@@ -7,9 +7,14 @@ const ADMIN_EMAIL = 'info@lynqagency.com'
 
 export default function AdminPage() {
   const [clients, setClients] = useState([])
+  const [broadcasts, setBroadcasts] = useState([])
   const [loading, setLoading] = useState(false)
+  const [broadcastLoading, setBroadcastLoading] = useState(false)
   const [success, setSuccess] = useState('')
+  const [broadcastSuccess, setBroadcastSuccess] = useState('')
   const [authorized, setAuthorized] = useState(false)
+  const [activeTab, setActiveTab] = useState('clients')
+  const [broadcastForm, setBroadcastForm] = useState({ title: '', body: '', type: 'update' })
   const [form, setForm] = useState({
     company_name: '',
     email: '',
@@ -30,9 +35,39 @@ export default function AdminPage() {
       }
       setAuthorized(true)
       fetchClients()
+      fetchBroadcasts()
     }
     checkAuth()
   }, [])
+
+  async function fetchBroadcasts() {
+    const { data } = await supabase.from('broadcasts').select('*').order('created_at', { ascending: false })
+    if (data) setBroadcasts(data)
+  }
+
+  async function handleBroadcast(e) {
+    e.preventDefault()
+    setBroadcastLoading(true)
+    setBroadcastSuccess('')
+    const { error } = await supabase.from('broadcasts').insert({
+      title: broadcastForm.title,
+      body: broadcastForm.body,
+      type: broadcastForm.type,
+    })
+    if (error) {
+      alert('Error: ' + error.message)
+    } else {
+      setBroadcastSuccess('Bericht gepushed naar alle klanten!')
+      setBroadcastForm({ title: '', body: '', type: 'update' })
+      fetchBroadcasts()
+    }
+    setBroadcastLoading(false)
+  }
+
+  async function deleteBroadcast(id) {
+    await supabase.from('broadcasts').delete().eq('id', id)
+    fetchBroadcasts()
+  }
 
   async function fetchClients() {
     const { data } = await supabase.from('clients').select('*').order('created_at', { ascending: false })
@@ -93,6 +128,12 @@ export default function AdminPage() {
     success: { background: 'rgba(78,204,163,0.15)', border: '1px solid #4ecca3', borderRadius: '8px', padding: '10px 14px', color: '#4ecca3', fontSize: '13px', marginBottom: '16px' },
     clientRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: '1px solid rgba(255,255,255,0.06)' },
     pill: { padding: '3px 10px', borderRadius: '20px', fontSize: '11px', fontWeight: '600', background: 'rgba(78,204,163,0.15)', color: '#4ecca3' },
+    tab: { padding: '8px 20px', borderRadius: '8px', border: 'none', fontSize: '13px', fontWeight: '600', cursor: 'pointer', transition: 'all 0.15s' },
+    tabActive: { background: '#A175FC', color: '#fff' },
+    tabInactive: { background: 'rgba(255,255,255,0.05)', color: '#8b7cb3' },
+    textarea: { width: '100%', padding: '10px 14px', background: '#1C0F36', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff', fontSize: '13px', boxSizing: 'border-box', marginBottom: '14px', fontFamily: 'sans-serif', resize: 'vertical', minHeight: '100px' },
+    typePill: (t, selected) => ({ padding: '6px 14px', borderRadius: '20px', border: 'none', fontSize: '12px', fontWeight: '600', cursor: 'pointer', background: selected === t ? '#A175FC' : 'rgba(255,255,255,0.06)', color: selected === t ? '#fff' : '#8b7cb3' }),
+    broadcastRow: { padding: '14px 0', borderBottom: '1px solid rgba(255,255,255,0.06)' },
   }
 
   if (!authorized) return (
@@ -111,7 +152,63 @@ export default function AdminPage() {
       </div>
       <div style={s.sub}>Beheer klanten en hun koppelingen</div>
 
-      <div style={s.grid}>
+      {/* Tabs */}
+      <div style={{ display: 'flex', gap: '8px', marginBottom: '32px' }}>
+        <button style={{ ...s.tab, ...(activeTab === 'clients' ? s.tabActive : s.tabInactive) }} onClick={() => setActiveTab('clients')}>Klanten</button>
+        <button style={{ ...s.tab, ...(activeTab === 'broadcasts' ? s.tabActive : s.tabInactive) }} onClick={() => setActiveTab('broadcasts')}>Broadcasts</button>
+      </div>
+
+      {activeTab === 'broadcasts' && (
+        <div style={s.grid}>
+          {/* Broadcast schrijven */}
+          <div style={s.card}>
+            <div style={s.cardTitle}>Nieuw bericht pushen</div>
+            {broadcastSuccess && <div style={s.success}>{broadcastSuccess}</div>}
+            <form onSubmit={handleBroadcast}>
+              <label style={s.label}>Type</label>
+              <div style={{ display: 'flex', gap: '8px', marginBottom: '14px' }}>
+                {['update', 'tip', 'video'].map(t => (
+                  <button key={t} type="button" style={s.typePill(t, broadcastForm.type)} onClick={() => setBroadcastForm({...broadcastForm, type: t})}>
+                    {t === 'update' ? '📢 Update' : t === 'tip' ? '💡 Tip' : '🎥 Video'}
+                  </button>
+                ))}
+              </div>
+              <label style={s.label}>Titel</label>
+              <input style={s.input} value={broadcastForm.title} onChange={e => setBroadcastForm({...broadcastForm, title: e.target.value})} required placeholder="Onderwerp van het bericht" />
+              <label style={s.label}>Bericht</label>
+              <textarea style={s.textarea} value={broadcastForm.body} onChange={e => setBroadcastForm({...broadcastForm, body: e.target.value})} required placeholder="Schrijf hier je bericht..." />
+              <button style={s.btn} type="submit" disabled={broadcastLoading}>
+                {broadcastLoading ? 'Pushen...' : '📤 Push naar alle klanten'}
+              </button>
+            </form>
+          </div>
+
+          {/* Broadcast geschiedenis */}
+          <div style={s.card}>
+            <div style={s.cardTitle}>Verstuurd — {broadcasts.length}</div>
+            {broadcasts.length === 0 && <div style={{ color: '#8b7cb3', fontSize: '13px' }}>Nog geen berichten verstuurd.</div>}
+            {broadcasts.map(b => (
+              <div key={b.id} style={s.broadcastRow}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <div>
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '4px' }}>
+                      <span style={{ ...s.pill, background: b.type === 'tip' ? 'rgba(161,117,252,0.15)' : b.type === 'video' ? 'rgba(255,209,102,0.15)' : 'rgba(78,204,163,0.15)', color: b.type === 'tip' ? '#A175FC' : b.type === 'video' ? '#ffd166' : '#4ecca3' }}>
+                        {b.type === 'update' ? '📢 Update' : b.type === 'tip' ? '💡 Tip' : '🎥 Video'}
+                      </span>
+                      <span style={{ fontSize: '11px', color: '#8b7cb3' }}>{new Date(b.created_at).toLocaleDateString('nl-NL')}</span>
+                    </div>
+                    <div style={{ fontWeight: '600', fontSize: '14px', marginBottom: '4px' }}>{b.title}</div>
+                    <div style={{ fontSize: '12px', color: '#8b7cb3', lineHeight: '1.5' }}>{b.body}</div>
+                  </div>
+                  <button onClick={() => deleteBroadcast(b.id)} style={{ background: 'none', border: 'none', color: '#ff6b8a', cursor: 'pointer', fontSize: '14px', marginLeft: '12px', flexShrink: 0 }}>✕</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'clients' && <div style={s.grid}>
         {/* Nieuw klant formulier */}
         <div style={s.card}>
           <div style={s.cardTitle}>Nieuwe klant aanmaken</div>
@@ -170,7 +267,7 @@ export default function AdminPage() {
             </div>
           ))}
         </div>
-      </div>
+      </div>}
     </div>
   )
 }

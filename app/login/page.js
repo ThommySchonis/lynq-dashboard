@@ -22,7 +22,7 @@ export default function LoginPage() {
       setError('Incorrect email or password')
       setLoading(false)
     } else {
-      router.push('/dashboard.html')
+      window.location.href = '/dashboard.html'
     }
   }
 

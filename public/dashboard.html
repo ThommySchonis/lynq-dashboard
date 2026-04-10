@@ -883,14 +883,44 @@
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: var(--radius);
-    padding: 18px 22px;
+    padding: 0;
     margin-bottom: 12px;
     transition: border-color 0.15s;
+    display: flex;
+    overflow: hidden;
   }
   .risk-order-card.high  { border-left: 4px solid var(--danger); }
   .risk-order-card.medium { border-left: 4px solid var(--warn); }
   .risk-order-card.low   { border-left: 4px solid rgba(161,117,252,0.6); }
   .risk-order-card.resolved { opacity: 0.4; border-left-color: var(--green); }
+  .risk-card-left { flex: 1; padding: 18px 22px; }
+  .risk-card-right {
+    width: 280px; min-width: 280px;
+    border-left: 1px solid var(--border);
+    padding: 16px 18px;
+    background: rgba(0,0,0,0.15);
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  .risk-rec-label {
+    font-size: 10px; font-weight: 800; text-transform: uppercase;
+    letter-spacing: 0.8px; color: var(--muted); margin-bottom: 2px;
+  }
+  .risk-rec-box {
+    font-size: 12px; line-height: 1.6; color: rgba(255,255,255,0.75);
+    padding: 10px 12px; border-radius: 8px;
+    border: 1px solid;
+  }
+  .risk-rec-box.warn   { background: rgba(255,209,102,0.06); border-color: rgba(255,209,102,0.2); }
+  .risk-rec-box.danger { background: rgba(255,107,138,0.06); border-color: rgba(255,107,138,0.2); }
+  .risk-rec-box.info   { background: rgba(161,117,252,0.06); border-color: rgba(161,117,252,0.2); }
+  .risk-rec-box.good   { background: rgba(78,204,163,0.06); border-color: rgba(78,204,163,0.2); }
+  .risk-rec-box strong { color: var(--text); }
+  .risk-rec-paypal {
+    font-size: 11px; font-weight: 700; padding: 6px 10px;
+    background: rgba(255,107,138,0.1); border: 1px solid rgba(255,107,138,0.25);
+    border-radius: 7px; color: var(--danger);
+    display: flex; align-items: center; gap: 6px;
+  }
   .risk-order-header { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; flex-wrap: wrap; }
   .risk-badge {
     font-size: 10px; font-weight: 800; text-transform: uppercase;
@@ -921,10 +951,9 @@
     font-family: 'Rethink Sans', sans-serif; transition: opacity 0.15s;
   }
   .risk-btn:hover { opacity: 0.85; }
-  .risk-btn.primary  { background: var(--accent); color: #fff; }
-  .risk-btn.danger   { background: var(--danger); color: #fff; }
   .risk-btn.ghost    { background: rgba(255,255,255,0.06); color: var(--muted); border: 1px solid var(--border); }
   .risk-btn.resolve  { background: rgba(78,204,163,0.12); color: var(--green); border: 1px solid rgba(78,204,163,0.2); }
+  .risk-btn.not-resolved { background: rgba(255,107,138,0.1); color: var(--danger); border: 1px solid rgba(255,107,138,0.2); }
 
   .risk-score-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
   .risk-score-track { flex: 1; height: 5px; background: rgba(255,255,255,0.07); border-radius: 4px; overflow: hidden; }
@@ -1358,206 +1387,306 @@
 
     <!-- HIGH RISK -->
     <div class="risk-order-card high" data-risk="high" id="risk-1">
-      <div class="risk-order-header">
-        <span class="risk-badge high">High risk — 94</span>
-        <div class="risk-order-id">#4512 — Classic Linen Dress</div>
-        <div class="risk-customer">Jennifer Adams · jennifer.a@gmail.com</div>
-        <div class="risk-value" style="margin-left:auto">$89</div>
+      <div class="risk-card-left">
+        <div class="risk-order-header">
+          <span class="risk-badge high">High risk — 94</span>
+          <div class="risk-order-id">#4512 — Classic Linen Dress</div>
+          <div class="risk-customer">Jennifer Adams · jennifer.a@gmail.com</div>
+          <div class="risk-value">$89</div>
+        </div>
+        <div class="risk-signals">
+          <span class="risk-signal complaint">🗣 Complained 3x</span>
+          <span class="risk-signal delivery">⏳ Day 18 in transit</span>
+          <span class="risk-signal product">📦 High-refund product (8.6%)</span>
+          <span class="risk-signal sentiment">😤 Negative sentiment</span>
+        </div>
+        <div class="risk-order-meta">
+          <span>Ordered: <strong>Mar 18</strong></span>
+          <span>Last contact: <strong>Apr 3 — "Where is my order??"</strong></span>
+          <span>Carrier: <strong>YunExpress</strong></span>
+          <span>No reply since: <strong>2 days</strong></span>
+        </div>
+        <div class="risk-actions">
+          <button class="risk-btn ghost">View in Gorgias</button>
+          <button class="risk-btn resolve" onclick="resolveRisk(this,'risk-1')">Resolved ✓</button>
+          <button class="risk-btn not-resolved" onclick="markNotResolved(this,'risk-1')">Not resolved ✗</button>
+        </div>
       </div>
-      <div class="risk-signals">
-        <span class="risk-signal complaint">🗣 Complained 3x</span>
-        <span class="risk-signal delivery">⏳ Day 18 in transit</span>
-        <span class="risk-signal product">📦 High-refund product (8.6%)</span>
-        <span class="risk-signal sentiment">😤 Negative sentiment</span>
-      </div>
-      <div class="risk-order-meta">
-        <span>Ordered: <strong>Mar 18</strong></span>
-        <span>Last contact: <strong>Apr 3 — "Where is my order??"</strong></span>
-        <span>Carrier: <strong>YunExpress</strong></span>
-        <span>No reply since: <strong>2 days</strong></span>
-      </div>
-      <div class="risk-actions">
-        <button class="risk-btn primary" onclick="resolveRisk(this,'risk-1')">Send proactive email</button>
-        <button class="risk-btn danger">Offer partial refund (30%)</button>
-        <button class="risk-btn ghost">View in Gorgias</button>
-        <button class="risk-btn resolve" onclick="resolveRisk(this,'risk-1')">Mark resolved ✓</button>
+      <div class="risk-card-right">
+        <div class="risk-rec-label">Aanbeveling</div>
+        <div class="risk-rec-box danger">
+          <strong>Klant vraagt 3x naar bestelling — actie vereist.</strong><br>
+          Check de trackingpagina van YunExpress. Is het pakket vastgelopen? Informeer de klant vandaag nog met een update + verwachte leverdatum. Neem contact op met de supplier om de verzending te versnellen.
+        </div>
+        <div class="risk-rec-box warn">
+          <strong>Volgende stap als klant blijft reageren:</strong><br>
+          Bied een gedeeltelijke compensatie aan (10–15%). Niet als volledige refund, maar als goodwill gebaar voor het ongemak door de vertraging.
+        </div>
+        <div class="risk-rec-paypal">⚠️ Betaalmethode onbekend — check op PayPal. PayPal klanten dienen sneller disputes in.
+        </div>
       </div>
     </div>
 
     <div class="risk-order-card high" data-risk="high" id="risk-2">
-      <div class="risk-order-header">
-        <span class="risk-badge high">High risk — 88</span>
-        <div class="risk-order-id">#4488 — Summer Wrap Skirt</div>
-        <div class="risk-customer">Rachel Kim · rachel.k@yahoo.com</div>
-        <div class="risk-value">$74</div>
+      <div class="risk-card-left">
+        <div class="risk-order-header">
+          <span class="risk-badge high">High risk — 88</span>
+          <div class="risk-order-id">#4488 — Summer Wrap Skirt</div>
+          <div class="risk-customer">Rachel Kim · rachel.k@yahoo.com · <span style="color:var(--danger);font-weight:700">PayPal</span></div>
+          <div class="risk-value">$74</div>
+        </div>
+        <div class="risk-signals">
+          <span class="risk-signal complaint">🗣 Complained 2x</span>
+          <span class="risk-signal delivery">⏳ Day 21 in transit</span>
+          <span class="risk-signal sentiment">😤 Gebruikt woord "refund" in ticket</span>
+        </div>
+        <div class="risk-order-meta">
+          <span>Ordered: <strong>Mar 15</strong></span>
+          <span>Last contact: <strong>Apr 4 — "I want a refund if it doesn't arrive today"</strong></span>
+          <span>Carrier: <strong>YunExpress</strong></span>
+          <span>No reply since: <strong>1 day</strong></span>
+        </div>
+        <div class="risk-actions">
+          <button class="risk-btn ghost">View in Gorgias</button>
+          <button class="risk-btn resolve" onclick="resolveRisk(this,'risk-2')">Resolved ✓</button>
+          <button class="risk-btn not-resolved" onclick="markNotResolved(this,'risk-2')">Not resolved ✗</button>
+        </div>
       </div>
-      <div class="risk-signals">
-        <span class="risk-signal complaint">🗣 Complained 2x</span>
-        <span class="risk-signal delivery">⏳ Day 21 in transit</span>
-        <span class="risk-signal sentiment">😤 Used word "refund" in ticket</span>
-      </div>
-      <div class="risk-order-meta">
-        <span>Ordered: <strong>Mar 15</strong></span>
-        <span>Last contact: <strong>Apr 4 — "I want a refund if it doesn't arrive today"</strong></span>
-        <span>Carrier: <strong>YunExpress</strong></span>
-        <span>No reply since: <strong>1 day</strong></span>
-      </div>
-      <div class="risk-actions">
-        <button class="risk-btn primary" onclick="resolveRisk(this,'risk-2')">Send proactive email</button>
-        <button class="risk-btn danger">Offer partial refund (30%)</button>
-        <button class="risk-btn ghost">View in Gorgias</button>
-        <button class="risk-btn resolve" onclick="resolveRisk(this,'risk-2')">Mark resolved ✓</button>
+      <div class="risk-card-right">
+        <div class="risk-rec-paypal">⚠️ PayPal betaling — dispute risico is hoog. Prioriteit #1.</div>
+        <div class="risk-rec-label" style="margin-top:4px">Aanbeveling</div>
+        <div class="risk-rec-box danger">
+          <strong>Klant dreigt met refund, betaalde via PayPal.</strong><br>
+          Reageer vandaag nog. Geef een concrete leverdatum of bied direct een 10–15% gedeeltelijke terugbetaling aan als goodwill. Voorkom een PayPal dispute — die leidt tot een payment hold op je account.
+        </div>
+        <div class="risk-rec-box warn">
+          <strong>Als klant dit niet accepteert (2e contact):</strong><br>
+          Verhoog naar 20–25% partial refund. Goedkoper dan een chargeback + possible account freeze bij PayPal.
+        </div>
       </div>
     </div>
 
     <div class="risk-order-card high" data-risk="high" id="risk-3">
-      <div class="risk-order-header">
-        <span class="risk-badge high">High risk — 82</span>
-        <div class="risk-order-id">#4601 — Boho Blouse Set (Size M)</div>
-        <div class="risk-customer">Monica Chang · m.chang@hotmail.com</div>
-        <div class="risk-value">$112</div>
+      <div class="risk-card-left">
+        <div class="risk-order-header">
+          <span class="risk-badge high">High risk — 82</span>
+          <div class="risk-order-id">#4601 — Boho Blouse Set (Size M)</div>
+          <div class="risk-customer">Monica Chang · m.chang@hotmail.com</div>
+          <div class="risk-value">$112</div>
+        </div>
+        <div class="risk-signals">
+          <span class="risk-signal complaint">🗣 Complained 2x</span>
+          <span class="risk-signal product">📦 High-refund product (maatproblemen)</span>
+          <span class="risk-signal no-reply">📭 CS replied, klant reageerde niet in 4 dagen</span>
+        </div>
+        <div class="risk-order-meta">
+          <span>Ordered: <strong>Mar 22</strong></span>
+          <span>Last contact: <strong>Mar 31 — "This doesn't fit at all, nothing like the size chart"</strong></span>
+          <span>Status: <strong>Delivered Mar 30</strong></span>
+          <span>Open ticket since: <strong>5 days</strong></span>
+        </div>
+        <div class="risk-actions">
+          <button class="risk-btn ghost">View in Gorgias</button>
+          <button class="risk-btn resolve" onclick="resolveRisk(this,'risk-3')">Resolved ✓</button>
+          <button class="risk-btn not-resolved" onclick="markNotResolved(this,'risk-3')">Not resolved ✗</button>
+        </div>
       </div>
-      <div class="risk-signals">
-        <span class="risk-signal complaint">🗣 Complained 2x</span>
-        <span class="risk-signal product">📦 High-refund product (size issues)</span>
-        <span class="risk-signal no-reply">📭 CS replied, customer hasn't responded in 4 days</span>
-      </div>
-      <div class="risk-order-meta">
-        <span>Ordered: <strong>Mar 22</strong></span>
-        <span>Last contact: <strong>Mar 31 — "This doesn't fit at all, nothing like the size chart"</strong></span>
-        <span>Status: <strong>Delivered Mar 30</strong></span>
-        <span>Open ticket since: <strong>5 days</strong></span>
-      </div>
-      <div class="risk-actions">
-        <button class="risk-btn primary">Send size exchange offer</button>
-        <button class="risk-btn danger">Offer partial refund (30%)</button>
-        <button class="risk-btn ghost">View in Gorgias</button>
-        <button class="risk-btn resolve" onclick="resolveRisk(this,'risk-3')">Mark resolved ✓</button>
+      <div class="risk-card-right">
+        <div class="risk-rec-label">Aanbeveling</div>
+        <div class="risk-rec-box warn">
+          <strong>Maatklacht, klant reageerde niet na CS reply.</strong><br>
+          Stuur een follow-up. Bied een ruiloptie aan (andere maat) als eerste stap. Als dat niet werkt: bied 10–15% partial refund aan zodat de klant het product houdt.
+        </div>
+        <div class="risk-rec-box info">
+          <strong>2e contact — klant accepteert ruil niet:</strong><br>
+          Verhoog naar 20% partial refund. Dit is goedkoper dan een volledige retour + verzendkosten + verlies op het product.
+        </div>
       </div>
     </div>
 
     <div class="risk-order-card high" data-risk="high" id="risk-4">
-      <div class="risk-order-header">
-        <span class="risk-badge high">High risk — 78</span>
-        <div class="risk-order-id">#4556 — Classic Linen Dress</div>
-        <div class="risk-customer">Angela White · a.white@gmail.com</div>
-        <div class="risk-value">$89</div>
+      <div class="risk-card-left">
+        <div class="risk-order-header">
+          <span class="risk-badge high">High risk — 78</span>
+          <div class="risk-order-id">#4556 — Classic Linen Dress</div>
+          <div class="risk-customer">Angela White · a.white@gmail.com</div>
+          <div class="risk-value">$89</div>
+        </div>
+        <div class="risk-signals">
+          <span class="risk-signal sentiment">😤 "Disappointed" + "refund" in één ticket</span>
+          <span class="risk-signal product">📦 High-refund product (8.6%)</span>
+          <span class="risk-signal delivery">⏳ Day 16 in transit</span>
+        </div>
+        <div class="risk-order-meta">
+          <span>Ordered: <strong>Mar 20</strong></span>
+          <span>Last contact: <strong>Apr 3 — "Very disappointed, this isn't what I expected"</strong></span>
+          <span>Carrier: <strong>USPS</strong></span>
+          <span>No follow-up sent</span>
+        </div>
+        <div class="risk-actions">
+          <button class="risk-btn ghost">View in Gorgias</button>
+          <button class="risk-btn resolve" onclick="resolveRisk(this,'risk-4')">Resolved ✓</button>
+          <button class="risk-btn not-resolved" onclick="markNotResolved(this,'risk-4')">Not resolved ✗</button>
+        </div>
       </div>
-      <div class="risk-signals">
-        <span class="risk-signal sentiment">😤 Used "disappointed" + "refund" in same ticket</span>
-        <span class="risk-signal product">📦 High-refund product (8.6%)</span>
-        <span class="risk-signal delivery">⏳ Day 16 in transit</span>
-      </div>
-      <div class="risk-order-meta">
-        <span>Ordered: <strong>Mar 20</strong></span>
-        <span>Last contact: <strong>Apr 3 — "Very disappointed, this isn't what I expected"</strong></span>
-        <span>Carrier: <strong>USPS</strong></span>
-        <span>No follow-up sent</span>
-      </div>
-      <div class="risk-actions">
-        <button class="risk-btn primary">Send proactive email</button>
-        <button class="risk-btn danger">Offer partial refund (30%)</button>
-        <button class="risk-btn ghost">View in Gorgias</button>
-        <button class="risk-btn resolve" onclick="resolveRisk(this,'risk-4')">Mark resolved ✓</button>
+      <div class="risk-card-right">
+        <div class="risk-rec-label">Aanbeveling</div>
+        <div class="risk-rec-box danger">
+          <strong>Klant is ontevreden over kwaliteit, 1e contact.</strong><br>
+          Reageer empathisch. Erken het probleem. Bied een 10–15% gedeeltelijke terugbetaling aan als goodwill — zonder te vragen om retour. Klant heeft het product al, dit houdt ze tevreden.
+        </div>
+        <div class="risk-rec-box warn">
+          <strong>Als klant dit niet accepteert:</strong><br>
+          Verhoog naar 20–25%. Het pakket is al 16 dagen onderweg — combineer de kwaliteitsklacht met de vertraging als reden voor de hogere compensatie.
+        </div>
       </div>
     </div>
 
     <div class="risk-order-card high" data-risk="high" id="risk-5">
-      <div class="risk-order-header">
-        <span class="risk-badge high">High risk — 72</span>
-        <div class="risk-order-id">#4633 — Coastal Cardigan</div>
-        <div class="risk-customer">Laura Bennett · l.bennett@outlook.com</div>
-        <div class="risk-value">$138</div>
+      <div class="risk-card-left">
+        <div class="risk-order-header">
+          <span class="risk-badge high">High risk — 72</span>
+          <div class="risk-order-id">#4633 — Coastal Cardigan</div>
+          <div class="risk-customer">Laura Bennett · l.bennett@outlook.com</div>
+          <div class="risk-value">$138</div>
+        </div>
+        <div class="risk-signals">
+          <span class="risk-signal complaint">🗣 Complained 2x</span>
+          <span class="risk-signal sentiment">😤 "Not as described"</span>
+          <span class="risk-signal no-reply">📭 CS ticket onbeantwoord — 26 uur</span>
+        </div>
+        <div class="risk-order-meta">
+          <span>Ordered: <strong>Mar 25</strong></span>
+          <span>Last contact: <strong>Apr 3 — "The colour is nothing like the photos"</strong></span>
+          <span>Status: <strong>Delivered Mar 31</strong></span>
+          <span>⚠️ Ticket unanswered 26h</span>
+        </div>
+        <div class="risk-actions">
+          <button class="risk-btn ghost">View in Gorgias</button>
+          <button class="risk-btn resolve" onclick="resolveRisk(this,'risk-5')">Resolved ✓</button>
+          <button class="risk-btn not-resolved" onclick="markNotResolved(this,'risk-5')">Not resolved ✗</button>
+        </div>
       </div>
-      <div class="risk-signals">
-        <span class="risk-signal complaint">🗣 Complained 2x</span>
-        <span class="risk-signal sentiment">😤 Negative sentiment — "not as described"</span>
-        <span class="risk-signal no-reply">📭 No CS reply in 26 hours</span>
-      </div>
-      <div class="risk-order-meta">
-        <span>Ordered: <strong>Mar 25</strong></span>
-        <span>Last contact: <strong>Apr 3 — "The colour is nothing like the photos"</strong></span>
-        <span>Status: <strong>Delivered Mar 31</strong></span>
-        <span>⚠️ Ticket unanswered 26h</span>
-      </div>
-      <div class="risk-actions">
-        <button class="risk-btn primary">Reply now — apologize + offer</button>
-        <button class="risk-btn danger">Offer partial refund (30%)</button>
-        <button class="risk-btn ghost">View in Gorgias</button>
-        <button class="risk-btn resolve" onclick="resolveRisk(this,'risk-5')">Mark resolved ✓</button>
+      <div class="risk-card-right">
+        <div class="risk-rec-label">Aanbeveling</div>
+        <div class="risk-rec-box danger">
+          <strong>Ticket 26 uur onbeantwoord — reageer nu.</strong><br>
+          Klant klaagt over kleursverschil (productpagina vs. werkelijkheid). Dit is een verwachtingsklacht. Erken dit, bied 10–15% partial refund aan als compensatie. Laat product testen op productpagina nauwkeurigheid.
+        </div>
+        <div class="risk-rec-box warn">
+          <strong>Als klant dit niet accepteert (2e contact):</strong><br>
+          Bied 20–25% aan. Bij $138 is dit $28–$35 — goedkoper dan een volledige retour.
+        </div>
       </div>
     </div>
 
     <!-- MEDIUM RISK -->
     <div class="risk-order-card medium" data-risk="medium" id="risk-6">
-      <div class="risk-order-header">
-        <span class="risk-badge medium">Medium risk — 58</span>
-        <div class="risk-order-id">#4714 — Floral Midi Dress</div>
-        <div class="risk-customer">Sandra Lee · s.lee@gmail.com</div>
-        <div class="risk-value" style="color:var(--warn)">$95</div>
+      <div class="risk-card-left">
+        <div class="risk-order-header">
+          <span class="risk-badge medium">Medium risk — 58</span>
+          <div class="risk-order-id">#4714 — Floral Midi Dress</div>
+          <div class="risk-customer">Sandra Lee · s.lee@gmail.com</div>
+          <div class="risk-value" style="color:var(--warn)">$95</div>
+        </div>
+        <div class="risk-signals">
+          <span class="risk-signal delivery">⏳ Day 15 in transit</span>
+          <span class="risk-signal complaint">🗣 Complained once — "Is my order coming?"</span>
+        </div>
+        <div class="risk-order-meta">
+          <span>Ordered: <strong>Mar 21</strong></span>
+          <span>Last contact: <strong>Apr 2 — "Is my order coming?"</strong></span>
+          <span>Carrier: <strong>FedEx</strong></span>
+          <span>CS replied Apr 2</span>
+        </div>
+        <div class="risk-actions">
+          <button class="risk-btn ghost">View in Gorgias</button>
+          <button class="risk-btn resolve" onclick="resolveRisk(this,'risk-6')">Resolved ✓</button>
+          <button class="risk-btn not-resolved" onclick="markNotResolved(this,'risk-6')">Not resolved ✗</button>
+        </div>
       </div>
-      <div class="risk-signals">
-        <span class="risk-signal delivery">⏳ Day 15 in transit</span>
-        <span class="risk-signal complaint">🗣 Complained once</span>
-      </div>
-      <div class="risk-order-meta">
-        <span>Ordered: <strong>Mar 21</strong></span>
-        <span>Last contact: <strong>Apr 2 — "Is my order coming?"</strong></span>
-        <span>Carrier: <strong>FedEx</strong></span>
-        <span>CS replied Apr 2</span>
-      </div>
-      <div class="risk-actions">
-        <button class="risk-btn primary">Send delivery update</button>
-        <button class="risk-btn ghost">View in Gorgias</button>
-        <button class="risk-btn resolve" onclick="resolveRisk(this,'risk-6')">Mark resolved ✓</button>
+      <div class="risk-card-right">
+        <div class="risk-rec-label">Aanbeveling</div>
+        <div class="risk-rec-box warn">
+          <strong>Klant informeert naar bestelling — 1e contact.</strong><br>
+          Check de tracking bij FedEx. Stuur de klant een update met huidige status + verwachte leverdatum. Neem contact op met de supplier als het pakket vertraagd is, en vraag om versnelde afhandeling.
+        </div>
+        <div class="risk-rec-box info">
+          <strong>Als klant opnieuw contact opneemt:</strong><br>
+          Bied een kleine compensatie aan (10%) voor het wachten. Dit voorkomt escalatie naar een refundverzoek.
+        </div>
       </div>
     </div>
 
     <div class="risk-order-card medium" data-risk="medium" id="risk-7">
-      <div class="risk-order-header">
-        <span class="risk-badge medium">Medium risk — 52</span>
-        <div class="risk-order-id">#4688 — Mountain Trail Pants</div>
-        <div class="risk-customer">Chris Evans · c.evans@yahoo.com</div>
-        <div class="risk-value" style="color:var(--warn)">$68</div>
+      <div class="risk-card-left">
+        <div class="risk-order-header">
+          <span class="risk-badge medium">Medium risk — 52</span>
+          <div class="risk-order-id">#4688 — Mountain Trail Pants</div>
+          <div class="risk-customer">Chris Evans · c.evans@yahoo.com</div>
+          <div class="risk-value" style="color:var(--warn)">$68</div>
+        </div>
+        <div class="risk-signals">
+          <span class="risk-signal delivery">⏳ Day 17 in transit</span>
+          <span class="risk-signal no-reply">📭 Klant heeft nog geen contact opgenomen</span>
+        </div>
+        <div class="risk-order-meta">
+          <span>Ordered: <strong>Mar 19</strong></span>
+          <span>Carrier: <strong>YunExpress</strong></span>
+          <span>Geen klantcontact tot nu toe</span>
+        </div>
+        <div class="risk-actions">
+          <button class="risk-btn ghost">View tracking</button>
+          <button class="risk-btn resolve" onclick="resolveRisk(this,'risk-7')">Resolved ✓</button>
+          <button class="risk-btn not-resolved" onclick="markNotResolved(this,'risk-7')">Not resolved ✗</button>
+        </div>
       </div>
-      <div class="risk-signals">
-        <span class="risk-signal delivery">⏳ Day 17 in transit</span>
-        <span class="risk-signal no-reply">📭 No contact yet from customer</span>
-      </div>
-      <div class="risk-order-meta">
-        <span>Ordered: <strong>Mar 19</strong></span>
-        <span>Last contact: <strong>—</strong></span>
-        <span>Carrier: <strong>YunExpress</strong></span>
-        <span>No proactive email sent yet</span>
-      </div>
-      <div class="risk-actions">
-        <button class="risk-btn primary">Send proactive update now</button>
-        <button class="risk-btn ghost">View tracking</button>
-        <button class="risk-btn resolve" onclick="resolveRisk(this,'risk-7')">Mark resolved ✓</button>
+      <div class="risk-card-right">
+        <div class="risk-rec-label">Aanbeveling</div>
+        <div class="risk-rec-box info">
+          <strong>17 dagen onderweg, klant heeft nog niet gemeld.</strong><br>
+          Informeer de klant proactief over de status voordat ze zelf contact opnemen. Stuur tracking info + verwachte leverdatum. Neem contact op met de supplier om de verzending te versnellen indien mogelijk.
+        </div>
+        <div class="risk-rec-box good">
+          Proactief informeren vermindert de kans op een boze klant met 60%. Zorg dat je vóór de klant bent.
+        </div>
       </div>
     </div>
 
     <div class="risk-order-card medium" data-risk="medium" id="risk-8">
-      <div class="risk-order-header">
-        <span class="risk-badge medium">Medium risk — 48</span>
-        <div class="risk-order-id">#4702 — Boho Blouse Set (Size L)</div>
-        <div class="risk-customer">Tina Foster · t.foster@gmail.com</div>
-        <div class="risk-value" style="color:var(--warn)">$112</div>
+      <div class="risk-card-left">
+        <div class="risk-order-header">
+          <span class="risk-badge medium">Medium risk — 48</span>
+          <div class="risk-order-id">#4702 — Boho Blouse Set (Size L)</div>
+          <div class="risk-customer">Tina Foster · t.foster@gmail.com</div>
+          <div class="risk-value" style="color:var(--warn)">$112</div>
+        </div>
+        <div class="risk-signals">
+          <span class="risk-signal product">📦 High-refund product (maatproblemen)</span>
+          <span class="risk-signal complaint">🗣 Complained once — "runs very small"</span>
+        </div>
+        <div class="risk-order-meta">
+          <span>Ordered: <strong>Mar 26</strong></span>
+          <span>Last contact: <strong>Apr 3 — "This runs really small"</strong></span>
+          <span>Status: <strong>Delivered Apr 1</strong></span>
+          <span>CS reply pending</span>
+        </div>
+        <div class="risk-actions">
+          <button class="risk-btn ghost">View in Gorgias</button>
+          <button class="risk-btn resolve" onclick="resolveRisk(this,'risk-8')">Resolved ✓</button>
+          <button class="risk-btn not-resolved" onclick="markNotResolved(this,'risk-8')">Not resolved ✗</button>
+        </div>
       </div>
-      <div class="risk-signals">
-        <span class="risk-signal product">📦 High-refund product (size issues)</span>
-        <span class="risk-signal complaint">🗣 Complained once — "runs very small"</span>
-      </div>
-      <div class="risk-order-meta">
-        <span>Ordered: <strong>Mar 26</strong></span>
-        <span>Last contact: <strong>Apr 3 — "This runs really small"</strong></span>
-        <span>Status: <strong>Delivered Apr 1</strong></span>
-        <span>CS reply pending</span>
-      </div>
-      <div class="risk-actions">
-        <button class="risk-btn primary">Offer size exchange</button>
-        <button class="risk-btn ghost">View in Gorgias</button>
-        <button class="risk-btn resolve" onclick="resolveRisk(this,'risk-8')">Mark resolved ✓</button>
+      <div class="risk-card-right">
+        <div class="risk-rec-label">Aanbeveling</div>
+        <div class="risk-rec-box info">
+          <strong>Maatklacht, 1e contact.</strong><br>
+          Bied een ruiloptie aan (grotere maat). Als de klant dit niet wil: bied 10–15% partial refund aan zodat ze het product houden. Dit is goedkoper dan een retour + herverzending.
+        </div>
+        <div class="risk-rec-box warn">
+          <strong>Als klant opnieuw klaagt:</strong><br>
+          Verhoog naar 20%. Noteer dit als feedback voor de supplier — "runs small" is een structureel probleem bij dit product.
+        </div>
       </div>
     </div>
 
@@ -1565,49 +1694,69 @@
     <div style="margin-top:8px;padding:12px 20px;background:rgba(161,117,252,0.05);border:1px solid var(--border);border-radius:var(--radius);display:flex;align-items:center;justify-content:space-between;cursor:pointer" data-risk="low" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none';this.querySelector('.low-toggle').textContent=this.nextElementSibling.style.display==='none'?'Show ▾':'Hide ▴'">
       <div style="display:flex;align-items:center;gap:10px">
         <span style="font-size:11px;font-weight:800;color:var(--accent);background:rgba(161,117,252,0.15);padding:3px 9px;border-radius:20px">LOW RISK</span>
-        <span style="font-size:13px;color:var(--muted)">2 orders — low priority, monitor only</span>
+        <span style="font-size:13px;color:var(--muted)">2 orders — laag risico, monitor alleen</span>
       </div>
       <span class="low-toggle" style="font-size:12px;color:var(--muted)">Show ▾</span>
     </div>
     <div style="display:none">
       <div class="risk-order-card low" data-risk="low" id="risk-9" style="margin-top:8px">
-        <div class="risk-order-header">
-          <span class="risk-badge low">Low risk — 28</span>
-          <div class="risk-order-id">#4801 — Classic Linen Dress</div>
-          <div class="risk-customer">Beth Morgan · b.morgan@gmail.com</div>
-          <div class="risk-value" style="color:var(--accent)">$89</div>
+        <div class="risk-card-left">
+          <div class="risk-order-header">
+            <span class="risk-badge low">Low risk — 28</span>
+            <div class="risk-order-id">#4801 — Classic Linen Dress</div>
+            <div class="risk-customer">Beth Morgan · b.morgan@gmail.com</div>
+            <div class="risk-value" style="color:var(--accent)">$89</div>
+          </div>
+          <div class="risk-signals">
+            <span class="risk-signal product">📦 High-refund product (8.6%)</span>
+          </div>
+          <div class="risk-order-meta">
+            <span>Ordered: <strong>Apr 1</strong></span>
+            <span>Status: <strong>In transit — Day 4</strong></span>
+            <span>Geen klachten</span>
+          </div>
+          <div class="risk-actions">
+            <button class="risk-btn ghost">Monitor</button>
+            <button class="risk-btn resolve" onclick="resolveRisk(this,'risk-9')">Resolved ✓</button>
+            <button class="risk-btn not-resolved" onclick="markNotResolved(this,'risk-9')">Not resolved ✗</button>
+          </div>
         </div>
-        <div class="risk-signals">
-          <span class="risk-signal product">📦 High-refund product (8.6%)</span>
-        </div>
-        <div class="risk-order-meta">
-          <span>Ordered: <strong>Apr 1</strong></span>
-          <span>Status: <strong>In transit — Day 4</strong></span>
-          <span>No complaints yet</span>
-        </div>
-        <div class="risk-actions">
-          <button class="risk-btn ghost">Monitor</button>
-          <button class="risk-btn resolve" onclick="resolveRisk(this,'risk-9')">Mark resolved ✓</button>
+        <div class="risk-card-right">
+          <div class="risk-rec-label">Aanbeveling</div>
+          <div class="risk-rec-box good">
+            <strong>Geen actie nodig.</strong><br>
+            Houd in de gaten. Als de bezorging langer duurt dan 14 dagen, informeer de klant proactief.
+          </div>
         </div>
       </div>
       <div class="risk-order-card low" data-risk="low" id="risk-10">
-        <div class="risk-order-header">
-          <span class="risk-badge low">Low risk — 22</span>
-          <div class="risk-order-id">#4810 — Summer Wrap Skirt</div>
-          <div class="risk-customer">Kate Wilson · k.wilson@icloud.com</div>
-          <div class="risk-value" style="color:var(--accent)">$74</div>
+        <div class="risk-card-left">
+          <div class="risk-order-header">
+            <span class="risk-badge low">Low risk — 22</span>
+            <div class="risk-order-id">#4810 — Summer Wrap Skirt</div>
+            <div class="risk-customer">Kate Wilson · k.wilson@icloud.com</div>
+            <div class="risk-value" style="color:var(--accent)">$74</div>
+          </div>
+          <div class="risk-signals">
+            <span class="risk-signal delivery">⏳ Day 11 in transit</span>
+          </div>
+          <div class="risk-order-meta">
+            <span>Ordered: <strong>Mar 25</strong></span>
+            <span>Status: <strong>In transit — expected Apr 6</strong></span>
+            <span>Geen contact</span>
+          </div>
+          <div class="risk-actions">
+            <button class="risk-btn ghost">Monitor</button>
+            <button class="risk-btn resolve" onclick="resolveRisk(this,'risk-10')">Resolved ✓</button>
+            <button class="risk-btn not-resolved" onclick="markNotResolved(this,'risk-10')">Not resolved ✗</button>
+          </div>
         </div>
-        <div class="risk-signals">
-          <span class="risk-signal delivery">⏳ Day 11 in transit</span>
-        </div>
-        <div class="risk-order-meta">
-          <span>Ordered: <strong>Mar 25</strong></span>
-          <span>Status: <strong>In transit — expected Apr 6</strong></span>
-          <span>No contact yet</span>
-        </div>
-        <div class="risk-actions">
-          <button class="risk-btn ghost">Monitor</button>
-          <button class="risk-btn resolve" onclick="resolveRisk(this,'risk-10')">Mark resolved ✓</button>
+        <div class="risk-card-right">
+          <div class="risk-rec-label">Aanbeveling</div>
+          <div class="risk-rec-box good">
+            <strong>Op schema voor levering.</strong><br>
+            Verwachte leverdatum Apr 6. Geen actie nodig tenzij het pakket na Apr 6 nog niet is aangekomen.
+          </div>
         </div>
       </div>
     </div>
@@ -4539,6 +4688,15 @@ function resolveRisk(btn, id) {
     card.style.opacity = '0';
     setTimeout(() => card.remove(), 400);
   }, 800);
+}
+
+function markNotResolved(btn, id) {
+  const card = document.getElementById(id);
+  card.style.outline = '2px solid var(--danger)';
+  card.style.outlineOffset = '-2px';
+  btn.textContent = '✗ Nog open';
+  btn.style.opacity = '0.5';
+  btn.disabled = true;
 }
 
 // ── FLOATING CHAT ──

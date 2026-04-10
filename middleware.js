@@ -1,20 +1,21 @@
-import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 
 export async function middleware(request) {
   const { pathname } = request.nextUrl
 
-  // Alleen dashboard.html beschermen
-  if (pathname === '/dashboard.html') {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  // Haal alle Supabase auth cookies op
+  const cookies = request.cookies
+  const projectId = 'cvrzvhnsltjubmfkcxql'
 
-    const authHeader = request.cookies.get('sb-access-token')?.value
-      || request.cookies.get(`sb-${supabaseUrl?.split('//')[1]?.split('.')[0]}-auth-token`)?.value
+  // Check voor Supabase session cookie (nieuwe en oude formaten)
+  const hasSession =
+    cookies.has(`sb-${projectId}-auth-token`) ||
+    cookies.has('sb-access-token') ||
+    cookies.has(`sb-${projectId}-auth-token.0`) ||
+    [...cookies.getAll()].some(c => c.name.startsWith('sb-') && c.name.includes('auth'))
 
-    if (!authHeader) {
-      return NextResponse.redirect(new URL('/login', request.url))
-    }
+  if (!hasSession) {
+    return NextResponse.redirect(new URL('/login', request.url))
   }
 
   return NextResponse.next()

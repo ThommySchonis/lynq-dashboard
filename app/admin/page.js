@@ -3,10 +3,13 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../../lib/supabase'
 
+const ADMIN_EMAIL = 'info@lynqagency.com'
+
 export default function AdminPage() {
   const [clients, setClients] = useState([])
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState('')
+  const [authorized, setAuthorized] = useState(false)
   const [form, setForm] = useState({
     company_name: '',
     email: '',
@@ -19,7 +22,16 @@ export default function AdminPage() {
   })
 
   useEffect(() => {
-    fetchClients()
+    async function checkAuth() {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user || user.email !== ADMIN_EMAIL) {
+        window.location.href = '/login'
+        return
+      }
+      setAuthorized(true)
+      fetchClients()
+    }
+    checkAuth()
   }, [])
 
   async function fetchClients() {
@@ -83,9 +95,20 @@ export default function AdminPage() {
     pill: { padding: '3px 10px', borderRadius: '20px', fontSize: '11px', fontWeight: '600', background: 'rgba(78,204,163,0.15)', color: '#4ecca3' },
   }
 
+  if (!authorized) return (
+    <div style={{ minHeight: '100vh', background: '#1C0F36', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#8b7cb3', fontFamily: 'sans-serif' }}>
+      Checking access...
+    </div>
+  )
+
   return (
     <div style={s.page}>
-      <div style={s.title}>Admin — Lynq & Flow</div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+        <div style={s.title}>Admin — Lynq & Flow</div>
+        <button onClick={async () => { await supabase.auth.signOut(); window.location.href = '/login' }} style={{ padding: '8px 16px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#8b7cb3', fontSize: '13px', cursor: 'pointer' }}>
+          Log out
+        </button>
+      </div>
       <div style={s.sub}>Beheer klanten en hun koppelingen</div>
 
       <div style={s.grid}>

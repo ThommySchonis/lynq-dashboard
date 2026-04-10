@@ -1201,6 +1201,29 @@
       <canvas id="homeMonthlyChart" height="60"></canvas>
     </div>
 
+    <!-- Recent Orders -->
+    <div class="card" style="margin-top:20px">
+      <div class="card-title">Recent Orders <span style="font-size:11px;color:var(--muted);font-weight:400">live via Shopify</span></div>
+      <div style="overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse;font-size:13px" id="orders-table">
+          <thead>
+            <tr style="border-bottom:1px solid var(--border)">
+              <th style="text-align:left;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted)">Order</th>
+              <th style="text-align:left;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted)">Customer</th>
+              <th style="text-align:left;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted)">Total</th>
+              <th style="text-align:left;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted)">Payment</th>
+              <th style="text-align:left;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted)">Fulfillment</th>
+              <th style="text-align:left;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted)">Refund</th>
+              <th style="text-align:left;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted)">Date</th>
+            </tr>
+          </thead>
+          <tbody id="orders-tbody">
+            <tr><td colspan="7" style="padding:20px 10px;color:var(--muted);font-size:13px;text-align:center">Loading orders...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
   </div><!-- end page-home -->
 
   <!-- ── PAGE: REVENUE AT RISK ── -->
@@ -3004,7 +3027,7 @@
       </div>
     </div>
 
-    <div style="max-width:760px">
+    <div style="max-width:760px" id="value-feed-dynamic">
 
       <!-- PINNED / URGENT -->
       <div class="feed-item urgent">
@@ -4614,6 +4637,8 @@ async function initDashboard() {
   const { data: { session } } = await sb.auth.getSession()
   if (!session) { window.location.href = '/login'; return }
   loadKPIs(session.access_token)
+  loadOrders(session.access_token)
+  loadBroadcasts()
 }
 
 async function loadKPIs(token) {
@@ -4635,6 +4660,76 @@ async function loadKPIs(token) {
     set('ref-pct', d.refundPct + '%')
   } catch (e) {
     console.error('Shopify KPI load failed:', e)
+  }
+}
+
+async function loadOrders(token) {
+  try {
+    const res = await fetch('/api/shopify/orders', {
+      headers: { 'Authorization': 'Bearer ' + token }
+    })
+    if (!res.ok) return
+    const d = await res.json()
+    if (!d.orders) return
+    const tbody = document.getElementById('orders-tbody')
+    if (!tbody) return
+
+    const statusColor = { paid: '#4ecca3', refunded: '#ff6b8a', partially_refunded: '#ffd166', pending: '#ffd166', voided: '#8b7cb3' }
+    const fulfillColor = { fulfilled: '#4ecca3', unfulfilled: '#ffd166', partial: '#ffd166', restocked: '#8b7cb3' }
+
+    tbody.innerHTML = d.orders.map(o => {
+      const date = new Date(o.createdAt).toLocaleDateString('en-GB', { day:'numeric', month:'short' })
+      const payColor = statusColor[o.financialStatus] || '#8b7cb3'
+      const fulColor = fulfillColor[o.fulfillmentStatus] || '#8b7cb3'
+      const refundBadge = o.hasRefund ? '<span style="font-size:11px;background:rgba(255,107,138,0.15);color:#ff6b8a;padding:2px 8px;border-radius:20px;font-weight:600">Yes</span>' : '<span style="font-size:11px;color:var(--muted)">—</span>'
+      const cancelBadge = o.cancelReason ? '<span style="font-size:11px;background:rgba(255,107,138,0.15);color:#ff6b8a;padding:2px 8px;border-radius:20px;font-weight:600">Cancelled</span>' : ''
+      return `<tr style="border-bottom:1px solid var(--border)">
+        <td style="padding:10px 10px;font-weight:700">${o.name} ${cancelBadge}</td>
+        <td style="padding:10px 10px">${o.customer}</td>
+        <td style="padding:10px 10px;font-weight:600">$${o.total}</td>
+        <td style="padding:10px 10px"><span style="font-size:11px;background:${payColor}22;color:${payColor};padding:2px 8px;border-radius:20px;font-weight:600;text-transform:capitalize">${o.financialStatus}</span></td>
+        <td style="padding:10px 10px"><span style="font-size:11px;background:${fulColor}22;color:${fulColor};padding:2px 8px;border-radius:20px;font-weight:600;text-transform:capitalize">${o.fulfillmentStatus}</span></td>
+        <td style="padding:10px 10px">${refundBadge}</td>
+        <td style="padding:10px 10px;color:var(--muted);font-size:12px">${date}</td>
+      </tr>`
+    }).join('')
+  } catch(e) {
+    console.error('Orders load failed:', e)
+  }
+}
+
+async function loadBroadcasts() {
+  try {
+    const { data } = await sb.from('broadcasts').select('*').order('created_at', { ascending: false }).limit(10)
+    if (!data || !data.length) return
+    const feed = document.getElementById('value-feed-dynamic')
+    if (!feed) return
+
+    const typeIcon = { update: '📢', tip: '💡', video: '▶️', industry: '🚨' }
+    const typeColor = { update: 'rgba(161,117,252,0.1)', tip: 'rgba(78,204,163,0.08)', video: 'rgba(255,107,138,0.08)', industry: 'rgba(255,209,102,0.08)' }
+    const typeBadge = { update: 'Update', tip: 'Tip', video: 'Video', industry: 'Industry Update' }
+
+    feed.innerHTML = data.map(b => {
+      const date = new Date(b.created_at).toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' })
+      const icon = typeIcon[b.type] || '📢'
+      const bg = typeColor[b.type] || 'rgba(255,255,255,0.03)'
+      const badge = typeBadge[b.type] || 'Update'
+      return `<div class="feed-item" style="background:${bg}">
+        <div class="feed-header">
+          <div class="feed-type-icon">${icon}</div>
+          <div class="feed-meta">
+            <div class="feed-badges">
+              <span class="feed-badge">${badge}</span>
+              <span class="feed-date">${date}</span>
+            </div>
+          </div>
+        </div>
+        <div class="feed-title">${b.title}</div>
+        <div class="feed-body">${b.body}</div>
+      </div>`
+    }).join('')
+  } catch(e) {
+    console.error('Broadcasts load failed:', e)
   }
 }
 

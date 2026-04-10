@@ -603,44 +603,6 @@
     font-family: 'Rethink Sans', sans-serif;
   }
 
-  /* ── NOTIFICATIONS ── */
-  .topbar {
-    position: sticky; top: 0; z-index: 100;
-    background: #180d30; border-bottom: 1px solid rgba(255,255,255,0.06);
-    padding: 0 36px; height: 52px; display: flex; align-items: center;
-    justify-content: flex-end; gap: 16px; margin: -32px -36px 24px;
-  }
-  .notif-btn {
-    position: relative; background: none; border: none;
-    cursor: pointer; font-size: 20px; color: var(--muted);
-    transition: color 0.15s; padding: 4px;
-  }
-  .notif-btn:hover { color: var(--text); }
-  .notif-dot {
-    position: absolute; top: 2px; right: 2px;
-    width: 8px; height: 8px; background: var(--danger);
-    border-radius: 50%; border: 2px solid var(--surface);
-  }
-  .notif-panel {
-    position: absolute; top: 48px; right: 0;
-    width: 320px; background: var(--surface);
-    border: 1px solid var(--border); border-radius: 14px;
-    box-shadow: 0 12px 40px rgba(0,0,0,0.4);
-    display: none; z-index: 200; overflow: hidden;
-  }
-  .notif-panel.open { display: block; }
-  .notif-header { padding: 14px 16px; border-bottom: 1px solid var(--border); font-size: 13px; font-weight: 700; display: flex; justify-content: space-between; align-items: center; }
-  .notif-clear { font-size: 11px; color: var(--accent); cursor: pointer; font-weight: 600; }
-  .notif-item { padding: 12px 16px; border-bottom: 1px solid var(--border); display: flex; gap: 10px; align-items: flex-start; cursor: pointer; transition: background 0.15s; }
-  .notif-item:hover { background: rgba(255,255,255,0.03); }
-  .notif-item:last-child { border-bottom: none; }
-  .notif-item.unread { background: rgba(161,117,252,0.05); }
-  .notif-icon { font-size: 16px; margin-top: 1px; flex-shrink: 0; }
-  .notif-text { font-size: 12px; line-height: 1.5; }
-  .notif-text strong { color: var(--text); font-size: 12px; }
-  .notif-time { font-size: 10px; color: var(--muted); margin-top: 3px; }
-  .notif-unread-dot { width: 6px; height: 6px; background: var(--accent); border-radius: 50%; margin-top: 6px; flex-shrink: 0; }
-  .topbar-right { display: flex; align-items: center; gap: 12px; position: relative; }
 
   /* ── HOMEPAGE ── */
   .signal-item {
@@ -1070,60 +1032,6 @@
 
 <!-- MAIN -->
 <div class="main">
-
-  <!-- ── TOPBAR ── -->
-  <div class="topbar">
-    <div class="topbar-right">
-      <button class="notif-btn" onclick="toggleNotifications()" id="notifBtn">
-        🔔
-        <span class="notif-dot" id="notifDot"></span>
-      </button>
-      <div class="notif-panel" id="notifPanel">
-        <div class="notif-header">
-          Notifications
-          <span class="notif-clear" onclick="clearNotifications()">Mark all read</span>
-        </div>
-        <div class="notif-item unread">
-          <span class="notif-icon">🚨</span>
-          <div style="flex:1">
-            <div class="notif-text"><strong>Failed delivery — 3 orders</strong><br>FedEx returned 3 packages. Auto-emails sent.</div>
-            <div class="notif-time">2 min ago</div>
-          </div>
-          <span class="notif-unread-dot"></span>
-        </div>
-        <div class="notif-item unread">
-          <span class="notif-icon">⚡</span>
-          <div style="flex:1">
-            <div class="notif-text"><strong>New action item</strong><br>Classic Linen Dress refund rate hit 8.6%</div>
-            <div class="notif-time">1 hr ago</div>
-          </div>
-          <span class="notif-unread-dot"></span>
-        </div>
-        <div class="notif-item unread">
-          <span class="notif-icon">↩</span>
-          <div style="flex:1">
-            <div class="notif-text"><strong>Refund spike detected</strong><br>+12 refunds this month vs last period</div>
-            <div class="notif-time">3 hr ago</div>
-          </div>
-          <span class="notif-unread-dot"></span>
-        </div>
-        <div class="notif-item">
-          <span class="notif-icon">📦</span>
-          <div style="flex:1">
-            <div class="notif-text"><strong>Delayed shipment resolved</strong><br>Order #SS-4421 now marked as delivered</div>
-            <div class="notif-time">Yesterday</div>
-          </div>
-        </div>
-        <div class="notif-item">
-          <span class="notif-icon">💡</span>
-          <div style="flex:1">
-            <div class="notif-text"><strong>New tip in Value Feed</strong><br>How to reduce size-related refunds by 40%</div>
-            <div class="notif-time">2 days ago</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
 
   <!-- ── PAGE: HOME ── -->
   <div class="page active" id="page-home">
@@ -4655,27 +4563,6 @@ function sendFloatChat() {
   msgs.scrollTop = msgs.scrollHeight;
 }
 
-// ── NOTIFICATIONS ──
-function toggleNotifications() {
-  const panel = document.getElementById('notifPanel');
-  panel.classList.toggle('open');
-}
-
-function clearNotifications() {
-  document.querySelectorAll('.notif-item.unread').forEach(el => el.classList.remove('unread'));
-  document.querySelectorAll('.notif-unread-dot').forEach(el => el.remove());
-  document.getElementById('notifDot').style.display = 'none';
-  document.getElementById('notifPanel').classList.remove('open');
-}
-
-// Close notification panel on outside click
-document.addEventListener('click', function(e) {
-  const panel = document.getElementById('notifPanel');
-  const btn = document.getElementById('notifBtn');
-  if (panel && panel.classList.contains('open') && !panel.contains(e.target) && !btn.contains(e.target)) {
-    panel.classList.remove('open');
-  }
-});
 
 // ── HOME CHART ──
 function initHomeChart() {

@@ -1,0 +1,54 @@
+import { supabaseAdmin } from '../../../../lib/supabaseAdmin'
+import { NextResponse } from 'next/server'
+
+export async function GET(request) {
+  const authHeader = request.headers.get('authorization')
+  if (!authHeader) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const token = authHeader.replace('Bearer ', '')
+  const { data: { user }, error } = await supabaseAdmin.auth.getUser(token)
+  if (error || !user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const { data: client } = await supabaseAdmin
+    .from('clients')
+    .select('shopify_domain, shopify_api_key')
+    .eq('email', user.email)
+    .single()
+
+  if (!client?.shopify_domain || !client?.shopify_api_key) {
+    return NextResponse.json({ error: 'Shopify not configured' }, { status: 400 })
+  }
+
+  try {
+    const res = await fetch(
+      `https://${client.shopify_domain}/admin/api/2024-01/orders.json?status=any&limit=250`,
+      { headers: { 'X-Shopify-Access-Token': client.shopify_api_key } }
+    )
+    if (!res.ok) return NextResponse.json({ error: 'Shopify API error' }, { status: 502 })
+    const { orders } = await res.json()
+
+    const refunded = orders
+      .filter(o => o.refunds && o.refunds.length > 0)
+      .map(o => {
+        const refundTotal = o.refunds.reduce((sum, r) => {
+          return sum + (r.transactions || []).reduce((ts, t) => ts + parseFloat(t.amount || 0), 0)
+        }, 0)
+        const items = o.refunds.flatMap(r => r.refund_line_items || [])
+        const productNames = [...new Set(
+          items.map(i => i.line_item?.title).filter(Boolean)
+        )]
+        return {
+          orderId: o.name,
+          customer: o.customer ? `${o.customer.first_name} ${o.customer.last_name}`.trim() : 'Unknown',
+          refundAmount: refundTotal.toFixed(2),
+          itemCount: items.reduce((s, i) => s + (i.quantity || 0), 0),
+          products: productNames,
+          refundedAt: o.refunds[0].created_at,
+        }
+      })
+
+    return NextResponse.json({ refunds: refunded })
+  } catch (e) {
+    return NextResponse.json({ error: 'Failed to fetch refunds' }, { status: 500 })
+  }
+}

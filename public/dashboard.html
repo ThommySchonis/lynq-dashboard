@@ -6,6 +6,7 @@
 <title>Lynq & Flow — Dashboard</title>
 <link href="https://fonts.googleapis.com/css2?family=Rethink+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <style>
   :root {
     --bg:       #1C0F36;
@@ -1051,25 +1052,23 @@
     <div class="kpi-row" style="grid-template-columns:repeat(5,1fr);margin-bottom:24px">
       <div class="kpi green">
         <div class="kpi-label">Total Revenue</div>
-        <div class="kpi-value">$84k</div>
-        <div class="kpi-delta"><span class="down">▲ +$6k</span> vs last month</div>
+        <div class="kpi-value" id="kpi-revenue">—</div>
+        <div class="kpi-delta"><span class="down">this month</span></div>
         <div style="margin-top:8px;display:flex;align-items:center;gap:6px">
-          <span class="trend-up-good">▲ 7.7%</span>
-          <span class="trend-label">90-day trend</span>
+          <span class="trend-label">live via Shopify</span>
         </div>
       </div>
       <div class="kpi red">
         <div class="kpi-label">Refund Rate</div>
-        <div class="kpi-value">4.6%</div>
-        <div class="kpi-delta"><span class="up">▲ +0.4%</span> vs last month</div>
+        <div class="kpi-value" id="kpi-refund-rate">—</div>
+        <div class="kpi-delta"><span class="up" id="kpi-refund-delta">this month</span></div>
         <div style="margin-top:8px;display:flex;align-items:center;gap:6px">
-          <span class="trend-up-bad">▲ +1.2%</span>
-          <span class="trend-label">90-day trend</span>
+          <span class="trend-label">live via Shopify</span>
         </div>
       </div>
       <div class="kpi warn">
         <div class="kpi-label">Cancellations</div>
-        <div class="kpi-value">19</div>
+        <div class="kpi-value" id="kpi-cancellations">—</div>
         <div class="kpi-delta"><span class="down">▼ -3</span> vs last month</div>
         <div style="margin-top:8px;display:flex;align-items:center;gap:6px">
           <span class="trend-down-good">▼ -8%</span>
@@ -1622,27 +1621,27 @@
     <div class="kpi-row" style="grid-template-columns:repeat(5,1fr)">
       <div class="kpi green">
         <div class="kpi-label">Total Revenue</div>
-        <div class="kpi-value">$84k</div>
-        <div class="kpi-delta"><span class="down">▲ +$6k</span> vs last month</div>
-        <div style="margin-top:8px;display:flex;align-items:center;gap:6px"><span class="trend-up-good">▲ 7.7%</span><span class="trend-label">90-day</span></div>
+        <div class="kpi-value" id="ref-revenue">—</div>
+        <div class="kpi-delta"><span class="down">this month</span></div>
+        <div style="margin-top:8px;display:flex;align-items:center;gap:6px"><span class="trend-label">live via Shopify</span></div>
       </div>
       <div class="kpi purple">
         <div class="kpi-label">Total Refunds</div>
-        <div class="kpi-value">47</div>
-        <div class="kpi-delta"><span class="up">▲ +12</span> vs last month</div>
-        <div style="margin-top:8px;display:flex;align-items:center;gap:6px"><span class="trend-up-bad">▲ +28%</span><span class="trend-label">90-day</span></div>
+        <div class="kpi-value" id="ref-total">—</div>
+        <div class="kpi-delta"><span class="up">this month</span></div>
+        <div style="margin-top:8px;display:flex;align-items:center;gap:6px"><span class="trend-label">live via Shopify</span></div>
       </div>
       <div class="kpi red">
         <div class="kpi-label">Refund Amount</div>
-        <div class="kpi-value">$3,840</div>
-        <div class="kpi-delta"><span class="up">▲ +$640</span> vs last month</div>
-        <div style="margin-top:8px;display:flex;align-items:center;gap:6px"><span class="trend-up-bad">▲ +$920</span><span class="trend-label">90-day</span></div>
+        <div class="kpi-value" id="ref-amount">—</div>
+        <div class="kpi-delta"><span class="up">this month</span></div>
+        <div style="margin-top:8px;display:flex;align-items:center;gap:6px"><span class="trend-label">live via Shopify</span></div>
       </div>
       <div class="kpi warn">
         <div class="kpi-label">Refund % of Revenue</div>
-        <div class="kpi-value">4.6%</div>
-        <div class="kpi-delta"><span class="up">▲ +0.4%</span> vs last month</div>
-        <div style="margin-top:8px;display:flex;align-items:center;gap:6px"><span class="trend-up-bad">▲ +1.2%</span><span class="trend-label">90-day</span></div>
+        <div class="kpi-value" id="ref-pct">—</div>
+        <div class="kpi-delta"><span class="up">this month</span></div>
+        <div style="margin-top:8px;display:flex;align-items:center;gap:6px"><span class="trend-label">live via Shopify</span></div>
       </div>
       <div class="kpi" style="border-top:3px solid rgba(255,255,255,0.15)">
         <div class="kpi-label">Most Common</div>
@@ -4600,6 +4599,46 @@ function initHomeChart() {
 initHomeChart();
 initReasonChart();
 initMonthlyChart();
+
+// ── SHOPIFY LIVE DATA ──
+const SUPABASE_URL = 'https://cvrzvhnsltjubmfkcxql.supabase.co'
+const SUPABASE_ANON_KEY = 'sb_publishable_kEgHmTK-kb_IAi-DCU8apA_am6JWsMd'
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+
+function fmtMoney(val) {
+  const n = parseInt(val)
+  return n >= 1000 ? '$' + (n / 1000).toFixed(1).replace(/\.0$/, '') + 'k' : '$' + n
+}
+
+async function initDashboard() {
+  const { data: { session } } = await sb.auth.getSession()
+  if (!session) { window.location.href = '/login'; return }
+  loadKPIs(session.access_token)
+}
+
+async function loadKPIs(token) {
+  try {
+    const res = await fetch('/api/shopify/kpis', {
+      headers: { 'Authorization': 'Bearer ' + token }
+    })
+    if (!res.ok) return
+    const d = await res.json()
+    if (d.error) return
+
+    const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val }
+    set('kpi-revenue', fmtMoney(d.totalRevenue))
+    set('kpi-refund-rate', d.refundRate + '%')
+    set('kpi-cancellations', d.cancelledOrders)
+    set('ref-revenue', fmtMoney(d.totalRevenue))
+    set('ref-total', d.totalRefunds)
+    set('ref-amount', '$' + parseInt(d.refundAmount).toLocaleString())
+    set('ref-pct', d.refundPct + '%')
+  } catch (e) {
+    console.error('Shopify KPI load failed:', e)
+  }
+}
+
+initDashboard()
 </script>
 </body>
 </html>

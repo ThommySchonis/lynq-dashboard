@@ -1,0 +1,61 @@
+import { supabaseAdmin } from '../../../../lib/supabaseAdmin'
+import { NextResponse } from 'next/server'
+
+export async function GET(request) {
+  const authHeader = request.headers.get('authorization')
+  if (!authHeader) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const token = authHeader.replace('Bearer ', '')
+  const { data: { user }, error } = await supabaseAdmin.auth.getUser(token)
+  if (error || !user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const { data: client } = await supabaseAdmin
+    .from('clients')
+    .select('shopify_domain, shopify_api_key')
+    .eq('email', user.email)
+    .single()
+
+  if (!client?.shopify_domain || !client?.shopify_api_key) {
+    return NextResponse.json({ error: 'Shopify not configured' }, { status: 400 })
+  }
+
+  const now = new Date()
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
+
+  try {
+    const res = await fetch(
+      `https://${client.shopify_domain}/admin/api/2024-01/orders.json?status=any&limit=250&created_at_min=${startOfMonth}`,
+      { headers: { 'X-Shopify-Access-Token': client.shopify_api_key } }
+    )
+    if (!res.ok) return NextResponse.json({ error: 'Shopify API error' }, { status: 502 })
+    const { orders } = await res.json()
+
+    const nonCancelled = orders.filter(o => !o.cancel_reason)
+    const cancelledOrders = orders.filter(o => o.cancel_reason).length
+    const totalOrders = nonCancelled.length
+    const totalRevenue = nonCancelled.reduce((sum, o) => sum + parseFloat(o.total_price || 0), 0)
+
+    const ordersWithRefunds = nonCancelled.filter(o => o.refunds && o.refunds.length > 0)
+    const totalRefunds = ordersWithRefunds.length
+    const refundAmount = ordersWithRefunds.reduce((sum, o) => {
+      return sum + o.refunds.reduce((rs, r) => {
+        return rs + (r.transactions || []).reduce((ts, t) => ts + parseFloat(t.amount || 0), 0)
+      }, 0)
+    }, 0)
+
+    const refundRate = totalOrders > 0 ? ((totalRefunds / totalOrders) * 100).toFixed(1) : '0.0'
+    const refundPct = totalRevenue > 0 ? ((refundAmount / totalRevenue) * 100).toFixed(1) : '0.0'
+
+    return NextResponse.json({
+      totalOrders,
+      totalRevenue: totalRevenue.toFixed(0),
+      cancelledOrders,
+      totalRefunds,
+      refundAmount: refundAmount.toFixed(0),
+      refundRate,
+      refundPct,
+    })
+  } catch (e) {
+    return NextResponse.json({ error: 'Failed to fetch Shopify data' }, { status: 500 })
+  }
+}

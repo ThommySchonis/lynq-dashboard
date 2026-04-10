@@ -43,8 +43,8 @@ export default function LoginPage() {
         width: '100%',
         maxWidth: '400px'
       }}>
-        <div style={{ marginBottom: '32px' }}>
-          <div style={{ fontSize: '22px', fontWeight: '800', color: '#fff', marginBottom: '4px' }}>Lynq & Flow</div>
+        <div style={{ marginBottom: '32px', textAlign: 'center' }}>
+          <img src="/logo.png" alt="Lynq & Flow" style={{ height: '36px', marginBottom: '16px', filter: 'brightness(0) invert(1)' }} />
           <div style={{ fontSize: '13px', color: '#8b7cb3' }}>Log in to your dashboard</div>
         </div>
 

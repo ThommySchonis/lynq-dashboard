@@ -25,7 +25,7 @@ export default function AdminPage() {
     async function checkAuth() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user || user.email !== ADMIN_EMAIL) {
-        window.location.href = '/login'
+        window.location.href = '/admin/login'
         return
       }
       setAuthorized(true)

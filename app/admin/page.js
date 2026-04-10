@@ -15,6 +15,7 @@ export default function AdminPage() {
     gorgias_api_key: '',
     shopify_domain: '',
     shopify_api_key: '',
+    parcel_panel_api_key: '',
   })
 
   useEffect(() => {
@@ -51,6 +52,7 @@ export default function AdminPage() {
       gorgias_api_key: form.gorgias_api_key,
       shopify_domain: form.shopify_domain,
       shopify_api_key: form.shopify_api_key,
+      parcel_panel_api_key: form.parcel_panel_api_key,
       status: 'active',
     })
 
@@ -61,7 +63,7 @@ export default function AdminPage() {
     }
 
     setSuccess(`Client ${form.company_name} aangemaakt!`)
-    setForm({ company_name: '', email: '', password: '', gorgias_domain: '', gorgias_api_key: '', shopify_domain: '', shopify_api_key: '' })
+    setForm({ company_name: '', email: '', password: '', gorgias_domain: '', gorgias_api_key: '', shopify_domain: '', shopify_api_key: '', parcel_panel_api_key: '' })
     fetchClients()
     setLoading(false)
   }
@@ -116,6 +118,11 @@ export default function AdminPage() {
 
             <label style={s.label}>Shopify API key</label>
             <input style={s.input} value={form.shopify_api_key} onChange={e => setForm({...form, shopify_api_key: e.target.value})} placeholder="API key" />
+
+            <div style={{ height: '1px', background: 'rgba(255,255,255,0.06)', margin: '6px 0 16px' }} />
+
+            <label style={s.label}>Parcel Panel API key</label>
+            <input style={s.input} value={form.parcel_panel_api_key} onChange={e => setForm({...form, parcel_panel_api_key: e.target.value})} placeholder="Parcel Panel API key" />
 
             <button style={s.btn} type="submit" disabled={loading}>
               {loading ? 'Aanmaken...' : 'Klant aanmaken'}

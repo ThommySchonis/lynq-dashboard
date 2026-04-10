@@ -8,13 +8,17 @@ const ADMIN_EMAIL = 'info@lynqagency.com'
 export default function AdminPage() {
   const [clients, setClients] = useState([])
   const [broadcasts, setBroadcasts] = useState([])
+  const [notifications, setNotifications] = useState([])
   const [loading, setLoading] = useState(false)
   const [broadcastLoading, setBroadcastLoading] = useState(false)
+  const [notifLoading, setNotifLoading] = useState(false)
   const [success, setSuccess] = useState('')
   const [broadcastSuccess, setBroadcastSuccess] = useState('')
+  const [notifSuccess, setNotifSuccess] = useState('')
   const [authorized, setAuthorized] = useState(false)
   const [activeTab, setActiveTab] = useState('clients')
   const [broadcastForm, setBroadcastForm] = useState({ title: '', body: '', type: 'update' })
+  const [notifForm, setNotifForm] = useState({ title: '', body: '', type: 'info' })
   const [form, setForm] = useState({
     company_name: '',
     email: '',
@@ -36,9 +40,39 @@ export default function AdminPage() {
       setAuthorized(true)
       fetchClients()
       fetchBroadcasts()
+      fetchNotifications()
     }
     checkAuth()
   }, [])
+
+  async function fetchNotifications() {
+    const { data } = await supabase.from('notifications').select('*').order('created_at', { ascending: false })
+    if (data) setNotifications(data)
+  }
+
+  async function handleNotification(e) {
+    e.preventDefault()
+    setNotifLoading(true)
+    setNotifSuccess('')
+    const { error } = await supabase.from('notifications').insert({
+      title: notifForm.title,
+      body: notifForm.body,
+      type: notifForm.type,
+    })
+    if (error) {
+      alert('Error: ' + error.message)
+    } else {
+      setNotifSuccess('Notificatie gepushed!')
+      setNotifForm({ title: '', body: '', type: 'info' })
+      fetchNotifications()
+    }
+    setNotifLoading(false)
+  }
+
+  async function deleteNotification(id) {
+    await supabase.from('notifications').delete().eq('id', id)
+    fetchNotifications()
+  }
 
   async function fetchBroadcasts() {
     const { data } = await supabase.from('broadcasts').select('*').order('created_at', { ascending: false })
@@ -156,6 +190,7 @@ export default function AdminPage() {
       <div style={{ display: 'flex', gap: '8px', marginBottom: '32px' }}>
         <button style={{ ...s.tab, ...(activeTab === 'clients' ? s.tabActive : s.tabInactive) }} onClick={() => setActiveTab('clients')}>Klanten</button>
         <button style={{ ...s.tab, ...(activeTab === 'broadcasts' ? s.tabActive : s.tabInactive) }} onClick={() => setActiveTab('broadcasts')}>Broadcasts</button>
+        <button style={{ ...s.tab, ...(activeTab === 'notifications' ? s.tabActive : s.tabInactive) }} onClick={() => setActiveTab('notifications')}>Notifications</button>
       </div>
 
       {activeTab === 'broadcasts' && (
@@ -201,6 +236,56 @@ export default function AdminPage() {
                     <div style={{ fontSize: '12px', color: '#8b7cb3', lineHeight: '1.5' }}>{b.body}</div>
                   </div>
                   <button onClick={() => deleteBroadcast(b.id)} style={{ background: 'none', border: 'none', color: '#ff6b8a', cursor: 'pointer', fontSize: '14px', marginLeft: '12px', flexShrink: 0 }}>✕</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'notifications' && (
+        <div style={s.grid}>
+          {/* Notificatie schrijven */}
+          <div style={s.card}>
+            <div style={s.cardTitle}>Nieuwe notificatie pushen</div>
+            {notifSuccess && <div style={s.success}>{notifSuccess}</div>}
+            <form onSubmit={handleNotification}>
+              <label style={s.label}>Type</label>
+              <div style={{ display: 'flex', gap: '8px', marginBottom: '14px' }}>
+                {['info', 'warning', 'alert'].map(t => (
+                  <button key={t} type="button" style={s.typePill(t, notifForm.type)} onClick={() => setNotifForm({...notifForm, type: t})}>
+                    {t === 'info' ? '💬 Info' : t === 'warning' ? '⚠️ Warning' : '🔴 Alert'}
+                  </button>
+                ))}
+              </div>
+              <label style={s.label}>Titel</label>
+              <input style={s.input} value={notifForm.title} onChange={e => setNotifForm({...notifForm, title: e.target.value})} required placeholder="Onderwerp van de notificatie" />
+              <label style={s.label}>Bericht</label>
+              <textarea style={s.textarea} value={notifForm.body} onChange={e => setNotifForm({...notifForm, body: e.target.value})} required placeholder="Schrijf hier de notificatie..." />
+              <button style={s.btn} type="submit" disabled={notifLoading}>
+                {notifLoading ? 'Pushen...' : '🔔 Push notificatie'}
+              </button>
+            </form>
+          </div>
+
+          {/* Notificaties geschiedenis */}
+          <div style={s.card}>
+            <div style={s.cardTitle}>Verstuurd — {notifications.length}</div>
+            {notifications.length === 0 && <div style={{ color: '#8b7cb3', fontSize: '13px' }}>Nog geen notificaties verstuurd.</div>}
+            {notifications.map(n => (
+              <div key={n.id} style={s.broadcastRow}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <div>
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '4px' }}>
+                      <span style={{ ...s.pill, background: n.type === 'alert' ? 'rgba(255,107,138,0.15)' : n.type === 'warning' ? 'rgba(255,209,102,0.15)' : 'rgba(78,204,163,0.15)', color: n.type === 'alert' ? '#ff6b8a' : n.type === 'warning' ? '#ffd166' : '#4ecca3' }}>
+                        {n.type === 'info' ? '💬 Info' : n.type === 'warning' ? '⚠️ Warning' : '🔴 Alert'}
+                      </span>
+                      <span style={{ fontSize: '11px', color: '#8b7cb3' }}>{new Date(n.created_at).toLocaleDateString('nl-NL')}</span>
+                    </div>
+                    <div style={{ fontWeight: '600', fontSize: '14px', marginBottom: '4px' }}>{n.title}</div>
+                    <div style={{ fontSize: '12px', color: '#8b7cb3', lineHeight: '1.5' }}>{n.body}</div>
+                  </div>
+                  <button onClick={() => deleteNotification(n.id)} style={{ background: 'none', border: 'none', color: '#ff6b8a', cursor: 'pointer', fontSize: '14px', marginLeft: '12px', flexShrink: 0 }}>✕</button>
                 </div>
               </div>
             ))}

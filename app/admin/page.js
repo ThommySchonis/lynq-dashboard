@@ -150,54 +150,97 @@ export default function AdminPage() {
   }
 
   const s = {
-    page: { minHeight: '100vh', background: '#1C0F36', fontFamily: 'sans-serif', padding: '40px', color: '#fff' },
-    title: { fontSize: '24px', fontWeight: '800', marginBottom: '8px' },
-    sub: { color: '#8b7cb3', fontSize: '14px', marginBottom: '40px' },
-    grid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '40px', maxWidth: '1100px' },
-    card: { background: '#241352', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '16px', padding: '28px' },
-    cardTitle: { fontSize: '16px', fontWeight: '700', marginBottom: '20px' },
-    label: { display: 'block', fontSize: '12px', color: '#8b7cb3', marginBottom: '5px' },
-    input: { width: '100%', padding: '10px 14px', background: '#1C0F36', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff', fontSize: '13px', boxSizing: 'border-box', marginBottom: '14px', fontFamily: 'sans-serif' },
-    btn: { width: '100%', padding: '12px', background: '#A175FC', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '14px', fontWeight: '600', cursor: 'pointer', marginTop: '6px' },
-    success: { background: 'rgba(78,204,163,0.15)', border: '1px solid #4ecca3', borderRadius: '8px', padding: '10px 14px', color: '#4ecca3', fontSize: '13px', marginBottom: '16px' },
-    clientRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: '1px solid rgba(255,255,255,0.06)' },
-    pill: { padding: '3px 10px', borderRadius: '20px', fontSize: '11px', fontWeight: '600', background: 'rgba(78,204,163,0.15)', color: '#4ecca3' },
-    tab: { padding: '8px 20px', borderRadius: '8px', border: 'none', fontSize: '13px', fontWeight: '600', cursor: 'pointer', transition: 'all 0.15s' },
-    tabActive: { background: '#A175FC', color: '#fff' },
-    tabInactive: { background: 'rgba(255,255,255,0.05)', color: '#8b7cb3' },
-    textarea: { width: '100%', padding: '10px 14px', background: '#1C0F36', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff', fontSize: '13px', boxSizing: 'border-box', marginBottom: '14px', fontFamily: 'sans-serif', resize: 'vertical', minHeight: '100px' },
-    typePill: (t, selected) => ({ padding: '6px 14px', borderRadius: '20px', border: 'none', fontSize: '12px', fontWeight: '600', cursor: 'pointer', background: selected === t ? '#A175FC' : 'rgba(255,255,255,0.06)', color: selected === t ? '#fff' : '#8b7cb3' }),
-    broadcastRow: { padding: '14px 0', borderBottom: '1px solid rgba(255,255,255,0.06)' },
+    page: { minHeight: '100vh', background: '#1C0F36', fontFamily: "'Rethink Sans', sans-serif", color: '#fff' },
+    topbar: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 40px', height: '64px', background: '#180d30', borderBottom: '1px solid rgba(255,255,255,0.07)', position: 'sticky', top: 0, zIndex: 10 },
+    topbarLogo: { height: '28px', filter: 'brightness(0) invert(1)' },
+    topbarRight: { display: 'flex', alignItems: 'center', gap: '16px' },
+    topbarEmail: { fontSize: '12px', color: '#8b7cb3' },
+    logoutBtn: { padding: '7px 16px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: '#8b7cb3', fontSize: '12px', fontWeight: '600', cursor: 'pointer', fontFamily: "'Rethink Sans', sans-serif", transition: 'all 0.15s' },
+    content: { padding: '36px 40px', maxWidth: '1200px' },
+    pageHeader: { marginBottom: '32px' },
+    pageTitle: { fontSize: '22px', fontWeight: '800', marginBottom: '4px' },
+    pageSub: { color: '#8b7cb3', fontSize: '13px' },
+    statsRow: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginBottom: '32px', maxWidth: '600px' },
+    statCard: { background: '#241352', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '12px', padding: '20px 24px' },
+    statNum: { fontSize: '28px', fontWeight: '800', color: '#fff', lineHeight: 1 },
+    statLabel: { fontSize: '11px', color: '#8b7cb3', marginTop: '4px', fontWeight: '500', textTransform: 'uppercase', letterSpacing: '0.05em' },
+    tabBar: { display: 'flex', gap: '2px', marginBottom: '28px', background: 'rgba(255,255,255,0.04)', padding: '4px', borderRadius: '10px', width: 'fit-content' },
+    tab: { padding: '8px 20px', borderRadius: '7px', border: 'none', fontSize: '13px', fontWeight: '600', cursor: 'pointer', transition: 'all 0.15s', fontFamily: "'Rethink Sans', sans-serif" },
+    tabActive: { background: '#A175FC', color: '#fff', boxShadow: '0 2px 8px rgba(161,117,252,0.3)' },
+    tabInactive: { background: 'transparent', color: '#8b7cb3' },
+    grid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' },
+    card: { background: '#241352', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '14px', padding: '28px' },
+    cardTitle: { fontSize: '15px', fontWeight: '700', marginBottom: '6px', color: '#fff' },
+    cardSub: { fontSize: '12px', color: '#8b7cb3', marginBottom: '24px' },
+    divider: { height: '1px', background: 'rgba(255,255,255,0.06)', margin: '16px 0' },
+    label: { display: 'block', fontSize: '11px', color: '#8b7cb3', marginBottom: '5px', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.04em' },
+    input: { width: '100%', padding: '10px 14px', background: '#180d30', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: '#fff', fontSize: '13px', boxSizing: 'border-box', marginBottom: '14px', fontFamily: "'Rethink Sans', sans-serif", transition: 'border-color 0.15s' },
+    textarea: { width: '100%', padding: '10px 14px', background: '#180d30', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: '#fff', fontSize: '13px', boxSizing: 'border-box', marginBottom: '14px', fontFamily: "'Rethink Sans', sans-serif", resize: 'vertical', minHeight: '100px' },
+    btn: { width: '100%', padding: '11px', background: '#A175FC', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: '700', cursor: 'pointer', marginTop: '6px', fontFamily: "'Rethink Sans', sans-serif", letterSpacing: '0.02em', transition: 'opacity 0.15s' },
+    success: { background: 'rgba(78,204,163,0.1)', border: '1px solid rgba(78,204,163,0.3)', borderRadius: '8px', padding: '10px 14px', color: '#4ecca3', fontSize: '13px', marginBottom: '16px' },
+    clientRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' },
+    pill: { padding: '3px 10px', borderRadius: '20px', fontSize: '11px', fontWeight: '600', background: 'rgba(78,204,163,0.12)', color: '#4ecca3', border: '1px solid rgba(78,204,163,0.2)' },
+    typePill: (t, selected) => ({ padding: '7px 14px', borderRadius: '8px', border: '1px solid', fontSize: '12px', fontWeight: '600', cursor: 'pointer', fontFamily: "'Rethink Sans', sans-serif", transition: 'all 0.15s', borderColor: selected === t ? '#A175FC' : 'rgba(255,255,255,0.08)', background: selected === t ? 'rgba(161,117,252,0.15)' : 'transparent', color: selected === t ? '#A175FC' : '#8b7cb3' }),
+    broadcastRow: { padding: '16px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' },
   }
 
   if (!authorized) return (
-    <div style={{ minHeight: '100vh', background: '#1C0F36', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#8b7cb3', fontFamily: 'sans-serif' }}>
+    <div style={{ minHeight: '100vh', background: '#1C0F36', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#8b7cb3', fontFamily: "'Rethink Sans', sans-serif" }}>
       Checking access...
     </div>
   )
 
   return (
     <div style={s.page}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-        <div style={s.title}>Admin — Lynq & Flow</div>
-        <button onClick={async () => { await supabase.auth.signOut(); window.location.href = '/login' }} style={{ padding: '8px 16px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#8b7cb3', fontSize: '13px', cursor: 'pointer' }}>
-          Log out
-        </button>
-      </div>
-      <div style={s.sub}>Beheer klanten en hun koppelingen</div>
+      <link href="https://fonts.googleapis.com/css2?family=Rethink+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 
-      {/* Tabs */}
-      <div style={{ display: 'flex', gap: '8px', marginBottom: '32px' }}>
-        <button style={{ ...s.tab, ...(activeTab === 'clients' ? s.tabActive : s.tabInactive) }} onClick={() => setActiveTab('clients')}>Klanten</button>
-        <button style={{ ...s.tab, ...(activeTab === 'broadcasts' ? s.tabActive : s.tabInactive) }} onClick={() => setActiveTab('broadcasts')}>Broadcasts</button>
-        <button style={{ ...s.tab, ...(activeTab === 'notifications' ? s.tabActive : s.tabInactive) }} onClick={() => setActiveTab('notifications')}>Notifications</button>
+      {/* Topbar */}
+      <div style={s.topbar}>
+        <img src="/logo.png" alt="Lynq & Flow" style={s.topbarLogo} />
+        <div style={s.topbarRight}>
+          <span style={s.topbarEmail}>info@lynqagency.com</span>
+          <button onClick={async () => { await supabase.auth.signOut(); window.location.href = '/admin/login' }} style={s.logoutBtn}>
+            Log out
+          </button>
+        </div>
       </div>
+
+      <div style={s.content}>
+        {/* Page header */}
+        <div style={s.pageHeader}>
+          <div style={s.pageTitle}>Admin Panel</div>
+          <div style={s.pageSub}>Beheer klanten, broadcasts en notificaties</div>
+        </div>
+
+        {/* Stats */}
+        <div style={s.statsRow}>
+          <div style={s.statCard}>
+            <div style={s.statNum}>{clients.length}</div>
+            <div style={s.statLabel}>Clients</div>
+          </div>
+          <div style={s.statCard}>
+            <div style={s.statNum}>{broadcasts.length}</div>
+            <div style={s.statLabel}>Broadcasts</div>
+          </div>
+          <div style={s.statCard}>
+            <div style={s.statNum}>{notifications.length}</div>
+            <div style={s.statLabel}>Notifications</div>
+          </div>
+        </div>
+
+        {/* Tabs */}
+        <div style={s.tabBar}>
+          <button style={{ ...s.tab, ...(activeTab === 'clients' ? s.tabActive : s.tabInactive) }} onClick={() => setActiveTab('clients')}>Clients</button>
+          <button style={{ ...s.tab, ...(activeTab === 'broadcasts' ? s.tabActive : s.tabInactive) }} onClick={() => setActiveTab('broadcasts')}>Broadcasts</button>
+          <button style={{ ...s.tab, ...(activeTab === 'notifications' ? s.tabActive : s.tabInactive) }} onClick={() => setActiveTab('notifications')}>Notifications</button>
+        </div>
 
       {activeTab === 'broadcasts' && (
         <div style={s.grid}>
           {/* Broadcast schrijven */}
           <div style={s.card}>
             <div style={s.cardTitle}>Nieuw bericht pushen</div>
+            <div style={s.cardSub}>Wordt zichtbaar in de Value Feed van alle klanten</div>
             {broadcastSuccess && <div style={s.success}>{broadcastSuccess}</div>}
             <form onSubmit={handleBroadcast}>
               <label style={s.label}>Type</label>
@@ -248,6 +291,7 @@ export default function AdminPage() {
           {/* Notificatie schrijven */}
           <div style={s.card}>
             <div style={s.cardTitle}>Nieuwe notificatie pushen</div>
+            <div style={s.cardSub}>Verschijnt in het notificatie-icoon van alle klanten</div>
             {notifSuccess && <div style={s.success}>{notifSuccess}</div>}
             <form onSubmit={handleNotification}>
               <label style={s.label}>Type</label>
@@ -297,6 +341,7 @@ export default function AdminPage() {
         {/* Nieuw klant formulier */}
         <div style={s.card}>
           <div style={s.cardTitle}>Nieuwe klant aanmaken</div>
+          <div style={s.cardSub}>Account aanmaken + API koppelingen instellen</div>
 
           {success && <div style={s.success}>{success}</div>}
 
@@ -353,6 +398,7 @@ export default function AdminPage() {
           ))}
         </div>
       </div>}
+      </div>
     </div>
   )
 }

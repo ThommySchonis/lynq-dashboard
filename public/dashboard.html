@@ -11,7 +11,7 @@
     --bg:       #1C0F36;
     --surface:  #241352;
     --surface2: #2e1a63;
-    --border:   rgba(161,117,252,0.18);
+    --border:   rgba(255,255,255,0.07);
     --accent:   #A175FC;
     --accent2:  #7c4fe0;
     --text:     #ffffff;
@@ -35,8 +35,8 @@
   .sidebar {
     width: 230px;
     min-width: 230px;
-    background: var(--surface);
-    border-right: 1px solid var(--border);
+    background: #180d30;
+    border-right: 1px solid rgba(255,255,255,0.06);
     display: flex;
     flex-direction: column;
     padding: 28px 0;
@@ -118,8 +118,8 @@
     justify-content: space-between;
     margin-bottom: 28px;
   }
-  .page-title { font-size: 22px; font-weight: 800; }
-  .page-sub { color: var(--muted); font-size: 13px; margin-top: 4px; }
+  .page-title { font-size: 24px; font-weight: 800; letter-spacing: -0.3px; }
+  .page-sub { color: var(--muted); font-size: 13px; margin-top: 5px; }
 
   /* ── DATE FILTER ── */
   .filter-bar {
@@ -202,23 +202,25 @@
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: var(--radius);
-    padding: 20px 22px;
+    padding: 22px 24px;
     position: relative;
     overflow: hidden;
+    transition: border-color 0.2s;
   }
+  .kpi:hover { border-color: rgba(161,117,252,0.25); }
   .kpi::after {
     content: '';
     position: absolute;
     top: 0; left: 0; right: 0;
-    height: 3px;
+    height: 2px;
     border-radius: var(--radius) var(--radius) 0 0;
   }
-  .kpi.purple::after { background: var(--accent); }
-  .kpi.red::after { background: var(--danger); }
-  .kpi.green::after { background: var(--green); }
-  .kpi.warn::after { background: var(--warn); }
-  .kpi-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; color: var(--muted); }
-  .kpi-value { font-size: 32px; font-weight: 800; margin: 8px 0 4px; letter-spacing: -1px; }
+  .kpi.purple::after { background: linear-gradient(90deg, var(--accent), rgba(161,117,252,0.3)); }
+  .kpi.red::after { background: linear-gradient(90deg, var(--danger), rgba(255,107,138,0.3)); }
+  .kpi.green::after { background: linear-gradient(90deg, var(--green), rgba(78,204,163,0.3)); }
+  .kpi.warn::after { background: linear-gradient(90deg, var(--warn), rgba(255,209,102,0.3)); }
+  .kpi-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); }
+  .kpi-value { font-size: 30px; font-weight: 800; margin: 10px 0 5px; letter-spacing: -1px; }
   .kpi.purple .kpi-value { color: var(--accent); }
   .kpi.red .kpi-value { color: var(--danger); }
   .kpi.green .kpi-value { color: var(--green); }
@@ -233,12 +235,14 @@
     border: 1px solid var(--border);
     border-radius: var(--radius);
     padding: 22px 24px;
+    transition: border-color 0.2s;
   }
+  .card:hover { border-color: rgba(161,117,252,0.2); }
   .card-title {
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.6px;
+    letter-spacing: 0.8px;
     color: var(--muted);
     margin-bottom: 18px;
     display: flex;
@@ -974,8 +978,7 @@
 <!-- SIDEBAR -->
 <div class="sidebar">
   <div class="logo">
-    <div class="logo-mark">›</div>
-    <div class="logo-text">Lynq <span>&</span> Flow</div>
+    <img src="/logo.png" alt="Lynq & Flow" style="height:26px;filter:brightness(0) invert(1);opacity:0.92">
   </div>
 
   <div class="nav-section">

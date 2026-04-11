@@ -4390,15 +4390,33 @@
       <div style="display:grid;grid-template-columns:340px 1fr;gap:0;height:calc(100vh - 180px);border:1px solid var(--border);border-radius:14px;overflow:hidden">
 
         <!-- Thread list -->
-        <div style="border-right:1px solid var(--border);overflow-y:auto;background:var(--surface)">
-          <div style="padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
-            <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px">All Messages</div>
-            <div style="display:flex;align-items:center;gap:8px">
-              <button onclick="openCompose()" style="background:var(--accent);border:none;color:#fff;cursor:pointer;font-size:12px;font-weight:700;padding:5px 12px;border-radius:7px;font-family:'Rethink Sans',sans-serif">+ Compose</button>
-              <button onclick="loadInbox()" style="background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:16px">↻</button>
+        <div style="border-right:1px solid var(--border);display:flex;flex-direction:column;background:var(--surface)">
+          <!-- Top bar -->
+          <div style="padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
+            <!-- Tabs -->
+            <div style="display:flex;gap:4px;background:rgba(255,255,255,0.05);border-radius:8px;padding:3px">
+              <button id="tab-inbox" onclick="switchTab('inbox')" style="font-size:12px;font-weight:700;padding:4px 12px;border-radius:6px;border:none;cursor:pointer;font-family:'Rethink Sans',sans-serif;background:var(--accent);color:#fff">Inbox</button>
+              <button id="tab-sent" onclick="switchTab('sent')" style="font-size:12px;font-weight:700;padding:4px 12px;border-radius:6px;border:none;cursor:pointer;font-family:'Rethink Sans',sans-serif;background:transparent;color:var(--muted)">Sent</button>
+            </div>
+            <div style="display:flex;align-items:center;gap:6px">
+              <button onclick="openCompose()" style="background:var(--accent);border:none;color:#fff;cursor:pointer;font-size:12px;font-weight:700;padding:5px 12px;border-radius:7px;font-family:'Rethink Sans',sans-serif">+ New Email</button>
+              <button id="inbox-refresh-btn" onclick="refreshCurrentTab()" style="background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:16px">↻</button>
             </div>
           </div>
-          <div id="inbox-thread-list"></div>
+          <!-- Delete toolbar (shown when items selected) -->
+          <div id="delete-toolbar" style="display:none;padding:8px 16px;background:rgba(255,107,138,0.08);border-bottom:1px solid rgba(255,107,138,0.2);align-items:center;justify-content:space-between;flex-shrink:0">
+            <span id="delete-toolbar-count" style="font-size:12px;font-weight:600;color:var(--danger)">0 selected</span>
+            <div style="display:flex;gap:6px">
+              <button onclick="deleteSelected()" style="font-size:11px;font-weight:700;padding:5px 12px;border-radius:7px;border:1px solid rgba(255,107,138,0.4);background:rgba(255,107,138,0.1);color:var(--danger);cursor:pointer;font-family:'Rethink Sans',sans-serif">Delete selected</button>
+              <button onclick="deleteAll()" style="font-size:11px;font-weight:700;padding:5px 12px;border-radius:7px;border:1px solid rgba(255,107,138,0.4);background:rgba(255,107,138,0.15);color:var(--danger);cursor:pointer;font-family:'Rethink Sans',sans-serif">Delete all</button>
+            </div>
+          </div>
+          <!-- Select all row -->
+          <div id="select-all-row" style="display:none;padding:8px 16px;border-bottom:1px solid var(--border);align-items:center;gap:8px;flex-shrink:0">
+            <input type="checkbox" id="select-all-checkbox" onchange="toggleSelectAll(this.checked)" style="accent-color:var(--accent);cursor:pointer;width:14px;height:14px">
+            <label for="select-all-checkbox" style="font-size:12px;color:var(--muted);cursor:pointer">Select all</label>
+          </div>
+          <div id="inbox-thread-list" style="overflow-y:auto;flex:1"></div>
         </div>
 
         <!-- Email detail -->
@@ -5180,21 +5198,29 @@ async function loadInbox() {
 
   const list = document.getElementById('inbox-thread-list')
   if (!data.threads.length) {
+    _allThreadIds = []
+    updateDeleteToolbar()
     list.innerHTML = '<div style="padding:20px;text-align:center;color:var(--muted);font-size:13px">No messages</div>'
     return
   }
 
+  _allThreadIds = data.threads.map(t => t.id)
+  _selectedIds = []
+  updateDeleteToolbar()
+
   list.innerHTML = data.threads.map(t => {
     const fromName = t.from ? t.from.replace(/<.*>/, '').trim() || t.from : '—'
     const date = t.date ? new Date(t.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : ''
-    return '<div class="inbox-thread-item" onclick="openThread(' + JSON.stringify(t).replace(/"/g, '&quot;') + ')" style="padding:14px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:background 0.1s" onmouseover="this.style.background=\'rgba(161,117,252,0.08)\'" onmouseout="this.style.background=\'transparent\'">'
-      + '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px">'
-      + '<div style="font-size:13px;font-weight:' + (t.unread ? '700' : '500') + ';color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px">' + fromName + '</div>'
+    return '<div style="padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;gap:10px;transition:background 0.1s" onmouseover="this.style.background=\'rgba(161,117,252,0.06)\'" onmouseout="this.style.background=\'transparent\'">'
+      + '<input type="checkbox" class="thread-checkbox" onchange="toggleThreadSelect(\'' + t.id + '\',this.checked)" style="accent-color:var(--accent);margin-top:3px;cursor:pointer;flex-shrink:0;width:14px;height:14px">'
+      + '<div style="flex:1;min-width:0;cursor:pointer" onclick="openThread(' + JSON.stringify(t).replace(/"/g, '&quot;') + ')">'
+      + '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:3px">'
+      + '<div style="font-size:13px;font-weight:' + (t.unread ? '700' : '500') + ';color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px">' + fromName + '</div>'
       + '<div style="font-size:11px;color:var(--muted);flex-shrink:0">' + date + '</div>'
       + '</div>'
-      + '<div style="font-size:12px;font-weight:' + (t.unread ? '600' : '400') + ';color:var(--text);margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + t.subject + '</div>'
+      + '<div style="font-size:12px;font-weight:' + (t.unread ? '600' : '400') + ';color:var(--text);margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + t.subject + '</div>'
       + '<div style="font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + (t.snippet || '') + '</div>'
-      + '</div>'
+      + '</div></div>'
   }).join('')
 }
 
@@ -5207,7 +5233,11 @@ function openThread(thread) {
   document.getElementById('detail-from').textContent = thread.from || ''
   document.getElementById('detail-date').textContent = thread.date ? new Date(thread.date).toLocaleString('en-GB') : ''
   document.getElementById('detail-body').innerHTML = '<div style="font-size:13px;line-height:1.7;color:var(--text)">' + (thread.snippet || '') + '</div>'
+  // Show reply box for inbox threads
+  document.getElementById('reply-box').style.display = ''
   document.getElementById('reply-box').value = ''
+  const replyFooter = document.querySelector('[onclick="sendReply()"]')
+  if (replyFooter) replyFooter.closest('div').style.display = ''
 }
 
 async function sendReply() {
@@ -5241,6 +5271,156 @@ async function sendReply() {
     document.getElementById('reply-box').value = ''
     document.getElementById('detail-body').innerHTML += '<div style="margin-top:16px;padding:12px 16px;background:rgba(161,117,252,0.1);border-left:3px solid var(--accent);border-radius:8px;font-size:13px;line-height:1.6">' + body + '</div>'
   }
+}
+
+// ── TABS + DELETE ──
+var _currentTab = 'inbox'
+var _selectedIds = []
+var _allThreadIds = []
+var _allSentIds = []
+
+function switchTab(tab) {
+  _currentTab = tab
+  _selectedIds = []
+  updateDeleteToolbar()
+  document.getElementById('tab-inbox').style.background = tab === 'inbox' ? 'var(--accent)' : 'transparent'
+  document.getElementById('tab-inbox').style.color = tab === 'inbox' ? '#fff' : 'var(--muted)'
+  document.getElementById('tab-sent').style.background = tab === 'sent' ? 'var(--accent)' : 'transparent'
+  document.getElementById('tab-sent').style.color = tab === 'sent' ? '#fff' : 'var(--muted)'
+  // Hide detail panel when switching
+  document.getElementById('inbox-detail-empty').style.display = 'flex'
+  document.getElementById('inbox-detail-content').style.display = 'none'
+  if (tab === 'inbox') loadInbox()
+  else loadSent()
+}
+
+function refreshCurrentTab() {
+  if (_currentTab === 'inbox') loadInbox()
+  else loadSent()
+}
+
+function updateDeleteToolbar() {
+  const toolbar = document.getElementById('delete-toolbar')
+  const selectRow = document.getElementById('select-all-row')
+  const count = document.getElementById('delete-toolbar-count')
+  const allIds = _currentTab === 'inbox' ? _allThreadIds : _allSentIds
+  if (allIds.length > 0) {
+    selectRow.style.display = 'flex'
+    toolbar.style.display = _selectedIds.length > 0 ? 'flex' : 'none'
+    count.textContent = _selectedIds.length + ' selected'
+    document.getElementById('select-all-checkbox').checked = _selectedIds.length === allIds.length
+  } else {
+    selectRow.style.display = 'none'
+    toolbar.style.display = 'none'
+  }
+}
+
+function toggleThreadSelect(id, checked) {
+  if (checked) { if (!_selectedIds.includes(id)) _selectedIds.push(id) }
+  else { _selectedIds = _selectedIds.filter(x => x !== id) }
+  updateDeleteToolbar()
+}
+
+function toggleSelectAll(checked) {
+  const allIds = _currentTab === 'inbox' ? _allThreadIds : _allSentIds
+  _selectedIds = checked ? [...allIds] : []
+  // Update all checkboxes
+  document.querySelectorAll('.thread-checkbox').forEach(cb => cb.checked = checked)
+  updateDeleteToolbar()
+}
+
+async function deleteSelected() {
+  if (!_selectedIds.length || !_inboxSession) return
+  if (!confirm('Delete ' + _selectedIds.length + ' email(s)?')) return
+  if (_currentTab === 'inbox') await trashThreads(_selectedIds)
+  else await deleteSentEmails(_selectedIds)
+  _selectedIds = []
+  refreshCurrentTab()
+}
+
+async function deleteAll() {
+  const allIds = _currentTab === 'inbox' ? _allThreadIds : _allSentIds
+  if (!allIds.length || !_inboxSession) return
+  if (!confirm('Delete all ' + allIds.length + ' email(s)? This cannot be undone.')) return
+  if (_currentTab === 'inbox') await trashThreads(allIds)
+  else await deleteSentEmails(allIds)
+  _selectedIds = []
+  refreshCurrentTab()
+}
+
+async function trashThreads(ids) {
+  await Promise.all(ids.map(id =>
+    fetch('/api/gmail/trash', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + _inboxSession.access_token, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ threadId: id })
+    })
+  ))
+}
+
+async function deleteSentEmails(ids) {
+  await fetch('/api/gmail/sent', {
+    method: 'DELETE',
+    headers: { Authorization: 'Bearer ' + _inboxSession.access_token, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ids })
+  })
+}
+
+async function loadSent() {
+  if (!_inboxSession) {
+    const session = await sb.auth.getSession()
+    _inboxSession = session?.data?.session
+  }
+  if (!_inboxSession) return
+
+  const list = document.getElementById('inbox-thread-list')
+  list.innerHTML = '<div style="padding:20px;text-align:center;color:var(--muted);font-size:13px">Loading...</div>'
+
+  const res = await fetch('/api/gmail/sent', {
+    headers: { Authorization: 'Bearer ' + _inboxSession.access_token }
+  })
+  const data = await res.json()
+  _allSentIds = (data.emails || []).map(e => e.id)
+  _selectedIds = []
+  updateDeleteToolbar()
+
+  if (!data.emails || !data.emails.length) {
+    list.innerHTML = '<div style="padding:20px;text-align:center;color:var(--muted);font-size:13px">No sent emails yet</div>'
+    return
+  }
+
+  list.innerHTML = data.emails.map(e => {
+    const date = e.sent_at ? new Date(e.sent_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : ''
+    const tagHtml = (e.tags || []).map(t =>
+      '<span style="background:rgba(161,117,252,0.15);color:var(--accent);font-size:10px;font-weight:600;padding:2px 7px;border-radius:20px">' + t + '</span>'
+    ).join('')
+    return '<div style="padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;gap:10px">'
+      + '<input type="checkbox" class="thread-checkbox" onchange="toggleThreadSelect(\'' + e.id + '\',this.checked)" style="accent-color:var(--accent);margin-top:3px;cursor:pointer;flex-shrink:0;width:14px;height:14px">'
+      + '<div style="flex:1;min-width:0;cursor:pointer" onclick="openSentDetail(' + JSON.stringify(e).replace(/"/g, '&quot;') + ')">'
+      + '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:3px">'
+      + '<div style="font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px">To: ' + (e.to_email || '—') + '</div>'
+      + '<div style="font-size:11px;color:var(--muted);flex-shrink:0">' + date + '</div>'
+      + '</div>'
+      + '<div style="font-size:12px;color:var(--text);margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + (e.subject || '(no subject)') + '</div>'
+      + (tagHtml ? '<div style="display:flex;flex-wrap:wrap;gap:4px">' + tagHtml + '</div>' : '')
+      + '</div></div>'
+  }).join('')
+}
+
+function openSentDetail(email) {
+  document.getElementById('inbox-detail-empty').style.display = 'none'
+  const content = document.getElementById('inbox-detail-content')
+  content.style.display = 'flex'
+  document.getElementById('detail-subject').textContent = email.subject || '(no subject)'
+  document.getElementById('detail-from').textContent = 'To: ' + (email.to_email || '')
+  const tags = (email.tags || [])
+  document.getElementById('detail-date').textContent = email.sent_at ? new Date(email.sent_at).toLocaleString('en-GB') : ''
+  const tagHtml = tags.length ? '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px">'
+    + tags.map(t => '<span style="background:rgba(161,117,252,0.15);color:var(--accent);font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px">' + t + '</span>').join('')
+    + '</div>' : ''
+  document.getElementById('detail-body').innerHTML = '<div style="font-size:13px;line-height:1.7;color:var(--text)">' + (email.body || '') + '</div>' + tagHtml
+  document.getElementById('reply-box').style.display = 'none'
+  document.querySelector('[onclick="sendReply()"]').closest('div').style.display = 'none'
 }
 
 // ── COMPOSE ──

@@ -958,6 +958,20 @@
   html[data-theme="light"] .risk-rec-paypal {
     background: rgba(220,38,38,0.07); border-color: rgba(220,38,38,0.25);
   }
+
+  /* ── LIGHT MODE: fix all hardcoded white colors ── */
+  html[data-theme="light"] .feed-body { color: var(--muted); }
+  html[data-theme="light"] .feed-tip-box { color: var(--muted); }
+  html[data-theme="light"] .todo-item { background: rgba(100,80,200,0.04); }
+  html[data-theme="light"] .status-badge.pending { background: rgba(100,80,200,0.08); }
+  html[data-theme="light"] .delivery-bar-track { background: rgba(100,80,200,0.10); }
+  html[data-theme="light"] .agent-kpi-bar { background: rgba(100,80,200,0.10); }
+  html[data-theme="light"] .qual-slider { background: rgba(100,80,200,0.12); }
+  html[data-theme="light"] .risk-signal.no-reply { background: rgba(100,80,200,0.08); }
+  html[data-theme="light"] .risk-score-track { background: rgba(100,80,200,0.10); }
+  html[data-theme="light"] .risk-btn.ghost { background: rgba(100,80,200,0.06); }
+  html[data-theme="light"] .alert-btn.ghost { background: rgba(100,80,200,0.06); }
+
   .risk-order-header { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; flex-wrap: wrap; }
   .risk-badge {
     font-size: 10px; font-weight: 800; text-transform: uppercase;
@@ -1177,7 +1191,7 @@
           <span class="trend-label">90-day trend</span>
         </div>
       </div>
-      <div class="kpi" style="border-top:3px solid rgba(255,255,255,0.15)">
+      <div class="kpi" style="border-top:3px solid var(--border)">
         <div class="kpi-label">Supply Alerts</div>
         <div class="kpi-value" style="color:var(--warn)">5</div>
         <div class="kpi-delta">3 failed, 2 pickup</div>
@@ -1401,7 +1415,7 @@
 
       <div class="card">
         <div class="card-title">How Risk Score is Calculated</div>
-        <div style="font-size:13px;color:rgba(255,255,255,0.7);line-height:1.7">
+        <div style="font-size:13px;color:var(--muted);line-height:1.7">
           Each order gets a risk score (0–100) based on a combination of signals:
         </div>
         <div style="margin-top:14px;display:flex;flex-direction:column;gap:10px">
@@ -1879,7 +1893,7 @@
         <div class="kpi-delta"><span class="up">this month</span></div>
         <div style="margin-top:8px;display:flex;align-items:center;gap:6px"><span class="trend-label">live via Shopify</span></div>
       </div>
-      <div class="kpi" style="border-top:3px solid rgba(255,255,255,0.15)">
+      <div class="kpi" style="border-top:3px solid var(--border)">
         <div class="kpi-label">Most Common</div>
         <div class="kpi-value" style="font-size:24px;color:var(--text)">Full refund</div>
         <div class="kpi-delta">68% of all refunds</div>
@@ -2088,7 +2102,7 @@
                 <div class="reason-name">Other</div>
                 <div class="reason-meta">3x — 6%</div>
               </div>
-              <div class="reason-track"><div class="reason-fill" style="width:6%;background:rgba(255,255,255,0.2)"></div></div>
+              <div class="reason-track"><div class="reason-fill" style="width:6%;background:var(--muted)"></div></div>
             </div>
           </div>
         </div>
@@ -2200,7 +2214,7 @@
                 <div class="reason-name">Changed mind</div>
                 <div class="reason-meta">10x — 53%</div>
               </div>
-              <div class="reason-track"><div class="reason-fill" style="width:53%;background:rgba(255,255,255,0.25)"></div></div>
+              <div class="reason-track"><div class="reason-fill" style="width:53%;background:var(--muted)"></div></div>
             </div>
             <div class="reason-row">
               <div class="reason-header">
@@ -2478,7 +2492,7 @@
               </div>
               <div class="reason-row">
                 <div class="reason-header"><div class="reason-name">Other</div><div class="reason-meta">3x — 6%</div></div>
-                <div class="reason-track"><div class="reason-fill" style="width:6%;background:rgba(255,255,255,0.15)"></div></div>
+                <div class="reason-track"><div class="reason-fill" style="width:6%;background:var(--muted)"></div></div>
               </div>
             </div>
           </div>
@@ -2526,7 +2540,7 @@
             <div class="reason-list">
               <div class="reason-row">
                 <div class="reason-header"><div class="reason-name">Changed mind</div><div class="reason-meta">10x — 53%</div></div>
-                <div class="reason-track"><div class="reason-fill" style="width:53%;background:rgba(255,255,255,0.25)"></div></div>
+                <div class="reason-track"><div class="reason-fill" style="width:53%;background:var(--muted)"></div></div>
               </div>
               <div class="reason-row">
                 <div class="reason-header"><div class="reason-name">Waiting too long</div><div class="reason-meta">5x — 26%</div></div>
@@ -2542,7 +2556,7 @@
               </div>
             </div>
 
-            <div style="margin-top:16px;padding:12px 14px;background:rgba(78,204,163,0.07);border:1px solid rgba(78,204,163,0.2);border-radius:8px;font-size:12px;color:rgba(255,255,255,0.7)">
+            <div style="margin-top:16px;padding:12px 14px;background:rgba(78,204,163,0.07);border:1px solid rgba(78,204,163,0.2);border-radius:8px;font-size:12px;color:var(--muted)">
               ✅ <strong style="color:var(--green)">13 of 19</strong> were cancelled before shipment — no fulfilment cost. 6 were already shipped (return process initiated).
             </div>
           </div>

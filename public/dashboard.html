@@ -1074,6 +1074,17 @@
         <button class="filter-btn active" onclick="setFilter(this)">Today</button>
         <button class="filter-btn" onclick="setFilter(this)">This week</button>
         <button class="filter-btn" onclick="setFilter(this)">This month</button>
+        <div class="filter-divider"></div>
+        <div class="filter-custom-wrap">
+          <button class="filter-btn" id="home-custom-btn" onclick="toggleCustomDatePicker('home-datepicker', this)">Custom</button>
+          <div class="date-picker-popup" id="home-datepicker">
+            <label>From</label>
+            <input type="date" id="home-date-from">
+            <label>To</label>
+            <input type="date" id="home-date-to">
+            <button class="date-picker-apply" onclick="applyCustomDate('home-datepicker','home-custom-btn','home-date-from','home-date-to')">Apply</button>
+          </div>
+        </div>
       </div>
     </div>
 

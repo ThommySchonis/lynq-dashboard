@@ -1,6 +1,21 @@
+import { supabaseAdmin } from '../../../../lib/supabaseAdmin'
 import { NextResponse } from 'next/server'
 
-export async function GET() {
+export async function GET(request) {
+  const { searchParams } = new URL(request.url)
+  const userToken = searchParams.get('t')
+
+  if (!userToken) {
+    return NextResponse.redirect('https://lynq-dashboard.vercel.app/dashboard.html?gmail=error')
+  }
+
+  // Verify the Supabase user from the token
+  const { data: { user }, error } = await supabaseAdmin.auth.getUser(userToken)
+  if (error || !user) {
+    console.error('[Gmail auth] Invalid token:', error?.message)
+    return NextResponse.redirect('https://lynq-dashboard.vercel.app/dashboard.html?gmail=error')
+  }
+
   const clientId = process.env.GOOGLE_CLIENT_ID?.trim()
   const redirectUri = 'https://lynq-dashboard.vercel.app/api/auth/gmail/callback'
 
@@ -18,6 +33,7 @@ export async function GET() {
   url.searchParams.set('scope', scope)
   url.searchParams.set('access_type', 'offline')
   url.searchParams.set('prompt', 'consent')
+  url.searchParams.set('state', user.id) // Pass user ID through OAuth flow
 
   return NextResponse.redirect(url.toString())
 }

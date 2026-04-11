@@ -4371,9 +4371,9 @@
         <div class="page-sub" id="inbox-sub">Connect your Gmail to get started</div>
       </div>
       <div id="inbox-connect-btn-wrap">
-        <a href="/api/auth/gmail" style="display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;font-size:13px;font-weight:700;padding:10px 20px;border-radius:10px;text-decoration:none">
+        <button onclick="connectGmail()" style="display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;font-size:13px;font-weight:700;padding:10px 20px;border-radius:10px;border:none;cursor:pointer;font-family:'Rethink Sans',sans-serif">
           <span>Connect Gmail</span>
-        </a>
+        </button>
       </div>
     </div>
 
@@ -4382,7 +4382,7 @@
       <div style="font-size:48px;margin-bottom:16px">✉️</div>
       <div style="font-size:18px;font-weight:700;margin-bottom:8px">Connect your Gmail</div>
       <div style="font-size:13px;color:var(--muted);max-width:400px;line-height:1.6;margin-bottom:24px">Link your Google Workspace account to manage all customer emails directly from this dashboard — with Shopify order data right next to every conversation.</div>
-      <a href="/api/auth/gmail" style="display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;font-size:13px;font-weight:700;padding:12px 24px;border-radius:10px;text-decoration:none">Connect Gmail</a>
+      <button onclick="connectGmail()" style="display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;font-size:13px;font-weight:700;padding:12px 24px;border-radius:10px;border:none;cursor:pointer;font-family:'Rethink Sans',sans-serif">Connect Gmail</button>
     </div>
 
     <!-- Connected state -->
@@ -5071,6 +5071,13 @@ initDashboard()
 // ── INBOX ──
 var _inboxSession = null
 var _activeThread = null
+
+async function connectGmail() {
+  const session = await sb.auth.getSession()
+  const token = session?.data?.session?.access_token
+  if (!token) { window.location.href = '/login'; return }
+  window.location.href = '/api/auth/gmail?t=' + encodeURIComponent(token)
+}
 
 async function loadInbox() {
   const session = await sb.auth.getSession()

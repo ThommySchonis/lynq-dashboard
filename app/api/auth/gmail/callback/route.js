@@ -4,9 +4,10 @@ import { NextResponse } from 'next/server'
 export async function GET(request) {
   const { searchParams } = new URL(request.url)
   const code = searchParams.get('code')
+  const userId = searchParams.get('state') // Supabase user ID passed through OAuth state
 
-  if (!code) {
-    console.error('[Gmail callback] No code in request')
+  if (!code || !userId) {
+    console.error('[Gmail callback] Missing code or state:', { code: !!code, userId: !!userId })
     return NextResponse.redirect('https://lynq-dashboard.vercel.app/dashboard.html?gmail=error')
   }
 
@@ -15,7 +16,7 @@ export async function GET(request) {
   const redirectUri = 'https://lynq-dashboard.vercel.app/api/auth/gmail/callback'
 
   if (!clientId || !clientSecret) {
-    console.error('[Gmail callback] Missing GOOGLE_CLIENT_ID or GOOGLE_CLIENT_SECRET env vars')
+    console.error('[Gmail callback] Missing Google env vars')
     return NextResponse.redirect('https://lynq-dashboard.vercel.app/dashboard.html?gmail=error')
   }
 
@@ -33,7 +34,7 @@ export async function GET(request) {
   })
 
   const tokens = await tokenRes.json()
-  console.log('[Gmail callback] Token exchange result:', { access_token: !!tokens.access_token, refresh_token: !!tokens.refresh_token, error: tokens.error })
+  console.log('[Gmail callback] Token exchange:', { access_token: !!tokens.access_token, error: tokens.error })
 
   if (!tokens.access_token) {
     console.error('[Gmail callback] Token exchange failed:', tokens)
@@ -45,22 +46,23 @@ export async function GET(request) {
     headers: { Authorization: `Bearer ${tokens.access_token}` },
   })
   const profile = await profileRes.json()
-  console.log('[Gmail callback] Profile email:', profile.email)
+  console.log('[Gmail callback] Gmail address:', profile.email, 'for user_id:', userId)
 
-  // Store tokens in Supabase
+  // Store tokens keyed by Supabase user ID
   const { error: upsertError } = await supabaseAdmin.from('gmail_tokens').upsert({
+    user_id: userId,
     email: profile.email,
+    gmail_address: profile.email,
     access_token: tokens.access_token,
     refresh_token: tokens.refresh_token,
     expires_at: new Date(Date.now() + tokens.expires_in * 1000).toISOString(),
-    gmail_address: profile.email,
-  }, { onConflict: 'email' })
+  }, { onConflict: 'user_id' })
 
   if (upsertError) {
     console.error('[Gmail callback] Supabase upsert failed:', upsertError)
     return NextResponse.redirect('https://lynq-dashboard.vercel.app/dashboard.html?gmail=error')
   }
 
-  console.log('[Gmail callback] Tokens saved for:', profile.email)
+  console.log('[Gmail callback] Tokens saved for user_id:', userId)
   return NextResponse.redirect('https://lynq-dashboard.vercel.app/dashboard.html?gmail=connected')
 }

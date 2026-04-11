@@ -1123,9 +1123,12 @@
     <!-- INBOX -->
     <div class="nav-panel-section" id="section-inbox">
       <div class="panel-header"><div class="panel-header-title">Inbox</div></div>
-      <div class="nav-item" onclick="showPage('inbox', this)">
+      <div class="nav-item active" onclick="showPage('inbox', this); switchInboxTab('inbox')">
         Inbox
         <span id="inbox-unread-badge" class="nav-badge accent" style="display:none">0</span>
+      </div>
+      <div class="nav-item" onclick="showPage('inbox', this); switchInboxTab('sent')">
+        Sent
       </div>
       <div class="panel-footer">
         <div class="client-badge">
@@ -5609,6 +5612,15 @@ var _currentTab = 'inbox'
 var _selectedIds = []
 var _allThreadIds = []
 var _allSentIds = []
+
+function switchInboxTab(tab) {
+  // Update sidebar nav item active state
+  const inboxNavItems = document.querySelectorAll('#section-inbox .nav-item')
+  inboxNavItems.forEach(el => el.classList.remove('active'))
+  if (tab === 'inbox') inboxNavItems[0] && inboxNavItems[0].classList.add('active')
+  else inboxNavItems[1] && inboxNavItems[1].classList.add('active')
+  switchTab(tab)
+}
 
 function switchTab(tab) {
   _currentTab = tab

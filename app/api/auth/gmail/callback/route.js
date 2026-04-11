@@ -9,8 +9,8 @@ export async function GET(request) {
     return NextResponse.redirect('https://lynq-dashboard.vercel.app/dashboard.html?gmail=error')
   }
 
-  const clientId = process.env.GOOGLE_CLIENT_ID
-  const clientSecret = process.env.GOOGLE_CLIENT_SECRET
+  const clientId = process.env.GOOGLE_CLIENT_ID?.trim()
+  const clientSecret = process.env.GOOGLE_CLIENT_SECRET?.trim()
   const redirectUri = 'https://lynq-dashboard.vercel.app/api/auth/gmail/callback'
 
   // Exchange code for tokens

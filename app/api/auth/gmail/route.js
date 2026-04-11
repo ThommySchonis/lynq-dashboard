@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 
 export async function GET() {
-  const clientId = process.env.GOOGLE_CLIENT_ID
+  const clientId = process.env.GOOGLE_CLIENT_ID?.trim()
   const redirectUri = 'https://lynq-dashboard.vercel.app/api/auth/gmail/callback'
 
   const scope = [

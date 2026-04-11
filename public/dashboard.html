@@ -147,6 +147,10 @@
   .filter-btn:hover { color: var(--text); background: rgba(255,255,255,0.06); }
   .filter-btn.active { background: var(--accent); color: #fff; }
   .filter-divider { width: 1px; height: 20px; background: var(--border); margin: 0 4px; }
+  .qc-btn { border:none;font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;cursor:pointer;font-family:'Rethink Sans',sans-serif; }
+  .qc-asked { background:rgba(255,209,102,0.15);border:1px solid rgba(255,209,102,0.3)!important;color:var(--warn); }
+  .qc-approve { background:rgba(78,204,163,0.1);border:1px solid rgba(78,204,163,0.2)!important;color:#4ecca3; }
+  .qc-reject { background:rgba(255,107,138,0.1);border:1px solid rgba(255,107,138,0.2)!important;color:#ff6b8a; }
   .filter-custom-wrap { position: relative; }
   .date-picker-popup {
     display: none;
@@ -4355,6 +4359,108 @@
     </div>
   </div>
 
+  <!-- QUALITY CHECKS PAGE -->
+  <div class="page" id="page-quality">
+    <div class="page-header">
+      <div>
+        <div class="page-title">Quality Checks</div>
+        <div class="page-sub">Products with 3+ sales that require a quality review before issues arise</div>
+      </div>
+    </div>
+
+    <div id="packaging-banner" style="background:linear-gradient(135deg,rgba(255,209,102,0.12),rgba(255,209,102,0.06));border:1px solid rgba(255,209,102,0.3);border-radius:14px;padding:18px 22px;margin-bottom:24px;display:flex;align-items:flex-start;gap:16px">
+      <div style="font-size:28px;flex-shrink:0">📦</div>
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:800;color:var(--warn);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:4px">Packaging Recommendation — 30+ Orders/Day Detected</div>
+        <div style="font-size:13px;color:var(--text);line-height:1.6">You're processing <strong>30+ orders per day</strong>. Customers receiving products in plain plastic bags leads to a poor unboxing experience and more complaints. Consider switching to <strong>custom branded packaging</strong> with a personal thank-you card and a discount code (e.g. <span style="color:var(--accent);font-weight:700">THANKYOU10</span>) to boost satisfaction and increase repeat purchases.</div>
+      </div>
+      <button onclick="document.getElementById('packaging-banner').style.display='none'" style="background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:18px;flex-shrink:0;padding:0">✕</button>
+    </div>
+
+    <div class="kpi-row" style="grid-template-columns:repeat(4,1fr);margin-bottom:24px">
+      <div class="kpi warn">
+        <div class="kpi-label">Awaiting Check</div>
+        <div class="kpi-value" id="qc-pending">7</div>
+        <div class="kpi-delta">quality check asked</div>
+      </div>
+      <div class="kpi green">
+        <div class="kpi-label">Approved</div>
+        <div class="kpi-value" id="qc-approved">2</div>
+        <div class="kpi-delta">quality confirmed</div>
+      </div>
+      <div class="kpi red">
+        <div class="kpi-label">Not Approved</div>
+        <div class="kpi-value" id="qc-rejected">1</div>
+        <div class="kpi-delta">improvement requested</div>
+      </div>
+      <div class="kpi purple">
+        <div class="kpi-label">Total Products</div>
+        <div class="kpi-value" id="qc-total">9</div>
+        <div class="kpi-delta">with 3+ sales</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title" style="margin-bottom:20px">Products Requiring Quality Check <span style="color:var(--muted);font-size:11px;font-weight:400">— 3+ sales</span></div>
+      <table style="width:100%;border-collapse:collapse">
+        <thead>
+          <tr style="border-bottom:1px solid var(--border)">
+            <th style="text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--muted);padding:0 12px 12px 0">Product</th>
+            <th style="text-align:center;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--muted);padding:0 12px 12px">Sales</th>
+            <th style="text-align:center;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--muted);padding:0 12px 12px">Status</th>
+          </tr>
+        </thead>
+        <tbody id="qc-tbody">
+          <tr style="border-bottom:1px solid var(--border)">
+            <td style="padding:14px 12px 14px 0"><div style="font-size:14px;font-weight:600">Classic Linen Dress</div></td>
+            <td style="text-align:center;padding:14px 12px"><span style="background:rgba(161,117,252,0.15);color:var(--accent);font-size:13px;font-weight:700;padding:3px 10px;border-radius:20px">18</span></td>
+            <td style="text-align:center;padding:14px 12px"><div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap"><button onclick="qcSet(this,'asked')" class="qc-btn qc-asked">⏳ Check Asked</button><button onclick="qcSet(this,'approved')" class="qc-btn qc-approve">✓ Approve</button><button onclick="qcSet(this,'rejected')" class="qc-btn qc-reject">✕ Not Approved</button></div></td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--border)">
+            <td style="padding:14px 12px 14px 0"><div style="font-size:14px;font-weight:600">Summer Wrap Skirt</div></td>
+            <td style="text-align:center;padding:14px 12px"><span style="background:rgba(161,117,252,0.15);color:var(--accent);font-size:13px;font-weight:700;padding:3px 10px;border-radius:20px">13</span></td>
+            <td style="text-align:center;padding:14px 12px"><div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap"><button onclick="qcSet(this,'asked')" class="qc-btn qc-asked">⏳ Check Asked</button><button onclick="qcSet(this,'approved')" class="qc-btn qc-approve">✓ Approve</button><button onclick="qcSet(this,'rejected')" class="qc-btn qc-reject">✕ Not Approved</button></div></td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--border)">
+            <td style="padding:14px 12px 14px 0"><div style="font-size:14px;font-weight:600">Bamboo Tote Bag</div></td>
+            <td style="text-align:center;padding:14px 12px"><span style="background:rgba(161,117,252,0.15);color:var(--accent);font-size:13px;font-weight:700;padding:3px 10px;border-radius:20px">11</span></td>
+            <td style="text-align:center;padding:14px 12px"><span style="display:inline-flex;align-items:center;gap:5px;background:rgba(78,204,163,0.15);border:1px solid rgba(78,204,163,0.3);color:#4ecca3;font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px">✓ Quality Approved</span></td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--border)">
+            <td style="padding:14px 12px 14px 0"><div style="font-size:14px;font-weight:600">Organic Cotton Tee</div></td>
+            <td style="text-align:center;padding:14px 12px"><span style="background:rgba(161,117,252,0.15);color:var(--accent);font-size:13px;font-weight:700;padding:3px 10px;border-radius:20px">9</span></td>
+            <td style="text-align:center;padding:14px 12px"><span style="display:inline-flex;align-items:center;gap:5px;background:rgba(255,107,138,0.15);border:1px solid rgba(255,107,138,0.3);color:#ff6b8a;font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px">✕ Not Approved — Improvement Requested</span></td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--border)">
+            <td style="padding:14px 12px 14px 0"><div style="font-size:14px;font-weight:600">Linen Shorts</div></td>
+            <td style="text-align:center;padding:14px 12px"><span style="background:rgba(161,117,252,0.15);color:var(--accent);font-size:13px;font-weight:700;padding:3px 10px;border-radius:20px">7</span></td>
+            <td style="text-align:center;padding:14px 12px"><div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap"><button onclick="qcSet(this,'asked')" class="qc-btn qc-asked">⏳ Check Asked</button><button onclick="qcSet(this,'approved')" class="qc-btn qc-approve">✓ Approve</button><button onclick="qcSet(this,'rejected')" class="qc-btn qc-reject">✕ Not Approved</button></div></td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--border)">
+            <td style="padding:14px 12px 14px 0"><div style="font-size:14px;font-weight:600">Floral Midi Dress</div></td>
+            <td style="text-align:center;padding:14px 12px"><span style="background:rgba(161,117,252,0.15);color:var(--accent);font-size:13px;font-weight:700;padding:3px 10px;border-radius:20px">6</span></td>
+            <td style="text-align:center;padding:14px 12px"><div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap"><button onclick="qcSet(this,'asked')" class="qc-btn qc-asked">⏳ Check Asked</button><button onclick="qcSet(this,'approved')" class="qc-btn qc-approve">✓ Approve</button><button onclick="qcSet(this,'rejected')" class="qc-btn qc-reject">✕ Not Approved</button></div></td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--border)">
+            <td style="padding:14px 12px 14px 0"><div style="font-size:14px;font-weight:600">Canvas Crossbody Bag</div></td>
+            <td style="text-align:center;padding:14px 12px"><span style="background:rgba(161,117,252,0.15);color:var(--accent);font-size:13px;font-weight:700;padding:3px 10px;border-radius:20px">5</span></td>
+            <td style="text-align:center;padding:14px 12px"><span style="display:inline-flex;align-items:center;gap:5px;background:rgba(78,204,163,0.15);border:1px solid rgba(78,204,163,0.3);color:#4ecca3;font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px">✓ Quality Approved</span></td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--border)">
+            <td style="padding:14px 12px 14px 0"><div style="font-size:14px;font-weight:600">Ribbed Tank Top</div></td>
+            <td style="text-align:center;padding:14px 12px"><span style="background:rgba(161,117,252,0.15);color:var(--accent);font-size:13px;font-weight:700;padding:3px 10px;border-radius:20px">4</span></td>
+            <td style="text-align:center;padding:14px 12px"><div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap"><button onclick="qcSet(this,'asked')" class="qc-btn qc-asked">⏳ Check Asked</button><button onclick="qcSet(this,'approved')" class="qc-btn qc-approve">✓ Approve</button><button onclick="qcSet(this,'rejected')" class="qc-btn qc-reject">✕ Not Approved</button></div></td>
+          </tr>
+          <tr>
+            <td style="padding:14px 12px 14px 0"><div style="font-size:14px;font-weight:600">Wide-Leg Trousers</div></td>
+            <td style="text-align:center;padding:14px 12px"><span style="background:rgba(161,117,252,0.15);color:var(--accent);font-size:13px;font-weight:700;padding:3px 10px;border-radius:20px">3</span></td>
+            <td style="text-align:center;padding:14px 12px"><div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap"><button onclick="qcSet(this,'asked')" class="qc-btn qc-asked">⏳ Check Asked</button><button onclick="qcSet(this,'approved')" class="qc-btn qc-approve">✓ Approve</button><button onclick="qcSet(this,'rejected')" class="qc-btn qc-reject">✕ Not Approved</button></div></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
 </div><!-- end main -->
 
 <script>
@@ -4912,151 +5018,17 @@ async function loadBroadcasts() {
 initDashboard()
 </script>
 
-<!-- QUALITY CHECKS PAGE -->
 <script>
-// Inject Quality Checks page HTML before </script> is reached
-(function() {
-  const main = document.querySelector('.main');
-  const page = document.createElement('div');
-  page.className = 'page';
-  page.id = 'page-quality';
-  page.innerHTML = `
-    <div class="page-header">
-      <div>
-        <div class="page-title">Quality Checks</div>
-        <div class="page-sub">Products with 3+ sales that require a quality review before issues arise</div>
-      </div>
-    </div>
-
-    <!-- Packaging recommendation banner -->
-    <div id="packaging-banner" style="background:linear-gradient(135deg,rgba(255,209,102,0.12),rgba(255,209,102,0.06));border:1px solid rgba(255,209,102,0.3);border-radius:14px;padding:18px 22px;margin-bottom:24px;display:flex;align-items:flex-start;gap:16px">
-      <div style="font-size:28px;flex-shrink:0">📦</div>
-      <div style="flex:1">
-        <div style="font-size:13px;font-weight:800;color:var(--warn);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:4px">Packaging Recommendation — 30+ Orders/Day Detected</div>
-        <div style="font-size:13px;color:var(--text);line-height:1.6">You're processing <strong>30+ orders per day</strong>. Customers receiving products in plain plastic bags leads to a poor unboxing experience and more complaints. Consider switching to <strong>custom branded packaging</strong> with a personal thank-you card and a discount code (e.g. <span style="color:var(--accent);font-weight:700">THANKYOU10</span>) to boost satisfaction and increase repeat purchases.</div>
-      </div>
-      <button onclick="document.getElementById('packaging-banner').style.display='none'" style="background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:18px;flex-shrink:0;padding:0">✕</button>
-    </div>
-
-    <!-- Stats row -->
-    <div class="kpi-row" style="grid-template-columns:repeat(4,1fr);margin-bottom:24px">
-      <div class="kpi warn">
-        <div class="kpi-label">Awaiting Check</div>
-        <div class="kpi-value" id="qc-pending">—</div>
-        <div class="kpi-delta">quality check asked</div>
-      </div>
-      <div class="kpi green">
-        <div class="kpi-label">Approved</div>
-        <div class="kpi-value" id="qc-approved">—</div>
-        <div class="kpi-delta">quality confirmed</div>
-      </div>
-      <div class="kpi red">
-        <div class="kpi-label">Not Approved</div>
-        <div class="kpi-value" id="qc-rejected">—</div>
-        <div class="kpi-delta">improvement requested</div>
-      </div>
-      <div class="kpi purple">
-        <div class="kpi-label">Total Products</div>
-        <div class="kpi-value" id="qc-total">—</div>
-        <div class="kpi-delta">with 3+ sales</div>
-      </div>
-    </div>
-
-    <!-- Quality checks table -->
-    <div class="card">
-      <div class="card-title" style="margin-bottom:20px">Products Requiring Quality Check <span style="color:var(--muted);font-size:11px;font-weight:400">— 3+ sales</span></div>
-      <table style="width:100%;border-collapse:collapse" id="qc-table">
-        <thead>
-          <tr style="border-bottom:1px solid var(--border)">
-            <th style="text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--muted);padding:0 12px 12px 0">Product</th>
-            <th style="text-align:center;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--muted);padding:0 12px 12px">Sales</th>
-            <th style="text-align:center;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--muted);padding:0 12px 12px">Status</th>
-          </tr>
-        </thead>
-        <tbody id="qc-tbody">
-        </tbody>
-      </table>
-    </div>
-  `;
-  main.appendChild(page);
-
-  // Sample product data (replace with live Shopify data later)
-  const products = [
-    { name: 'Classic Linen Dress', sales: 18, status: 'pending' },
-    { name: 'Summer Wrap Skirt', sales: 13, status: 'pending' },
-    { name: 'Bamboo Tote Bag', sales: 11, status: 'approved' },
-    { name: 'Organic Cotton Tee', sales: 9, status: 'not_approved' },
-    { name: 'Linen Shorts', sales: 7, status: 'pending' },
-    { name: 'Floral Midi Dress', sales: 6, status: 'pending' },
-    { name: 'Canvas Crossbody Bag', sales: 5, status: 'approved' },
-    { name: 'Ribbed Tank Top', sales: 4, status: 'pending' },
-    { name: 'Wide-Leg Trousers', sales: 3, status: 'pending' },
-  ];
-
-  function statusBadge(status, idx) {
-    if (status === 'approved') {
-      return '<span style="display:inline-flex;align-items:center;gap:5px;background:rgba(78,204,163,0.15);border:1px solid rgba(78,204,163,0.3);color:#4ecca3;font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px">✓ Quality Approved</span>';
-    }
-    if (status === 'not_approved') {
-      return '<span style="display:inline-flex;align-items:center;gap:5px;background:rgba(255,107,138,0.15);border:1px solid rgba(255,107,138,0.3);color:#ff6b8a;font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px">✕ Not Approved — Improvement Requested</span>';
-    }
-    return \`<div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap">
-      <button onclick="setQCStatus(\${idx},'pending')" style="background:rgba(255,209,102,0.15);border:1px solid rgba(255,209,102,0.3);color:var(--warn);font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;cursor:pointer;font-family:'Rethink Sans',sans-serif">⏳ Check Asked</button>
-      <button onclick="setQCStatus(\${idx},'approved')" style="background:rgba(78,204,163,0.1);border:1px solid rgba(78,204,163,0.2);color:#4ecca3;font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;cursor:pointer;font-family:'Rethink Sans',sans-serif">✓ Approve</button>
-      <button onclick="setQCStatus(\${idx},'not_approved')" style="background:rgba(255,107,138,0.1);border:1px solid rgba(255,107,138,0.2);color:#ff6b8a;font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;cursor:pointer;font-family:'Rethink Sans',sans-serif">✕ Not Approved</button>
-    </div>\`;
+function qcSet(btn, action) {
+  var td = btn.closest('td');
+  if (action === 'approved') {
+    td.innerHTML = '<span style="display:inline-flex;align-items:center;gap:5px;background:rgba(78,204,163,0.15);border:1px solid rgba(78,204,163,0.3);color:#4ecca3;font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px">&#10003; Quality Approved</span>';
+  } else if (action === 'rejected') {
+    td.innerHTML = '<span style="display:inline-flex;align-items:center;gap:5px;background:rgba(255,107,138,0.15);border:1px solid rgba(255,107,138,0.3);color:#ff6b8a;font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px">&#10005; Not Approved &#8212; Improvement Requested</span>';
+  } else {
+    td.innerHTML = '<span style="display:inline-flex;align-items:center;gap:5px;background:rgba(255,209,102,0.15);border:1px solid rgba(255,209,102,0.3);color:var(--warn);font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px">&#9203; Check Asked</span>';
   }
-
-  function renderTable() {
-    const tbody = document.getElementById('qc-tbody');
-    if (!tbody) return;
-    tbody.innerHTML = products.map((p, i) => \`
-      <tr style="border-bottom:1px solid var(--border)" id="qc-row-\${i}">
-        <td style="padding:14px 12px 14px 0">
-          <div style="font-size:14px;font-weight:600">\${p.name}</div>
-        </td>
-        <td style="text-align:center;padding:14px 12px">
-          <span style="background:rgba(161,117,252,0.15);color:var(--accent);font-size:13px;font-weight:700;padding:3px 10px;border-radius:20px">\${p.sales}</span>
-        </td>
-        <td style="text-align:center;padding:14px 12px">
-          <button onclick="toggleSizeTable(\${i})" style="background:rgba(161,117,252,0.1);border:1px solid rgba(161,117,252,0.2);color:var(--accent);font-size:11px;font-weight:600;padding:5px 12px;border-radius:8px;cursor:pointer;font-family:'Rethink Sans',sans-serif">
-            \${p.sizeTable ? '✓ View' : '+ Add'}
-          </button>
-        </td>
-        <td style="text-align:center;padding:14px 12px">
-          \${statusBadge(p.status, i)}
-        </td>
-      </tr>
-    \`).join('');
-    updateQCStats();
-  }
-
-  function updateQCStats() {
-    const pending = products.filter(p => p.status === 'pending').length;
-    const approved = products.filter(p => p.status === 'approved').length;
-    const rejected = products.filter(p => p.status === 'not_approved').length;
-    const el_p = document.getElementById('qc-pending');
-    const el_a = document.getElementById('qc-approved');
-    const el_r = document.getElementById('qc-rejected');
-    const el_t = document.getElementById('qc-total');
-    if (el_p) el_p.textContent = pending;
-    if (el_a) el_a.textContent = approved;
-    if (el_r) el_r.textContent = rejected;
-    if (el_t) el_t.textContent = products.length;
-  }
-
-  window.setQCStatus = function(idx, status) {
-    products[idx].status = status;
-    renderTable();
-  };
-
-  // Init on page show
-  const origShowPage = window.showPage;
-  window.showPage = function(id, el) {
-    origShowPage(id, el);
-    if (id === 'quality') renderTable();
-  };
-})();
+}
 </script>
 </body>
 </html>

@@ -13,6 +13,7 @@ async function refreshAccessToken(email, refreshToken) {
     }),
   })
   const data = await res.json()
+  console.log('[Threads] Token refresh result:', { access_token: !!data.access_token, error: data.error })
   if (!data.access_token) return null
 
   await supabaseAdmin.from('gmail_tokens').update({
@@ -25,26 +26,35 @@ async function refreshAccessToken(email, refreshToken) {
 
 export async function GET(request) {
   const authHeader = request.headers.get('authorization')
-  if (!authHeader) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!authHeader) {
+    console.log('[Threads] No auth header')
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
 
   const token = authHeader.replace('Bearer ', '')
   const { data: { user }, error } = await supabaseAdmin.auth.getUser(token)
+  console.log('[Threads] Supabase user:', user?.email, 'error:', error?.message)
   if (error || !user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   // Get Gmail tokens
-  const { data: gmailToken } = await supabaseAdmin
+  const { data: gmailToken, error: tokenError } = await supabaseAdmin
     .from('gmail_tokens')
     .select('*')
     .eq('email', user.email)
     .single()
 
+  console.log('[Threads] Gmail token lookup for:', user.email, 'found:', !!gmailToken, 'error:', tokenError?.message)
+
   if (!gmailToken) return NextResponse.json({ error: 'Gmail not connected', connected: false }, { status: 200 })
 
   // Refresh token if expired
   let accessToken = gmailToken.access_token
-  if (new Date(gmailToken.expires_at) < new Date()) {
+  const isExpired = new Date(gmailToken.expires_at) < new Date()
+  console.log('[Threads] Token expired:', isExpired, 'expires_at:', gmailToken.expires_at)
+
+  if (isExpired) {
     accessToken = await refreshAccessToken(user.email, gmailToken.refresh_token)
-    if (!accessToken) return NextResponse.json({ error: 'Token refresh failed' }, { status: 401 })
+    if (!accessToken) return NextResponse.json({ error: 'Token refresh failed', connected: false }, { status: 200 })
   }
 
   const { searchParams } = new URL(request.url)
@@ -61,6 +71,7 @@ export async function GET(request) {
     headers: { Authorization: `Bearer ${accessToken}` },
   })
   const listData = await listRes.json()
+  console.log('[Threads] Gmail list result: threads count:', listData.threads?.length, 'error:', listData.error?.message)
 
   if (!listData.threads) return NextResponse.json({ threads: [], connected: true })
 

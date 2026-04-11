@@ -1057,8 +1057,13 @@
     <div class="rail-logo" onclick="switchSection('overview', document.querySelector('[data-section=overview]'))">L&F</div>
     <div class="rail-items">
 
-      <button class="rail-item active" data-section="overview" onclick="switchSection('overview',this)" title="Overview">
+      <button class="rail-item active" data-section="overview" onclick="switchSection('overview',this)" title="Home">
         <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      </button>
+
+      <button class="rail-item" data-section="inbox" onclick="switchSection('inbox',this)" title="Inbox">
+        <span class="rail-badge accent" id="inbox-unread-badge-rail" style="display:none">0</span>
+        <svg viewBox="0 0 24 24"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11L2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.45-6.89A2 2 0 0016.76 4H7.24a2 2 0 00-1.79 1.11z"/></svg>
       </button>
 
       <button class="rail-item" data-section="analytics" onclick="switchSection('analytics',this)" title="Analytics">
@@ -1107,6 +1112,17 @@
         <img src="/logo.png" alt="Lynq & Flow" class="panel-header-logo">
       </div>
       <div class="nav-item active" onclick="showPage('home', this)">Home</div>
+      <div class="panel-footer">
+        <div class="client-badge">
+          <div class="client-name">Smith Sisters</div>
+          <div class="client-sub">smithssisters-asheville</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- INBOX -->
+    <div class="nav-panel-section" id="section-inbox">
+      <div class="panel-header"><div class="panel-header-title">Inbox</div></div>
       <div class="nav-item" onclick="showPage('inbox', this)">
         Inbox
         <span id="inbox-unread-badge" class="nav-badge accent" style="display:none">0</span>
@@ -5106,7 +5122,8 @@ function initDeliveryChart() {
 // ── UPDATE showPage to init charts per page ──
 // ── SECTION SWITCHER ──
 const PAGE_SECTION = {
-  home: 'overview', inbox: 'overview',
+  home: 'overview',
+  inbox: 'inbox',
   risk: 'analytics', refunds: 'analytics', cancellations: 'analytics', reports: 'analytics',
   actions: 'actions',
   performance: 'performance',
@@ -5446,8 +5463,14 @@ async function loadInbox() {
 
   const unread = data.threads.filter(t => t.unread).length
   const badge = document.getElementById('inbox-unread-badge')
-  if (unread > 0) { badge.textContent = unread; badge.style.display = 'inline-block' }
-  else { badge.style.display = 'none' }
+  const badgeRail = document.getElementById('inbox-unread-badge-rail')
+  if (unread > 0) {
+    badge.textContent = unread; badge.style.display = 'inline-block'
+    badgeRail.textContent = unread; badgeRail.style.display = 'flex'
+  } else {
+    badge.style.display = 'none'
+    badgeRail.style.display = 'none'
+  }
 
   const list = document.getElementById('inbox-thread-list')
   if (!data.threads.length) {

@@ -4556,78 +4556,207 @@
 
     <!-- Connected state -->
     <div id="inbox-connected" style="display:none">
-      <div style="display:grid;grid-template-columns:340px 1fr;gap:0;height:calc(100vh - 180px);border:1px solid var(--border);border-radius:14px;overflow:hidden">
+      <div style="display:grid;grid-template-columns:290px 1fr 272px;gap:0;height:calc(100vh - 130px);border:1px solid var(--border);border-radius:14px;overflow:hidden">
 
-        <!-- Thread list -->
+        <!-- ── COLUMN 1: Thread list ── -->
         <div style="border-right:1px solid var(--border);display:flex;flex-direction:column;background:var(--surface);overflow:hidden;min-height:0">
           <!-- Top bar -->
-          <div style="padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
-            <!-- Tabs -->
-            <div style="display:flex;gap:4px;background:rgba(255,255,255,0.05);border-radius:8px;padding:3px">
-              <button id="tab-inbox" onclick="switchTab('inbox')" style="font-size:12px;font-weight:700;padding:4px 12px;border-radius:6px;border:none;cursor:pointer;font-family:'Inter',sans-serif;background:var(--accent);color:#fff">Inbox</button>
-              <button id="tab-sent" onclick="switchTab('sent')" style="font-size:12px;font-weight:700;padding:4px 12px;border-radius:6px;border:none;cursor:pointer;font-family:'Inter',sans-serif;background:transparent;color:var(--muted)">Sent</button>
+          <div style="padding:10px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
+            <div style="display:flex;gap:3px;background:var(--surface2);border-radius:8px;padding:3px">
+              <button id="tab-inbox" onclick="switchTab('inbox')" style="font-size:11px;font-weight:700;padding:4px 11px;border-radius:6px;border:none;cursor:pointer;font-family:'Inter',sans-serif;background:var(--accent);color:#fff">Inbox</button>
+              <button id="tab-sent" onclick="switchTab('sent')" style="font-size:11px;font-weight:700;padding:4px 11px;border-radius:6px;border:none;cursor:pointer;font-family:'Inter',sans-serif;background:transparent;color:var(--muted)">Sent</button>
             </div>
-            <div style="display:flex;align-items:center;gap:6px">
-              <button onclick="openCompose()" style="background:var(--accent);border:none;color:#fff;cursor:pointer;font-size:12px;font-weight:700;padding:5px 12px;border-radius:7px;font-family:'Inter',sans-serif">+ New Email</button>
-              <button id="inbox-refresh-btn" onclick="refreshCurrentTab()" style="background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:16px">↻</button>
-            </div>
-          </div>
-          <!-- Delete toolbar (shown when items selected) -->
-          <div id="delete-toolbar" style="display:none;padding:8px 16px;background:rgba(255,107,138,0.08);border-bottom:1px solid rgba(255,107,138,0.2);align-items:center;justify-content:space-between;flex-shrink:0">
-            <span id="delete-toolbar-count" style="font-size:12px;font-weight:600;color:var(--danger)">0 selected</span>
-            <div style="display:flex;gap:6px">
-              <button onclick="deleteSelected()" style="font-size:11px;font-weight:700;padding:5px 12px;border-radius:7px;border:1px solid rgba(255,107,138,0.4);background:rgba(255,107,138,0.1);color:var(--danger);cursor:pointer;font-family:'Inter',sans-serif">Delete selected</button>
-              <button onclick="deleteAll()" style="font-size:11px;font-weight:700;padding:5px 12px;border-radius:7px;border:1px solid rgba(255,107,138,0.4);background:rgba(255,107,138,0.15);color:var(--danger);cursor:pointer;font-family:'Inter',sans-serif">Delete all</button>
+            <div style="display:flex;align-items:center;gap:5px">
+              <button onclick="openCompose()" style="background:var(--accent);border:none;color:#fff;cursor:pointer;font-size:11px;font-weight:700;padding:5px 10px;border-radius:7px;font-family:'Inter',sans-serif">+ New</button>
+              <button onclick="refreshCurrentTab()" style="background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:15px;line-height:1" title="Refresh">↻</button>
             </div>
           </div>
-          <!-- Select all row -->
-          <div id="select-all-row" style="display:none;padding:8px 16px;border-bottom:1px solid var(--border);align-items:center;gap:8px;flex-shrink:0">
-            <input type="checkbox" id="select-all-checkbox" onchange="toggleSelectAll(this.checked)" style="accent-color:var(--accent);cursor:pointer;width:14px;height:14px">
+          <!-- Delete toolbar -->
+          <div id="delete-toolbar" style="display:none;padding:7px 12px;background:rgba(255,107,138,0.08);border-bottom:1px solid rgba(255,107,138,0.2);align-items:center;justify-content:space-between;flex-shrink:0">
+            <span id="delete-toolbar-count" style="font-size:11px;font-weight:600;color:var(--danger)">0 selected</span>
+            <div style="display:flex;gap:5px">
+              <button onclick="deleteSelected()" style="font-size:11px;font-weight:700;padding:4px 10px;border-radius:6px;border:1px solid rgba(255,107,138,0.4);background:rgba(255,107,138,0.1);color:var(--danger);cursor:pointer;font-family:'Inter',sans-serif">Delete selected</button>
+              <button onclick="deleteAll()" style="font-size:11px;font-weight:700;padding:4px 10px;border-radius:6px;border:1px solid rgba(255,107,138,0.4);background:rgba(255,107,138,0.15);color:var(--danger);cursor:pointer;font-family:'Inter',sans-serif">Delete all</button>
+            </div>
+          </div>
+          <!-- Select all -->
+          <div id="select-all-row" style="display:none;padding:7px 12px;border-bottom:1px solid var(--border);align-items:center;gap:8px;flex-shrink:0">
+            <input type="checkbox" id="select-all-checkbox" onchange="toggleSelectAll(this.checked)" style="accent-color:var(--accent);cursor:pointer;width:13px;height:13px">
             <label for="select-all-checkbox" style="font-size:12px;color:var(--muted);cursor:pointer">Select all</label>
           </div>
           <div id="inbox-thread-list" style="overflow-y:auto;flex:1"></div>
         </div>
 
-        <!-- Email detail -->
-        <div id="inbox-detail" style="display:flex;flex-direction:column;background:var(--bg)">
+        <!-- ── COLUMN 2: Conversation ── -->
+        <div id="inbox-detail" style="display:flex;flex-direction:column;background:var(--bg);border-right:1px solid var(--border)">
+
+          <!-- Empty state -->
           <div id="inbox-detail-empty" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--muted)">
-            <div style="font-size:32px;margin-bottom:12px">✉️</div>
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:14px;opacity:0.4"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11L2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.45-6.89A2 2 0 0016.76 4H7.24a2 2 0 00-1.79 1.11z"/></svg>
             <div style="font-size:13px">Select a conversation</div>
           </div>
-          <div id="inbox-detail-content" style="display:none;flex-direction:column;height:100%">
-            <!-- Email header -->
-            <div style="padding:18px 24px;border-bottom:1px solid var(--border);background:var(--surface)">
-              <div style="font-size:16px;font-weight:700;margin-bottom:12px;color:var(--text)" id="detail-subject"></div>
-              <div style="display:flex;align-items:center;gap:12px">
-                <div id="detail-avatar" style="width:36px;height:36px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0">?</div>
+
+          <!-- Conversation content -->
+          <div id="inbox-detail-content" style="display:none;flex-direction:column;height:100%;overflow:hidden">
+
+            <!-- Ticket action bar -->
+            <div style="padding:8px 16px;border-bottom:1px solid var(--border);background:var(--surface);flex-shrink:0">
+              <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+                <button onclick="markThreadClosed()" style="display:flex;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:5px 12px;border-radius:7px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;font-family:'Inter',sans-serif">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg> Close
+                </button>
+                <button onclick="addTicketTag()" style="font-size:11px;font-weight:600;padding:5px 10px;border-radius:7px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;font-family:'Inter',sans-serif">+ Add tags</button>
+                <div id="ticket-tags" style="display:flex;gap:4px;flex-wrap:wrap"></div>
+                <div style="margin-left:auto;display:flex;align-items:center;gap:4px">
+                  <span style="font-size:11px;color:var(--muted);padding:3px 8px;background:var(--surface2);border-radius:6px;cursor:pointer" id="ticket-status-badge">normal</span>
+                  <button style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px;padding:0 4px">⋯</button>
+                </div>
+              </div>
+              <div style="display:flex;gap:16px;margin-top:6px;font-size:11px;color:var(--muted)">
+                <span>Contact reason: <span style="color:var(--accent);cursor:pointer;font-weight:600" id="field-reason">+ Add</span></span>
+                <span>Product: <span style="color:var(--accent);cursor:pointer;font-weight:600" id="field-product">+ Add</span></span>
+                <span>Resolution: <span style="color:var(--accent);cursor:pointer;font-weight:600" id="field-resolution">+ Add</span></span>
+              </div>
+            </div>
+
+            <!-- Subject + sender -->
+            <div style="padding:12px 20px;border-bottom:1px solid var(--border);background:var(--surface);flex-shrink:0">
+              <div style="font-size:15px;font-weight:700;margin-bottom:8px;color:var(--text)" id="detail-subject"></div>
+              <div style="display:flex;align-items:center;gap:10px">
+                <div id="detail-avatar" style="width:32px;height:32px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0">?</div>
                 <div style="flex:1;min-width:0">
                   <div style="font-size:13px;font-weight:600;color:var(--text)" id="detail-from-name"></div>
-                  <div style="font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap" id="detail-from"></div>
+                  <div style="font-size:11px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap" id="detail-from"></div>
                 </div>
                 <div style="font-size:11px;color:var(--muted);flex-shrink:0" id="detail-date"></div>
               </div>
             </div>
-            <!-- Email body -->
-            <div style="flex:1;overflow-y:auto;padding:24px;background:var(--bg)" id="detail-body"></div>
-            <!-- Reply area -->
-            <div style="border-top:1px solid var(--border);background:var(--surface)">
+
+            <!-- Message thread -->
+            <div style="flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:16px;background:var(--bg)" id="detail-body"></div>
+
+            <!-- Reply composer -->
+            <div style="border-top:1px solid var(--border);background:var(--surface);flex-shrink:0">
+
               <!-- AI macro suggestions -->
-              <div id="macro-bar" style="display:none;padding:10px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-                <span style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.6px;flex-shrink:0">Suggested:</span>
-                <div id="macro-suggestions" style="display:flex;gap:6px;flex-wrap:wrap"></div>
-                <div id="macro-loading" style="font-size:12px;color:var(--muted)">Loading suggestions...</div>
+              <div id="macro-bar" style="display:none;padding:8px 16px;border-bottom:1px solid var(--border);align-items:center;gap:6px;flex-wrap:wrap">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                <span style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.6px">Suggested macros</span>
+                <div id="macro-suggestions" style="display:flex;gap:5px;flex-wrap:wrap"></div>
+                <div id="macro-loading" style="font-size:11px;color:var(--muted)">Loading suggestions...</div>
               </div>
-              <!-- Reply box -->
-              <div style="padding:14px 16px">
-                <textarea id="reply-box" placeholder="Write your reply..." style="width:100%;height:90px;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:12px;color:var(--text);font-family:'Inter',sans-serif;font-size:13px;resize:none;outline:none;box-sizing:border-box;transition:border-color 0.15s" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"></textarea>
-                <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px">
-                  <div style="font-size:11px;color:var(--muted)" id="reply-status"></div>
-                  <button onclick="sendReply()" style="background:var(--accent);color:#fff;border:none;padding:9px 22px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif">Send Reply</button>
+
+              <!-- To + macro search -->
+              <div style="padding:10px 16px 0;display:flex;flex-direction:column;gap:6px">
+                <div style="display:flex;align-items:center;gap:8px;font-size:12px">
+                  <span style="color:var(--muted);font-weight:600;flex-shrink:0">To:</span>
+                  <span id="reply-to-field" style="color:var(--text);font-size:12px">—</span>
+                </div>
+                <input id="macro-search" placeholder="Search macros by name, tags or body..." style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:7px 12px;color:var(--muted);font-family:'Inter',sans-serif;font-size:12px;outline:none;box-sizing:border-box" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+              </div>
+
+              <!-- Reply textarea -->
+              <div style="padding:8px 16px">
+                <textarea id="reply-box" placeholder="Click here to reply, or press r..." style="width:100%;height:80px;background:transparent;border:none;padding:4px 0;color:var(--text);font-family:'Inter',sans-serif;font-size:13px;resize:none;outline:none;box-sizing:border-box;line-height:1.6"></textarea>
+              </div>
+
+              <!-- Formatting toolbar + send -->
+              <div style="padding:8px 16px 12px;display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--border)">
+                <div style="display:flex;align-items:center;gap:1px">
+                  <button title="Bold" style="width:28px;height:28px;border:none;background:none;cursor:pointer;color:var(--muted);font-size:13px;font-weight:700;border-radius:5px;font-family:'Inter',sans-serif" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='none'">B</button>
+                  <button title="Italic" style="width:28px;height:28px;border:none;background:none;cursor:pointer;color:var(--muted);font-size:13px;font-style:italic;border-radius:5px;font-family:'Inter',sans-serif" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='none'">I</button>
+                  <button title="Underline" style="width:28px;height:28px;border:none;background:none;cursor:pointer;color:var(--muted);font-size:13px;text-decoration:underline;border-radius:5px;font-family:'Inter',sans-serif" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='none'">U</button>
+                  <div style="width:1px;height:16px;background:var(--border);margin:0 4px"></div>
+                  <button title="Link" style="width:28px;height:28px;border:none;background:none;cursor:pointer;color:var(--muted);border-radius:5px" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='none'">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+                  </button>
+                  <button title="Image" style="width:28px;height:28px;border:none;background:none;cursor:pointer;color:var(--muted);border-radius:5px" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='none'">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                  </button>
+                  <button title="Attach file" style="width:28px;height:28px;border:none;background:none;cursor:pointer;color:var(--muted);border-radius:5px" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='none'">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>
+                  </button>
+                  <button title="Emoji" style="width:28px;height:28px;border:none;background:none;cursor:pointer;color:var(--muted);border-radius:5px;font-size:14px" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='none'">☺</button>
+                </div>
+                <div style="display:flex;align-items:center;gap:6px">
+                  <span style="font-size:11px;color:var(--muted)" id="reply-status"></span>
+                  <button onclick="sendReply()" style="background:var(--accent);color:#fff;border:none;padding:7px 18px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif">Send</button>
+                  <button onclick="sendReplyAndClose()" style="background:var(--surface2);color:var(--text);border:1px solid var(--border);padding:7px 14px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif">Send &amp; Close</button>
                 </div>
               </div>
             </div>
           </div>
         </div>
+
+        <!-- ── COLUMN 3: Customer panel ── -->
+        <div id="inbox-customer-panel" style="display:flex;flex-direction:column;background:var(--surface);overflow-y:auto">
+
+          <!-- Empty customer state -->
+          <div id="cust-empty" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--muted);padding:24px;text-align:center">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" style="margin-bottom:10px;opacity:0.4"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            <div style="font-size:12px">Customer info appears<br>when you open a conversation</div>
+          </div>
+
+          <!-- Customer info (shown when thread open) -->
+          <div id="cust-info" style="display:none;flex-direction:column">
+
+            <!-- Customer header -->
+            <div style="padding:14px 14px 10px;border-bottom:1px solid var(--border)">
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+                <div id="cust-avatar" style="width:34px;height:34px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0">?</div>
+                <div style="flex:1;min-width:0">
+                  <div id="cust-name" style="font-size:13px;font-weight:700;color:var(--text)">—</div>
+                  <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px">Customer</div>
+                </div>
+                <button style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px;padding:0">⋯</button>
+              </div>
+              <!-- Customer note -->
+              <div style="font-size:11px;color:var(--muted);font-style:italic;margin-bottom:8px" id="cust-note">This customer has no note.</div>
+              <!-- Contact details -->
+              <div style="display:flex;flex-direction:column;gap:4px;font-size:11px;color:var(--muted)">
+                <div style="display:flex;align-items:center;gap:6px">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                  <span id="cust-email" style="color:var(--text)">—</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:6px">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81 19.79 19.79 0 01.22 1.22 2 2 0 012.18 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.91 7.91a16 16 0 006.29 6.29l1.28-1.29a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
+                  <span id="cust-phone" style="color:var(--text)">—</span>
+                </div>
+              </div>
+              <!-- Ticket stats -->
+              <div style="display:flex;gap:6px;margin-top:10px">
+                <span style="font-size:10px;font-weight:600;padding:3px 8px;border-radius:6px;background:rgba(161,117,252,0.12);color:var(--accent);cursor:pointer">Open Timeline</span>
+                <span id="cust-tickets" style="font-size:10px;font-weight:600;padding:3px 8px;border-radius:6px;background:var(--surface2);color:var(--muted)">1 ticket open</span>
+              </div>
+            </div>
+
+            <!-- Tabs: Shopify | ParcelPanel -->
+            <div style="display:flex;border-bottom:1px solid var(--border);flex-shrink:0">
+              <button id="cust-tab-shopify" onclick="switchCustTab('shopify')" style="flex:1;padding:9px 6px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;border:none;border-bottom:2px solid var(--accent);background:none;cursor:pointer;color:var(--accent);font-family:'Inter',sans-serif">Shopify</button>
+              <button id="cust-tab-parcel" onclick="switchCustTab('parcel')" style="flex:1;padding:9px 6px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;border:none;border-bottom:2px solid transparent;background:none;cursor:pointer;color:var(--muted);font-family:'Inter',sans-serif">ParcelPanel</button>
+            </div>
+
+            <!-- SHOPIFY panel -->
+            <div id="cust-panel-shopify" style="display:flex;flex-direction:column">
+              <div style="padding:12px 14px;border-bottom:1px solid var(--border)">
+                <button style="width:100%;padding:6px;border:1px solid var(--border);border-radius:7px;background:none;color:var(--text);font-family:'Inter',sans-serif;font-size:11px;font-weight:600;cursor:pointer">+ Create order</button>
+                <div style="display:flex;flex-direction:column;gap:5px;margin-top:10px;font-size:11px">
+                  <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Total spent</span><span style="font-weight:700;color:var(--text)" id="cust-total-spent">—</span></div>
+                  <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Orders</span><span style="font-weight:700;color:var(--text)" id="cust-order-count">—</span></div>
+                  <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Customer tags</span><span style="font-weight:600;color:var(--accent);cursor:pointer;font-size:10px">View</span></div>
+                </div>
+              </div>
+              <div id="cust-orders-list" style="display:flex;flex-direction:column"></div>
+            </div>
+
+            <!-- PARCEL PANEL panel -->
+            <div id="cust-panel-parcel" style="display:none;flex-direction:column">
+              <div id="cust-parcel-list" style="display:flex;flex-direction:column"></div>
+            </div>
+
+          </div><!-- /cust-info -->
+        </div><!-- /customer panel -->
+
       </div>
     </div>
   </div>
@@ -5524,18 +5653,95 @@ function openThread(thread) {
   document.getElementById('detail-from').textContent = senderEmail
   document.getElementById('detail-date').textContent = thread.date ? new Date(thread.date).toLocaleString('en-GB', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' }) : ''
 
-  // Show snippet while loading full body
-  document.getElementById('detail-body').innerHTML = '<div style="font-size:13px;line-height:1.8;color:var(--text);white-space:pre-wrap">' + (thread.snippet || '') + '</div>'
+  // Show snippet as a customer message bubble
+  document.getElementById('detail-body').innerHTML =
+    '<div style="display:flex;gap:10px;align-items:flex-start">'
+    + '<div style="width:30px;height:30px;border-radius:50%;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--text);flex-shrink:0">' + initials + '</div>'
+    + '<div style="flex:1;min-width:0">'
+    + '<div style="font-size:11px;font-weight:600;margin-bottom:4px;color:var(--text)">' + (senderName||senderEmail) + ' <span style="font-weight:400;color:var(--muted)">&lt;' + senderEmail + '&gt;</span></div>'
+    + '<div style="font-size:13px;line-height:1.7;color:var(--text);white-space:pre-wrap;padding:12px 14px;background:var(--surface);border:1px solid var(--border);border-radius:10px">' + (thread.snippet || '(no preview)') + '</div>'
+    + '</div></div>'
 
   // Reply box
-  document.getElementById('reply-box').style.display = ''
   document.getElementById('reply-box').value = ''
   document.getElementById('reply-status').textContent = ''
-  const replyFooter = document.querySelector('[onclick="sendReply()"]')
-  if (replyFooter) replyFooter.closest('div').style.display = ''
+
+  // Update "To:" field
+  const replyToField = document.getElementById('reply-to-field')
+  if (replyToField) replyToField.textContent = senderName ? senderName + ' (' + senderEmail + ')' : senderEmail
+
+  // Reset ticket fields
+  document.getElementById('ticket-tags').innerHTML = ''
+  document.getElementById('field-reason').textContent = '+ Add'
+  document.getElementById('field-product').textContent = '+ Add'
+  document.getElementById('field-resolution').textContent = '+ Add'
+
+  // Show customer panel
+  populateCustomerPanel(senderName, senderEmail)
 
   // Load AI macro suggestions
   loadMacros(thread)
+}
+
+function populateCustomerPanel(name, email) {
+  document.getElementById('cust-empty').style.display = 'none'
+  document.getElementById('cust-info').style.display = 'flex'
+
+  // Avatar initials
+  const initials = name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase() || '?'
+  document.getElementById('cust-avatar').textContent = initials
+  document.getElementById('cust-name').textContent = name || email
+  document.getElementById('cust-email').textContent = email
+
+  // Mock Shopify data (placeholder until real API)
+  document.getElementById('cust-total-spent').textContent = '—'
+  document.getElementById('cust-order-count').textContent = '—'
+  document.getElementById('cust-orders-list').innerHTML =
+    '<div style="padding:12px 14px;font-size:11px;color:var(--muted);font-style:italic;border-bottom:1px solid var(--border)">Shopify data will load here once the integration is set up.</div>'
+  document.getElementById('cust-parcel-list').innerHTML =
+    '<div style="padding:12px 14px;font-size:11px;color:var(--muted);font-style:italic">ParcelPanel tracking will appear here.</div>'
+
+  switchCustTab('shopify')
+}
+
+function switchCustTab(tab) {
+  const shopifyBtn = document.getElementById('cust-tab-shopify')
+  const parcelBtn  = document.getElementById('cust-tab-parcel')
+  const shopifyPanel = document.getElementById('cust-panel-shopify')
+  const parcelPanel  = document.getElementById('cust-panel-parcel')
+  if (tab === 'shopify') {
+    shopifyBtn.style.color = 'var(--accent)'; shopifyBtn.style.borderBottomColor = 'var(--accent)'
+    parcelBtn.style.color  = 'var(--muted)';  parcelBtn.style.borderBottomColor  = 'transparent'
+    shopifyPanel.style.display = 'flex'; parcelPanel.style.display = 'none'
+  } else {
+    parcelBtn.style.color  = 'var(--accent)'; parcelBtn.style.borderBottomColor = 'var(--accent)'
+    shopifyBtn.style.color = 'var(--muted)';  shopifyBtn.style.borderBottomColor = 'transparent'
+    parcelPanel.style.display = 'flex'; shopifyPanel.style.display = 'none'
+  }
+}
+
+function markThreadClosed() {
+  const badge = document.getElementById('ticket-status-badge')
+  if (!badge) return
+  const isClosed = badge.textContent === 'closed'
+  badge.textContent = isClosed ? 'open' : 'closed'
+  badge.style.background = isClosed ? 'rgba(161,117,252,0.12)' : 'rgba(78,204,163,0.12)'
+  badge.style.color = isClosed ? 'var(--accent)' : 'var(--green)'
+}
+
+function addTicketTag() {
+  const tag = prompt('Tag name:')
+  if (!tag) return
+  const container = document.getElementById('ticket-tags')
+  const pill = document.createElement('span')
+  pill.style.cssText = 'font-size:11px;font-weight:600;padding:3px 8px;border-radius:5px;background:rgba(161,117,252,0.12);color:var(--accent);cursor:pointer;display:flex;align-items:center;gap:4px'
+  pill.innerHTML = tag + ' <span onclick="this.parentElement.remove()" style="opacity:0.6;font-size:12px">×</span>'
+  container.appendChild(pill)
+}
+
+async function sendReplyAndClose() {
+  await sendReply()
+  markThreadClosed()
 }
 
 async function loadMacros(thread) {

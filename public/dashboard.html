@@ -4364,50 +4364,75 @@
     <div class="page-header">
       <div>
         <div class="page-title">Quality Checks</div>
-        <div class="page-sub">Track product quality checks — from request to approval</div>
+        <div class="page-sub">Track product quality from action point to approval</div>
       </div>
     </div>
 
-    <div id="packaging-banner" style="background:linear-gradient(135deg,rgba(255,209,102,0.12),rgba(255,209,102,0.06));border:1px solid rgba(255,209,102,0.3);border-radius:14px;padding:18px 22px;margin-bottom:24px;display:flex;align-items:flex-start;gap:16px">
-      <div style="font-size:28px;flex-shrink:0">📦</div>
-      <div style="flex:1">
-        <div style="font-size:13px;font-weight:800;color:var(--warn);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:4px">Packaging Recommendation — 30+ Orders/Day Detected</div>
-        <div style="font-size:13px;color:var(--text);line-height:1.6">You're processing <strong>30+ orders per day</strong>. Consider switching to <strong>custom branded packaging</strong> with a thank-you card and discount code (e.g. <span style="color:var(--accent);font-weight:700">THANKYOU10</span>) to boost satisfaction and repeat purchases.</div>
+    <!-- KPI row -->
+    <div class="kpi-row" style="grid-template-columns:repeat(4,1fr);margin-bottom:24px">
+      <div class="kpi purple">
+        <div class="kpi-label">Needs Check</div>
+        <div class="kpi-value" id="qc-stat-new">—</div>
+        <div class="kpi-delta">action required</div>
       </div>
-      <button onclick="document.getElementById('packaging-banner').style.display='none'" style="background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:18px;flex-shrink:0;padding:0">✕</button>
+      <div class="kpi warn">
+        <div class="kpi-label">Check Asked</div>
+        <div class="kpi-value" id="qc-stat-asked">—</div>
+        <div class="kpi-delta">waiting on supplier</div>
+      </div>
+      <div class="kpi red">
+        <div class="kpi-label">Not Approved</div>
+        <div class="kpi-value" id="qc-stat-rejected">—</div>
+        <div class="kpi-delta">improvement needed</div>
+      </div>
+      <div class="kpi green">
+        <div class="kpi-label">Approved</div>
+        <div class="kpi-value" id="qc-stat-approved">—</div>
+        <div class="kpi-delta">quality confirmed</div>
+      </div>
     </div>
 
-    <!-- Kanban board -->
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;align-items:start">
+    <!-- Kanban board: 4 columns -->
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:16px;align-items:start">
 
-      <!-- Column 1: Check Asked -->
+      <!-- Col 1: Needs Check -->
       <div>
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
-          <div style="width:10px;height:10px;border-radius:50%;background:var(--warn);flex-shrink:0"></div>
-          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--muted)">Check Asked</div>
-          <span id="qc-count-asked" style="margin-left:auto;background:rgba(255,209,102,0.2);color:var(--warn);font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px">0</span>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+          <div style="width:8px;height:8px;border-radius:50%;background:var(--accent);flex-shrink:0"></div>
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--muted)">Needs Check</div>
+          <span id="qc-badge-new" style="margin-left:auto;background:rgba(161,117,252,0.2);color:var(--accent);font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px">0</span>
         </div>
-        <div id="qc-col-asked" style="display:flex;flex-direction:column;gap:10px;min-height:80px"></div>
+        <div id="qc-col-new" style="display:flex;flex-direction:column;gap:10px;min-height:60px"></div>
       </div>
 
-      <!-- Column 2: Not Approved -->
+      <!-- Col 2: Check Asked -->
       <div>
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
-          <div style="width:10px;height:10px;border-radius:50%;background:var(--danger);flex-shrink:0"></div>
-          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--muted)">Not Approved</div>
-          <span id="qc-count-rejected" style="margin-left:auto;background:rgba(255,107,138,0.2);color:var(--danger);font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px">0</span>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+          <div style="width:8px;height:8px;border-radius:50%;background:var(--warn);flex-shrink:0"></div>
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--muted)">Check Asked</div>
+          <span id="qc-badge-asked" style="margin-left:auto;background:rgba(255,209,102,0.2);color:var(--warn);font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px">0</span>
         </div>
-        <div id="qc-col-rejected" style="display:flex;flex-direction:column;gap:10px;min-height:80px"></div>
+        <div id="qc-col-asked" style="display:flex;flex-direction:column;gap:10px;min-height:60px"></div>
       </div>
 
-      <!-- Column 3: Approved -->
+      <!-- Col 3: Not Approved -->
       <div>
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
-          <div style="width:10px;height:10px;border-radius:50%;background:var(--green);flex-shrink:0"></div>
-          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--muted)">Approved</div>
-          <span id="qc-count-approved" style="margin-left:auto;background:rgba(78,204,163,0.2);color:var(--green);font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px">0</span>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+          <div style="width:8px;height:8px;border-radius:50%;background:var(--danger);flex-shrink:0"></div>
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--muted)">Not Approved</div>
+          <span id="qc-badge-rejected" style="margin-left:auto;background:rgba(255,107,138,0.2);color:var(--danger);font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px">0</span>
         </div>
-        <div id="qc-col-approved" style="display:flex;flex-direction:column;gap:10px;min-height:80px"></div>
+        <div id="qc-col-rejected" style="display:flex;flex-direction:column;gap:10px;min-height:60px"></div>
+      </div>
+
+      <!-- Col 4: Approved -->
+      <div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+          <div style="width:8px;height:8px;border-radius:50%;background:var(--green);flex-shrink:0"></div>
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--muted)">Approved</div>
+          <span id="qc-badge-approved" style="margin-left:auto;background:rgba(78,204,163,0.2);color:var(--green);font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px">0</span>
+        </div>
+        <div id="qc-col-approved" style="display:flex;flex-direction:column;gap:10px;min-height:60px"></div>
       </div>
 
     </div>
@@ -4972,17 +4997,17 @@ initDashboard()
 
 <script>
 (function() {
-  var STORAGE_KEY = 'qc_board';
+  var STORAGE_KEY = 'qc_board_v2';
   var DEFAULT_PRODUCTS = [
-    { id: 1, name: 'Classic Linen Dress',  sales: 18, status: 'asked', askedAt: Date.now() - 3*24*60*60*1000 },
-    { id: 2, name: 'Summer Wrap Skirt',    sales: 13, status: 'asked', askedAt: Date.now() - 2*24*60*60*1000 },
-    { id: 3, name: 'Bamboo Tote Bag',      sales: 11, status: 'asked', askedAt: Date.now() - 1*24*60*60*1000 },
-    { id: 4, name: 'Organic Cotton Tee',   sales: 9,  status: 'rejected', askedAt: Date.now() - 5*24*60*60*1000 },
-    { id: 5, name: 'Linen Shorts',         sales: 7,  status: 'asked', askedAt: Date.now() - 4*24*60*60*1000 },
+    { id: 1, name: 'Classic Linen Dress',  sales: 18, status: 'new', askedAt: null },
+    { id: 2, name: 'Summer Wrap Skirt',    sales: 13, status: 'new', askedAt: null },
+    { id: 3, name: 'Bamboo Tote Bag',      sales: 11, status: 'new', askedAt: null },
+    { id: 4, name: 'Organic Cotton Tee',   sales: 9,  status: 'asked', askedAt: Date.now() - 5*24*60*60*1000 },
+    { id: 5, name: 'Linen Shorts',         sales: 7,  status: 'asked', askedAt: Date.now() - 2*24*60*60*1000 },
     { id: 6, name: 'Floral Midi Dress',    sales: 6,  status: 'asked', askedAt: Date.now() - 6*60*60*1000 },
-    { id: 7, name: 'Canvas Crossbody Bag', sales: 5,  status: 'asked', askedAt: Date.now() - 12*60*60*1000 },
-    { id: 8, name: 'Ribbed Tank Top',      sales: 4,  status: 'asked', askedAt: Date.now() - 2*60*60*1000 },
-    { id: 9, name: 'Wide-Leg Trousers',    sales: 3,  status: 'asked', askedAt: Date.now() - 30*60*1000 }
+    { id: 7, name: 'Canvas Crossbody Bag', sales: 5,  status: 'rejected', askedAt: Date.now() - 8*24*60*60*1000 },
+    { id: 8, name: 'Ribbed Tank Top',      sales: 4,  status: 'new', askedAt: null },
+    { id: 9, name: 'Wide-Leg Trousers',    sales: 3,  status: 'new', askedAt: null }
   ];
 
   function load() {
@@ -5010,38 +5035,42 @@ initDashboard()
     return 'var(--muted)';
   }
 
+  var S = 'background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;';
+  var BTN = 'width:100%;font-size:11px;font-weight:700;padding:7px 0;border-radius:8px;cursor:pointer;font-family:\'Rethink Sans\',sans-serif;margin-top:6px;border:1px solid ';
+
+  function header(p, borderColor) {
+    return '<div style="' + S + 'border-left:3px solid ' + borderColor + '">'
+      + '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:6px;margin-bottom:8px">'
+      + '<div style="font-size:13px;font-weight:700;line-height:1.3">' + p.name + '</div>'
+      + '<span style="background:rgba(161,117,252,0.15);color:var(--accent);font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px;white-space:nowrap;flex-shrink:0">' + p.sales + ' sales</span>'
+      + '</div>';
+  }
+
   function cardHTML(p) {
+    if (p.status === 'new') {
+      return header(p, 'var(--accent)')
+        + '<div style="font-size:11px;color:var(--muted);margin-bottom:10px">Ask supplier for quality check</div>'
+        + '<button onclick="qcMove(' + p.id + ',\'asked\')" style="' + BTN + 'rgba(255,209,102,0.3);background:rgba(255,209,102,0.12);color:var(--warn)">&#9203; Quality Check Asked</button>'
+        + '</div>';
+    }
     if (p.status === 'asked') {
-      return '<div style="background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--warn);border-radius:12px;padding:14px 16px">'
-        + '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:10px">'
-        + '<div style="font-size:13px;font-weight:700">' + p.name + '</div>'
-        + '<span style="background:rgba(161,117,252,0.15);color:var(--accent);font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;white-space:nowrap">' + p.sales + ' sales</span>'
-        + '</div>'
-        + '<div style="font-size:11px;font-weight:600;color:' + urgencyColor(p.askedAt) + ';margin-bottom:12px">&#9203; ' + waitingLabel(p.askedAt) + '</div>'
+      var wait = p.askedAt ? '<div style="font-size:11px;font-weight:600;color:' + urgencyColor(p.askedAt) + ';margin-bottom:10px">&#9203; ' + waitingLabel(p.askedAt) + '</div>' : '';
+      return header(p, 'var(--warn)')
+        + wait
         + '<div style="display:flex;gap:6px">'
-        + '<button onclick="qcMove(' + p.id + ',\'approved\')" style="flex:1;background:rgba(78,204,163,0.1);border:1px solid rgba(78,204,163,0.25);color:#4ecca3;font-size:11px;font-weight:700;padding:6px 0;border-radius:8px;cursor:pointer;font-family:\'Rethink Sans\',sans-serif">&#10003; Approve</button>'
-        + '<button onclick="qcMove(' + p.id + ',\'rejected\')" style="flex:1;background:rgba(255,107,138,0.1);border:1px solid rgba(255,107,138,0.25);color:#ff6b8a;font-size:11px;font-weight:700;padding:6px 0;border-radius:8px;cursor:pointer;font-family:\'Rethink Sans\',sans-serif">&#10005; Not Approved</button>'
+        + '<button onclick="qcMove(' + p.id + ',\'approved\')" style="flex:1;font-size:11px;font-weight:700;padding:6px 0;border-radius:8px;cursor:pointer;font-family:\'Rethink Sans\',sans-serif;background:rgba(78,204,163,0.1);border:1px solid rgba(78,204,163,0.25);color:#4ecca3">&#10003; Approved</button>'
+        + '<button onclick="qcMove(' + p.id + ',\'rejected\')" style="flex:1;font-size:11px;font-weight:700;padding:6px 0;border-radius:8px;cursor:pointer;font-family:\'Rethink Sans\',sans-serif;background:rgba(255,107,138,0.1);border:1px solid rgba(255,107,138,0.25);color:#ff6b8a">&#10005; Not Approved</button>'
         + '</div>'
         + '</div>';
     }
     if (p.status === 'rejected') {
-      return '<div style="background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--danger);border-radius:12px;padding:14px 16px">'
-        + '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:8px">'
-        + '<div style="font-size:13px;font-weight:700">' + p.name + '</div>'
-        + '<span style="background:rgba(161,117,252,0.15);color:var(--accent);font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;white-space:nowrap">' + p.sales + ' sales</span>'
+      return header(p, 'var(--danger)')
+        + '<div style="font-size:11px;font-weight:700;color:var(--danger);margin-bottom:10px">Action required:</div>'
+        + '<div style="display:flex;flex-direction:column;gap:5px;margin-bottom:10px">'
+        + '<label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer"><input type="checkbox" style="accent-color:var(--accent)"> Request better quality from supplier</label>'
+        + '<label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer"><input type="checkbox" style="accent-color:var(--accent)"> Remove product from store</label>'
         + '</div>'
-        + '<div style="font-size:11px;color:var(--muted);margin-bottom:12px">Better quality requested from supplier</div>'
-        + '<button onclick="qcMove(' + p.id + ',\'approved\')" style="width:100%;background:rgba(78,204,163,0.1);border:1px solid rgba(78,204,163,0.25);color:#4ecca3;font-size:11px;font-weight:700;padding:6px 0;border-radius:8px;cursor:pointer;font-family:\'Rethink Sans\',sans-serif">&#10003; Mark as Approved</button>'
-        + '</div>';
-    }
-    if (p.status === 'approved') {
-      return '<div style="background:var(--surface);border:1px solid rgba(78,204,163,0.2);border-left:3px solid var(--green);border-radius:12px;padding:14px 16px">'
-        + '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:8px">'
-        + '<div style="font-size:13px;font-weight:700">' + p.name + '</div>'
-        + '<span style="background:rgba(161,117,252,0.15);color:var(--accent);font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;white-space:nowrap">' + p.sales + ' sales</span>'
-        + '</div>'
-        + '<div style="font-size:11px;color:var(--green);margin-bottom:12px">&#10003; Quality confirmed</div>'
-        + '<button onclick="qcDismiss(' + p.id + ')" style="width:100%;background:rgba(255,255,255,0.04);border:1px solid var(--border);color:var(--muted);font-size:11px;font-weight:600;padding:6px 0;border-radius:8px;cursor:pointer;font-family:\'Rethink Sans\',sans-serif">Remove from board</button>'
+        + '<button onclick="qcMove(' + p.id + ',\'done\')" style="' + BTN + 'rgba(78,204,163,0.3);background:rgba(78,204,163,0.1);color:#4ecca3">&#10003; Completed</button>'
         + '</div>';
     }
     return '';
@@ -5049,34 +5078,55 @@ initDashboard()
 
   function render() {
     var products = load();
-    var asked = products.filter(function(p) { return p.status === 'asked'; });
+    var newP     = products.filter(function(p) { return p.status === 'new'; });
+    var asked    = products.filter(function(p) { return p.status === 'asked'; });
     var rejected = products.filter(function(p) { return p.status === 'rejected'; });
     var approved = products.filter(function(p) { return p.status === 'approved'; });
 
-    var colAsked = document.getElementById('qc-col-asked');
+    var colNew      = document.getElementById('qc-col-new');
+    var colAsked    = document.getElementById('qc-col-asked');
     var colRejected = document.getElementById('qc-col-rejected');
     var colApproved = document.getElementById('qc-col-approved');
-    if (!colAsked) return;
+    if (!colNew) return;
 
-    colAsked.innerHTML = asked.length ? asked.map(cardHTML).join('') : '<div style="font-size:12px;color:var(--muted);text-align:center;padding:20px 0">No checks pending</div>';
-    colRejected.innerHTML = rejected.length ? rejected.map(cardHTML).join('') : '<div style="font-size:12px;color:var(--muted);text-align:center;padding:20px 0">None</div>';
-    colApproved.innerHTML = approved.length ? approved.map(cardHTML).join('') : '<div style="font-size:12px;color:var(--muted);text-align:center;padding:20px 0">None yet</div>';
+    var empty = '<div style="font-size:12px;color:var(--muted);text-align:center;padding:20px 0;border:1px dashed rgba(255,255,255,0.08);border-radius:10px">—</div>';
+    colNew.innerHTML      = newP.length     ? newP.map(cardHTML).join('')     : empty;
+    colAsked.innerHTML    = asked.length    ? asked.map(cardHTML).join('')    : empty;
+    colRejected.innerHTML = rejected.length ? rejected.map(cardHTML).join('') : empty;
+    colApproved.innerHTML = approved.length
+      ? approved.map(function(p) {
+          return '<div style="background:var(--surface);border:1px solid rgba(78,204,163,0.2);border-left:3px solid var(--green);border-radius:12px;padding:14px 16px">'
+            + '<div style="font-size:13px;font-weight:700;margin-bottom:4px">' + p.name + '</div>'
+            + '<div style="font-size:11px;color:var(--green);margin-bottom:10px">&#10003; Quality confirmed</div>'
+            + '<button onclick="qcDismiss(' + p.id + ')" style="width:100%;font-size:11px;font-weight:600;padding:6px 0;border-radius:8px;cursor:pointer;font-family:\'Rethink Sans\',sans-serif;background:rgba(255,255,255,0.04);border:1px solid var(--border);color:var(--muted)">Remove</button>'
+            + '</div>';
+        }).join('')
+      : empty;
 
-    document.getElementById('qc-count-asked').textContent = asked.length;
-    document.getElementById('qc-count-rejected').textContent = rejected.length;
-    document.getElementById('qc-count-approved').textContent = approved.length;
+    document.getElementById('qc-badge-new').textContent      = newP.length;
+    document.getElementById('qc-badge-asked').textContent    = asked.length;
+    document.getElementById('qc-badge-rejected').textContent = rejected.length;
+    document.getElementById('qc-badge-approved').textContent = approved.length;
+    document.getElementById('qc-stat-new').textContent      = newP.length;
+    document.getElementById('qc-stat-asked').textContent    = asked.length;
+    document.getElementById('qc-stat-rejected').textContent = rejected.length;
+    document.getElementById('qc-stat-approved').textContent = approved.length;
   }
 
   window.qcMove = function(id, newStatus) {
     var products = load();
-    products.forEach(function(p) { if (p.id === id) p.status = newStatus; });
+    products.forEach(function(p) {
+      if (p.id === id) {
+        p.status = newStatus;
+        if (newStatus === 'asked') p.askedAt = Date.now();
+      }
+    });
     save(products);
     render();
   };
 
   window.qcDismiss = function(id) {
-    var products = load().filter(function(p) { return p.id !== id; });
-    save(products);
+    save(load().filter(function(p) { return p.id !== id; }));
     render();
   };
 

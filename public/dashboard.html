@@ -4970,9 +4970,6 @@ initDashboard()
           <tr style="border-bottom:1px solid var(--border)">
             <th style="text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--muted);padding:0 12px 12px 0">Product</th>
             <th style="text-align:center;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--muted);padding:0 12px 12px">Sales</th>
-            <th style="text-align:center;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--muted);padding:0 12px 12px">Image</th>
-            <th style="text-align:center;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--muted);padding:0 12px 12px">Video</th>
-            <th style="text-align:center;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--muted);padding:0 12px 12px">Size Table</th>
             <th style="text-align:center;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--muted);padding:0 12px 12px">Status</th>
           </tr>
         </thead>
@@ -4985,15 +4982,15 @@ initDashboard()
 
   // Sample product data (replace with live Shopify data later)
   const products = [
-    { name: 'Classic Linen Dress', sales: 18, image: null, video: null, sizeTable: false, status: 'pending' },
-    { name: 'Summer Wrap Skirt', sales: 13, image: null, video: null, sizeTable: false, status: 'pending' },
-    { name: 'Bamboo Tote Bag', sales: 11, image: null, video: null, sizeTable: false, status: 'approved' },
-    { name: 'Organic Cotton Tee', sales: 9, image: null, video: null, sizeTable: false, status: 'not_approved' },
-    { name: 'Linen Shorts', sales: 7, image: null, video: null, sizeTable: false, status: 'pending' },
-    { name: 'Floral Midi Dress', sales: 6, image: null, video: null, sizeTable: false, status: 'pending' },
-    { name: 'Canvas Crossbody Bag', sales: 5, image: null, video: null, sizeTable: false, status: 'approved' },
-    { name: 'Ribbed Tank Top', sales: 4, image: null, video: null, sizeTable: false, status: 'pending' },
-    { name: 'Wide-Leg Trousers', sales: 3, image: null, video: null, sizeTable: false, status: 'pending' },
+    { name: 'Classic Linen Dress', sales: 18, status: 'pending' },
+    { name: 'Summer Wrap Skirt', sales: 13, status: 'pending' },
+    { name: 'Bamboo Tote Bag', sales: 11, status: 'approved' },
+    { name: 'Organic Cotton Tee', sales: 9, status: 'not_approved' },
+    { name: 'Linen Shorts', sales: 7, status: 'pending' },
+    { name: 'Floral Midi Dress', sales: 6, status: 'pending' },
+    { name: 'Canvas Crossbody Bag', sales: 5, status: 'approved' },
+    { name: 'Ribbed Tank Top', sales: 4, status: 'pending' },
+    { name: 'Wide-Leg Trousers', sales: 3, status: 'pending' },
   ];
 
   function statusBadge(status, idx) {
@@ -5020,18 +5017,6 @@ initDashboard()
         </td>
         <td style="text-align:center;padding:14px 12px">
           <span style="background:rgba(161,117,252,0.15);color:var(--accent);font-size:13px;font-weight:700;padding:3px 10px;border-radius:20px">\${p.sales}</span>
-        </td>
-        <td style="text-align:center;padding:14px 12px">
-          \${p.image
-            ? \`<img src="\${p.image}" style="width:40px;height:40px;object-fit:cover;border-radius:8px;border:1px solid var(--border)">\`
-            : \`<label style="cursor:pointer"><input type="file" accept="image/*" style="display:none" onchange="uploadQCFile(event,\${i},'image')"><span style="font-size:11px;color:var(--muted);border:1px dashed var(--border);border-radius:8px;padding:5px 10px;display:inline-block">+ Add</span></label>\`
-          }
-        </td>
-        <td style="text-align:center;padding:14px 12px">
-          \${p.video
-            ? \`<span style="font-size:11px;color:var(--green)">✓ Uploaded</span>\`
-            : \`<label style="cursor:pointer"><input type="file" accept="video/*" style="display:none" onchange="uploadQCFile(event,\${i},'video')"><span style="font-size:11px;color:var(--muted);border:1px dashed var(--border);border-radius:8px;padding:5px 10px;display:inline-block">+ Add</span></label>\`
-          }
         </td>
         <td style="text-align:center;padding:14px 12px">
           <button onclick="toggleSizeTable(\${i})" style="background:rgba(161,117,252,0.1);border:1px solid rgba(161,117,252,0.2);color:var(--accent);font-size:11px;font-weight:600;padding:5px 12px;border-radius:8px;cursor:pointer;font-family:'Rethink Sans',sans-serif">
@@ -5062,19 +5047,6 @@ initDashboard()
 
   window.setQCStatus = function(idx, status) {
     products[idx].status = status;
-    renderTable();
-  };
-
-  window.uploadQCFile = function(event, idx, type) {
-    const file = event.target.files[0];
-    if (!file) return;
-    const url = URL.createObjectURL(file);
-    products[idx][type] = url;
-    renderTable();
-  };
-
-  window.toggleSizeTable = function(idx) {
-    products[idx].sizeTable = !products[idx].sizeTable;
     renderTable();
   };
 

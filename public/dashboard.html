@@ -58,78 +58,109 @@
     overflow: hidden;
   }
 
-  /* ── SIDEBAR — always dark like Gorgias ── */
+  /* ── SIDEBAR — two-panel icon rail ── */
   .sidebar {
-    width: 230px;
-    min-width: 230px;
+    width: 232px; min-width: 232px;
     background: #1a1040;
-    border-right: none;
-    display: flex;
-    flex-direction: column;
-    padding: 28px 0;
+    display: flex; flex-direction: row;
   }
-  .logo {
-    padding: 0 24px 32px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-  .logo-mark {
-    width: 32px;
-    height: 32px;
-    background: var(--accent);
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 16px;
-    font-weight: 800;
-    color: #fff;
-  }
-  .logo-text { font-size: 15px; font-weight: 700; letter-spacing: -0.3px; color: #fff; }
-  .logo-text span { color: #A175FC; }
 
-  .nav-section { padding: 0 12px 8px; }
-  .nav-label {
-    font-size: 10px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    color: rgba(255,255,255,0.30);
-    padding: 0 12px 8px;
+  /* Left icon rail */
+  .nav-rail {
+    width: 56px; min-width: 56px;
+    background: #120b2e;
+    border-right: 1px solid rgba(255,255,255,0.05);
+    display: flex; flex-direction: column; align-items: center;
+    padding: 16px 0 14px;
+  }
+  .rail-logo {
+    width: 32px; height: 32px;
+    background: #A175FC; border-radius: 9px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 900; color: #fff; letter-spacing: -1px;
+    flex-shrink: 0; margin-bottom: 18px; cursor: pointer;
+  }
+  .rail-items {
+    display: flex; flex-direction: column; gap: 2px;
+    flex: 1; width: 100%; padding: 0 6px; overflow-y: auto;
+  }
+  .rail-item {
+    width: 100%; min-height: 42px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    border-radius: 10px; cursor: pointer; border: none;
+    background: transparent; color: rgba(255,255,255,0.32);
+    transition: all 0.15s; position: relative; padding: 5px 0;
+  }
+  .rail-item:hover { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.75); }
+  .rail-item.active { background: rgba(161,117,252,0.22); color: #A175FC; }
+  .rail-item svg {
+    width: 17px; height: 17px; stroke: currentColor; stroke-width: 1.8;
+    fill: none; stroke-linecap: round; stroke-linejoin: round;
+  }
+  .rail-badge {
+    position: absolute; top: 4px; right: 4px;
+    background: #ff6b8a; color: #fff;
+    font-size: 8px; font-weight: 800;
+    min-width: 13px; height: 13px; padding: 0 2px; border-radius: 7px;
+    display: flex; align-items: center; justify-content: center; line-height: 1;
+  }
+  .rail-badge.warn   { background: #ffd166; color: #1C0F36; }
+  .rail-badge.accent { background: #A175FC; }
+  .rail-footer {
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+    padding: 10px 6px 0; border-top: 1px solid rgba(255,255,255,0.07); width: 100%;
+  }
+  .rail-theme-btn {
+    width: 36px; height: 36px; border-radius: 9px;
+    border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.04);
+    cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 14px;
+  }
+  .rail-avatar {
+    width: 30px; height: 30px; border-radius: 8px; background: #A175FC;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 800; color: #fff; cursor: pointer;
+    title: 'Smith Sisters';
+  }
+
+  /* Right nav panel */
+  .nav-panel { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  .nav-panel-section { display: none; flex-direction: column; height: 100%; padding-top: 14px; }
+  .nav-panel-section.active { display: flex; }
+  .panel-header {
+    padding: 0 14px 12px;
+    border-bottom: 1px solid rgba(255,255,255,0.06); margin-bottom: 4px;
+  }
+  .panel-header-logo { height: 16px; filter: brightness(0) invert(1); opacity: 0.82; display: block; }
+  .panel-header-title {
+    font-size: 10px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 1px; color: rgba(255,255,255,0.30);
   }
   .nav-item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 10px 12px;
-    border-radius: 10px;
-    cursor: pointer;
-    font-size: 13.5px;
-    font-weight: 500;
-    color: rgba(255,255,255,0.60);
-    transition: all 0.15s;
-    margin-bottom: 2px;
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 10px 8px 12px;
+    border-radius: 8px; cursor: pointer;
+    font-size: 13px; font-weight: 500;
+    color: rgba(255,255,255,0.55);
+    transition: all 0.15s; margin: 0 5px 1px;
   }
-  .nav-item:hover { background: rgba(255,255,255,0.07); color: #fff; }
+  .nav-item:hover { background: rgba(255,255,255,0.06); color: #fff; }
   .nav-item.active { background: rgba(161,117,252,0.20); color: #fff; font-weight: 600; }
-  .nav-item.active .nav-icon { color: #A175FC; }
-  .nav-icon { font-size: 16px; width: 20px; text-align: center; }
-
-  .sidebar-footer {
-    margin-top: auto;
-    padding: 16px 24px;
-    border-top: 1px solid rgba(255,255,255,0.08);
+  .nav-badge {
+    margin-left: auto; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 20px;
+  }
+  .nav-badge.danger { background: #ff6b8a; color: #fff; }
+  .nav-badge.warn   { background: #ffd166; color: #1C0F36; }
+  .nav-badge.accent { background: #A175FC; color: #fff; }
+  .panel-footer {
+    margin-top: auto; padding: 10px 10px 12px;
+    border-top: 1px solid rgba(255,255,255,0.07);
   }
   .client-badge {
-    background: rgba(255,255,255,0.06);
-    border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 10px;
-    padding: 10px 12px;
-    font-size: 12px;
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 9px; padding: 8px 10px; font-size: 11px;
   }
-  .client-badge .client-name { font-weight: 700; font-size: 13px; color: #fff; }
-  .client-badge .client-sub { color: rgba(255,255,255,0.45); margin-top: 2px; }
+  .client-badge .client-name { font-weight: 700; font-size: 12px; color: #fff; }
+  .client-badge .client-sub { color: rgba(255,255,255,0.38); margin-top: 1px; font-size: 10px; }
 
   /* ── MAIN ── */
   .main {
@@ -1020,93 +1051,160 @@
 
 <!-- SIDEBAR -->
 <div class="sidebar">
-  <div class="logo">
-    <img src="/logo.png" alt="Lynq & Flow" style="height:20px;filter:brightness(0) invert(1);opacity:0.88">
-  </div>
 
-  <div class="nav-section">
-    <div class="nav-label">Overview</div>
-    <div class="nav-item active" onclick="showPage('home', this)">
-      <span class="nav-icon">🏠</span> Home
-    </div>
-    <div class="nav-item" onclick="showPage('inbox', this)">
-      <span class="nav-icon">✉️</span> Inbox
-      <span id="inbox-unread-badge" style="margin-left:auto;background:var(--accent);color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px;display:none">0</span>
-    </div>
-  </div>
+  <!-- Icon Rail -->
+  <div class="nav-rail">
+    <div class="rail-logo" onclick="switchSection('overview', document.querySelector('[data-section=overview]'))">L&F</div>
+    <div class="rail-items">
 
-  <div class="nav-section" style="margin-top:12px">
-    <div class="nav-label">Analytics</div>
-    <div class="nav-item" onclick="showPage('risk', this)">
-      <span class="nav-icon">🔥</span> Revenue at Risk
-      <span style="margin-left:auto;background:var(--danger);color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px">14</span>
-    </div>
-    <div class="nav-item" onclick="showPage('refunds', this)">
-      <span class="nav-icon">↩</span> Refunds
-    </div>
-    <div class="nav-item" onclick="showPage('cancellations', this)">
-      <span class="nav-icon">✕</span> Cancellations
-    </div>
-    <div class="nav-item" onclick="showPage('reports', this)">
-      <span class="nav-icon">📄</span> Reports
-    </div>
-  </div>
-
-
-  <div class="nav-section" style="margin-top:12px">
-    <div class="nav-label">Actions</div>
-    <div class="nav-item" onclick="showPage('actions', this)">
-      <span class="nav-icon">⚡</span> Action Items
-      <span style="margin-left:auto;background:var(--danger);color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px">3</span>
-    </div>
-  </div>
-
-  <div class="nav-section" style="margin-top:12px">
-    <div class="nav-label">Performance</div>
-    <div class="nav-item" onclick="showPage('performance', this)">
-      <span class="nav-icon">📊</span> CS Performance
-    </div>
-  </div>
-
-  <div class="nav-section" style="margin-top:12px">
-    <div class="nav-label">Logistics</div>
-    <div class="nav-item" onclick="showPage('supply', this)">
-      <span class="nav-icon">📦</span> Supply Chain
-      <span style="margin-left:auto;background:var(--warn);color:#1C0F36;font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px">5</span>
-    </div>
-    <div class="nav-item" style="padding-left:32px" onclick="showPage('autoemails', this)">
-      <span class="nav-icon" style="font-size:13px">✉️</span> <span style="font-size:13px">Auto Emails</span>
-    </div>
-  </div>
-
-  <div class="nav-section" style="margin-top:12px">
-    <div class="nav-label">Quality</div>
-    <div class="nav-item" onclick="showPage('quality', this)">
-      <span class="nav-icon">✅</span> Quality Checks
-    </div>
-  </div>
-
-  <div class="sidebar-footer">
-    <div class="nav-section" style="padding:0;margin-bottom:16px">
-      <div class="nav-label" style="padding:0 12px 8px">Growth</div>
-      <div class="nav-item" onclick="showPage('value', this)">
-        <span class="nav-icon">💡</span> Value Feed
-        <span style="margin-left:auto;background:var(--accent);color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px">New</span>
-      </div>
-    </div>
-    <div style="border-top:1px solid rgba(255,255,255,0.08);padding-top:16px;display:flex;flex-direction:column;gap:10px">
-      <!-- Theme toggle -->
-      <button onclick="toggleTheme()" id="theme-toggle-btn" style="display:flex;align-items:center;gap:8px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.10);border-radius:10px;padding:8px 12px;cursor:pointer;font-family:'Inter',sans-serif;font-size:12px;font-weight:600;color:rgba(255,255,255,0.7);width:100%;transition:background 0.15s" onmouseover="this.style.background='rgba(255,255,255,0.10)'" onmouseout="this.style.background='rgba(255,255,255,0.06)'">
-        <span id="theme-icon" style="font-size:14px">☀️</span>
-        <span id="theme-label">Light Mode</span>
+      <button class="rail-item active" data-section="overview" onclick="switchSection('overview',this)" title="Overview">
+        <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
       </button>
-      <div class="client-badge">
-        <div class="client-name">Smith Sisters</div>
-        <div class="client-sub">smithssisters-asheville</div>
-      </div>
+
+      <button class="rail-item" data-section="analytics" onclick="switchSection('analytics',this)" title="Analytics">
+        <span class="rail-badge">14</span>
+        <svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/><line x1="2" y1="20" x2="22" y2="20"/></svg>
+      </button>
+
+      <button class="rail-item" data-section="actions" onclick="switchSection('actions',this)" title="Action Items">
+        <span class="rail-badge">3</span>
+        <svg viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+      </button>
+
+      <button class="rail-item" data-section="performance" onclick="switchSection('performance',this)" title="CS Performance">
+        <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      </button>
+
+      <button class="rail-item" data-section="logistics" onclick="switchSection('logistics',this)" title="Logistics">
+        <span class="rail-badge warn">5</span>
+        <svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+      </button>
+
+      <button class="rail-item" data-section="quality" onclick="switchSection('quality',this)" title="Quality">
+        <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>
+      </button>
+
+      <button class="rail-item" data-section="growth" onclick="switchSection('growth',this)" title="Value Feed">
+        <span class="rail-badge accent">New</span>
+        <svg viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+      </button>
+
+    </div>
+    <div class="rail-footer">
+      <button onclick="toggleTheme()" id="theme-toggle-btn" class="rail-theme-btn" title="Toggle theme">
+        <span id="theme-icon">☀️</span>
+      </button>
+      <div class="rail-avatar" title="Smith Sisters">S</div>
     </div>
   </div>
-</div>
+
+  <!-- Nav Panel -->
+  <div class="nav-panel">
+
+    <!-- OVERVIEW -->
+    <div class="nav-panel-section active" id="section-overview">
+      <div class="panel-header">
+        <img src="/logo.png" alt="Lynq & Flow" class="panel-header-logo">
+      </div>
+      <div class="nav-item active" onclick="showPage('home', this)">Home</div>
+      <div class="nav-item" onclick="showPage('inbox', this)">
+        Inbox
+        <span id="inbox-unread-badge" class="nav-badge accent" style="display:none">0</span>
+      </div>
+      <div class="panel-footer">
+        <div class="client-badge">
+          <div class="client-name">Smith Sisters</div>
+          <div class="client-sub">smithssisters-asheville</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ANALYTICS -->
+    <div class="nav-panel-section" id="section-analytics">
+      <div class="panel-header"><div class="panel-header-title">Analytics</div></div>
+      <div class="nav-item" onclick="showPage('risk', this)">
+        Revenue at Risk <span class="nav-badge danger">14</span>
+      </div>
+      <div class="nav-item" onclick="showPage('refunds', this)">Refunds</div>
+      <div class="nav-item" onclick="showPage('cancellations', this)">Cancellations</div>
+      <div class="nav-item" onclick="showPage('reports', this)">Reports</div>
+      <div class="panel-footer">
+        <div class="client-badge">
+          <div class="client-name">Smith Sisters</div>
+          <div class="client-sub">smithssisters-asheville</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ACTIONS -->
+    <div class="nav-panel-section" id="section-actions">
+      <div class="panel-header"><div class="panel-header-title">Actions</div></div>
+      <div class="nav-item" onclick="showPage('actions', this)">
+        Action Items <span class="nav-badge danger">3</span>
+      </div>
+      <div class="panel-footer">
+        <div class="client-badge">
+          <div class="client-name">Smith Sisters</div>
+          <div class="client-sub">smithssisters-asheville</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PERFORMANCE -->
+    <div class="nav-panel-section" id="section-performance">
+      <div class="panel-header"><div class="panel-header-title">Performance</div></div>
+      <div class="nav-item" onclick="showPage('performance', this)">CS Performance</div>
+      <div class="panel-footer">
+        <div class="client-badge">
+          <div class="client-name">Smith Sisters</div>
+          <div class="client-sub">smithssisters-asheville</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LOGISTICS -->
+    <div class="nav-panel-section" id="section-logistics">
+      <div class="panel-header"><div class="panel-header-title">Logistics</div></div>
+      <div class="nav-item" onclick="showPage('supply', this)">
+        Supply Chain <span class="nav-badge warn">5</span>
+      </div>
+      <div class="nav-item" onclick="showPage('autoemails', this)">Auto Emails</div>
+      <div class="panel-footer">
+        <div class="client-badge">
+          <div class="client-name">Smith Sisters</div>
+          <div class="client-sub">smithssisters-asheville</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- QUALITY -->
+    <div class="nav-panel-section" id="section-quality">
+      <div class="panel-header"><div class="panel-header-title">Quality</div></div>
+      <div class="nav-item" onclick="showPage('quality', this)">Quality Checks</div>
+      <div class="panel-footer">
+        <div class="client-badge">
+          <div class="client-name">Smith Sisters</div>
+          <div class="client-sub">smithssisters-asheville</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- GROWTH -->
+    <div class="nav-panel-section" id="section-growth">
+      <div class="panel-header"><div class="panel-header-title">Growth</div></div>
+      <div class="nav-item" onclick="showPage('value', this)">
+        Value Feed <span class="nav-badge accent">New</span>
+      </div>
+      <div class="panel-footer">
+        <div class="client-badge">
+          <div class="client-name">Smith Sisters</div>
+          <div class="client-sub">smithssisters-asheville</div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /nav-panel -->
+</div><!-- /sidebar -->
 
 <!-- FLOATING AI CHAT -->
 <button class="float-chat-btn" onclick="toggleFloatChat()" title="Ask AI">✦</button>
@@ -5006,11 +5104,33 @@ function initDeliveryChart() {
 }
 
 // ── UPDATE showPage to init charts per page ──
+// ── SECTION SWITCHER ──
+const PAGE_SECTION = {
+  home: 'overview', inbox: 'overview',
+  risk: 'analytics', refunds: 'analytics', cancellations: 'analytics', reports: 'analytics',
+  actions: 'actions',
+  performance: 'performance',
+  supply: 'logistics', autoemails: 'logistics',
+  quality: 'quality',
+  value: 'growth',
+}
+
+function switchSection(sectionId, railEl) {
+  document.querySelectorAll('.rail-item').forEach(el => el.classList.remove('active'))
+  const target = railEl || document.querySelector(`.rail-item[data-section="${sectionId}"]`)
+  if (target) target.classList.add('active')
+  document.querySelectorAll('.nav-panel-section').forEach(el => el.classList.remove('active'))
+  const section = document.getElementById('section-' + sectionId)
+  if (section) section.classList.add('active')
+}
+
 const _origShowPage = showPage;
 showPage = function(id, el) {
   _origShowPage(id, el);
   if (id === 'supply') initDeliveryChart();
   if (id === 'home') initHomeChart();
+  const sec = PAGE_SECTION[id];
+  if (sec) switchSection(sec);
 };
 
 // ── REPORT WEEK SELECTOR ──

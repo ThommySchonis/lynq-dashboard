@@ -14,7 +14,7 @@ export async function POST(request) {
   const { data: gmailToken } = await supabaseAdmin
     .from('gmail_tokens')
     .select('*')
-    .eq('email', user.email)
+    .eq('user_id', user.id)
     .single()
 
   if (!gmailToken) return NextResponse.json({ error: 'Gmail not connected' }, { status: 400 })

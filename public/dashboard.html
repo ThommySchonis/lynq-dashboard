@@ -5075,14 +5075,25 @@ var _activeThread = null
 async function loadInbox() {
   const session = await sb.auth.getSession()
   _inboxSession = session?.data?.session
-  if (!_inboxSession) return
+  if (!_inboxSession) {
+    console.warn('[Inbox] No Supabase session found')
+    return
+  }
 
-  const res = await fetch('/api/gmail/threads', {
-    headers: { Authorization: 'Bearer ' + _inboxSession.access_token }
-  })
-  const data = await res.json()
+  let data
+  try {
+    const res = await fetch('/api/gmail/threads', {
+      headers: { Authorization: 'Bearer ' + _inboxSession.access_token }
+    })
+    data = await res.json()
+    console.log('[Inbox] API response:', data)
+  } catch (e) {
+    console.error('[Inbox] Fetch failed:', e)
+    return
+  }
 
   if (!data.connected) {
+    console.log('[Inbox] Not connected. Error:', data.error)
     document.getElementById('inbox-not-connected').style.display = 'flex'
     document.getElementById('inbox-connected').style.display = 'none'
     document.getElementById('inbox-connect-btn-wrap').style.display = 'block'

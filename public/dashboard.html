@@ -1211,6 +1211,7 @@
     <div class="nav-panel-section" id="section-performance">
       <div class="panel-header"><div class="panel-header-title">Performance</div></div>
       <div class="nav-item" onclick="showPage('performance', this)">CS Performance</div>
+      <div class="nav-item" onclick="showPage('timetracking', this)">Time Tracking</div>
       <div class="panel-footer">
         <div class="client-badge">
           <div class="client-name">Smith Sisters</div>
@@ -3947,6 +3948,73 @@
 
   </div>
 
+  <!-- ── PAGE: TIME TRACKING ── -->
+  <div class="page" id="page-timetracking">
+    <div class="page-header">
+      <div>
+        <div class="page-title">Time Tracking</div>
+        <div class="page-sub" id="time-page-sub">Clock in when you start working, clock out when you're done</div>
+      </div>
+      <div class="filter-bar" id="time-filter-bar" style="flex-wrap:wrap;gap:6px">
+        <button class="filter-btn" onclick="setTimeFilter('day',this)">Today</button>
+        <button class="filter-btn active" onclick="setTimeFilter('week',this)">This week</button>
+        <button class="filter-btn" onclick="setTimeFilter('month',this)">This month</button>
+        <button class="filter-btn" onclick="setTimeFilter('lastmonth',this)">Last month</button>
+        <button class="filter-btn" onclick="setTimeFilter('custom',this)">Custom</button>
+        <div id="time-custom-range" style="display:none;gap:6px;align-items:center">
+          <input type="date" id="time-from-date" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:5px 10px;color:var(--text);font-size:12px;font-family:'Inter',sans-serif">
+          <span style="color:var(--muted);font-size:12px">→</span>
+          <input type="date" id="time-to-date" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:5px 10px;color:var(--text);font-size:12px;font-family:'Inter',sans-serif">
+          <button onclick="loadTimeTracking()" style="background:var(--accent);color:#fff;border:none;border-radius:8px;padding:5px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif">Apply</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Clock widget (agents only) -->
+    <div id="time-clock-widget" class="card" style="display:none;margin-bottom:20px">
+      <div style="display:flex;align-items:center;gap:24px;flex-wrap:wrap">
+        <div style="flex:1;min-width:200px">
+          <div style="font-size:13px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:6px">Current session</div>
+          <div id="time-display" style="font-size:40px;font-weight:800;color:var(--text);font-variant-numeric:tabular-nums;letter-spacing:-1px">00:00:00</div>
+          <div id="time-status-row" style="display:flex;align-items:center;gap:8px;margin-top:6px">
+            <div id="time-status-dot" style="width:8px;height:8px;border-radius:50%;background:var(--muted)"></div>
+            <span id="time-status-label" style="font-size:12px;color:var(--muted)">Not clocked in</span>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px;align-items:flex-end">
+          <button id="btn-clock-in" onclick="clockIn()" style="background:var(--green);color:#fff;border:none;border-radius:10px;padding:12px 28px;font-size:14px;font-weight:800;cursor:pointer;font-family:'Inter',sans-serif;transition:opacity 0.15s">Clock In</button>
+          <button id="btn-clock-out" onclick="clockOut()" style="display:none;background:var(--danger);color:#fff;border:none;border-radius:10px;padding:12px 28px;font-size:14px;font-weight:800;cursor:pointer;font-family:'Inter',sans-serif;transition:opacity 0.15s">Clock Out</button>
+        </div>
+        <div style="display:flex;gap:20px">
+          <div style="text-align:center">
+            <div id="time-today-total" style="font-size:22px;font-weight:800;color:var(--accent)">—</div>
+            <div style="font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin-top:2px">Today</div>
+          </div>
+          <div style="text-align:center">
+            <div id="time-week-total" style="font-size:22px;font-weight:800;color:var(--accent)">—</div>
+            <div style="font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin-top:2px">This week</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Admin summary cards -->
+    <div id="time-admin-summary" style="display:none;margin-bottom:20px">
+      <div id="time-agent-cards" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;margin-bottom:20px"></div>
+    </div>
+
+    <!-- Session log table -->
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+        <div class="card-title" style="margin:0" id="time-log-title">My time log</div>
+        <div id="time-idle-note" style="font-size:12px;color:var(--muted)">Idle = no activity for 5+ minutes</div>
+      </div>
+      <div id="time-log-container">
+        <div style="text-align:center;padding:40px;color:var(--muted);font-size:14px">Loading...</div>
+      </div>
+    </div>
+  </div>
+
   <!-- ── PAGE: SUPPLY CHAIN ── -->
   <div class="page" id="page-supply">
     <div class="page-header">
@@ -4927,6 +4995,7 @@ function showPage(id, el) {
   if (id === 'refunds') initReasonChart();
   if (id === 'inbox') loadInbox();
   if (id === 'performance') loadPerformancePage();
+  if (id === 'timetracking') initTimeTracking();
 }
 
 // ── FILTER ──
@@ -5276,6 +5345,7 @@ const PAGE_SECTION = {
   risk: 'analytics', refunds: 'analytics', cancellations: 'analytics', reports: 'analytics',
   actions: 'actions',
   performance: 'performance',
+  timetracking: 'performance',
   supply: 'logistics', autoemails: 'logistics',
   quality: 'quality',
   value: 'growth',
@@ -5457,6 +5527,318 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
 function fmtMoney(val) {
   const n = parseInt(val)
   return n >= 1000 ? '$' + (n / 1000).toFixed(1).replace(/\.0$/, '') + 'k' : '$' + n
+}
+
+// ── TIME TRACKING ──
+var _timeSession = null       // active session object
+var _timerInterval = null     // live clock setInterval
+var _heartbeatInterval = null // heartbeat setInterval
+var _lastActivity = Date.now()
+var _currentTimeFilter = 'week'
+
+// Track user activity for idle detection
+;['mousemove','mousedown','keydown','scroll','touchstart'].forEach(evt => {
+  document.addEventListener(evt, () => { _lastActivity = Date.now() }, { passive: true })
+})
+
+function fmtSeconds(s) {
+  if (!s || s <= 0) return '0m'
+  const h = Math.floor(s / 3600)
+  const m = Math.floor((s % 3600) / 60)
+  if (h > 0) return h + 'h ' + m + 'm'
+  return m + 'm'
+}
+
+function fmtHHMMSS(s) {
+  const h = Math.floor(s / 3600)
+  const m = Math.floor((s % 3600) / 60)
+  const sec = s % 60
+  return String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0') + ':' + String(sec).padStart(2,'0')
+}
+
+function fmtTime(isoStr) {
+  if (!isoStr) return '—'
+  return new Date(isoStr).toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit' })
+}
+
+function fmtDate(isoStr) {
+  if (!isoStr) return '—'
+  const d = new Date(isoStr)
+  const today = new Date()
+  const yesterday = new Date(today); yesterday.setDate(today.getDate()-1)
+  if (d.toDateString() === today.toDateString()) return 'Today'
+  if (d.toDateString() === yesterday.toDateString()) return 'Yesterday'
+  return d.toLocaleDateString('en-GB', { day:'numeric', month:'short' })
+}
+
+function isIdle() {
+  return (Date.now() - _lastActivity) > 5 * 60 * 1000  // 5 min
+}
+
+function startTimerTick(clockedInAt) {
+  if (_timerInterval) clearInterval(_timerInterval)
+  _timerInterval = setInterval(() => {
+    const elapsed = Math.floor((Date.now() - new Date(clockedInAt).getTime()) / 1000)
+    const display = document.getElementById('time-display')
+    if (display) display.textContent = fmtHHMMSS(elapsed)
+    const dot = document.getElementById('time-status-dot')
+    const label = document.getElementById('time-status-label')
+    if (isIdle()) {
+      if (dot) dot.style.background = 'var(--warn)'
+      if (label) { label.textContent = 'Idle'; label.style.color = 'var(--warn)' }
+    } else {
+      if (dot) dot.style.background = 'var(--green)'
+      if (label) { label.textContent = 'Active'; label.style.color = 'var(--green)' }
+    }
+  }, 1000)
+}
+
+function startHeartbeat(sessionId) {
+  if (_heartbeatInterval) clearInterval(_heartbeatInterval)
+  _heartbeatInterval = setInterval(async () => {
+    if (!_timeSession || !_inboxSession) return
+    try {
+      await fetch('/api/time', {
+        method: 'POST',
+        headers: { Authorization: 'Bearer ' + _inboxSession.access_token, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'heartbeat', session_id: sessionId, is_idle: isIdle() })
+      })
+    } catch(e) {}
+  }, 30000)
+}
+
+function stopTimer() {
+  if (_timerInterval) { clearInterval(_timerInterval); _timerInterval = null }
+  if (_heartbeatInterval) { clearInterval(_heartbeatInterval); _heartbeatInterval = null }
+  const display = document.getElementById('time-display')
+  if (display) display.textContent = '00:00:00'
+  const dot = document.getElementById('time-status-dot')
+  const label = document.getElementById('time-status-label')
+  if (dot) dot.style.background = 'var(--muted)'
+  if (label) { label.textContent = 'Not clocked in'; label.style.color = 'var(--muted)' }
+}
+
+function setClockedInUI(session) {
+  _timeSession = session
+  document.getElementById('btn-clock-in').style.display = 'none'
+  document.getElementById('btn-clock-out').style.display = 'block'
+  startTimerTick(session.clocked_in_at)
+  startHeartbeat(session.id)
+}
+
+function setClockedOutUI() {
+  _timeSession = null
+  document.getElementById('btn-clock-in').style.display = 'block'
+  document.getElementById('btn-clock-out').style.display = 'none'
+  stopTimer()
+}
+
+async function clockIn() {
+  if (!_inboxSession) return
+  const btn = document.getElementById('btn-clock-in')
+  btn.textContent = 'Clocking in...'
+  btn.disabled = true
+  try {
+    const res = await fetch('/api/time', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + _inboxSession.access_token, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'clock-in' })
+    })
+    const data = await res.json()
+    if (data.error) { alert(data.error); btn.textContent = 'Clock In'; btn.disabled = false; return }
+    setClockedInUI(data.session)
+    loadTimeTracking()
+  } catch(e) {
+    btn.textContent = 'Clock In'
+    btn.disabled = false
+  }
+}
+
+async function clockOut() {
+  if (!_timeSession || !_inboxSession) return
+  const btn = document.getElementById('btn-clock-out')
+  btn.textContent = 'Clocking out...'
+  btn.disabled = true
+  try {
+    const res = await fetch('/api/time', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + _inboxSession.access_token, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'clock-out', session_id: _timeSession.id })
+    })
+    const data = await res.json()
+    if (data.error) { alert(data.error); btn.textContent = 'Clock Out'; btn.disabled = false; return }
+    setClockedOutUI()
+    loadTimeTracking()
+  } catch(e) {
+    btn.textContent = 'Clock Out'
+    btn.disabled = false
+  }
+}
+
+function setTimeFilter(filter, el) {
+  _currentTimeFilter = filter
+  document.querySelectorAll('#time-filter-bar .filter-btn').forEach(b => b.classList.remove('active'))
+  el.classList.add('active')
+  const custom = document.getElementById('time-custom-range')
+  if (filter === 'custom') { custom.style.display = 'flex'; return }
+  custom.style.display = 'none'
+  loadTimeTracking()
+}
+
+function renderTimeSummaryCards(agents) {
+  return agents.map(a => {
+    const total = a.total_active + a.total_idle
+    const initial = (a.name || '?')[0].toUpperCase()
+    const palette = ['#A175FC','#7c4fe0','#4ecca3','#f59e0b','#ef4444']
+    const ci = a.name.charCodeAt(0) % palette.length
+    const idlePct = total > 0 ? Math.round((a.total_idle / total) * 100) : 0
+    return `<div class="card" style="padding:16px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+        <div class="agent-avatar" style="background:${palette[ci]};width:32px;height:32px;font-size:13px;flex-shrink:0">${initial}</div>
+        <div>
+          <div style="font-size:13px;font-weight:700;color:var(--text)">${a.name}</div>
+          <div style="font-size:11px;color:var(--muted)">${a.sessions} session${a.sessions !== 1 ? 's' : ''}</div>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+        <div style="text-align:center">
+          <div style="font-size:18px;font-weight:800;color:var(--accent)">${fmtSeconds(total)}</div>
+          <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px">Total</div>
+        </div>
+        <div style="text-align:center">
+          <div style="font-size:18px;font-weight:800;color:var(--green)">${fmtSeconds(a.total_active)}</div>
+          <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px">Active</div>
+        </div>
+        <div style="text-align:center">
+          <div style="font-size:18px;font-weight:800;color:${idlePct > 20 ? 'var(--warn)' : 'var(--muted)'}">${fmtSeconds(a.total_idle)}</div>
+          <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px">Idle</div>
+        </div>
+      </div>
+      <div style="height:4px;border-radius:4px;background:var(--border);overflow:hidden;margin-top:8px">
+        <div style="height:100%;width:${100-idlePct}%;background:var(--green);border-radius:4px"></div>
+      </div>
+      <div style="font-size:10px;color:var(--muted);margin-top:4px;text-align:right">${100-idlePct}% active</div>
+    </div>`
+  }).join('')
+}
+
+function renderSessionTable(sessions, showAgent, agentMap) {
+  if (!sessions.length) return '<div style="text-align:center;padding:40px;color:var(--muted)">No sessions in this period.</div>'
+  const rows = sessions.map(s => {
+    const duration = s.clocked_out_at
+      ? Math.floor((new Date(s.clocked_out_at) - new Date(s.clocked_in_at)) / 1000)
+      : null
+    const agentName = agentMap?.[s.agent_id] || '—'
+    const statusColor = s.status === 'completed' ? 'var(--green)' : s.status === 'idle' ? 'var(--warn)' : 'var(--accent)'
+    return `<tr>
+      ${showAgent ? `<td style="padding:10px 12px;font-size:13px;font-weight:600;color:var(--text)">${agentName}</td>` : ''}
+      <td style="padding:10px 12px;font-size:13px;color:var(--text)">${fmtDate(s.clocked_in_at)}</td>
+      <td style="padding:10px 12px;font-size:13px;color:var(--text)">${fmtTime(s.clocked_in_at)}</td>
+      <td style="padding:10px 12px;font-size:13px;color:var(--text)">${s.clocked_out_at ? fmtTime(s.clocked_out_at) : '<span style="color:var(--accent);font-weight:700">Active now</span>'}</td>
+      <td style="padding:10px 12px;font-size:13px;color:var(--text)">${duration ? fmtSeconds(duration) : '—'}</td>
+      <td style="padding:10px 12px;font-size:13px;color:var(--green)">${fmtSeconds(s.active_seconds)}</td>
+      <td style="padding:10px 12px;font-size:13px;color:${s.idle_seconds > 300 ? 'var(--warn)' : 'var(--muted)'}">${fmtSeconds(s.idle_seconds)}</td>
+      <td style="padding:10px 12px"><span style="font-size:11px;font-weight:700;color:${statusColor};text-transform:capitalize">${s.status}</span></td>
+    </tr>`
+  }).join('')
+
+  const agentHeader = showAgent ? '<th style="padding:10px 12px;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.6px;text-align:left;border-bottom:1px solid var(--border)">Agent</th>' : ''
+
+  return `<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse">
+    <thead><tr>
+      ${agentHeader}
+      <th style="padding:10px 12px;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.6px;text-align:left;border-bottom:1px solid var(--border)">Date</th>
+      <th style="padding:10px 12px;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.6px;text-align:left;border-bottom:1px solid var(--border)">Clock In</th>
+      <th style="padding:10px 12px;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.6px;text-align:left;border-bottom:1px solid var(--border)">Clock Out</th>
+      <th style="padding:10px 12px;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.6px;text-align:left;border-bottom:1px solid var(--border)">Duration</th>
+      <th style="padding:10px 12px;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.6px;text-align:left;border-bottom:1px solid var(--border)">Active</th>
+      <th style="padding:10px 12px;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.6px;text-align:left;border-bottom:1px solid var(--border)">Idle</th>
+      <th style="padding:10px 12px;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.6px;text-align:left;border-bottom:1px solid var(--border)">Status</th>
+    </tr></thead>
+    <tbody>${rows}</tbody>
+  </table></div>`
+}
+
+async function loadTimeTracking() {
+  const container = document.getElementById('time-log-container')
+  if (!container) return
+  const session = _inboxSession || (await sb.auth.getSession())?.data?.session
+  if (!session) return
+  const token = session.access_token || session
+
+  container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted)">Loading...</div>'
+
+  let url = '/api/time?filter=' + _currentTimeFilter
+  if (_currentTimeFilter === 'custom') {
+    const from = document.getElementById('time-from-date')?.value
+    const to = document.getElementById('time-to-date')?.value
+    if (!from || !to) { container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted)">Select a date range and click Apply.</div>'; return }
+    url += '&from=' + from + '&to=' + to
+  }
+
+  try {
+    const res = await fetch(url, { headers: { Authorization: 'Bearer ' + token } })
+    const data = await res.json()
+
+    // Today + week totals for agent widget
+    if (!data.is_admin) {
+      const todayRes = await fetch('/api/time?filter=day', { headers: { Authorization: 'Bearer ' + token } })
+      const todayData = await todayRes.json()
+      const weekRes = await fetch('/api/time?filter=week', { headers: { Authorization: 'Bearer ' + token } })
+      const weekData = await weekRes.json()
+      const todayEl = document.getElementById('time-today-total')
+      const weekEl = document.getElementById('time-week-total')
+      if (todayEl && todayData.agents?.[0]) todayEl.textContent = fmtSeconds(todayData.agents[0].total_active + todayData.agents[0].total_idle) || '0m'
+      if (weekEl && weekData.agents?.[0]) weekEl.textContent = fmtSeconds(weekData.agents[0].total_active + weekData.agents[0].total_idle) || '0m'
+    }
+
+    // Admin summary cards
+    const adminSummary = document.getElementById('time-admin-summary')
+    const agentCards = document.getElementById('time-agent-cards')
+    const logTitle = document.getElementById('time-log-title')
+    if (data.is_admin) {
+      adminSummary.style.display = 'block'
+      agentCards.innerHTML = renderTimeSummaryCards(data.agents || [])
+      if (logTitle) logTitle.textContent = 'All sessions'
+    } else {
+      adminSummary.style.display = 'none'
+      if (logTitle) logTitle.textContent = 'My time log'
+    }
+
+    // Build agent name map for admin table
+    const agentMap = {}
+    ;(data.agents || []).forEach(a => { agentMap[a.id] = a.name })
+
+    container.innerHTML = renderSessionTable(data.sessions || [], data.is_admin, agentMap)
+  } catch(e) {
+    container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted)">Failed to load time data.</div>'
+  }
+}
+
+async function initTimeTracking() {
+  const session = _inboxSession || (await sb.auth.getSession())?.data?.session
+  if (!session) return
+  const token = session.access_token || session
+
+  // Show/hide clock widget based on role
+  const widget = document.getElementById('time-clock-widget')
+  const isAdmin = session.user?.email === 'info@lynqagency.com'
+  if (widget) widget.style.display = isAdmin ? 'none' : 'block'
+
+  // Check for existing active session
+  if (!isAdmin) {
+    try {
+      const res = await fetch('/api/time?filter=day', { headers: { Authorization: 'Bearer ' + token } })
+      const data = await res.json()
+      if (data.active_session) {
+        setClockedInUI(data.active_session)
+      } else {
+        setClockedOutUI()
+      }
+    } catch(e) {}
+  }
+
+  loadTimeTracking()
 }
 
 // ── AGENT PERFORMANCE ──

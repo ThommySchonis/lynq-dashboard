@@ -4,11 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Lynq & Flow — Dashboard</title>
-<link href="https://fonts.googleapis.com/css2?family=Rethink+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <style>
-  :root {
+  /* ── LIGHT THEME (default) ── */
+  :root, html[data-theme="light"] {
     --bg:       #f4f2ff;
     --surface:  #ffffff;
     --surface2: #ede9fe;
@@ -16,15 +17,40 @@
     --accent:   #7c3aed;
     --accent2:  #6d28d9;
     --text:     #1a1040;
-    --muted:    #8b7db8;
+    --muted:    #6b5f8a;
     --danger:   #dc2626;
     --green:    #16a34a;
     --warn:     #d97706;
     --radius:   14px;
   }
+
+  /* ── DARK THEME ── */
+  html[data-theme="dark"] {
+    --bg:       #1C0F36;
+    --surface:  #241352;
+    --surface2: #2e1a63;
+    --border:   rgba(255,255,255,0.07);
+    --accent:   #A175FC;
+    --accent2:  #7c4fe0;
+    --text:     #ffffff;
+    --muted:    rgba(255,255,255,0.50);
+    --danger:   #ff6b8a;
+    --green:    #4ecca3;
+    --warn:     #ffd166;
+    --radius:   14px;
+  }
+
+  /* Dark theme specific overrides */
+  html[data-theme="dark"] .filter-btn:hover { background: rgba(255,255,255,0.06) !important; }
+  html[data-theme="dark"] .product-reason { background: rgba(255,255,255,0.05) !important; }
+  html[data-theme="dark"] .product-bar { background: rgba(255,255,255,0.08) !important; }
+  html[data-theme="dark"] .reason-track { background: rgba(255,255,255,0.07) !important; }
+  html[data-theme="dark"] .chat-avatar.user { background: rgba(255,255,255,0.10) !important; }
+  html[data-theme="dark"] .pill.cancel { background: rgba(255,255,255,0.08) !important; }
+  html[data-theme="dark"] .date-picker-popup { color-scheme: dark; box-shadow: 0 8px 32px rgba(0,0,0,0.4) !important; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
-    font-family: 'Rethink Sans', sans-serif;
+    font-family: 'Inter', sans-serif;
     background: var(--bg);
     color: var(--text);
     display: flex;
@@ -32,12 +58,12 @@
     overflow: hidden;
   }
 
-  /* ── SIDEBAR ── */
+  /* ── SIDEBAR — always dark like Gorgias ── */
   .sidebar {
     width: 230px;
     min-width: 230px;
-    background: #ffffff;
-    border-right: 1px solid var(--border);
+    background: #1a1040;
+    border-right: none;
     display: flex;
     flex-direction: column;
     padding: 28px 0;
@@ -60,8 +86,8 @@
     font-weight: 800;
     color: #fff;
   }
-  .logo-text { font-size: 15px; font-weight: 700; letter-spacing: -0.3px; }
-  .logo-text span { color: var(--accent); }
+  .logo-text { font-size: 15px; font-weight: 700; letter-spacing: -0.3px; color: #fff; }
+  .logo-text span { color: #A175FC; }
 
   .nav-section { padding: 0 12px 8px; }
   .nav-label {
@@ -69,7 +95,7 @@
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 1px;
-    color: var(--muted);
+    color: rgba(255,255,255,0.30);
     padding: 0 12px 8px;
   }
   .nav-item {
@@ -79,31 +105,31 @@
     padding: 10px 12px;
     border-radius: 10px;
     cursor: pointer;
-    font-size: 14px;
+    font-size: 13.5px;
     font-weight: 500;
-    color: var(--muted);
+    color: rgba(255,255,255,0.60);
     transition: all 0.15s;
     margin-bottom: 2px;
   }
-  .nav-item:hover { background: rgba(124,58,237,0.07); color: var(--text); }
-  .nav-item.active { background: rgba(124,58,237,0.10); color: var(--accent); font-weight: 600; }
-  .nav-item.active .nav-icon { color: var(--accent); }
+  .nav-item:hover { background: rgba(255,255,255,0.07); color: #fff; }
+  .nav-item.active { background: rgba(161,117,252,0.20); color: #fff; font-weight: 600; }
+  .nav-item.active .nav-icon { color: #A175FC; }
   .nav-icon { font-size: 16px; width: 20px; text-align: center; }
 
   .sidebar-footer {
     margin-top: auto;
     padding: 16px 24px;
-    border-top: 1px solid var(--border);
+    border-top: 1px solid rgba(255,255,255,0.08);
   }
   .client-badge {
-    background: rgba(161,117,252,0.12);
-    border: 1px solid var(--border);
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.08);
     border-radius: 10px;
     padding: 10px 12px;
     font-size: 12px;
   }
-  .client-badge .client-name { font-weight: 700; font-size: 13px; }
-  .client-badge .client-sub { color: var(--muted); margin-top: 2px; }
+  .client-badge .client-name { font-weight: 700; font-size: 13px; color: #fff; }
+  .client-badge .client-sub { color: rgba(255,255,255,0.45); margin-top: 2px; }
 
   /* ── MAIN ── */
   .main {
@@ -137,7 +163,7 @@
     border-radius: 7px;
     font-size: 12px;
     font-weight: 600;
-    font-family: 'Rethink Sans', sans-serif;
+    font-family: 'Inter', sans-serif;
     cursor: pointer;
     border: none;
     background: transparent;
@@ -147,7 +173,7 @@
   .filter-btn:hover { color: var(--text); background: rgba(0,0,0,0.04); }
   .filter-btn.active { background: var(--accent); color: #fff; }
   .filter-divider { width: 1px; height: 20px; background: var(--border); margin: 0 4px; }
-  .qc-btn { border:none;font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;cursor:pointer;font-family:'Rethink Sans',sans-serif; }
+  .qc-btn { border:none;font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;cursor:pointer;font-family:'Inter',sans-serif; }
   .qc-asked { background:rgba(255,209,102,0.15);border:1px solid rgba(255,209,102,0.3)!important;color:var(--warn); }
   .qc-approve { background:rgba(78,204,163,0.1);border:1px solid rgba(78,204,163,0.2)!important;color:#4ecca3; }
   .qc-reject { background:rgba(255,107,138,0.1);border:1px solid rgba(255,107,138,0.2)!important;color:#ff6b8a; }
@@ -174,7 +200,7 @@
     border: 1px solid var(--border);
     background: var(--surface);
     color: var(--text);
-    font-family: 'Rethink Sans', sans-serif;
+    font-family: 'Inter', sans-serif;
     font-size: 13px;
     margin-bottom: 12px;
     box-sizing: border-box;
@@ -188,7 +214,7 @@
     color: #fff;
     border: none;
     border-radius: 8px;
-    font-family: 'Rethink Sans', sans-serif;
+    font-family: 'Inter', sans-serif;
     font-size: 13px;
     font-weight: 600;
     cursor: pointer;
@@ -369,7 +395,7 @@
     padding: 12px 16px;
     color: var(--text);
     font-size: 14px;
-    font-family: 'Rethink Sans', sans-serif;
+    font-family: 'Inter', sans-serif;
     outline: none;
   }
   .chat-input:focus { border-color: var(--accent); }
@@ -433,7 +459,7 @@
     padding: 10px 20px;
     font-size: 13px;
     font-weight: 700;
-    font-family: 'Rethink Sans', sans-serif;
+    font-family: 'Inter', sans-serif;
     cursor: pointer;
     transition: opacity 0.15s;
   }
@@ -446,7 +472,7 @@
     padding: 10px 20px;
     font-size: 13px;
     font-weight: 600;
-    font-family: 'Rethink Sans', sans-serif;
+    font-family: 'Inter', sans-serif;
     cursor: pointer;
   }
 
@@ -554,7 +580,7 @@
   .alert-btn {
     font-size: 12px; font-weight: 700; padding: 6px 14px;
     border-radius: 7px; cursor: pointer; border: none;
-    font-family: 'Rethink Sans', sans-serif;
+    font-family: 'Inter', sans-serif;
     transition: opacity 0.15s;
   }
   .alert-btn:hover { opacity: 0.85; }
@@ -598,14 +624,14 @@
   .float-chat-input {
     flex: 1; background: var(--surface2); border: 1px solid var(--border);
     border-radius: 8px; padding: 9px 12px; color: var(--text);
-    font-size: 13px; font-family: 'Rethink Sans', sans-serif; outline: none;
+    font-size: 13px; font-family: 'Inter', sans-serif; outline: none;
   }
   .float-chat-input:focus { border-color: var(--accent); }
   .float-send-btn {
     background: var(--accent); border: none; border-radius: 8px;
     width: 36px; height: 36px; cursor: pointer; color: #fff;
     font-size: 16px; display: flex; align-items: center; justify-content: center;
-    font-family: 'Rethink Sans', sans-serif;
+    font-family: 'Inter', sans-serif;
   }
 
 
@@ -705,7 +731,7 @@
   .feed-action-btn {
     font-size: 12px; color: var(--muted); cursor: pointer;
     display: flex; align-items: center; gap: 5px;
-    background: none; border: none; font-family: 'Rethink Sans', sans-serif;
+    background: none; border: none; font-family: 'Inter', sans-serif;
     padding: 0; transition: color 0.15s;
   }
   .feed-action-btn:hover { color: var(--text); }
@@ -737,7 +763,7 @@
     padding: 8px 20px; border-radius: 7px; font-size: 13px;
     font-weight: 600; cursor: pointer; border: none;
     background: transparent; color: var(--muted);
-    font-family: 'Rethink Sans', sans-serif; transition: all 0.15s;
+    font-family: 'Inter', sans-serif; transition: all 0.15s;
   }
   .perf-tab:hover { color: var(--text); }
   .perf-tab.active { background: var(--accent); color: #fff; }
@@ -813,7 +839,7 @@
   .notes-area {
     width: 100%; background: var(--surface2); border: 1px solid var(--border);
     border-radius: 10px; padding: 14px; color: var(--text);
-    font-family: 'Rethink Sans', sans-serif; font-size: 13px;
+    font-family: 'Inter', sans-serif; font-size: 13px;
     line-height: 1.6; resize: vertical; outline: none; min-height: 100px;
   }
   .notes-area:focus { border-color: var(--accent); }
@@ -877,7 +903,7 @@
     padding: 7px 16px; border-radius: 8px; font-size: 12px;
     font-weight: 600; cursor: pointer; border: 1px solid var(--border);
     background: transparent; color: var(--muted);
-    font-family: 'Rethink Sans', sans-serif; transition: all 0.15s;
+    font-family: 'Inter', sans-serif; transition: all 0.15s;
   }
   .filter-tab:hover { color: var(--text); }
   .filter-tab.active { background: var(--accent); color: #fff; border-color: var(--accent); }
@@ -952,7 +978,7 @@
   .risk-btn {
     font-size: 12px; font-weight: 700; padding: 7px 14px;
     border-radius: 8px; cursor: pointer; border: none;
-    font-family: 'Rethink Sans', sans-serif; transition: opacity 0.15s;
+    font-family: 'Inter', sans-serif; transition: opacity 0.15s;
   }
   .risk-btn:hover { opacity: 0.85; }
   .risk-btn.ghost    { background: rgba(255,255,255,0.06); color: var(--muted); border: 1px solid var(--border); }
@@ -1047,7 +1073,12 @@
         <span style="margin-left:auto;background:var(--accent);color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px">New</span>
       </div>
     </div>
-    <div style="border-top:1px solid var(--border);padding-top:16px">
+    <div style="border-top:1px solid rgba(255,255,255,0.08);padding-top:16px;display:flex;flex-direction:column;gap:10px">
+      <!-- Theme toggle -->
+      <button onclick="toggleTheme()" id="theme-toggle-btn" style="display:flex;align-items:center;gap:8px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.10);border-radius:10px;padding:8px 12px;cursor:pointer;font-family:'Inter',sans-serif;font-size:12px;font-weight:600;color:rgba(255,255,255,0.7);width:100%;transition:background 0.15s" onmouseover="this.style.background='rgba(255,255,255,0.10)'" onmouseout="this.style.background='rgba(255,255,255,0.06)'">
+        <span id="theme-icon" style="font-size:14px">☀️</span>
+        <span id="theme-label">Light Mode</span>
+      </button>
       <div class="client-badge">
         <div class="client-name">Smith Sisters</div>
         <div class="client-sub">smithssisters-asheville</div>
@@ -2725,15 +2756,15 @@
           <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:1px solid var(--border)">
             <div style="font-size:13px;font-weight:600">Send on</div>
             <div style="display:flex;gap:6px">
-              <button class="filter-btn active" style="font-size:12px;padding:5px 10px;border-radius:7px;border:1px solid var(--border);background:var(--accent);color:#fff;cursor:pointer;font-family:'Rethink Sans',sans-serif">Mon</button>
-              <button class="filter-btn" style="font-size:12px;padding:5px 10px;border-radius:7px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;font-family:'Rethink Sans',sans-serif" onclick="this.closest('div').querySelectorAll('button').forEach(b=>b.style.background='transparent'&&(b.style.color='var(--muted)'));this.style.background='var(--accent)';this.style.color='#fff'">Fri</button>
+              <button class="filter-btn active" style="font-size:12px;padding:5px 10px;border-radius:7px;border:1px solid var(--border);background:var(--accent);color:#fff;cursor:pointer;font-family:'Inter',sans-serif">Mon</button>
+              <button class="filter-btn" style="font-size:12px;padding:5px 10px;border-radius:7px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;font-family:'Inter',sans-serif" onclick="this.closest('div').querySelectorAll('button').forEach(b=>b.style.background='transparent'&&(b.style.color='var(--muted)'));this.style.background='var(--accent)';this.style.color='#fff'">Fri</button>
             </div>
           </div>
 
           <!-- Send time -->
           <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:1px solid var(--border)">
             <div style="font-size:13px;font-weight:600">Send at</div>
-            <select style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:6px 12px;color:var(--text);font-size:13px;font-family:'Rethink Sans',sans-serif;outline:none;cursor:pointer">
+            <select style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:6px 12px;color:var(--text);font-size:13px;font-family:'Inter',sans-serif;outline:none;cursor:pointer">
               <option>8:00 AM</option>
               <option selected>9:00 AM</option>
               <option>10:00 AM</option>
@@ -2856,7 +2887,7 @@
         </div>
 
         <!-- Email preview box -->
-        <div style="background:#fff;border-radius:12px;padding:40px;max-width:640px;color:#1a1a1a;font-family:'Rethink Sans',sans-serif">
+        <div style="background:#fff;border-radius:12px;padding:40px;max-width:640px;color:#1a1a1a;font-family:'Inter',sans-serif">
 
           <!-- Header -->
           <div style="display:flex;align-items:center;gap:10px;margin-bottom:28px;padding-bottom:20px;border-bottom:2px solid #f0f0f0">
@@ -4371,7 +4402,7 @@
         <div class="page-sub" id="inbox-sub">Connect your Gmail to get started</div>
       </div>
       <div id="inbox-connect-btn-wrap">
-        <button onclick="connectGmail()" style="display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;font-size:13px;font-weight:700;padding:10px 20px;border-radius:10px;border:none;cursor:pointer;font-family:'Rethink Sans',sans-serif">
+        <button onclick="connectGmail()" style="display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;font-size:13px;font-weight:700;padding:10px 20px;border-radius:10px;border:none;cursor:pointer;font-family:'Inter',sans-serif">
           <span>Connect Gmail</span>
         </button>
       </div>
@@ -4382,7 +4413,7 @@
       <div style="font-size:48px;margin-bottom:16px">✉️</div>
       <div style="font-size:18px;font-weight:700;margin-bottom:8px">Connect your Gmail</div>
       <div style="font-size:13px;color:var(--muted);max-width:400px;line-height:1.6;margin-bottom:24px">Link your Google Workspace account to manage all customer emails directly from this dashboard — with Shopify order data right next to every conversation.</div>
-      <button onclick="connectGmail()" style="display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;font-size:13px;font-weight:700;padding:12px 24px;border-radius:10px;border:none;cursor:pointer;font-family:'Rethink Sans',sans-serif">Connect Gmail</button>
+      <button onclick="connectGmail()" style="display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;font-size:13px;font-weight:700;padding:12px 24px;border-radius:10px;border:none;cursor:pointer;font-family:'Inter',sans-serif">Connect Gmail</button>
     </div>
 
     <!-- Connected state -->
@@ -4395,11 +4426,11 @@
           <div style="padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
             <!-- Tabs -->
             <div style="display:flex;gap:4px;background:rgba(255,255,255,0.05);border-radius:8px;padding:3px">
-              <button id="tab-inbox" onclick="switchTab('inbox')" style="font-size:12px;font-weight:700;padding:4px 12px;border-radius:6px;border:none;cursor:pointer;font-family:'Rethink Sans',sans-serif;background:var(--accent);color:#fff">Inbox</button>
-              <button id="tab-sent" onclick="switchTab('sent')" style="font-size:12px;font-weight:700;padding:4px 12px;border-radius:6px;border:none;cursor:pointer;font-family:'Rethink Sans',sans-serif;background:transparent;color:var(--muted)">Sent</button>
+              <button id="tab-inbox" onclick="switchTab('inbox')" style="font-size:12px;font-weight:700;padding:4px 12px;border-radius:6px;border:none;cursor:pointer;font-family:'Inter',sans-serif;background:var(--accent);color:#fff">Inbox</button>
+              <button id="tab-sent" onclick="switchTab('sent')" style="font-size:12px;font-weight:700;padding:4px 12px;border-radius:6px;border:none;cursor:pointer;font-family:'Inter',sans-serif;background:transparent;color:var(--muted)">Sent</button>
             </div>
             <div style="display:flex;align-items:center;gap:6px">
-              <button onclick="openCompose()" style="background:var(--accent);border:none;color:#fff;cursor:pointer;font-size:12px;font-weight:700;padding:5px 12px;border-radius:7px;font-family:'Rethink Sans',sans-serif">+ New Email</button>
+              <button onclick="openCompose()" style="background:var(--accent);border:none;color:#fff;cursor:pointer;font-size:12px;font-weight:700;padding:5px 12px;border-radius:7px;font-family:'Inter',sans-serif">+ New Email</button>
               <button id="inbox-refresh-btn" onclick="refreshCurrentTab()" style="background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:16px">↻</button>
             </div>
           </div>
@@ -4407,8 +4438,8 @@
           <div id="delete-toolbar" style="display:none;padding:8px 16px;background:rgba(255,107,138,0.08);border-bottom:1px solid rgba(255,107,138,0.2);align-items:center;justify-content:space-between;flex-shrink:0">
             <span id="delete-toolbar-count" style="font-size:12px;font-weight:600;color:var(--danger)">0 selected</span>
             <div style="display:flex;gap:6px">
-              <button onclick="deleteSelected()" style="font-size:11px;font-weight:700;padding:5px 12px;border-radius:7px;border:1px solid rgba(255,107,138,0.4);background:rgba(255,107,138,0.1);color:var(--danger);cursor:pointer;font-family:'Rethink Sans',sans-serif">Delete selected</button>
-              <button onclick="deleteAll()" style="font-size:11px;font-weight:700;padding:5px 12px;border-radius:7px;border:1px solid rgba(255,107,138,0.4);background:rgba(255,107,138,0.15);color:var(--danger);cursor:pointer;font-family:'Rethink Sans',sans-serif">Delete all</button>
+              <button onclick="deleteSelected()" style="font-size:11px;font-weight:700;padding:5px 12px;border-radius:7px;border:1px solid rgba(255,107,138,0.4);background:rgba(255,107,138,0.1);color:var(--danger);cursor:pointer;font-family:'Inter',sans-serif">Delete selected</button>
+              <button onclick="deleteAll()" style="font-size:11px;font-weight:700;padding:5px 12px;border-radius:7px;border:1px solid rgba(255,107,138,0.4);background:rgba(255,107,138,0.15);color:var(--danger);cursor:pointer;font-family:'Inter',sans-serif">Delete all</button>
             </div>
           </div>
           <!-- Select all row -->
@@ -4450,10 +4481,10 @@
               </div>
               <!-- Reply box -->
               <div style="padding:14px 16px">
-                <textarea id="reply-box" placeholder="Write your reply..." style="width:100%;height:90px;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:12px;color:var(--text);font-family:'Rethink Sans',sans-serif;font-size:13px;resize:none;outline:none;box-sizing:border-box;transition:border-color 0.15s" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"></textarea>
+                <textarea id="reply-box" placeholder="Write your reply..." style="width:100%;height:90px;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:12px;color:var(--text);font-family:'Inter',sans-serif;font-size:13px;resize:none;outline:none;box-sizing:border-box;transition:border-color 0.15s" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"></textarea>
                 <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px">
                   <div style="font-size:11px;color:var(--muted)" id="reply-status"></div>
-                  <button onclick="sendReply()" style="background:var(--accent);color:#fff;border:none;padding:9px 22px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Rethink Sans',sans-serif">Send Reply</button>
+                  <button onclick="sendReply()" style="background:var(--accent);color:#fff;border:none;padding:9px 22px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif">Send Reply</button>
                 </div>
               </div>
             </div>
@@ -4479,29 +4510,29 @@
         <!-- To -->
         <div>
           <label style="display:block;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:6px">To</label>
-          <input id="compose-to" type="email" placeholder="recipient@example.com" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-family:'Rethink Sans',sans-serif;font-size:13px;outline:none;box-sizing:border-box">
+          <input id="compose-to" type="email" placeholder="recipient@example.com" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-family:'Inter',sans-serif;font-size:13px;outline:none;box-sizing:border-box">
         </div>
 
         <!-- Subject -->
         <div>
           <label style="display:block;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:6px">Subject</label>
-          <input id="compose-subject" type="text" placeholder="Email subject" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-family:'Rethink Sans',sans-serif;font-size:13px;outline:none;box-sizing:border-box">
+          <input id="compose-subject" type="text" placeholder="Email subject" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-family:'Inter',sans-serif;font-size:13px;outline:none;box-sizing:border-box">
         </div>
 
         <!-- Tags -->
         <div>
           <label style="display:block;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:8px">Tags <span style="font-weight:400;text-transform:none;letter-spacing:0">(for analysis)</span></label>
           <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px">
-            <button onclick="toggleTag(this,'Follow-up')" class="tag-pill" style="background:rgba(161,117,252,0.12);border:1px solid rgba(161,117,252,0.25);color:var(--accent);font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;cursor:pointer;font-family:'Rethink Sans',sans-serif">Follow-up</button>
-            <button onclick="toggleTag(this,'Support')" class="tag-pill" style="background:rgba(161,117,252,0.12);border:1px solid rgba(161,117,252,0.25);color:var(--accent);font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;cursor:pointer;font-family:'Rethink Sans',sans-serif">Support</button>
-            <button onclick="toggleTag(this,'Promotion')" class="tag-pill" style="background:rgba(161,117,252,0.12);border:1px solid rgba(161,117,252,0.25);color:var(--accent);font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;cursor:pointer;font-family:'Rethink Sans',sans-serif">Promotion</button>
-            <button onclick="toggleTag(this,'Important')" class="tag-pill" style="background:rgba(161,117,252,0.12);border:1px solid rgba(161,117,252,0.25);color:var(--accent);font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;cursor:pointer;font-family:'Rethink Sans',sans-serif">Important</button>
-            <button onclick="toggleTag(this,'Newsletter')" class="tag-pill" style="background:rgba(161,117,252,0.12);border:1px solid rgba(161,117,252,0.25);color:var(--accent);font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;cursor:pointer;font-family:'Rethink Sans',sans-serif">Newsletter</button>
-            <button onclick="toggleTag(this,'Cold Outreach')" class="tag-pill" style="background:rgba(161,117,252,0.12);border:1px solid rgba(161,117,252,0.25);color:var(--accent);font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;cursor:pointer;font-family:'Rethink Sans',sans-serif">Cold Outreach</button>
+            <button onclick="toggleTag(this,'Follow-up')" class="tag-pill" style="background:rgba(161,117,252,0.12);border:1px solid rgba(161,117,252,0.25);color:var(--accent);font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;cursor:pointer;font-family:'Inter',sans-serif">Follow-up</button>
+            <button onclick="toggleTag(this,'Support')" class="tag-pill" style="background:rgba(161,117,252,0.12);border:1px solid rgba(161,117,252,0.25);color:var(--accent);font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;cursor:pointer;font-family:'Inter',sans-serif">Support</button>
+            <button onclick="toggleTag(this,'Promotion')" class="tag-pill" style="background:rgba(161,117,252,0.12);border:1px solid rgba(161,117,252,0.25);color:var(--accent);font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;cursor:pointer;font-family:'Inter',sans-serif">Promotion</button>
+            <button onclick="toggleTag(this,'Important')" class="tag-pill" style="background:rgba(161,117,252,0.12);border:1px solid rgba(161,117,252,0.25);color:var(--accent);font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;cursor:pointer;font-family:'Inter',sans-serif">Important</button>
+            <button onclick="toggleTag(this,'Newsletter')" class="tag-pill" style="background:rgba(161,117,252,0.12);border:1px solid rgba(161,117,252,0.25);color:var(--accent);font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;cursor:pointer;font-family:'Inter',sans-serif">Newsletter</button>
+            <button onclick="toggleTag(this,'Cold Outreach')" class="tag-pill" style="background:rgba(161,117,252,0.12);border:1px solid rgba(161,117,252,0.25);color:var(--accent);font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;cursor:pointer;font-family:'Inter',sans-serif">Cold Outreach</button>
           </div>
           <div style="display:flex;gap:8px">
-            <input id="compose-tag-input" type="text" placeholder="Custom tag..." onkeydown="if(event.key==='Enter'){event.preventDefault();addCustomTag()}" style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-family:'Rethink Sans',sans-serif;font-size:12px;outline:none">
-            <button onclick="addCustomTag()" style="background:transparent;border:1px solid var(--border);color:var(--muted);font-size:12px;font-weight:600;padding:8px 14px;border-radius:8px;cursor:pointer;font-family:'Rethink Sans',sans-serif">Add</button>
+            <input id="compose-tag-input" type="text" placeholder="Custom tag..." onkeydown="if(event.key==='Enter'){event.preventDefault();addCustomTag()}" style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-family:'Inter',sans-serif;font-size:12px;outline:none">
+            <button onclick="addCustomTag()" style="background:transparent;border:1px solid var(--border);color:var(--muted);font-size:12px;font-weight:600;padding:8px 14px;border-radius:8px;cursor:pointer;font-family:'Inter',sans-serif">Add</button>
           </div>
           <div id="compose-selected-tags" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px"></div>
         </div>
@@ -4509,14 +4540,14 @@
         <!-- Body -->
         <div>
           <label style="display:block;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:6px">Message</label>
-          <textarea id="compose-body" placeholder="Write your message..." style="width:100%;height:160px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px 14px;color:var(--text);font-family:'Rethink Sans',sans-serif;font-size:13px;resize:none;outline:none;box-sizing:border-box;line-height:1.6"></textarea>
+          <textarea id="compose-body" placeholder="Write your message..." style="width:100%;height:160px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px 14px;color:var(--text);font-family:'Inter',sans-serif;font-size:13px;resize:none;outline:none;box-sizing:border-box;line-height:1.6"></textarea>
         </div>
       </div>
 
       <!-- Footer -->
       <div style="padding:16px 24px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
         <div id="compose-status" style="font-size:12px;color:var(--muted)"></div>
-        <button onclick="sendNewEmail()" id="compose-send-btn" style="background:var(--accent);color:#fff;border:none;padding:10px 24px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Rethink Sans',sans-serif">Send Email</button>
+        <button onclick="sendNewEmail()" id="compose-send-btn" style="background:var(--accent);color:#fff;border:none;padding:10px 24px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif">Send Email</button>
       </div>
     </div>
   </div>
@@ -4654,19 +4685,80 @@ document.addEventListener('click', function(e) {
 });
 
 // ── CHARTS ──
-let reasonChart, cancelChart;
+const _charts = {}
+
+function chartTheme() {
+  const dark = document.documentElement.getAttribute('data-theme') === 'dark'
+  return {
+    text:   dark ? 'rgba(255,255,255,0.55)' : '#6b5f8a',
+    grid:   dark ? 'rgba(255,255,255,0.05)' : 'rgba(100,80,200,0.07)',
+    font:   'Inter',
+    accent: dark ? '#A175FC' : '#7c3aed',
+    danger: dark ? '#ff6b8a' : '#dc2626',
+    green:  dark ? '#4ecca3' : '#16a34a',
+    warn:   dark ? '#ffd166' : '#d97706',
+  }
+}
+
+function destroyAllCharts() {
+  Object.values(_charts).forEach(c => { try { c.destroy() } catch(e) {} })
+  Object.keys(_charts).forEach(k => delete _charts[k])
+  // Reset init flags
+  document.querySelectorAll('canvas').forEach(c => { c._chartInstance = false })
+}
+
+// ── THEME TOGGLE ──
+function toggleTheme() {
+  const current = document.documentElement.getAttribute('data-theme') || 'light'
+  const next = current === 'light' ? 'dark' : 'light'
+  applyTheme(next)
+}
+
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme)
+  localStorage.setItem('lynq-theme', theme)
+  const btn = document.getElementById('theme-toggle-btn')
+  const icon = document.getElementById('theme-icon')
+  const label = document.getElementById('theme-label')
+  if (theme === 'dark') {
+    if (icon) icon.textContent = '🌙'
+    if (label) label.textContent = 'Dark Mode'
+  } else {
+    if (icon) icon.textContent = '☀️'
+    if (label) label.textContent = 'Light Mode'
+  }
+  destroyAllCharts()
+  // Re-init chart for currently visible page
+  const activePage = document.querySelector('.page.active')
+  if (activePage) {
+    const id = activePage.id.replace('page-', '')
+    if (id === 'refunds') initReasonChart()
+    if (id === 'cancellations') initCancelChart()
+    if (id === 'home') { initMonthlyChart(); initHomeChart && initHomeChart() }
+    if (id === 'performance') initDeliveryChart()
+  }
+}
+
+// Init theme from localStorage on load
+;(function() {
+  const saved = localStorage.getItem('lynq-theme') || 'light'
+  document.documentElement.setAttribute('data-theme', saved)
+  // Update button after DOM ready
+  window.addEventListener('DOMContentLoaded', () => applyTheme(saved))
+})()
 
 function initReasonChart() {
   const ctx = document.getElementById('reasonChart');
   if (!ctx || ctx._chartInstance) return;
   ctx._chartInstance = true;
-  new Chart(ctx, {
+  const t = chartTheme();
+  _charts.reason = new Chart(ctx, {
     type: 'doughnut',
     data: {
       labels: ['Quality', 'Delivery', 'Size', 'Webshop', 'Other'],
       datasets: [{
         data: [18, 13, 9, 4, 3],
-        backgroundColor: ['#ff6b8a','#ffd166','#A175FC','#4ecca3','rgba(255,255,255,0.15)'],
+        backgroundColor: [t.danger, t.warn, t.accent, t.green, 'rgba(120,100,180,0.25)'],
         borderWidth: 0,
         hoverOffset: 6,
       }]
@@ -4676,7 +4768,7 @@ function initReasonChart() {
       plugins: {
         legend: {
           position: 'bottom',
-          labels: { color: 'rgba(255,255,255,0.55)', font: { size: 11, family: 'Rethink Sans' }, boxWidth: 10, padding: 12 }
+          labels: { color: t.text, font: { size: 11, family: t.font }, boxWidth: 10, padding: 12 }
         }
       }
     }
@@ -4687,13 +4779,14 @@ function initCancelChart() {
   const ctx = document.getElementById('cancelChart');
   if (!ctx || ctx._chartInstance) return;
   ctx._chartInstance = true;
-  new Chart(ctx, {
+  const t = chartTheme();
+  _charts.cancel = new Chart(ctx, {
     type: 'doughnut',
     data: {
       labels: ['Changed mind', 'Long wait', 'Wrong order', 'Found cheaper'],
       datasets: [{
         data: [10, 5, 3, 1],
-        backgroundColor: ['rgba(255,255,255,0.2)','#ffd166','#4ecca3','#A175FC'],
+        backgroundColor: ['rgba(120,100,180,0.35)', t.warn, t.green, t.accent],
         borderWidth: 0,
         hoverOffset: 6,
       }]
@@ -4703,7 +4796,7 @@ function initCancelChart() {
       plugins: {
         legend: {
           position: 'bottom',
-          labels: { color: 'rgba(255,255,255,0.55)', font: { size: 11, family: 'Rethink Sans' }, boxWidth: 10, padding: 12 }
+          labels: { color: t.text, font: { size: 11, family: t.font }, boxWidth: 10, padding: 12 }
         }
       }
     }
@@ -4743,7 +4836,8 @@ function initMonthlyChart() {
   const ctx = document.getElementById('monthlyChart');
   if (!ctx || ctx._chartInstance) return;
   ctx._chartInstance = true;
-  new Chart(ctx, {
+  const t = chartTheme();
+  _charts.monthly = new Chart(ctx, {
     type: 'bar',
     data: {
       labels: ['Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar'],
@@ -4773,17 +4867,17 @@ function initMonthlyChart() {
     options: {
       plugins: {
         legend: {
-          labels: { color: 'rgba(255,255,255,0.5)', font: { size: 11, family: 'Rethink Sans' }, boxWidth: 10 }
+          labels: { color: t.text, font: { size: 11, family: t.font }, boxWidth: 10 }
         },
         tooltip: {
           callbacks: { label: ctx => ` ${ctx.raw}%` }
         }
       },
       scales: {
-        x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: 'rgba(255,255,255,0.5)', font: { family: 'Rethink Sans', size: 11 } } },
+        x: { grid: { color: t.grid }, ticks: { color: t.text, font: { family: t.font, size: 11 } } },
         y: {
-          grid: { color: 'rgba(255,255,255,0.05)' },
-          ticks: { color: 'rgba(255,255,255,0.5)', font: { family: 'Rethink Sans', size: 11 }, callback: v => v + '%' },
+          grid: { color: t.grid },
+          ticks: { color: t.text, font: { family: t.font, size: 11 }, callback: v => v + '%' },
           min: 0, max: 6
         }
       }
@@ -4855,7 +4949,8 @@ function initDeliveryChart() {
   const ctx = document.getElementById('deliveryChart');
   if (!ctx || ctx._chartInstance) return;
   ctx._chartInstance = true;
-  new Chart(ctx, {
+  const t = chartTheme();
+  _charts.delivery = new Chart(ctx, {
     type: 'line',
     data: {
       labels: ['Oct','Nov','Dec','Jan','Feb','Mar'],
@@ -4863,15 +4958,15 @@ function initDeliveryChart() {
         {
           label: 'Avg delivery (days)',
           data: [14.2, 13.8, 15.1, 12.9, 12.1, 11.0],
-          borderColor: '#A175FC',
+          borderColor: t.accent,
           backgroundColor: 'rgba(161,117,252,0.1)',
           borderWidth: 2, pointRadius: 4,
-          pointBackgroundColor: '#A175FC', fill: true, tension: 0.4,
+          pointBackgroundColor: t.accent, fill: true, tension: 0.4,
         },
         {
           label: 'Target (14d)',
           data: [14,14,14,14,14,14],
-          borderColor: 'rgba(255,107,138,0.5)',
+          borderColor: t.danger.replace(')', ',0.5)').replace('rgb', 'rgba'),
           borderWidth: 2, borderDash: [6,4],
           pointRadius: 0, fill: false,
         }
@@ -4879,11 +4974,11 @@ function initDeliveryChart() {
     },
     options: {
       plugins: {
-        legend: { labels: { color: 'rgba(255,255,255,0.5)', font: { size: 11, family: 'Rethink Sans' }, boxWidth: 10 } }
+        legend: { labels: { color: t.text, font: { size: 11, family: t.font }, boxWidth: 10 } }
       },
       scales: {
-        x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: 'rgba(255,255,255,0.5)', font: { family: 'Rethink Sans', size: 11 } } },
-        y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: 'rgba(255,255,255,0.5)', font: { family: 'Rethink Sans', size: 11 }, callback: v => v + 'd' }, min: 8, max: 18 }
+        x: { grid: { color: t.grid }, ticks: { color: t.text, font: { family: t.font, size: 11 } } },
+        y: { grid: { color: t.grid }, ticks: { color: t.text, font: { family: t.font, size: 11 }, callback: v => v + 'd' }, min: 8, max: 18 }
       }
     }
   });
@@ -5013,7 +5108,8 @@ function initHomeChart() {
   const ctx = document.getElementById('homeMonthlyChart');
   if (!ctx || ctx._chartInstance) return;
   ctx._chartInstance = true;
-  new Chart(ctx, {
+  const t = chartTheme();
+  _charts.home = new Chart(ctx, {
     type: 'bar',
     data: {
       labels: ['Oct','Nov','Dec','Jan','Feb','Mar'],
@@ -5033,8 +5129,8 @@ function initHomeChart() {
         tooltip: { callbacks: { label: ctx => ctx.parsed.y + '%' } }
       },
       scales: {
-        x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: 'rgba(255,255,255,0.5)', font: { family: 'Rethink Sans', size: 11 } } },
-        y: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: 'rgba(255,255,255,0.5)', font: { family: 'Rethink Sans', size: 11 }, callback: v => v + '%' }, min: 0, max: 6 }
+        x: { grid: { color: t.grid }, ticks: { color: t.text, font: { family: t.font, size: 11 } } },
+        y: { grid: { color: t.grid }, ticks: { color: t.text, font: { family: t.font, size: 11 }, callback: v => v + '%' }, min: 0, max: 6 }
       }
     }
   });
@@ -5294,7 +5390,7 @@ async function loadMacros(thread) {
     macroLoading.style.display = 'none'
     if (data.macros && data.macros.length) {
       macroSuggestions.innerHTML = data.macros.map(m =>
-        '<button onclick="applyMacro(' + JSON.stringify(m.body).replace(/"/g,'&quot;') + ')" style="font-size:12px;font-weight:600;padding:5px 12px;border-radius:20px;border:1px solid var(--border);background:var(--surface2);color:var(--accent);cursor:pointer;font-family:\'Rethink Sans\',sans-serif;transition:all 0.15s" onmouseover="this.style.background=\'var(--accent)\';this.style.color=\'#fff\'" onmouseout="this.style.background=\'var(--surface2)\';this.style.color=\'var(--accent)\'">'
+        '<button onclick="applyMacro(' + JSON.stringify(m.body).replace(/"/g,'&quot;') + ')" style="font-size:12px;font-weight:600;padding:5px 12px;border-radius:20px;border:1px solid var(--border);background:var(--surface2);color:var(--accent);cursor:pointer;font-family:\'Inter\',sans-serif;transition:all 0.15s" onmouseover="this.style.background=\'var(--accent)\';this.style.color=\'#fff\'" onmouseout="this.style.background=\'var(--surface2)\';this.style.color=\'var(--accent)\'">'
         + m.name + '</button>'
       ).join('')
     }
@@ -5657,7 +5753,7 @@ async function sendNewEmail() {
   }
 
   var S = 'background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;';
-  var BTN = 'width:100%;font-size:11px;font-weight:700;padding:7px 0;border-radius:8px;cursor:pointer;font-family:\'Rethink Sans\',sans-serif;margin-top:6px;border:1px solid ';
+  var BTN = 'width:100%;font-size:11px;font-weight:700;padding:7px 0;border-radius:8px;cursor:pointer;font-family:\'Inter\',sans-serif;margin-top:6px;border:1px solid ';
 
   function header(p, borderColor) {
     return '<div style="' + S + 'border-left:3px solid ' + borderColor + '">'
@@ -5679,8 +5775,8 @@ async function sendNewEmail() {
       return header(p, 'var(--warn)')
         + wait
         + '<div style="display:flex;gap:6px">'
-        + '<button onclick="qcMove(' + p.id + ',\'approved\')" style="flex:1;font-size:11px;font-weight:700;padding:6px 0;border-radius:8px;cursor:pointer;font-family:\'Rethink Sans\',sans-serif;background:rgba(78,204,163,0.1);border:1px solid rgba(78,204,163,0.25);color:#4ecca3">&#10003; Approved</button>'
-        + '<button onclick="qcMove(' + p.id + ',\'rejected\')" style="flex:1;font-size:11px;font-weight:700;padding:6px 0;border-radius:8px;cursor:pointer;font-family:\'Rethink Sans\',sans-serif;background:rgba(255,107,138,0.1);border:1px solid rgba(255,107,138,0.25);color:#ff6b8a">&#10005; Not Approved</button>'
+        + '<button onclick="qcMove(' + p.id + ',\'approved\')" style="flex:1;font-size:11px;font-weight:700;padding:6px 0;border-radius:8px;cursor:pointer;font-family:\'Inter\',sans-serif;background:rgba(78,204,163,0.1);border:1px solid rgba(78,204,163,0.25);color:#4ecca3">&#10003; Approved</button>'
+        + '<button onclick="qcMove(' + p.id + ',\'rejected\')" style="flex:1;font-size:11px;font-weight:700;padding:6px 0;border-radius:8px;cursor:pointer;font-family:\'Inter\',sans-serif;background:rgba(255,107,138,0.1);border:1px solid rgba(255,107,138,0.25);color:#ff6b8a">&#10005; Not Approved</button>'
         + '</div>'
         + '</div>';
     }
@@ -5719,7 +5815,7 @@ async function sendNewEmail() {
           return '<div style="background:var(--surface);border:1px solid rgba(78,204,163,0.2);border-left:3px solid var(--green);border-radius:12px;padding:14px 16px">'
             + '<div style="font-size:13px;font-weight:700;margin-bottom:4px">' + p.name + '</div>'
             + '<div style="font-size:11px;color:var(--green);margin-bottom:10px">&#10003; Quality confirmed</div>'
-            + '<button onclick="qcDismiss(' + p.id + ')" style="width:100%;font-size:11px;font-weight:600;padding:6px 0;border-radius:8px;cursor:pointer;font-family:\'Rethink Sans\',sans-serif;background:rgba(255,255,255,0.04);border:1px solid var(--border);color:var(--muted)">Remove</button>'
+            + '<button onclick="qcDismiss(' + p.id + ')" style="width:100%;font-size:11px;font-weight:600;padding:6px 0;border-radius:8px;cursor:pointer;font-family:\'Inter\',sans-serif;background:rgba(255,255,255,0.04);border:1px solid var(--border);color:var(--muted)">Remove</button>'
             + '</div>';
         }).join('')
       : empty;

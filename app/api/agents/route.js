@@ -24,18 +24,15 @@ export async function GET(request) {
   return NextResponse.json({ agents: agents || [] })
 }
 
-// POST — create agent + Supabase auth account
+// POST — invite agent (sends email with link to set password)
 export async function POST(request) {
   const user = await getUser(request)
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { name, email, role } = await request.json()
+  const { name, email } = await request.json()
   if (!name || !email) return NextResponse.json({ error: 'Name and email required' }, { status: 400 })
 
-  const validRoles = ['observer', 'lite', 'basic', 'lead', 'admin']
-  const agentRole = validRoles.includes(role) ? role : 'basic'
-
-  // Check if agent already exists
+  // Check if agent already exists in agents table
   const { data: existing } = await supabaseAdmin
     .from('agents')
     .select('id')
@@ -44,18 +41,22 @@ export async function POST(request) {
 
   if (existing) return NextResponse.json({ error: 'An agent with this email already exists' }, { status: 400 })
 
-  // Create Supabase auth user (they will receive a password reset email to set their password)
-  const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
-    email,
-    email_confirm: true,
-    user_metadata: { name, role: agentRole, is_agent: true },
+  // Send invite email via Supabase — agent receives link to set their password
+  // redirectTo must be listed in Supabase Auth → URL Configuration → Redirect URLs
+  const { data: inviteData, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
+    data: { name, role: 'agent', is_agent: true },
+    redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/login`,
   })
 
-  if (authError && !authError.message.includes('already been registered')) {
-    return NextResponse.json({ error: authError.message }, { status: 500 })
+  if (inviteError) {
+    // If user already exists in auth but not in agents table, we can still add them
+    if (!inviteError.message.toLowerCase().includes('already been invited') &&
+        !inviteError.message.toLowerCase().includes('already registered')) {
+      return NextResponse.json({ error: inviteError.message }, { status: 500 })
+    }
   }
 
-  const authUserId = authData?.user?.id || null
+  const authUserId = inviteData?.user?.id || null
 
   // Insert into agents table
   const { data: agent, error: insertError } = await supabaseAdmin
@@ -63,7 +64,7 @@ export async function POST(request) {
     .insert({
       name,
       email,
-      role: agentRole,
+      role: 'agent',
       user_id: authUserId,
       invited_by: user.id,
     })
@@ -72,10 +73,10 @@ export async function POST(request) {
 
   if (insertError) return NextResponse.json({ error: insertError.message }, { status: 500 })
 
-  return NextResponse.json({ agent })
+  return NextResponse.json({ agent, invited: true })
 }
 
-// DELETE — remove agent
+// DELETE — remove agent (removes from agents table + deletes auth user)
 export async function DELETE(request) {
   const user = await getUser(request)
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -83,6 +84,20 @@ export async function DELETE(request) {
   const { id } = await request.json()
   if (!id) return NextResponse.json({ error: 'Missing id' }, { status: 400 })
 
+  // Get agent to find their auth user_id
+  const { data: agent } = await supabaseAdmin
+    .from('agents')
+    .select('user_id')
+    .eq('id', id)
+    .single()
+
+  // Delete from agents table
   await supabaseAdmin.from('agents').delete().eq('id', id)
+
+  // Also remove their Supabase auth account
+  if (agent?.user_id) {
+    await supabaseAdmin.auth.admin.deleteUser(agent.user_id)
+  }
+
   return NextResponse.json({ success: true })
 }

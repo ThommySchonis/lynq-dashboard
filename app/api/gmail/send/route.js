@@ -9,7 +9,7 @@ export async function POST(request) {
   const { data: { user }, error } = await supabaseAdmin.auth.getUser(token)
   if (error || !user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { to, subject, body, threadId, replyToMessageId } = await request.json()
+  const { to, subject, body, threadId, replyToMessageId, tags } = await request.json()
 
   const { data: gmailToken } = await supabaseAdmin
     .from('gmail_tokens')
@@ -19,7 +19,27 @@ export async function POST(request) {
 
   if (!gmailToken) return NextResponse.json({ error: 'Gmail not connected' }, { status: 400 })
 
-  const accessToken = gmailToken.access_token
+  // Refresh token if expired
+  let accessToken = gmailToken.access_token
+  if (new Date(gmailToken.expires_at) < new Date()) {
+    const refreshRes = await fetch('https://oauth2.googleapis.com/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        client_id: process.env.GOOGLE_CLIENT_ID?.trim(),
+        client_secret: process.env.GOOGLE_CLIENT_SECRET?.trim(),
+        refresh_token: gmailToken.refresh_token,
+        grant_type: 'refresh_token',
+      }),
+    })
+    const refreshData = await refreshRes.json()
+    if (!refreshData.access_token) return NextResponse.json({ error: 'Token refresh failed' }, { status: 401 })
+    accessToken = refreshData.access_token
+    await supabaseAdmin.from('gmail_tokens').update({
+      access_token: accessToken,
+      expires_at: new Date(Date.now() + refreshData.expires_in * 1000).toISOString(),
+    }).eq('user_id', user.id)
+  }
 
   // Build RFC 2822 email
   const emailLines = [
@@ -56,6 +76,17 @@ export async function POST(request) {
 
   const result = await res.json()
   if (!res.ok) return NextResponse.json({ error: result.error?.message || 'Send failed' }, { status: 500 })
+
+  // Log sent email with tags to Supabase (only for new emails, not replies)
+  if (!threadId && tags) {
+    await supabaseAdmin.from('sent_emails').insert({
+      user_id: user.id,
+      to_email: to,
+      subject,
+      body,
+      tags,
+    })
+  }
 
   return NextResponse.json({ success: true, messageId: result.id })
 }

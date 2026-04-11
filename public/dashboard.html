@@ -4393,7 +4393,10 @@
         <div style="border-right:1px solid var(--border);overflow-y:auto;background:var(--surface)">
           <div style="padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
             <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px">All Messages</div>
-            <button onclick="loadInbox()" style="background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:16px">↻</button>
+            <div style="display:flex;align-items:center;gap:8px">
+              <button onclick="openCompose()" style="background:var(--accent);border:none;color:#fff;cursor:pointer;font-size:12px;font-weight:700;padding:5px 12px;border-radius:7px;font-family:'Rethink Sans',sans-serif">+ Compose</button>
+              <button onclick="loadInbox()" style="background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:16px">↻</button>
+            </div>
           </div>
           <div id="inbox-thread-list"></div>
         </div>
@@ -4422,6 +4425,64 @@
             </div>
           </div>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- COMPOSE MODAL -->
+  <div id="compose-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center">
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;width:100%;max-width:580px;max-height:90vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 24px 60px rgba(0,0,0,0.4)">
+
+      <!-- Header -->
+      <div style="padding:18px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+        <div style="font-size:15px;font-weight:700">New Email</div>
+        <button onclick="closeCompose()" style="background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:20px;line-height:1;padding:0">&times;</button>
+      </div>
+
+      <!-- Fields -->
+      <div style="padding:20px 24px;display:flex;flex-direction:column;gap:14px;overflow-y:auto;flex:1">
+
+        <!-- To -->
+        <div>
+          <label style="display:block;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:6px">To</label>
+          <input id="compose-to" type="email" placeholder="recipient@example.com" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-family:'Rethink Sans',sans-serif;font-size:13px;outline:none;box-sizing:border-box">
+        </div>
+
+        <!-- Subject -->
+        <div>
+          <label style="display:block;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:6px">Subject</label>
+          <input id="compose-subject" type="text" placeholder="Email subject" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-family:'Rethink Sans',sans-serif;font-size:13px;outline:none;box-sizing:border-box">
+        </div>
+
+        <!-- Tags -->
+        <div>
+          <label style="display:block;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:8px">Tags <span style="font-weight:400;text-transform:none;letter-spacing:0">(for analysis)</span></label>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px">
+            <button onclick="toggleTag(this,'Follow-up')" class="tag-pill" style="background:rgba(161,117,252,0.12);border:1px solid rgba(161,117,252,0.25);color:var(--accent);font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;cursor:pointer;font-family:'Rethink Sans',sans-serif">Follow-up</button>
+            <button onclick="toggleTag(this,'Support')" class="tag-pill" style="background:rgba(161,117,252,0.12);border:1px solid rgba(161,117,252,0.25);color:var(--accent);font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;cursor:pointer;font-family:'Rethink Sans',sans-serif">Support</button>
+            <button onclick="toggleTag(this,'Promotion')" class="tag-pill" style="background:rgba(161,117,252,0.12);border:1px solid rgba(161,117,252,0.25);color:var(--accent);font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;cursor:pointer;font-family:'Rethink Sans',sans-serif">Promotion</button>
+            <button onclick="toggleTag(this,'Important')" class="tag-pill" style="background:rgba(161,117,252,0.12);border:1px solid rgba(161,117,252,0.25);color:var(--accent);font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;cursor:pointer;font-family:'Rethink Sans',sans-serif">Important</button>
+            <button onclick="toggleTag(this,'Newsletter')" class="tag-pill" style="background:rgba(161,117,252,0.12);border:1px solid rgba(161,117,252,0.25);color:var(--accent);font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;cursor:pointer;font-family:'Rethink Sans',sans-serif">Newsletter</button>
+            <button onclick="toggleTag(this,'Cold Outreach')" class="tag-pill" style="background:rgba(161,117,252,0.12);border:1px solid rgba(161,117,252,0.25);color:var(--accent);font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;cursor:pointer;font-family:'Rethink Sans',sans-serif">Cold Outreach</button>
+          </div>
+          <div style="display:flex;gap:8px">
+            <input id="compose-tag-input" type="text" placeholder="Custom tag..." onkeydown="if(event.key==='Enter'){event.preventDefault();addCustomTag()}" style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-family:'Rethink Sans',sans-serif;font-size:12px;outline:none">
+            <button onclick="addCustomTag()" style="background:transparent;border:1px solid var(--border);color:var(--muted);font-size:12px;font-weight:600;padding:8px 14px;border-radius:8px;cursor:pointer;font-family:'Rethink Sans',sans-serif">Add</button>
+          </div>
+          <div id="compose-selected-tags" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px"></div>
+        </div>
+
+        <!-- Body -->
+        <div>
+          <label style="display:block;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:6px">Message</label>
+          <textarea id="compose-body" placeholder="Write your message..." style="width:100%;height:160px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px 14px;color:var(--text);font-family:'Rethink Sans',sans-serif;font-size:13px;resize:none;outline:none;box-sizing:border-box;line-height:1.6"></textarea>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div style="padding:16px 24px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+        <div id="compose-status" style="font-size:12px;color:var(--muted)"></div>
+        <button onclick="sendNewEmail()" id="compose-send-btn" style="background:var(--accent);color:#fff;border:none;padding:10px 24px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Rethink Sans',sans-serif">Send Email</button>
       </div>
     </div>
   </div>
@@ -5179,6 +5240,126 @@ async function sendReply() {
   if (data.success) {
     document.getElementById('reply-box').value = ''
     document.getElementById('detail-body').innerHTML += '<div style="margin-top:16px;padding:12px 16px;background:rgba(161,117,252,0.1);border-left:3px solid var(--accent);border-radius:8px;font-size:13px;line-height:1.6">' + body + '</div>'
+  }
+}
+
+// ── COMPOSE ──
+var _composeTags = []
+
+function openCompose() {
+  _composeTags = []
+  document.getElementById('compose-to').value = ''
+  document.getElementById('compose-subject').value = ''
+  document.getElementById('compose-body').value = ''
+  document.getElementById('compose-tag-input').value = ''
+  document.getElementById('compose-selected-tags').innerHTML = ''
+  document.getElementById('compose-status').textContent = ''
+  document.getElementById('compose-send-btn').textContent = 'Send Email'
+  document.getElementById('compose-send-btn').disabled = false
+  // Reset tag pills
+  document.querySelectorAll('.tag-pill').forEach(p => {
+    p.style.background = 'rgba(161,117,252,0.12)'
+    p.style.borderColor = 'rgba(161,117,252,0.25)'
+    p.style.color = 'var(--accent)'
+  })
+  const overlay = document.getElementById('compose-overlay')
+  overlay.style.display = 'flex'
+}
+
+function closeCompose() {
+  document.getElementById('compose-overlay').style.display = 'none'
+}
+
+// Close on backdrop click
+document.getElementById('compose-overlay').addEventListener('click', function(e) {
+  if (e.target === this) closeCompose()
+})
+
+function toggleTag(btn, tag) {
+  const idx = _composeTags.indexOf(tag)
+  if (idx === -1) {
+    _composeTags.push(tag)
+    btn.style.background = 'var(--accent)'
+    btn.style.borderColor = 'var(--accent)'
+    btn.style.color = '#fff'
+  } else {
+    _composeTags.splice(idx, 1)
+    btn.style.background = 'rgba(161,117,252,0.12)'
+    btn.style.borderColor = 'rgba(161,117,252,0.25)'
+    btn.style.color = 'var(--accent)'
+  }
+  renderSelectedTags()
+}
+
+function addCustomTag() {
+  const input = document.getElementById('compose-tag-input')
+  const tag = input.value.trim()
+  if (!tag || _composeTags.includes(tag)) { input.value = ''; return }
+  _composeTags.push(tag)
+  input.value = ''
+  renderSelectedTags()
+}
+
+function removeTag(tag) {
+  _composeTags = _composeTags.filter(t => t !== tag)
+  // Un-highlight preset pill if it matches
+  document.querySelectorAll('.tag-pill').forEach(p => {
+    if (p.getAttribute('onclick').includes("'" + tag + "'")) {
+      p.style.background = 'rgba(161,117,252,0.12)'
+      p.style.borderColor = 'rgba(161,117,252,0.25)'
+      p.style.color = 'var(--accent)'
+    }
+  })
+  renderSelectedTags()
+}
+
+function renderSelectedTags() {
+  const wrap = document.getElementById('compose-selected-tags')
+  wrap.innerHTML = _composeTags.map(tag =>
+    '<span style="display:inline-flex;align-items:center;gap:5px;background:rgba(161,117,252,0.2);color:var(--accent);font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px">'
+    + tag
+    + '<span onclick="removeTag(\'' + tag.replace(/'/g, "\\'") + '\')" style="cursor:pointer;opacity:0.7;font-size:13px;line-height:1">&times;</span>'
+    + '</span>'
+  ).join('')
+}
+
+async function sendNewEmail() {
+  if (!_inboxSession) return
+  const to = document.getElementById('compose-to').value.trim()
+  const subject = document.getElementById('compose-subject').value.trim()
+  const body = document.getElementById('compose-body').value.trim()
+
+  if (!to || !subject || !body) {
+    document.getElementById('compose-status').textContent = 'Please fill in To, Subject and Message.'
+    document.getElementById('compose-status').style.color = 'var(--danger)'
+    return
+  }
+
+  const btn = document.getElementById('compose-send-btn')
+  const status = document.getElementById('compose-status')
+  btn.textContent = 'Sending...'
+  btn.disabled = true
+  status.textContent = ''
+
+  const res = await fetch('/api/gmail/send', {
+    method: 'POST',
+    headers: {
+      Authorization: 'Bearer ' + _inboxSession.access_token,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ to, subject, body, tags: _composeTags })
+  })
+
+  const data = await res.json()
+  if (data.success) {
+    status.textContent = 'Sent!'
+    status.style.color = 'var(--green)'
+    setTimeout(closeCompose, 1200)
+  } else {
+    status.textContent = data.error || 'Failed to send.'
+    status.style.color = 'var(--danger)'
+    btn.textContent = 'Send Email'
+    btn.disabled = false
   }
 }
 

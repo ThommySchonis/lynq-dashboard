@@ -4844,31 +4844,7 @@
             <label style="display:block;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:6px">Email <span style="color:var(--danger)">*</span></label>
             <input id="agent-email-input" type="email" placeholder="agent@example.com" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-family:'Inter',sans-serif;font-size:13px;outline:none;box-sizing:border-box" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
           </div>
-          <div>
-            <label style="display:block;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:10px">Role</label>
-            <div style="display:flex;flex-direction:column;gap:8px" id="agent-role-group">
-              <label class="role-option" onclick="selectRole(this,'observer')">
-                <input type="radio" name="agent-role" value="observer" style="accent-color:var(--accent)">
-                <div><strong>Observer</strong><div style="font-size:12px;color:var(--muted);margin-top:2px">Can view customers and tickets, but cannot reply.</div></div>
-              </label>
-              <label class="role-option" onclick="selectRole(this,'lite')">
-                <input type="radio" name="agent-role" value="lite" style="accent-color:var(--accent)">
-                <div><strong>Lite</strong><div style="font-size:12px;color:var(--muted);margin-top:2px">Observer + can reply to customers.</div></div>
-              </label>
-              <label class="role-option active" onclick="selectRole(this,'basic')">
-                <input type="radio" name="agent-role" value="basic" checked style="accent-color:var(--accent)">
-                <div><strong>Basic</strong><div style="font-size:12px;color:var(--muted);margin-top:2px">Lite + can perform integration actions (e.g. Shopify Refund).</div></div>
-              </label>
-              <label class="role-option" onclick="selectRole(this,'lead')">
-                <input type="radio" name="agent-role" value="lead" style="accent-color:var(--accent)">
-                <div><strong>Lead</strong><div style="font-size:12px;color:var(--muted);margin-top:2px">Basic + can delete tickets, manage macros, rules and tags.</div></div>
-              </label>
-              <label class="role-option" onclick="selectRole(this,'admin')">
-                <input type="radio" name="agent-role" value="admin" style="accent-color:var(--accent)">
-                <div><strong>Admin</strong><div style="font-size:12px;color:var(--muted);margin-top:2px">Full access. Can manage users, settings and billing.</div></div>
-              </label>
-            </div>
-          </div>
+          <input type="hidden" name="agent-role" value="agent">
           <div style="display:flex;gap:10px;align-items:center;margin-top:4px">
             <button onclick="createAgent()" style="background:var(--accent);color:#fff;border:none;padding:10px 24px;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif">Create user</button>
             <button onclick="clearAgentForm()" style="background:transparent;color:var(--muted);border:1px solid var(--border);padding:10px 20px;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif">Cancel</button>
@@ -6310,7 +6286,7 @@ async function loadAgents() {
         <div style="font-size:13px;font-weight:700;color:var(--text)">${a.name}</div>
         <div style="font-size:11px;color:var(--muted)">${a.email}</div>
       </div>
-      <span class="role-badge ${a.role}">${a.role}</span>
+      <span class="role-badge basic">Agent</span>
       <button onclick="removeAgent('${a.id}')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px;padding:0 4px" title="Remove">×</button>
     </div>`
   }).join('')

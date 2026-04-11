@@ -47,13 +47,15 @@ export async function GET(request) {
   const customTo = searchParams.get('to')
   const { from, to } = getDateRange(filter, customFrom, customTo)
 
-  const isAdmin = user.email === 'info@lynqagency.com'
+  // Check if user is an agent (in agents table) — if not, treat as admin
+  const { data: selfAgent } = await supabaseAdmin.from('agents').select('id').eq('email', user.email).maybeSingle()
+  const isAdmin = !selfAgent
 
   let agentsQuery = supabaseAdmin.from('agents').select('id, name, email').order('created_at')
   if (!isAdmin) agentsQuery = agentsQuery.eq('email', user.email)
   const { data: agents } = await agentsQuery
 
-  if (!agents?.length) return NextResponse.json({ sessions: [], agents: [], active_session: null })
+  if (!agents?.length) return NextResponse.json({ sessions: [], agents: [], active_session: null, is_admin: isAdmin })
 
   const agentIds = agents.map(a => a.id)
 

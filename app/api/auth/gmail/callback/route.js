@@ -6,12 +6,18 @@ export async function GET(request) {
   const code = searchParams.get('code')
 
   if (!code) {
+    console.error('[Gmail callback] No code in request')
     return NextResponse.redirect('https://lynq-dashboard.vercel.app/dashboard.html?gmail=error')
   }
 
   const clientId = process.env.GOOGLE_CLIENT_ID?.trim()
   const clientSecret = process.env.GOOGLE_CLIENT_SECRET?.trim()
   const redirectUri = 'https://lynq-dashboard.vercel.app/api/auth/gmail/callback'
+
+  if (!clientId || !clientSecret) {
+    console.error('[Gmail callback] Missing GOOGLE_CLIENT_ID or GOOGLE_CLIENT_SECRET env vars')
+    return NextResponse.redirect('https://lynq-dashboard.vercel.app/dashboard.html?gmail=error')
+  }
 
   // Exchange code for tokens
   const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
@@ -27,7 +33,10 @@ export async function GET(request) {
   })
 
   const tokens = await tokenRes.json()
+  console.log('[Gmail callback] Token exchange result:', { access_token: !!tokens.access_token, refresh_token: !!tokens.refresh_token, error: tokens.error })
+
   if (!tokens.access_token) {
+    console.error('[Gmail callback] Token exchange failed:', tokens)
     return NextResponse.redirect('https://lynq-dashboard.vercel.app/dashboard.html?gmail=error')
   }
 
@@ -36,9 +45,10 @@ export async function GET(request) {
     headers: { Authorization: `Bearer ${tokens.access_token}` },
   })
   const profile = await profileRes.json()
+  console.log('[Gmail callback] Profile email:', profile.email)
 
   // Store tokens in Supabase
-  await supabaseAdmin.from('gmail_tokens').upsert({
+  const { error: upsertError } = await supabaseAdmin.from('gmail_tokens').upsert({
     email: profile.email,
     access_token: tokens.access_token,
     refresh_token: tokens.refresh_token,
@@ -46,5 +56,11 @@ export async function GET(request) {
     gmail_address: profile.email,
   }, { onConflict: 'email' })
 
+  if (upsertError) {
+    console.error('[Gmail callback] Supabase upsert failed:', upsertError)
+    return NextResponse.redirect('https://lynq-dashboard.vercel.app/dashboard.html?gmail=error')
+  }
+
+  console.log('[Gmail callback] Tokens saved for:', profile.email)
   return NextResponse.redirect('https://lynq-dashboard.vercel.app/dashboard.html?gmail=connected')
 }

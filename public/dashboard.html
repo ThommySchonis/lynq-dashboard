@@ -4966,6 +4966,12 @@ async function initDashboard() {
   loadKPIs(session.access_token)
   loadOrders(session.access_token)
   loadBroadcasts()
+
+  if (window.location.search.includes('gmail=connected')) {
+    history.replaceState({}, '', '/dashboard.html')
+    const inboxNav = document.querySelector('[onclick="showPage(\'inbox\', this)"]')
+    if (inboxNav) showPage('inbox', inboxNav)
+  }
 }
 
 async function loadKPIs(token) {
@@ -5067,7 +5073,7 @@ var _inboxSession = null
 var _activeThread = null
 
 async function loadInbox() {
-  const session = await supabaseClient.auth.getSession()
+  const session = await sb.auth.getSession()
   _inboxSession = session?.data?.session
   if (!_inboxSession) return
 
@@ -5158,11 +5164,6 @@ async function sendReply() {
   }
 }
 
-// Check for gmail=connected param on load
-if (window.location.search.includes('gmail=connected')) {
-  history.replaceState({}, '', '/dashboard.html')
-  loadInbox()
-}
 </script>
 
 <script>

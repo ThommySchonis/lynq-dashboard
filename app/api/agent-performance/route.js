@@ -1,13 +1,11 @@
-import { supabaseAdmin } from '../../../lib/supabaseAdmin'
+import { supabaseAdmin, getUserFromToken } from '../../../lib/supabaseAdmin'
 import { NextResponse } from 'next/server'
 
 async function getUser(request) {
   const authHeader = request.headers.get('authorization')
   if (!authHeader) return null
   const token = authHeader.replace('Bearer ', '')
-  const { data: { user }, error } = await supabaseAdmin.auth.getUser(token)
-  if (error || !user) return null
-  return user
+  return await getUserFromToken(token)
 }
 
 export async function GET(request) {

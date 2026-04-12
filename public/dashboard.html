@@ -5779,7 +5779,7 @@ async function loadTimeTracking() {
   try {
     const res = await fetch(url, { headers: { Authorization: 'Bearer ' + token } })
     const data = await res.json()
-    console.log('[TIME DEBUG]', JSON.stringify({ is_admin: data.is_admin, sessions: data.sessions?.length, agents: data.agents?.length, error: data.error }))
+    console.log('[TIME DEBUG]', JSON.stringify({ is_admin: data.is_admin, sessions: data.sessions?.length, agents: data.agents?.length, error: data.error, debug: data.debug }))
 
     // Today + week totals for agent widget
     if (!data.is_admin) {

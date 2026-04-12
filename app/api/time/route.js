@@ -53,9 +53,10 @@ export async function GET(request) {
 
   let agentsQuery = supabaseAdmin.from('agents').select('id, name, email').order('created_at')
   if (!isAdmin) agentsQuery = agentsQuery.eq('email', user.email)
-  const { data: agents } = await agentsQuery
+  const { data: agents, error: agentsError } = await agentsQuery
 
-  if (!agents?.length) return NextResponse.json({ sessions: [], agents: [], active_session: null, is_admin: isAdmin })
+  if (agentsError) return NextResponse.json({ error: agentsError.message, is_admin: isAdmin, debug: 'agents_query_failed' }, { status: 500 })
+  if (!agents?.length) return NextResponse.json({ sessions: [], agents: [], active_session: null, is_admin: isAdmin, debug: 'no_agents_found' })
 
   const agentIds = agents.map(a => a.id)
 

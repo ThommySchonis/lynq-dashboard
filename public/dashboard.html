@@ -5820,22 +5820,25 @@ async function initTimeTracking() {
   if (!session) return
   const token = session.access_token || session
 
-  // Show/hide clock widget based on role
+  // Determine admin: fetch a quick API call and use is_admin from response
   const widget = document.getElementById('time-clock-widget')
-  const isAdmin = session.user?.email === 'info@lynqagency.com'
-  if (widget) widget.style.display = isAdmin ? 'none' : 'block'
 
-  // Check for existing active session
-  if (!isAdmin) {
-    try {
-      const res = await fetch('/api/time?filter=day', { headers: { Authorization: 'Bearer ' + token } })
-      const data = await res.json()
+  try {
+    const res = await fetch('/api/time?filter=day', { headers: { Authorization: 'Bearer ' + token } })
+    const data = await res.json()
+    const isAdmin = data.is_admin
+
+    if (widget) widget.style.display = isAdmin ? 'none' : 'block'
+
+    if (!isAdmin) {
       if (data.active_session) {
         setClockedInUI(data.active_session)
       } else {
         setClockedOutUI()
       }
-    } catch(e) {}
+    }
+  } catch(e) {
+    if (widget) widget.style.display = 'none'
   }
 
   loadTimeTracking()

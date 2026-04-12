@@ -5596,11 +5596,13 @@ function startTimerTick(clockedInAt) {
 function startHeartbeat(sessionId) {
   if (_heartbeatInterval) clearInterval(_heartbeatInterval)
   _heartbeatInterval = setInterval(async () => {
-    if (!_timeSession || !_inboxSession) return
+    if (!_timeSession) return
     try {
+      const { data: { session } } = await sb.auth.getSession()
+      if (!session) return
       await fetch('/api/time', {
         method: 'POST',
-        headers: { Authorization: 'Bearer ' + _inboxSession.access_token, 'Content-Type': 'application/json' },
+        headers: { Authorization: 'Bearer ' + session.access_token, 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'heartbeat', session_id: sessionId, is_idle: isIdle() })
       })
     } catch(e) {}
@@ -5634,14 +5636,17 @@ function setClockedOutUI() {
 }
 
 async function clockIn() {
-  if (!_inboxSession) return
+  const { data: { session } } = await sb.auth.getSession()
+  if (!session) return
   const btn = document.getElementById('btn-clock-in')
   btn.textContent = 'Clocking in...'
   btn.disabled = true
   try {
+    const { data: { session } } = await sb.auth.getSession()
+    if (!session) { btn.textContent = 'Clock In'; btn.disabled = false; return }
     const res = await fetch('/api/time', {
       method: 'POST',
-      headers: { Authorization: 'Bearer ' + _inboxSession.access_token, 'Content-Type': 'application/json' },
+      headers: { Authorization: 'Bearer ' + session.access_token, 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'clock-in' })
     })
     const data = await res.json()
@@ -5655,14 +5660,16 @@ async function clockIn() {
 }
 
 async function clockOut() {
-  if (!_timeSession || !_inboxSession) return
+  if (!_timeSession) return
   const btn = document.getElementById('btn-clock-out')
   btn.textContent = 'Clocking out...'
   btn.disabled = true
   try {
+    const { data: { session } } = await sb.auth.getSession()
+    if (!session) { btn.textContent = 'Clock Out'; btn.disabled = false; return }
     const res = await fetch('/api/time', {
       method: 'POST',
-      headers: { Authorization: 'Bearer ' + _inboxSession.access_token, 'Content-Type': 'application/json' },
+      headers: { Authorization: 'Bearer ' + session.access_token, 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'clock-out', session_id: _timeSession.id })
     })
     const data = await res.json()
@@ -5762,9 +5769,9 @@ function renderSessionTable(sessions, showAgent, agentMap) {
 async function loadTimeTracking() {
   const container = document.getElementById('time-log-container')
   if (!container) return
-  const session = _inboxSession || (await sb.auth.getSession())?.data?.session
+  const { data: { session } } = await sb.auth.getSession()
   if (!session) return
-  const token = session.access_token || session
+  const token = session.access_token
 
   container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted)">Loading...</div>'
 
@@ -5817,9 +5824,9 @@ async function loadTimeTracking() {
 }
 
 async function initTimeTracking() {
-  const session = _inboxSession || (await sb.auth.getSession())?.data?.session
+  const { data: { session } } = await sb.auth.getSession()
   if (!session) return
-  const token = session.access_token || session
+  const token = session.access_token
 
   // Determine admin: fetch a quick API call and use is_admin from response
   const widget = document.getElementById('time-clock-widget')

@@ -49,9 +49,6 @@ export async function GET(request) {
   const { data: selfAgent } = await supabaseAdmin.from('agents').select('id').eq('email', user.email).maybeSingle()
   const isAdmin = !selfAgent
 
-  const { data: allAgents, error: allAgentsError } = await supabaseAdmin.from('agents').select('id, name, email')
-  console.log('[TIME API DEBUG] allAgents:', JSON.stringify(allAgents), 'error:', JSON.stringify(allAgentsError), 'isAdmin:', isAdmin, 'userEmail:', user.email)
-
   let agentsQuery = supabaseAdmin.from('agents').select('id, name, email').order('created_at')
   if (!isAdmin) agentsQuery = agentsQuery.eq('email', user.email)
   const { data: agents, error: agentsError } = await agentsQuery

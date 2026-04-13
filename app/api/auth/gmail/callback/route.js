@@ -8,7 +8,7 @@ export async function GET(request) {
 
   if (!code || !userId) {
     console.error('[Gmail callback] Missing code or state:', { code: !!code, userId: !!userId })
-    return NextResponse.redirect('https://lynq-dashboard.vercel.app/dashboard.html?gmail=error')
+    return NextResponse.redirect('https://lynq-dashboard.vercel.app/dashboard.html?gmail=error&reason=missing_code')
   }
 
   const clientId = process.env.GOOGLE_CLIENT_ID?.trim()
@@ -17,7 +17,7 @@ export async function GET(request) {
 
   if (!clientId || !clientSecret) {
     console.error('[Gmail callback] Missing Google env vars')
-    return NextResponse.redirect('https://lynq-dashboard.vercel.app/dashboard.html?gmail=error')
+    return NextResponse.redirect('https://lynq-dashboard.vercel.app/dashboard.html?gmail=error&reason=missing_env')
   }
 
   // Exchange code for tokens
@@ -38,7 +38,7 @@ export async function GET(request) {
 
   if (!tokens.access_token) {
     console.error('[Gmail callback] Token exchange failed:', tokens)
-    return NextResponse.redirect('https://lynq-dashboard.vercel.app/dashboard.html?gmail=error')
+    return NextResponse.redirect('https://lynq-dashboard.vercel.app/dashboard.html?gmail=error&reason=token_exchange_failed')
   }
 
   // Get Gmail address
@@ -60,7 +60,7 @@ export async function GET(request) {
 
   if (upsertError) {
     console.error('[Gmail callback] Supabase upsert failed:', upsertError)
-    return NextResponse.redirect('https://lynq-dashboard.vercel.app/dashboard.html?gmail=error')
+    return NextResponse.redirect('https://lynq-dashboard.vercel.app/dashboard.html?gmail=error&reason=upsert_failed')
   }
 
   console.log('[Gmail callback] Tokens saved for user_id:', userId)

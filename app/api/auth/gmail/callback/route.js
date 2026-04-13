@@ -60,7 +60,8 @@ export async function GET(request) {
 
   if (upsertError) {
     console.error('[Gmail callback] Supabase upsert failed:', upsertError)
-    return NextResponse.redirect('https://lynq-dashboard.vercel.app/dashboard.html?gmail=error&reason=upsert_failed')
+    const msg = encodeURIComponent(upsertError.message || upsertError.code || 'unknown')
+    return NextResponse.redirect(`https://lynq-dashboard.vercel.app/dashboard.html?gmail=error&reason=upsert_failed&msg=${msg}`)
   }
 
   console.log('[Gmail callback] Tokens saved for user_id:', userId)

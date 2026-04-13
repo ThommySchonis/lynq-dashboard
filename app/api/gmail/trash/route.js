@@ -1,4 +1,4 @@
-import { supabaseAdmin } from '../../../../lib/supabaseAdmin'
+import { supabaseAdmin, getUserFromToken } from '../../../../lib/supabaseAdmin'
 import { NextResponse } from 'next/server'
 
 export async function POST(request) {
@@ -6,8 +6,8 @@ export async function POST(request) {
   if (!authHeader) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const token = authHeader.replace('Bearer ', '')
-  const { data: { user }, error } = await supabaseAdmin.auth.getUser(token)
-  if (error || !user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const user = await getUserFromToken(token)
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { threadId } = await request.json()
   if (!threadId) return NextResponse.json({ error: 'Missing threadId' }, { status: 400 })

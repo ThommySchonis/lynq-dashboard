@@ -1,4 +1,4 @@
-import { supabaseAdmin } from '../../../../lib/supabaseAdmin'
+import { supabaseAdmin, getUserFromToken } from '../../../../lib/supabaseAdmin'
 import { NextResponse } from 'next/server'
 
 async function refreshAccessToken(userId, refreshToken) {
@@ -28,8 +28,8 @@ export async function GET(request) {
   if (!authHeader) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const token = authHeader.replace('Bearer ', '')
-  const { data: { user }, error } = await supabaseAdmin.auth.getUser(token)
-  if (error || !user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const user = await getUserFromToken(token)
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   // Look up Gmail token by Supabase user ID (not email)
   const { data: gmailToken } = await supabaseAdmin

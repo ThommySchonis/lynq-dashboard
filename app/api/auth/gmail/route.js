@@ -1,4 +1,4 @@
-import { supabaseAdmin } from '../../../../lib/supabaseAdmin'
+import { getUserFromToken } from '../../../../lib/supabaseAdmin'
 import { NextResponse } from 'next/server'
 
 export async function GET(request) {
@@ -10,9 +10,9 @@ export async function GET(request) {
   }
 
   // Verify the Supabase user from the token
-  const { data: { user }, error } = await supabaseAdmin.auth.getUser(userToken)
-  if (error || !user) {
-    console.error('[Gmail auth] Invalid token:', error?.message)
+  const user = await getUserFromToken(userToken)
+  if (!user) {
+    console.error('[Gmail auth] Invalid token')
     return NextResponse.redirect('https://lynq-dashboard.vercel.app/dashboard.html?gmail=error')
   }
 

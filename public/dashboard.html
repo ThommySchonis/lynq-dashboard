@@ -1132,6 +1132,182 @@
   .risk-score-track { flex: 1; height: 5px; background: rgba(255,255,255,0.07); border-radius: 4px; overflow: hidden; }
   .risk-score-fill { height: 100%; border-radius: 4px; }
 
+  /* ── SHOPIFY ORDER MODALS ── */
+  .shopify-modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.6); z-index: 2000;
+    align-items: center; justify-content: center;
+    backdrop-filter: blur(4px);
+  }
+  .shopify-modal-overlay.open { display: flex; }
+  .shopify-modal {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 16px; width: 100%; max-width: 640px;
+    max-height: 88vh; display: flex; flex-direction: column;
+    overflow: hidden; box-shadow: 0 32px 80px rgba(0,0,0,0.5);
+    animation: modalIn 0.18s ease;
+  }
+  @keyframes modalIn {
+    from { opacity:0; transform: translateY(12px) scale(0.98); }
+    to   { opacity:1; transform: translateY(0) scale(1); }
+  }
+  .shopify-modal-header {
+    padding: 18px 24px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between; flex-shrink:0;
+  }
+  .shopify-modal-header h3 { font-size: 16px; font-weight: 700; color: var(--text); }
+  .shopify-modal-close {
+    background: none; border: none; color: var(--muted);
+    cursor: pointer; font-size: 22px; line-height: 1; padding: 0;
+  }
+  .shopify-modal-body { overflow-y: auto; flex: 1; }
+  .shopify-modal-footer {
+    padding: 14px 24px; border-top: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    flex-shrink: 0; gap: 10px; flex-wrap: wrap;
+  }
+  .smodal-table { width: 100%; border-collapse: collapse; }
+  .smodal-table th {
+    font-size: 10px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.6px; color: var(--muted); padding: 8px 12px;
+    border-bottom: 1px solid var(--border); text-align: left;
+  }
+  .smodal-table td {
+    padding: 10px 12px; border-bottom: 1px solid var(--border);
+    font-size: 12px; color: var(--text); vertical-align: middle;
+  }
+  .smodal-table tr:last-child td { border-bottom: none; }
+  .smodal-product-name { font-weight: 600; color: var(--accent); font-size: 12px; }
+  .smodal-product-meta { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .smodal-qty-input {
+    width: 56px; background: var(--bg); border: 1px solid var(--border);
+    border-radius: 6px; padding: 4px 8px; color: var(--text);
+    font-family: 'Inter', sans-serif; font-size: 12px; text-align: center;
+  }
+  .smodal-divider { border: none; border-top: 1px solid var(--border); margin: 0; }
+  .smodal-totals { padding: 10px 24px; display: flex; flex-direction: column; gap: 5px; }
+  .smodal-totals-row {
+    display: flex; justify-content: space-between;
+    font-size: 12px; color: var(--muted);
+  }
+  .smodal-totals-row.total { font-weight: 700; font-size: 13px; color: var(--text); }
+  .smodal-section { padding: 14px 24px; border-bottom: 1px solid var(--border); }
+  .smodal-section-title {
+    font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.6px; color: var(--muted); margin-bottom: 10px;
+  }
+  .smodal-label { font-size: 11px; font-weight: 700; color: var(--muted); margin-bottom: 5px; display: block; }
+  .smodal-input {
+    width: 100%; background: var(--bg); border: 1px solid var(--border);
+    border-radius: 8px; padding: 8px 12px; color: var(--text);
+    font-family: 'Inter', sans-serif; font-size: 13px; outline: none;
+    box-sizing: border-box;
+  }
+  .smodal-input:focus { border-color: var(--accent); }
+  .smodal-input.small { padding: 6px 10px; font-size: 12px; }
+  .smodal-tag {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 11px; font-weight: 600; padding: 3px 8px;
+    border-radius: 5px; background: var(--surface2); color: var(--text);
+    border: 1px solid var(--border);
+  }
+  .smodal-tag span { cursor: pointer; opacity: 0.6; }
+  .smodal-checkbox-row {
+    display: flex; align-items: flex-start; gap: 9px;
+    font-size: 12px; color: var(--text); margin-bottom: 8px;
+  }
+  .smodal-checkbox-row input[type=checkbox] { accent-color: var(--accent); margin-top: 2px; flex-shrink: 0; }
+  .smodal-checkbox-desc { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .btn-modal-primary {
+    background: var(--accent); color: #fff; border: none;
+    padding: 9px 20px; border-radius: 8px; font-size: 12px;
+    font-weight: 700; cursor: pointer; font-family: 'Inter', sans-serif;
+    transition: opacity 0.15s;
+  }
+  .btn-modal-primary:hover { opacity: 0.85; }
+  .btn-modal-secondary {
+    background: var(--surface2); color: var(--text);
+    border: 1px solid var(--border); padding: 9px 18px;
+    border-radius: 8px; font-size: 12px; font-weight: 600;
+    cursor: pointer; font-family: 'Inter', sans-serif;
+  }
+  .btn-modal-secondary:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-modal-danger {
+    background: rgba(220,38,38,0.1); color: var(--danger);
+    border: 1px solid rgba(220,38,38,0.25); padding: 9px 18px;
+    border-radius: 8px; font-size: 12px; font-weight: 700;
+    cursor: pointer; font-family: 'Inter', sans-serif;
+  }
+  .btn-modal-cancel {
+    background: none; color: var(--muted); border: none;
+    padding: 9px 14px; font-size: 12px; font-weight: 600;
+    cursor: pointer; font-family: 'Inter', sans-serif;
+  }
+  /* ── SHOPIFY ORDER CARD in customer panel ── */
+  .shopify-order-card {
+    border-bottom: 1px solid var(--border); font-size: 12px;
+  }
+  .shopify-order-head {
+    padding: 10px 14px; cursor: pointer;
+    transition: background 0.1s;
+  }
+  .shopify-order-head:hover { background: var(--surface2); }
+  .shopify-order-num { font-size: 13px; font-weight: 700; color: var(--text); }
+  .shopify-order-badge {
+    display: inline-block; font-size: 9px; font-weight: 800;
+    padding: 2px 6px; border-radius: 4px; text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .shopify-order-badge.paid { background: rgba(78,204,163,0.15); color: #4ecca3; }
+  .shopify-order-badge.fulfilled { background: rgba(78,204,163,0.1); color: #4ecca3; }
+  .shopify-order-badge.unfulfilled { background: rgba(255,209,102,0.15); color: var(--warn); }
+  .shopify-order-badge.refunded { background: rgba(255,107,138,0.12); color: var(--danger); }
+  .shopify-order-actions {
+    display: flex; gap: 4px; margin-top: 7px; flex-wrap: wrap;
+  }
+  .shopify-order-action-btn {
+    font-size: 10px; font-weight: 700; padding: 4px 9px;
+    border-radius: 6px; border: 1px solid var(--border);
+    background: var(--bg); color: var(--text);
+    cursor: pointer; font-family: 'Inter', sans-serif;
+    display: flex; align-items: center; gap: 4px;
+    transition: all 0.15s;
+  }
+  .shopify-order-action-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .shopify-order-action-btn.danger:hover { border-color: var(--danger); color: var(--danger); }
+  .shopify-order-detail {
+    display: none; padding: 0 14px 12px;
+    border-top: 1px solid var(--border);
+    font-size: 11px; color: var(--muted);
+  }
+  .shopify-order-detail.open { display: block; }
+  .shopify-detail-row {
+    display: flex; justify-content: space-between;
+    padding: 4px 0; border-bottom: 1px solid var(--border);
+  }
+  .shopify-detail-row:last-child { border-bottom: none; }
+  .shopify-detail-label { font-weight: 600; color: var(--muted); }
+  .shopify-detail-value { color: var(--text); font-weight: 500; text-align: right; max-width: 60%; word-break: break-word; }
+  .shopify-detail-value a { color: var(--accent); text-decoration: none; }
+  .shopify-detail-value a:hover { text-decoration: underline; }
+  .shopify-detail-section-title {
+    font-size: 10px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.6px; color: var(--muted); margin: 10px 0 6px;
+  }
+  .shopify-line-item {
+    padding: 7px 0; border-bottom: 1px solid var(--border);
+    display: flex; flex-direction: column; gap: 2px;
+  }
+  .shopify-line-item:last-child { border-bottom: none; }
+  .shopify-line-item-name { font-weight: 700; color: var(--accent); font-size: 11px; }
+  .shopify-line-item-meta { font-size: 10px; color: var(--muted); }
+  .shopify-line-item-price { font-size: 11px; font-weight: 600; color: var(--text); }
+  .shopify-line-item-tags { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 3px; }
+  .shopify-line-item-tag {
+    font-size: 9px; font-weight: 600; padding: 2px 6px;
+    border-radius: 4px; background: var(--surface2);
+    color: var(--muted); border: 1px solid var(--border);
+  }
   /* ── SETTINGS ── */
   .settings-tab {
     padding: 10px 20px; font-size: 13px; font-weight: 600;
@@ -4742,7 +4918,7 @@
 
     <!-- Connected state -->
     <div id="inbox-connected" style="display:none">
-      <div style="display:grid;grid-template-columns:290px 1fr 272px;gap:0;height:calc(100vh - 130px);border:1px solid var(--border);border-radius:14px;overflow:hidden">
+      <div style="display:grid;grid-template-columns:290px 1fr 300px;gap:0;height:calc(100vh - 130px);border:1px solid var(--border);border-radius:14px;overflow:hidden">
 
         <!-- ── COLUMN 1: Thread list ── -->
         <div style="border-right:1px solid var(--border);display:flex;flex-direction:column;background:var(--surface);overflow:hidden;min-height:0">
@@ -4927,14 +5103,21 @@
 
             <!-- SHOPIFY panel -->
             <div id="cust-panel-shopify" style="display:flex;flex-direction:column">
+              <!-- Customer stats + create order -->
               <div style="padding:12px 14px;border-bottom:1px solid var(--border)">
-                <button style="width:100%;padding:6px;border:1px solid var(--border);border-radius:7px;background:none;color:var(--text);font-family:'Inter',sans-serif;font-size:11px;font-weight:600;cursor:pointer">+ Create order</button>
-                <div style="display:flex;flex-direction:column;gap:5px;margin-top:10px;font-size:11px">
+                <button onclick="openCreateOrderModal()" style="width:100%;padding:7px;border:1px solid var(--border);border-radius:7px;background:none;color:var(--text);font-family:'Inter',sans-serif;font-size:11px;font-weight:600;cursor:pointer;transition:all 0.15s" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text)'">+ Create order</button>
+                <div style="display:flex;flex-direction:column;gap:4px;margin-top:10px;font-size:11px">
                   <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Total spent</span><span style="font-weight:700;color:var(--text)" id="cust-total-spent">—</span></div>
                   <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Orders</span><span style="font-weight:700;color:var(--text)" id="cust-order-count">—</span></div>
-                  <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Customer tags</span><span style="font-weight:600;color:var(--accent);cursor:pointer;font-size:10px">View</span></div>
+                  <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Store</span><span style="font-weight:600;color:var(--muted)" id="cust-store-id">—</span></div>
+                  <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Customer since</span><span style="font-weight:600;color:var(--muted)" id="cust-since">—</span></div>
+                </div>
+                <!-- Customer tags -->
+                <div style="margin-top:10px" id="cust-tags-wrap">
+                  <div id="cust-tags" style="display:flex;flex-wrap:wrap;gap:4px"></div>
                 </div>
               </div>
+              <!-- Orders list -->
               <div id="cust-orders-list" style="display:flex;flex-direction:column"></div>
             </div>
 
@@ -7233,6 +7416,794 @@ showPage = function(id, el) {
 
   document.addEventListener('DOMContentLoaded', render);
 })();
+</script>
+
+<!-- ══════════════════════════════════════════════════════════
+     SHOPIFY ACTION MODALS
+══════════════════════════════════════════════════════════ -->
+
+<!-- DUPLICATE ORDER MODAL -->
+<div class="shopify-modal-overlay" id="modal-duplicate">
+  <div class="shopify-modal" style="max-width:680px">
+    <div class="shopify-modal-header">
+      <h3>Duplicate order</h3>
+      <button class="shopify-modal-close" onclick="closeShopifyModal('modal-duplicate')">&times;</button>
+    </div>
+    <div class="shopify-modal-body">
+      <!-- Search bar -->
+      <div style="padding:12px 24px;border-bottom:1px solid var(--border);display:flex;gap:10px">
+        <div style="flex:1;position:relative">
+          <input id="dup-search" class="smodal-input" placeholder="Search products..." style="padding-left:34px">
+          <svg style="position:absolute;left:10px;top:50%;transform:translateY(-50%);pointer-events:none" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        </div>
+        <button class="btn-modal-secondary" style="white-space:nowrap">+ Add custom item</button>
+      </div>
+      <!-- Product table -->
+      <table class="smodal-table">
+        <thead>
+          <tr>
+            <th style="width:40%">PRODUCT</th>
+            <th>IN STOCK</th>
+            <th>ITEM PRICE</th>
+            <th>QTY</th>
+            <th>ITEM TOTAL</th>
+          </tr>
+        </thead>
+        <tbody id="dup-items"></tbody>
+      </table>
+      <!-- Notes -->
+      <div class="smodal-section">
+        <label class="smodal-label">Notes</label>
+        <textarea id="dup-notes" class="smodal-input" rows="2" placeholder="Add a note..." style="resize:none"></textarea>
+      </div>
+      <!-- Tags -->
+      <div class="smodal-section">
+        <label class="smodal-label">Tags</label>
+        <div id="dup-tags" style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px"></div>
+        <input id="dup-tag-input" class="smodal-input small" placeholder="Add tags..." onkeydown="dupAddTag(event)" style="width:auto">
+      </div>
+      <!-- Totals -->
+      <div class="smodal-totals">
+        <div class="smodal-totals-row">
+          <span>Add discount</span>
+          <span id="dup-discount" style="color:var(--accent);cursor:pointer">— 0,00</span>
+        </div>
+        <div class="smodal-totals-row"><span>Subtotal</span><span id="dup-subtotal">£ 0,00</span></div>
+        <div class="smodal-totals-row"><span>Shipping</span><span id="dup-shipping">Free shipping incl. Track &amp; Trace &nbsp; £ 0,00</span></div>
+        <div class="smodal-totals-row"><span>Taxes</span><span>—</span></div>
+        <div class="smodal-totals-row total"><span>Total</span><span id="dup-total">£ 0,00</span></div>
+      </div>
+    </div>
+    <div class="shopify-modal-footer" style="justify-content:space-between;flex-wrap:wrap;gap:8px">
+      <div style="display:flex;align-items:center;gap:8px">
+        <button class="btn-modal-secondary" onclick="dupCreateDraftOrder()">Create draft order &amp; send Shopify invoice</button>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn-modal-cancel" onclick="closeShopifyModal('modal-duplicate')">Cancel</button>
+        <button class="btn-modal-primary" onclick="dupCreatePaid()">Create order as paid</button>
+        <button class="btn-modal-secondary" onclick="dupCreatePending()">Create order as pending</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- REFUND ORDER MODAL -->
+<div class="shopify-modal-overlay" id="modal-refund">
+  <div class="shopify-modal" style="max-width:680px">
+    <div class="shopify-modal-header">
+      <h3>Refund order</h3>
+      <button class="shopify-modal-close" onclick="closeShopifyModal('modal-refund')">&times;</button>
+    </div>
+    <div class="shopify-modal-body">
+      <!-- Product table -->
+      <table class="smodal-table">
+        <thead>
+          <tr>
+            <th style="width:40%">PRODUCT</th>
+            <th>ITEM PRICE</th>
+            <th>QTY</th>
+            <th>ITEM TOTAL</th>
+          </tr>
+        </thead>
+        <tbody id="refund-items"></tbody>
+      </table>
+      <!-- Options -->
+      <div class="smodal-section">
+        <div class="smodal-checkbox-row">
+          <input type="checkbox" id="refund-restock">
+          <div>
+            <div>Restock items</div>
+            <div class="smodal-checkbox-desc">The claimed quantity will be restocked back to your store. Note that custom items can't be restocked.</div>
+          </div>
+        </div>
+        <div class="smodal-checkbox-row">
+          <input type="checkbox" id="refund-notify" checked>
+          <div>Send notification to customer</div>
+        </div>
+      </div>
+      <!-- Totals -->
+      <div class="smodal-totals">
+        <div class="smodal-totals-row"><span>Subtotal</span><span id="refund-subtotal">£ 0,00</span></div>
+        <div class="smodal-totals-row"><span>Shipping (<span id="refund-shipping-remaining">£ 0,00</span> remaining)</span><span>—</span></div>
+        <div class="smodal-totals-row"><span>Discounts</span><span>—</span></div>
+        <div class="smodal-totals-row"><span>Tax</span><span>—</span></div>
+        <div class="smodal-totals-row total"><span>Total available to refund</span><span id="refund-available">£ 0,00</span></div>
+      </div>
+      <!-- Refund method -->
+      <div class="smodal-section">
+        <div style="display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap">
+          <div style="flex:1;min-width:140px">
+            <label class="smodal-label">Refund with</label>
+            <select id="refund-method" class="smodal-input" style="cursor:pointer">
+              <option value="manual">Manual</option>
+              <option value="original">Original payment method</option>
+              <option value="store-credit">Store credit</option>
+            </select>
+            <input type="number" id="refund-amount" class="smodal-input" placeholder="£ 0,00" style="margin-top:6px" min="0" step="0.01">
+          </div>
+          <div style="flex:1;min-width:140px">
+            <label class="smodal-label">Reason for refund</label>
+            <input id="refund-reason" class="smodal-input" placeholder="Reason (internal only)">
+            <div style="font-size:10px;color:var(--muted);margin-top:4px">Only you and other staff can see this reason.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="shopify-modal-footer">
+      <button class="btn-modal-cancel" onclick="closeShopifyModal('modal-refund')">Cancel</button>
+      <button class="btn-modal-primary" id="refund-submit-btn" onclick="submitRefund()" style="background:var(--danger)">Refund</button>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT ORDER MODAL -->
+<div class="shopify-modal-overlay" id="modal-edit-order">
+  <div class="shopify-modal" style="max-width:740px">
+    <div class="shopify-modal-header">
+      <h3>Edit order</h3>
+      <button class="shopify-modal-close" onclick="closeShopifyModal('modal-edit-order')">&times;</button>
+    </div>
+    <div class="shopify-modal-body">
+      <!-- Search bar -->
+      <div style="padding:12px 24px;border-bottom:1px solid var(--border);display:flex;gap:10px">
+        <div style="flex:1;position:relative">
+          <input id="edit-search" class="smodal-input" placeholder="Search products...">
+          <svg style="position:absolute;left:10px;top:50%;transform:translateY(-50%);pointer-events:none" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        </div>
+        <button class="btn-modal-secondary" style="white-space:nowrap">+ Add custom item</button>
+      </div>
+      <!-- Product table -->
+      <table class="smodal-table">
+        <thead>
+          <tr>
+            <th style="width:32%">PRODUCT</th>
+            <th>IN STOCK</th>
+            <th>ITEM PRICE</th>
+            <th>QTY</th>
+            <th>ITEM TOTAL</th>
+            <th>REMOVE/RESTOCK</th>
+          </tr>
+        </thead>
+        <tbody id="edit-items"></tbody>
+      </table>
+      <!-- Reason for edit + totals -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;border-top:1px solid var(--border)">
+        <div class="smodal-section" style="border-right:1px solid var(--border)">
+          <div class="smodal-section-title">Reason for edit</div>
+          <textarea id="edit-reason" class="smodal-input" rows="3" placeholder="Add a reason..." style="resize:none"></textarea>
+          <div style="font-size:10px;color:var(--muted);margin-top:4px">Only you and other staff can see this reason</div>
+          <div class="smodal-checkbox-row" style="margin-top:10px">
+            <input type="checkbox" id="edit-send-invoice">
+            <div>Send invoice to customer</div>
+          </div>
+        </div>
+        <div class="smodal-totals" style="padding:14px 20px">
+          <div class="smodal-totals-row"><span>Subtotal</span><span id="edit-subtotal">£ 0,00</span></div>
+          <div class="smodal-totals-row"><span>Tax</span><span>—</span></div>
+          <div class="smodal-totals-row total"><span>Total</span><span id="edit-total">£ 0,00</span></div>
+          <div class="smodal-totals-row"><span>Paid by customer</span><span id="edit-paid">£ 0,00</span></div>
+          <div style="height:1px;background:var(--border);margin:8px 0"></div>
+          <div class="smodal-totals-row total"><span>Amount to collect</span><span id="edit-to-collect" style="color:var(--accent)">£ 0,00</span></div>
+          <div style="font-size:10px;color:var(--muted);text-align:right;margin-top:4px" id="edit-no-changes">No changes have been made</div>
+        </div>
+      </div>
+    </div>
+    <div class="shopify-modal-footer">
+      <button class="btn-modal-cancel" onclick="closeShopifyModal('modal-edit-order')">Cancel</button>
+      <button class="btn-modal-primary" onclick="submitEditOrder()">Edit order</button>
+    </div>
+  </div>
+</div>
+
+<!-- CANCEL ORDER MODAL -->
+<div class="shopify-modal-overlay" id="modal-cancel">
+  <div class="shopify-modal" style="max-width:480px">
+    <div class="shopify-modal-header">
+      <h3>Cancel order</h3>
+      <button class="shopify-modal-close" onclick="closeShopifyModal('modal-cancel')">&times;</button>
+    </div>
+    <div class="shopify-modal-body">
+      <div class="smodal-section">
+        <div style="font-size:13px;color:var(--text);margin-bottom:16px">
+          Are you sure you want to cancel <strong id="cancel-order-num">this order</strong>?
+          This action cannot be undone.
+        </div>
+        <div style="margin-bottom:14px">
+          <label class="smodal-label">Reason for cancellation</label>
+          <select id="cancel-reason" class="smodal-input" style="cursor:pointer">
+            <option value="">Select a reason...</option>
+            <option value="customer">Customer changed mind</option>
+            <option value="inventory">Items unavailable</option>
+            <option value="fraud">Fraudulent order</option>
+            <option value="address">Incorrect address</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div style="margin-bottom:14px">
+          <label class="smodal-label">Additional note (optional)</label>
+          <textarea id="cancel-note" class="smodal-input" rows="2" placeholder="Add a note..." style="resize:none"></textarea>
+        </div>
+        <div class="smodal-checkbox-row">
+          <input type="checkbox" id="cancel-restock" checked>
+          <div>Restock items</div>
+        </div>
+        <div class="smodal-checkbox-row">
+          <input type="checkbox" id="cancel-notify" checked>
+          <div>Send cancellation email to customer</div>
+        </div>
+        <div class="smodal-checkbox-row">
+          <input type="checkbox" id="cancel-refund">
+          <div>
+            <div>Refund payment</div>
+            <div class="smodal-checkbox-desc">If checked, the customer will be refunded automatically via their original payment method.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="shopify-modal-footer">
+      <button class="btn-modal-cancel" onclick="closeShopifyModal('modal-cancel')">Back</button>
+      <button class="btn-modal-danger" onclick="submitCancelOrder()">Cancel order</button>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT ADDRESS MODAL -->
+<div class="shopify-modal-overlay" id="modal-address">
+  <div class="shopify-modal" style="max-width:520px">
+    <div class="shopify-modal-header">
+      <h3>Edit shipping address</h3>
+      <button class="shopify-modal-close" onclick="closeShopifyModal('modal-address')">&times;</button>
+    </div>
+    <div class="shopify-modal-body">
+      <div class="smodal-section">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div>
+            <label class="smodal-label">First name</label>
+            <input id="addr-first" class="smodal-input" placeholder="First name">
+          </div>
+          <div>
+            <label class="smodal-label">Last name</label>
+            <input id="addr-last" class="smodal-input" placeholder="Last name">
+          </div>
+          <div style="grid-column:1/-1">
+            <label class="smodal-label">Address line 1</label>
+            <input id="addr-line1" class="smodal-input" placeholder="Street address">
+          </div>
+          <div style="grid-column:1/-1">
+            <label class="smodal-label">Address line 2 (optional)</label>
+            <input id="addr-line2" class="smodal-input" placeholder="Apartment, suite, etc.">
+          </div>
+          <div>
+            <label class="smodal-label">City</label>
+            <input id="addr-city" class="smodal-input" placeholder="City">
+          </div>
+          <div>
+            <label class="smodal-label">Postal / ZIP code</label>
+            <input id="addr-zip" class="smodal-input" placeholder="Postal code">
+          </div>
+          <div>
+            <label class="smodal-label">Province / State</label>
+            <input id="addr-province" class="smodal-input" placeholder="Province">
+          </div>
+          <div>
+            <label class="smodal-label">Country</label>
+            <input id="addr-country" class="smodal-input" placeholder="Country">
+          </div>
+          <div style="grid-column:1/-1">
+            <label class="smodal-label">Phone (optional)</label>
+            <input id="addr-phone" class="smodal-input" placeholder="+44 ...">
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="shopify-modal-footer">
+      <button class="btn-modal-cancel" onclick="closeShopifyModal('modal-address')">Cancel</button>
+      <button class="btn-modal-primary" onclick="submitAddressEdit()">Save address</button>
+    </div>
+  </div>
+</div>
+
+<!-- CREATE ORDER MODAL -->
+<div class="shopify-modal-overlay" id="modal-create-order">
+  <div class="shopify-modal" style="max-width:680px">
+    <div class="shopify-modal-header">
+      <h3>Create order</h3>
+      <button class="shopify-modal-close" onclick="closeShopifyModal('modal-create-order')">&times;</button>
+    </div>
+    <div class="shopify-modal-body">
+      <div style="padding:12px 24px;border-bottom:1px solid var(--border);display:flex;gap:10px">
+        <div style="flex:1;position:relative">
+          <input id="create-search" class="smodal-input" placeholder="Search products...">
+          <svg style="position:absolute;left:10px;top:50%;transform:translateY(-50%);pointer-events:none" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        </div>
+        <button class="btn-modal-secondary" style="white-space:nowrap">+ Add custom item</button>
+      </div>
+      <div id="create-items-wrap" style="padding:24px;text-align:center;color:var(--muted);font-size:13px">
+        Search for a product to add it to the order.
+      </div>
+      <div class="smodal-section">
+        <label class="smodal-label">Customer email</label>
+        <input id="create-customer-email" class="smodal-input" placeholder="customer@example.com" id="create-email">
+      </div>
+      <div class="smodal-section">
+        <label class="smodal-label">Notes</label>
+        <textarea id="create-notes" class="smodal-input" rows="2" placeholder="Add a note..." style="resize:none"></textarea>
+      </div>
+    </div>
+    <div class="shopify-modal-footer">
+      <button class="btn-modal-secondary" onclick="closeShopifyModal('modal-create-order')">Create draft &amp; send invoice</button>
+      <div style="display:flex;gap:8px">
+        <button class="btn-modal-cancel" onclick="closeShopifyModal('modal-create-order')">Cancel</button>
+        <button class="btn-modal-primary">Create order as paid</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════
+// SHOPIFY ORDER MODALS — JS
+// ══════════════════════════════════════════════════════════
+
+// Current order context
+var _currentShopifyOrder = null
+
+function closeShopifyModal(id) {
+  document.getElementById(id).classList.remove('open')
+}
+
+function closeAllShopifyModals() {
+  document.querySelectorAll('.shopify-modal-overlay').forEach(m => m.classList.remove('open'))
+}
+
+// Close on backdrop click
+document.querySelectorAll('.shopify-modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', function(e) {
+    if (e.target === overlay) overlay.classList.remove('open')
+  })
+})
+
+// ── DUPLICATE ORDER ──────────────────────────────────────
+function openDuplicateModal(order) {
+  _currentShopifyOrder = order
+  const tbody = document.getElementById('dup-items')
+  tbody.innerHTML = (order.items || []).map(item => `
+    <tr>
+      <td>
+        <div class="smodal-product-name">${item.name}</div>
+        <div class="smodal-product-meta">${item.variant || ''} &nbsp;·&nbsp; SKU: ${item.sku}</div>
+      </td>
+      <td style="color:var(--green);font-weight:700">${item.stock ?? '—'}</td>
+      <td>${item.price}</td>
+      <td><input type="number" class="smodal-qty-input dup-qty" value="${item.qty}" min="1" onchange="recalcDuplicate()"></td>
+      <td class="dup-item-total" style="font-weight:600">${item.price}</td>
+    </tr>
+  `).join('')
+
+  // Tags from order
+  const tagsContainer = document.getElementById('dup-tags')
+  tagsContainer.innerHTML = (order.items?.[0]?.tags || []).map(t =>
+    `<span class="smodal-tag">${t} <span onclick="this.parentElement.remove()">×</span></span>`
+  ).join('')
+
+  recalcDuplicate()
+  document.getElementById('modal-duplicate').classList.add('open')
+}
+
+function recalcDuplicate() {
+  const rows = document.querySelectorAll('#dup-items tr')
+  let total = 0
+  rows.forEach((row, i) => {
+    const order = _currentShopifyOrder
+    const item = order?.items?.[i]
+    if (!item) return
+    const priceNum = parseFloat(item.price.replace(/[^0-9.,]/g,'').replace(',','.')) || 0
+    const qty = parseInt(row.querySelector('.dup-qty')?.value || 1)
+    const lineTotal = priceNum * qty
+    const cell = row.querySelector('.dup-item-total')
+    if (cell) cell.textContent = '£ ' + lineTotal.toFixed(2).replace('.',',')
+    total += lineTotal
+  })
+  document.getElementById('dup-subtotal').textContent = '£ ' + total.toFixed(2).replace('.',',')
+  document.getElementById('dup-total').textContent = '£ ' + total.toFixed(2).replace('.',',')
+}
+
+function dupAddTag(e) {
+  if (e.key !== 'Enter') return
+  const val = e.target.value.trim()
+  if (!val) return
+  const container = document.getElementById('dup-tags')
+  const tag = document.createElement('span')
+  tag.className = 'smodal-tag'
+  tag.innerHTML = val + ' <span onclick="this.parentElement.remove()">×</span>'
+  container.appendChild(tag)
+  e.target.value = ''
+}
+
+function dupCreatePaid() {
+  showShopifyActionFeedback('modal-duplicate', 'Order created as paid — will sync when Shopify is connected.')
+}
+function dupCreatePending() {
+  showShopifyActionFeedback('modal-duplicate', 'Order created as pending — will sync when Shopify is connected.')
+}
+function dupCreateDraftOrder() {
+  showShopifyActionFeedback('modal-duplicate', 'Draft order created — invoice will be sent when Shopify is connected.')
+}
+
+// ── REFUND ORDER ─────────────────────────────────────────
+function openRefundModal(order) {
+  _currentShopifyOrder = order
+  const tbody = document.getElementById('refund-items')
+  tbody.innerHTML = (order.items || []).map(item => `
+    <tr>
+      <td>
+        <div class="smodal-product-name">${item.name}</div>
+        <div class="smodal-product-meta">${item.variant || ''} &nbsp;·&nbsp; SKU: ${item.sku}</div>
+      </td>
+      <td>${item.price}</td>
+      <td>
+        <input type="number" class="smodal-qty-input refund-qty" value="0" min="0" max="${item.qty}" onchange="recalcRefund()">
+        <span style="color:var(--muted);font-size:11px"> / ${item.qty}</span>
+      </td>
+      <td class="refund-item-total" style="font-weight:600;color:var(--muted)">£ 0,00</td>
+    </tr>
+  `).join('')
+
+  const total = (order.items || []).reduce((sum, item) => {
+    const p = parseFloat(item.price.replace(/[^0-9.,]/g,'').replace(',','.')) || 0
+    return sum + p * item.qty
+  }, 0)
+
+  document.getElementById('refund-available').textContent = '£ ' + total.toFixed(2).replace('.',',')
+  document.getElementById('refund-shipping-remaining').textContent = '£ 0,00'
+  document.getElementById('refund-subtotal').textContent = '£ 0,00'
+  document.getElementById('refund-amount').value = ''
+  document.getElementById('refund-reason').value = ''
+  document.getElementById('modal-refund').classList.add('open')
+}
+
+function recalcRefund() {
+  const rows = document.querySelectorAll('#refund-items tr')
+  let total = 0
+  rows.forEach((row, i) => {
+    const item = _currentShopifyOrder?.items?.[i]
+    if (!item) return
+    const priceNum = parseFloat(item.price.replace(/[^0-9.,]/g,'').replace(',','.')) || 0
+    const qty = parseInt(row.querySelector('.refund-qty')?.value || 0)
+    const lineTotal = priceNum * qty
+    const cell = row.querySelector('.refund-item-total')
+    if (cell) cell.textContent = '£ ' + lineTotal.toFixed(2).replace('.',',')
+    total += lineTotal
+  })
+  document.getElementById('refund-subtotal').textContent = '£ ' + total.toFixed(2).replace('.',',')
+  document.getElementById('refund-amount').value = total.toFixed(2)
+}
+
+function submitRefund() {
+  const amount = document.getElementById('refund-amount').value
+  const reason = document.getElementById('refund-reason').value
+  if (!amount || parseFloat(amount) <= 0) {
+    alert('Please select items or enter a refund amount.')
+    return
+  }
+  showShopifyActionFeedback('modal-refund', `Refund of £ ${parseFloat(amount).toFixed(2)} will be processed when Shopify is connected.`)
+}
+
+// ── EDIT ORDER ───────────────────────────────────────────
+function openEditOrderModal(order) {
+  _currentShopifyOrder = order
+  const tbody = document.getElementById('edit-items')
+  tbody.innerHTML = (order.items || []).map((item, i) => `
+    <tr>
+      <td>
+        <div class="smodal-product-name">${item.name}</div>
+        <div class="smodal-product-meta">${item.variant || ''} &nbsp;·&nbsp; SKU: ${item.sku}</div>
+      </td>
+      <td style="color:var(--green);font-weight:700">${item.stock ?? '—'}</td>
+      <td>${item.price}</td>
+      <td><input type="number" class="smodal-qty-input edit-qty" value="${item.qty}" min="0" onchange="recalcEdit()"></td>
+      <td class="edit-item-total" style="font-weight:600">${item.price}</td>
+      <td>
+        <button onclick="removeEditItem(this)" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px;padding:2px 6px" title="Remove">×</button>
+      </td>
+    </tr>
+  `).join('')
+
+  const totalPaid = (order.items || []).reduce((sum, item) => {
+    const p = parseFloat(item.price.replace(/[^0-9.,]/g,'').replace(',','.')) || 0
+    return sum + p * item.qty
+  }, 0)
+
+  document.getElementById('edit-reason').value = ''
+  document.getElementById('edit-send-invoice').checked = false
+  document.getElementById('edit-paid').textContent = '£ ' + totalPaid.toFixed(2).replace('.',',')
+  document.getElementById('edit-to-collect').textContent = '£ 0,00'
+  document.getElementById('edit-no-changes').style.display = 'block'
+  recalcEdit()
+  document.getElementById('modal-edit-order').classList.add('open')
+}
+
+function removeEditItem(btn) {
+  btn.closest('tr').remove()
+  recalcEdit()
+}
+
+function recalcEdit() {
+  const rows = document.querySelectorAll('#edit-items tr')
+  let total = 0
+  rows.forEach((row, i) => {
+    const item = _currentShopifyOrder?.items?.[i]
+    if (!item) return
+    const priceNum = parseFloat(item.price.replace(/[^0-9.,]/g,'').replace(',','.')) || 0
+    const qty = parseInt(row.querySelector('.edit-qty')?.value || 0)
+    const lineTotal = priceNum * qty
+    const cell = row.querySelector('.edit-item-total')
+    if (cell) cell.textContent = '£ ' + lineTotal.toFixed(2).replace('.',',')
+    total += lineTotal
+  })
+  const paidEl = document.getElementById('edit-paid')
+  const paid = parseFloat(paidEl?.textContent?.replace(/[^0-9.,]/g,'').replace(',','.') || 0)
+  document.getElementById('edit-subtotal').textContent = '£ ' + total.toFixed(2).replace('.',',')
+  document.getElementById('edit-total').textContent = '£ ' + total.toFixed(2).replace('.',',')
+  const diff = total - paid
+  document.getElementById('edit-to-collect').textContent = '£ ' + Math.max(0, diff).toFixed(2).replace('.',',')
+  document.getElementById('edit-no-changes').style.display = diff === 0 ? 'block' : 'none'
+}
+
+function submitEditOrder() {
+  showShopifyActionFeedback('modal-edit-order', 'Order edit will be applied when Shopify is connected.')
+}
+
+// ── CANCEL ORDER ─────────────────────────────────────────
+function openCancelModal(order) {
+  _currentShopifyOrder = order
+  document.getElementById('cancel-order-num').textContent = 'Order #' + order.id
+  document.getElementById('cancel-reason').value = ''
+  document.getElementById('cancel-note').value = ''
+  document.getElementById('modal-cancel').classList.add('open')
+}
+
+function submitCancelOrder() {
+  const reason = document.getElementById('cancel-reason').value
+  if (!reason) { alert('Please select a cancellation reason.'); return }
+  showShopifyActionFeedback('modal-cancel', 'Order cancellation will be processed when Shopify is connected.')
+}
+
+// ── EDIT ADDRESS ─────────────────────────────────────────
+function openAddressModal(order) {
+  _currentShopifyOrder = order
+  const addr = order?.address || {}
+  const nameParts = (addr.name || '').split(' ')
+  document.getElementById('addr-first').value = nameParts[0] || ''
+  document.getElementById('addr-last').value = nameParts.slice(1).join(' ') || ''
+  document.getElementById('addr-line1').value = addr.address1 || ''
+  document.getElementById('addr-line2').value = addr.address2 || ''
+  document.getElementById('addr-city').value = addr.city || ''
+  document.getElementById('addr-zip').value = addr.zip || ''
+  document.getElementById('addr-province').value = addr.province || ''
+  document.getElementById('addr-country').value = addr.country || ''
+  document.getElementById('addr-phone').value = addr.phone || ''
+  document.getElementById('modal-address').classList.add('open')
+}
+
+function submitAddressEdit() {
+  showShopifyActionFeedback('modal-address', 'Address update will be saved when Shopify is connected.')
+}
+
+// ── CREATE ORDER ─────────────────────────────────────────
+function openCreateOrderModal() {
+  document.getElementById('modal-create-order').classList.add('open')
+}
+
+// ── SHARED FEEDBACK ──────────────────────────────────────
+function showShopifyActionFeedback(modalId, message) {
+  closeShopifyModal(modalId)
+  // Show a toast
+  const toast = document.createElement('div')
+  toast.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#241352;border:1px solid rgba(161,117,252,0.3);color:#fff;font-size:12px;font-weight:600;padding:10px 20px;border-radius:10px;z-index:9999;box-shadow:0 8px 24px rgba(0,0,0,0.4);white-space:nowrap;font-family:\'Inter\',sans-serif'
+  toast.textContent = message
+  document.body.appendChild(toast)
+  setTimeout(() => toast.remove(), 3500)
+}
+
+// ══════════════════════════════════════════════════════════
+// POPULATE CUSTOMER PANEL — mock Shopify orders
+// ══════════════════════════════════════════════════════════
+
+function renderShopifyOrders(orders) {
+  const container = document.getElementById('cust-orders-list')
+  container.innerHTML = orders.map(order => {
+    const statusBadge = `<span class="shopify-order-badge ${order.status.toLowerCase()}">${order.status}</span>`
+    const fulfillBadge = order.fulfillment
+      ? `<span class="shopify-order-badge ${order.fulfillment.toLowerCase()}">${order.fulfillment}</span>`
+      : ''
+
+    const itemsHtml = (order.items || []).map(item => `
+      <div class="shopify-line-item">
+        <div class="shopify-line-item-name">${item.name}</div>
+        <div class="shopify-line-item-meta">${item.variant || ''} &nbsp;·&nbsp; SKU: ${item.sku}</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:2px">
+          <div>
+            <div class="shopify-line-item-price">Amount: ${item.price}</div>
+            ${item.tags?.length ? `<div class="shopify-line-item-tags">${item.tags.map(t=>`<span class="shopify-line-item-tag">${t}</span>`).join('')}</div>` : ''}
+          </div>
+          <span style="font-size:10px;color:var(--muted)">×${item.qty}</span>
+        </div>
+      </div>
+    `).join('')
+
+    const addressHtml = order.address ? `
+      <div class="shopify-detail-section-title">Shipping address</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+        <span style="font-size:10px;font-weight:700;color:var(--muted)">ADDRESS</span>
+        <button onclick="event.stopPropagation();openAddressModal(getOrderById(${order.id}))" class="shopify-order-action-btn" style="font-size:9px;padding:2px 7px">Edit</button>
+      </div>
+      <div style="font-size:11px;color:var(--text);line-height:1.7">
+        ${order.address.name}<br>
+        ${order.address.address1}<br>
+        ${order.address.city}, ${order.address.province_code} ${order.address.zip}<br>
+        ${order.address.country}
+      </div>
+    ` : ''
+
+    const trackingHtml = order.tracking_number ? `
+      <div class="shopify-detail-section-title">Shipment</div>
+      <div style="font-size:11px;color:var(--muted);line-height:1.8">
+        <div>Tracking: <a href="${order.tracking_url || '#'}" target="_blank" style="color:var(--accent)">${order.tracking_number}</a></div>
+        ${order.shipping_code ? `<div>Code: <span style="color:var(--text)">${order.shipping_code}</span></div>` : ''}
+      </div>
+    ` : ''
+
+    return `
+      <div class="shopify-order-card" id="order-card-${order.id}">
+        <div class="shopify-order-head" onclick="toggleOrderDetail(${order.id})">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+            <span class="shopify-order-num">Order #${order.id}</span>
+            <div style="display:flex;gap:4px">${statusBadge}${fulfillBadge}</div>
+          </div>
+          <div style="font-size:10px;color:var(--muted)">Created: ${order.createdLabel || order.created} &nbsp;·&nbsp; Total: ${order.total}</div>
+          <div class="shopify-order-actions">
+            <button class="shopify-order-action-btn" onclick="event.stopPropagation();openDuplicateModal(getOrderById(${order.id}))">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+              Duplicate
+            </button>
+            <button class="shopify-order-action-btn" onclick="event.stopPropagation();openRefundModal(getOrderById(${order.id}))">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+              Refund
+            </button>
+            <button class="shopify-order-action-btn" onclick="event.stopPropagation();openEditOrderModal(getOrderById(${order.id}))">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              Edit
+            </button>
+            <button class="shopify-order-action-btn danger" onclick="event.stopPropagation();openCancelModal(getOrderById(${order.id}))">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+              Cancel
+            </button>
+          </div>
+        </div>
+        <div class="shopify-order-detail" id="order-detail-${order.id}">
+          ${trackingHtml}
+          ${addressHtml}
+          <div class="shopify-detail-section-title" style="margin-top:${order.address || order.tracking_number ? 10 : 0}px">Line items</div>
+          ${itemsHtml}
+        </div>
+      </div>
+    `
+  }).join('')
+}
+
+function toggleOrderDetail(orderId) {
+  const detail = document.getElementById('order-detail-' + orderId)
+  if (detail) detail.classList.toggle('open')
+}
+
+// Mock order store — keyed by id for modal lookups
+var _mockOrders = []
+function getOrderById(id) {
+  return _mockOrders.find(o => o.id === id) || null
+}
+
+// Override populateCustomerPanel to show rich mock data
+;(function() {
+  var _origPopulate = window.populateCustomerPanel
+  window.populateCustomerPanel = function(name, email) {
+    document.getElementById('cust-empty').style.display = 'none'
+    document.getElementById('cust-info').style.display = 'flex'
+
+    // Avatar
+    const initials = name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase() || '?'
+    document.getElementById('cust-avatar').textContent = initials
+    document.getElementById('cust-name').textContent = name || email
+    document.getElementById('cust-email').textContent = email
+    document.getElementById('cust-note').textContent = 'Customer has no metafields populated.'
+
+    // Mock Shopify stats
+    document.getElementById('cust-total-spent').textContent = '£ 30,16'
+    document.getElementById('cust-order-count').textContent = '2'
+    document.getElementById('cust-store-id').textContent = '5u3z59-ct'
+    document.getElementById('cust-since').textContent = '02/07/2026'
+
+    // Customer tags
+    const tags = ['kaching-has-active-subscription', 'kaching-subscriber', 'Login with Shop', 'Shop']
+    document.getElementById('cust-tags').innerHTML = tags.map(t =>
+      `<span style="font-size:9px;font-weight:600;padding:2px 7px;border-radius:4px;background:var(--surface2);color:var(--muted);border:1px solid var(--border)">${t}</span>`
+    ).join('')
+
+    // Mock orders
+    _mockOrders = [
+      {
+        id: 2900,
+        status: 'PAID',
+        fulfillment: 'FULFILLED',
+        created: '02/07/2026',
+        createdLabel: 'Tuesday',
+        total: '£ 12,21',
+        tracking_url: '#',
+        tracking_number: 'GV278651248GB',
+        shipping_code: 'Free shipping incl. Track & Trace',
+        address: {
+          name: 'Sandra Ross',
+          address1: '225 Thunder Lane',
+          address2: '',
+          city: 'Norwich',
+          country: 'United Kingdom',
+          province: 'England',
+          province_code: 'ENG',
+          zip: 'NR7 0JA'
+        },
+        items: [{
+          name: 'ZERO-RESIDUE LAUNDRY STRIPS.',
+          variant: 'Spring Blossom',
+          sku: 'DPCD4-ZA542002',
+          qty: 1,
+          price: '£ 14,36',
+          stock: 965,
+          tags: ['Kaching Subscription', 'Kaching Subscription First Order']
+        }]
+      },
+      {
+        id: 1544,
+        status: 'PAID',
+        fulfillment: 'FULFILLED',
+        created: '02/07/2026',
+        createdLabel: 'Tuesday',
+        total: '£ 17,95',
+        items: [{
+          name: 'ZERO-RESIDUE LAUNDRY STRIPS.',
+          variant: 'Spring Blossom',
+          sku: 'DPCD4-ZA542002',
+          qty: 1,
+          price: '£ 17,95',
+          stock: 965,
+          tags: []
+        }]
+      }
+    ]
+
+    renderShopifyOrders(_mockOrders)
+    switchCustTab('shopify')
+  }
+})()
 </script>
 </body>
 </html>

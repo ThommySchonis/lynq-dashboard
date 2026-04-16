@@ -17,17 +17,24 @@ export async function POST(request) {
   const { text, targetLanguage = 'English' } = await request.json()
   if (!text?.trim()) return NextResponse.json({ error: 'text required' }, { status: 400 })
 
-  const { text: raw } = await generateText({
-    model: anthropic('claude-haiku-4-5-20251001'),
-    prompt: `Detect the language of the following text and translate it to ${targetLanguage}.
+  let raw
+  try {
+    const result = await generateText({
+      model: anthropic('claude-haiku-4-5-20251001'),
+      prompt: `Detect the language of the following text and translate it to ${targetLanguage}.
 
 Respond ONLY with a JSON object in this exact format (no markdown, no extra text):
 {"detectedLanguage":"<detected language name in English>","translatedText":"<the translated text>"}
 
 Text to translate:
 ${text}`,
-    maxTokens: 1024,
-  })
+      maxTokens: 1024,
+    })
+    raw = result.text
+  } catch (err) {
+    console.error('[translate] generateText failed:', err?.message || err)
+    return NextResponse.json({ error: 'AI error: ' + (err?.message || 'unknown') }, { status: 500 })
+  }
 
   let detectedLanguage = 'Unknown'
   let translatedText = text

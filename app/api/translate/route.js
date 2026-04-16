@@ -40,7 +40,9 @@ ${text}`,
   let translatedText = text
 
   try {
-    const parsed = JSON.parse(raw.trim())
+    // Strip markdown code blocks if Claude wraps the response
+    const cleaned = raw.trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim()
+    const parsed = JSON.parse(cleaned)
     detectedLanguage = parsed.detectedLanguage || 'Unknown'
     translatedText = parsed.translatedText || text
   } catch {

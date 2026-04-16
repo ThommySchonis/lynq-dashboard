@@ -1,0 +1,76 @@
+import { getUserFromToken } from '../../../../../../lib/supabaseAdmin'
+import { getShopifyClient, shopifyFetch } from '../../../../../../lib/shopify'
+import { NextResponse } from 'next/server'
+
+export async function POST(request, { params }) {
+  const authHeader = request.headers.get('authorization')
+  if (!authHeader) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const token = authHeader.replace('Bearer ', '')
+  const user = await getUserFromToken(token)
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const client = await getShopifyClient(user.email)
+  if (!client) return NextResponse.json({ error: 'Shopify not configured' }, { status: 400 })
+
+  const { id } = await params
+  const { lineItems, restock, notify, reason, shipping } = await request.json()
+
+  // lineItems: [{ lineItemId, quantity }]
+  const refundLineItems = (lineItems || []).map(item => ({
+    line_item_id: item.lineItemId,
+    quantity: item.quantity,
+    restock_type: restock ? 'return' : 'no_restock',
+  }))
+
+  // Calculate refund amounts via Shopify
+  const calcRes = await shopifyFetch(
+    client,
+    `/orders/${id}/refunds/calculate.json`,
+    {
+      method: 'POST',
+      body: JSON.stringify({
+        refund: {
+          shipping: { full_refund: !!shipping },
+          refund_line_items: refundLineItems,
+        },
+      }),
+    }
+  )
+
+  const calcData = await calcRes.json()
+  if (!calcRes.ok) {
+    return NextResponse.json({ error: calcData.errors || 'Calculation failed' }, { status: 502 })
+  }
+
+  const transactions = (calcData.refund?.transactions || []).map(t => ({
+    parent_id: t.parent_id,
+    amount: t.amount,
+    kind: 'refund',
+    gateway: t.gateway,
+  }))
+
+  const refundRes = await shopifyFetch(
+    client,
+    `/orders/${id}/refunds.json`,
+    {
+      method: 'POST',
+      body: JSON.stringify({
+        refund: {
+          notify: notify !== false,
+          note: reason || '',
+          shipping: { full_refund: !!shipping },
+          refund_line_items: refundLineItems,
+          transactions,
+        },
+      }),
+    }
+  )
+
+  const refundData = await refundRes.json()
+  if (!refundRes.ok) {
+    return NextResponse.json({ error: refundData.errors || 'Refund failed' }, { status: 502 })
+  }
+
+  return NextResponse.json({ success: true, refund: refundData.refund })
+}

@@ -4,12 +4,12 @@ import { usePathname } from 'next/navigation'
 import { supabase } from '../../lib/supabase'
 
 const nav = [
-  { href: '/inbox',         icon: '✉️',  label: 'Inbox' },
-  { href: '/supply-chain',  icon: '📦',  label: 'Supply Chain' },
-  { href: '/macros',        icon: '⚡',  label: 'Macros' },
-  { href: '/analytics',     icon: '📊',  label: 'Analytics' },
-  { href: '/services',      icon: '👥',  label: 'Services' },
-  { href: '/settings',      icon: '⚙️',  label: 'Settings' },
+  { href: '/inbox',        icon: '✉️',  label: 'Inbox' },
+  { href: '/supply-chain', icon: '📦',  label: 'Supply Chain' },
+  { href: '/macros',       icon: '⚡',  label: 'Macros' },
+  { href: '/analytics',    icon: '📊',  label: 'Analytics' },
+  { href: '/services',     icon: '👥',  label: 'Services' },
+  { href: '/settings',     icon: '⚙️',  label: 'Settings' },
 ]
 
 export default function Sidebar() {
@@ -22,86 +22,68 @@ export default function Sidebar() {
 
   return (
     <aside style={{
-      width: '220px',
+      width: '56px',
       minHeight: '100vh',
-      background: '#1a0d30',
+      background: '#160b2e',
       borderRight: '1px solid rgba(255,255,255,0.06)',
       display: 'flex',
       flexDirection: 'column',
-      padding: '20px 12px',
+      alignItems: 'center',
+      padding: '16px 0',
       flexShrink: 0,
     }}>
       {/* Logo */}
-      <div style={{ padding: '8px 12px 24px' }}>
-        <img
-          src="/logo.png"
-          alt="Lynq"
-          style={{ height: '24px', filter: 'brightness(0) invert(1)' }}
-        />
+      <div style={{ marginBottom: '24px', padding: '4px' }}>
+        <div style={{
+          width: '32px', height: '32px', borderRadius: '8px',
+          background: '#A175FC',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: '14px', fontWeight: '700', color: '#fff',
+        }}>L</div>
       </div>
 
       {/* Nav */}
-      <nav style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '2px' }}>
+      <nav style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', width: '100%' }}>
         {nav.map(item => {
           const active = pathname.startsWith(item.href)
           return (
             <a
               key={item.href}
               href={item.href}
+              title={item.label}
               style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px',
-                padding: '9px 12px',
-                borderRadius: '8px',
-                fontSize: '13px',
-                fontWeight: active ? '600' : '400',
-                color: active ? '#fff' : 'rgba(255,255,255,0.45)',
-                background: active ? 'rgba(161,117,252,0.15)' : 'transparent',
+                width: '40px', height: '40px', borderRadius: '10px',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: '18px',
+                background: active ? 'rgba(161,117,252,0.2)' : 'transparent',
                 textDecoration: 'none',
                 transition: 'all 0.15s ease',
-                borderLeft: active ? '2px solid #A175FC' : '2px solid transparent',
+                opacity: active ? 1 : 0.45,
               }}
-              onMouseEnter={e => {
-                if (!active) e.currentTarget.style.color = 'rgba(255,255,255,0.75)'
-              }}
-              onMouseLeave={e => {
-                if (!active) e.currentTarget.style.color = 'rgba(255,255,255,0.45)'
-              }}
+              onMouseEnter={e => { if (!active) e.currentTarget.style.opacity = '0.8' }}
+              onMouseLeave={e => { if (!active) e.currentTarget.style.opacity = '0.45' }}
             >
-              <span style={{ fontSize: '15px', width: '20px', textAlign: 'center' }}>
-                {item.icon}
-              </span>
-              {item.label}
+              {item.icon}
             </a>
           )
         })}
       </nav>
 
-      {/* Bottom */}
-      <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '12px' }}>
-        <button
-          onClick={handleLogout}
-          style={{
-            width: '100%',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '10px',
-            padding: '9px 12px',
-            borderRadius: '8px',
-            fontSize: '13px',
-            color: 'rgba(255,255,255,0.35)',
-            background: 'transparent',
-            cursor: 'pointer',
-            textAlign: 'left',
-          }}
-          onMouseEnter={e => e.currentTarget.style.color = 'rgba(255,255,255,0.7)'}
-          onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.35)'}
-        >
-          <span style={{ fontSize: '15px', width: '20px', textAlign: 'center' }}>↩</span>
-          Sign out
-        </button>
-      </div>
+      {/* Logout */}
+      <button
+        onClick={handleLogout}
+        title="Sign out"
+        style={{
+          width: '40px', height: '40px', borderRadius: '10px',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: '18px', background: 'transparent',
+          opacity: 0.35, cursor: 'pointer',
+        }}
+        onMouseEnter={e => e.currentTarget.style.opacity = '0.7'}
+        onMouseLeave={e => e.currentTarget.style.opacity = '0.35'}
+      >
+        ↩
+      </button>
     </aside>
   )
 }

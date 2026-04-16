@@ -12,7 +12,7 @@ export async function GET(request) {
   const user = await getUserFromToken(token)
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const client = await getShopifyClient(user.email)
+  const client = await getShopifyClient(user.id)
   if (!client) return NextResponse.json({ error: 'Shopify not configured' }, { status: 400 })
 
   const { searchParams } = new URL(request.url)

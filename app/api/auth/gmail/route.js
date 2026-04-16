@@ -2,22 +2,28 @@ import { getUserFromToken } from '../../../../lib/supabaseAdmin'
 import { NextResponse } from 'next/server'
 
 export async function GET(request) {
+  const authHeader = request.headers.get('authorization')
   const { searchParams } = new URL(request.url)
-  const userToken = searchParams.get('t')
 
-  if (!userToken) {
-    return NextResponse.redirect('https://lynq-dashboard.vercel.app/dashboard.html?gmail=error')
+  // Support both Authorization header and ?t= query param (for direct browser redirects)
+  let userToken = null
+  if (authHeader) {
+    userToken = authHeader.replace('Bearer ', '')
+  } else {
+    userToken = searchParams.get('t')
   }
 
-  // Verify the Supabase user from the token
+  if (!userToken) {
+    return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/settings?gmail=error`)
+  }
+
   const user = await getUserFromToken(userToken)
   if (!user) {
-    console.error('[Gmail auth] Invalid token')
-    return NextResponse.redirect('https://lynq-dashboard.vercel.app/dashboard.html?gmail=error')
+    return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/settings?gmail=error`)
   }
 
   const clientId = process.env.GOOGLE_CLIENT_ID?.trim()
-  const redirectUri = 'https://lynq-dashboard.vercel.app/api/auth/gmail/callback'
+  const redirectUri = `${process.env.NEXT_PUBLIC_APP_URL}/api/auth/gmail/callback`
 
   const scope = [
     'https://www.googleapis.com/auth/gmail.readonly',
@@ -33,7 +39,7 @@ export async function GET(request) {
   url.searchParams.set('scope', scope)
   url.searchParams.set('access_type', 'offline')
   url.searchParams.set('prompt', 'consent')
-  url.searchParams.set('state', user.id) // Pass user ID through OAuth flow
+  url.searchParams.set('state', user.id)
 
   return NextResponse.redirect(url.toString())
 }

@@ -22,18 +22,7 @@ export default function LoginPage() {
       return
     }
 
-    // Check if onboarding completed
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('onboarding_completed')
-      .eq('id', data.user.id)
-      .single()
-
-    if (!profile?.onboarding_completed) {
-      window.location.href = '/onboarding'
-    } else {
-      window.location.href = '/inbox'
-    }
+    window.location.href = '/inbox'
   }
 
   return (

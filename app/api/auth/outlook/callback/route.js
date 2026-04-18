@@ -6,9 +6,10 @@ export async function GET(request) {
   const code = searchParams.get('code')
   const userId = searchParams.get('state')
   const appUrl = process.env.NEXT_PUBLIC_APP_URL
+  const lovableUrl = process.env.LOVABLE_APP_URL || appUrl
 
   if (!code || !userId) {
-    return NextResponse.redirect(`${appUrl}/settings?outlook=error`)
+    return NextResponse.redirect(`${lovableUrl}/settings?outlook=error`)
   }
 
   const clientId = process.env.MICROSOFT_CLIENT_ID
@@ -48,8 +49,8 @@ export async function GET(request) {
   }, { onConflict: 'user_id' })
 
   if (error) {
-    return NextResponse.redirect(`${appUrl}/settings?outlook=error&reason=save_failed`)
+    return NextResponse.redirect(`${lovableUrl}/settings?outlook=error&reason=save_failed`)
   }
 
-  return NextResponse.redirect(`${appUrl}/settings?outlook=connected`)
+  return NextResponse.redirect(`${lovableUrl}/settings?outlook=connected`)
 }

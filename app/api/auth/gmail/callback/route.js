@@ -6,9 +6,10 @@ export async function GET(request) {
   const code = searchParams.get('code')
   const userId = searchParams.get('state')
   const appUrl = process.env.NEXT_PUBLIC_APP_URL
+  const lovableUrl = process.env.LOVABLE_APP_URL || appUrl
 
   if (!code || !userId) {
-    return NextResponse.redirect(`${appUrl}/onboarding?error=gmail_failed`)
+    return NextResponse.redirect(`${lovableUrl}/onboarding?error=gmail_failed`)
   }
 
   const clientId = process.env.GOOGLE_CLIENT_ID?.trim()
@@ -24,7 +25,7 @@ export async function GET(request) {
 
   const tokens = await tokenRes.json()
   if (!tokens.access_token) {
-    return NextResponse.redirect(`${appUrl}/onboarding?error=gmail_token_failed`)
+    return NextResponse.redirect(`${lovableUrl}/onboarding?error=gmail_token_failed`)
   }
 
   // Get Gmail address
@@ -44,8 +45,8 @@ export async function GET(request) {
   }, { onConflict: 'user_id' })
 
   if (error) {
-    return NextResponse.redirect(`${appUrl}/onboarding?error=gmail_save_failed`)
+    return NextResponse.redirect(`${lovableUrl}/onboarding?error=gmail_save_failed`)
   }
 
-  return NextResponse.redirect(`${appUrl}/onboarding?step=3&gmail=connected`)
+  return NextResponse.redirect(`${lovableUrl}/onboarding?step=3&gmail=connected`)
 }

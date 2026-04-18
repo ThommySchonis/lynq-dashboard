@@ -14,12 +14,12 @@ export async function GET(request) {
   }
 
   if (!userToken) {
-    return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/settings?gmail=error`)
+    return NextResponse.redirect(`${process.env.LOVABLE_APP_URL || process.env.NEXT_PUBLIC_APP_URL}/settings?gmail=error`)
   }
 
   const user = await getUserFromToken(userToken)
   if (!user) {
-    return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/settings?gmail=error`)
+    return NextResponse.redirect(`${process.env.LOVABLE_APP_URL || process.env.NEXT_PUBLIC_APP_URL}/settings?gmail=error`)
   }
 
   const clientId = process.env.GOOGLE_CLIENT_ID?.trim()

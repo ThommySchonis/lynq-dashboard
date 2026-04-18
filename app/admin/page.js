@@ -17,6 +17,8 @@ export default function AdminPage() {
   const [notifSuccess, setNotifSuccess] = useState('')
   const [authorized, setAuthorized] = useState(false)
   const [activeTab, setActiveTab] = useState('clients')
+  const [finance, setFinance] = useState(null)
+  const [financeLoading, setFinanceLoading] = useState(false)
   const [broadcastForm, setBroadcastForm] = useState({ title: '', body: '', type: 'update' })
   const [notifForm, setNotifForm] = useState({ title: '', body: '', type: 'info' })
   const [form, setForm] = useState({
@@ -44,6 +46,16 @@ export default function AdminPage() {
     }
     checkAuth()
   }, [])
+
+  async function fetchFinance() {
+    setFinanceLoading(true)
+    const { data: { session } } = await supabase.auth.getSession()
+    const res = await fetch('/api/admin/finance', {
+      headers: { Authorization: `Bearer ${session.access_token}`, 'x-admin-email': ADMIN_EMAIL },
+    })
+    if (res.ok) setFinance(await res.json())
+    setFinanceLoading(false)
+  }
 
   async function fetchNotifications() {
     const { data } = await supabase.from('notifications').select('*').order('created_at', { ascending: false })
@@ -233,6 +245,7 @@ export default function AdminPage() {
           <button style={{ ...s.tab, ...(activeTab === 'clients' ? s.tabActive : s.tabInactive) }} onClick={() => setActiveTab('clients')}>Clients</button>
           <button style={{ ...s.tab, ...(activeTab === 'broadcasts' ? s.tabActive : s.tabInactive) }} onClick={() => setActiveTab('broadcasts')}>Broadcasts</button>
           <button style={{ ...s.tab, ...(activeTab === 'notifications' ? s.tabActive : s.tabInactive) }} onClick={() => setActiveTab('notifications')}>Notifications</button>
+          <button style={{ ...s.tab, ...(activeTab === 'finance' ? s.tabActive : s.tabInactive) }} onClick={() => { setActiveTab('finance'); if (!finance) fetchFinance() }}>Finance</button>
         </div>
 
       {activeTab === 'broadcasts' && (
@@ -334,6 +347,137 @@ export default function AdminPage() {
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {activeTab === 'finance' && (
+        <div>
+          {financeLoading && <div style={{ color: '#8b7cb3', fontSize: '13px' }}>Laden...</div>}
+          {!financeLoading && !finance && <div style={{ color: '#8b7cb3', fontSize: '13px' }}>Geen data beschikbaar.</div>}
+          {finance && (() => {
+            const f = finance.finance
+            const ai = finance.ai
+            const fmt = (n) => n == null ? '—' : `$${n.toFixed(4)}`
+            const fmtE = (n) => n == null ? '—' : `€${n.toFixed(0)}`
+            const fmtN = (n) => (n || 0).toLocaleString()
+            const green = '#4ecca3', red = '#ff6b8a', yellow = '#ffd166', purple = '#A175FC'
+
+            return (
+              <div>
+                {/* P&L overzicht */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginBottom: '28px' }}>
+                  {[
+                    { label: 'MRR', value: fmtE(f.mrr), color: green, sub: `${f.activeClients} actieve klanten` },
+                    { label: 'Kosten deze maand', value: fmtE(f.totalCostMonth), color: yellow, sub: `Fixed €${f.fixedCosts} + AI $${f.aiCostMonth.toFixed(4)}` },
+                    { label: 'Netto marge', value: fmtE(f.netMargin), color: f.netMargin >= 0 ? green : red, sub: `${f.marginPct}% van MRR` },
+                    { label: 'AI kosten vandaag', value: fmt(ai.today.cost), color: purple, sub: `${ai.today.calls} calls` },
+                  ].map(({ label, value, color, sub }) => (
+                    <div key={label} style={s.statCard}>
+                      <div style={{ ...s.statNum, color }}>{value}</div>
+                      <div style={s.statLabel}>{label}</div>
+                      <div style={{ fontSize: '11px', color: '#8b7cb3', marginTop: '4px' }}>{sub}</div>
+                    </div>
+                  ))}
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '24px' }}>
+                  {/* AI usage week/maand */}
+                  <div style={s.card}>
+                    <div style={s.cardTitle}>AI Credits verbruik</div>
+                    <div style={s.cardSub}>Claude Haiku 4.5 · $0.80/M input · $4.00/M output</div>
+                    {[
+                      { label: 'Vandaag', cost: ai.today.cost, calls: ai.today.calls },
+                      { label: 'Afgelopen 7 dagen', cost: ai.week.cost, calls: ai.week.calls, tokens: ai.week.input_tokens + ai.week.output_tokens },
+                      { label: 'Deze maand', cost: ai.month.cost, calls: ai.month.calls, tokens: ai.month.input_tokens + ai.month.output_tokens },
+                      { label: 'Vorige maand', cost: ai.lastMonth.cost },
+                    ].map(({ label, cost, calls, tokens }) => (
+                      <div key={label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                        <div>
+                          <div style={{ fontSize: '13px', fontWeight: '600' }}>{label}</div>
+                          {tokens != null && <div style={{ fontSize: '11px', color: '#8b7cb3', marginTop: '2px' }}>{fmtN(tokens)} tokens · {calls} calls</div>}
+                          {tokens == null && calls != null && <div style={{ fontSize: '11px', color: '#8b7cb3', marginTop: '2px' }}>{calls} calls</div>}
+                        </div>
+                        <div style={{ fontWeight: '700', color: purple, fontSize: '14px' }}>{fmt(cost)}</div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Per route */}
+                  <div style={s.card}>
+                    <div style={s.cardTitle}>Verbruik per route (deze maand)</div>
+                    <div style={s.cardSub}>Welke AI functie kost het meest</div>
+                    {Object.entries(ai.byRoute).length === 0 && (
+                      <div style={{ color: '#8b7cb3', fontSize: '13px' }}>Nog geen AI calls gelogd deze maand.</div>
+                    )}
+                    {Object.entries(ai.byRoute).sort(([,a],[,b]) => b.cost - a.cost).map(([route, v]) => (
+                      <div key={route} style={{ padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                          <span style={{ fontSize: '13px', fontWeight: '600', textTransform: 'capitalize' }}>{route}</span>
+                          <span style={{ fontWeight: '700', color: purple, fontSize: '13px' }}>{fmt(v.cost)}</span>
+                        </div>
+                        <div style={{ fontSize: '11px', color: '#8b7cb3' }}>
+                          {fmtN(v.calls)} calls · {fmtN(v.input_tokens)} in · {fmtN(v.output_tokens)} out tokens
+                        </div>
+                        <div style={{ marginTop: '6px', height: '3px', background: 'rgba(255,255,255,0.06)', borderRadius: '2px' }}>
+                          <div style={{ height: '3px', background: purple, borderRadius: '2px', width: `${Math.min(100, (v.calls / Math.max(...Object.values(ai.byRoute).map(r => r.calls))) * 100)}%` }} />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
+                  {/* Subscriptions */}
+                  <div style={s.card}>
+                    <div style={s.cardTitle}>Vaste subscriptions</div>
+                    <div style={s.cardSub}>Maandelijkse vaste kosten</div>
+                    {finance.subscriptions.map(sub => (
+                      <div key={sub.name} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                        <div>
+                          <div style={{ fontSize: '13px', fontWeight: '600' }}>{sub.name}</div>
+                          {sub.note && <div style={{ fontSize: '11px', color: '#8b7cb3', marginTop: '2px' }}>{sub.note}</div>}
+                        </div>
+                        <div style={{ fontWeight: '700', color: sub.cost > 0 ? yellow : '#8b7cb3', fontSize: '13px' }}>
+                          {sub.cost > 0 ? `$${sub.cost}/mo` : '—'}
+                        </div>
+                      </div>
+                    ))}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0 0', marginTop: '4px' }}>
+                      <span style={{ fontSize: '13px', fontWeight: '700' }}>Totaal</span>
+                      <span style={{ fontWeight: '800', color: yellow, fontSize: '14px' }}>${f.fixedCosts}/mo</span>
+                    </div>
+                  </div>
+
+                  {/* Dagelijkse AI kosten */}
+                  <div style={s.card}>
+                    <div style={s.cardTitle}>AI kosten per dag (deze maand)</div>
+                    <div style={s.cardSub}>Dagelijks verbruik overzicht</div>
+                    {ai.daily.length === 0 && <div style={{ color: '#8b7cb3', fontSize: '13px' }}>Nog geen data.</div>}
+                    <div style={{ maxHeight: '280px', overflowY: 'auto' }}>
+                      {[...ai.daily].reverse().map(({ date, cost, calls }) => {
+                        const maxCost = Math.max(...ai.daily.map(d => d.cost), 0.0001)
+                        const pct = Math.min(100, (cost / maxCost) * 100)
+                        return (
+                          <div key={date} style={{ padding: '7px 0', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                              <span style={{ fontSize: '12px', color: '#8b7cb3' }}>{new Date(date).toLocaleDateString('nl-NL', { day: 'numeric', month: 'short' })}</span>
+                              <span style={{ fontSize: '12px', fontWeight: '600', color: purple }}>{fmt(cost)} <span style={{ color: '#8b7cb3', fontWeight: '400' }}>· {calls}x</span></span>
+                            </div>
+                            <div style={{ height: '3px', background: 'rgba(255,255,255,0.06)', borderRadius: '2px' }}>
+                              <div style={{ height: '3px', background: purple, borderRadius: '2px', width: `${pct}%`, opacity: 0.7 }} />
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                    <button onClick={fetchFinance} style={{ ...s.btn, marginTop: '16px', background: 'rgba(161,117,252,0.15)', color: purple }}>
+                      Vernieuwen
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )
+          })()}
         </div>
       )}
 

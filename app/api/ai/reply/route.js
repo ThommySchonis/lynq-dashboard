@@ -55,7 +55,7 @@ export async function POST(request) {
     ? `\n\nIMPORTANT: Write your reply in ${language}. The customer is communicating in ${language}.`
     : ''
 
-  const { text } = await generateText({
+  const { text, usage } = await generateText({
     model: anthropic('claude-haiku-4-5-20251001'),
     system: systemPrompt + languageInstruction,
     prompt: `Here is the full email conversation. Write a professional reply to the latest message from the customer.
@@ -65,6 +65,15 @@ ${conversationContext}
 ---
 Write only the reply body. Do not include subject lines, metadata, or explanations. Sign off as "${brandName}".`,
     maxTokens: 600,
+  })
+
+  await supabaseAdmin.from('ai_usage').insert({
+    route: 'reply',
+    model: 'claude-haiku-4-5-20251001',
+    input_tokens: usage.promptTokens,
+    output_tokens: usage.completionTokens,
+    cost_usd: (usage.promptTokens * 0.0000008) + (usage.completionTokens * 0.000004),
+    user_email: user.email,
   })
 
   return NextResponse.json({ reply: text.trim(), threadId })

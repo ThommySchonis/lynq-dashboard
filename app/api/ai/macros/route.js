@@ -30,7 +30,7 @@ export async function POST(request) {
 
   const macroList = MACROS.map(m => `${m.id}: ${m.name}`).join('\n')
 
-  const { text } = await generateText({
+  const { text, usage } = await generateText({
     model: anthropic('claude-haiku-4-5-20251001'),
     prompt: `You are a customer service assistant. Based on this customer email, pick the 3 most relevant macro IDs to suggest as quick replies. Return only the 3 IDs, comma-separated, nothing else.
 
@@ -42,6 +42,15 @@ ${macroList}
 
 Return exactly 3 IDs, comma-separated:`,
     maxTokens: 60,
+  })
+
+  await supabaseAdmin.from('ai_usage').insert({
+    route: 'macros',
+    model: 'claude-haiku-4-5-20251001',
+    input_tokens: usage.promptTokens,
+    output_tokens: usage.completionTokens,
+    cost_usd: (usage.promptTokens * 0.0000008) + (usage.completionTokens * 0.000004),
+    user_email: user.email,
   })
 
   const suggested = text.trim()

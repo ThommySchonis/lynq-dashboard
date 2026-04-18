@@ -1,6 +1,6 @@
 import { generateText } from 'ai'
 import { anthropic } from '@ai-sdk/anthropic'
-import { getUserFromToken } from '../../../lib/supabaseAdmin'
+import { getUserFromToken, supabaseAdmin } from '../../../lib/supabaseAdmin'
 import { NextResponse } from 'next/server'
 
 // POST /api/translate
@@ -31,6 +31,14 @@ ${text}`,
       maxTokens: 1024,
     })
     raw = result.text
+    await supabaseAdmin.from('ai_usage').insert({
+      route: 'translate',
+      model: 'claude-haiku-4-5-20251001',
+      input_tokens: result.usage.promptTokens,
+      output_tokens: result.usage.completionTokens,
+      cost_usd: (result.usage.promptTokens * 0.0000008) + (result.usage.completionTokens * 0.000004),
+      user_email: user.email,
+    })
   } catch (err) {
     console.error('[translate] generateText failed:', err?.message || err)
     return NextResponse.json({ error: 'AI error: ' + (err?.message || 'unknown') }, { status: 500 })

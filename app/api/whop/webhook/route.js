@@ -54,6 +54,7 @@ export async function POST(request) {
       whop_membership_id: membershipId,
       plan,
       status: 'active',
+      payment_failed_count: 0,
       activated_at: new Date().toISOString(),
       expires_at: membership?.renewal_period_end
         ? new Date(membership.renewal_period_end * 1000).toISOString()
@@ -79,6 +80,25 @@ export async function POST(request) {
         expires_at: membership?.renewal_period_end
           ? new Date(membership.renewal_period_end * 1000).toISOString()
           : null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('user_email', userEmail)
+  }
+
+  if (action === 'membership.payment_failed') {
+    const { data: sub } = await supabaseAdmin
+      .from('subscriptions')
+      .select('payment_failed_count')
+      .eq('user_email', userEmail)
+      .single()
+
+    const newCount = (sub?.payment_failed_count || 0) + 1
+    const newStatus = newCount >= 3 ? 'payment_failed' : 'active'
+
+    await supabaseAdmin.from('subscriptions')
+      .update({
+        payment_failed_count: newCount,
+        status: newStatus,
         updated_at: new Date().toISOString(),
       })
       .eq('user_email', userEmail)

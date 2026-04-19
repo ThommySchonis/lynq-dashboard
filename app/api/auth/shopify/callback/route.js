@@ -73,9 +73,8 @@ export async function GET(request) {
     }, { onConflict: 'user_id' })
 
   // Clear OAuth cookies
-  const response = NextResponse.redirect(
-    `${process.env.NEXT_PUBLIC_APP_URL}/onboarding?step=3&shopify=connected`
-  )
+  const appUrl = process.env.LOVABLE_APP_URL || process.env.NEXT_PUBLIC_APP_URL
+  const response = NextResponse.redirect(`${appUrl}/onboarding?step=3&shopify=connected`)
   response.cookies.delete('shopify_oauth_state')
   response.cookies.delete('shopify_oauth_user')
   response.cookies.delete('shopify_oauth_shop')

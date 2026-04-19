@@ -1,4 +1,5 @@
-import { supabaseAdmin, getUserFromToken } from '../../../../lib/supabaseAdmin'
+import { getUserFromToken } from '../../../../lib/supabaseAdmin'
+import { getShopifyCredentials } from '../../../../lib/shopifyCredentials'
 import { NextResponse } from 'next/server'
 
 export async function GET(request) {
@@ -9,15 +10,8 @@ export async function GET(request) {
   const user = await getUserFromToken(token)
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { data: client } = await supabaseAdmin
-    .from('clients')
-    .select('shopify_domain, shopify_api_key')
-    .eq('email', user.email)
-    .single()
-
-  if (!client?.shopify_domain || !client?.shopify_api_key) {
-    return NextResponse.json({ error: 'Shopify not configured' }, { status: 400 })
-  }
+  const client = await getShopifyCredentials(user.id, user.email)
+  if (!client) return NextResponse.json({ error: 'Shopify not configured' }, { status: 400 })
 
   try {
     const res = await fetch(

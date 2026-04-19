@@ -36,7 +36,7 @@ export async function GET(request) {
     .from('gmail_tokens')
     .select('*')
     .eq('user_id', user.id)
-    .single()
+    .maybeSingle()
 
   if (!gmailToken) return NextResponse.json({ error: 'Gmail not connected', connected: false }, { status: 200 })
 

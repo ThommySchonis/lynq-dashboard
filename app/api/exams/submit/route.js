@@ -191,7 +191,7 @@ export async function POST(request) {
     passing_score: PASSING_SCORE,
     question_scores: questionScores,
     message: passed
-      ? `Gefeliciteerd! Je hebt het examen gehaald met ${percentage}%. Je wordt binnenkort uitgenodigd voor een call met het Lynq team.`
-      : `Je score is ${percentage}%. De minimale score is ${PASSING_SCORE}%. Je kunt het examen opnieuw proberen. Resterende pogingen: ${MAX_ATTEMPTS - (count || 0) - 1}.`,
+      ? `Congratulations! You passed the exam with ${percentage}%. You will be invited for a call with the Lynq team shortly.`
+      : `Your score is ${percentage}%. The minimum passing score is ${PASSING_SCORE}%. You can retake the exam. Remaining attempts: ${MAX_ATTEMPTS - (count || 0) - 1}.`,
   })
 }

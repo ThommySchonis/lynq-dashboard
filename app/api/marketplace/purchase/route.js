@@ -63,6 +63,6 @@ export async function POST(request) {
     total_amount: totalAmount,
     placement_fee: PLACEMENT_FEE,
     trainer_fee: include_trainer ? TRAINER_FEE : 0,
-    message: `Je aanvraag voor ${candidate.display_code} is ontvangen. Het Lynq team neemt binnen 24 uur contact met je op voor de betaling en koppeling.`,
+    message: `Your request for ${candidate.display_code} has been received. The Lynq team will contact you within 24 hours to finalize payment and onboarding.`,
   })
 }

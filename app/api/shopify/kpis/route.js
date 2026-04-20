@@ -17,12 +17,19 @@ export async function GET(request) {
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
 
   try {
-    const res = await fetch(
-      `https://${client.domain}/admin/api/2024-01/orders.json?status=any&limit=250&created_at_min=${startOfMonth}`,
-      { headers: { 'X-Shopify-Access-Token': client.accessToken } }
-    )
-    if (!res.ok) return NextResponse.json({ error: 'Shopify API error' }, { status: 502 })
-    const { orders } = await res.json()
+    let orders = []
+    let url = `https://${client.domain}/admin/api/2024-01/orders.json?status=any&limit=250&created_at_min=${startOfMonth}`
+
+    while (url) {
+      const res = await fetch(url, { headers: { 'X-Shopify-Access-Token': client.accessToken } })
+      if (!res.ok) return NextResponse.json({ error: 'Shopify API error' }, { status: 502 })
+      const data = await res.json()
+      orders = orders.concat(data.orders)
+
+      const linkHeader = res.headers.get('link')
+      const nextMatch = linkHeader?.match(/<([^>]+)>;\s*rel="next"/)
+      url = nextMatch ? nextMatch[1] : null
+    }
 
     const nonCancelled = orders.filter(o => !o.cancel_reason)
     const cancelledOrders = orders.filter(o => o.cancel_reason).length

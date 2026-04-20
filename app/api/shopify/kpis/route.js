@@ -34,7 +34,6 @@ export async function GET(request) {
     const nonCancelled = orders.filter(o => !o.cancel_reason)
     const cancelledOrders = orders.filter(o => o.cancel_reason).length
     const totalOrders = nonCancelled.length
-    const totalRevenue = nonCancelled.reduce((sum, o) => sum + parseFloat(o.total_price || 0), 0)
 
     const ordersWithRefunds = nonCancelled.filter(o => o.refunds && o.refunds.length > 0)
     const totalRefunds = ordersWithRefunds.length
@@ -43,6 +42,9 @@ export async function GET(request) {
         return rs + (r.transactions || []).reduce((ts, t) => ts + parseFloat(t.amount || 0), 0)
       }, 0)
     }, 0)
+
+    // Netto-omzet = subtotaal (na kortingen) − retouren, matching Shopify analytics
+    const totalRevenue = nonCancelled.reduce((sum, o) => sum + parseFloat(o.subtotal_price || 0), 0) - refundAmount
 
     const refundRate = totalOrders > 0 ? ((totalRefunds / totalOrders) * 100).toFixed(1) : '0.0'
     const refundPct = totalRevenue > 0 ? ((refundAmount / totalRevenue) * 100).toFixed(1) : '0.0'

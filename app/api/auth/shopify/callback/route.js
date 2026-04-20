@@ -53,13 +53,18 @@ export async function GET(request) {
   }
 
   // Save to integrations table
-  await supabaseAdmin.from('integrations').upsert({
+  const { error: upsertError } = await supabaseAdmin.from('integrations').upsert({
     client_id: oauthState.user_id,
     shopify_domain: shop,
     shopify_access_token: tokenData.access_token,
     shopify_scope: tokenData.scope,
     shopify_connected_at: new Date().toISOString(),
   }, { onConflict: 'client_id' })
+
+  if (upsertError) {
+    console.error('integrations upsert failed:', JSON.stringify(upsertError))
+    return NextResponse.redirect(`${appUrl}/settings?error=save_failed&detail=${encodeURIComponent(upsertError.message)}`)
+  }
 
   await supabaseAdmin.from('oauth_states').delete().eq('state', state)
 

@@ -44,7 +44,7 @@ export async function POST(request) {
   const state = crypto.randomBytes(16).toString('hex')
   const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString()
 
-  await supabaseAdmin.from('oauth_states').upsert({
+  const { error: stateError } = await supabaseAdmin.from('oauth_states').insert({
     state,
     user_id: user.id,
     shop: shopDomain,
@@ -52,6 +52,11 @@ export async function POST(request) {
     client_secret: clientSecret,
     expires_at: expiresAt,
   })
+
+  if (stateError) {
+    console.error('oauth_states insert failed:', stateError)
+    return NextResponse.json({ error: 'Failed to initiate OAuth: ' + stateError.message }, { status: 500 })
+  }
 
   const redirectUri = `${process.env.NEXT_PUBLIC_APP_URL}/api/auth/shopify/callback`
 

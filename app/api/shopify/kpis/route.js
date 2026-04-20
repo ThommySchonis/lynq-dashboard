@@ -45,8 +45,8 @@ export async function GET(request) {
       }, 0)
     }, 0)
 
-    // Netto-omzet = subtotaal (na kortingen) − retouren, matching Shopify analytics
-    const totalRevenue = nonCancelled.reduce((sum, o) => sum + parseFloat(o.subtotal_price || 0), 0) - refundAmount
+    // current_subtotal_price already reflects refunds and order edits
+    const totalRevenue = nonCancelled.reduce((sum, o) => sum + parseFloat(o.current_subtotal_price ?? o.subtotal_price ?? 0), 0)
 
     const refundRate = totalOrders > 0 ? ((totalRefunds / totalOrders) * 100).toFixed(1) : '0.0'
     const refundPct = totalRevenue > 0 ? ((refundAmount / totalRevenue) * 100).toFixed(1) : '0.0'

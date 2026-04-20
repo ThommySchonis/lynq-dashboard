@@ -29,11 +29,11 @@ export async function POST(request) {
   }
 
   await supabaseAdmin.from('integrations').upsert({
-    user_id: user.id,
+    client_id: user.id,
     shopify_domain: shopDomain,
     shopify_access_token: accessToken,
-    connected_at: new Date().toISOString(),
-  }, { onConflict: 'user_id' })
+    shopify_connected_at: new Date().toISOString(),
+  }, { onConflict: 'client_id' })
 
   return NextResponse.json({ success: true, shop: shopDomain })
 }
@@ -46,6 +46,6 @@ export async function DELETE(request) {
   const user = await getUserFromToken(token)
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  await supabaseAdmin.from('integrations').delete().eq('user_id', user.id)
+  await supabaseAdmin.from('integrations').delete().eq('client_id', user.id)
   return NextResponse.json({ success: true })
 }

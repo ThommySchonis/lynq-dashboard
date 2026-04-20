@@ -54,12 +54,12 @@ export async function GET(request) {
 
   // Save to integrations table
   await supabaseAdmin.from('integrations').upsert({
-    user_id: oauthState.user_id,
+    client_id: oauthState.user_id,
     shopify_domain: shop,
     shopify_access_token: tokenData.access_token,
     shopify_scope: tokenData.scope,
-    connected_at: new Date().toISOString(),
-  }, { onConflict: 'user_id' })
+    shopify_connected_at: new Date().toISOString(),
+  }, { onConflict: 'client_id' })
 
   await supabaseAdmin.from('oauth_states').delete().eq('state', state)
 

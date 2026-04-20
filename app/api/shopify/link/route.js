@@ -25,12 +25,12 @@ export async function POST(request) {
   }
 
   await supabaseAdmin.from('integrations').upsert({
-    user_id: user.id,
+    client_id: user.id,
     shopify_domain: shop,
     shopify_access_token: pending.access_token,
     shopify_scope: pending.scope,
-    connected_at: new Date().toISOString(),
-  }, { onConflict: 'user_id' })
+    shopify_connected_at: new Date().toISOString(),
+  }, { onConflict: 'client_id' })
 
   await supabaseAdmin.from('pending_shopify_tokens').delete().eq('shop', shop)
 

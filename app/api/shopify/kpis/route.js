@@ -18,7 +18,7 @@ export async function GET(request) {
 
   try {
     let orders = []
-    let url = `https://${client.domain}/admin/api/2024-01/orders.json?status=any&limit=250&created_at_min=${startOfMonth}`
+    let url = `https://${client.domain}/admin/api/2024-01/orders.json?status=any&limit=250&processed_at_min=${startOfMonth}`
 
     while (url) {
       const res = await fetch(url, { headers: { 'X-Shopify-Access-Token': client.accessToken } })

@@ -1,4 +1,4 @@
-import { getUserFromToken } from '../../../../lib/supabaseAdmin'
+import { getUserFromToken, supabaseAdmin } from '../../../../lib/supabaseAdmin'
 import { NextResponse } from 'next/server'
 import crypto from 'crypto'
 
@@ -13,9 +13,14 @@ const SCOPES = [
   'write_fulfillments',
 ].join(',')
 
-// GET /api/auth/shopify?shop=yourstore.myshopify.com
-// Starts the OAuth flow — redirects merchant to Shopify authorization page
-export async function GET(request) {
+export async function OPTIONS() {
+  return new Response(null, { status: 204 })
+}
+
+// POST /api/auth/shopify
+// Body: { shop: "yourstore.myshopify.com" }
+// Returns: { url } — frontend does window.location.href = url
+export async function POST(request) {
   const authHeader = request.headers.get('authorization')
   if (!authHeader) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
@@ -23,48 +28,31 @@ export async function GET(request) {
   const user = await getUserFromToken(token)
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { searchParams } = new URL(request.url)
-  const shop = searchParams.get('shop')?.toLowerCase().trim()
+  const { shop } = await request.json()
+  if (!shop) return NextResponse.json({ error: 'Missing shop' }, { status: 400 })
 
-  if (!shop) return NextResponse.json({ error: 'Missing shop parameter' }, { status: 400 })
+  const shopDomain = shop.includes('.myshopify.com')
+    ? shop.toLowerCase().trim()
+    : `${shop.toLowerCase().trim()}.myshopify.com`
 
-  // Normalize: add .myshopify.com if not present
-  const shopDomain = shop.includes('.myshopify.com') ? shop : `${shop}.myshopify.com`
-
-  // Generate a random state to prevent CSRF
   const state = crypto.randomBytes(16).toString('hex')
+  const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString()
+
+  await supabaseAdmin.from('oauth_states').upsert({
+    state,
+    user_id: user.id,
+    shop: shopDomain,
+    expires_at: expiresAt,
+  })
 
   const redirectUri = `${process.env.NEXT_PUBLIC_APP_URL}/api/auth/shopify/callback`
-  const clientId = process.env.SHOPIFY_CLIENT_ID
 
   const authUrl = `https://${shopDomain}/admin/oauth/authorize?` + new URLSearchParams({
-    client_id: clientId,
+    client_id: process.env.SHOPIFY_CLIENT_ID,
     scope: SCOPES,
     redirect_uri: redirectUri,
     state,
-    'grant_options[]': 'per-user',
   }).toString()
 
-  // Store state + user_id in a short-lived cookie so callback can verify
-  const response = NextResponse.redirect(authUrl)
-  response.cookies.set('shopify_oauth_state', state, {
-    httpOnly: true,
-    secure: true,
-    sameSite: 'lax',
-    maxAge: 600, // 10 minutes
-  })
-  response.cookies.set('shopify_oauth_user', user.id, {
-    httpOnly: true,
-    secure: true,
-    sameSite: 'lax',
-    maxAge: 600,
-  })
-  response.cookies.set('shopify_oauth_shop', shopDomain, {
-    httpOnly: true,
-    secure: true,
-    sameSite: 'lax',
-    maxAge: 600,
-  })
-
-  return response
+  return NextResponse.json({ url: authUrl })
 }

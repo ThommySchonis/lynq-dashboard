@@ -2,8 +2,6 @@ import { supabaseAdmin } from '../../../../../lib/supabaseAdmin'
 import { NextResponse } from 'next/server'
 import crypto from 'crypto'
 
-// GET /api/auth/shopify/callback?code=...&hmac=...&shop=...&state=...
-// Shopify redirects here after merchant approves the app
 export async function GET(request) {
   const { searchParams } = new URL(request.url)
   const code = searchParams.get('code')
@@ -11,21 +9,18 @@ export async function GET(request) {
   const shop = searchParams.get('shop')
   const state = searchParams.get('state')
 
-  // Verify state matches cookie (CSRF protection)
-  const cookieState = request.cookies.get('shopify_oauth_state')?.value
-  const userId = request.cookies.get('shopify_oauth_user')?.value
-  const cookieShop = request.cookies.get('shopify_oauth_shop')?.value
+  const appUrl = process.env.LOVABLE_APP_URL || process.env.NEXT_PUBLIC_APP_URL
 
-  if (!state || state !== cookieState) {
-    return NextResponse.redirect(
-      `${process.env.NEXT_PUBLIC_APP_URL}/onboarding?error=invalid_state`
-    )
-  }
+  // Look up state in Supabase instead of cookies (works cross-origin)
+  const { data: oauthState } = await supabaseAdmin
+    .from('oauth_states')
+    .select('*')
+    .eq('state', state)
+    .eq('shop', shop)
+    .maybeSingle()
 
-  if (!shop || shop !== cookieShop) {
-    return NextResponse.redirect(
-      `${process.env.NEXT_PUBLIC_APP_URL}/onboarding?error=shop_mismatch`
-    )
+  if (!oauthState || new Date(oauthState.expires_at) < new Date()) {
+    return NextResponse.redirect(`${appUrl}/settings?error=invalid_state`)
   }
 
   // Verify HMAC signature from Shopify
@@ -38,9 +33,7 @@ export async function GET(request) {
     .digest('hex')
 
   if (digest !== hmac) {
-    return NextResponse.redirect(
-      `${process.env.NEXT_PUBLIC_APP_URL}/onboarding?error=invalid_hmac`
-    )
+    return NextResponse.redirect(`${appUrl}/settings?error=invalid_hmac`)
   }
 
   // Exchange code for permanent access token
@@ -56,28 +49,20 @@ export async function GET(request) {
 
   const tokenData = await tokenRes.json()
   if (!tokenData.access_token) {
-    return NextResponse.redirect(
-      `${process.env.NEXT_PUBLIC_APP_URL}/onboarding?error=token_exchange_failed`
-    )
+    return NextResponse.redirect(`${appUrl}/settings?error=token_exchange_failed`)
   }
 
-  // Save to integrations table in Supabase
-  await supabaseAdmin
-    .from('integrations')
-    .upsert({
-      user_id: userId,
-      shopify_domain: shop,
-      shopify_access_token: tokenData.access_token,
-      shopify_scope: tokenData.scope,
-      connected_at: new Date().toISOString(),
-    }, { onConflict: 'user_id' })
+  // Save to integrations table
+  await supabaseAdmin.from('integrations').upsert({
+    user_id: oauthState.user_id,
+    shopify_domain: shop,
+    shopify_access_token: tokenData.access_token,
+    shopify_scope: tokenData.scope,
+    connected_at: new Date().toISOString(),
+  }, { onConflict: 'user_id' })
 
-  // Clear OAuth cookies
-  const appUrl = process.env.LOVABLE_APP_URL || process.env.NEXT_PUBLIC_APP_URL
-  const response = NextResponse.redirect(`${appUrl}/onboarding?step=3&shopify=connected`)
-  response.cookies.delete('shopify_oauth_state')
-  response.cookies.delete('shopify_oauth_user')
-  response.cookies.delete('shopify_oauth_shop')
+  // Clean up used state
+  await supabaseAdmin.from('oauth_states').delete().eq('state', state)
 
-  return response
+  return NextResponse.redirect(`${appUrl}/settings?shopify=connected`)
 }

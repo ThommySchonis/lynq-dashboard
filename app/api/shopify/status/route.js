@@ -13,5 +13,5 @@ export async function GET(request) {
   const client = await getShopifyCredentials(user.id, user.email)
   if (!client) return NextResponse.json({ connected: false })
 
-  return NextResponse.json({ connected: true, shop: client.shopify_domain || client.domain })
+  return NextResponse.json({ connected: true, shop: client.domain })
 }

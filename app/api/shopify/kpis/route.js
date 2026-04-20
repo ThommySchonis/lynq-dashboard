@@ -31,9 +31,9 @@ export async function GET(request) {
       url = nextMatch ? nextMatch[1] : null
     }
 
-    const nonCancelled = orders.filter(o => !o.cancel_reason)
     const cancelledOrders = orders.filter(o => o.cancel_reason).length
-    const totalOrders = nonCancelled.length
+    const totalOrders = orders.length
+    const nonCancelled = orders.filter(o => !o.cancel_reason)
 
     const ordersWithRefunds = nonCancelled.filter(o => o.refunds && o.refunds.length > 0)
     const totalRefunds = ordersWithRefunds.length

@@ -63,7 +63,17 @@ export async function GET(request) {
 
   if (upsertError) {
     console.error('integrations upsert failed:', JSON.stringify(upsertError))
-    return NextResponse.redirect(`${appUrl}/settings?error=save_failed&detail=${encodeURIComponent(upsertError.message)}`)
+    return new Response(`
+      <html><body style="font-family:monospace;padding:40px;background:#1a1a1a;color:#ff6b6b">
+        <h2>Shopify save failed</h2>
+        <p><b>Error:</b> ${upsertError.message}</p>
+        <p><b>Code:</b> ${upsertError.code}</p>
+        <p><b>Details:</b> ${upsertError.details || 'none'}</p>
+        <p><b>user_id:</b> ${oauthState.user_id}</p>
+        <p><b>shop:</b> ${shop}</p>
+        <p style="margin-top:20px"><a href="${appUrl}/settings" style="color:#888">← Back to settings</a></p>
+      </body></html>
+    `, { status: 500, headers: { 'Content-Type': 'text/html' } })
   }
 
   await supabaseAdmin.from('oauth_states').delete().eq('state', state)

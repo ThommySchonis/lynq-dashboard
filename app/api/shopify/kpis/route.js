@@ -14,7 +14,9 @@ export async function GET(request) {
   if (!client) return NextResponse.json({ error: 'Shopify not configured' }, { status: 400 })
 
   const now = new Date()
-  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
+  // Offset 2 hours back to align with Amsterdam timezone (UTC+2)
+  const startOfMonthLocal = new Date(now.getFullYear(), now.getMonth(), 1, -2, 0, 0)
+  const startOfMonth = startOfMonthLocal.toISOString()
 
   try {
     let orders = []

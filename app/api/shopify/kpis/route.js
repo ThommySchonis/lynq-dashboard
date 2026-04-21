@@ -49,24 +49,6 @@ export async function GET(request) {
   const refundRate = totalOrders > 0 ? ((totalRefunds / totalOrders) * 100).toFixed(1) : '0.0'
   const refundPct = netRevenue > 0 ? ((totalReturns / netRevenue) * 100).toFixed(1) : '0.0'
 
-  const CHANNEL_NAMES = {
-    web: 'Online Store',
-    subscription_contract: 'Kaching Subscriptions',
-    subscription_contract_checkout_one: 'Kaching Subscriptions',
-  }
-
-  const channelMap = {}
-  for (const o of nonCancelled) {
-    const raw = o.source_name || 'web'
-    const label = CHANNEL_NAMES[raw] || (/^\d+$/.test(raw) ? 'Shop' : raw)
-    if (!channelMap[label]) channelMap[label] = { orders: 0, revenue: 0 }
-    channelMap[label].orders += 1
-    channelMap[label].revenue += (o.subtotal_price || 0) - (o.refund_amount || 0)
-  }
-  const channels = Object.entries(channelMap)
-    .map(([name, v]) => ({ name, orders: v.orders, revenue: v.revenue.toFixed(0) }))
-    .sort((a, b) => b.revenue - a.revenue)
-
   return NextResponse.json({
     totalOrders,
     cancelledOrders,
@@ -78,6 +60,5 @@ export async function GET(request) {
     discounts: totalDiscounts.toFixed(0),
     returns: totalReturns.toFixed(0),
     refundAmount: totalReturns.toFixed(0),
-    channels,
   })
 }

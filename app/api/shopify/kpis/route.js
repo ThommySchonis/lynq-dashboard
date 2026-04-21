@@ -14,53 +14,76 @@ export async function GET(request) {
   if (!client) return NextResponse.json({ error: 'Shopify not configured' }, { status: 400 })
 
   const now = new Date()
-  // Offset 2 hours back to align with Amsterdam timezone (UTC+2)
-  const startOfMonthLocal = new Date(now.getFullYear(), now.getMonth(), 1, -2, 0, 0)
-  const startOfMonth = startOfMonthLocal.toISOString()
+  const startOfMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`
+  const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+
+  const query = `
+    FROM orders
+    WHERE order_date >= '${startOfMonth}' AND order_date <= '${today}'
+    SELECT
+      count(order_id) AS total_orders,
+      sum(gross_sales) AS gross_sales,
+      sum(discounts) AS discounts,
+      sum(returns) AS returns,
+      sum(net_sales) AS net_sales,
+      count(order_id, financial_status = 'refunded' OR financial_status = 'partially_refunded') AS total_refunds
+  `
 
   try {
-    let orders = []
-    let url = `https://${client.domain}/admin/api/2024-01/orders.json?status=any&limit=250&processed_at_min=${startOfMonth}`
+    const res = await fetch(`https://${client.domain}/admin/api/2024-01/graphql.json`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Shopify-Access-Token': client.accessToken,
+      },
+      body: JSON.stringify({
+        query: `{
+          shopifyqlQuery(query: ${JSON.stringify(query)}) {
+            ... on TableResponse {
+              tableData {
+                columns { name }
+                rowData
+              }
+            }
+            ... on ParseErrorResponse {
+              parseErrors { code message range { start { line column } } }
+            }
+          }
+        }`,
+      }),
+    })
 
-    while (url) {
-      const res = await fetch(url, { headers: { 'X-Shopify-Access-Token': client.accessToken } })
-      if (!res.ok) return NextResponse.json({ error: 'Shopify API error' }, { status: 502 })
-      const data = await res.json()
-      orders = orders.concat(data.orders)
+    const json = await res.json()
+    const tableData = json?.data?.shopifyqlQuery?.tableData
 
-      const linkHeader = res.headers.get('link')
-      const nextMatch = linkHeader?.match(/<([^>]+)>;\s*rel="next"/)
-      url = nextMatch ? nextMatch[1] : null
+    if (!tableData) {
+      const errors = json?.data?.shopifyqlQuery?.parseErrors
+      return NextResponse.json({ error: 'ShopifyQL error', details: errors }, { status: 502 })
     }
 
-    const cancelledOrders = orders.filter(o => o.cancel_reason).length
-    const totalOrders = orders.length
-    const nonCancelled = orders.filter(o => !o.cancel_reason)
+    const cols = tableData.columns.map(c => c.name)
+    const row = tableData.rowData[0] || []
+    const get = (name) => parseFloat(row[cols.indexOf(name)] || 0)
 
-    const ordersWithRefunds = nonCancelled.filter(o => o.refunds && o.refunds.length > 0)
-    const totalRefunds = ordersWithRefunds.length
-    const refundAmount = ordersWithRefunds.reduce((sum, o) => {
-      return sum + o.refunds.reduce((rs, r) => {
-        return rs + (r.transactions || []).reduce((ts, t) => ts + parseFloat(t.amount || 0), 0)
-      }, 0)
-    }, 0)
-
-    // current_subtotal_price already reflects refunds and order edits
-    const totalRevenue = nonCancelled.reduce((sum, o) => sum + parseFloat(o.current_subtotal_price ?? o.subtotal_price ?? 0), 0)
+    const totalOrders = Math.round(get('total_orders'))
+    const netSales = get('net_sales')
+    const grossSales = get('gross_sales')
+    const discounts = Math.abs(get('discounts'))
+    const returns = Math.abs(get('returns'))
+    const totalRefunds = Math.round(get('total_refunds'))
 
     const refundRate = totalOrders > 0 ? ((totalRefunds / totalOrders) * 100).toFixed(1) : '0.0'
-    const refundPct = totalRevenue > 0 ? ((refundAmount / totalRevenue) * 100).toFixed(1) : '0.0'
 
     return NextResponse.json({
       totalOrders,
-      totalRevenue: totalRevenue.toFixed(0),
-      cancelledOrders,
+      totalRevenue: netSales.toFixed(0),
+      grossSales: grossSales.toFixed(0),
+      discounts: discounts.toFixed(0),
+      returns: returns.toFixed(0),
       totalRefunds,
-      refundAmount: refundAmount.toFixed(0),
       refundRate,
-      refundPct,
     })
   } catch (e) {
-    return NextResponse.json({ error: 'Failed to fetch Shopify data' }, { status: 500 })
+    return NextResponse.json({ error: 'Failed to fetch Shopify analytics' }, { status: 500 })
   }
 }

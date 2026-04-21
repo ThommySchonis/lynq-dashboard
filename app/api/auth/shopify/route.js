@@ -15,6 +15,7 @@ const SCOPES = [
   'write_price_rules',
   'read_discounts',
   'write_discounts',
+  'read_analytics',
 ].join(',')
 
 export async function OPTIONS() {

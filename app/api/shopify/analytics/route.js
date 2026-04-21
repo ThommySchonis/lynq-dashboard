@@ -30,7 +30,7 @@ export async function GET(request) {
     SINCE ${since} UNTIL ${until}
   `
 
-  const res = await fetch(`https://${client.domain}/admin/api/2024-01/shopify_ql.json`, {
+  const res = await fetch(`https://${client.domain}/admin/api/2024-04/shopify_ql.json`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -39,11 +39,9 @@ export async function GET(request) {
     body: JSON.stringify({ query }),
   })
 
-  const data = await res.json()
+  const text = await res.text()
+  let data
+  try { data = JSON.parse(text) } catch { data = text }
 
-  if (!res.ok) {
-    return NextResponse.json({ error: 'ShopifyQL failed', detail: data }, { status: 500 })
-  }
-
-  return NextResponse.json({ raw: data, query })
+  return NextResponse.json({ status: res.status, raw: data, query })
 }

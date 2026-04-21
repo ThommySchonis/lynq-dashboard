@@ -1,0 +1,70 @@
+import { supabaseAdmin, getUserFromToken } from '../../../../../../lib/supabaseAdmin'
+import { NextResponse } from 'next/server'
+import { Resend } from 'resend'
+
+const resend = new Resend(process.env.RESEND_API_KEY)
+
+export async function POST(request, { params }) {
+  const authHeader = request.headers.get('authorization')
+  if (!authHeader) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const token = authHeader.replace('Bearer ', '')
+  const user = await getUserFromToken(token)
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const { id } = await params
+  const { body } = await request.json()
+  if (!body?.trim()) return NextResponse.json({ error: 'Message is required' }, { status: 400 })
+
+  // Get conversation + email account
+  const [{ data: conversation }, { data: account }] = await Promise.all([
+    supabaseAdmin.from('email_conversations').select('*').eq('id', id).eq('client_id', user.id).maybeSingle(),
+    supabaseAdmin.from('email_accounts').select('*').eq('client_id', user.id).maybeSingle(),
+  ])
+
+  if (!conversation) return NextResponse.json({ error: 'Conversation not found' }, { status: 404 })
+  if (!account) return NextResponse.json({ error: 'Email not connected' }, { status: 400 })
+
+  // Get last inbound message for threading
+  const { data: lastMessage } = await supabaseAdmin
+    .from('email_messages')
+    .select('message_id')
+    .eq('conversation_id', id)
+    .eq('is_outbound', false)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  // Send via Resend as the client's real email
+  const { data: sent, error: sendError } = await resend.emails.send({
+    from: `${account.display_name} <${account.real_email}>`,
+    to: [conversation.customer_email],
+    subject: conversation.subject.startsWith('Re:') ? conversation.subject : `Re: ${conversation.subject}`,
+    html: body,
+    headers: lastMessage?.message_id
+      ? { 'In-Reply-To': lastMessage.message_id, 'References': lastMessage.message_id }
+      : undefined,
+  })
+
+  if (sendError) {
+    return NextResponse.json({ error: sendError.message }, { status: 502 })
+  }
+
+  // Save to DB
+  await supabaseAdmin.from('email_messages').insert({
+    conversation_id: id,
+    from_email: account.real_email,
+    from_name: account.display_name,
+    body_html: body,
+    body_text: body.replace(/<[^>]+>/g, ''),
+    is_outbound: true,
+    message_id: sent?.id,
+  })
+
+  await supabaseAdmin
+    .from('email_conversations')
+    .update({ last_message_at: new Date().toISOString() })
+    .eq('id', id)
+
+  return NextResponse.json({ success: true })
+}

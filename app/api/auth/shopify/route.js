@@ -9,6 +9,8 @@ const SCOPES = [
   'read_all_orders',
   'read_draft_orders',
   'write_draft_orders',
+  'read_order_edits',
+  'write_order_edits',
   'read_returns',
   'write_returns',
   // Fulfillment
@@ -23,12 +25,20 @@ const SCOPES = [
   // Customers
   'read_customers',
   'write_customers',
+  'read_customer_merge',
+  'write_customer_merge',
+  'read_customer_payment_methods',
+  'read_customer_events',
   // Products & inventory
   'read_products',
   'write_products',
   'read_inventory',
   'write_inventory',
   'read_product_listings',
+  'read_product_feeds',
+  'write_product_feeds',
+  'read_publications',
+  'write_publications',
   // Subscriptions (Kaching / Recharge)
   'read_purchase_options',
   'write_purchase_options',
@@ -39,6 +49,8 @@ const SCOPES = [
   'write_discounts',
   'read_gift_cards',
   'write_gift_cards',
+  'read_store_credit_accounts',
+  'write_store_credit_accounts',
   // Analytics & reports
   'read_analytics',
   'read_reports',
@@ -48,14 +60,23 @@ const SCOPES = [
   'write_checkouts',
   'read_payment_terms',
   'write_payment_terms',
+  'read_payment_customizations',
+  'write_payment_customizations',
+  'read_shopify_payments_accounts',
+  'read_shopify_payments_bank_accounts',
+  'read_shopify_payments_disputes',
+  'read_shopify_payments_payouts',
   // Marketing
   'read_marketing_events',
   'write_marketing_events',
   // Shipping & locations
   'read_shipping',
   'write_shipping',
+  'write_carrier_services',
   'read_locations',
-  // Store content
+  'read_delivery_customizations',
+  'write_delivery_customizations',
+  // Store content & themes
   'read_content',
   'write_content',
   'read_themes',
@@ -64,13 +85,30 @@ const SCOPES = [
   'write_files',
   'read_translations',
   'write_translations',
+  'read_online_store_pages',
+  'write_online_store_pages',
+  'read_online_store_navigation',
+  'write_online_store_navigation',
+  // Metafields & metaobjects
   'read_metaobjects',
   'write_metaobjects',
-  // Pixels & script tags
+  'read_metafield_definitions',
+  'write_metafield_definitions',
+  // Pixels, script tags & validations
   'read_pixels',
   'write_pixels',
   'read_script_tags',
   'write_script_tags',
+  'read_validations',
+  'write_validations',
+  'read_cart_transforms',
+  'write_cart_transforms',
+  // Resource feedbacks
+  'read_resource_feedbacks',
+  'write_resource_feedbacks',
+  // GDPR & privacy
+  'read_gdpr_data_requests',
+  'write_gdpr_data_requests',
   // Misc
   'read_legal_policies',
   'read_locales',

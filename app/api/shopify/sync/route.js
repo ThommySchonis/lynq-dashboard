@@ -68,6 +68,7 @@ export async function POST(request) {
       total_price: totalPrice,
       total_discounts: totalDiscounts,
       refund_amount: refundAmount,
+      presentment_currency: order.presentment_currency || order.currency || null,
       source_name: order.source_name || null,
       customer_email: order.customer?.email || order.email || null,
       customer_name: order.customer

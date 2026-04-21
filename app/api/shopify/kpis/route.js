@@ -38,7 +38,7 @@ export async function GET(request) {
 
   const { data: allOrders, error } = await supabaseAdmin
     .from('shopify_orders')
-    .select('subtotal_price, total_discounts, refund_amount, cancel_reason, financial_status, processed_at, created_at_shopify, source_name')
+    .select('subtotal_price, total_discounts, refund_amount, cancel_reason, financial_status, processed_at, created_at_shopify, source_name, presentment_currency')
     .eq('client_id', user.id)
 
   if (error) return NextResponse.json({ error: 'Failed to fetch data' }, { status: 500 })

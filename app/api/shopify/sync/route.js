@@ -13,6 +13,18 @@ export async function POST(request) {
   const client = await getShopifyCredentials(user.id, user.email)
   if (!client) return NextResponse.json({ error: 'Shopify not configured' }, { status: 400 })
 
+  // Fetch store currency and save to integrations
+  const shopRes = await fetch(`https://${client.domain}/admin/api/2024-01/shop.json`, {
+    headers: { 'X-Shopify-Access-Token': client.accessToken }
+  })
+  if (shopRes.ok) {
+    const shopData = await shopRes.json()
+    const currency = shopData.shop?.currency || 'EUR'
+    await supabaseAdmin.from('integrations')
+      .update({ store_currency: currency })
+      .eq('client_id', user.id)
+  }
+
   let orders = []
   let url = `https://${client.domain}/admin/api/2024-01/orders.json?status=any&limit=250`
 

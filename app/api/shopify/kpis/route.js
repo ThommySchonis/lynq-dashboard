@@ -17,6 +17,25 @@ export async function GET(request) {
   const offsetMs = now.getTime() - amsterdamNow.getTime()
   const startOfMonth = new Date(startOfMonthAmsterdam.getTime() + offsetMs).toISOString()
 
+  // Get store currency — convert to EUR if needed (e.g. GBP store showing EUR analytics)
+  let fxRate = 1
+  const { data: integration } = await supabaseAdmin
+    .from('integrations')
+    .select('store_currency')
+    .eq('client_id', user.id)
+    .maybeSingle()
+
+  const storeCurrency = integration?.store_currency || 'EUR'
+  if (storeCurrency !== 'EUR') {
+    try {
+      const fxRes = await fetch(`https://api.frankfurter.app/latest?from=${storeCurrency}&to=EUR`)
+      const fxData = await fxRes.json()
+      fxRate = fxData.rates?.EUR || 1
+    } catch {
+      fxRate = 1
+    }
+  }
+
   const { data: allOrders, error } = await supabaseAdmin
     .from('shopify_orders')
     .select('subtotal_price, total_discounts, refund_amount, cancel_reason, financial_status, processed_at, created_at_shopify, source_name')
@@ -42,9 +61,9 @@ export async function GET(request) {
   const cancelledOrders = orders.filter(o => o.cancel_reason).length
   const nonCancelled = orders.filter(o => !o.cancel_reason)
 
-  const netRevenue = nonCancelled.reduce((s, o) => s + (o.subtotal_price || 0) - (o.refund_amount || 0), 0)
-  const totalDiscounts = nonCancelled.reduce((s, o) => s + (o.total_discounts || 0), 0)
-  const totalReturns = nonCancelled.reduce((s, o) => s + (o.refund_amount || 0), 0)
+  const netRevenue = nonCancelled.reduce((s, o) => s + ((o.subtotal_price || 0) - (o.refund_amount || 0)) * fxRate, 0)
+  const totalDiscounts = nonCancelled.reduce((s, o) => s + (o.total_discounts || 0) * fxRate, 0)
+  const totalReturns = nonCancelled.reduce((s, o) => s + (o.refund_amount || 0) * fxRate, 0)
   const totalRefunds = nonCancelled.filter(o => o.refund_amount > 0).length
   const refundRate = totalOrders > 0 ? ((totalRefunds / totalOrders) * 100).toFixed(1) : '0.0'
   const refundPct = netRevenue > 0 ? ((totalReturns / netRevenue) * 100).toFixed(1) : '0.0'

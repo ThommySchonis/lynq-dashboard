@@ -19,7 +19,7 @@ export async function GET(request) {
 
   const { data: allOrders, error } = await supabaseAdmin
     .from('shopify_orders')
-    .select('subtotal_price, refund_amount, cancel_reason, financial_status, processed_at, created_at_shopify, source_name')
+    .select('subtotal_price, total_discounts, refund_amount, cancel_reason, financial_status, processed_at, created_at_shopify, source_name')
     .eq('client_id', user.id)
 
   if (error) return NextResponse.json({ error: 'Failed to fetch data' }, { status: 500 })
@@ -42,35 +42,43 @@ export async function GET(request) {
   const cancelledOrders = orders.filter(o => o.cancel_reason).length
   const nonCancelled = orders.filter(o => !o.cancel_reason)
 
-  const totalRefundAmount = nonCancelled.reduce((s, o) => s + (o.refund_amount || 0), 0)
-  const totalRevenue = nonCancelled.reduce((s, o) => s + (o.subtotal_price || 0), 0) - totalRefundAmount
-  const totalRefunds = nonCancelled.filter(o => o.refund_amount > 0).length
+  // Shopify-style breakdown
+  const brutoOmzet = nonCancelled.reduce((s, o) => s + (o.subtotal_price || 0) + (o.total_discounts || 0), 0)
+  const kortingen = nonCancelled.reduce((s, o) => s + (o.total_discounts || 0), 0)
+  const retouren = nonCancelled.reduce((s, o) => s + (o.refund_amount || 0), 0)
+  const nettoOmzet = brutoOmzet - kortingen - retouren
 
+  const totalRefunds = nonCancelled.filter(o => o.refund_amount > 0).length
   const refundRate = totalOrders > 0 ? ((totalRefunds / totalOrders) * 100).toFixed(1) : '0.0'
-  const refundPct = totalRevenue > 0 ? ((totalRefundAmount / totalRevenue) * 100).toFixed(1) : '0.0'
+  const refundPct = nettoOmzet > 0 ? ((retouren / nettoOmzet) * 100).toFixed(1) : '0.0'
 
   // Per-channel breakdown
   const channelMap = {}
   for (const o of nonCancelled) {
     const channel = o.source_name || 'web'
-    if (!channelMap[channel]) channelMap[channel] = { orders: 0, revenue: 0 }
+    if (!channelMap[channel]) channelMap[channel] = { orders: 0, netto: 0 }
     channelMap[channel].orders += 1
-    channelMap[channel].revenue += (o.subtotal_price || 0) - (o.refund_amount || 0)
+    channelMap[channel].netto += (o.subtotal_price || 0) - (o.refund_amount || 0)
   }
   const channels = Object.entries(channelMap).map(([name, v]) => ({
     name,
     orders: v.orders,
-    revenue: v.revenue.toFixed(0),
+    revenue: v.netto.toFixed(0),
   }))
 
   return NextResponse.json({
     totalOrders,
-    totalRevenue: totalRevenue.toFixed(0),
     cancelledOrders,
     totalRefunds,
-    refundAmount: totalRefundAmount.toFixed(0),
     refundRate,
     refundPct,
+    // Shopify-style revenue breakdown
+    brutoOmzet: brutoOmzet.toFixed(0),
+    kortingen: kortingen.toFixed(0),
+    retouren: retouren.toFixed(0),
+    nettoOmzet: nettoOmzet.toFixed(0),
+    totalRevenue: nettoOmzet.toFixed(0),
+    refundAmount: retouren.toFixed(0),
     channels,
   })
 }

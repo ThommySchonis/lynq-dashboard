@@ -27,8 +27,24 @@ export async function POST(request) {
   }
 
   const rows = orders.map(order => {
+    // Use presentment_money (customer-facing currency, e.g. EUR) if available,
+    // otherwise fall back to shop currency (e.g. GBP). This matches Shopify Analytics.
+    const subtotal = parseFloat(
+      order.subtotal_price_set?.presentment_money?.amount ||
+      order.subtotal_price || 0
+    )
+    const totalPrice = parseFloat(
+      order.total_price_set?.presentment_money?.amount ||
+      order.total_price || 0
+    )
+    const totalDiscounts = parseFloat(
+      order.total_discounts_set?.presentment_money?.amount ||
+      order.total_discounts || 0
+    )
+
     const refundAmount = (order.refunds || []).reduce((sum, r) =>
-      sum + (r.transactions || []).reduce((ts, t) => ts + parseFloat(t.amount || 0), 0), 0)
+      sum + (r.transactions || []).reduce((ts, t) =>
+        ts + parseFloat(t.amount_set?.presentment_money?.amount || t.amount || 0), 0), 0)
 
     return {
       id: order.id,
@@ -36,9 +52,9 @@ export async function POST(request) {
       order_number: order.name,
       financial_status: order.financial_status,
       cancel_reason: order.cancel_reason || null,
-      subtotal_price: parseFloat(order.subtotal_price || 0),
-      total_price: parseFloat(order.total_price || 0),
-      total_discounts: parseFloat(order.total_discounts || 0),
+      subtotal_price: subtotal,
+      total_price: totalPrice,
+      total_discounts: totalDiscounts,
       refund_amount: refundAmount,
       source_name: order.source_name || null,
       customer_email: order.customer?.email || order.email || null,

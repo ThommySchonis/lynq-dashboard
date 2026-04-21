@@ -3,8 +3,21 @@ import { NextResponse } from 'next/server'
 import crypto from 'crypto'
 
 function upsertOrder(order, clientId) {
+  const subtotal = parseFloat(
+    order.subtotal_price_set?.presentment_money?.amount ||
+    order.subtotal_price || 0
+  )
+  const totalPrice = parseFloat(
+    order.total_price_set?.presentment_money?.amount ||
+    order.total_price || 0
+  )
+  const totalDiscounts = parseFloat(
+    order.total_discounts_set?.presentment_money?.amount ||
+    order.total_discounts || 0
+  )
   const refundAmount = (order.refunds || []).reduce((sum, r) =>
-    sum + (r.transactions || []).reduce((ts, t) => ts + parseFloat(t.amount || 0), 0), 0)
+    sum + (r.transactions || []).reduce((ts, t) =>
+      ts + parseFloat(t.amount_set?.presentment_money?.amount || t.amount || 0), 0), 0)
 
   const customerName = order.customer
     ? `${order.customer.first_name || ''} ${order.customer.last_name || ''}`.trim()
@@ -16,9 +29,9 @@ function upsertOrder(order, clientId) {
     order_number: order.name,
     financial_status: order.financial_status,
     cancel_reason: order.cancel_reason || null,
-    subtotal_price: parseFloat(order.subtotal_price || 0),
-    total_price: parseFloat(order.total_price || 0),
-    total_discounts: parseFloat(order.total_discounts || 0),
+    subtotal_price: subtotal,
+    total_price: totalPrice,
+    total_discounts: totalDiscounts,
     refund_amount: refundAmount,
     source_name: order.source_name || null,
     customer_email: order.customer?.email || order.email || null,

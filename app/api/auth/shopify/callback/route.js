@@ -52,12 +52,13 @@ export async function GET(request) {
     return NextResponse.redirect(`${appUrl}/settings?error=token_exchange_failed`)
   }
 
-  // Save to integrations table
+  // Save to integrations table including client secret for webhook verification
   const { error: upsertError } = await supabaseAdmin.from('integrations').upsert({
     client_id: oauthState.user_id,
     shopify_domain: shop,
     shopify_access_token: tokenData.access_token,
     shopify_scope: tokenData.scope,
+    shopify_client_secret: clientSecret,
     shopify_connected_at: new Date().toISOString(),
   }, { onConflict: 'client_id' })
 
@@ -65,6 +66,24 @@ export async function GET(request) {
     console.error('integrations upsert failed:', JSON.stringify(upsertError))
     return NextResponse.redirect(`${appUrl}/settings?error=save_failed`)
   }
+
+  // Register Shopify webhooks
+  const webhookBase = process.env.NEXT_PUBLIC_APP_URL
+  const webhookTopics = ['orders/create', 'orders/updated', 'orders/cancelled', 'refunds/create']
+
+  await Promise.all(webhookTopics.map(topic =>
+    fetch(`https://${shop}/admin/api/2024-01/webhooks.json`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Shopify-Access-Token': tokenData.access_token },
+      body: JSON.stringify({
+        webhook: {
+          topic,
+          address: `${webhookBase}/api/webhooks/shopify?cid=${oauthState.user_id}`,
+          format: 'json',
+        },
+      }),
+    })
+  ))
 
   await supabaseAdmin.from('oauth_states').delete().eq('state', state)
 

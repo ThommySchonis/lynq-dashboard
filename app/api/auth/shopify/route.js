@@ -3,28 +3,78 @@ import { NextResponse } from 'next/server'
 import crypto from 'crypto'
 
 const SCOPES = [
+  // Orders
   'read_orders',
   'write_orders',
-  'read_customers',
-  'write_customers',
+  'read_all_orders',
   'read_draft_orders',
   'write_draft_orders',
+  'read_returns',
+  'write_returns',
+  // Fulfillment
   'read_fulfillments',
   'write_fulfillments',
+  'read_assigned_fulfillment_orders',
+  'write_assigned_fulfillment_orders',
+  'read_merchant_managed_fulfillment_orders',
+  'write_merchant_managed_fulfillment_orders',
+  'read_third_party_fulfillment_orders',
+  'write_third_party_fulfillment_orders',
+  // Customers
+  'read_customers',
+  'write_customers',
+  // Products & inventory
+  'read_products',
+  'write_products',
+  'read_inventory',
+  'write_inventory',
+  'read_product_listings',
+  // Subscriptions (Kaching / Recharge)
+  'read_purchase_options',
+  'write_purchase_options',
+  // Discounts & pricing
   'read_price_rules',
   'write_price_rules',
   'read_discounts',
   'write_discounts',
+  'read_gift_cards',
+  'write_gift_cards',
+  // Analytics & reports
   'read_analytics',
-  'read_products',
-  'write_products',
-  'read_inventory',
   'read_reports',
+  'write_reports',
+  // Checkouts & payments
   'read_checkouts',
+  'write_checkouts',
+  'read_payment_terms',
+  'write_payment_terms',
+  // Marketing
   'read_marketing_events',
+  'write_marketing_events',
+  // Shipping & locations
   'read_shipping',
-  'read_returns',
-  'write_returns',
+  'write_shipping',
+  'read_locations',
+  // Store content
+  'read_content',
+  'write_content',
+  'read_themes',
+  'write_themes',
+  'read_files',
+  'write_files',
+  'read_translations',
+  'write_translations',
+  'read_metaobjects',
+  'write_metaobjects',
+  // Pixels & script tags
+  'read_pixels',
+  'write_pixels',
+  'read_script_tags',
+  'write_script_tags',
+  // Misc
+  'read_legal_policies',
+  'read_locales',
+  'write_locales',
 ].join(',')
 
 export async function OPTIONS() {

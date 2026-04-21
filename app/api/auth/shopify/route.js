@@ -16,6 +16,15 @@ const SCOPES = [
   'read_discounts',
   'write_discounts',
   'read_analytics',
+  'read_products',
+  'write_products',
+  'read_inventory',
+  'read_reports',
+  'read_checkouts',
+  'read_marketing_events',
+  'read_shipping',
+  'read_returns',
+  'write_returns',
 ].join(',')
 
 export async function OPTIONS() {

@@ -9,10 +9,13 @@ export async function GET(request) {
   const user = await getUserFromToken(token)
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
+  // Start of current month in Amsterdam timezone (UTC+1 CET / UTC+2 CEST)
   const now = new Date()
-  const isDST = now.getMonth() >= 2 && now.getMonth() <= 9
-  const offsetHours = isDST ? 2 : 1
-  const startOfMonth = new Date(Date.UTC(now.getFullYear(), now.getMonth(), 1) - offsetHours * 3600000).toISOString()
+  const amsterdamNow = new Date(now.toLocaleString('en-US', { timeZone: 'Europe/Amsterdam' }))
+  const startOfMonthAmsterdam = new Date(amsterdamNow.getFullYear(), amsterdamNow.getMonth(), 1, 0, 0, 0)
+  // Convert back to UTC ISO string for comparison against stored UTC timestamps
+  const offsetMs = now.getTime() - amsterdamNow.getTime()
+  const startOfMonth = new Date(startOfMonthAmsterdam.getTime() + offsetMs).toISOString()
 
   const { data: allOrders, error } = await supabaseAdmin
     .from('shopify_orders')
@@ -21,7 +24,7 @@ export async function GET(request) {
 
   if (error) return NextResponse.json({ error: 'Failed to fetch data' }, { status: 500 })
 
-  // Filter by date using processed_at, falling back to created_at_shopify
+  // Filter by processed_at in Amsterdam timezone, falling back to created_at_shopify
   const orders = (allOrders || []).filter(o => {
     const date = o.processed_at || o.created_at_shopify
     return date && date >= startOfMonth

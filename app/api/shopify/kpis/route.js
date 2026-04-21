@@ -14,15 +14,20 @@ export async function GET(request) {
   const offsetHours = isDST ? 2 : 1
   const startOfMonth = new Date(Date.UTC(now.getFullYear(), now.getMonth(), 1) - offsetHours * 3600000).toISOString()
 
-  const { data: orders, error } = await supabaseAdmin
+  const { data: allOrders, error } = await supabaseAdmin
     .from('shopify_orders')
-    .select('subtotal_price, refund_amount, cancel_reason, financial_status')
+    .select('subtotal_price, refund_amount, cancel_reason, financial_status, processed_at, created_at_shopify')
     .eq('client_id', user.id)
-    .or(`processed_at.gte.${startOfMonth},and(processed_at.is.null,created_at_shopify.gte.${startOfMonth})`)
 
   if (error) return NextResponse.json({ error: 'Failed to fetch data' }, { status: 500 })
 
-  if (!orders || orders.length === 0) {
+  // Filter by date using processed_at, falling back to created_at_shopify
+  const orders = (allOrders || []).filter(o => {
+    const date = o.processed_at || o.created_at_shopify
+    return date && date >= startOfMonth
+  })
+
+  if (orders.length === 0) {
     return NextResponse.json({
       totalOrders: 0, totalRevenue: '0', cancelledOrders: 0,
       totalRefunds: 0, refundAmount: '0', refundRate: '0.0', refundPct: '0.0',

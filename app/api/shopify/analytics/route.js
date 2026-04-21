@@ -30,18 +30,32 @@ export async function GET(request) {
     SINCE ${since} UNTIL ${until}
   `
 
-  const res = await fetch(`https://${client.domain}/admin/api/2024-04/shopify_ql.json`, {
+  const gqlQuery = `
+    mutation shopifyqlQuery($query: String!) {
+      shopifyqlQuery(query: $query) {
+        tableData {
+          unformattedData {
+            headers
+            rowData
+          }
+        }
+        parseErrors { code message }
+      }
+    }
+  `
+
+  const res = await fetch(`https://${client.domain}/admin/api/2024-04/graphql.json`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'X-Shopify-Access-Token': client.accessToken,
     },
-    body: JSON.stringify({ query }),
+    body: JSON.stringify({ query: gqlQuery, variables: { query } }),
   })
 
   const text = await res.text()
   let data
   try { data = JSON.parse(text) } catch { data = text }
 
-  return NextResponse.json({ status: res.status, raw: data, query })
+  return NextResponse.json({ status: res.status, raw: data })
 }

@@ -18,7 +18,7 @@ export async function GET(request) {
     .from('shopify_orders')
     .select('subtotal_price, refund_amount, cancel_reason, financial_status')
     .eq('client_id', user.id)
-    .gte('processed_at', startOfMonth)
+    .or(`processed_at.gte.${startOfMonth},and(processed_at.is.null,created_at_shopify.gte.${startOfMonth})`)
 
   if (error) return NextResponse.json({ error: 'Failed to fetch data' }, { status: 500 })
 

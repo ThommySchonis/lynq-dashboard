@@ -40,6 +40,7 @@ export async function POST(request) {
       total_price: parseFloat(order.total_price || 0),
       total_discounts: parseFloat(order.total_discounts || 0),
       refund_amount: refundAmount,
+      source_name: order.source_name || null,
       customer_email: order.customer?.email || order.email || null,
       customer_name: order.customer
         ? `${order.customer.first_name || ''} ${order.customer.last_name || ''}`.trim()

@@ -16,7 +16,7 @@ export async function GET(request) {
 
   const { data: allOrders, error } = await supabaseAdmin
     .from('shopify_orders')
-    .select('subtotal_price, refund_amount, cancel_reason, financial_status, processed_at, created_at_shopify')
+    .select('subtotal_price, refund_amount, cancel_reason, financial_status, processed_at, created_at_shopify, source_name')
     .eq('client_id', user.id)
 
   if (error) return NextResponse.json({ error: 'Failed to fetch data' }, { status: 500 })
@@ -46,6 +46,20 @@ export async function GET(request) {
   const refundRate = totalOrders > 0 ? ((totalRefunds / totalOrders) * 100).toFixed(1) : '0.0'
   const refundPct = totalRevenue > 0 ? ((totalRefundAmount / totalRevenue) * 100).toFixed(1) : '0.0'
 
+  // Per-channel breakdown
+  const channelMap = {}
+  for (const o of nonCancelled) {
+    const channel = o.source_name || 'web'
+    if (!channelMap[channel]) channelMap[channel] = { orders: 0, revenue: 0 }
+    channelMap[channel].orders += 1
+    channelMap[channel].revenue += (o.subtotal_price || 0) - (o.refund_amount || 0)
+  }
+  const channels = Object.entries(channelMap).map(([name, v]) => ({
+    name,
+    orders: v.orders,
+    revenue: v.revenue.toFixed(0),
+  }))
+
   return NextResponse.json({
     totalOrders,
     totalRevenue: totalRevenue.toFixed(0),
@@ -54,5 +68,6 @@ export async function GET(request) {
     refundAmount: totalRefundAmount.toFixed(0),
     refundRate,
     refundPct,
+    channels,
   })
 }

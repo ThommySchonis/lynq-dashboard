@@ -20,6 +20,7 @@ function upsertOrder(order, clientId) {
     total_price: parseFloat(order.total_price || 0),
     total_discounts: parseFloat(order.total_discounts || 0),
     refund_amount: refundAmount,
+    source_name: order.source_name || null,
     customer_email: order.customer?.email || order.email || null,
     customer_name: customerName,
     processed_at: order.processed_at,
@@ -30,7 +31,7 @@ function upsertOrder(order, clientId) {
 }
 
 export async function POST(request) {
-  const { searchParams } = new URL(request.url)
+  const { searchParams } = await new URL(request.url)
   const clientId = searchParams.get('cid')
   if (!clientId) return NextResponse.json({ ok: true })
 

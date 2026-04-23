@@ -162,42 +162,42 @@ export default function AdminPage() {
   }
 
   const s = {
-    page: { minHeight: '100vh', background: '#1C0F36', fontFamily: "'Rethink Sans', sans-serif", color: '#fff' },
+    page: { minHeight: '100vh', background: '#08101F', fontFamily: "'Inter Tight', sans-serif", color: '#fff' },
     topbar: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 40px', height: '64px', background: '#180d30', borderBottom: '1px solid rgba(255,255,255,0.07)', position: 'sticky', top: 0, zIndex: 10 },
     topbarLogo: { height: '28px', filter: 'brightness(0) invert(1)' },
     topbarRight: { display: 'flex', alignItems: 'center', gap: '16px' },
-    topbarEmail: { fontSize: '12px', color: '#8b7cb3' },
-    logoutBtn: { padding: '7px 16px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: '#8b7cb3', fontSize: '12px', fontWeight: '600', cursor: 'pointer', fontFamily: "'Rethink Sans', sans-serif", transition: 'all 0.15s' },
+    topbarEmail: { fontSize: '12px', color: '#4a7fb5' },
+    logoutBtn: { padding: '7px 16px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: '#4a7fb5', fontSize: '12px', fontWeight: '600', cursor: 'pointer', fontFamily: "'Inter Tight', sans-serif", transition: 'all 0.15s' },
     content: { padding: '36px 40px', maxWidth: '1200px' },
     pageHeader: { marginBottom: '32px' },
     pageTitle: { fontSize: '22px', fontWeight: '800', marginBottom: '4px' },
-    pageSub: { color: '#8b7cb3', fontSize: '13px' },
+    pageSub: { color: '#4a7fb5', fontSize: '13px' },
     statsRow: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginBottom: '32px', maxWidth: '600px' },
-    statCard: { background: '#241352', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '12px', padding: '20px 24px' },
+    statCard: { background: '#0D1829', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '12px', padding: '20px 24px' },
     statNum: { fontSize: '28px', fontWeight: '800', color: '#fff', lineHeight: 1 },
-    statLabel: { fontSize: '11px', color: '#8b7cb3', marginTop: '4px', fontWeight: '500', textTransform: 'uppercase', letterSpacing: '0.05em' },
+    statLabel: { fontSize: '11px', color: '#4a7fb5', marginTop: '4px', fontWeight: '500', textTransform: 'uppercase', letterSpacing: '0.05em' },
     tabBar: { display: 'flex', gap: '2px', marginBottom: '28px', background: 'rgba(255,255,255,0.04)', padding: '4px', borderRadius: '10px', width: 'fit-content' },
-    tab: { padding: '8px 20px', borderRadius: '7px', border: 'none', fontSize: '13px', fontWeight: '600', cursor: 'pointer', transition: 'all 0.15s', fontFamily: "'Rethink Sans', sans-serif" },
-    tabActive: { background: '#A175FC', color: '#fff', boxShadow: '0 2px 8px rgba(161,117,252,0.3)' },
-    tabInactive: { background: 'transparent', color: '#8b7cb3' },
+    tab: { padding: '8px 20px', borderRadius: '7px', border: 'none', fontSize: '13px', fontWeight: '600', cursor: 'pointer', transition: 'all 0.15s', fontFamily: "'Inter Tight', sans-serif" },
+    tabActive: { background: '#3088FF', color: '#fff', boxShadow: '0 2px 8px rgba(48,136,255,0.3)' },
+    tabInactive: { background: 'transparent', color: '#4a7fb5' },
     grid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' },
-    card: { background: '#241352', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '14px', padding: '28px' },
+    card: { background: '#0D1829', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '14px', padding: '28px' },
     cardTitle: { fontSize: '15px', fontWeight: '700', marginBottom: '6px', color: '#fff' },
-    cardSub: { fontSize: '12px', color: '#8b7cb3', marginBottom: '24px' },
+    cardSub: { fontSize: '12px', color: '#4a7fb5', marginBottom: '24px' },
     divider: { height: '1px', background: 'rgba(255,255,255,0.06)', margin: '16px 0' },
-    label: { display: 'block', fontSize: '11px', color: '#8b7cb3', marginBottom: '5px', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.04em' },
-    input: { width: '100%', padding: '10px 14px', background: '#180d30', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: '#fff', fontSize: '13px', boxSizing: 'border-box', marginBottom: '14px', fontFamily: "'Rethink Sans', sans-serif", transition: 'border-color 0.15s' },
-    textarea: { width: '100%', padding: '10px 14px', background: '#180d30', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: '#fff', fontSize: '13px', boxSizing: 'border-box', marginBottom: '14px', fontFamily: "'Rethink Sans', sans-serif", resize: 'vertical', minHeight: '100px' },
-    btn: { width: '100%', padding: '11px', background: '#A175FC', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: '700', cursor: 'pointer', marginTop: '6px', fontFamily: "'Rethink Sans', sans-serif", letterSpacing: '0.02em', transition: 'opacity 0.15s' },
+    label: { display: 'block', fontSize: '11px', color: '#4a7fb5', marginBottom: '5px', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.04em' },
+    input: { width: '100%', padding: '10px 14px', background: '#180d30', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: '#fff', fontSize: '13px', boxSizing: 'border-box', marginBottom: '14px', fontFamily: "'Inter Tight', sans-serif", transition: 'border-color 0.15s' },
+    textarea: { width: '100%', padding: '10px 14px', background: '#180d30', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: '#fff', fontSize: '13px', boxSizing: 'border-box', marginBottom: '14px', fontFamily: "'Inter Tight', sans-serif", resize: 'vertical', minHeight: '100px' },
+    btn: { width: '100%', padding: '11px', background: '#3088FF', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: '700', cursor: 'pointer', marginTop: '6px', fontFamily: "'Inter Tight', sans-serif", letterSpacing: '0.02em', transition: 'opacity 0.15s' },
     success: { background: 'rgba(78,204,163,0.1)', border: '1px solid rgba(78,204,163,0.3)', borderRadius: '8px', padding: '10px 14px', color: '#4ecca3', fontSize: '13px', marginBottom: '16px' },
     clientRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' },
     pill: { padding: '3px 10px', borderRadius: '20px', fontSize: '11px', fontWeight: '600', background: 'rgba(78,204,163,0.12)', color: '#4ecca3', border: '1px solid rgba(78,204,163,0.2)' },
-    typePill: (t, selected) => ({ padding: '7px 14px', borderRadius: '8px', border: '1px solid', fontSize: '12px', fontWeight: '600', cursor: 'pointer', fontFamily: "'Rethink Sans', sans-serif", transition: 'all 0.15s', borderColor: selected === t ? '#A175FC' : 'rgba(255,255,255,0.08)', background: selected === t ? 'rgba(161,117,252,0.15)' : 'transparent', color: selected === t ? '#A175FC' : '#8b7cb3' }),
+    typePill: (t, selected) => ({ padding: '7px 14px', borderRadius: '8px', border: '1px solid', fontSize: '12px', fontWeight: '600', cursor: 'pointer', fontFamily: "'Inter Tight', sans-serif", transition: 'all 0.15s', borderColor: selected === t ? '#3088FF' : 'rgba(255,255,255,0.08)', background: selected === t ? 'rgba(48,136,255,0.15)' : 'transparent', color: selected === t ? '#3088FF' : '#4a7fb5' }),
     broadcastRow: { padding: '16px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' },
   }
 
   if (!authorized) return (
-    <div style={{ minHeight: '100vh', background: '#1C0F36', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#8b7cb3', fontFamily: "'Rethink Sans', sans-serif" }}>
+    <div style={{ minHeight: '100vh', background: '#08101F', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#4a7fb5', fontFamily: "'Inter Tight', sans-serif" }}>
       Checking access...
     </div>
   )
@@ -277,19 +277,19 @@ export default function AdminPage() {
           {/* Broadcast geschiedenis */}
           <div style={s.card}>
             <div style={s.cardTitle}>Verstuurd — {broadcasts.length}</div>
-            {broadcasts.length === 0 && <div style={{ color: '#8b7cb3', fontSize: '13px' }}>Nog geen berichten verstuurd.</div>}
+            {broadcasts.length === 0 && <div style={{ color: '#4a7fb5', fontSize: '13px' }}>Nog geen berichten verstuurd.</div>}
             {broadcasts.map(b => (
               <div key={b.id} style={s.broadcastRow}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                   <div>
                     <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '4px' }}>
-                      <span style={{ ...s.pill, background: b.type === 'tip' ? 'rgba(161,117,252,0.15)' : b.type === 'video' ? 'rgba(255,209,102,0.15)' : 'rgba(78,204,163,0.15)', color: b.type === 'tip' ? '#A175FC' : b.type === 'video' ? '#ffd166' : '#4ecca3' }}>
+                      <span style={{ ...s.pill, background: b.type === 'tip' ? 'rgba(48,136,255,0.15)' : b.type === 'video' ? 'rgba(255,209,102,0.15)' : 'rgba(78,204,163,0.15)', color: b.type === 'tip' ? '#3088FF' : b.type === 'video' ? '#ffd166' : '#4ecca3' }}>
                         {b.type === 'update' ? '📢 Update' : b.type === 'tip' ? '💡 Tip' : '🎥 Video'}
                       </span>
-                      <span style={{ fontSize: '11px', color: '#8b7cb3' }}>{new Date(b.created_at).toLocaleDateString('nl-NL')}</span>
+                      <span style={{ fontSize: '11px', color: '#4a7fb5' }}>{new Date(b.created_at).toLocaleDateString('nl-NL')}</span>
                     </div>
                     <div style={{ fontWeight: '600', fontSize: '14px', marginBottom: '4px' }}>{b.title}</div>
-                    <div style={{ fontSize: '12px', color: '#8b7cb3', lineHeight: '1.5' }}>{b.body}</div>
+                    <div style={{ fontSize: '12px', color: '#4a7fb5', lineHeight: '1.5' }}>{b.body}</div>
                   </div>
                   <button onClick={() => deleteBroadcast(b.id)} style={{ background: 'none', border: 'none', color: '#ff6b8a', cursor: 'pointer', fontSize: '14px', marginLeft: '12px', flexShrink: 0 }}>✕</button>
                 </div>
@@ -328,7 +328,7 @@ export default function AdminPage() {
           {/* Notificaties geschiedenis */}
           <div style={s.card}>
             <div style={s.cardTitle}>Verstuurd — {notifications.length}</div>
-            {notifications.length === 0 && <div style={{ color: '#8b7cb3', fontSize: '13px' }}>Nog geen notificaties verstuurd.</div>}
+            {notifications.length === 0 && <div style={{ color: '#4a7fb5', fontSize: '13px' }}>Nog geen notificaties verstuurd.</div>}
             {notifications.map(n => (
               <div key={n.id} style={s.broadcastRow}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
@@ -337,10 +337,10 @@ export default function AdminPage() {
                       <span style={{ ...s.pill, background: n.type === 'alert' ? 'rgba(255,107,138,0.15)' : n.type === 'warning' ? 'rgba(255,209,102,0.15)' : 'rgba(78,204,163,0.15)', color: n.type === 'alert' ? '#ff6b8a' : n.type === 'warning' ? '#ffd166' : '#4ecca3' }}>
                         {n.type === 'info' ? '💬 Info' : n.type === 'warning' ? '⚠️ Warning' : '🔴 Alert'}
                       </span>
-                      <span style={{ fontSize: '11px', color: '#8b7cb3' }}>{new Date(n.created_at).toLocaleDateString('nl-NL')}</span>
+                      <span style={{ fontSize: '11px', color: '#4a7fb5' }}>{new Date(n.created_at).toLocaleDateString('nl-NL')}</span>
                     </div>
                     <div style={{ fontWeight: '600', fontSize: '14px', marginBottom: '4px' }}>{n.title}</div>
-                    <div style={{ fontSize: '12px', color: '#8b7cb3', lineHeight: '1.5' }}>{n.body}</div>
+                    <div style={{ fontSize: '12px', color: '#4a7fb5', lineHeight: '1.5' }}>{n.body}</div>
                   </div>
                   <button onClick={() => deleteNotification(n.id)} style={{ background: 'none', border: 'none', color: '#ff6b8a', cursor: 'pointer', fontSize: '14px', marginLeft: '12px', flexShrink: 0 }}>✕</button>
                 </div>
@@ -352,15 +352,15 @@ export default function AdminPage() {
 
       {activeTab === 'finance' && (
         <div>
-          {financeLoading && <div style={{ color: '#8b7cb3', fontSize: '13px' }}>Laden...</div>}
-          {!financeLoading && !finance && <div style={{ color: '#8b7cb3', fontSize: '13px' }}>Geen data beschikbaar.</div>}
+          {financeLoading && <div style={{ color: '#4a7fb5', fontSize: '13px' }}>Laden...</div>}
+          {!financeLoading && !finance && <div style={{ color: '#4a7fb5', fontSize: '13px' }}>Geen data beschikbaar.</div>}
           {finance && (() => {
             const f = finance.finance
             const ai = finance.ai
             const fmt = (n) => n == null ? '—' : `$${n.toFixed(4)}`
             const fmtE = (n) => n == null ? '—' : `€${n.toFixed(0)}`
             const fmtN = (n) => (n || 0).toLocaleString()
-            const green = '#4ecca3', red = '#ff6b8a', yellow = '#ffd166', purple = '#A175FC'
+            const green = '#4ecca3', red = '#ff6b8a', yellow = '#ffd166', purple = '#3088FF'
 
             return (
               <div>
@@ -375,7 +375,7 @@ export default function AdminPage() {
                     <div key={label} style={s.statCard}>
                       <div style={{ ...s.statNum, color }}>{value}</div>
                       <div style={s.statLabel}>{label}</div>
-                      <div style={{ fontSize: '11px', color: '#8b7cb3', marginTop: '4px' }}>{sub}</div>
+                      <div style={{ fontSize: '11px', color: '#4a7fb5', marginTop: '4px' }}>{sub}</div>
                     </div>
                   ))}
                 </div>
@@ -394,8 +394,8 @@ export default function AdminPage() {
                       <div key={label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
                         <div>
                           <div style={{ fontSize: '13px', fontWeight: '600' }}>{label}</div>
-                          {tokens != null && <div style={{ fontSize: '11px', color: '#8b7cb3', marginTop: '2px' }}>{fmtN(tokens)} tokens · {calls} calls</div>}
-                          {tokens == null && calls != null && <div style={{ fontSize: '11px', color: '#8b7cb3', marginTop: '2px' }}>{calls} calls</div>}
+                          {tokens != null && <div style={{ fontSize: '11px', color: '#4a7fb5', marginTop: '2px' }}>{fmtN(tokens)} tokens · {calls} calls</div>}
+                          {tokens == null && calls != null && <div style={{ fontSize: '11px', color: '#4a7fb5', marginTop: '2px' }}>{calls} calls</div>}
                         </div>
                         <div style={{ fontWeight: '700', color: purple, fontSize: '14px' }}>{fmt(cost)}</div>
                       </div>
@@ -407,7 +407,7 @@ export default function AdminPage() {
                     <div style={s.cardTitle}>Verbruik per route (deze maand)</div>
                     <div style={s.cardSub}>Welke AI functie kost het meest</div>
                     {Object.entries(ai.byRoute).length === 0 && (
-                      <div style={{ color: '#8b7cb3', fontSize: '13px' }}>Nog geen AI calls gelogd deze maand.</div>
+                      <div style={{ color: '#4a7fb5', fontSize: '13px' }}>Nog geen AI calls gelogd deze maand.</div>
                     )}
                     {Object.entries(ai.byRoute).sort(([,a],[,b]) => b.cost - a.cost).map(([route, v]) => (
                       <div key={route} style={{ padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
@@ -415,7 +415,7 @@ export default function AdminPage() {
                           <span style={{ fontSize: '13px', fontWeight: '600', textTransform: 'capitalize' }}>{route}</span>
                           <span style={{ fontWeight: '700', color: purple, fontSize: '13px' }}>{fmt(v.cost)}</span>
                         </div>
-                        <div style={{ fontSize: '11px', color: '#8b7cb3' }}>
+                        <div style={{ fontSize: '11px', color: '#4a7fb5' }}>
                           {fmtN(v.calls)} calls · {fmtN(v.input_tokens)} in · {fmtN(v.output_tokens)} out tokens
                         </div>
                         <div style={{ marginTop: '6px', height: '3px', background: 'rgba(255,255,255,0.06)', borderRadius: '2px' }}>
@@ -435,9 +435,9 @@ export default function AdminPage() {
                       <div key={sub.name} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
                         <div>
                           <div style={{ fontSize: '13px', fontWeight: '600' }}>{sub.name}</div>
-                          {sub.note && <div style={{ fontSize: '11px', color: '#8b7cb3', marginTop: '2px' }}>{sub.note}</div>}
+                          {sub.note && <div style={{ fontSize: '11px', color: '#4a7fb5', marginTop: '2px' }}>{sub.note}</div>}
                         </div>
-                        <div style={{ fontWeight: '700', color: sub.cost > 0 ? yellow : '#8b7cb3', fontSize: '13px' }}>
+                        <div style={{ fontWeight: '700', color: sub.cost > 0 ? yellow : '#4a7fb5', fontSize: '13px' }}>
                           {sub.cost > 0 ? `$${sub.cost}/mo` : '—'}
                         </div>
                       </div>
@@ -452,7 +452,7 @@ export default function AdminPage() {
                   <div style={s.card}>
                     <div style={s.cardTitle}>AI kosten per dag (deze maand)</div>
                     <div style={s.cardSub}>Dagelijks verbruik overzicht</div>
-                    {ai.daily.length === 0 && <div style={{ color: '#8b7cb3', fontSize: '13px' }}>Nog geen data.</div>}
+                    {ai.daily.length === 0 && <div style={{ color: '#4a7fb5', fontSize: '13px' }}>Nog geen data.</div>}
                     <div style={{ maxHeight: '280px', overflowY: 'auto' }}>
                       {[...ai.daily].reverse().map(({ date, cost, calls }) => {
                         const maxCost = Math.max(...ai.daily.map(d => d.cost), 0.0001)
@@ -460,8 +460,8 @@ export default function AdminPage() {
                         return (
                           <div key={date} style={{ padding: '7px 0', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                              <span style={{ fontSize: '12px', color: '#8b7cb3' }}>{new Date(date).toLocaleDateString('nl-NL', { day: 'numeric', month: 'short' })}</span>
-                              <span style={{ fontSize: '12px', fontWeight: '600', color: purple }}>{fmt(cost)} <span style={{ color: '#8b7cb3', fontWeight: '400' }}>· {calls}x</span></span>
+                              <span style={{ fontSize: '12px', color: '#4a7fb5' }}>{new Date(date).toLocaleDateString('nl-NL', { day: 'numeric', month: 'short' })}</span>
+                              <span style={{ fontSize: '12px', fontWeight: '600', color: purple }}>{fmt(cost)} <span style={{ color: '#4a7fb5', fontWeight: '400' }}>· {calls}x</span></span>
                             </div>
                             <div style={{ height: '3px', background: 'rgba(255,255,255,0.06)', borderRadius: '2px' }}>
                               <div style={{ height: '3px', background: purple, borderRadius: '2px', width: `${pct}%`, opacity: 0.7 }} />
@@ -470,7 +470,7 @@ export default function AdminPage() {
                         )
                       })}
                     </div>
-                    <button onClick={fetchFinance} style={{ ...s.btn, marginTop: '16px', background: 'rgba(161,117,252,0.15)', color: purple }}>
+                    <button onClick={fetchFinance} style={{ ...s.btn, marginTop: '16px', background: 'rgba(48,136,255,0.15)', color: purple }}>
                       Vernieuwen
                     </button>
                   </div>
@@ -528,14 +528,14 @@ export default function AdminPage() {
         <div style={s.card}>
           <div style={s.cardTitle}>Klanten — {clients.length}</div>
           {clients.length === 0 && (
-            <div style={{ color: '#8b7cb3', fontSize: '13px' }}>Nog geen klanten aangemaakt.</div>
+            <div style={{ color: '#4a7fb5', fontSize: '13px' }}>Nog geen klanten aangemaakt.</div>
           )}
           {clients.map(client => (
             <div key={client.id} style={s.clientRow}>
               <div>
                 <div style={{ fontWeight: '600', fontSize: '14px' }}>{client.company_name}</div>
-                <div style={{ color: '#8b7cb3', fontSize: '12px', marginTop: '2px' }}>{client.email}</div>
-                {client.gorgias_domain && <div style={{ color: '#8b7cb3', fontSize: '11px', marginTop: '2px' }}>Gorgias: {client.gorgias_domain}</div>}
+                <div style={{ color: '#4a7fb5', fontSize: '12px', marginTop: '2px' }}>{client.email}</div>
+                {client.gorgias_domain && <div style={{ color: '#4a7fb5', fontSize: '11px', marginTop: '2px' }}>Gorgias: {client.gorgias_domain}</div>}
               </div>
               <span style={s.pill}>{client.status}</span>
             </div>

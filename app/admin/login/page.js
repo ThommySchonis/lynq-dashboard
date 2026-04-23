@@ -35,14 +35,14 @@ export default function AdminLoginPage() {
   return (
     <div style={{
       minHeight: '100vh',
-      background: '#1C0F36',
+      background: '#08101F',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
       fontFamily: 'sans-serif'
     }}>
       <div style={{
-        background: '#241352',
+        background: '#0D1829',
         border: '1px solid rgba(255,255,255,0.08)',
         borderRadius: '16px',
         padding: '40px',
@@ -51,29 +51,29 @@ export default function AdminLoginPage() {
       }}>
         <div style={{ marginBottom: '32px', textAlign: 'center' }}>
           <img src="/logo.png" alt="Lynq & Flow" style={{ height: '36px', marginBottom: '16px', filter: 'brightness(0) invert(1)' }} />
-          <div style={{ fontSize: '13px', color: '#8b7cb3' }}>Admin access only</div>
+          <div style={{ fontSize: '13px', color: '#4a7fb5' }}>Admin access only</div>
         </div>
 
         <form onSubmit={handleLogin}>
           <div style={{ marginBottom: '16px' }}>
-            <label style={{ display: 'block', fontSize: '12px', color: '#8b7cb3', marginBottom: '6px' }}>Email</label>
+            <label style={{ display: 'block', fontSize: '12px', color: '#4a7fb5', marginBottom: '6px' }}>Email</label>
             <input
               type="email"
               value={email}
               onChange={e => setEmail(e.target.value)}
               required
-              style={{ width: '100%', padding: '10px 14px', background: '#1C0F36', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff', fontSize: '14px', boxSizing: 'border-box' }}
+              style={{ width: '100%', padding: '10px 14px', background: '#08101F', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff', fontSize: '14px', boxSizing: 'border-box' }}
             />
           </div>
 
           <div style={{ marginBottom: '24px' }}>
-            <label style={{ display: 'block', fontSize: '12px', color: '#8b7cb3', marginBottom: '6px' }}>Password</label>
+            <label style={{ display: 'block', fontSize: '12px', color: '#4a7fb5', marginBottom: '6px' }}>Password</label>
             <input
               type="password"
               value={password}
               onChange={e => setPassword(e.target.value)}
               required
-              style={{ width: '100%', padding: '10px 14px', background: '#1C0F36', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff', fontSize: '14px', boxSizing: 'border-box' }}
+              style={{ width: '100%', padding: '10px 14px', background: '#08101F', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff', fontSize: '14px', boxSizing: 'border-box' }}
             />
           </div>
 
@@ -84,7 +84,7 @@ export default function AdminLoginPage() {
           <button
             type="submit"
             disabled={loading}
-            style={{ width: '100%', padding: '12px', background: '#A175FC', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '14px', fontWeight: '600', cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.7 : 1 }}
+            style={{ width: '100%', padding: '12px', background: '#3088FF', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '14px', fontWeight: '600', cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.7 : 1 }}
           >
             {loading ? 'Logging in...' : 'Log in'}
           </button>

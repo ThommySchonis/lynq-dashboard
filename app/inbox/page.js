@@ -192,7 +192,7 @@ export default function InboxPage() {
   const tabs = ['Inbox', 'Starred', 'Pending', 'Overdue']
 
   return (
-    <div style={{ display: 'flex', height: '100vh', background: '#1C0F36', overflow: 'hidden', fontFamily: 'inherit' }}>
+    <div style={{ display: 'flex', height: '100vh', background: '#08101F', overflow: 'hidden', fontFamily: 'inherit' }}>
       <Sidebar />
 
       {/* Thread List */}
@@ -215,8 +215,8 @@ export default function InboxPage() {
                 <button key={tab} onClick={() => setActiveTab(tab.toLowerCase())} style={{
                   flex: 1, padding: '8px 4px', background: 'transparent',
                   fontSize: '11px', fontWeight: active ? '600' : '400',
-                  color: active ? '#A175FC' : 'rgba(255,255,255,0.35)',
-                  borderBottom: active ? '2px solid #A175FC' : '2px solid transparent',
+                  color: active ? '#3088FF' : 'rgba(255,255,255,0.35)',
+                  borderBottom: active ? '2px solid #3088FF' : '2px solid transparent',
                   cursor: 'pointer', letterSpacing: '0.02em',
                 }}>{tab}</button>
               )
@@ -230,7 +230,7 @@ export default function InboxPage() {
             <div style={{ padding: '32px 16px', textAlign: 'center' }}>
               <div style={{ fontSize: '28px', marginBottom: '8px' }}>✉️</div>
               <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', marginBottom: '12px' }}>Gmail not connected</div>
-              <a href="/settings" style={{ padding: '7px 14px', background: '#A175FC', color: '#fff', borderRadius: '8px', fontSize: '12px', textDecoration: 'none', fontWeight: '500' }}>Connect Gmail</a>
+              <a href="/settings" style={{ padding: '7px 14px', background: '#3088FF', color: '#fff', borderRadius: '8px', fontSize: '12px', textDecoration: 'none', fontWeight: '500' }}>Connect Gmail</a>
             </div>
           )}
 
@@ -244,8 +244,8 @@ export default function InboxPage() {
                 padding: '12px 16px',
                 borderBottom: '1px solid rgba(255,255,255,0.04)',
                 cursor: 'pointer',
-                background: active ? 'rgba(161,117,252,0.08)' : 'transparent',
-                borderLeft: active ? '2px solid #A175FC' : '2px solid transparent',
+                background: active ? 'rgba(48,136,255,0.08)' : 'transparent',
+                borderLeft: active ? '2px solid #3088FF' : '2px solid transparent',
                 transition: 'background 0.1s',
               }}
                 onMouseEnter={e => { if (!active) e.currentTarget.style.background = 'rgba(255,255,255,0.03)' }}
@@ -318,8 +318,8 @@ export default function InboxPage() {
                         <span style={{ marginLeft: '6px' }}>{formatDate(msg.date)}</span>
                       </div>
                       <div style={{
-                        background: isAgent ? 'rgba(161,117,252,0.12)' : '#241352',
-                        border: `1px solid ${isAgent ? 'rgba(161,117,252,0.2)' : 'rgba(255,255,255,0.07)'}`,
+                        background: isAgent ? 'rgba(48,136,255,0.12)' : '#0D1829',
+                        border: `1px solid ${isAgent ? 'rgba(48,136,255,0.2)' : 'rgba(255,255,255,0.07)'}`,
                         borderRadius: isAgent ? '12px 4px 12px 12px' : '4px 12px 12px 12px',
                         padding: '12px 14px', fontSize: '13px', lineHeight: '1.65',
                         color: 'rgba(255,255,255,0.85)', whiteSpace: 'pre-wrap', wordBreak: 'break-word',
@@ -342,7 +342,7 @@ export default function InboxPage() {
                     padding: '7px 14px', background: 'transparent',
                     fontSize: '12px', fontWeight: replyTab === tab ? '600' : '400',
                     color: replyTab === tab ? '#fff' : 'rgba(255,255,255,0.35)',
-                    borderBottom: replyTab === tab ? '2px solid #A175FC' : '2px solid transparent',
+                    borderBottom: replyTab === tab ? '2px solid #3088FF' : '2px solid transparent',
                     cursor: 'pointer', textTransform: 'capitalize',
                   }}>
                     {tab === 'reply' ? 'Reply' : 'Internal Note'}
@@ -357,7 +357,7 @@ export default function InboxPage() {
                 rows={4}
                 style={{
                   width: '100%', resize: 'none',
-                  background: replyTab === 'note' ? 'rgba(251,191,36,0.05)' : '#241352',
+                  background: replyTab === 'note' ? 'rgba(251,191,36,0.05)' : '#0D1829',
                   border: `1px solid ${replyTab === 'note' ? 'rgba(251,191,36,0.2)' : 'rgba(255,255,255,0.07)'}`,
                   borderRadius: '10px', padding: '12px 14px',
                   fontSize: '13px', color: '#fff', fontFamily: 'inherit',
@@ -370,9 +370,9 @@ export default function InboxPage() {
                 <button onClick={handleAiReply} disabled={aiLoading} style={{
                   display: 'flex', alignItems: 'center', gap: '6px',
                   padding: '7px 14px',
-                  background: 'rgba(161,117,252,0.12)',
-                  border: '1px solid rgba(161,117,252,0.25)',
-                  color: '#A175FC', borderRadius: '8px',
+                  background: 'rgba(48,136,255,0.12)',
+                  border: '1px solid rgba(48,136,255,0.25)',
+                  color: '#3088FF', borderRadius: '8px',
                   fontSize: '12px', fontWeight: '600',
                   cursor: aiLoading ? 'wait' : 'pointer',
                   opacity: aiLoading ? 0.6 : 1,
@@ -383,7 +383,7 @@ export default function InboxPage() {
                 <div style={{ display: 'flex', gap: '8px' }}>
                   <button onClick={handleSend} disabled={!reply.trim() || sending} style={{
                     padding: '8px 20px',
-                    background: reply.trim() && !sending ? '#A175FC' : 'rgba(161,117,252,0.25)',
+                    background: reply.trim() && !sending ? '#3088FF' : 'rgba(48,136,255,0.25)',
                     color: '#fff', borderRadius: '8px',
                     fontSize: '12px', fontWeight: '600',
                     cursor: reply.trim() && !sending ? 'pointer' : 'not-allowed',
@@ -426,10 +426,10 @@ export default function InboxPage() {
                 <button key={tab} onClick={() => setRightTab(tab)} style={{
                   flex: 1, padding: '6px', borderRadius: '6px',
                   fontSize: '11px', fontWeight: '500',
-                  background: rightTab === tab ? 'rgba(161,117,252,0.15)' : 'rgba(255,255,255,0.05)',
-                  color: rightTab === tab ? '#A175FC' : 'rgba(255,255,255,0.4)',
+                  background: rightTab === tab ? 'rgba(48,136,255,0.15)' : 'rgba(255,255,255,0.05)',
+                  color: rightTab === tab ? '#3088FF' : 'rgba(255,255,255,0.4)',
                   cursor: 'pointer', textTransform: 'capitalize',
-                  border: rightTab === tab ? '1px solid rgba(161,117,252,0.2)' : '1px solid transparent',
+                  border: rightTab === tab ? '1px solid rgba(48,136,255,0.2)' : '1px solid transparent',
                 }}>{tab}</button>
               ))}
             </div>
@@ -467,7 +467,7 @@ export default function InboxPage() {
                   borderRadius: '10px', padding: '12px', marginBottom: '10px',
                 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-                    <span style={{ fontSize: '12px', fontWeight: '600', color: '#A175FC' }}>{order.name}</span>
+                    <span style={{ fontSize: '12px', fontWeight: '600', color: '#3088FF' }}>{order.name}</span>
                     <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)' }}>
                       {new Date(order.createdAt).toLocaleDateString('nl-NL', { day: 'numeric', month: 'short' })}
                     </span>
@@ -500,7 +500,7 @@ export default function InboxPage() {
                         color: 'rgba(255,255,255,0.6)', borderRadius: '5px',
                         cursor: 'pointer',
                       }}
-                        onMouseEnter={e => { e.currentTarget.style.background = 'rgba(161,117,252,0.15)'; e.currentTarget.style.color = '#A175FC' }}
+                        onMouseEnter={e => { e.currentTarget.style.background = 'rgba(48,136,255,0.15)'; e.currentTarget.style.color = '#3088FF' }}
                         onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.color = 'rgba(255,255,255,0.6)' }}
                       >{action}</button>
                     ))}

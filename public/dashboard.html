@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Lynq & Flow — Dashboard</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <style>
@@ -26,11 +26,11 @@
 
   /* ── DARK THEME ── */
   html[data-theme="dark"] {
-    --bg:       #1C0F36;
-    --surface:  #241352;
-    --surface2: #2e1a63;
+    --bg:       #08101F;
+    --surface:  #0D1829;
+    --surface2: #112236;
     --border:   rgba(255,255,255,0.07);
-    --accent:   #A175FC;
+    --accent:   #3088FF;
     --accent2:  #7c4fe0;
     --text:     #ffffff;
     --muted:    rgba(255,255,255,0.50);
@@ -50,7 +50,7 @@
   html[data-theme="dark"] .date-picker-popup { color-scheme: dark; box-shadow: 0 8px 32px rgba(0,0,0,0.4) !important; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
-    font-family: 'Inter', sans-serif;
+    font-family: 'Inter Tight', sans-serif;
     background: var(--bg);
     color: var(--text);
     display: flex;
@@ -77,7 +77,7 @@
   }
   .rail-logo {
     width: 32px; height: 32px;
-    background: #A175FC; border-radius: 9px;
+    background: #3088FF; border-radius: 9px;
     display: flex; align-items: center; justify-content: center;
     font-size: 13px; font-weight: 900; color: #fff; letter-spacing: -1px;
     flex-shrink: 0; margin-bottom: 18px; cursor: pointer;
@@ -94,7 +94,7 @@
     transition: all 0.15s; position: relative; padding: 5px 0;
   }
   .rail-item:hover { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.75); }
-  .rail-item.active { background: rgba(161,117,252,0.22); color: #A175FC; }
+  .rail-item.active { background: rgba(48,136,255,0.22); color: #3088FF; }
   .rail-item svg {
     width: 17px; height: 17px; stroke: currentColor; stroke-width: 1.8;
     fill: none; stroke-linecap: round; stroke-linejoin: round;
@@ -106,8 +106,8 @@
     min-width: 13px; height: 13px; padding: 0 2px; border-radius: 7px;
     display: flex; align-items: center; justify-content: center; line-height: 1;
   }
-  .rail-badge.warn   { background: #ffd166; color: #1C0F36; }
-  .rail-badge.accent { background: #A175FC; }
+  .rail-badge.warn   { background: #ffd166; color: #08101F; }
+  .rail-badge.accent { background: #3088FF; }
   .rail-footer {
     display: flex; flex-direction: column; align-items: center; gap: 8px;
     padding: 10px 6px 0; border-top: 1px solid rgba(255,255,255,0.07); width: 100%;
@@ -118,7 +118,7 @@
     cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 14px;
   }
   .rail-avatar {
-    width: 30px; height: 30px; border-radius: 8px; background: #A175FC;
+    width: 30px; height: 30px; border-radius: 8px; background: #3088FF;
     display: flex; align-items: center; justify-content: center;
     font-size: 11px; font-weight: 800; color: #fff; cursor: pointer;
     title: 'Smith Sisters';
@@ -161,13 +161,13 @@
     transition: all 0.15s; margin: 0 5px 1px;
   }
   .nav-item:hover { background: rgba(255,255,255,0.06); color: #fff; }
-  .nav-item.active { background: rgba(161,117,252,0.20); color: #fff; font-weight: 600; }
+  .nav-item.active { background: rgba(48,136,255,0.20); color: #fff; font-weight: 600; }
   .nav-badge {
     margin-left: auto; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 20px;
   }
   .nav-badge.danger { background: #ff6b8a; color: #fff; }
-  .nav-badge.warn   { background: #ffd166; color: #1C0F36; }
-  .nav-badge.accent { background: #A175FC; color: #fff; }
+  .nav-badge.warn   { background: #ffd166; color: #08101F; }
+  .nav-badge.accent { background: #3088FF; color: #fff; }
   .panel-footer {
     margin-top: auto; padding: 10px 10px 12px;
     border-top: 1px solid rgba(255,255,255,0.07);
@@ -211,7 +211,7 @@
     border-radius: 7px;
     font-size: 12px;
     font-weight: 600;
-    font-family: 'Inter', sans-serif;
+    font-family: 'Inter Tight', sans-serif;
     cursor: pointer;
     border: none;
     background: transparent;
@@ -248,7 +248,7 @@
     border: 1px solid var(--border);
     background: var(--surface);
     color: var(--text);
-    font-family: 'Inter', sans-serif;
+    font-family: 'Inter Tight', sans-serif;
     font-size: 13px;
     margin-bottom: 12px;
     box-sizing: border-box;
@@ -262,7 +262,7 @@
     color: #fff;
     border: none;
     border-radius: 8px;
-    font-family: 'Inter', sans-serif;
+    font-family: 'Inter Tight', sans-serif;
     font-size: 13px;
     font-weight: 600;
     cursor: pointer;
@@ -286,7 +286,7 @@
     overflow: hidden;
     transition: border-color 0.2s;
   }
-  .kpi:hover { border-color: rgba(161,117,252,0.25); }
+  .kpi:hover { border-color: rgba(48,136,255,0.25); }
   .kpi::after {
     content: '';
     position: absolute;
@@ -294,7 +294,7 @@
     height: 2px;
     border-radius: var(--radius) var(--radius) 0 0;
   }
-  .kpi.purple::after { background: linear-gradient(90deg, var(--accent), rgba(161,117,252,0.3)); }
+  .kpi.purple::after { background: linear-gradient(90deg, var(--accent), rgba(48,136,255,0.3)); }
   .kpi.red::after { background: linear-gradient(90deg, var(--danger), rgba(255,107,138,0.3)); }
   .kpi.green::after { background: linear-gradient(90deg, var(--green), rgba(78,204,163,0.3)); }
   .kpi.warn::after { background: linear-gradient(90deg, var(--warn), rgba(255,209,102,0.3)); }
@@ -316,7 +316,7 @@
     padding: 22px 24px;
     transition: border-color 0.2s;
   }
-  .card:hover { border-color: rgba(161,117,252,0.2); }
+  .card:hover { border-color: rgba(48,136,255,0.2); }
   .card-title {
     font-size: 12px;
     font-weight: 700;
@@ -348,7 +348,7 @@
     padding-right: 8px;
   }
   .product-row:last-child { border-bottom: none; }
-  .product-row:hover { background: rgba(161,117,252,0.07); }
+  .product-row:hover { background: rgba(48,136,255,0.07); }
   .product-num {
     font-size: 13px;
     font-weight: 800;
@@ -443,7 +443,7 @@
     padding: 12px 16px;
     color: var(--text);
     font-size: 14px;
-    font-family: 'Inter', sans-serif;
+    font-family: 'Inter Tight', sans-serif;
     outline: none;
   }
   .chat-input:focus { border-color: var(--accent); }
@@ -476,7 +476,7 @@
     font-weight: 700;
   }
   .pill.quality  { background: rgba(255,107,138,0.12); color: var(--danger); }
-  .pill.size     { background: rgba(161,117,252,0.15); color: var(--accent); }
+  .pill.size     { background: rgba(48,136,255,0.15); color: var(--accent); }
   .pill.delivery { background: rgba(255,209,102,0.12); color: var(--warn); }
   .pill.webshop  { background: rgba(78,204,163,0.12); color: var(--green); }
   .pill.cancel   { background: rgba(0,0,0,0.06); color: var(--muted); }
@@ -507,7 +507,7 @@
     padding: 10px 20px;
     font-size: 13px;
     font-weight: 700;
-    font-family: 'Inter', sans-serif;
+    font-family: 'Inter Tight', sans-serif;
     cursor: pointer;
     transition: opacity 0.15s;
   }
@@ -520,7 +520,7 @@
     padding: 10px 20px;
     font-size: 13px;
     font-weight: 600;
-    font-family: 'Inter', sans-serif;
+    font-family: 'Inter Tight', sans-serif;
     cursor: pointer;
   }
 
@@ -550,7 +550,7 @@
   }
   .action-priority.high   { background: rgba(255,107,138,0.15); color: var(--danger); }
   .action-priority.medium { background: rgba(255,209,102,0.15); color: var(--warn); }
-  .action-priority.low    { background: rgba(161,117,252,0.15); color: var(--accent); }
+  .action-priority.low    { background: rgba(48,136,255,0.15); color: var(--accent); }
   .action-title { font-size: 15px; font-weight: 700; flex: 1; }
   .action-why { font-size: 13px; color: var(--muted); margin-bottom: 16px; line-height: 1.5; }
   .action-todos { display: flex; flex-direction: column; gap: 10px; }
@@ -567,7 +567,7 @@
     transition: background 0.15s;
     user-select: none;
   }
-  .todo-item:hover { background: rgba(161,117,252,0.08); }
+  .todo-item:hover { background: rgba(48,136,255,0.08); }
   .todo-item.checked { color: var(--muted); text-decoration: line-through; }
   .todo-box {
     width: 18px;
@@ -595,7 +595,7 @@
     font-size: 11px; font-weight: 700; white-space: nowrap;
   }
   .status-badge.delivered   { background: rgba(78,204,163,0.15); color: var(--green); }
-  .status-badge.in-transit  { background: rgba(161,117,252,0.15); color: var(--accent); }
+  .status-badge.in-transit  { background: rgba(48,136,255,0.15); color: var(--accent); }
   .status-badge.late        { background: rgba(255,107,138,0.15); color: var(--danger); }
   .status-badge.failed      { background: rgba(255,107,138,0.2);  color: var(--danger); }
   .status-badge.pickup      { background: rgba(255,209,102,0.15); color: var(--warn); }
@@ -611,7 +611,7 @@
   }
   .shipment-table td { padding: 11px 12px; border-bottom: 1px solid var(--border); font-size: 13px; }
   .shipment-table tr:last-child td { border-bottom: none; }
-  .shipment-table tr:hover td { background: rgba(161,117,252,0.05); }
+  .shipment-table tr:hover td { background: rgba(48,136,255,0.05); }
 
   .alert-strip {
     border-radius: 10px; padding: 14px 18px;
@@ -628,12 +628,12 @@
   .alert-btn {
     font-size: 12px; font-weight: 700; padding: 6px 14px;
     border-radius: 7px; cursor: pointer; border: none;
-    font-family: 'Inter', sans-serif;
+    font-family: 'Inter Tight', sans-serif;
     transition: opacity 0.15s;
   }
   .alert-btn:hover { opacity: 0.85; }
   .alert-btn.primary { background: var(--danger); color: #fff; }
-  .alert-btn.warn-btn { background: var(--warn); color: #1C0F36; }
+  .alert-btn.warn-btn { background: var(--warn); color: #08101F; }
   .alert-btn.ghost { background: rgba(255,255,255,0.07); color: var(--muted); }
 
   .delivery-bar-row { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
@@ -648,10 +648,10 @@
     width: 52px; height: 52px; border-radius: 50%;
     background: var(--accent); border: none; cursor: pointer;
     display: flex; align-items: center; justify-content: center;
-    font-size: 22px; box-shadow: 0 4px 24px rgba(161,117,252,0.45);
+    font-size: 22px; box-shadow: 0 4px 24px rgba(48,136,255,0.45);
     z-index: 1000; transition: transform 0.2s, box-shadow 0.2s;
   }
-  .float-chat-btn:hover { transform: scale(1.08); box-shadow: 0 6px 30px rgba(161,117,252,0.6); }
+  .float-chat-btn:hover { transform: scale(1.08); box-shadow: 0 6px 30px rgba(48,136,255,0.6); }
   .float-chat-panel {
     position: fixed; bottom: 92px; right: 28px;
     width: 360px; background: var(--surface);
@@ -672,14 +672,14 @@
   .float-chat-input {
     flex: 1; background: var(--surface2); border: 1px solid var(--border);
     border-radius: 8px; padding: 9px 12px; color: var(--text);
-    font-size: 13px; font-family: 'Inter', sans-serif; outline: none;
+    font-size: 13px; font-family: 'Inter Tight', sans-serif; outline: none;
   }
   .float-chat-input:focus { border-color: var(--accent); }
   .float-send-btn {
     background: var(--accent); border: none; border-radius: 8px;
     width: 36px; height: 36px; cursor: pointer; color: #fff;
     font-size: 16px; display: flex; align-items: center; justify-content: center;
-    font-family: 'Inter', sans-serif;
+    font-family: 'Inter Tight', sans-serif;
   }
 
 
@@ -692,7 +692,7 @@
   .signal-item.warn  { background: rgba(255,209,102,0.06); border-color: rgba(255,209,102,0.2); }
   .signal-item.danger { background: rgba(255,107,138,0.06); border-color: rgba(255,107,138,0.2); }
   .signal-item.good  { background: rgba(78,204,163,0.06); border-color: rgba(78,204,163,0.2); }
-  .signal-item.info  { background: rgba(161,117,252,0.06); border-color: rgba(161,117,252,0.15); }
+  .signal-item.info  { background: rgba(48,136,255,0.06); border-color: rgba(48,136,255,0.15); }
   .signal-emoji { font-size: 16px; margin-top: 1px; flex-shrink: 0; }
   .signal-text { font-size: 13px; line-height: 1.5; flex: 1; }
   .signal-text strong { color: var(--text); }
@@ -715,8 +715,8 @@
     position: relative;
   }
   .feed-item.important {
-    border-color: rgba(161,117,252,0.5);
-    background: linear-gradient(135deg, rgba(161,117,252,0.06) 0%, var(--surface) 60%);
+    border-color: rgba(48,136,255,0.5);
+    background: linear-gradient(135deg, rgba(48,136,255,0.06) 0%, var(--surface) 60%);
   }
   .feed-item.urgent {
     border-color: rgba(255,107,138,0.4);
@@ -729,7 +729,7 @@
     font-size: 18px; flex-shrink: 0;
   }
   .feed-type-icon.video    { background: rgba(255,107,138,0.12); }
-  .feed-type-icon.tip      { background: rgba(161,117,252,0.12); }
+  .feed-type-icon.tip      { background: rgba(48,136,255,0.12); }
   .feed-type-icon.feature  { background: rgba(78,204,163,0.12); }
   .feed-type-icon.industry { background: rgba(255,209,102,0.12); }
   .feed-meta { flex: 1; }
@@ -739,10 +739,10 @@
     border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px;
   }
   .feed-badge.video    { background: rgba(255,107,138,0.12); color: var(--danger); }
-  .feed-badge.tip      { background: rgba(161,117,252,0.12); color: var(--accent); }
+  .feed-badge.tip      { background: rgba(48,136,255,0.12); color: var(--accent); }
   .feed-badge.feature  { background: rgba(78,204,163,0.12);  color: var(--green); }
   .feed-badge.industry { background: rgba(255,209,102,0.12); color: var(--warn); }
-  .feed-badge.important-badge { background: rgba(161,117,252,0.2); color: var(--accent); }
+  .feed-badge.important-badge { background: rgba(48,136,255,0.2); color: var(--accent); }
   .feed-badge.new-badge { background: var(--accent); color: #fff; }
   .feed-badge.urgent-badge { background: rgba(255,107,138,0.2); color: var(--danger); }
   .feed-date { font-size: 11px; color: var(--muted); margin-left: auto; white-space: nowrap; }
@@ -758,7 +758,7 @@
   }
   .feed-video-thumb {
     width: 100%; height: 100%; object-fit: cover;
-    background: linear-gradient(135deg, #2e1a63, #1C0F36);
+    background: linear-gradient(135deg, #112236, #08101F);
     display: flex; align-items: center; justify-content: center;
     flex-direction: column; gap: 10px;
   }
@@ -766,7 +766,7 @@
     width: 52px; height: 52px; background: var(--accent);
     border-radius: 50%; display: flex; align-items: center;
     justify-content: center; font-size: 20px; color: #fff;
-    box-shadow: 0 4px 20px rgba(161,117,252,0.4);
+    box-shadow: 0 4px 20px rgba(48,136,255,0.4);
   }
   .feed-video-label { font-size: 12px; color: var(--muted); }
   .feed-link {
@@ -779,7 +779,7 @@
   .feed-action-btn {
     font-size: 12px; color: var(--muted); cursor: pointer;
     display: flex; align-items: center; gap: 5px;
-    background: none; border: none; font-family: 'Inter', sans-serif;
+    background: none; border: none; font-family: 'Inter Tight', sans-serif;
     padding: 0; transition: color 0.15s;
   }
   .feed-action-btn:hover { color: var(--text); }
@@ -792,8 +792,8 @@
   }
 
   .feed-tip-box {
-    background: rgba(161,117,252,0.07);
-    border: 1px solid rgba(161,117,252,0.2);
+    background: rgba(48,136,255,0.07);
+    border: 1px solid rgba(48,136,255,0.2);
     border-radius: 10px; padding: 14px 16px;
     margin-bottom: 14px; font-size: 13px; line-height: 1.65;
     color: rgba(255,255,255,0.8);
@@ -811,7 +811,7 @@
     padding: 8px 20px; border-radius: 7px; font-size: 13px;
     font-weight: 600; cursor: pointer; border: none;
     background: transparent; color: var(--muted);
-    font-family: 'Inter', sans-serif; transition: all 0.15s;
+    font-family: 'Inter Tight', sans-serif; transition: all 0.15s;
   }
   .perf-tab:hover { color: var(--text); }
   .perf-tab.active { background: var(--accent); color: #fff; }
@@ -887,7 +887,7 @@
   .notes-area {
     width: 100%; background: var(--surface2); border: 1px solid var(--border);
     border-radius: 10px; padding: 14px; color: var(--text);
-    font-family: 'Inter', sans-serif; font-size: 13px;
+    font-family: 'Inter Tight', sans-serif; font-size: 13px;
     line-height: 1.6; resize: vertical; outline: none; min-height: 100px;
   }
   .notes-area:focus { border-color: var(--accent); }
@@ -908,7 +908,7 @@
   }
   .email-trigger-icon.failed  { background: rgba(255,107,138,0.12); }
   .email-trigger-icon.pickup  { background: rgba(255,209,102,0.12); }
-  .email-trigger-icon.late    { background: rgba(161,117,252,0.12); }
+  .email-trigger-icon.late    { background: rgba(48,136,255,0.12); }
   .email-trigger-icon.address { background: rgba(78,204,163,0.12); }
   .email-body { flex: 1; }
   .email-header { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; flex-wrap: wrap; }
@@ -919,7 +919,7 @@
   }
   .email-trigger-badge.failed  { background: rgba(255,107,138,0.15); color: var(--danger); }
   .email-trigger-badge.pickup  { background: rgba(255,209,102,0.15); color: var(--warn); }
-  .email-trigger-badge.late    { background: rgba(161,117,252,0.15); color: var(--accent); }
+  .email-trigger-badge.late    { background: rgba(48,136,255,0.15); color: var(--accent); }
   .email-trigger-badge.address { background: rgba(78,204,163,0.15); color: var(--green); }
   .email-meta { font-size: 12px; color: var(--muted); display: flex; gap: 16px; flex-wrap: wrap; }
   .email-meta strong { color: var(--text); }
@@ -927,7 +927,7 @@
     font-size: 11px; font-weight: 700; padding: 2px 8px;
     border-radius: 20px; white-space: nowrap; margin-left: auto;
   }
-  .email-status.sent   { background: rgba(161,117,252,0.12); color: var(--accent); }
+  .email-status.sent   { background: rgba(48,136,255,0.12); color: var(--accent); }
   .email-status.opened { background: rgba(78,204,163,0.12); color: var(--green); }
   .email-status.failed-send { background: rgba(255,107,138,0.12); color: var(--danger); }
   .email-preview {
@@ -951,7 +951,7 @@
     padding: 7px 16px; border-radius: 8px; font-size: 12px;
     font-weight: 600; cursor: pointer; border: 1px solid var(--border);
     background: transparent; color: var(--muted);
-    font-family: 'Inter', sans-serif; transition: all 0.15s;
+    font-family: 'Inter Tight', sans-serif; transition: all 0.15s;
   }
   .filter-tab:hover { color: var(--text); }
   .filter-tab.active { background: var(--accent); color: #fff; border-color: var(--accent); }
@@ -969,7 +969,7 @@
   }
   .risk-order-card.high  { border-left: 4px solid var(--danger); }
   .risk-order-card.medium { border-left: 4px solid var(--warn); }
-  .risk-order-card.low   { border-left: 4px solid rgba(161,117,252,0.6); }
+  .risk-order-card.low   { border-left: 4px solid rgba(48,136,255,0.6); }
   .risk-order-card.resolved { opacity: 0.4; border-left-color: var(--green); }
   .risk-card-left { flex: 1; padding: 18px 22px; }
   .risk-card-right {
@@ -990,7 +990,7 @@
   }
   .risk-rec-box.warn   { background: rgba(255,209,102,0.06); border-color: rgba(255,209,102,0.2); }
   .risk-rec-box.danger { background: rgba(255,107,138,0.06); border-color: rgba(255,107,138,0.2); }
-  .risk-rec-box.info   { background: rgba(161,117,252,0.06); border-color: rgba(161,117,252,0.2); }
+  .risk-rec-box.info   { background: rgba(48,136,255,0.06); border-color: rgba(48,136,255,0.2); }
   .risk-rec-box.good   { background: rgba(78,204,163,0.06); border-color: rgba(78,204,163,0.2); }
   .risk-rec-box strong { color: var(--text); }
   html[data-theme="light"] .risk-rec-box.warn   { background: rgba(217,119,6,0.07);  border-color: rgba(217,119,6,0.25); }
@@ -1024,10 +1024,10 @@
     position: absolute;
     top: 0; left: 0; right: 0;
     height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(161,117,252,0.4), transparent);
+    background: linear-gradient(90deg, transparent, rgba(48,136,255,0.4), transparent);
   }
   .glass-card:hover {
-    border-color: rgba(161,117,252,0.2);
+    border-color: rgba(48,136,255,0.2);
     transform: translateY(-1px);
   }
   .glass-kpi {
@@ -1047,7 +1047,7 @@
     position: absolute;
     bottom: 0; left: 0; right: 0;
     height: 60px;
-    background: radial-gradient(ellipse at bottom, rgba(var(--glow-rgb, 161,117,252), 0.06) 0%, transparent 70%);
+    background: radial-gradient(ellipse at bottom, rgba(var(--glow-rgb, 48,136,255), 0.06) 0%, transparent 70%);
     pointer-events: none;
   }
   .glass-kpi:hover {
@@ -1118,7 +1118,7 @@
   }
   .risk-badge.high   { background: rgba(255,107,138,0.15); color: var(--danger); }
   .risk-badge.medium { background: rgba(255,209,102,0.15); color: var(--warn); }
-  .risk-badge.low    { background: rgba(161,117,252,0.15); color: var(--accent); }
+  .risk-badge.low    { background: rgba(48,136,255,0.15); color: var(--accent); }
   .risk-order-id { font-size: 14px; font-weight: 800; }
   .risk-customer { font-size: 13px; color: var(--muted); }
   .risk-value { font-size: 15px; font-weight: 800; color: var(--danger); margin-left: auto; }
@@ -1129,7 +1129,7 @@
   }
   .risk-signal.complaint  { background: rgba(255,107,138,0.1); color: var(--danger); }
   .risk-signal.delivery   { background: rgba(255,209,102,0.1); color: var(--warn); }
-  .risk-signal.product    { background: rgba(161,117,252,0.12); color: var(--accent); }
+  .risk-signal.product    { background: rgba(48,136,255,0.12); color: var(--accent); }
   .risk-signal.no-reply   { background: rgba(255,255,255,0.07); color: var(--muted); }
   .risk-signal.sentiment  { background: rgba(255,107,138,0.08); color: var(--danger); }
   .risk-order-meta { display: flex; gap: 20px; font-size: 12px; color: var(--muted); flex-wrap: wrap; margin-bottom: 12px; }
@@ -1138,7 +1138,7 @@
   .risk-btn {
     font-size: 12px; font-weight: 700; padding: 7px 14px;
     border-radius: 8px; cursor: pointer; border: none;
-    font-family: 'Inter', sans-serif; transition: opacity 0.15s;
+    font-family: 'Inter Tight', sans-serif; transition: opacity 0.15s;
   }
   .risk-btn:hover { opacity: 0.85; }
   .risk-btn.ghost    { background: rgba(255,255,255,0.06); color: var(--muted); border: 1px solid var(--border); }
@@ -1199,7 +1199,7 @@
   .smodal-qty-input {
     width: 56px; background: var(--bg); border: 1px solid var(--border);
     border-radius: 6px; padding: 4px 8px; color: var(--text);
-    font-family: 'Inter', sans-serif; font-size: 12px; text-align: center;
+    font-family: 'Inter Tight', sans-serif; font-size: 12px; text-align: center;
   }
   .smodal-divider { border: none; border-top: 1px solid var(--border); margin: 0; }
   .smodal-totals { padding: 10px 24px; display: flex; flex-direction: column; gap: 5px; }
@@ -1217,7 +1217,7 @@
   .smodal-input {
     width: 100%; background: var(--bg); border: 1px solid var(--border);
     border-radius: 8px; padding: 8px 12px; color: var(--text);
-    font-family: 'Inter', sans-serif; font-size: 13px; outline: none;
+    font-family: 'Inter Tight', sans-serif; font-size: 13px; outline: none;
     box-sizing: border-box;
   }
   .smodal-input:focus { border-color: var(--accent); }
@@ -1238,7 +1238,7 @@
   .btn-modal-primary {
     background: var(--accent); color: #fff; border: none;
     padding: 9px 20px; border-radius: 8px; font-size: 12px;
-    font-weight: 700; cursor: pointer; font-family: 'Inter', sans-serif;
+    font-weight: 700; cursor: pointer; font-family: 'Inter Tight', sans-serif;
     transition: opacity 0.15s;
   }
   .btn-modal-primary:hover { opacity: 0.85; }
@@ -1246,19 +1246,19 @@
     background: var(--surface2); color: var(--text);
     border: 1px solid var(--border); padding: 9px 18px;
     border-radius: 8px; font-size: 12px; font-weight: 600;
-    cursor: pointer; font-family: 'Inter', sans-serif;
+    cursor: pointer; font-family: 'Inter Tight', sans-serif;
   }
   .btn-modal-secondary:hover { border-color: var(--accent); color: var(--accent); }
   .btn-modal-danger {
     background: rgba(220,38,38,0.1); color: var(--danger);
     border: 1px solid rgba(220,38,38,0.25); padding: 9px 18px;
     border-radius: 8px; font-size: 12px; font-weight: 700;
-    cursor: pointer; font-family: 'Inter', sans-serif;
+    cursor: pointer; font-family: 'Inter Tight', sans-serif;
   }
   .btn-modal-cancel {
     background: none; color: var(--muted); border: none;
     padding: 9px 14px; font-size: 12px; font-weight: 600;
-    cursor: pointer; font-family: 'Inter', sans-serif;
+    cursor: pointer; font-family: 'Inter Tight', sans-serif;
   }
   /* ── SHOPIFY ORDER CARD in customer panel ── */
   .shopify-order-card {
@@ -1286,7 +1286,7 @@
     font-size: 10px; font-weight: 700; padding: 4px 9px;
     border-radius: 6px; border: 1px solid var(--border);
     background: var(--bg); color: var(--text);
-    cursor: pointer; font-family: 'Inter', sans-serif;
+    cursor: pointer; font-family: 'Inter Tight', sans-serif;
     display: flex; align-items: center; gap: 4px;
     transition: all 0.15s;
   }
@@ -1330,7 +1330,7 @@
     padding: 10px 20px; font-size: 13px; font-weight: 600;
     border: none; border-bottom: 2px solid transparent;
     background: none; cursor: pointer; color: var(--muted);
-    font-family: 'Inter', sans-serif; transition: all 0.15s;
+    font-family: 'Inter Tight', sans-serif; transition: all 0.15s;
   }
   .settings-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
   .role-option {
@@ -1338,8 +1338,8 @@
     padding: 12px 14px; border-radius: 10px; border: 1px solid var(--border);
     cursor: pointer; transition: all 0.15s; font-size: 13px; font-weight: 600;
   }
-  .role-option:hover { border-color: var(--accent); background: rgba(161,117,252,0.04); }
-  .role-option.active { border-color: var(--accent); background: rgba(161,117,252,0.08); }
+  .role-option:hover { border-color: var(--accent); background: rgba(48,136,255,0.04); }
+  .role-option.active { border-color: var(--accent); background: rgba(48,136,255,0.08); }
   .agent-row {
     display: flex; align-items: center; gap: 12px;
     padding: 12px 0; border-bottom: 1px solid var(--border);
@@ -1355,8 +1355,8 @@
     letter-spacing: 0.5px; padding: 2px 8px; border-radius: 20px;
   }
   .role-badge.observer { background: rgba(100,80,200,0.1); color: var(--muted); }
-  .role-badge.lite     { background: rgba(161,117,252,0.12); color: var(--accent); }
-  .role-badge.basic    { background: rgba(161,117,252,0.15); color: var(--accent); }
+  .role-badge.lite     { background: rgba(48,136,255,0.12); color: var(--accent); }
+  .role-badge.basic    { background: rgba(48,136,255,0.15); color: var(--accent); }
   .role-badge.lead     { background: rgba(255,209,102,0.15); color: var(--warn); }
   .role-badge.admin    { background: rgba(255,107,138,0.12); color: var(--danger); }
 
@@ -1649,17 +1649,17 @@
         <div style="height:2px;border-radius:2px;background:linear-gradient(90deg,rgba(255,209,102,0.6),transparent);margin-top:12px"></div>
       </div>
 
-      <div class="glass-kpi" style="--glow:#A175FC">
+      <div class="glass-kpi" style="--glow:#3088FF">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-          <div class="glass-kpi-icon" style="background:linear-gradient(135deg,rgba(161,117,252,0.3),rgba(161,117,252,0.1))">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#A175FC" stroke-width="2.5"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+          <div class="glass-kpi-icon" style="background:linear-gradient(135deg,rgba(48,136,255,0.3),rgba(48,136,255,0.1))">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3088FF" stroke-width="2.5"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
           </div>
-          <span style="font-size:10px;font-weight:700;color:#A175FC;background:rgba(161,117,252,0.12);padding:3px 8px;border-radius:20px;letter-spacing:0.5px">2 HIGH</span>
+          <span style="font-size:10px;font-weight:700;color:#3088FF;background:rgba(48,136,255,0.12);padding:3px 8px;border-radius:20px;letter-spacing:0.5px">2 HIGH</span>
         </div>
         <div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:6px">Open Actions</div>
-        <div style="font-size:26px;font-weight:800;color:#A175FC;letter-spacing:-0.5px;line-height:1">3</div>
+        <div style="font-size:26px;font-weight:800;color:#3088FF;letter-spacing:-0.5px;line-height:1">3</div>
         <div style="font-size:11px;color:var(--muted);margin-top:6px">2 high priority · 1 medium</div>
-        <div style="height:2px;border-radius:2px;background:linear-gradient(90deg,rgba(161,117,252,0.6),transparent);margin-top:12px"></div>
+        <div style="height:2px;border-radius:2px;background:linear-gradient(90deg,rgba(48,136,255,0.6),transparent);margin-top:12px"></div>
       </div>
 
       <div class="glass-kpi" style="--glow:#f97316">
@@ -1780,12 +1780,12 @@
             <div style="font-size:13px;font-weight:800;color:#ffd166;flex-shrink:0">13</div>
           </div>
           <div style="display:flex;align-items:center;gap:10px">
-            <div style="width:28px;height:28px;border-radius:8px;background:rgba(161,117,252,0.15);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#A175FC;flex-shrink:0">3</div>
+            <div style="width:28px;height:28px;border-radius:8px;background:rgba(48,136,255,0.15);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#3088FF;flex-shrink:0">3</div>
             <div style="flex:1;min-width:0">
               <div style="font-size:12px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Boho Blouse Set</div>
-              <div style="height:3px;background:var(--border);border-radius:3px;margin-top:4px"><div style="height:100%;width:45%;background:linear-gradient(90deg,#A175FC,rgba(161,117,252,0.3));border-radius:3px"></div></div>
+              <div style="height:3px;background:var(--border);border-radius:3px;margin-top:4px"><div style="height:100%;width:45%;background:linear-gradient(90deg,#3088FF,rgba(48,136,255,0.3));border-radius:3px"></div></div>
             </div>
-            <div style="font-size:13px;font-weight:800;color:#A175FC;flex-shrink:0">9</div>
+            <div style="font-size:13px;font-weight:800;color:#3088FF;flex-shrink:0">9</div>
           </div>
           <div style="display:flex;align-items:center;gap:10px">
             <div style="width:28px;height:28px;border-radius:8px;background:rgba(78,204,163,0.15);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#4ecca3;flex-shrink:0">4</div>
@@ -1971,7 +1971,7 @@
             <div style="font-size:11px;color:var(--muted);min-width:40px;text-align:right">+10 pts</div>
           </div>
         </div>
-        <div style="margin-top:14px;padding:10px 14px;background:rgba(161,117,252,0.07);border-radius:8px;font-size:12px;color:var(--muted)">
+        <div style="margin-top:14px;padding:10px 14px;background:rgba(48,136,255,0.07);border-radius:8px;font-size:12px;color:var(--muted)">
           <strong style="color:var(--text)">70–100</strong> = High &nbsp;·&nbsp;
           <strong style="color:var(--text)">40–69</strong> = Medium &nbsp;·&nbsp;
           <strong style="color:var(--text)">&lt;40</strong> = Low
@@ -2295,9 +2295,9 @@
     </div>
 
     <!-- LOW RISK (collapsed style) -->
-    <div style="margin-top:8px;padding:12px 20px;background:rgba(161,117,252,0.05);border:1px solid var(--border);border-radius:var(--radius);display:flex;align-items:center;justify-content:space-between;cursor:pointer" data-risk="low" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none';this.querySelector('.low-toggle').textContent=this.nextElementSibling.style.display==='none'?'Show ▾':'Hide ▴'">
+    <div style="margin-top:8px;padding:12px 20px;background:rgba(48,136,255,0.05);border:1px solid var(--border);border-radius:var(--radius);display:flex;align-items:center;justify-content:space-between;cursor:pointer" data-risk="low" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none';this.querySelector('.low-toggle').textContent=this.nextElementSibling.style.display==='none'?'Show ▾':'Hide ▴'">
       <div style="display:flex;align-items:center;gap:10px">
-        <span style="font-size:11px;font-weight:800;color:var(--accent);background:rgba(161,117,252,0.15);padding:3px 9px;border-radius:20px">LOW RISK</span>
+        <span style="font-size:11px;font-weight:800;color:var(--accent);background:rgba(48,136,255,0.15);padding:3px 9px;border-radius:20px">LOW RISK</span>
         <span style="font-size:13px;color:var(--muted)">2 orders — low risk, monitor only</span>
       </div>
       <span class="low-toggle" style="font-size:12px;color:var(--muted)">Show ▾</span>
@@ -2808,7 +2808,7 @@
       <div id="report-w13">
 
         <!-- Header -->
-        <div style="background:linear-gradient(135deg,rgba(161,117,252,0.12) 0%,rgba(161,117,252,0.04) 100%);border:1px solid var(--border);border-radius:var(--radius);padding:24px 28px;margin-bottom:20px;display:flex;align-items:flex-start;justify-content:space-between">
+        <div style="background:linear-gradient(135deg,rgba(48,136,255,0.12) 0%,rgba(48,136,255,0.04) 100%);border:1px solid var(--border);border-radius:var(--radius);padding:24px 28px;margin-bottom:20px;display:flex;align-items:flex-start;justify-content:space-between">
           <div>
             <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--accent);margin-bottom:6px">Week 13 · Automatically generated Sunday March 31, 2026</div>
             <div style="font-size:22px;font-weight:800">Weekly CS Report — Smith Sisters</div>
@@ -3186,7 +3186,7 @@
               </div>
 
               <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:rgba(255,255,255,0.03);border-radius:8px;border:1px solid var(--border)">
-                <div style="width:30px;height:30px;background:#4ecca3;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#1C0F36;flex-shrink:0">L</div>
+                <div style="width:30px;height:30px;background:#4ecca3;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#08101F;flex-shrink:0">L</div>
                 <div style="flex:1">
                   <div style="font-size:13px;font-weight:700">Lisa Bakker</div>
                   <div style="font-size:11px;color:var(--muted);margin-top:1px">107 tickets · 8.9h · 2.9 emails/ticket</div>
@@ -3237,13 +3237,13 @@
               </div>
             </div>
 
-            <div style="padding:16px;background:rgba(161,117,252,0.06);border:1px solid rgba(161,117,252,0.15);border-radius:10px">
+            <div style="padding:16px;background:rgba(48,136,255,0.06);border:1px solid rgba(48,136,255,0.15);border-radius:10px">
               <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:0.7px;color:var(--accent);margin-bottom:8px">🟣 Keep going</div>
               <div style="display:flex;flex-direction:column;gap:8px">
-                <div style="font-size:13px;line-height:1.5;padding-bottom:8px;border-bottom:1px solid rgba(161,117,252,0.15)">
+                <div style="font-size:13px;line-height:1.5;padding-bottom:8px;border-bottom:1px solid rgba(48,136,255,0.15)">
                   Delivery time improving (11d avg) — keep monitoring YunExpress for delays.
                 </div>
-                <div style="font-size:13px;line-height:1.5;padding-bottom:8px;border-bottom:1px solid rgba(161,117,252,0.15)">
+                <div style="font-size:13px;line-height:1.5;padding-bottom:8px;border-bottom:1px solid rgba(48,136,255,0.15)">
                   Cancellations down 14% — good trend, maintain proactive shipping updates.
                 </div>
                 <div style="font-size:13px;line-height:1.5">
@@ -3259,7 +3259,7 @@
 
       <!-- Week 12 (collapsed / dimmed) -->
       <div id="report-w12" style="display:none">
-        <div style="background:linear-gradient(135deg,rgba(161,117,252,0.08) 0%,rgba(161,117,252,0.02) 100%);border:1px solid var(--border);border-radius:var(--radius);padding:24px 28px;margin-bottom:20px">
+        <div style="background:linear-gradient(135deg,rgba(48,136,255,0.08) 0%,rgba(48,136,255,0.02) 100%);border:1px solid var(--border);border-radius:var(--radius);padding:24px 28px;margin-bottom:20px">
           <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--accent);margin-bottom:6px">Week 12 · Generated Sunday March 23, 2026</div>
           <div style="font-size:22px;font-weight:800">Weekly CS Report — Smith Sisters</div>
           <div style="font-size:13px;color:var(--muted);margin-top:4px">March 17–23, 2026</div>
@@ -3322,12 +3322,12 @@
           <div style="padding:14px 0;border-bottom:1px solid var(--border)">
             <div style="font-size:13px;font-weight:600;margin-bottom:10px">Recipients</div>
             <div style="display:flex;flex-direction:column;gap:6px">
-              <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:rgba(161,117,252,0.07);border:1px solid var(--border);border-radius:8px;font-size:12px">
+              <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:rgba(48,136,255,0.07);border:1px solid var(--border);border-radius:8px;font-size:12px">
                 <span>✉️</span>
                 <span style="flex:1">info@smithsisters.com</span>
                 <span style="color:var(--muted);cursor:pointer;font-size:11px">✕</span>
               </div>
-              <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:rgba(161,117,252,0.07);border:1px solid var(--border);border-radius:8px;font-size:12px">
+              <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:rgba(48,136,255,0.07);border:1px solid var(--border);border-radius:8px;font-size:12px">
                 <span>✉️</span>
                 <span style="flex:1">owner@smithsisters.com</span>
                 <span style="color:var(--muted);cursor:pointer;font-size:11px">✕</span>
@@ -3438,22 +3438,22 @@
 
           <!-- Header -->
           <div style="display:flex;align-items:center;gap:10px;margin-bottom:28px;padding-bottom:20px;border-bottom:2px solid #f0f0f0">
-            <div style="width:32px;height:32px;background:#A175FC;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:15px">›</div>
+            <div style="width:32px;height:32px;background:#3088FF;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:15px">›</div>
             <div>
-              <div style="font-size:14px;font-weight:800;color:#1C0F36">Lynq & Flow</div>
+              <div style="font-size:14px;font-weight:800;color:#08101F">Lynq & Flow</div>
               <div style="font-size:11px;color:#888">Weekly CS Digest — Smith Sisters</div>
             </div>
             <div style="margin-left:auto;font-size:12px;color:#888">Week 13 · March 24–31, 2026</div>
           </div>
 
           <!-- Greeting -->
-          <div style="font-size:18px;font-weight:800;color:#1C0F36;margin-bottom:6px">Hi Smith Sisters 👋</div>
+          <div style="font-size:18px;font-weight:800;color:#08101F;margin-bottom:6px">Hi Smith Sisters 👋</div>
           <div style="font-size:14px;color:#555;line-height:1.6;margin-bottom:28px">Here's your weekly CS summary from Lynq & Flow. We've analyzed everything so you don't have to — here's what happened, what's working, and what needs your attention.</div>
 
           <!-- KPI boxes -->
           <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:28px">
             <div style="background:#fdf4ff;border-radius:10px;padding:14px;text-align:center">
-              <div style="font-size:24px;font-weight:800;color:#A175FC">47</div>
+              <div style="font-size:24px;font-weight:800;color:#3088FF">47</div>
               <div style="font-size:11px;color:#888;margin-top:3px;text-transform:uppercase;letter-spacing:0.5px">Refunds</div>
             </div>
             <div style="background:#fff5f7;border-radius:10px;padding:14px;text-align:center">
@@ -3513,19 +3513,19 @@
             <div style="font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:0.8px;color:#888;margin-bottom:10px">📦 Top Refund Products</div>
             <div style="border:1px solid #f0f0f0;border-radius:10px;overflow:hidden">
               <div style="display:flex;align-items:center;padding:10px 14px;border-bottom:1px solid #f0f0f0;font-size:13px">
-                <span style="font-weight:800;color:#A175FC;min-width:24px">1</span>
+                <span style="font-weight:800;color:#3088FF;min-width:24px">1</span>
                 <span style="flex:1;font-weight:600">Classic Linen Dress</span>
                 <span style="color:#888;font-size:11px;margin-right:12px">Quality</span>
                 <span style="font-weight:800;color:#ff6b8a">18x</span>
               </div>
               <div style="display:flex;align-items:center;padding:10px 14px;border-bottom:1px solid #f0f0f0;font-size:13px">
-                <span style="font-weight:800;color:#A175FC;min-width:24px">2</span>
+                <span style="font-weight:800;color:#3088FF;min-width:24px">2</span>
                 <span style="flex:1;font-weight:600">Summer Wrap Skirt</span>
                 <span style="color:#888;font-size:11px;margin-right:12px">Delivery</span>
                 <span style="font-weight:800;color:#ff6b8a">13x</span>
               </div>
               <div style="display:flex;align-items:center;padding:10px 14px;font-size:13px">
-                <span style="font-weight:800;color:#A175FC;min-width:24px">3</span>
+                <span style="font-weight:800;color:#3088FF;min-width:24px">3</span>
                 <span style="flex:1;font-weight:600">Boho Blouse Set</span>
                 <span style="color:#888;font-size:11px;margin-right:12px">Size</span>
                 <span style="font-weight:800;color:#ff6b8a">9x</span>
@@ -3538,17 +3538,17 @@
             <div style="font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:0.8px;color:#888;margin-bottom:10px">👥 CS Team This Week</div>
             <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
               <div style="background:#fdf4ff;border-radius:8px;padding:12px;text-align:center">
-                <div style="font-size:13px;font-weight:800;color:#1C0F36">Sophie</div>
+                <div style="font-size:13px;font-weight:800;color:#08101F">Sophie</div>
                 <div style="font-size:11px;color:#888;margin:3px 0">124 tickets · 7.2h resp.</div>
                 <div style="font-size:11px;font-weight:700;color:#2ecc8e">On target ✓</div>
               </div>
               <div style="background:#fff8f0;border-radius:8px;padding:12px;text-align:center">
-                <div style="font-size:13px;font-weight:800;color:#1C0F36">Max</div>
+                <div style="font-size:13px;font-weight:800;color:#08101F">Max</div>
                 <div style="font-size:11px;color:#888;margin:3px 0">98 tickets · 11.4h resp.</div>
                 <div style="font-size:11px;font-weight:700;color:#e6a817">Needs attention</div>
               </div>
               <div style="background:#f0fdf8;border-radius:8px;padding:12px;text-align:center">
-                <div style="font-size:13px;font-weight:800;color:#1C0F36">Lisa</div>
+                <div style="font-size:13px;font-weight:800;color:#08101F">Lisa</div>
                 <div style="font-size:11px;color:#888;margin:3px 0">107 tickets · 8.9h resp.</div>
                 <div style="font-size:11px;font-weight:700;color:#2ecc8e">On target ✓</div>
               </div>
@@ -3557,7 +3557,7 @@
 
           <!-- Footer -->
           <div style="padding-top:20px;border-top:2px solid #f0f0f0;display:flex;align-items:center;justify-content:space-between">
-            <div style="font-size:12px;color:#aaa">Sent by Lynq & Flow · <a href="#" style="color:#A175FC;text-decoration:none">View full dashboard</a> · <a href="#" style="color:#aaa;text-decoration:none">Unsubscribe</a></div>
+            <div style="font-size:12px;color:#aaa">Sent by Lynq & Flow · <a href="#" style="color:#3088FF;text-decoration:none">View full dashboard</a> · <a href="#" style="color:#aaa;text-decoration:none">Unsubscribe</a></div>
             <div style="font-size:11px;color:#ccc">Week 13 · Apr 1, 2026</div>
           </div>
 
@@ -4101,7 +4101,7 @@
 
     <!-- ── TAB 3: QUALITATIVE ── -->
     <div class="perf-section" id="perf-qualitative">
-      <div style="margin-bottom:16px;padding:14px 18px;background:rgba(161,117,252,0.08);border:1px solid var(--border);border-radius:10px;font-size:13px;color:var(--muted);line-height:1.6">
+      <div style="margin-bottom:16px;padding:14px 18px;background:rgba(48,136,255,0.08);border:1px solid var(--border);border-radius:10px;font-size:13px;color:var(--muted);line-height:1.6">
         Score each agent 1–10 on qualitative criteria. These scores count towards the bonus calculation alongside the hard KPIs.
       </div>
 
@@ -4263,7 +4263,7 @@
         <!-- Lisa bonus -->
         <div class="card">
           <div class="agent-header" style="margin-bottom:18px">
-            <div class="agent-avatar" style="background:#4ecca3;color:#1C0F36">L</div>
+            <div class="agent-avatar" style="background:#4ecca3;color:#08101F">L</div>
             <div style="flex:1">
               <div class="agent-name">Lisa Bakker</div>
               <div class="agent-role">CS Agent</div>
@@ -5104,7 +5104,7 @@
               </div>
               <!-- Ticket stats -->
               <div style="display:flex;gap:6px;margin-top:10px">
-                <span style="font-size:10px;font-weight:600;padding:3px 8px;border-radius:6px;background:rgba(161,117,252,0.12);color:var(--accent);cursor:pointer">Open Timeline</span>
+                <span style="font-size:10px;font-weight:600;padding:3px 8px;border-radius:6px;background:rgba(48,136,255,0.12);color:var(--accent);cursor:pointer">Open Timeline</span>
                 <span id="cust-tickets" style="font-size:10px;font-weight:600;padding:3px 8px;border-radius:6px;background:var(--surface2);color:var(--muted)">1 ticket open</span>
               </div>
             </div>
@@ -5239,12 +5239,12 @@
         <div>
           <label style="display:block;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:8px">Tags <span style="font-weight:400;text-transform:none;letter-spacing:0">(for analysis)</span></label>
           <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px">
-            <button onclick="toggleTag(this,'Follow-up')" class="tag-pill" style="background:rgba(161,117,252,0.12);border:1px solid rgba(161,117,252,0.25);color:var(--accent);font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;cursor:pointer;font-family:'Inter',sans-serif">Follow-up</button>
-            <button onclick="toggleTag(this,'Support')" class="tag-pill" style="background:rgba(161,117,252,0.12);border:1px solid rgba(161,117,252,0.25);color:var(--accent);font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;cursor:pointer;font-family:'Inter',sans-serif">Support</button>
-            <button onclick="toggleTag(this,'Promotion')" class="tag-pill" style="background:rgba(161,117,252,0.12);border:1px solid rgba(161,117,252,0.25);color:var(--accent);font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;cursor:pointer;font-family:'Inter',sans-serif">Promotion</button>
-            <button onclick="toggleTag(this,'Important')" class="tag-pill" style="background:rgba(161,117,252,0.12);border:1px solid rgba(161,117,252,0.25);color:var(--accent);font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;cursor:pointer;font-family:'Inter',sans-serif">Important</button>
-            <button onclick="toggleTag(this,'Newsletter')" class="tag-pill" style="background:rgba(161,117,252,0.12);border:1px solid rgba(161,117,252,0.25);color:var(--accent);font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;cursor:pointer;font-family:'Inter',sans-serif">Newsletter</button>
-            <button onclick="toggleTag(this,'Cold Outreach')" class="tag-pill" style="background:rgba(161,117,252,0.12);border:1px solid rgba(161,117,252,0.25);color:var(--accent);font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;cursor:pointer;font-family:'Inter',sans-serif">Cold Outreach</button>
+            <button onclick="toggleTag(this,'Follow-up')" class="tag-pill" style="background:rgba(48,136,255,0.12);border:1px solid rgba(48,136,255,0.25);color:var(--accent);font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;cursor:pointer;font-family:'Inter',sans-serif">Follow-up</button>
+            <button onclick="toggleTag(this,'Support')" class="tag-pill" style="background:rgba(48,136,255,0.12);border:1px solid rgba(48,136,255,0.25);color:var(--accent);font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;cursor:pointer;font-family:'Inter',sans-serif">Support</button>
+            <button onclick="toggleTag(this,'Promotion')" class="tag-pill" style="background:rgba(48,136,255,0.12);border:1px solid rgba(48,136,255,0.25);color:var(--accent);font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;cursor:pointer;font-family:'Inter',sans-serif">Promotion</button>
+            <button onclick="toggleTag(this,'Important')" class="tag-pill" style="background:rgba(48,136,255,0.12);border:1px solid rgba(48,136,255,0.25);color:var(--accent);font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;cursor:pointer;font-family:'Inter',sans-serif">Important</button>
+            <button onclick="toggleTag(this,'Newsletter')" class="tag-pill" style="background:rgba(48,136,255,0.12);border:1px solid rgba(48,136,255,0.25);color:var(--accent);font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;cursor:pointer;font-family:'Inter',sans-serif">Newsletter</button>
+            <button onclick="toggleTag(this,'Cold Outreach')" class="tag-pill" style="background:rgba(48,136,255,0.12);border:1px solid rgba(48,136,255,0.25);color:var(--accent);font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;cursor:pointer;font-family:'Inter',sans-serif">Cold Outreach</button>
           </div>
           <div style="display:flex;gap:8px">
             <input id="compose-tag-input" type="text" placeholder="Custom tag..." onkeydown="if(event.key==='Enter'){event.preventDefault();addCustomTag()}" style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-family:'Inter',sans-serif;font-size:12px;outline:none">
@@ -5309,7 +5309,7 @@
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
           <div style="width:8px;height:8px;border-radius:50%;background:var(--accent);flex-shrink:0"></div>
           <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--muted)">Needs Check</div>
-          <span id="qc-badge-new" style="margin-left:auto;background:rgba(161,117,252,0.2);color:var(--accent);font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px">0</span>
+          <span id="qc-badge-new" style="margin-left:auto;background:rgba(48,136,255,0.2);color:var(--accent);font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px">0</span>
         </div>
         <div id="qc-col-new" style="display:flex;flex-direction:column;gap:10px;min-height:60px"></div>
       </div>
@@ -5411,7 +5411,7 @@ function chartTheme() {
     text:   dark ? 'rgba(255,255,255,0.55)' : '#6b5f8a',
     grid:   dark ? 'rgba(255,255,255,0.05)' : 'rgba(100,80,200,0.07)',
     font:   'Inter',
-    accent: dark ? '#A175FC' : '#7c3aed',
+    accent: dark ? '#3088FF' : '#7c3aed',
     danger: dark ? '#ff6b8a' : '#dc2626',
     green:  dark ? '#4ecca3' : '#16a34a',
     warn:   dark ? '#ffd166' : '#d97706',
@@ -5565,7 +5565,7 @@ function initMonthlyChart() {
           data: [2.8, 3.1, 4.2, 3.6, 2.8, 4.6],
           backgroundColor: function(ctx) {
             const v = ctx.raw;
-            return v >= 4 ? 'rgba(255,107,138,0.7)' : v >= 3.5 ? 'rgba(255,209,102,0.7)' : 'rgba(161,117,252,0.6)';
+            return v >= 4 ? 'rgba(255,107,138,0.7)' : v >= 3.5 ? 'rgba(255,209,102,0.7)' : 'rgba(48,136,255,0.6)';
           },
           borderRadius: 6,
           borderSkipped: false,
@@ -5677,7 +5677,7 @@ function initDeliveryChart() {
           label: 'Avg delivery (days)',
           data: [14.2, 13.8, 15.1, 12.9, 12.1, 11.0],
           borderColor: t.accent,
-          backgroundColor: 'rgba(161,117,252,0.1)',
+          backgroundColor: 'rgba(48,136,255,0.1)',
           borderWidth: 2, pointRadius: 4,
           pointBackgroundColor: t.accent, fill: true, tension: 0.4,
         },
@@ -5861,7 +5861,7 @@ function initHomeChart() {
         data: [3.1, 2.8, 3.4, 3.9, 4.2, 4.6],
         backgroundColor: function(context) {
           const val = context.dataset.data[context.dataIndex];
-          return val >= 4.0 ? 'rgba(255,107,138,0.7)' : val >= 3.5 ? 'rgba(255,209,102,0.7)' : 'rgba(161,117,252,0.5)';
+          return val >= 4.0 ? 'rgba(255,107,138,0.7)' : val >= 3.5 ? 'rgba(255,209,102,0.7)' : 'rgba(48,136,255,0.5)';
         },
         borderRadius: 6,
       }]
@@ -5968,7 +5968,7 @@ function initGlobe() {
       if (i === 0) ctx.moveTo(p.x, p.y)
       else ctx.lineTo(p.x, p.y)
     }
-    ctx.strokeStyle = `rgba(161,117,252,${alpha * 0.6})`
+    ctx.strokeStyle = `rgba(48,136,255,${alpha * 0.6})`
     ctx.lineWidth = 1
     ctx.stroke()
   }
@@ -5978,7 +5978,7 @@ function initGlobe() {
 
     // Outer glow
     const grad = ctx.createRadialGradient(cx, cy, r * 0.7, cx, cy, r * 1.2)
-    grad.addColorStop(0, 'rgba(161,117,252,0.06)')
+    grad.addColorStop(0, 'rgba(48,136,255,0.06)')
     grad.addColorStop(1, 'transparent')
     ctx.fillStyle = grad
     ctx.beginPath()
@@ -5988,7 +5988,7 @@ function initGlobe() {
     // Globe outline
     ctx.beginPath()
     ctx.arc(cx, cy, r, 0, Math.PI * 2)
-    ctx.strokeStyle = 'rgba(161,117,252,0.2)'
+    ctx.strokeStyle = 'rgba(48,136,255,0.2)'
     ctx.lineWidth = 1
     ctx.stroke()
 
@@ -6004,7 +6004,7 @@ function initGlobe() {
         if (!started) { ctx.moveTo(p.x, p.y); started = true }
         else ctx.lineTo(p.x, p.y)
       }
-      ctx.strokeStyle = 'rgba(161,117,252,0.1)'
+      ctx.strokeStyle = 'rgba(48,136,255,0.1)'
       ctx.lineWidth = 0.5
       ctx.stroke()
     }
@@ -6021,7 +6021,7 @@ function initGlobe() {
         if (!started) { ctx.moveTo(p.x, p.y); started = true }
         else ctx.lineTo(p.x, p.y)
       }
-      ctx.strokeStyle = 'rgba(161,117,252,0.08)'
+      ctx.strokeStyle = 'rgba(48,136,255,0.08)'
       ctx.lineWidth = 0.5
       ctx.stroke()
     }
@@ -6033,7 +6033,7 @@ function initGlobe() {
       const a = d.alpha * Math.max(0, p.z)
       ctx.beginPath()
       ctx.arc(p.x, p.y, d.size * p.z, 0, Math.PI * 2)
-      ctx.fillStyle = `rgba(161,117,252,${a})`
+      ctx.fillStyle = `rgba(48,136,255,${a})`
       ctx.fill()
     })
 
@@ -6236,7 +6236,7 @@ function renderTimeSummaryCards(agents) {
   return agents.map(a => {
     const total = a.total_active + a.total_idle
     const initial = (a.name || '?')[0].toUpperCase()
-    const palette = ['#A175FC','#7c4fe0','#4ecca3','#f59e0b','#ef4444']
+    const palette = ['#3088FF','#7c4fe0','#4ecca3','#f59e0b','#ef4444']
     const ci = a.name.charCodeAt(0) % palette.length
     const idlePct = total > 0 ? Math.round((a.total_idle / total) * 100) : 0
     return `<div class="card" style="padding:16px">
@@ -6424,7 +6424,7 @@ function renderAgentCard(stat) {
     : stat.emails_per_ticket <= 4.0 ? 'var(--warn)'
     : 'var(--danger)'
   const initial = (stat.name || '?')[0].toUpperCase()
-  const palette = ['#A175FC','#7c4fe0','#4ecca3','#f59e0b','#ef4444']
+  const palette = ['#3088FF','#7c4fe0','#4ecca3','#f59e0b','#ef4444']
   const ci = stat.name.charCodeAt(0) % palette.length
   const isGreen = ci === 2
   const statusBadge = respOk
@@ -6437,7 +6437,7 @@ function renderAgentCard(stat) {
 
   return `<div class="agent-card">
     <div class="agent-header">
-      <div class="agent-avatar" style="background:${palette[ci]};${isGreen ? 'color:#1C0F36' : ''}">${initial}</div>
+      <div class="agent-avatar" style="background:${palette[ci]};${isGreen ? 'color:#08101F' : ''}">${initial}</div>
       <div>
         <div class="agent-name">${stat.name}</div>
         <div class="agent-role">Agent · ${stat.email}</div>
@@ -6589,7 +6589,7 @@ async function loadBroadcasts() {
     if (!feed) return
 
     const typeIcon = { update: '📢', tip: '💡', video: '▶️', industry: '🚨' }
-    const typeColor = { update: 'rgba(161,117,252,0.1)', tip: 'rgba(78,204,163,0.08)', video: 'rgba(255,107,138,0.08)', industry: 'rgba(255,209,102,0.08)' }
+    const typeColor = { update: 'rgba(48,136,255,0.1)', tip: 'rgba(78,204,163,0.08)', video: 'rgba(255,107,138,0.08)', industry: 'rgba(255,209,102,0.08)' }
     const typeBadge = { update: 'Update', tip: 'Tip', video: 'Video', industry: 'Industry Update' }
 
     feed.innerHTML = data.map(b => {
@@ -6691,7 +6691,7 @@ async function loadInbox() {
   list.innerHTML = data.threads.map(t => {
     const fromName = t.from ? t.from.replace(/<.*>/, '').trim() || t.from : '—'
     const date = t.date ? new Date(t.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : ''
-    return '<div style="padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;gap:10px;transition:background 0.1s" onmouseover="this.style.background=\'rgba(161,117,252,0.06)\'" onmouseout="this.style.background=\'transparent\'">'
+    return '<div style="padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;gap:10px;transition:background 0.1s" onmouseover="this.style.background=\'rgba(48,136,255,0.06)\'" onmouseout="this.style.background=\'transparent\'">'
       + '<input type="checkbox" class="thread-checkbox" onchange="toggleThreadSelect(\'' + t.id + '\',this.checked)" style="accent-color:var(--accent);margin-top:3px;cursor:pointer;flex-shrink:0;width:14px;height:14px">'
       + '<div style="flex:1;min-width:0;cursor:pointer" onclick="openThread(' + JSON.stringify(t).replace(/"/g, '&quot;') + ')">'
       + '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:3px">'
@@ -6798,7 +6798,7 @@ function markThreadClosed() {
   if (!badge) return
   const isClosed = badge.textContent === 'closed'
   badge.textContent = isClosed ? 'open' : 'closed'
-  badge.style.background = isClosed ? 'rgba(161,117,252,0.12)' : 'rgba(78,204,163,0.12)'
+  badge.style.background = isClosed ? 'rgba(48,136,255,0.12)' : 'rgba(78,204,163,0.12)'
   badge.style.color = isClosed ? 'var(--accent)' : 'var(--green)'
 }
 
@@ -6807,7 +6807,7 @@ function addTicketTag() {
   if (!tag) return
   const container = document.getElementById('ticket-tags')
   const pill = document.createElement('span')
-  pill.style.cssText = 'font-size:11px;font-weight:600;padding:3px 8px;border-radius:5px;background:rgba(161,117,252,0.12);color:var(--accent);cursor:pointer;display:flex;align-items:center;gap:4px'
+  pill.style.cssText = 'font-size:11px;font-weight:600;padding:3px 8px;border-radius:5px;background:rgba(48,136,255,0.12);color:var(--accent);cursor:pointer;display:flex;align-items:center;gap:4px'
   pill.innerHTML = tag + ' <span onclick="this.parentElement.remove()" style="opacity:0.6;font-size:12px">×</span>'
   container.appendChild(pill)
 }
@@ -7032,7 +7032,7 @@ async function loadSent() {
   list.innerHTML = data.emails.map(e => {
     const date = e.sent_at ? new Date(e.sent_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : ''
     const tagHtml = (e.tags || []).map(t =>
-      '<span style="background:rgba(161,117,252,0.15);color:var(--accent);font-size:10px;font-weight:600;padding:2px 7px;border-radius:20px">' + t + '</span>'
+      '<span style="background:rgba(48,136,255,0.15);color:var(--accent);font-size:10px;font-weight:600;padding:2px 7px;border-radius:20px">' + t + '</span>'
     ).join('')
     return '<div style="padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;gap:10px">'
       + '<input type="checkbox" class="thread-checkbox" onchange="toggleThreadSelect(\'' + e.id + '\',this.checked)" style="accent-color:var(--accent);margin-top:3px;cursor:pointer;flex-shrink:0;width:14px;height:14px">'
@@ -7056,7 +7056,7 @@ function openSentDetail(email) {
   const tags = (email.tags || [])
   document.getElementById('detail-date').textContent = email.sent_at ? new Date(email.sent_at).toLocaleString('en-GB') : ''
   const tagHtml = tags.length ? '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px">'
-    + tags.map(t => '<span style="background:rgba(161,117,252,0.15);color:var(--accent);font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px">' + t + '</span>').join('')
+    + tags.map(t => '<span style="background:rgba(48,136,255,0.15);color:var(--accent);font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px">' + t + '</span>').join('')
     + '</div>' : ''
   document.getElementById('detail-body').innerHTML = '<div style="font-size:13px;line-height:1.7;color:var(--text)">' + (email.body || '') + '</div>' + tagHtml
   document.getElementById('reply-box').style.display = 'none'
@@ -7078,8 +7078,8 @@ function openCompose() {
   document.getElementById('compose-send-btn').disabled = false
   // Reset tag pills
   document.querySelectorAll('.tag-pill').forEach(p => {
-    p.style.background = 'rgba(161,117,252,0.12)'
-    p.style.borderColor = 'rgba(161,117,252,0.25)'
+    p.style.background = 'rgba(48,136,255,0.12)'
+    p.style.borderColor = 'rgba(48,136,255,0.25)'
     p.style.color = 'var(--accent)'
   })
   const overlay = document.getElementById('compose-overlay')
@@ -7104,8 +7104,8 @@ function toggleTag(btn, tag) {
     btn.style.color = '#fff'
   } else {
     _composeTags.splice(idx, 1)
-    btn.style.background = 'rgba(161,117,252,0.12)'
-    btn.style.borderColor = 'rgba(161,117,252,0.25)'
+    btn.style.background = 'rgba(48,136,255,0.12)'
+    btn.style.borderColor = 'rgba(48,136,255,0.25)'
     btn.style.color = 'var(--accent)'
   }
   renderSelectedTags()
@@ -7125,8 +7125,8 @@ function removeTag(tag) {
   // Un-highlight preset pill if it matches
   document.querySelectorAll('.tag-pill').forEach(p => {
     if (p.getAttribute('onclick').includes("'" + tag + "'")) {
-      p.style.background = 'rgba(161,117,252,0.12)'
-      p.style.borderColor = 'rgba(161,117,252,0.25)'
+      p.style.background = 'rgba(48,136,255,0.12)'
+      p.style.borderColor = 'rgba(48,136,255,0.25)'
       p.style.color = 'var(--accent)'
     }
   })
@@ -7136,7 +7136,7 @@ function removeTag(tag) {
 function renderSelectedTags() {
   const wrap = document.getElementById('compose-selected-tags')
   wrap.innerHTML = _composeTags.map(tag =>
-    '<span style="display:inline-flex;align-items:center;gap:5px;background:rgba(161,117,252,0.2);color:var(--accent);font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px">'
+    '<span style="display:inline-flex;align-items:center;gap:5px;background:rgba(48,136,255,0.2);color:var(--accent);font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px">'
     + tag
     + '<span onclick="removeTag(\'' + tag.replace(/'/g, "\\'") + '\')" style="cursor:pointer;opacity:0.7;font-size:13px;line-height:1">&times;</span>'
     + '</span>'
@@ -7255,7 +7255,7 @@ async function loadAgents() {
 
   list.innerHTML = data.agents.map(a => {
     const initials = a.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase()
-    const colors = { observer:'#6b5f8a', lite:'#A175FC', basic:'#A175FC', lead:'#d97706', admin:'#dc2626' }
+    const colors = { observer:'#6b5f8a', lite:'#3088FF', basic:'#3088FF', lead:'#d97706', admin:'#dc2626' }
     const bg = colors[a.role] || 'var(--accent)'
     return `<div class="agent-row">
       <div class="agent-avatar" style="background:${bg}">${initials}</div>
@@ -7337,7 +7337,7 @@ showPage = function(id, el) {
     return '<div style="' + S + 'border-left:3px solid ' + borderColor + '">'
       + '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:6px;margin-bottom:8px">'
       + '<div style="font-size:13px;font-weight:700;line-height:1.3">' + p.name + '</div>'
-      + '<span style="background:rgba(161,117,252,0.15);color:var(--accent);font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px;white-space:nowrap;flex-shrink:0">' + p.sales + ' sales</span>'
+      + '<span style="background:rgba(48,136,255,0.15);color:var(--accent);font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px;white-space:nowrap;flex-shrink:0">' + p.sales + ' sales</span>'
       + '</div>';
   }
 
@@ -8037,7 +8037,7 @@ function showShopifyActionFeedback(modalId, message) {
   closeShopifyModal(modalId)
   // Show a toast
   const toast = document.createElement('div')
-  toast.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#241352;border:1px solid rgba(161,117,252,0.3);color:#fff;font-size:12px;font-weight:600;padding:10px 20px;border-radius:10px;z-index:9999;box-shadow:0 8px 24px rgba(0,0,0,0.4);white-space:nowrap;font-family:\'Inter\',sans-serif'
+  toast.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#0D1829;border:1px solid rgba(48,136,255,0.3);color:#fff;font-size:12px;font-weight:600;padding:10px 20px;border-radius:10px;z-index:9999;box-shadow:0 8px 24px rgba(0,0,0,0.4);white-space:nowrap;font-family:\'Inter\',sans-serif'
   toast.textContent = message
   document.body.appendChild(toast)
   setTimeout(() => toast.remove(), 3500)

@@ -28,7 +28,7 @@ export default function LoginPage() {
   return (
     <div style={{
       minHeight: '100vh',
-      background: '#1C0F36',
+      background: '#08101F',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
@@ -42,7 +42,7 @@ export default function LoginPage() {
         transform: 'translateX(-50%)',
         width: '600px',
         height: '400px',
-        background: 'radial-gradient(ellipse, rgba(161,117,252,0.08) 0%, transparent 70%)',
+        background: 'radial-gradient(ellipse, rgba(48,136,255,0.08) 0%, transparent 70%)',
         pointerEvents: 'none',
       }} />
 
@@ -61,7 +61,7 @@ export default function LoginPage() {
 
         {/* Card */}
         <div style={{
-          background: '#241352',
+          background: '#0D1829',
           border: '1px solid rgba(255,255,255,0.07)',
           borderRadius: '16px',
           padding: '32px',
@@ -135,7 +135,7 @@ export default function LoginPage() {
               style={{
                 width: '100%',
                 padding: '12px',
-                background: loading ? 'rgba(161,117,252,0.5)' : '#A175FC',
+                background: loading ? 'rgba(48,136,255,0.5)' : '#3088FF',
                 color: '#fff',
                 borderRadius: '8px',
                 fontSize: '14px',

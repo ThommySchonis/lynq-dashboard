@@ -33,18 +33,18 @@ export default function SignupPage() {
 
   return (
     <div style={{
-      minHeight: '100vh', background: '#1C0F36',
+      minHeight: '100vh', background: '#08101F',
       display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px',
     }}>
-      <div style={{ position: 'fixed', top: '20%', left: '50%', transform: 'translateX(-50%)', width: '600px', height: '400px', background: 'radial-gradient(ellipse, rgba(161,117,252,0.07) 0%, transparent 70%)', pointerEvents: 'none' }} />
+      <div style={{ position: 'fixed', top: '20%', left: '50%', transform: 'translateX(-50%)', width: '600px', height: '400px', background: 'radial-gradient(ellipse, rgba(48,136,255,0.07) 0%, transparent 70%)', pointerEvents: 'none' }} />
 
       <div style={{ width: '100%', maxWidth: '400px', position: 'relative' }}>
         <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-          <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#A175FC', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px', fontWeight: '700', color: '#fff', margin: '0 auto 12px' }}>L</div>
+          <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#3088FF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px', fontWeight: '700', color: '#fff', margin: '0 auto 12px' }}>L</div>
           <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.4)' }}>Create your Lynq account</div>
         </div>
 
-        <div style={{ background: '#241352', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '16px', padding: '32px' }}>
+        <div style={{ background: '#0D1829', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '16px', padding: '32px' }}>
           {success ? (
             <div style={{ textAlign: 'center' }}>
               <div style={{ fontSize: '32px', marginBottom: '12px' }}>✉️</div>
@@ -73,7 +73,7 @@ export default function SignupPage() {
 
               <button type="submit" disabled={loading} style={{
                 width: '100%', padding: '12px',
-                background: loading ? 'rgba(161,117,252,0.5)' : '#A175FC',
+                background: loading ? 'rgba(48,136,255,0.5)' : '#3088FF',
                 color: '#fff', borderRadius: '8px', fontSize: '14px', fontWeight: '600',
                 cursor: loading ? 'not-allowed' : 'pointer',
               }}>
@@ -85,7 +85,7 @@ export default function SignupPage() {
 
         <div style={{ textAlign: 'center', marginTop: '20px', fontSize: '13px', color: 'rgba(255,255,255,0.35)' }}>
           Already have an account?{' '}
-          <a href="/login" style={{ color: '#A175FC', textDecoration: 'none' }}>Sign in</a>
+          <a href="/login" style={{ color: '#3088FF', textDecoration: 'none' }}>Sign in</a>
         </div>
       </div>
     </div>

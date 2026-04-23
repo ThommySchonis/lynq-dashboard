@@ -36,7 +36,7 @@ export default function Sidebar() {
       <div style={{ marginBottom: '24px', padding: '4px' }}>
         <div style={{
           width: '32px', height: '32px', borderRadius: '8px',
-          background: '#A175FC',
+          background: '#3088FF',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           fontSize: '14px', fontWeight: '700', color: '#fff',
         }}>L</div>
@@ -55,7 +55,7 @@ export default function Sidebar() {
                 width: '40px', height: '40px', borderRadius: '10px',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontSize: '18px',
-                background: active ? 'rgba(161,117,252,0.2)' : 'transparent',
+                background: active ? 'rgba(48,136,255,0.2)' : 'transparent',
                 textDecoration: 'none',
                 transition: 'all 0.15s ease',
                 opacity: active ? 1 : 0.45,

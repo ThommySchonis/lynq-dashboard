@@ -34,12 +34,7 @@ export default function Sidebar() {
     }}>
       {/* Logo */}
       <div style={{ marginBottom: '24px', padding: '4px' }}>
-        <div style={{
-          width: '32px', height: '32px', borderRadius: '8px',
-          background: '#3088FF',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: '14px', fontWeight: '700', color: '#fff',
-        }}>L</div>
+        <img src="/logo-icon.png" alt="Lynq" style={{ width: '32px', height: '32px', objectFit: 'contain' }} />
       </div>
 
       {/* Nav */}

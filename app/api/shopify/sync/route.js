@@ -25,8 +25,15 @@ export async function POST(request) {
       .eq('client_id', user.id)
   }
 
+  // Only sync last 90 days by default — historical data is already in DB
+  const { searchParams } = await new URL(request.url)
+  const fullSync = searchParams.get('full') === 'true'
+  const since = fullSync
+    ? ''
+    : `&processed_at_min=${new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString()}`
+
   let orders = []
-  let url = `https://${client.domain}/admin/api/2024-01/orders.json?status=any&limit=250`
+  let url = `https://${client.domain}/admin/api/2024-01/orders.json?status=any&limit=250${since}`
 
   while (url) {
     const res = await fetch(url, { headers: { 'X-Shopify-Access-Token': client.accessToken } })

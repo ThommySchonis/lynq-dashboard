@@ -14,29 +14,11 @@ export async function POST(request) {
     return NextResponse.json({ error: 'Admin only', email: caller?.email ?? null }, { status: 403 })
   }
 
-  // 1. Create demo auth user
-  const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
-    email: DEMO_EMAIL,
-    password: DEMO_PASSWORD,
-    email_confirm: true,
-  })
+  const body = await request.json().catch(() => ({}))
+  const userId = body.user_id
+  if (!userId) return NextResponse.json({ error: 'Missing user_id in body' }, { status: 400 })
 
-  let userId
-  if (authError) {
-    if (authError.message?.includes('already been registered')) {
-      // User exists — fetch the ID
-      const { data: existing } = await supabaseAdmin.auth.admin.listUsers()
-      const found = existing?.users?.find(u => u.email === DEMO_EMAIL)
-      if (!found) return NextResponse.json({ error: 'User exists but could not find ID' }, { status: 500 })
-      userId = found.id
-    } else {
-      return NextResponse.json({ error: authError.message }, { status: 500 })
-    }
-  } else {
-    userId = authData.user.id
-  }
-
-  // 2. Insert/update integrations row (marks Shopify as connected)
+  // 1. Insert/update integrations row (marks Shopify as connected)
   await supabaseAdmin.from('integrations').upsert({
     client_id: userId,
     shopify_domain: DEMO_SHOP,
@@ -53,7 +35,6 @@ export async function POST(request) {
     success: true,
     userId,
     email: DEMO_EMAIL,
-    password: DEMO_PASSWORD,
     shop: DEMO_SHOP,
     ordersSeeded: rows.length,
   })

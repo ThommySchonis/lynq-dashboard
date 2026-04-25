@@ -1,14 +1,16 @@
-import { supabaseAdmin, getUserFromToken } from '../../../../lib/supabaseAdmin'
+import { supabaseAdmin } from '../../../../lib/supabaseAdmin'
 import { DEMO_SHOP, DEMO_EMAIL, DEMO_PASSWORD, getDemoShopifyOrderRows } from '../../../../lib/demoData'
 import { NextResponse } from 'next/server'
+
+const ADMIN_EMAIL = 'info@lynqagency.com'
 
 export async function POST(request) {
   const authHeader = request.headers.get('authorization')
   if (!authHeader) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const token = authHeader.replace('Bearer ', '')
-  const caller = await getUserFromToken(token)
-  if (!caller || caller.email !== 'info@lynqagency.com') {
+  const { data: { user } } = await supabaseAdmin.auth.getUser(token)
+  if (!user || user.email !== ADMIN_EMAIL) {
     return NextResponse.json({ error: 'Admin only' }, { status: 403 })
   }
 

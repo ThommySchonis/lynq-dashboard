@@ -1,5 +1,6 @@
 import { getUserFromToken } from '../../../../lib/supabaseAdmin'
 import { getShopifyCredentials } from '../../../../lib/shopifyCredentials'
+import { DEMO_SHOP, DEMO_REFUNDS } from '../../../../lib/demoData'
 import { NextResponse } from 'next/server'
 
 export async function GET(request) {
@@ -12,6 +13,10 @@ export async function GET(request) {
 
   const client = await getShopifyCredentials(user.id, user.email)
   if (!client) return NextResponse.json({ error: 'Shopify not configured' }, { status: 400 })
+
+  if (client.domain === DEMO_SHOP) {
+    return NextResponse.json({ refunds: DEMO_REFUNDS })
+  }
 
   try {
     const res = await fetch(

@@ -73,7 +73,16 @@ export default function OnboardingPage() {
   async function connectShopify() {
     if (!shopifyStore) return
     const { data: { session } } = await supabase.auth.getSession()
-    window.location.href = `/api/auth/shopify?shop=${shopifyStore}&token=${session.access_token}`
+    const res = await fetch('/api/auth/shopify', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({ shop: shopifyStore }),
+    })
+    const data = await res.json()
+    if (data.url) window.location.href = data.url
   }
 
   async function connectGmail() {

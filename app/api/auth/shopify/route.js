@@ -120,8 +120,8 @@ export async function OPTIONS() {
 }
 
 // POST /api/auth/shopify
-// Body: { shop, clientId, clientSecret }
-// Each client uses their own Shopify app credentials — no distribution restrictions
+// Body: { shop }
+// Uses shared Lynq Partner App credentials — no per-client credentials needed
 export async function POST(request) {
   const authHeader = request.headers.get('authorization')
   if (!authHeader) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -130,9 +130,12 @@ export async function POST(request) {
   const user = await getUserFromToken(token)
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { shop, clientId, clientSecret } = await request.json()
-  if (!shop || !clientId || !clientSecret) {
-    return NextResponse.json({ error: 'Shop domain, Client ID and Client Secret are required' }, { status: 400 })
+  const clientId = process.env.SHOPIFY_CLIENT_ID
+  if (!clientId) return NextResponse.json({ error: 'Shopify app not configured' }, { status: 500 })
+
+  const { shop } = await request.json()
+  if (!shop) {
+    return NextResponse.json({ error: 'Shop domain is required' }, { status: 400 })
   }
 
   const shopDomain = shop.includes('.myshopify.com')
@@ -146,8 +149,6 @@ export async function POST(request) {
     state,
     user_id: user.id,
     shop: shopDomain,
-    client_id: clientId,
-    client_secret: clientSecret,
     expires_at: expiresAt,
   })
 

@@ -1,4 +1,4 @@
-import { supabaseAdmin } from '../../../../lib/supabaseAdmin'
+import { supabaseAdmin, getUserFromToken } from '../../../../lib/supabaseAdmin'
 import { DEMO_SHOP, DEMO_EMAIL, DEMO_PASSWORD, getDemoShopifyOrderRows } from '../../../../lib/demoData'
 import { NextResponse } from 'next/server'
 
@@ -9,9 +9,9 @@ export async function POST(request) {
   if (!authHeader) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const token = authHeader.replace('Bearer ', '')
-  const { data: { user } } = await supabaseAdmin.auth.getUser(token)
-  if (!user || user.email !== ADMIN_EMAIL) {
-    return NextResponse.json({ error: 'Admin only' }, { status: 403 })
+  const caller = await getUserFromToken(token)
+  if (!caller || caller.email !== ADMIN_EMAIL) {
+    return NextResponse.json({ error: 'Admin only', email: caller?.email ?? null }, { status: 403 })
   }
 
   // 1. Create demo auth user

@@ -291,17 +291,19 @@ const CSS = `
     -webkit-backdrop-filter: blur(12px);
   }
   .msg-out {
-    background: linear-gradient(145deg, #6B3FC4 0%, #4A2893 100%);
-    border: 1px solid rgba(161,117,252,0.5);
-    border-top: 1px solid rgba(255,255,255,0.18);
+    background: linear-gradient(145deg, rgba(80,40,160,0.72) 0%, rgba(45,18,105,0.82) 100%);
+    border: 1px solid rgba(161,117,252,0.28);
+    border-top: 1px solid rgba(255,255,255,0.1);
     border-radius: 18px 3px 18px 18px;
     padding: 15px 18px;
     font-size: 13.5px;
     line-height: 1.82;
-    color: rgba(255,255,255,0.97);
+    color: rgba(240,236,249,0.95);
     white-space: pre-wrap;
     word-break: break-word;
-    box-shadow: 0 8px 40px rgba(107,63,196,0.45), inset 0 1px 0 rgba(255,255,255,0.15), inset 0 -1px 0 rgba(0,0,0,0.2);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0 8px 40px rgba(60,20,140,0.35), inset 0 1px 0 rgba(255,255,255,0.09), inset 0 -1px 0 rgba(0,0,0,0.25);
   }
   .msg-note {
     background: linear-gradient(145deg, rgba(251,191,36,0.1) 0%, rgba(251,191,36,0.05) 100%);
@@ -1507,7 +1509,7 @@ export default function InboxPage() {
 
       {/* ═══════════════ RIGHT: Customer panel ═══════════════ */}
       {selected&&(
-        <div className="sscroll" style={{width:320,borderLeft:'1px solid rgba(255,255,255,0.07)',display:'flex',flexDirection:'column',flexShrink:0,overflowY:'auto',background:'rgba(10,4,28,0.48)',backdropFilter:'blur(24px)',WebkitBackdropFilter:'blur(24px)'}}>
+        <div className="sscroll" style={{width:320,borderLeft:'1px solid rgba(255,255,255,0.07)',display:'flex',flexDirection:'column',flexShrink:0,overflowY:'auto',background:'rgba(10,4,28,0.68)',backdropFilter:'blur(24px)',WebkitBackdropFilter:'blur(24px)'}}>
 
           {/* Customer header */}
           <div style={{padding:'16px 16px 12px',borderBottom:'1px solid rgba(255,255,255,0.055)',flexShrink:0}}>

@@ -108,6 +108,10 @@ const CSS = `
     0%,100% { transform:translate(0,0) scale(1);             opacity:.6; }
     45%      { transform:translate(-55px,-50px) scale(1.3);  opacity:.8; }
   }
+  @keyframes auroraE {
+    0%,100% { transform:translate(0,0) scale(1);          opacity:.6; }
+    60%      { transform:translate(75px,35px) scale(1.2); opacity:.85; }
+  }
 
   .ir * { box-sizing:border-box; margin:0; padding:0; }
   .ir { font-family:var(--font-rethink),-apple-system,BlinkMacSystemFont,'Inter',sans-serif; -webkit-font-smoothing:antialiased; }
@@ -1179,24 +1183,28 @@ export default function InboxPage() {
 
       {/* ── Aurora background ── */}
       <div aria-hidden style={{position:'absolute',inset:0,overflow:'hidden',pointerEvents:'none',zIndex:0}}>
-        {/* Layer 1 — brand purple bloom, top-center */}
-        <div style={{position:'absolute',top:'-20%',left:'18%',width:820,height:720,borderRadius:'50%',background:'radial-gradient(ellipse,rgba(161,117,252,0.42) 0%,rgba(124,58,237,0.18) 40%,rgba(109,40,217,0.06) 62%,transparent 75%)',animation:'auroraA 24s ease-in-out infinite',filter:'blur(60px)'}} />
-        {/* Layer 2 — deep violet, bottom-right */}
-        <div style={{position:'absolute',bottom:'-10%',right:'5%',width:600,height:600,borderRadius:'50%',background:'radial-gradient(ellipse,rgba(107,63,196,0.32) 0%,rgba(75,40,148,0.12) 48%,transparent 70%)',animation:'auroraB 32s ease-in-out infinite',filter:'blur(55px)'}} />
-        {/* Layer 3 — rose tint, left mid */}
-        <div style={{position:'absolute',top:'35%',left:'-8%',width:480,height:480,borderRadius:'50%',background:'radial-gradient(ellipse,rgba(251,113,133,0.16) 0%,rgba(244,63,94,0.05) 52%,transparent 72%)',animation:'auroraC 36s ease-in-out infinite',filter:'blur(52px)'}} />
-        {/* Layer 4 — violet spark, top-left */}
-        <div style={{position:'absolute',top:'4%',left:'4%',width:340,height:340,borderRadius:'50%',background:'radial-gradient(ellipse,rgba(139,92,246,0.36) 0%,rgba(109,40,217,0.12) 52%,transparent 74%)',animation:'auroraD 20s ease-in-out infinite',filter:'blur(44px)'}} />
+        {/* Layer 1 — massive brand purple bloom, top-center */}
+        <div style={{position:'absolute',top:'-25%',left:'12%',width:1000,height:900,borderRadius:'50%',background:'radial-gradient(ellipse,rgba(161,117,252,0.62) 0%,rgba(124,58,237,0.32) 38%,rgba(109,40,217,0.1) 60%,transparent 74%)',animation:'auroraA 22s ease-in-out infinite',filter:'blur(55px)'}} />
+        {/* Layer 2 — warm amber/orange, bottom-right */}
+        <div style={{position:'absolute',bottom:'-18%',right:'-5%',width:760,height:760,borderRadius:'50%',background:'radial-gradient(ellipse,rgba(251,146,60,0.42) 0%,rgba(251,191,36,0.18) 44%,transparent 68%)',animation:'auroraB 30s ease-in-out infinite',filter:'blur(52px)'}} />
+        {/* Layer 3 — rose/pink, left mid */}
+        <div style={{position:'absolute',top:'30%',left:'-12%',width:620,height:620,borderRadius:'50%',background:'radial-gradient(ellipse,rgba(251,113,133,0.32) 0%,rgba(244,63,94,0.1) 50%,transparent 70%)',animation:'auroraC 34s ease-in-out infinite',filter:'blur(50px)'}} />
+        {/* Layer 4 — deep violet spark, top-left */}
+        <div style={{position:'absolute',top:'2%',left:'3%',width:420,height:420,borderRadius:'50%',background:'radial-gradient(ellipse,rgba(139,92,246,0.55) 0%,rgba(109,40,217,0.22) 50%,transparent 72%)',animation:'auroraD 19s ease-in-out infinite',filter:'blur(42px)'}} />
+        {/* Layer 5 — amber spark, top right */}
+        <div style={{position:'absolute',top:'6%',right:'6%',width:320,height:320,borderRadius:'50%',background:'radial-gradient(ellipse,rgba(251,191,36,0.32) 0%,rgba(245,158,11,0.12) 50%,transparent 70%)',animation:'auroraC 28s ease-in-out infinite reverse',filter:'blur(42px)'}} />
+        {/* Layer 6 — extra deep purple pulse center-bottom */}
+        <div style={{position:'absolute',bottom:'10%',left:'30%',width:500,height:500,borderRadius:'50%',background:'radial-gradient(ellipse,rgba(107,63,196,0.38) 0%,rgba(75,40,148,0.14) 48%,transparent 70%)',animation:'auroraB 26s ease-in-out infinite reverse',filter:'blur(58px)'}} />
         {/* Subtle grid */}
-        <div style={{position:'absolute',inset:0,backgroundImage:'linear-gradient(rgba(255,255,255,0.014) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.014) 1px,transparent 1px)',backgroundSize:'72px 72px',maskImage:'radial-gradient(ellipse 95% 90% at 50% 25%, black 20%, transparent 100%)'}} />
-        {/* Edge vignette */}
-        <div style={{position:'absolute',inset:0,background:'radial-gradient(ellipse 120% 110% at 50% 50%, transparent 28%, rgba(10,5,32,0.5) 72%, rgba(10,5,32,0.88) 100%)'}} />
+        <div style={{position:'absolute',inset:0,backgroundImage:'linear-gradient(rgba(255,255,255,0.018) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.018) 1px,transparent 1px)',backgroundSize:'72px 72px',maskImage:'radial-gradient(ellipse 90% 85% at 50% 22%, black 25%, transparent 100%)'}} />
+        {/* Edge vignette — softer to let glow breathe */}
+        <div style={{position:'absolute',inset:0,background:'radial-gradient(ellipse 115% 105% at 50% 50%, transparent 32%, rgba(10,5,32,0.42) 70%, rgba(10,5,32,0.82) 100%)'}} />
       </div>
 
       <Sidebar />
 
       {/* ═══════════════ LEFT: Thread list ═══════════════ */}
-      <div style={{width:308,borderRight:'1px solid rgba(255,255,255,0.06)',display:'flex',flexDirection:'column',flexShrink:0,background:'rgba(8,3,22,0.72)',backdropFilter:'blur(20px)',WebkitBackdropFilter:'blur(20px)',position:'relative',zIndex:1}}>
+      <div style={{width:308,borderRight:'1px solid rgba(255,255,255,0.07)',display:'flex',flexDirection:'column',flexShrink:0,background:'rgba(10,4,28,0.52)',backdropFilter:'blur(24px)',WebkitBackdropFilter:'blur(24px)',position:'relative',zIndex:1}}>
 
         {/* Header */}
         <div style={{padding:'14px 14px 0',flexShrink:0}}>
@@ -1304,7 +1312,7 @@ export default function InboxPage() {
         ):(
           <>
             {/* Ticket header */}
-            <div style={{padding:'14px 22px',borderBottom:'1px solid rgba(255,255,255,0.07)',flexShrink:0,background:'rgba(8,3,22,0.75)',backdropFilter:'blur(16px)',WebkitBackdropFilter:'blur(16px)'}}>
+            <div style={{padding:'14px 22px',borderBottom:'1px solid rgba(255,255,255,0.08)',flexShrink:0,background:'rgba(8,3,22,0.58)',backdropFilter:'blur(20px)',WebkitBackdropFilter:'blur(20px)'}}>
               <div style={{display:'flex',alignItems:'center',gap:14}}>
                 <div style={{flex:1,minWidth:0}}>
                   <div style={{fontSize:14,fontWeight:700,color:'#F0ECF9',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',marginBottom:2,letterSpacing:'-0.01em'}}>{selected.subject}</div>
@@ -1325,7 +1333,7 @@ export default function InboxPage() {
             </div>
 
             {/* Messages */}
-            <div className="sscroll conv-area" style={{flex:1,overflowY:'auto',padding:'24px 28px 16px',background:'rgba(5,2,18,0.55)'}}>
+            <div className="sscroll conv-area" style={{flex:1,overflowY:'auto',padding:'24px 28px 16px',background:'rgba(5,2,18,0.38)'}}>
               {loadingMsgs&&[0,1].map(i=>(
                 <div key={i} style={{display:'flex',gap:12,flexDirection:i%2===0?'row':'row-reverse',marginBottom:22,animation:`fadeUp .3s ease ${i*.1}s both`}}>
                   <div className="skel" style={{width:34,height:34,borderRadius:'50%',flexShrink:0}} />
@@ -1368,7 +1376,7 @@ export default function InboxPage() {
             </div>
 
             {/* Composer */}
-            <div style={{borderTop:'1px solid rgba(255,255,255,0.07)',flexShrink:0,background:'rgba(8,3,22,0.7)',backdropFilter:'blur(16px)',WebkitBackdropFilter:'blur(16px)'}}>
+            <div style={{borderTop:'1px solid rgba(255,255,255,0.08)',flexShrink:0,background:'rgba(8,3,22,0.55)',backdropFilter:'blur(20px)',WebkitBackdropFilter:'blur(20px)'}}>
               {/* Macro panel */}
               {showMacros&&(
                 <MacroPanel
@@ -1499,7 +1507,7 @@ export default function InboxPage() {
 
       {/* ═══════════════ RIGHT: Customer panel ═══════════════ */}
       {selected&&(
-        <div className="sscroll" style={{width:320,borderLeft:'1px solid rgba(255,255,255,0.06)',display:'flex',flexDirection:'column',flexShrink:0,overflowY:'auto',background:'rgba(8,3,22,0.68)',backdropFilter:'blur(20px)',WebkitBackdropFilter:'blur(20px)'}}>
+        <div className="sscroll" style={{width:320,borderLeft:'1px solid rgba(255,255,255,0.07)',display:'flex',flexDirection:'column',flexShrink:0,overflowY:'auto',background:'rgba(10,4,28,0.48)',backdropFilter:'blur(24px)',WebkitBackdropFilter:'blur(24px)'}}>
 
           {/* Customer header */}
           <div style={{padding:'16px 16px 12px',borderBottom:'1px solid rgba(255,255,255,0.055)',flexShrink:0}}>

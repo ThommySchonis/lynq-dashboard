@@ -79,14 +79,15 @@ const DEMO_CUSTOMER = {
 
 // ─── CSS ─────────────────────────────────────────────────────
 const CSS = `
-  @keyframes fadeUp   { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+  @keyframes fadeUp   { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
   @keyframes fadeIn   { from{opacity:0} to{opacity:1} }
   @keyframes slideIn  { from{opacity:0;transform:translateX(-8px)} to{opacity:1;transform:translateX(0)} }
   @keyframes spin     { to{transform:rotate(360deg)} }
   @keyframes shimmer  { 0%{background-position:200% center} 100%{background-position:-200% center} }
   @keyframes toastIn  { from{opacity:0;transform:translateY(14px) scale(.95)} to{opacity:1;transform:translateY(0) scale(1)} }
-  @keyframes msgIn    { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
-  @keyframes modalIn  { from{opacity:0;transform:scale(.95) translateY(14px)} to{opacity:1;transform:scale(1) translateY(0)} }
+  @keyframes msgIn    { from{opacity:0;transform:translateY(10px) scale(.99)} to{opacity:1;transform:translateY(0) scale(1)} }
+  @keyframes modalIn  { from{opacity:0;transform:scale(.96) translateY(16px)} to{opacity:1;transform:scale(1) translateY(0)} }
+  @keyframes glowPulse { 0%,100%{opacity:.5} 50%{opacity:1} }
 
   .ir * { box-sizing:border-box; margin:0; padding:0; }
   .ir { font-family:var(--font-rethink),-apple-system,BlinkMacSystemFont,'Inter',sans-serif; -webkit-font-smoothing:antialiased; }
@@ -98,9 +99,10 @@ const CSS = `
   input:focus-visible,textarea:focus-visible,[contenteditable]:focus-visible { outline:none; }
 
   /* ── Thread row ── */
-  .trow { padding:13px 16px 11px; cursor:pointer; border-bottom:1px solid rgba(255,255,255,0.028); border-left:2.5px solid transparent; transition:background .18s,border-color .18s; position:relative; }
-  .trow:hover:not(.trow-active) { background:linear-gradient(90deg,rgba(161,117,252,0.065) 0%,rgba(161,117,252,0.018) 100%); }
-  .trow-active { background:linear-gradient(90deg,rgba(161,117,252,0.14) 0%,rgba(161,117,252,0.03) 100%); border-left-color:#A175FC; }
+  .trow { padding:14px 16px 12px; cursor:pointer; border-bottom:1px solid rgba(255,255,255,0.025); border-left:3px solid transparent; transition:all .2s cubic-bezier(.16,1,.3,1); position:relative; }
+  .trow:hover:not(.trow-active) { background:linear-gradient(90deg,rgba(161,117,252,0.09) 0%,rgba(161,117,252,0.02) 100%); border-left-color:rgba(161,117,252,0.35); }
+  .trow-active { background:linear-gradient(90deg,rgba(161,117,252,0.18) 0%,rgba(161,117,252,0.04) 100%); border-left-color:#A175FC; box-shadow:inset 0 0 0 0 transparent; }
+  .trow-active::after { content:''; position:absolute; left:0; top:0; bottom:0; width:3px; background:linear-gradient(180deg,#C3A3FF 0%,#7B45E8 100%); border-radius:0 2px 2px 0; }
 
   /* ── View tabs — pill style ── */
   .vtab { padding:5px 12px; background:transparent; cursor:pointer; font-size:11.5px; font-weight:500; font-family:inherit; border-radius:8px; transition:all .18s; color:rgba(240,236,249,0.32); white-space:nowrap; letter-spacing:.01em; border:1px solid transparent; }
@@ -145,8 +147,8 @@ const CSS = `
   .compose-ta { width:100%; resize:none; outline:none; font-family:inherit; background:transparent; border:none; padding:14px 16px; font-size:13.5px; color:#F0ECF9; line-height:1.78; letter-spacing:.005em; }
 
   /* ── Compose box ── */
-  .compose-box { margin:0 14px 14px; border:1px solid rgba(255,255,255,0.075); border-radius:16px; overflow:hidden; background:rgba(255,255,255,0.018); transition:border-color .22s,box-shadow .22s; }
-  .compose-box:focus-within { border-color:rgba(161,117,252,0.38); box-shadow:0 0 0 3px rgba(161,117,252,0.07),0 4px 24px rgba(161,117,252,0.05); }
+  .compose-box { margin:0 16px 16px; border:1px solid rgba(255,255,255,0.09); border-top:1px solid rgba(255,255,255,0.13); border-radius:18px; overflow:hidden; background:linear-gradient(145deg,rgba(255,255,255,0.04) 0%,rgba(255,255,255,0.02) 100%); transition:border-color .25s,box-shadow .25s; backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); box-shadow:0 4px 24px rgba(0,0,0,0.2); }
+  .compose-box:focus-within { border-color:rgba(161,117,252,0.5); border-top-color:rgba(161,117,252,0.6); box-shadow:0 0 0 3px rgba(161,117,252,0.09),0 8px 40px rgba(161,117,252,0.1); }
 
   /* ── Buttons ── */
   .btn-send { padding:9px 20px; font-size:13px; font-weight:600; font-family:inherit; background:linear-gradient(135deg,#A175FC 0%,#7B45E8 100%); color:#fff; border-radius:10px; cursor:pointer; transition:all .2s cubic-bezier(.16,1,.3,1); box-shadow:0 2px 14px rgba(161,117,252,0.45); letter-spacing:.01em; }
@@ -163,15 +165,15 @@ const CSS = `
   .btn-danger:hover:not(:disabled) { background:linear-gradient(135deg,#f87171,#ef4444); box-shadow:0 6px 24px rgba(239,68,68,0.5); transform:translateY(-1px); }
   .btn-danger:active:not(:disabled) { transform:translateY(0); }
   .btn-danger:disabled { opacity:.3; cursor:not-allowed; }
-  .btn-iris { padding:8px 15px; font-size:12.5px; font-weight:600; font-family:inherit; background:rgba(161,117,252,0.1); border:1px solid rgba(161,117,252,0.22); color:#B48CFF; border-radius:10px; cursor:pointer; transition:all .18s; }
-  .btn-iris:hover:not(:disabled) { background:rgba(161,117,252,0.18); border-color:rgba(161,117,252,0.4); transform:translateY(-1px); box-shadow:0 4px 16px rgba(161,117,252,0.2); }
-  .btn-iris:disabled { opacity:.35; cursor:not-allowed; }
+  .btn-iris { padding:8px 16px; font-size:12.5px; font-weight:600; font-family:inherit; background:linear-gradient(135deg,rgba(161,117,252,0.15) 0%,rgba(123,69,232,0.1) 100%); border:1px solid rgba(161,117,252,0.28); border-top:1px solid rgba(161,117,252,0.35); color:#C3A3FF; border-radius:11px; cursor:pointer; transition:all .2s cubic-bezier(.16,1,.3,1); box-shadow:0 2px 10px rgba(161,117,252,0.1); }
+  .btn-iris:hover:not(:disabled) { background:linear-gradient(135deg,rgba(161,117,252,0.24) 0%,rgba(123,69,232,0.18) 100%); border-color:rgba(161,117,252,0.45); transform:translateY(-1px); box-shadow:0 6px 20px rgba(161,117,252,0.25); color:#D0B8FF; }
+  .btn-iris:disabled { opacity:.3; cursor:not-allowed; }
 
   /* ── Order card ── */
-  .order-card { background:linear-gradient(145deg,rgba(255,255,255,0.038) 0%,rgba(161,117,252,0.015) 100%); border:1px solid rgba(255,255,255,0.075); border-radius:18px; padding:16px 16px 14px; margin-bottom:10px; position:relative; overflow:hidden; transition:border-color .22s,box-shadow .22s; }
-  .order-card::before { content:''; position:absolute; left:0; top:0; bottom:0; width:3px; background:linear-gradient(180deg,#A175FC 0%,rgba(161,117,252,0.04) 100%); border-radius:0 3px 3px 0; }
-  .order-card::after { content:''; position:absolute; inset:0; background:radial-gradient(ellipse 60% 40% at 80% 0%,rgba(161,117,252,0.055) 0%,transparent 70%); pointer-events:none; }
-  .order-card:hover { border-color:rgba(161,117,252,0.26); box-shadow:0 16px 48px rgba(0,0,0,0.3),0 0 0 1px rgba(161,117,252,0.09),0 0 60px rgba(161,117,252,0.04); }
+  .order-card { background:linear-gradient(145deg,rgba(255,255,255,0.05) 0%,rgba(161,117,252,0.02) 100%); border:1px solid rgba(255,255,255,0.09); border-top:1px solid rgba(255,255,255,0.13); border-radius:18px; padding:16px 16px 14px; margin-bottom:10px; position:relative; overflow:hidden; transition:all .24s cubic-bezier(.16,1,.3,1); box-shadow:0 4px 20px rgba(0,0,0,0.2); }
+  .order-card::before { content:''; position:absolute; left:0; top:0; bottom:0; width:3px; background:linear-gradient(180deg,#C3A3FF 0%,rgba(161,117,252,0.1) 100%); border-radius:0 3px 3px 0; }
+  .order-card::after { content:''; position:absolute; inset:0; background:radial-gradient(ellipse 50% 35% at 85% 0%,rgba(161,117,252,0.07) 0%,transparent 65%); pointer-events:none; }
+  .order-card:hover { border-color:rgba(161,117,252,0.32); box-shadow:0 20px 60px rgba(0,0,0,0.38),0 0 0 1px rgba(161,117,252,0.12),0 0 80px rgba(161,117,252,0.06); transform:translateY(-1px); }
 
   /* ── Order actions grid ── */
   .order-actions { display:grid; grid-template-columns:1fr 1fr; gap:5px; padding-top:11px; border-top:1px solid rgba(255,255,255,0.05); margin-top:4px; }
@@ -208,8 +210,8 @@ const CSS = `
   /* ── Info grid ── */
   .info-label { font-size:10px; font-weight:700; color:rgba(240,236,249,0.25); letter-spacing:.07em; text-transform:uppercase; }
   .info-val   { font-size:12.5px; color:rgba(240,236,249,0.75); margin-top:2px; line-height:1.5; }
-  .stat-card  { background:linear-gradient(145deg,rgba(255,255,255,0.035) 0%,rgba(161,117,252,0.012) 100%); border:1px solid rgba(255,255,255,0.07); border-radius:12px; padding:12px 14px; transition:all .18s; }
-  .stat-card:hover { border-color:rgba(161,117,252,0.22); background:linear-gradient(145deg,rgba(255,255,255,0.05) 0%,rgba(161,117,252,0.022) 100%); }
+  .stat-card  { background:linear-gradient(145deg,rgba(255,255,255,0.055) 0%,rgba(161,117,252,0.018) 100%); border:1px solid rgba(255,255,255,0.09); border-top:1px solid rgba(255,255,255,0.13); border-radius:14px; padding:13px 15px; transition:all .22s cubic-bezier(.16,1,.3,1); box-shadow:0 4px 16px rgba(0,0,0,0.18); }
+  .stat-card:hover { border-color:rgba(161,117,252,0.3); background:linear-gradient(145deg,rgba(255,255,255,0.07) 0%,rgba(161,117,252,0.03) 100%); box-shadow:0 8px 28px rgba(0,0,0,0.28),0 0 0 1px rgba(161,117,252,0.1); transform:translateY(-1px); }
 
   /* ── Tracking ── */
   .track-pill { display:inline-flex; align-items:center; gap:5px; font-size:10.5px; font-weight:600; padding:3px 9px; border-radius:100px; }
@@ -247,15 +249,58 @@ const CSS = `
   .msg-xlate-btn { font-size:10px; font-weight:600; color:rgba(240,236,249,0.28); background:none; border:none; cursor:pointer; padding:2px 7px; font-family:inherit; transition:all .15s; border-radius:5px; }
   .msg-xlate-btn:hover { color:#A175FC; background:rgba(161,117,252,0.1); }
 
-  /* ── Message bubbles ── */
-  .msg-in  { background:rgba(255,255,255,0.085); border:1px solid rgba(255,255,255,0.13); border-radius:4px 16px 16px 16px; padding:14px 17px; font-size:13.5px; line-height:1.78; color:rgba(240,236,249,0.92); white-space:pre-wrap; word-break:break-word; box-shadow:0 4px 20px rgba(0,0,0,0.28),inset 0 1px 0 rgba(255,255,255,0.07); }
-  .msg-out { background:linear-gradient(145deg,rgba(161,117,252,0.22) 0%,rgba(123,69,232,0.16) 100%); border:1px solid rgba(161,117,252,0.32); border-radius:16px 4px 16px 16px; padding:14px 17px; font-size:13.5px; line-height:1.78; color:rgba(240,236,249,0.94); white-space:pre-wrap; word-break:break-word; box-shadow:0 4px 20px rgba(161,117,252,0.12),inset 0 1px 0 rgba(255,255,255,0.08); }
-  .msg-note { background:rgba(251,191,36,0.07); border:1px solid rgba(251,191,36,0.22); border-left:3px solid rgba(251,191,36,0.48); border-radius:4px 14px 14px 14px; padding:14px 17px; font-size:13.5px; line-height:1.78; color:rgba(240,236,249,0.88); white-space:pre-wrap; word-break:break-word; box-shadow:0 4px 20px rgba(0,0,0,0.2); }
-  .msg-sender { font-size:10.5px; color:rgba(240,236,249,0.68); font-weight:600; }
-  .msg-time   { font-size:10.5px; color:rgba(240,236,249,0.32); margin-left:6px; }
+  /* ── Message bubbles — Premium glass design ── */
+  .msg-in  {
+    background: linear-gradient(145deg, rgba(255,255,255,0.11) 0%, rgba(255,255,255,0.065) 100%);
+    border: 1px solid rgba(255,255,255,0.16);
+    border-top: 1px solid rgba(255,255,255,0.22);
+    border-left: 2px solid rgba(161,117,252,0.45);
+    border-radius: 3px 18px 18px 18px;
+    padding: 15px 18px;
+    font-size: 13.5px;
+    line-height: 1.82;
+    color: rgba(240,236,249,0.96);
+    white-space: pre-wrap;
+    word-break: break-word;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.12), inset 0 -1px 0 rgba(0,0,0,0.15);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+  .msg-out {
+    background: linear-gradient(145deg, #6B3FC4 0%, #4A2893 100%);
+    border: 1px solid rgba(161,117,252,0.5);
+    border-top: 1px solid rgba(255,255,255,0.18);
+    border-radius: 18px 3px 18px 18px;
+    padding: 15px 18px;
+    font-size: 13.5px;
+    line-height: 1.82;
+    color: rgba(255,255,255,0.97);
+    white-space: pre-wrap;
+    word-break: break-word;
+    box-shadow: 0 8px 40px rgba(107,63,196,0.45), inset 0 1px 0 rgba(255,255,255,0.15), inset 0 -1px 0 rgba(0,0,0,0.2);
+  }
+  .msg-note {
+    background: linear-gradient(145deg, rgba(251,191,36,0.1) 0%, rgba(251,191,36,0.05) 100%);
+    border: 1px solid rgba(251,191,36,0.25);
+    border-top: 1px solid rgba(251,191,36,0.3);
+    border-left: 3px solid rgba(251,191,36,0.6);
+    border-radius: 3px 18px 18px 18px;
+    padding: 15px 18px;
+    font-size: 13.5px;
+    line-height: 1.82;
+    color: rgba(240,236,249,0.9);
+    white-space: pre-wrap;
+    word-break: break-word;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.06);
+  }
+  .msg-sender { font-size:10.5px; color:rgba(240,236,249,0.72); font-weight:700; letter-spacing:.01em; }
+  .msg-time   { font-size:10px; color:rgba(240,236,249,0.3); margin-left:7px; font-weight:400; }
 
   /* ── Conversation area ── */
-  .conv-area { background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(161,117,252,0.04) 0%,transparent 70%); }
+  .conv-area {
+    background: radial-gradient(ellipse 70% 40% at 50% 15%, rgba(161,117,252,0.055) 0%, transparent 65%),
+                radial-gradient(ellipse 50% 30% at 20% 80%, rgba(107,63,196,0.04) 0%, transparent 60%);
+  }
 
   @media (prefers-reduced-motion:reduce) { *,*::before,*::after { animation-duration:.01ms !important; transition-duration:.01ms !important; } }
 `
@@ -842,6 +887,7 @@ export default function InboxPage() {
   const [toast, setToast]             = useState(null)
   const [search, setSearch]           = useState('')
   const [gmailOk, setGmailOk]         = useState(true)
+  const [emailProvider, setEmailProvider] = useState(null) // 'gmail' | 'outlook' | 'custom' | null
   const [demoMode, setDemoMode]       = useState(false)
   const [customer, setCustomer]       = useState(null)
   const [loadingCust, setLoadingCust] = useState(false)
@@ -925,19 +971,41 @@ export default function InboxPage() {
 
   async function loadThreads(token) {
     setLT(true)
-    const res  = await authFetch('/api/gmail/threads',{},token)
-    const data = await res.json()
-    if(data.connected===false){
-      setGmailOk(false); setDemoMode(true)
-      setThreads(DEMO_THREADS); setLT(false)
-      analyzeThreads(DEMO_THREADS, token)
+    // Try Gmail first, then Outlook, then custom email
+    const gmailRes  = await authFetch('/api/gmail/threads',{},token)
+    const gmailData = await gmailRes.json()
+    if(gmailData.connected!==false){
+      setGmailOk(true); setDemoMode(false); setEmailProvider('gmail')
+      const thr = gmailData.threads||[]
+      setThreads(thr); setLT(false)
+      analyzeThreads(thr, token)
       return
     }
-    setGmailOk(true); setDemoMode(false)
-    const thr = data.threads||[]
-    setThreads(thr)
-    setLT(false)
-    analyzeThreads(thr, token)
+
+    const outlookRes  = await authFetch('/api/outlook/threads',{},token)
+    const outlookData = await outlookRes.json()
+    if(outlookData.connected!==false && outlookData.threads?.length){
+      setGmailOk(false); setDemoMode(false); setEmailProvider('outlook')
+      const thr = outlookData.threads||[]
+      setThreads(thr); setLT(false)
+      analyzeThreads(thr, token)
+      return
+    }
+
+    const customRes  = await authFetch('/api/custom-email/threads',{},token)
+    const customData = await customRes.json()
+    if(customData.connected!==false && customData.threads?.length){
+      setGmailOk(false); setDemoMode(false); setEmailProvider('custom')
+      const thr = customData.threads||[]
+      setThreads(thr); setLT(false)
+      analyzeThreads(thr, token)
+      return
+    }
+
+    // No provider connected — demo mode
+    setGmailOk(false); setDemoMode(true); setEmailProvider(null)
+    setThreads(DEMO_THREADS); setLT(false)
+    analyzeThreads(DEMO_THREADS, token)
   }
 
   async function analyzeThreads(threadList, token) {
@@ -960,11 +1028,12 @@ export default function InboxPage() {
       setTimeout(()=>{ setMessages(DEMO_MESSAGES[thread.id]||[]); setLM(false); setCustomer(DEMO_CUSTOMER[thread.id]||null); setThreads(p=>p.map(t=>t.id===thread.id?{...t,unread:false}:t)) }, 400)
       return
     }
-    const res  = await authFetch(`/api/gmail/thread/${thread.id}`,{},session.access_token)
+    const providerPath = emailProvider==='outlook' ? 'outlook' : emailProvider==='custom' ? 'custom-email' : 'gmail'
+    const res  = await authFetch(`/api/${providerPath}/thread/${thread.id}`,{},session.access_token)
     const data = await res.json()
     setMessages(data.messages||[])
     setLM(false)
-    if(thread.unread){ authFetch(`/api/gmail/thread/${thread.id}`,{method:'PATCH'},session.access_token); setThreads(p=>p.map(t=>t.id===thread.id?{...t,unread:false}:t)) }
+    if(thread.unread){ authFetch(`/api/${providerPath}/thread/${thread.id}`,{method:'PATCH'},session.access_token); setThreads(p=>p.map(t=>t.id===thread.id?{...t,unread:false}:t)) }
     const email=extractEmail(thread.from)
     if(email){
       setLoadingCust(true)
@@ -1093,7 +1162,7 @@ export default function InboxPage() {
       <Sidebar />
 
       {/* ═══════════════ LEFT: Thread list ═══════════════ */}
-      <div style={{width:300,borderRight:'1px solid rgba(255,255,255,0.05)',display:'flex',flexDirection:'column',flexShrink:0,background:'rgba(255,255,255,0.015)'}}>
+      <div style={{width:308,borderRight:'1px solid rgba(255,255,255,0.06)',display:'flex',flexDirection:'column',flexShrink:0,background:'rgba(0,0,0,0.14)'}}>
 
         {/* Header */}
         <div style={{padding:'14px 14px 0',flexShrink:0}}>
@@ -1201,7 +1270,7 @@ export default function InboxPage() {
         ):(
           <>
             {/* Ticket header */}
-            <div style={{padding:'12px 20px',borderBottom:'1px solid rgba(255,255,255,0.055)',flexShrink:0,background:'rgba(255,255,255,0.018)'}}>
+            <div style={{padding:'14px 22px',borderBottom:'1px solid rgba(255,255,255,0.06)',flexShrink:0,background:'linear-gradient(180deg,rgba(255,255,255,0.03) 0%,rgba(255,255,255,0.01) 100%)',backdropFilter:'blur(8px)',WebkitBackdropFilter:'blur(8px)'}}>
               <div style={{display:'flex',alignItems:'center',gap:14}}>
                 <div style={{flex:1,minWidth:0}}>
                   <div style={{fontSize:14,fontWeight:700,color:'#F0ECF9',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',marginBottom:2,letterSpacing:'-0.01em'}}>{selected.subject}</div>
@@ -1222,11 +1291,11 @@ export default function InboxPage() {
             </div>
 
             {/* Messages */}
-            <div className="sscroll conv-area" style={{flex:1,overflowY:'auto',padding:'22px 26px 14px',background:'rgba(0,0,0,0.12)'}}>
+            <div className="sscroll conv-area" style={{flex:1,overflowY:'auto',padding:'24px 28px 16px',background:'rgba(0,0,0,0.18)'}}>
               {loadingMsgs&&[0,1].map(i=>(
-                <div key={i} style={{display:'flex',gap:10,flexDirection:i%2===0?'row':'row-reverse',marginBottom:18,animation:`fadeUp .3s ease ${i*.1}s both`}}>
-                  <div className="skel" style={{width:30,height:30,borderRadius:'50%',flexShrink:0}} />
-                  <div className="skel" style={{height:72,width:'60%',borderRadius:16}} />
+                <div key={i} style={{display:'flex',gap:12,flexDirection:i%2===0?'row':'row-reverse',marginBottom:22,animation:`fadeUp .3s ease ${i*.1}s both`}}>
+                  <div className="skel" style={{width:34,height:34,borderRadius:'50%',flexShrink:0}} />
+                  <div className="skel" style={{height:80,width:'60%',borderRadius:18}} />
                 </div>
               ))}
               {messages.map((msg,idx)=>{
@@ -1234,8 +1303,8 @@ export default function InboxPage() {
                 const isNote=msg.isNote
                 const name=extractName(msg.from)
                 return (
-                  <div key={msg.id||idx} style={{marginBottom:18,display:'flex',gap:10,flexDirection:isAgent?'row-reverse':'row',animation:'msgIn .28s ease both'}}>
-                    {!isNote&&<Avatar name={name} size={30} />}
+                  <div key={msg.id||idx} style={{marginBottom:22,display:'flex',gap:12,flexDirection:isAgent?'row-reverse':'row',animation:'msgIn .3s cubic-bezier(.16,1,.3,1) both'}}>
+                    {!isNote&&<Avatar name={name} size={32} />}
                     <div style={{maxWidth:'76%'}}>
                       <div style={{fontSize:10.5,marginBottom:5,textAlign:isAgent?'right':'left'}}>
                         <span className="msg-sender">{name}</span>
@@ -1265,7 +1334,7 @@ export default function InboxPage() {
             </div>
 
             {/* Composer */}
-            <div style={{borderTop:'1px solid rgba(255,255,255,0.055)',flexShrink:0,background:'rgba(255,255,255,0.01)'}}>
+            <div style={{borderTop:'1px solid rgba(255,255,255,0.07)',flexShrink:0,background:'linear-gradient(180deg,rgba(255,255,255,0.025) 0%,rgba(255,255,255,0.01) 100%)',backdropFilter:'blur(12px)',WebkitBackdropFilter:'blur(12px)'}}>
               {/* Macro panel */}
               {showMacros&&(
                 <MacroPanel

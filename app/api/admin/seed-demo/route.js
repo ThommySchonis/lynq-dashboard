@@ -18,7 +18,10 @@ export async function POST(request) {
   const userId = body.user_id
   if (!userId) return NextResponse.json({ error: 'Missing user_id in body' }, { status: 400 })
 
-  // 1. Insert/update integrations row (marks Shopify as connected)
+  // Mark onboarding as completed so demo user lands on inbox directly
+  await supabaseAdmin.from('profiles').upsert({ id: userId, onboarding_completed: true })
+
+  // Insert/update integrations row (marks Shopify as connected)
   await supabaseAdmin.from('integrations').upsert({
     client_id: userId,
     shopify_domain: DEMO_SHOP,
@@ -27,7 +30,7 @@ export async function POST(request) {
     shopify_connected_at: new Date().toISOString(),
   }, { onConflict: 'client_id' })
 
-  // 3. Seed shopify_orders for KPIs
+  // Seed shopify_orders for KPIs
   const rows = getDemoShopifyOrderRows(userId)
   await supabaseAdmin.from('shopify_orders').upsert(rows, { onConflict: 'id,client_id' })
 

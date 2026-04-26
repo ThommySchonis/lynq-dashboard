@@ -207,6 +207,12 @@ const CSS = `
   /* ── Tracking ── */
   .track-pill { display:inline-flex; align-items:center; gap:5px; font-size:10.5px; font-weight:600; padding:3px 9px; border-radius:100px; }
 
+  /* ── Urgency badges ── */
+  .urg-pill { display:inline-flex; align-items:center; gap:4px; font-size:9px; font-weight:800; letter-spacing:.07em; text-transform:uppercase; padding:2px 7px; border-radius:100px; }
+  .urg-dot  { width:5px; height:5px; border-radius:50%; flex-shrink:0; }
+  @keyframes urgPulse { 0%,100%{opacity:1} 50%{opacity:.45} }
+  .urg-critical .urg-dot { animation:urgPulse 1.6s ease-in-out infinite; }
+
   @media (prefers-reduced-motion:reduce) { *,*::before,*::after { animation-duration:.01ms !important; transition-duration:.01ms !important; } }
 `
 
@@ -795,6 +801,8 @@ export default function InboxPage() {
   const [showMacros, setShowMacros]   = useState(false)
   // Order modals
   const [modal, setModal]             = useState(null) // { type:'refund'|'cancel'|'duplicate'|'address', order }
+  // AI triage
+  const [analyses, setAnalyses]       = useState({})
 
   const msgEnd    = useRef(null)
   const replyRef  = useRef(null)
@@ -816,18 +824,19 @@ export default function InboxPage() {
     function h(e){
       const tag=document.activeElement?.tagName
       if(tag==='INPUT'||tag==='TEXTAREA'||tag==='SELECT') return
-      if(e.key==='j'){ const i=filtered.findIndex(t=>t.id===selected?.id); if(i<filtered.length-1) openThread(filtered[i+1]) }
-      if(e.key==='k'){ const i=filtered.findIndex(t=>t.id===selected?.id); if(i>0) openThread(filtered[i-1]) }
+      if(e.key==='j'){ const i=sortedFiltered.findIndex(t=>t.id===selected?.id); if(i<sortedFiltered.length-1) openThread(sortedFiltered[i+1]) }
+      if(e.key==='k'){ const i=sortedFiltered.findIndex(t=>t.id===selected?.id); if(i>0) openThread(sortedFiltered[i-1]) }
       if(e.key==='r'&&selected) setTimeout(()=>replyRef.current?.focus(),10)
     }
     document.addEventListener('keydown',h); return ()=>document.removeEventListener('keydown',h)
-  },[threads,selected,view,search])
+  },[threads,selected,view,search,analyses])
 
   // ── Status helpers ──
   function saveStatus(id,s){ const u={...statuses,[id]:s}; setStatuses(u); localStorage.setItem('lynq_statuses',JSON.stringify(u)) }
   const getStatus = id => statuses[id]||'open'
 
-  // ── Filtered threads ──
+  // ── Filtered + priority-sorted threads ──
+  const URGENCY_SCORE = { critical:4, high:3, medium:2, low:1 }
   const filtered = threads.filter(t=>{
     const s=getStatus(t.id)
     if(view==='open')     return s==='open'
@@ -835,6 +844,13 @@ export default function InboxPage() {
     if(view==='resolved') return s==='resolved'
     return true
   }).filter(t=>!search||t.subject?.toLowerCase().includes(search.toLowerCase())||t.from?.toLowerCase().includes(search.toLowerCase()))
+
+  const sortedFiltered = [...filtered].sort((a,b)=>{
+    const sa = URGENCY_SCORE[analyses[a.id]?.urgency]||0
+    const sb = URGENCY_SCORE[analyses[b.id]?.urgency]||0
+    if(sb!==sa) return sb-sa
+    return new Date(b.date)-new Date(a.date)
+  })
 
   const counts = { all:threads.length, open:threads.filter(t=>getStatus(t.id)==='open').length, pending:threads.filter(t=>getStatus(t.id)==='pending').length, resolved:threads.filter(t=>getStatus(t.id)==='resolved').length }
 
@@ -851,11 +867,27 @@ export default function InboxPage() {
     const data = await res.json()
     if(data.connected===false){
       setGmailOk(false); setDemoMode(true)
-      setThreads(DEMO_THREADS); setLT(false); return
+      setThreads(DEMO_THREADS); setLT(false)
+      analyzeThreads(DEMO_THREADS, token)
+      return
     }
     setGmailOk(true); setDemoMode(false)
-    setThreads(data.threads||[])
+    const thr = data.threads||[]
+    setThreads(thr)
     setLT(false)
+    analyzeThreads(thr, token)
+  }
+
+  async function analyzeThreads(threadList, token) {
+    if(!threadList?.length||!token) return
+    try {
+      const res = await authFetch('/api/ai/analyze',{
+        method:'POST',
+        body:JSON.stringify({ threads: threadList.slice(0,25).map(t=>({ id:t.id, subject:t.subject, snippet:t.snippet })) })
+      }, token)
+      const data = await res.json()
+      if(data.analyses) setAnalyses(data.analyses)
+    } catch {}
   }
 
   async function openThread(thread) {
@@ -975,13 +1007,24 @@ export default function InboxPage() {
               </div>
             </div>
           ))}
-          {!loadingThreads&&filtered.length===0&&gmailOk&&<div style={{padding:'40px 20px',textAlign:'center',color:'rgba(240,236,249,0.25)',fontSize:12.5}}>No threads in this view</div>}
-          {filtered.map(thread=>{
+          {!loadingThreads&&sortedFiltered.length===0&&gmailOk&&<div style={{padding:'40px 20px',textAlign:'center',color:'rgba(240,236,249,0.25)',fontSize:12.5}}>No threads in this view</div>}
+          {sortedFiltered.map(thread=>{
             const active=selected?.id===thread.id
             const name=extractName(thread.from)
             const status=getStatus(thread.id)
+            const analysis=analyses[thread.id]
+            const URGENCY_UI={
+              critical:{ color:'#ef4444', bg:'rgba(239,68,68,0.13)', border:'rgba(239,68,68,0.55)' },
+              high:    { color:'#f97316', bg:'rgba(249,115,22,0.13)', border:'rgba(249,115,22,0.55)' },
+              medium:  { color:'#fbbf24', bg:'rgba(251,191,36,0.12)', border:'rgba(251,191,36,0.4)'  },
+              low:     { color:'#4ade80', bg:'rgba(74,222,128,0.09)', border:'rgba(74,222,128,0.3)'  },
+            }
+            const urg=analysis?.urgency
+            const urgUI=URGENCY_UI[urg]
             return (
-              <div key={thread.id} className={`trow${active?' trow-active':''}`} onClick={()=>openThread(thread)}>
+              <div key={thread.id} className={`trow${active?' trow-active':''}`}
+                style={!active&&urgUI?{borderLeftColor:urgUI.border}:{}}
+                onClick={()=>openThread(thread)}>
                 <div style={{display:'flex',gap:10}}>
                   <div style={{position:'relative',flexShrink:0}}>
                     <Avatar name={name} size={33} />
@@ -992,9 +1035,20 @@ export default function InboxPage() {
                       <span style={{fontSize:12.5,fontWeight:thread.unread?700:500,color:thread.unread?'#F0ECF9':'rgba(240,236,249,0.7)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',maxWidth:145}}>{name}</span>
                       <span style={{fontSize:10,color:'rgba(240,236,249,0.28)',flexShrink:0,marginLeft:4}}>{formatDate(thread.date)}</span>
                     </div>
-                    <div style={{fontSize:11.5,color:thread.unread?'rgba(240,236,249,0.7)':'rgba(240,236,249,0.4)',fontWeight:thread.unread?600:400,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',marginBottom:4}}>{thread.subject}</div>
+                    <div style={{fontSize:11.5,color:thread.unread?'rgba(240,236,249,0.7)':'rgba(240,236,249,0.4)',fontWeight:thread.unread?600:400,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',marginBottom:3}}>{thread.subject}</div>
                     <div style={{fontSize:10.5,color:'rgba(240,236,249,0.25)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',marginBottom:5}}>{thread.snippet}</div>
-                    <TicketBadge status={status} />
+                    <div style={{display:'flex',alignItems:'center',gap:5,flexWrap:'wrap'}}>
+                      {analysis&&urg&&urg!=='low'&&(
+                        <span className={`urg-pill urg-${urg}`} style={{background:urgUI.bg,color:urgUI.color,border:`1px solid ${urgUI.border}`}}>
+                          <span className="urg-dot" style={{background:urgUI.color}} />
+                          {analysis.intent}
+                        </span>
+                      )}
+                      {analysis&&urg==='low'&&(
+                        <span style={{fontSize:9.5,color:'rgba(240,236,249,0.28)',fontWeight:600}}>{analysis.intent}</span>
+                      )}
+                      <TicketBadge status={status} />
+                    </div>
                   </div>
                 </div>
               </div>

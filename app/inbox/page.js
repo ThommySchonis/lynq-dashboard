@@ -89,6 +89,26 @@ const CSS = `
   @keyframes modalIn  { from{opacity:0;transform:scale(.96) translateY(16px)} to{opacity:1;transform:scale(1) translateY(0)} }
   @keyframes glowPulse { 0%,100%{opacity:.5} 50%{opacity:1} }
 
+  /* ── Aurora background animations ── */
+  @keyframes auroraA {
+    0%,100% { transform:translate(0,0) scale(1);           opacity:.75; }
+    33%      { transform:translate(70px,-90px) scale(1.28); opacity:.9; }
+    66%      { transform:translate(-50px,45px) scale(.88);  opacity:.6; }
+  }
+  @keyframes auroraB {
+    0%,100% { transform:translate(0,0) scale(1);             opacity:.65; }
+    40%      { transform:translate(-90px,60px) scale(1.22);  opacity:.85; }
+    75%      { transform:translate(55px,-35px) scale(.82);   opacity:.5; }
+  }
+  @keyframes auroraC {
+    0%,100% { transform:translate(0,0) scale(1);          opacity:.55; }
+    55%      { transform:translate(45px,75px) scale(1.15); opacity:.75; }
+  }
+  @keyframes auroraD {
+    0%,100% { transform:translate(0,0) scale(1);             opacity:.6; }
+    45%      { transform:translate(-55px,-50px) scale(1.3);  opacity:.8; }
+  }
+
   .ir * { box-sizing:border-box; margin:0; padding:0; }
   .ir { font-family:var(--font-rethink),-apple-system,BlinkMacSystemFont,'Inter',sans-serif; -webkit-font-smoothing:antialiased; }
   button { border:none; background:none; }
@@ -296,11 +316,8 @@ const CSS = `
   .msg-sender { font-size:10.5px; color:rgba(240,236,249,0.72); font-weight:700; letter-spacing:.01em; }
   .msg-time   { font-size:10px; color:rgba(240,236,249,0.3); margin-left:7px; font-weight:400; }
 
-  /* ── Conversation area ── */
-  .conv-area {
-    background: radial-gradient(ellipse 70% 40% at 50% 15%, rgba(161,117,252,0.055) 0%, transparent 65%),
-                radial-gradient(ellipse 50% 30% at 20% 80%, rgba(107,63,196,0.04) 0%, transparent 60%);
-  }
+  /* ── Conversation area — aurora shows through ── */
+  .conv-area { }
 
   @media (prefers-reduced-motion:reduce) { *,*::before,*::after { animation-duration:.01ms !important; transition-duration:.01ms !important; } }
 `
@@ -1157,12 +1174,29 @@ export default function InboxPage() {
 
   // ── Render ──
   return (
-    <div className="ir" style={{display:'flex',height:'100vh',background:'#080518',overflow:'hidden'}}>
+    <div className="ir" style={{display:'flex',height:'100vh',background:'#0A0520',overflow:'hidden',position:'relative'}}>
       <style>{CSS}</style>
+
+      {/* ── Aurora background ── */}
+      <div aria-hidden style={{position:'absolute',inset:0,overflow:'hidden',pointerEvents:'none',zIndex:0}}>
+        {/* Layer 1 — brand purple bloom, top-center */}
+        <div style={{position:'absolute',top:'-20%',left:'18%',width:820,height:720,borderRadius:'50%',background:'radial-gradient(ellipse,rgba(161,117,252,0.42) 0%,rgba(124,58,237,0.18) 40%,rgba(109,40,217,0.06) 62%,transparent 75%)',animation:'auroraA 24s ease-in-out infinite',filter:'blur(60px)'}} />
+        {/* Layer 2 — deep violet, bottom-right */}
+        <div style={{position:'absolute',bottom:'-10%',right:'5%',width:600,height:600,borderRadius:'50%',background:'radial-gradient(ellipse,rgba(107,63,196,0.32) 0%,rgba(75,40,148,0.12) 48%,transparent 70%)',animation:'auroraB 32s ease-in-out infinite',filter:'blur(55px)'}} />
+        {/* Layer 3 — rose tint, left mid */}
+        <div style={{position:'absolute',top:'35%',left:'-8%',width:480,height:480,borderRadius:'50%',background:'radial-gradient(ellipse,rgba(251,113,133,0.16) 0%,rgba(244,63,94,0.05) 52%,transparent 72%)',animation:'auroraC 36s ease-in-out infinite',filter:'blur(52px)'}} />
+        {/* Layer 4 — violet spark, top-left */}
+        <div style={{position:'absolute',top:'4%',left:'4%',width:340,height:340,borderRadius:'50%',background:'radial-gradient(ellipse,rgba(139,92,246,0.36) 0%,rgba(109,40,217,0.12) 52%,transparent 74%)',animation:'auroraD 20s ease-in-out infinite',filter:'blur(44px)'}} />
+        {/* Subtle grid */}
+        <div style={{position:'absolute',inset:0,backgroundImage:'linear-gradient(rgba(255,255,255,0.014) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.014) 1px,transparent 1px)',backgroundSize:'72px 72px',maskImage:'radial-gradient(ellipse 95% 90% at 50% 25%, black 20%, transparent 100%)'}} />
+        {/* Edge vignette */}
+        <div style={{position:'absolute',inset:0,background:'radial-gradient(ellipse 120% 110% at 50% 50%, transparent 28%, rgba(10,5,32,0.5) 72%, rgba(10,5,32,0.88) 100%)'}} />
+      </div>
+
       <Sidebar />
 
       {/* ═══════════════ LEFT: Thread list ═══════════════ */}
-      <div style={{width:308,borderRight:'1px solid rgba(255,255,255,0.06)',display:'flex',flexDirection:'column',flexShrink:0,background:'rgba(0,0,0,0.14)'}}>
+      <div style={{width:308,borderRight:'1px solid rgba(255,255,255,0.06)',display:'flex',flexDirection:'column',flexShrink:0,background:'rgba(8,3,22,0.72)',backdropFilter:'blur(20px)',WebkitBackdropFilter:'blur(20px)',position:'relative',zIndex:1}}>
 
         {/* Header */}
         <div style={{padding:'14px 14px 0',flexShrink:0}}>
@@ -1260,7 +1294,7 @@ export default function InboxPage() {
       </div>
 
       {/* ═══════════════ CENTER: Conversation ═══════════════ */}
-      <div style={{flex:1,display:'flex',flexDirection:'column',overflow:'hidden',minWidth:0}}>
+      <div style={{flex:1,display:'flex',flexDirection:'column',overflow:'hidden',minWidth:0,position:'relative',zIndex:1}}>
         {!selected?(
           <div style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:12,color:'rgba(240,236,249,0.15)'}}>
             <div style={{opacity:.4}}>{I.mail}</div>
@@ -1270,7 +1304,7 @@ export default function InboxPage() {
         ):(
           <>
             {/* Ticket header */}
-            <div style={{padding:'14px 22px',borderBottom:'1px solid rgba(255,255,255,0.06)',flexShrink:0,background:'linear-gradient(180deg,rgba(255,255,255,0.03) 0%,rgba(255,255,255,0.01) 100%)',backdropFilter:'blur(8px)',WebkitBackdropFilter:'blur(8px)'}}>
+            <div style={{padding:'14px 22px',borderBottom:'1px solid rgba(255,255,255,0.07)',flexShrink:0,background:'rgba(8,3,22,0.75)',backdropFilter:'blur(16px)',WebkitBackdropFilter:'blur(16px)'}}>
               <div style={{display:'flex',alignItems:'center',gap:14}}>
                 <div style={{flex:1,minWidth:0}}>
                   <div style={{fontSize:14,fontWeight:700,color:'#F0ECF9',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',marginBottom:2,letterSpacing:'-0.01em'}}>{selected.subject}</div>
@@ -1291,7 +1325,7 @@ export default function InboxPage() {
             </div>
 
             {/* Messages */}
-            <div className="sscroll conv-area" style={{flex:1,overflowY:'auto',padding:'24px 28px 16px',background:'rgba(0,0,0,0.18)'}}>
+            <div className="sscroll conv-area" style={{flex:1,overflowY:'auto',padding:'24px 28px 16px',background:'rgba(5,2,18,0.55)'}}>
               {loadingMsgs&&[0,1].map(i=>(
                 <div key={i} style={{display:'flex',gap:12,flexDirection:i%2===0?'row':'row-reverse',marginBottom:22,animation:`fadeUp .3s ease ${i*.1}s both`}}>
                   <div className="skel" style={{width:34,height:34,borderRadius:'50%',flexShrink:0}} />
@@ -1334,7 +1368,7 @@ export default function InboxPage() {
             </div>
 
             {/* Composer */}
-            <div style={{borderTop:'1px solid rgba(255,255,255,0.07)',flexShrink:0,background:'linear-gradient(180deg,rgba(255,255,255,0.025) 0%,rgba(255,255,255,0.01) 100%)',backdropFilter:'blur(12px)',WebkitBackdropFilter:'blur(12px)'}}>
+            <div style={{borderTop:'1px solid rgba(255,255,255,0.07)',flexShrink:0,background:'rgba(8,3,22,0.7)',backdropFilter:'blur(16px)',WebkitBackdropFilter:'blur(16px)'}}>
               {/* Macro panel */}
               {showMacros&&(
                 <MacroPanel
@@ -1465,7 +1499,7 @@ export default function InboxPage() {
 
       {/* ═══════════════ RIGHT: Customer panel ═══════════════ */}
       {selected&&(
-        <div className="sscroll" style={{width:320,borderLeft:'1px solid rgba(255,255,255,0.055)',display:'flex',flexDirection:'column',flexShrink:0,overflowY:'auto',background:'rgba(255,255,255,0.012)'}}>
+        <div className="sscroll" style={{width:320,borderLeft:'1px solid rgba(255,255,255,0.06)',display:'flex',flexDirection:'column',flexShrink:0,overflowY:'auto',background:'rgba(8,3,22,0.68)',backdropFilter:'blur(20px)',WebkitBackdropFilter:'blur(20px)'}}>
 
           {/* Customer header */}
           <div style={{padding:'16px 16px 12px',borderBottom:'1px solid rgba(255,255,255,0.055)',flexShrink:0}}>

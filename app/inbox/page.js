@@ -447,6 +447,119 @@ function ModalBase({ title, onClose, children, footer }) {
   )
 }
 
+// ─── Compose New Ticket Modal ─────────────────────────────────
+function ComposeModal({ token, emailProvider, onClose, onSuccess }) {
+  const [to, setTo]           = useState('')
+  const [subject, setSubject] = useState('')
+  const [body, setBody]       = useState('')
+  const [sending, setSending] = useState(false)
+  const [showCC, setShowCC]   = useState(false)
+  const [cc, setCC]           = useState('')
+  const bodyRef               = useRef(null)
+
+  useEffect(()=>{ function h(e){if(e.key==='Escape')onClose()} document.addEventListener('keydown',h); return ()=>document.removeEventListener('keydown',h) },[onClose])
+  useEffect(()=>{ setTimeout(()=>bodyRef.current?.focus(), 120) },[])
+
+  function formatDoc(cmd, val) { bodyRef.current?.focus(); document.execCommand(cmd, false, val||null) }
+
+  async function handleSend() {
+    if(!to.trim()||!subject.trim()||!(bodyRef.current?.textContent?.trim())) return
+    setSending(true)
+    const sendPath = emailProvider==='outlook' ? '/api/outlook/send' : emailProvider==='custom' ? '/api/custom-email/send' : '/api/gmail/send'
+    const res = await authFetch(sendPath, {
+      method:'POST',
+      body: JSON.stringify({ to:to.trim(), subject:subject.trim(), body:bodyRef.current.innerHTML, cc:cc.trim()||undefined }),
+    }, token)
+    const data = await res.json()
+    setSending(false)
+    if(data.success||data.id) { onSuccess('New ticket sent!'); onClose() }
+    else onSuccess(data.error||'Failed to send','error')
+  }
+
+  const ready = to.trim() && subject.trim() && body.trim()
+
+  return (
+    <div className="modal-backdrop" onClick={e=>{if(e.target===e.currentTarget)onClose()}}>
+      <div style={{background:'linear-gradient(145deg,rgba(14,6,38,0.97) 0%,rgba(8,3,24,0.98) 100%)',border:'1px solid rgba(161,117,252,0.2)',borderTop:'1px solid rgba(161,117,252,0.32)',borderRadius:24,width:'100%',maxWidth:660,animation:'modalIn .24s cubic-bezier(.16,1,.3,1)',backdropFilter:'blur(24px)',WebkitBackdropFilter:'blur(24px)',boxShadow:'0 48px 120px rgba(0,0,0,0.85),0 0 0 1px rgba(161,117,252,0.08),0 0 120px rgba(161,117,252,0.06)',display:'flex',flexDirection:'column',maxHeight:'88vh',overflow:'hidden'}}>
+
+        {/* Header */}
+        <div style={{padding:'20px 24px 0',display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0}}>
+          <div style={{display:'flex',alignItems:'center',gap:10}}>
+            <div style={{width:36,height:36,borderRadius:10,background:'linear-gradient(135deg,rgba(161,117,252,0.18) 0%,rgba(123,69,232,0.12) 100%)',border:'1px solid rgba(161,117,252,0.25)',display:'flex',alignItems:'center',justifyContent:'center'}}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#A175FC" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+            </div>
+            <div>
+              <div style={{fontSize:15,fontWeight:700,color:'#F0ECF9',letterSpacing:'-0.01em'}}>New ticket</div>
+              <div style={{fontSize:11,color:'rgba(240,236,249,0.28)',marginTop:1}}>Compose a new outbound message</div>
+            </div>
+          </div>
+          <button onClick={onClose} style={{color:'rgba(240,236,249,0.3)',cursor:'pointer',display:'flex',padding:6,borderRadius:8,transition:'all .15s',border:'1px solid transparent'}} onMouseEnter={e=>{e.currentTarget.style.color='rgba(240,236,249,0.8)';e.currentTarget.style.background='rgba(255,255,255,0.06)'}} onMouseLeave={e=>{e.currentTarget.style.color='rgba(240,236,249,0.3)';e.currentTarget.style.background='transparent'}}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+
+        {/* Fields */}
+        <div style={{padding:'18px 24px 0',flexShrink:0}}>
+          {/* To */}
+          <div style={{display:'flex',alignItems:'center',gap:10,padding:'0 0 12px',borderBottom:'1px solid rgba(255,255,255,0.06)'}}>
+            <span style={{fontSize:11.5,fontWeight:700,color:'rgba(240,236,249,0.3)',letterSpacing:'.06em',textTransform:'uppercase',width:52,flexShrink:0}}>To</span>
+            <input value={to} onChange={e=>setTo(e.target.value)} placeholder="customer@email.com" style={{flex:1,background:'transparent',border:'none',outline:'none',fontSize:13.5,color:'#F0ECF9',fontFamily:'inherit'}} />
+            <button onClick={()=>setShowCC(v=>!v)} style={{fontSize:10.5,fontWeight:600,color:showCC?'#A175FC':'rgba(240,236,249,0.22)',background:showCC?'rgba(161,117,252,0.1)':'transparent',border:`1px solid ${showCC?'rgba(161,117,252,0.25)':'rgba(255,255,255,0.08)'}`,borderRadius:6,padding:'3px 8px',cursor:'pointer',transition:'all .15s',fontFamily:'inherit',flexShrink:0}}>CC / BCC</button>
+          </div>
+          {/* CC */}
+          {showCC&&<div style={{display:'flex',alignItems:'center',gap:10,padding:'10px 0',borderBottom:'1px solid rgba(255,255,255,0.06)'}}>
+            <span style={{fontSize:11.5,fontWeight:700,color:'rgba(240,236,249,0.3)',letterSpacing:'.06em',textTransform:'uppercase',width:52,flexShrink:0}}>CC</span>
+            <input value={cc} onChange={e=>setCC(e.target.value)} placeholder="cc@email.com" style={{flex:1,background:'transparent',border:'none',outline:'none',fontSize:13.5,color:'#F0ECF9',fontFamily:'inherit'}} />
+          </div>}
+          {/* Subject */}
+          <div style={{display:'flex',alignItems:'center',gap:10,padding:'12px 0 0',borderBottom:'1px solid rgba(255,255,255,0.06)'}}>
+            <span style={{fontSize:11.5,fontWeight:700,color:'rgba(240,236,249,0.3)',letterSpacing:'.06em',textTransform:'uppercase',width:52,flexShrink:0}}>Subject</span>
+            <input value={subject} onChange={e=>setSubject(e.target.value)} placeholder="What's this about?" onKeyDown={e=>{if(e.key==='Enter'){e.preventDefault();bodyRef.current?.focus()}}} style={{flex:1,background:'transparent',border:'none',outline:'none',fontSize:13.5,color:'#F0ECF9',fontFamily:'inherit',paddingBottom:12}} />
+          </div>
+        </div>
+
+        {/* Toolbar */}
+        <div className="rtbar" style={{margin:'12px 24px 0',borderRadius:10,background:'rgba(255,255,255,0.03)',border:'1px solid rgba(255,255,255,0.06)'}}>
+          {[['bold','B',700],['italic','I',600,true],['underline','U',600,false,true]].map(([cmd,lbl,fw,italic,underline])=>(
+            <button key={cmd} className="rtbar-btn" onMouseDown={e=>e.preventDefault()} onClick={()=>formatDoc(cmd)}
+              style={{fontWeight:fw,fontStyle:italic?'italic':'normal',textDecoration:underline?'underline':'none'}}>{lbl}</button>
+          ))}
+          <div className="rtbar-sep"/>
+          <button className="rtbar-btn" onMouseDown={e=>e.preventDefault()} onClick={()=>{const u=prompt('URL:');if(u)formatDoc('createLink',u)}} title="Link">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+          </button>
+          <button className="rtbar-btn" onMouseDown={e=>e.preventDefault()} onClick={()=>formatDoc('insertUnorderedList')} title="List">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+          </button>
+        </div>
+
+        {/* Body */}
+        <div
+          ref={bodyRef}
+          contentEditable
+          suppressContentEditableWarning
+          data-placeholder="Write your message…"
+          onInput={e=>setBody(e.currentTarget.textContent)}
+          onKeyDown={e=>{if(e.key==='Enter'&&(e.metaKey||e.ctrlKey))handleSend()}}
+          className="compose-ta"
+          style={{flex:1,overflowY:'auto',minHeight:200,padding:'16px 24px',fontSize:13.5,lineHeight:1.82,color:'#F0ECF9'}}
+        />
+
+        {/* Footer */}
+        <div style={{padding:'14px 24px 20px',borderTop:'1px solid rgba(255,255,255,0.07)',display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0}}>
+          <span style={{fontSize:11,color:'rgba(240,236,249,0.18)'}}>⌘+Enter to send</span>
+          <div style={{display:'flex',gap:8}}>
+            <button className="btn-ghost" onClick={onClose} style={{padding:'9px 18px'}}>Discard</button>
+            <button className="btn-send" onClick={handleSend} disabled={!ready||sending} style={{display:'flex',alignItems:'center',gap:7,padding:'9px 20px'}}>
+              {sending?<><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{animation:'spin .8s linear infinite'}}><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>Sending…</>:<><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>Send</>}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─── Refund Modal ─────────────────────────────────────────────
 function RefundModal({ order, token, onClose, onSuccess }) {
   const [mode, setMode]           = useState('items') // 'items' | 'full' | 'custom'
@@ -1215,7 +1328,13 @@ export default function InboxPage() {
               <span style={{fontSize:15,fontWeight:700,color:'#F0ECF9',letterSpacing:'-0.01em'}}>Inbox</span>
               <span title="Shortcuts: j/k navigate · r reply" style={{fontSize:9.5,color:'rgba(240,236,249,0.2)',background:'rgba(255,255,255,0.06)',padding:'2px 6px',borderRadius:4,cursor:'default'}}>j/k/r</span>
             </div>
-            <button onClick={()=>loadThreads(session.access_token)} style={{background:'transparent',color:'rgba(240,236,249,0.32)',cursor:'pointer',display:'flex',padding:5,borderRadius:7,transition:'all .15s'}} onMouseEnter={e=>{e.currentTarget.style.color='rgba(240,236,249,0.7)';e.currentTarget.style.background='rgba(255,255,255,0.06)'}} onMouseLeave={e=>{e.currentTarget.style.color='rgba(240,236,249,0.32)';e.currentTarget.style.background='transparent'}} title="Refresh">{I.refresh}</button>
+            <div style={{display:'flex',alignItems:'center',gap:4}}>
+              <button onClick={()=>loadThreads(session.access_token)} style={{background:'transparent',color:'rgba(240,236,249,0.32)',cursor:'pointer',display:'flex',padding:5,borderRadius:7,transition:'all .15s'}} onMouseEnter={e=>{e.currentTarget.style.color='rgba(240,236,249,0.7)';e.currentTarget.style.background='rgba(255,255,255,0.06)'}} onMouseLeave={e=>{e.currentTarget.style.color='rgba(240,236,249,0.32)';e.currentTarget.style.background='transparent'}} title="Refresh">{I.refresh}</button>
+              <button onClick={()=>setModal({type:'compose'})} style={{display:'flex',alignItems:'center',gap:5,padding:'5px 10px',borderRadius:8,background:'linear-gradient(135deg,rgba(161,117,252,0.18) 0%,rgba(123,69,232,0.12) 100%)',border:'1px solid rgba(161,117,252,0.28)',color:'#C3A3FF',cursor:'pointer',fontSize:11.5,fontWeight:700,fontFamily:'inherit',transition:'all .2s',letterSpacing:'.01em'}} onMouseEnter={e=>{e.currentTarget.style.background='linear-gradient(135deg,rgba(161,117,252,0.28) 0%,rgba(123,69,232,0.2) 100%)';e.currentTarget.style.boxShadow='0 4px 16px rgba(161,117,252,0.2)'}} onMouseLeave={e=>{e.currentTarget.style.background='linear-gradient(135deg,rgba(161,117,252,0.18) 0%,rgba(123,69,232,0.12) 100%)';e.currentTarget.style.boxShadow='none'}} title="New ticket">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                New
+              </button>
+            </div>
           </div>
 
           {/* Search */}
@@ -1672,6 +1791,7 @@ export default function InboxPage() {
       )}
 
       {/* ═══════════════ Modals ═══════════════ */}
+      {modal?.type==='compose'   && <ComposeModal emailProvider={emailProvider} token={session.access_token} onClose={()=>setModal(null)} onSuccess={(msg,type)=>{handleModalSuccess(msg,type);loadThreads(session.access_token)}} />}
       {modal?.type==='refund'    && <RefundModal      order={modal.order} token={session.access_token} onClose={()=>setModal(null)} onSuccess={handleModalSuccess} />}
       {modal?.type==='cancel'    && <CancelModal      order={modal.order} token={session.access_token} onClose={()=>setModal(null)} onSuccess={handleModalSuccess} />}
       {modal?.type==='duplicate' && <DuplicateModal   order={modal.order} token={session.access_token} onClose={()=>setModal(null)} onSuccess={handleModalSuccess} />}

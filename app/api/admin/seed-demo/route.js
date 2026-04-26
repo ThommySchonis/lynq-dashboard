@@ -15,8 +15,16 @@ export async function POST(request) {
   }
 
   const body = await request.json().catch(() => ({}))
-  const userId = body.user_id
-  if (!userId) return NextResponse.json({ error: 'Missing user_id in body' }, { status: 400 })
+  let userId = body.user_id
+
+  if (!userId && body.email) {
+    const { data } = await supabaseAdmin.auth.admin.listUsers()
+    const found = data?.users?.find(u => u.email === body.email)
+    if (!found) return NextResponse.json({ error: `No user found with email ${body.email}` }, { status: 404 })
+    userId = found.id
+  }
+
+  if (!userId) return NextResponse.json({ error: 'Missing user_id or email in body' }, { status: 400 })
 
   // Mark onboarding as completed so demo user lands on inbox directly
   await supabaseAdmin.from('profiles').upsert({ id: userId, onboarding_completed: true })

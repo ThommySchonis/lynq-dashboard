@@ -156,6 +156,9 @@ const CSS = `
   .btn-ghost { padding:9px 16px; font-size:12.5px; font-weight:500; font-family:inherit; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.09); color:rgba(240,236,249,0.45); border-radius:10px; cursor:pointer; transition:all .15s; }
   .btn-ghost:hover:not(:disabled) { border-color:rgba(255,255,255,0.18); color:rgba(240,236,249,0.85); background:rgba(255,255,255,0.07); }
   .btn-ghost:disabled { opacity:.28; cursor:not-allowed; }
+  .btn-close { padding:9px 16px; font-size:12.5px; font-weight:600; font-family:inherit; background:rgba(74,222,128,0.07); border:1px solid rgba(74,222,128,0.2); color:rgba(74,222,128,0.75); border-radius:10px; cursor:pointer; transition:all .18s; display:flex; align-items:center; gap:5px; }
+  .btn-close:hover:not(:disabled) { background:rgba(74,222,128,0.13); border-color:rgba(74,222,128,0.38); color:#4ade80; box-shadow:0 2px 12px rgba(74,222,128,0.15); }
+  .btn-close:disabled { opacity:.28; cursor:not-allowed; }
   .btn-danger { padding:9px 20px; font-size:13px; font-weight:600; font-family:inherit; background:linear-gradient(135deg,#ef4444,#c81e1e); color:#fff; border-radius:10px; cursor:pointer; transition:all .2s cubic-bezier(.16,1,.3,1); box-shadow:0 2px 14px rgba(239,68,68,0.35); }
   .btn-danger:hover:not(:disabled) { background:linear-gradient(135deg,#f87171,#ef4444); box-shadow:0 6px 24px rgba(239,68,68,0.5); transform:translateY(-1px); }
   .btn-danger:active:not(:disabled) { transform:translateY(0); }
@@ -241,8 +244,18 @@ const CSS = `
   .xlate-bar { display:flex; align-items:center; gap:8px; padding:6px 14px; background:linear-gradient(90deg,rgba(161,117,252,0.1) 0%,rgba(161,117,252,0.04) 100%); border-bottom:1px solid rgba(161,117,252,0.14); font-size:11.5px; color:#B48CFF; }
 
   /* ── Msg translate btn ── */
-  .msg-xlate-btn { font-size:10px; font-weight:600; color:rgba(240,236,249,0.25); background:none; border:none; cursor:pointer; padding:2px 7px; font-family:inherit; transition:all .15s; border-radius:5px; }
+  .msg-xlate-btn { font-size:10px; font-weight:600; color:rgba(240,236,249,0.28); background:none; border:none; cursor:pointer; padding:2px 7px; font-family:inherit; transition:all .15s; border-radius:5px; }
   .msg-xlate-btn:hover { color:#A175FC; background:rgba(161,117,252,0.1); }
+
+  /* ── Message bubbles ── */
+  .msg-in  { background:rgba(255,255,255,0.085); border:1px solid rgba(255,255,255,0.13); border-radius:4px 16px 16px 16px; padding:14px 17px; font-size:13.5px; line-height:1.78; color:rgba(240,236,249,0.92); white-space:pre-wrap; word-break:break-word; box-shadow:0 4px 20px rgba(0,0,0,0.28),inset 0 1px 0 rgba(255,255,255,0.07); }
+  .msg-out { background:linear-gradient(145deg,rgba(161,117,252,0.22) 0%,rgba(123,69,232,0.16) 100%); border:1px solid rgba(161,117,252,0.32); border-radius:16px 4px 16px 16px; padding:14px 17px; font-size:13.5px; line-height:1.78; color:rgba(240,236,249,0.94); white-space:pre-wrap; word-break:break-word; box-shadow:0 4px 20px rgba(161,117,252,0.12),inset 0 1px 0 rgba(255,255,255,0.08); }
+  .msg-note { background:rgba(251,191,36,0.07); border:1px solid rgba(251,191,36,0.22); border-left:3px solid rgba(251,191,36,0.48); border-radius:4px 14px 14px 14px; padding:14px 17px; font-size:13.5px; line-height:1.78; color:rgba(240,236,249,0.88); white-space:pre-wrap; word-break:break-word; box-shadow:0 4px 20px rgba(0,0,0,0.2); }
+  .msg-sender { font-size:10.5px; color:rgba(240,236,249,0.68); font-weight:600; }
+  .msg-time   { font-size:10.5px; color:rgba(240,236,249,0.32); margin-left:6px; }
+
+  /* ── Conversation area ── */
+  .conv-area { background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(161,117,252,0.04) 0%,transparent 70%); }
 
   @media (prefers-reduced-motion:reduce) { *,*::before,*::after { animation-duration:.01ms !important; transition-duration:.01ms !important; } }
 `
@@ -984,8 +997,8 @@ export default function InboxPage() {
 
   async function handleSend() {
     const textContent = replyRef.current?.textContent || reply
-    if(!textContent.trim()||!selected) return
-    if(demoMode){ showT('Demo mode — connect Gmail to send messages','error'); return }
+    if(!textContent.trim()||!selected) return false
+    if(demoMode){ showT('Demo mode — connect Gmail to send messages','error'); return false }
     setSending(true)
     let bodyToSend = replyRef.current?.innerHTML || reply
     // Auto-translate outgoing message to customer's language
@@ -1004,11 +1017,27 @@ export default function InboxPage() {
       if(replyRef.current) replyRef.current.innerHTML=''
       setReply(''); setAttachments([])
       loadThreads(session.access_token)
-    } else showT(data.error||'Failed to send','error')
+      setSending(false)
+      return true
+    }
+    showT(data.error||'Failed to send','error')
     setSending(false)
+    return false
   }
 
-  async function handleSendResolve() { await handleSend(); if(selected) saveStatus(selected.id,'resolved') }
+  async function handleSendResolve() {
+    if(!selected) return
+    const currentId = selected.id
+    const currentIdx = sortedFiltered.findIndex(t => t.id === currentId)
+    const nextThread = sortedFiltered.find((t, i) => i !== currentIdx)
+    const ok = await handleSend()
+    if(ok) {
+      saveStatus(currentId, 'resolved')
+      showT('Resolved & closed','success')
+      if(nextThread) openThread(nextThread)
+      else setSelected(null)
+    }
+  }
 
   async function translateMessage(msgId, text) {
     setMsgTranslations(p=>({...p,[msgId]:'__loading__'}))
@@ -1193,11 +1222,11 @@ export default function InboxPage() {
             </div>
 
             {/* Messages */}
-            <div className="sscroll" style={{flex:1,overflowY:'auto',padding:'20px 24px 12px'}}>
+            <div className="sscroll conv-area" style={{flex:1,overflowY:'auto',padding:'22px 26px 14px',background:'rgba(0,0,0,0.12)'}}>
               {loadingMsgs&&[0,1].map(i=>(
-                <div key={i} style={{display:'flex',gap:10,flexDirection:i%2===0?'row':'row-reverse',marginBottom:14,animation:`fadeUp .3s ease ${i*.1}s both`}}>
-                  <div className="skel" style={{width:28,height:28,borderRadius:'50%',flexShrink:0}} />
-                  <div className="skel" style={{height:64,width:'60%',borderRadius:12}} />
+                <div key={i} style={{display:'flex',gap:10,flexDirection:i%2===0?'row':'row-reverse',marginBottom:18,animation:`fadeUp .3s ease ${i*.1}s both`}}>
+                  <div className="skel" style={{width:30,height:30,borderRadius:'50%',flexShrink:0}} />
+                  <div className="skel" style={{height:72,width:'60%',borderRadius:16}} />
                 </div>
               ))}
               {messages.map((msg,idx)=>{
@@ -1205,15 +1234,15 @@ export default function InboxPage() {
                 const isNote=msg.isNote
                 const name=extractName(msg.from)
                 return (
-                  <div key={msg.id||idx} style={{marginBottom:14,display:'flex',gap:10,flexDirection:isAgent?'row-reverse':'row',animation:'msgIn .28s ease both'}}>
-                    {!isNote&&<Avatar name={name} size={28} />}
-                    <div style={{maxWidth:'74%'}}>
-                      <div style={{fontSize:10.5,color:'rgba(240,236,249,0.3)',marginBottom:4,textAlign:isAgent?'right':'left'}}>
-                        <span style={{color:'rgba(240,236,249,0.55)',fontWeight:600}}>{name}</span>
-                        <span style={{marginLeft:6}}>{formatDate(msg.date)}</span>
+                  <div key={msg.id||idx} style={{marginBottom:18,display:'flex',gap:10,flexDirection:isAgent?'row-reverse':'row',animation:'msgIn .28s ease both'}}>
+                    {!isNote&&<Avatar name={name} size={30} />}
+                    <div style={{maxWidth:'76%'}}>
+                      <div style={{fontSize:10.5,marginBottom:5,textAlign:isAgent?'right':'left'}}>
+                        <span className="msg-sender">{name}</span>
+                        <span className="msg-time">{formatDate(msg.date)}</span>
                       </div>
-                      <div style={{background:isNote?'rgba(251,191,36,0.07)':isAgent?'rgba(161,117,252,0.14)':'rgba(255,255,255,0.05)',border:`1px solid ${isNote?'rgba(251,191,36,0.22)':isAgent?'rgba(161,117,252,0.22)':'rgba(255,255,255,0.07)'}`,borderRadius:isAgent?'14px 4px 14px 14px':'4px 14px 14px 14px',borderLeft:isNote?'3px solid rgba(251,191,36,0.45)':undefined,padding:'12px 15px',fontSize:13.5,lineHeight:1.72,color:'rgba(240,236,249,0.85)',whiteSpace:'pre-wrap',wordBreak:'break-word'}}>
-                        {isNote&&<div style={{fontSize:10,fontWeight:700,color:'rgba(251,191,36,0.7)',letterSpacing:'.07em',textTransform:'uppercase',marginBottom:6}}>Internal note</div>}
+                      <div className={isNote?'msg-note':isAgent?'msg-out':'msg-in'}>
+                        {isNote&&<div style={{fontSize:10,fontWeight:700,color:'rgba(251,191,36,0.75)',letterSpacing:'.07em',textTransform:'uppercase',marginBottom:7}}>Internal note</div>}
                         {msgTranslations[msg.id]&&msgTranslations[msg.id]!=='__loading__'
                           ? msgTranslations[msg.id]
                           : (msg.body||msg.snippet)}
@@ -1347,7 +1376,10 @@ export default function InboxPage() {
                         {aiLoading?'Generating…':'AI Reply'}
                       </button>
                       <div style={{display:'flex',gap:7}}>
-                        <button className="btn-ghost" onClick={handleSendResolve} disabled={!reply.trim()||sending}>Send & Close</button>
+                        <button className="btn-close" onClick={handleSendResolve} disabled={!reply.trim()||sending}>
+                          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                          Send & Close
+                        </button>
                         <button className="btn-send" onClick={handleSend} disabled={!reply.trim()||sending} style={{display:'flex',alignItems:'center',gap:6}}>
                           {sending?<Spinner white />:I.send}
                           {sending?'Sending…':'Send'}

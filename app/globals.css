@@ -1,21 +1,23 @@
 @import "tailwindcss";
 
 :root {
-  --bg: #08101F;
-  --surface: #0D1829;
-  --surface-2: #112236;
-  --accent: #3088FF;
-  --accent-hover: #5AA3FF;
-  --accent-gradient: linear-gradient(135deg, #0047FF 0%, #3088FF 40%, #FF6B35 100%);
-  --border: rgba(255, 255, 255, 0.07);
-  --border-hover: rgba(255, 255, 255, 0.15);
-  --text: #ffffff;
-  --text-muted: rgba(255, 255, 255, 0.45);
-  --text-subtle: rgba(255, 255, 255, 0.25);
+  /* Lynq & Flow Brand Colors */
+  --bg: #1C0F36;           /* Cosmic Ink */
+  --surface: #241352;      /* Cosmic Ink surface */
+  --surface-2: #2D1A6A;    /* Elevated surface */
+  --accent: #A175FC;       /* Iris Electric */
+  --accent-hover: #B990FF;
+  --accent-dim: rgba(161, 117, 252, 0.15);
+  --accent-gradient: linear-gradient(135deg, #A175FC 0%, #7C3AED 100%);
+  --border: rgba(161, 117, 252, 0.1);
+  --border-hover: rgba(161, 117, 252, 0.25);
+  --text: #F8FAFC;
+  --text-muted: rgba(248, 250, 252, 0.45);
+  --text-subtle: rgba(248, 250, 252, 0.25);
   --success: #4ade80;
   --warning: #fb923c;
   --danger: #f87171;
-  --info: #60a5fa;
+  --info: #A175FC;
 }
 
 * {

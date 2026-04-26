@@ -7,7 +7,7 @@ export default function PrivacyPage() {
   return (
     <div style={{
       minHeight: '100vh',
-      background: '#08101F',
+      background: '#1C0F36',
       color: '#ffffff',
       fontFamily: "'Inter', sans-serif",
       padding: '60px 24px',

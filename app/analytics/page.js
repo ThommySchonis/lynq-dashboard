@@ -9,11 +9,11 @@ import Sidebar from '../components/Sidebar'
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
 function fmt(n) {
-  return Number(n || 0).toLocaleString('nl-NL')
+  return Number(n || 0).toLocaleString('en-US')
 }
 
 function fmtEur(n) {
-  return `€${Number(n || 0).toLocaleString('nl-NL', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+  return `€${Number(n || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 }
 
 function getISODay(dateStr) {
@@ -68,7 +68,7 @@ function statusColor(s) {
 }
 
 function fmtDate(str) {
-  return new Date(str).toLocaleDateString('nl-NL', { day: '2-digit', month: 'short' })
+  return new Date(str).toLocaleDateString('en-US', { day: '2-digit', month: 'short' })
 }
 
 // ─── CSS ────────────────────────────────────────────────────────────────────
@@ -136,7 +136,7 @@ const CSS = `
     position:absolute;
     top:0; left:0; right:0;
     height:2px;
-    background:linear-gradient(90deg,#3088FF,#FF6B35);
+    background:linear-gradient(90deg,#A175FC,#FF6B35);
     opacity:0;
     transition:opacity 0.22s ease;
   }
@@ -144,11 +144,11 @@ const CSS = `
     content:'';
     position:absolute;
     inset:0;
-    background:linear-gradient(135deg,rgba(48,136,255,0.06),transparent 60%);
+    background:linear-gradient(135deg,rgba(161,117,252,0.06),transparent 60%);
     opacity:0;
     transition:opacity 0.22s ease;
   }
-  .kpi-card:hover { transform:translateY(-2px); border-color:rgba(48,136,255,0.2); box-shadow:0 8px 32px rgba(48,136,255,0.08); }
+  .kpi-card:hover { transform:translateY(-2px); border-color:rgba(161,117,252,0.2); box-shadow:0 8px 32px rgba(161,117,252,0.08); }
   .kpi-card:hover::before { opacity:1; }
   .kpi-card:hover::after  { opacity:1; }
 
@@ -160,7 +160,7 @@ const CSS = `
     padding:24px;
     transition:all 0.22s ease;
   }
-  .chart-card:hover { border-color:rgba(48,136,255,0.15); box-shadow:0 8px 32px rgba(48,136,255,0.06); }
+  .chart-card:hover { border-color:rgba(161,117,252,0.15); box-shadow:0 8px 32px rgba(161,117,252,0.06); }
 
   /* Bar chart bars */
   .bar-wrap {
@@ -175,7 +175,7 @@ const CSS = `
     width:100%;
     max-width:32px;
     border-radius:4px 4px 0 0;
-    background:linear-gradient(180deg,#3088FF,rgba(48,136,255,0.4));
+    background:linear-gradient(180deg,#FB923C 0%,#A175FC 60%,rgba(161,117,252,0.45) 100%);
     transform-origin:bottom;
     animation:barGrow 0.6s cubic-bezier(0.34,1.56,0.64,1) both;
     cursor:pointer;
@@ -190,8 +190,8 @@ const CSS = `
     top:-34px;
     left:50%;
     transform:translateX(-50%);
-    background:rgba(15,20,45,0.95);
-    border:1px solid rgba(48,136,255,0.25);
+    background:rgba(28,15,54,0.95);
+    border:1px solid rgba(161,117,252,0.25);
     border-radius:7px;
     padding:4px 10px;
     font-size:11px;
@@ -229,7 +229,7 @@ function AuroraBackground() {
       <div style={{
         position:'absolute', top:'-10%', right:'15%',
         width:'700px', height:'600px', borderRadius:'50%',
-        background:'radial-gradient(ellipse,rgba(48,136,255,0.10) 0%,transparent 70%)',
+        background:'radial-gradient(ellipse,rgba(161,117,252,0.10) 0%,transparent 70%)',
         animation:'aurora1 20s ease-in-out infinite',
         filter:'blur(50px)',
       }}/>
@@ -243,7 +243,7 @@ function AuroraBackground() {
       <div style={{
         position:'absolute', top:'45%', right:'-5%',
         width:'400px', height:'400px', borderRadius:'50%',
-        background:'radial-gradient(ellipse,rgba(139,92,246,0.05) 0%,transparent 70%)',
+        background:'radial-gradient(ellipse,rgba(251,113,133,0.06) 0%,transparent 70%)',
         animation:'aurora3 30s ease-in-out infinite',
         filter:'blur(45px)',
       }}/>
@@ -323,9 +323,9 @@ function KpiRow({ kpis, loaded }) {
           <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'14px' }}>
             <div style={{
               width:36, height:36, borderRadius:9,
-              background:'rgba(48,136,255,0.1)',
+              background:'rgba(161,117,252,0.1)',
               display:'flex', alignItems:'center', justifyContent:'center',
-              color:'#3088FF', flexShrink:0,
+              color:'#A175FC', flexShrink:0,
             }}>
               {c.icon}
             </div>
@@ -366,9 +366,9 @@ function RevenueBarChart({ orders }) {
         </div>
         <div style={{
           padding:'4px 12px', borderRadius:100,
-          background:'rgba(48,136,255,0.1)',
-          border:'1px solid rgba(48,136,255,0.2)',
-          fontSize:11, fontWeight:600, color:'#3088FF', letterSpacing:'.04em',
+          background:'rgba(161,117,252,0.1)',
+          border:'1px solid rgba(161,117,252,0.2)',
+          fontSize:11, fontWeight:600, color:'#A175FC', letterSpacing:'.04em',
         }}>
           {orders.length} total
         </div>
@@ -435,7 +435,7 @@ function StatusDonut({ orders }) {
   const total = orders.length || 1
 
   const segments = [
-    { label:'Fulfilled',   count:fulfilled,   color:'#3088FF',  pct: (fulfilled/total)*100 },
+    { label:'Fulfilled',   count:fulfilled,   color:'#A175FC',  pct: (fulfilled/total)*100 },
     { label:'Unfulfilled', count:unfulfilled, color:'#fbbf24',  pct: (unfulfilled/total)*100 },
     { label:'Cancelled',   count:cancelled,   color:'#f87171',  pct: (cancelled/total)*100 },
     { label:'Refunded',    count:refunded,    color:'#FF6B35',  pct: (refunded/total)*100 },
@@ -473,7 +473,7 @@ function StatusDonut({ orders }) {
             position:'absolute', top:'50%', left:'50%',
             transform:'translate(-50%,-50%)',
             width:88, height:88, borderRadius:'50%',
-            background:'#06091A',
+            background:'#1C0F36',
             display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center',
             gap:2,
           }}>
@@ -624,8 +624,8 @@ function OrdersTable({ orders, loaded }) {
         <div style={{
           display:'flex', alignItems:'center', gap:6,
           padding:'4px 12px', borderRadius:100,
-          background:'rgba(48,136,255,0.08)', border:'1px solid rgba(48,136,255,0.2)',
-          fontSize:11, fontWeight:600, color:'#3088FF', letterSpacing:'.04em',
+          background:'rgba(161,117,252,0.08)', border:'1px solid rgba(161,117,252,0.2)',
+          fontSize:11, fontWeight:600, color:'#A175FC', letterSpacing:'.04em',
         }}>
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
             <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
@@ -724,7 +724,7 @@ function Spinner() {
     <div style={{
       width:18, height:18,
       border:'2px solid rgba(255,255,255,0.1)',
-      borderTop:'2px solid #3088FF',
+      borderTop:'2px solid #A175FC',
       borderRadius:'50%',
       animation:'spin 0.7s linear infinite',
       flexShrink:0,
@@ -779,7 +779,7 @@ export default function AnalyticsPage() {
   const chartsLoaded = loaded.orders
 
   return (
-    <div className="analytics-root" style={{ display:'flex', minHeight:'100vh', background:'#06091A' }}>
+    <div className="analytics-root" style={{ display:'flex', minHeight:'100vh', background:'#1C0F36' }}>
       <style>{CSS}</style>
       <Sidebar/>
 

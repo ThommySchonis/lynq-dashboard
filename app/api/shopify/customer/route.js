@@ -60,6 +60,17 @@ export async function GET(request) {
       status: f.status,
     })),
     hasRefund: o.refunds?.length > 0,
+    shippingAddress: o.shipping_address ? {
+      firstName: o.shipping_address.first_name || '',
+      lastName: o.shipping_address.last_name || '',
+      address1: o.shipping_address.address1 || '',
+      address2: o.shipping_address.address2 || '',
+      city: o.shipping_address.city || '',
+      zip: o.shipping_address.zip || '',
+      country: o.shipping_address.country || '',
+      countryCode: o.shipping_address.country_code || '',
+      phone: o.shipping_address.phone || '',
+    } : null,
   }))
 
   return NextResponse.json({

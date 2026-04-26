@@ -14,7 +14,7 @@ export async function POST(request) {
   if (!client) return NextResponse.json({ error: 'Shopify not configured' }, { status: 400 })
 
   // Fetch store currency and save to integrations
-  const shopRes = await fetch(`https://${client.domain}/admin/api/2024-01/shop.json`, {
+  const shopRes = await fetch(`https://${client.domain}/admin/api/2025-04/shop.json`, {
     headers: { 'X-Shopify-Access-Token': client.accessToken }
   })
   if (shopRes.ok) {
@@ -33,7 +33,7 @@ export async function POST(request) {
     : `&processed_at_min=${new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString()}`
 
   let orders = []
-  let url = `https://${client.domain}/admin/api/2024-01/orders.json?status=any&limit=250${since}`
+  let url = `https://${client.domain}/admin/api/2025-04/orders.json?status=any&limit=250${since}`
 
   while (url) {
     const res = await fetch(url, { headers: { 'X-Shopify-Access-Token': client.accessToken } })

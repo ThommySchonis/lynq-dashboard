@@ -5,7 +5,7 @@ import crypto from 'crypto'
 async function syncOrders(userId, shop, accessToken) {
   const since = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString()
   let orders = []
-  let url = `https://${shop}/admin/api/2024-01/orders.json?status=any&limit=250&processed_at_min=${since}`
+  let url = `https://${shop}/admin/api/2025-04/orders.json?status=any&limit=250&processed_at_min=${since}`
 
   while (url) {
     const res = await fetch(url, { headers: { 'X-Shopify-Access-Token': accessToken } })
@@ -57,7 +57,7 @@ export async function GET(request) {
   const { searchParams } = new URL(request.url)
   const { code, hmac, shop, state } = Object.fromEntries(searchParams)
 
-  const appUrl = process.env.LOVABLE_APP_URL || process.env.NEXT_PUBLIC_APP_URL
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL
 
   const { data: oauthState } = await supabaseAdmin
     .from('oauth_states')
@@ -111,7 +111,7 @@ export async function GET(request) {
   const webhookBase = process.env.NEXT_PUBLIC_APP_URL
   const webhookTopics = ['orders/create', 'orders/updated', 'orders/cancelled', 'refunds/create']
   await Promise.all(webhookTopics.map(topic =>
-    fetch(`https://${shop}/admin/api/2024-01/webhooks.json`, {
+    fetch(`https://${shop}/admin/api/2025-04/webhooks.json`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-Shopify-Access-Token': tokenData.access_token },
       body: JSON.stringify({

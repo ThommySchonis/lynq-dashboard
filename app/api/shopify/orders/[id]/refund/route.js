@@ -14,63 +14,58 @@ export async function POST(request, { params }) {
   if (!client) return NextResponse.json({ error: 'Shopify not configured' }, { status: 400 })
 
   const { id } = await params
-  const { lineItems, restock, notify, reason, shipping } = await request.json()
+  const { lineItems, restock, notify, reason, shipping, customAmount } = await request.json()
 
-  // lineItems: [{ lineItemId, quantity }]
+  // Custom amount refund — bypass line item calculation
+  if (customAmount && Number(customAmount) > 0) {
+    const txRes = await shopifyFetch(client, `/orders/${id}/transactions.json`)
+    const txData = await txRes.json()
+    const originalTx = (txData.transactions || []).find(t => t.kind === 'capture' || t.kind === 'sale' || t.kind === 'authorization')
+
+    const transaction = originalTx
+      ? { parent_id: originalTx.id, kind: 'refund', gateway: originalTx.gateway, amount: String(Number(customAmount).toFixed(2)) }
+      : { kind: 'refund', amount: String(Number(customAmount).toFixed(2)) }
+
+    const refundRes = await shopifyFetch(client, `/orders/${id}/refunds.json`, {
+      method: 'POST',
+      body: JSON.stringify({ refund: { notify: notify !== false, note: reason || '', transactions: [transaction] } }),
+    })
+    const refundData = await refundRes.json()
+    if (!refundRes.ok) return NextResponse.json({ error: refundData.errors || 'Refund failed' }, { status: 502 })
+    return NextResponse.json({ success: true, refund: refundData.refund })
+  }
+
+  // Line-item based refund (partial by qty or full)
   const refundLineItems = (lineItems || []).map(item => ({
     line_item_id: item.lineItemId,
     quantity: item.quantity,
     restock_type: restock ? 'return' : 'no_restock',
   }))
 
-  // Calculate refund amounts via Shopify
-  const calcRes = await shopifyFetch(
-    client,
-    `/orders/${id}/refunds/calculate.json`,
-    {
-      method: 'POST',
-      body: JSON.stringify({
-        refund: {
-          shipping: { full_refund: !!shipping },
-          refund_line_items: refundLineItems,
-        },
-      }),
-    }
-  )
-
+  const calcRes = await shopifyFetch(client, `/orders/${id}/refunds/calculate.json`, {
+    method: 'POST',
+    body: JSON.stringify({ refund: { shipping: { full_refund: !!shipping }, refund_line_items: refundLineItems } }),
+  })
   const calcData = await calcRes.json()
-  if (!calcRes.ok) {
-    return NextResponse.json({ error: calcData.errors || 'Calculation failed' }, { status: 502 })
-  }
+  if (!calcRes.ok) return NextResponse.json({ error: calcData.errors || 'Calculation failed' }, { status: 502 })
 
   const transactions = (calcData.refund?.transactions || []).map(t => ({
-    parent_id: t.parent_id,
-    amount: t.amount,
-    kind: 'refund',
-    gateway: t.gateway,
+    parent_id: t.parent_id, amount: t.amount, kind: 'refund', gateway: t.gateway,
   }))
 
-  const refundRes = await shopifyFetch(
-    client,
-    `/orders/${id}/refunds.json`,
-    {
-      method: 'POST',
-      body: JSON.stringify({
-        refund: {
-          notify: notify !== false,
-          note: reason || '',
-          shipping: { full_refund: !!shipping },
-          refund_line_items: refundLineItems,
-          transactions,
-        },
-      }),
-    }
-  )
-
+  const refundRes = await shopifyFetch(client, `/orders/${id}/refunds.json`, {
+    method: 'POST',
+    body: JSON.stringify({
+      refund: {
+        notify: notify !== false,
+        note: reason || '',
+        shipping: { full_refund: !!shipping },
+        refund_line_items: refundLineItems,
+        transactions,
+      },
+    }),
+  })
   const refundData = await refundRes.json()
-  if (!refundRes.ok) {
-    return NextResponse.json({ error: refundData.errors || 'Refund failed' }, { status: 502 })
-  }
-
+  if (!refundRes.ok) return NextResponse.json({ error: refundData.errors || 'Refund failed' }, { status: 502 })
   return NextResponse.json({ success: true, refund: refundData.refund })
 }

@@ -102,7 +102,7 @@ export default function OnboardingPage() {
   return (
     <div style={{
       minHeight: '100vh',
-      background: '#08101F',
+      background: '#1C0F36',
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
@@ -112,7 +112,7 @@ export default function OnboardingPage() {
       <div style={{
         position: 'fixed', top: 0, left: '50%', transform: 'translateX(-50%)',
         width: '800px', height: '400px',
-        background: 'radial-gradient(ellipse, rgba(48,136,255,0.07) 0%, transparent 70%)',
+        background: 'radial-gradient(ellipse, rgba(161,117,252,0.07) 0%, transparent 70%)',
         pointerEvents: 'none',
       }} />
 
@@ -134,9 +134,9 @@ export default function OnboardingPage() {
                   width: '32px', height: '32px', borderRadius: '50%',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   fontSize: '13px', fontWeight: '600',
-                  background: done ? '#3088FF' : active ? 'transparent' : 'transparent',
-                  border: done ? 'none' : active ? '2px solid #3088FF' : '2px solid rgba(255,255,255,0.15)',
-                  color: done ? '#fff' : active ? '#3088FF' : 'rgba(255,255,255,0.3)',
+                  background: done ? '#A175FC' : active ? 'transparent' : 'transparent',
+                  border: done ? 'none' : active ? '2px solid #A175FC' : '2px solid rgba(255,255,255,0.15)',
+                  color: done ? '#fff' : active ? '#A175FC' : 'rgba(255,255,255,0.3)',
                   transition: 'all 0.3s ease',
                 }}>
                   {done ? '✓' : num}
@@ -153,7 +153,7 @@ export default function OnboardingPage() {
               {i < STEPS.length - 1 && (
                 <div style={{
                   width: '80px', height: '1px', marginBottom: '18px', marginLeft: '8px', marginRight: '8px',
-                  background: step > num ? '#3088FF' : 'rgba(255,255,255,0.1)',
+                  background: step > num ? '#A175FC' : 'rgba(255,255,255,0.1)',
                   transition: 'background 0.3s ease',
                 }} />
               )}
@@ -164,7 +164,7 @@ export default function OnboardingPage() {
 
       {/* Card */}
       <div style={{
-        background: '#0D1829',
+        background: '#241352',
         border: '1px solid rgba(255,255,255,0.07)',
         borderRadius: '20px',
         padding: '40px',
@@ -185,7 +185,7 @@ export default function OnboardingPage() {
               It only takes about 2 minutes.
             </p>
             <button onClick={() => setStep(2)} style={{
-              background: '#3088FF', color: '#fff', borderRadius: '10px',
+              background: '#A175FC', color: '#fff', borderRadius: '10px',
               padding: '14px 40px', fontSize: '15px', fontWeight: '600',
             }}>
               Get Started →
@@ -235,8 +235,8 @@ export default function OnboardingPage() {
                     style={{
                       padding: '14px 16px',
                       borderRadius: '10px',
-                      border: `1px solid ${tone === opt.value ? '#3088FF' : 'rgba(255,255,255,0.07)'}`,
-                      background: tone === opt.value ? 'rgba(48,136,255,0.08)' : 'transparent',
+                      border: `1px solid ${tone === opt.value ? '#A175FC' : 'rgba(255,255,255,0.07)'}`,
+                      background: tone === opt.value ? 'rgba(161,117,252,0.08)' : 'transparent',
                       cursor: 'pointer',
                       transition: 'all 0.15s ease',
                     }}
@@ -253,7 +253,7 @@ export default function OnboardingPage() {
               disabled={!brandName || loading}
               style={{
                 width: '100%', padding: '13px',
-                background: !brandName ? 'rgba(48,136,255,0.3)' : '#3088FF',
+                background: !brandName ? 'rgba(161,117,252,0.3)' : '#A175FC',
                 color: '#fff', borderRadius: '10px',
                 fontSize: '14px', fontWeight: '600',
                 cursor: !brandName ? 'not-allowed' : 'pointer',
@@ -357,7 +357,7 @@ export default function OnboardingPage() {
 
             <button onClick={() => setStep(4)} style={{
               width: '100%', padding: '13px',
-              background: '#3088FF', color: '#fff',
+              background: '#A175FC', color: '#fff',
               borderRadius: '10px', fontSize: '14px', fontWeight: '600',
             }}>
               Continue →
@@ -370,8 +370,8 @@ export default function OnboardingPage() {
           <div style={{ textAlign: 'center' }}>
             <div style={{
               width: '72px', height: '72px', borderRadius: '50%',
-              background: 'rgba(48,136,255,0.15)',
-              border: '2px solid #3088FF',
+              background: 'rgba(161,117,252,0.15)',
+              border: '2px solid #A175FC',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontSize: '32px', margin: '0 auto 24px',
             }}>
@@ -385,7 +385,7 @@ export default function OnboardingPage() {
               Start by checking your inbox.
             </p>
             <button onClick={completeOnboarding} style={{
-              background: '#3088FF', color: '#fff', borderRadius: '10px',
+              background: '#A175FC', color: '#fff', borderRadius: '10px',
               padding: '14px 40px', fontSize: '15px', fontWeight: '600',
               marginBottom: '16px', width: '100%',
             }}>
@@ -420,7 +420,7 @@ function Label({ children }) {
 function ConnectCard({ icon, title, description, connected, children }) {
   return (
     <div style={{
-      background: '#08101F',
+      background: '#1C0F36',
       border: `1px solid ${connected ? 'rgba(74,222,128,0.3)' : 'rgba(255,255,255,0.07)'}`,
       borderRadius: '12px',
       padding: '20px',
@@ -470,8 +470,8 @@ function SkipLink() {
 const btnOutline = {
   width: '100%', padding: '9px',
   background: 'transparent',
-  border: '1px solid rgba(48,136,255,0.4)',
-  color: '#3088FF', borderRadius: '8px',
+  border: '1px solid rgba(161,117,252,0.4)',
+  color: '#A175FC', borderRadius: '8px',
   fontSize: '13px', fontWeight: '500',
   cursor: 'pointer',
 }

@@ -74,7 +74,7 @@ export default function AdminPage() {
     if (error) {
       alert('Error: ' + error.message)
     } else {
-      setNotifSuccess('Notificatie gepushed!')
+      setNotifSuccess('Notification pushed!')
       setNotifForm({ title: '', body: '', type: 'info' })
       fetchNotifications()
     }
@@ -103,7 +103,7 @@ export default function AdminPage() {
     if (error) {
       alert('Error: ' + error.message)
     } else {
-      setBroadcastSuccess('Bericht gepushed naar alle klanten!')
+      setBroadcastSuccess('Message pushed to all clients!')
       setBroadcastForm({ title: '', body: '', type: 'update' })
       fetchBroadcasts()
     }
@@ -155,14 +155,14 @@ export default function AdminPage() {
       return
     }
 
-    setSuccess(`Client ${form.company_name} aangemaakt!`)
+    setSuccess(`Client ${form.company_name} created!`)
     setForm({ company_name: '', email: '', password: '', gorgias_domain: '', gorgias_api_key: '', shopify_domain: '', shopify_api_key: '', parcel_panel_api_key: '' })
     fetchClients()
     setLoading(false)
   }
 
   const s = {
-    page: { minHeight: '100vh', background: '#08101F', fontFamily: "'Inter Tight', sans-serif", color: '#fff' },
+    page: { minHeight: '100vh', background: '#1C0F36', fontFamily: "'Inter Tight', sans-serif", color: '#fff' },
     topbar: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 40px', height: '64px', background: '#180d30', borderBottom: '1px solid rgba(255,255,255,0.07)', position: 'sticky', top: 0, zIndex: 10 },
     topbarLogo: { height: '28px', filter: 'brightness(0) invert(1)' },
     topbarRight: { display: 'flex', alignItems: 'center', gap: '16px' },
@@ -173,31 +173,31 @@ export default function AdminPage() {
     pageTitle: { fontSize: '22px', fontWeight: '800', marginBottom: '4px' },
     pageSub: { color: '#4a7fb5', fontSize: '13px' },
     statsRow: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginBottom: '32px', maxWidth: '600px' },
-    statCard: { background: '#0D1829', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '12px', padding: '20px 24px' },
+    statCard: { background: '#241352', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '12px', padding: '20px 24px' },
     statNum: { fontSize: '28px', fontWeight: '800', color: '#fff', lineHeight: 1 },
     statLabel: { fontSize: '11px', color: '#4a7fb5', marginTop: '4px', fontWeight: '500', textTransform: 'uppercase', letterSpacing: '0.05em' },
     tabBar: { display: 'flex', gap: '2px', marginBottom: '28px', background: 'rgba(255,255,255,0.04)', padding: '4px', borderRadius: '10px', width: 'fit-content' },
     tab: { padding: '8px 20px', borderRadius: '7px', border: 'none', fontSize: '13px', fontWeight: '600', cursor: 'pointer', transition: 'all 0.15s', fontFamily: "'Inter Tight', sans-serif" },
-    tabActive: { background: '#3088FF', color: '#fff', boxShadow: '0 2px 8px rgba(48,136,255,0.3)' },
+    tabActive: { background: '#A175FC', color: '#fff', boxShadow: '0 2px 8px rgba(161,117,252,0.3)' },
     tabInactive: { background: 'transparent', color: '#4a7fb5' },
     grid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' },
-    card: { background: '#0D1829', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '14px', padding: '28px' },
+    card: { background: '#241352', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '14px', padding: '28px' },
     cardTitle: { fontSize: '15px', fontWeight: '700', marginBottom: '6px', color: '#fff' },
     cardSub: { fontSize: '12px', color: '#4a7fb5', marginBottom: '24px' },
     divider: { height: '1px', background: 'rgba(255,255,255,0.06)', margin: '16px 0' },
     label: { display: 'block', fontSize: '11px', color: '#4a7fb5', marginBottom: '5px', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.04em' },
     input: { width: '100%', padding: '10px 14px', background: '#180d30', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: '#fff', fontSize: '13px', boxSizing: 'border-box', marginBottom: '14px', fontFamily: "'Inter Tight', sans-serif", transition: 'border-color 0.15s' },
     textarea: { width: '100%', padding: '10px 14px', background: '#180d30', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: '#fff', fontSize: '13px', boxSizing: 'border-box', marginBottom: '14px', fontFamily: "'Inter Tight', sans-serif", resize: 'vertical', minHeight: '100px' },
-    btn: { width: '100%', padding: '11px', background: '#3088FF', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: '700', cursor: 'pointer', marginTop: '6px', fontFamily: "'Inter Tight', sans-serif", letterSpacing: '0.02em', transition: 'opacity 0.15s' },
+    btn: { width: '100%', padding: '11px', background: '#A175FC', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: '700', cursor: 'pointer', marginTop: '6px', fontFamily: "'Inter Tight', sans-serif", letterSpacing: '0.02em', transition: 'opacity 0.15s' },
     success: { background: 'rgba(78,204,163,0.1)', border: '1px solid rgba(78,204,163,0.3)', borderRadius: '8px', padding: '10px 14px', color: '#4ecca3', fontSize: '13px', marginBottom: '16px' },
     clientRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' },
     pill: { padding: '3px 10px', borderRadius: '20px', fontSize: '11px', fontWeight: '600', background: 'rgba(78,204,163,0.12)', color: '#4ecca3', border: '1px solid rgba(78,204,163,0.2)' },
-    typePill: (t, selected) => ({ padding: '7px 14px', borderRadius: '8px', border: '1px solid', fontSize: '12px', fontWeight: '600', cursor: 'pointer', fontFamily: "'Inter Tight', sans-serif", transition: 'all 0.15s', borderColor: selected === t ? '#3088FF' : 'rgba(255,255,255,0.08)', background: selected === t ? 'rgba(48,136,255,0.15)' : 'transparent', color: selected === t ? '#3088FF' : '#4a7fb5' }),
+    typePill: (t, selected) => ({ padding: '7px 14px', borderRadius: '8px', border: '1px solid', fontSize: '12px', fontWeight: '600', cursor: 'pointer', fontFamily: "'Inter Tight', sans-serif", transition: 'all 0.15s', borderColor: selected === t ? '#A175FC' : 'rgba(255,255,255,0.08)', background: selected === t ? 'rgba(161,117,252,0.15)' : 'transparent', color: selected === t ? '#A175FC' : '#4a7fb5' }),
     broadcastRow: { padding: '16px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' },
   }
 
   if (!authorized) return (
-    <div style={{ minHeight: '100vh', background: '#08101F', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#4a7fb5', fontFamily: "'Inter Tight', sans-serif" }}>
+    <div style={{ minHeight: '100vh', background: '#1C0F36', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#4a7fb5', fontFamily: "'Inter Tight', sans-serif" }}>
       Checking access...
     </div>
   )
@@ -221,7 +221,7 @@ export default function AdminPage() {
         {/* Page header */}
         <div style={s.pageHeader}>
           <div style={s.pageTitle}>Admin Panel</div>
-          <div style={s.pageSub}>Beheer klanten, broadcasts en notificaties</div>
+          <div style={s.pageSub}>Manage clients, broadcasts and notifications</div>
         </div>
 
         {/* Stats */}
@@ -252,8 +252,8 @@ export default function AdminPage() {
         <div style={s.grid}>
           {/* Broadcast schrijven */}
           <div style={s.card}>
-            <div style={s.cardTitle}>Nieuw bericht pushen</div>
-            <div style={s.cardSub}>Wordt zichtbaar in de Value Feed van alle klanten</div>
+            <div style={s.cardTitle}>Push new message</div>
+            <div style={s.cardSub}>Visible in the Value Feed of all clients</div>
             {broadcastSuccess && <div style={s.success}>{broadcastSuccess}</div>}
             <form onSubmit={handleBroadcast}>
               <label style={s.label}>Type</label>
@@ -264,29 +264,29 @@ export default function AdminPage() {
                   </button>
                 ))}
               </div>
-              <label style={s.label}>Titel</label>
-              <input style={s.input} value={broadcastForm.title} onChange={e => setBroadcastForm({...broadcastForm, title: e.target.value})} required placeholder="Onderwerp van het bericht" />
-              <label style={s.label}>Bericht</label>
-              <textarea style={s.textarea} value={broadcastForm.body} onChange={e => setBroadcastForm({...broadcastForm, body: e.target.value})} required placeholder="Schrijf hier je bericht..." />
+              <label style={s.label}>Title</label>
+              <input style={s.input} value={broadcastForm.title} onChange={e => setBroadcastForm({...broadcastForm, title: e.target.value})} required placeholder="Message subject" />
+              <label style={s.label}>Message</label>
+              <textarea style={s.textarea} value={broadcastForm.body} onChange={e => setBroadcastForm({...broadcastForm, body: e.target.value})} required placeholder="Write your message here..." />
               <button style={s.btn} type="submit" disabled={broadcastLoading}>
-                {broadcastLoading ? 'Pushen...' : '📤 Push naar alle klanten'}
+                {broadcastLoading ? 'Pushing...' : '📤 Push to all clients'}
               </button>
             </form>
           </div>
 
           {/* Broadcast geschiedenis */}
           <div style={s.card}>
-            <div style={s.cardTitle}>Verstuurd — {broadcasts.length}</div>
-            {broadcasts.length === 0 && <div style={{ color: '#4a7fb5', fontSize: '13px' }}>Nog geen berichten verstuurd.</div>}
+            <div style={s.cardTitle}>Sent — {broadcasts.length}</div>
+            {broadcasts.length === 0 && <div style={{ color: '#4a7fb5', fontSize: '13px' }}>No messages sent yet.</div>}
             {broadcasts.map(b => (
               <div key={b.id} style={s.broadcastRow}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                   <div>
                     <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '4px' }}>
-                      <span style={{ ...s.pill, background: b.type === 'tip' ? 'rgba(48,136,255,0.15)' : b.type === 'video' ? 'rgba(255,209,102,0.15)' : 'rgba(78,204,163,0.15)', color: b.type === 'tip' ? '#3088FF' : b.type === 'video' ? '#ffd166' : '#4ecca3' }}>
+                      <span style={{ ...s.pill, background: b.type === 'tip' ? 'rgba(161,117,252,0.15)' : b.type === 'video' ? 'rgba(255,209,102,0.15)' : 'rgba(78,204,163,0.15)', color: b.type === 'tip' ? '#A175FC' : b.type === 'video' ? '#ffd166' : '#4ecca3' }}>
                         {b.type === 'update' ? '📢 Update' : b.type === 'tip' ? '💡 Tip' : '🎥 Video'}
                       </span>
-                      <span style={{ fontSize: '11px', color: '#4a7fb5' }}>{new Date(b.created_at).toLocaleDateString('nl-NL')}</span>
+                      <span style={{ fontSize: '11px', color: '#4a7fb5' }}>{new Date(b.created_at).toLocaleDateString('en-US')}</span>
                     </div>
                     <div style={{ fontWeight: '600', fontSize: '14px', marginBottom: '4px' }}>{b.title}</div>
                     <div style={{ fontSize: '12px', color: '#4a7fb5', lineHeight: '1.5' }}>{b.body}</div>
@@ -303,8 +303,8 @@ export default function AdminPage() {
         <div style={s.grid}>
           {/* Notificatie schrijven */}
           <div style={s.card}>
-            <div style={s.cardTitle}>Nieuwe notificatie pushen</div>
-            <div style={s.cardSub}>Verschijnt in het notificatie-icoon van alle klanten</div>
+            <div style={s.cardTitle}>Push new notification</div>
+            <div style={s.cardSub}>Appears in the notification icon of all clients</div>
             {notifSuccess && <div style={s.success}>{notifSuccess}</div>}
             <form onSubmit={handleNotification}>
               <label style={s.label}>Type</label>
@@ -315,20 +315,20 @@ export default function AdminPage() {
                   </button>
                 ))}
               </div>
-              <label style={s.label}>Titel</label>
-              <input style={s.input} value={notifForm.title} onChange={e => setNotifForm({...notifForm, title: e.target.value})} required placeholder="Onderwerp van de notificatie" />
-              <label style={s.label}>Bericht</label>
-              <textarea style={s.textarea} value={notifForm.body} onChange={e => setNotifForm({...notifForm, body: e.target.value})} required placeholder="Schrijf hier de notificatie..." />
+              <label style={s.label}>Title</label>
+              <input style={s.input} value={notifForm.title} onChange={e => setNotifForm({...notifForm, title: e.target.value})} required placeholder="Notification subject" />
+              <label style={s.label}>Message</label>
+              <textarea style={s.textarea} value={notifForm.body} onChange={e => setNotifForm({...notifForm, body: e.target.value})} required placeholder="Write your notification here..." />
               <button style={s.btn} type="submit" disabled={notifLoading}>
-                {notifLoading ? 'Pushen...' : '🔔 Push notificatie'}
+                {notifLoading ? 'Pushing...' : '🔔 Push notification'}
               </button>
             </form>
           </div>
 
           {/* Notificaties geschiedenis */}
           <div style={s.card}>
-            <div style={s.cardTitle}>Verstuurd — {notifications.length}</div>
-            {notifications.length === 0 && <div style={{ color: '#4a7fb5', fontSize: '13px' }}>Nog geen notificaties verstuurd.</div>}
+            <div style={s.cardTitle}>Sent — {notifications.length}</div>
+            {notifications.length === 0 && <div style={{ color: '#4a7fb5', fontSize: '13px' }}>No notifications sent yet.</div>}
             {notifications.map(n => (
               <div key={n.id} style={s.broadcastRow}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
@@ -337,7 +337,7 @@ export default function AdminPage() {
                       <span style={{ ...s.pill, background: n.type === 'alert' ? 'rgba(255,107,138,0.15)' : n.type === 'warning' ? 'rgba(255,209,102,0.15)' : 'rgba(78,204,163,0.15)', color: n.type === 'alert' ? '#ff6b8a' : n.type === 'warning' ? '#ffd166' : '#4ecca3' }}>
                         {n.type === 'info' ? '💬 Info' : n.type === 'warning' ? '⚠️ Warning' : '🔴 Alert'}
                       </span>
-                      <span style={{ fontSize: '11px', color: '#4a7fb5' }}>{new Date(n.created_at).toLocaleDateString('nl-NL')}</span>
+                      <span style={{ fontSize: '11px', color: '#4a7fb5' }}>{new Date(n.created_at).toLocaleDateString('en-US')}</span>
                     </div>
                     <div style={{ fontWeight: '600', fontSize: '14px', marginBottom: '4px' }}>{n.title}</div>
                     <div style={{ fontSize: '12px', color: '#4a7fb5', lineHeight: '1.5' }}>{n.body}</div>
@@ -352,25 +352,25 @@ export default function AdminPage() {
 
       {activeTab === 'finance' && (
         <div>
-          {financeLoading && <div style={{ color: '#4a7fb5', fontSize: '13px' }}>Laden...</div>}
-          {!financeLoading && !finance && <div style={{ color: '#4a7fb5', fontSize: '13px' }}>Geen data beschikbaar.</div>}
+          {financeLoading && <div style={{ color: '#4a7fb5', fontSize: '13px' }}>Loading...</div>}
+          {!financeLoading && !finance && <div style={{ color: '#4a7fb5', fontSize: '13px' }}>No data available.</div>}
           {finance && (() => {
             const f = finance.finance
             const ai = finance.ai
             const fmt = (n) => n == null ? '—' : `$${n.toFixed(4)}`
             const fmtE = (n) => n == null ? '—' : `€${n.toFixed(0)}`
             const fmtN = (n) => (n || 0).toLocaleString()
-            const green = '#4ecca3', red = '#ff6b8a', yellow = '#ffd166', purple = '#3088FF'
+            const green = '#4ecca3', red = '#ff6b8a', yellow = '#ffd166', purple = '#A175FC'
 
             return (
               <div>
                 {/* P&L overzicht */}
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginBottom: '28px' }}>
                   {[
-                    { label: 'MRR', value: fmtE(f.mrr), color: green, sub: `${f.activeClients} actieve klanten` },
-                    { label: 'Kosten deze maand', value: fmtE(f.totalCostMonth), color: yellow, sub: `Fixed €${f.fixedCosts} + AI $${f.aiCostMonth.toFixed(4)}` },
-                    { label: 'Netto marge', value: fmtE(f.netMargin), color: f.netMargin >= 0 ? green : red, sub: `${f.marginPct}% van MRR` },
-                    { label: 'AI kosten vandaag', value: fmt(ai.today.cost), color: purple, sub: `${ai.today.calls} calls` },
+                    { label: 'MRR', value: fmtE(f.mrr), color: green, sub: `${f.activeClients} active clients` },
+                    { label: 'Costs this month', value: fmtE(f.totalCostMonth), color: yellow, sub: `Fixed €${f.fixedCosts} + AI $${f.aiCostMonth.toFixed(4)}` },
+                    { label: 'Net margin', value: fmtE(f.netMargin), color: f.netMargin >= 0 ? green : red, sub: `${f.marginPct}% of MRR` },
+                    { label: 'AI costs today', value: fmt(ai.today.cost), color: purple, sub: `${ai.today.calls} calls` },
                   ].map(({ label, value, color, sub }) => (
                     <div key={label} style={s.statCard}>
                       <div style={{ ...s.statNum, color }}>{value}</div>
@@ -381,15 +381,15 @@ export default function AdminPage() {
                 </div>
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '24px' }}>
-                  {/* AI usage week/maand */}
+                  {/* AI usage week/month */}
                   <div style={s.card}>
-                    <div style={s.cardTitle}>AI Credits verbruik</div>
+                    <div style={s.cardTitle}>AI Credits usage</div>
                     <div style={s.cardSub}>Claude Haiku 4.5 · $0.80/M input · $4.00/M output</div>
                     {[
-                      { label: 'Vandaag', cost: ai.today.cost, calls: ai.today.calls },
-                      { label: 'Afgelopen 7 dagen', cost: ai.week.cost, calls: ai.week.calls, tokens: ai.week.input_tokens + ai.week.output_tokens },
-                      { label: 'Deze maand', cost: ai.month.cost, calls: ai.month.calls, tokens: ai.month.input_tokens + ai.month.output_tokens },
-                      { label: 'Vorige maand', cost: ai.lastMonth.cost },
+                      { label: 'Today', cost: ai.today.cost, calls: ai.today.calls },
+                      { label: 'Last 7 days', cost: ai.week.cost, calls: ai.week.calls, tokens: ai.week.input_tokens + ai.week.output_tokens },
+                      { label: 'This month', cost: ai.month.cost, calls: ai.month.calls, tokens: ai.month.input_tokens + ai.month.output_tokens },
+                      { label: 'Last month', cost: ai.lastMonth.cost },
                     ].map(({ label, cost, calls, tokens }) => (
                       <div key={label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
                         <div>
@@ -404,10 +404,10 @@ export default function AdminPage() {
 
                   {/* Per route */}
                   <div style={s.card}>
-                    <div style={s.cardTitle}>Verbruik per route (deze maand)</div>
-                    <div style={s.cardSub}>Welke AI functie kost het meest</div>
+                    <div style={s.cardTitle}>Usage by route (this month)</div>
+                    <div style={s.cardSub}>Which AI function costs the most</div>
                     {Object.entries(ai.byRoute).length === 0 && (
-                      <div style={{ color: '#4a7fb5', fontSize: '13px' }}>Nog geen AI calls gelogd deze maand.</div>
+                      <div style={{ color: '#4a7fb5', fontSize: '13px' }}>No AI calls logged this month.</div>
                     )}
                     {Object.entries(ai.byRoute).sort(([,a],[,b]) => b.cost - a.cost).map(([route, v]) => (
                       <div key={route} style={{ padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
@@ -429,8 +429,8 @@ export default function AdminPage() {
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
                   {/* Subscriptions */}
                   <div style={s.card}>
-                    <div style={s.cardTitle}>Vaste subscriptions</div>
-                    <div style={s.cardSub}>Maandelijkse vaste kosten</div>
+                    <div style={s.cardTitle}>Fixed subscriptions</div>
+                    <div style={s.cardSub}>Monthly fixed costs</div>
                     {finance.subscriptions.map(sub => (
                       <div key={sub.name} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
                         <div>
@@ -443,16 +443,16 @@ export default function AdminPage() {
                       </div>
                     ))}
                     <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0 0', marginTop: '4px' }}>
-                      <span style={{ fontSize: '13px', fontWeight: '700' }}>Totaal</span>
+                      <span style={{ fontSize: '13px', fontWeight: '700' }}>Total</span>
                       <span style={{ fontWeight: '800', color: yellow, fontSize: '14px' }}>${f.fixedCosts}/mo</span>
                     </div>
                   </div>
 
-                  {/* Dagelijkse AI kosten */}
+                  {/* Daily AI costs */}
                   <div style={s.card}>
-                    <div style={s.cardTitle}>AI kosten per dag (deze maand)</div>
-                    <div style={s.cardSub}>Dagelijks verbruik overzicht</div>
-                    {ai.daily.length === 0 && <div style={{ color: '#4a7fb5', fontSize: '13px' }}>Nog geen data.</div>}
+                    <div style={s.cardTitle}>AI costs per day (this month)</div>
+                    <div style={s.cardSub}>Daily usage overview</div>
+                    {ai.daily.length === 0 && <div style={{ color: '#4a7fb5', fontSize: '13px' }}>No data yet.</div>}
                     <div style={{ maxHeight: '280px', overflowY: 'auto' }}>
                       {[...ai.daily].reverse().map(({ date, cost, calls }) => {
                         const maxCost = Math.max(...ai.daily.map(d => d.cost), 0.0001)
@@ -460,7 +460,7 @@ export default function AdminPage() {
                         return (
                           <div key={date} style={{ padding: '7px 0', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                              <span style={{ fontSize: '12px', color: '#4a7fb5' }}>{new Date(date).toLocaleDateString('nl-NL', { day: 'numeric', month: 'short' })}</span>
+                              <span style={{ fontSize: '12px', color: '#4a7fb5' }}>{new Date(date).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}</span>
                               <span style={{ fontSize: '12px', fontWeight: '600', color: purple }}>{fmt(cost)} <span style={{ color: '#4a7fb5', fontWeight: '400' }}>· {calls}x</span></span>
                             </div>
                             <div style={{ height: '3px', background: 'rgba(255,255,255,0.06)', borderRadius: '2px' }}>
@@ -470,8 +470,8 @@ export default function AdminPage() {
                         )
                       })}
                     </div>
-                    <button onClick={fetchFinance} style={{ ...s.btn, marginTop: '16px', background: 'rgba(48,136,255,0.15)', color: purple }}>
-                      Vernieuwen
+                    <button onClick={fetchFinance} style={{ ...s.btn, marginTop: '16px', background: 'rgba(161,117,252,0.15)', color: purple }}>
+                      Refresh
                     </button>
                   </div>
                 </div>
@@ -482,32 +482,32 @@ export default function AdminPage() {
       )}
 
       {activeTab === 'clients' && <div style={s.grid}>
-        {/* Nieuw klant formulier */}
+        {/* New client form */}
         <div style={s.card}>
-          <div style={s.cardTitle}>Nieuwe klant aanmaken</div>
-          <div style={s.cardSub}>Account aanmaken + API koppelingen instellen</div>
+          <div style={s.cardTitle}>Create new client</div>
+          <div style={s.cardSub}>Create account + configure API integrations</div>
 
           {success && <div style={s.success}>{success}</div>}
 
           <form onSubmit={handleSubmit}>
-            <label style={s.label}>Bedrijfsnaam</label>
+            <label style={s.label}>Company name</label>
             <input style={s.input} value={form.company_name} onChange={e => setForm({...form, company_name: e.target.value})} required placeholder="Smith Sisters" />
 
             <label style={s.label}>Email</label>
-            <input style={s.input} type="email" value={form.email} onChange={e => setForm({...form, email: e.target.value})} required placeholder="client@bedrijf.com" />
+            <input style={s.input} type="email" value={form.email} onChange={e => setForm({...form, email: e.target.value})} required placeholder="client@company.com" />
 
-            <label style={s.label}>Wachtwoord</label>
-            <input style={s.input} type="password" value={form.password} onChange={e => setForm({...form, password: e.target.value})} required placeholder="Min. 6 tekens" />
+            <label style={s.label}>Password</label>
+            <input style={s.input} type="password" value={form.password} onChange={e => setForm({...form, password: e.target.value})} required placeholder="Min. 6 characters" />
 
             <div style={{ height: '1px', background: 'rgba(255,255,255,0.06)', margin: '6px 0 16px' }} />
 
-            <label style={s.label}>Gorgias domein</label>
+            <label style={s.label}>Gorgias domain</label>
             <input style={s.input} value={form.gorgias_domain} onChange={e => setForm({...form, gorgias_domain: e.target.value})} placeholder="smithsisters.gorgias.com" />
 
             <label style={s.label}>Gorgias API key</label>
             <input style={s.input} value={form.gorgias_api_key} onChange={e => setForm({...form, gorgias_api_key: e.target.value})} placeholder="API key" />
 
-            <label style={s.label}>Shopify domein</label>
+            <label style={s.label}>Shopify domain</label>
             <input style={s.input} value={form.shopify_domain} onChange={e => setForm({...form, shopify_domain: e.target.value})} placeholder="smithsisters.myshopify.com" />
 
             <label style={s.label}>Shopify API key</label>
@@ -519,16 +519,16 @@ export default function AdminPage() {
             <input style={s.input} value={form.parcel_panel_api_key} onChange={e => setForm({...form, parcel_panel_api_key: e.target.value})} placeholder="Parcel Panel API key" />
 
             <button style={s.btn} type="submit" disabled={loading}>
-              {loading ? 'Aanmaken...' : 'Klant aanmaken'}
+              {loading ? 'Creating...' : 'Create client'}
             </button>
           </form>
         </div>
 
         {/* Klanten lijst */}
         <div style={s.card}>
-          <div style={s.cardTitle}>Klanten — {clients.length}</div>
+          <div style={s.cardTitle}>Clients — {clients.length}</div>
           {clients.length === 0 && (
-            <div style={{ color: '#4a7fb5', fontSize: '13px' }}>Nog geen klanten aangemaakt.</div>
+            <div style={{ color: '#4a7fb5', fontSize: '13px' }}>No clients created yet.</div>
           )}
           {clients.map(client => (
             <div key={client.id} style={s.clientRow}>

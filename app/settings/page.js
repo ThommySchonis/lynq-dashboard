@@ -40,8 +40,8 @@ const CSS = `
     transition:all 0.2s ease;
   }
   .settings-input:focus {
-    border-color:#3088FF;
-    box-shadow:0 0 0 3px rgba(48,136,255,0.1);
+    border-color:#A175FC;
+    box-shadow:0 0 0 3px rgba(161,117,252,0.1);
   }
   .settings-input:read-only {
     opacity:0.55;
@@ -73,8 +73,8 @@ const CSS = `
     color:rgba(248,250,252,0.85);
   }
   .tab-item.active {
-    background:rgba(48,136,255,0.15);
-    color:#3088FF;
+    background:rgba(161,117,252,0.15);
+    color:#A175FC;
     font-weight:600;
   }
 
@@ -87,7 +87,7 @@ const CSS = `
   }
 
   .primary-btn {
-    background:#3088FF;
+    background:#A175FC;
     color:#fff;
     padding:10px 20px;
     border-radius:8px;
@@ -102,8 +102,8 @@ const CSS = `
     transition:all 0.2s ease;
   }
   .primary-btn:hover:not(:disabled) {
-    background:#5AA3FF;
-    box-shadow:0 4px 20px rgba(48,136,255,0.3);
+    background:#B990FF;
+    box-shadow:0 4px 20px rgba(161,117,252,0.3);
     transform:translateY(-1px);
   }
   .primary-btn:disabled {
@@ -213,7 +213,7 @@ const CSS = `
     bottom:32px;
     right:32px;
     background:#1a2744;
-    border:1px solid rgba(48,136,255,0.3);
+    border:1px solid rgba(161,117,252,0.3);
     border-radius:10px;
     padding:14px 20px;
     color:#F8FAFC;
@@ -243,8 +243,8 @@ const CSS = `
     cursor:pointer;
   }
   .color-input-wrapper:focus-within {
-    border-color:#3088FF;
-    box-shadow:0 0 0 3px rgba(48,136,255,0.1);
+    border-color:#A175FC;
+    box-shadow:0 0 0 3px rgba(161,117,252,0.1);
   }
   input[type="color"] {
     -webkit-appearance:none;
@@ -449,7 +449,7 @@ function Toggle({ on, onChange }) {
     <button
       className="toggle-track"
       onClick={() => onChange(!on)}
-      style={{ background: on ? '#3088FF' : 'rgba(255,255,255,0.1)' }}
+      style={{ background: on ? '#A175FC' : 'rgba(255,255,255,0.1)' }}
       aria-checked={on}
       role="switch"
     >
@@ -459,16 +459,18 @@ function Toggle({ on, onChange }) {
 }
 
 /* ─── Avatar ─── */
-function Avatar({ email, size = 56 }) {
-  const initials = email ? email.split('@')[0].slice(0, 2).toUpperCase() : '??'
+function Avatar({ email, name, size = 56 }) {
+  const initials = name
+    ? name.trim().split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase()
+    : email ? email.split('@')[0].slice(0, 2).toUpperCase() : '??'
   return (
     <div style={{
       width:size, height:size, borderRadius:'50%',
-      background:'linear-gradient(135deg,#3088FF 0%,#FF6B35 100%)',
+      background:'linear-gradient(135deg,#A175FC 0%,#7C3AED 100%)',
       display:'flex', alignItems:'center', justifyContent:'center',
       fontSize:size * 0.29, fontWeight:700, color:'#fff',
       flexShrink:0,
-      boxShadow:'0 4px 20px rgba(48,136,255,0.25)',
+      boxShadow:'0 4px 20px rgba(161,117,252,0.25)',
     }}>
       {initials}
     </div>
@@ -498,15 +500,24 @@ function PasswordInput({ value, onChange, placeholder }) {
 /* ─── TAB: Profile ─── */
 function ProfileTab({ session }) {
   const email = session?.user?.email || ''
-  const [displayName, setDisplayName] = useState(email.split('@')[0] || '')
+  const meta  = session?.user?.user_metadata || {}
+  const [displayName, setDisplayName] = useState(meta.full_name || meta.name || email.split('@')[0] || '')
   const [saving, setSaving] = useState(false)
   const [toast, setToast] = useState(null)
 
   async function handleSave() {
+    if (!displayName.trim()) {
+      setToast({ message: 'Name cannot be empty', type: 'error' })
+      return
+    }
     setSaving(true)
-    await new Promise(r => setTimeout(r, 800))
+    const { error } = await supabase.auth.updateUser({ data: { full_name: displayName.trim() } })
     setSaving(false)
-    setToast({ message: 'Profile saved successfully', type: 'success' })
+    if (error) {
+      setToast({ message: error.message || 'Failed to save', type: 'error' })
+    } else {
+      setToast({ message: 'Profile saved — refresh the home page to see your name', type: 'success' })
+    }
   }
 
   return (
@@ -519,7 +530,7 @@ function ProfileTab({ session }) {
 
       {/* Avatar row */}
       <div className="settings-card" style={{ display:'flex', alignItems:'center', gap:20, animationDelay:'0.05s' }}>
-        <Avatar email={email} size={56}/>
+        <Avatar email={email} name={displayName} size={56}/>
         <div>
           <div style={{ color:'#F8FAFC', fontWeight:600, fontSize:15, marginBottom:4 }}>
             {displayName || email.split('@')[0]}
@@ -722,7 +733,7 @@ function IntegrationsTab({ session }) {
 function BrandTab({ session }) {
   const [brandName, setBrandName] = useState('')
   const [supportEmail, setSupportEmail] = useState('')
-  const [primaryColor, setPrimaryColor] = useState('#3088FF')
+  const [primaryColor, setPrimaryColor] = useState('#A175FC')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [toast, setToast] = useState(null)
@@ -1058,7 +1069,7 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="settings-root" style={{ display:'flex', minHeight:'100vh', background:'#06091A' }}>
+    <div className="settings-root" style={{ display:'flex', minHeight:'100vh', background:'#1C0F36' }}>
       <style>{CSS}</style>
       <Sidebar/>
 
@@ -1115,10 +1126,10 @@ export default function SettingsPage() {
                   {activeTab === tab.id && (
                     <span style={{
                       width:5, height:5, borderRadius:'50%',
-                      background:'#3088FF',
+                      background:'#A175FC',
                       marginLeft:'auto',
                       flexShrink:0,
-                      boxShadow:'0 0 6px #3088FF',
+                      boxShadow:'0 0 6px #A175FC',
                     }}/>
                   )}
                 </button>

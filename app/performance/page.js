@@ -28,12 +28,12 @@ const CHART_DATA = [
 const CHART_MAX = 38
 
 const FEED = [
-  { icon: 'check',   text: 'Ticket #4521 resolved by Sarah K.',         time: '2 min ago',  color: '#3088FF' },
+  { icon: 'check',   text: 'Ticket #4521 resolved by Sarah K.',         time: '2 min ago',  color: '#A175FC' },
   { icon: 'alert',   text: 'New urgent ticket: Wrong item received',     time: '15 min ago', color: '#FF6B35' },
   { icon: 'money',   text: 'Refund approved for order #1089',            time: '1h ago',     color: '#4ade80' },
   { icon: 'star',    text: 'Emma L. achieved 5.0 CSAT rating',           time: '3h ago',     color: '#FFD700' },
   { icon: 'spike',   text: 'Ticket volume spike detected (+40%)',         time: '5h ago',     color: '#FF6B35' },
-  { icon: 'report',  text: 'Weekly performance report generated',         time: '1d ago',     color: '#3088FF' },
+  { icon: 'report',  text: 'Weekly performance report generated',         time: '1d ago',     color: '#A175FC' },
 ]
 
 /* ─────────────────────────────────────────
@@ -63,7 +63,7 @@ const CSS = `
     to   { width:var(--bar-w); }
   }
   @keyframes ringFill {
-    from { background: conic-gradient(#1a2540 0deg, #1a2540 360deg); }
+    from { background: conic-gradient(#1C0F36 0deg, #1C0F36 360deg); }
     to   { background: var(--ring-final); }
   }
   @keyframes fadeIn {
@@ -99,16 +99,16 @@ const CSS = `
     content:'';
     position:absolute;
     inset:0;
-    background:linear-gradient(135deg,rgba(48,136,255,0.07),transparent 60%);
+    background:linear-gradient(135deg,rgba(161,117,252,0.07),transparent 60%);
     opacity:0;
     transition:opacity 0.3s ease;
     pointer-events:none;
   }
   .hero-card:hover::before { opacity:1; }
   .hero-card:hover {
-    border-color:rgba(48,136,255,0.28);
+    border-color:rgba(161,117,252,0.28);
     transform:translateY(-3px);
-    box-shadow:0 12px 40px rgba(48,136,255,0.1);
+    box-shadow:0 12px 40px rgba(161,117,252,0.1);
   }
 
   /* table row hover */
@@ -117,7 +117,7 @@ const CSS = `
     border-bottom:1px solid rgba(255,255,255,0.05);
   }
   .agent-row:last-child { border-bottom:none; }
-  .agent-row:hover { background:rgba(48,136,255,0.06); }
+  .agent-row:hover { background:rgba(161,117,252,0.06); }
 
   /* chart bar hover */
   .chart-bar-wrap:hover .chart-bar-inner {
@@ -155,7 +155,7 @@ function AuroraBackground() {
       <div style={{
         position:'absolute', top:'-15%', left:'30%',
         width:'650px', height:'550px', borderRadius:'50%',
-        background:'radial-gradient(ellipse,rgba(48,136,255,0.10) 0%,transparent 70%)',
+        background:'radial-gradient(ellipse,rgba(161,117,252,0.10) 0%,transparent 70%)',
         animation:'aurora1 20s ease-in-out infinite',
         filter:'blur(50px)',
       }}/>
@@ -169,7 +169,7 @@ function AuroraBackground() {
       <div style={{
         position:'absolute', top:'45%', left:'-8%',
         width:'380px', height:'380px', borderRadius:'50%',
-        background:'radial-gradient(ellipse,rgba(139,92,246,0.05) 0%,transparent 70%)',
+        background:'radial-gradient(ellipse,rgba(251,113,133,0.06) 0%,transparent 70%)',
         animation:'aurora3 28s ease-in-out infinite',
         filter:'blur(50px)',
       }}/>
@@ -263,7 +263,7 @@ function ProgressRing({ pct }) {
       {/* outer glow ring */}
       <div style={{
         position:'absolute', inset:-4, borderRadius:'50%',
-        background:'radial-gradient(circle,rgba(48,136,255,0.12) 60%,transparent 80%)',
+        background:'radial-gradient(circle,rgba(161,117,252,0.12) 60%,transparent 80%)',
       }}/>
       {/* track */}
       <div style={{
@@ -275,13 +275,13 @@ function ProgressRing({ pct }) {
         {/* filled ring */}
         <div style={{
           position:'absolute', inset:0, borderRadius:'50%',
-          background:`conic-gradient(#3088FF 0deg, #FF6B35 ${deg}deg, rgba(255,255,255,0.08) ${deg}deg 360deg)`,
+          background:`conic-gradient(#A175FC 0deg, #FF6B35 ${deg}deg, rgba(255,255,255,0.08) ${deg}deg 360deg)`,
           transition:'background 1.2s cubic-bezier(0.34,1.56,0.64,1)',
         }}/>
         {/* inner circle */}
         <div style={{
           position:'absolute', inset:14, borderRadius:'50%',
-          background:'#06091A',
+          background:'#1C0F36',
           display:'flex', alignItems:'center', justifyContent:'center',
           zIndex:1,
         }}>
@@ -317,8 +317,8 @@ function SparklineBars() {
             height: h,
             borderRadius:'3px 3px 0 0',
             background: i === 6
-              ? 'linear-gradient(180deg,#3088FF,#FF6B35)'
-              : 'rgba(48,136,255,0.35)',
+              ? 'linear-gradient(180deg,#A175FC,#FF6B35)'
+              : 'rgba(161,117,252,0.35)',
             transition:`height 0.7s cubic-bezier(0.34,1.56,0.64,1) ${i * 60}ms`,
             minHeight: animate ? 3 : 0,
           }}/>
@@ -372,7 +372,7 @@ function ResolutionBar({ pct }) {
     return () => obs.disconnect()
   }, [])
 
-  const color = pct >= 95 ? '#4ade80' : pct >= 90 ? '#3088FF' : '#FF6B35'
+  const color = pct >= 95 ? '#4ade80' : pct >= 90 ? '#A175FC' : '#FF6B35'
 
   return (
     <div ref={ref} style={{ display:'flex', alignItems:'center', gap:'10px' }}>
@@ -418,10 +418,10 @@ function ChartBarRow({ day, count, max, delay }) {
       }}>
         <div className="chart-bar-inner" style={{
           height:'100%', borderRadius:'5px',
-          background:'linear-gradient(90deg,#3088FF,#FF6B35)',
+          background:'linear-gradient(90deg,#A175FC,#FF6B35)',
           width: animated ? `${pct}%` : '0%',
           transition:`width 0.8s cubic-bezier(0.34,1.56,0.64,1) ${delay}ms`,
-          boxShadow:'0 0 12px rgba(48,136,255,0.35)',
+          boxShadow:'0 0 12px rgba(161,117,252,0.35)',
         }}/>
       </div>
       <span style={{ fontSize:'12px', fontWeight:600, color:'rgba(248,250,252,0.55)', textAlign:'left' }}>
@@ -477,7 +477,7 @@ export default function PerformancePage() {
   if (!mounted) return null
 
   return (
-    <div className="perf-root" style={{ display:'flex', minHeight:'100vh', background:'#06091A' }}>
+    <div className="perf-root" style={{ display:'flex', minHeight:'100vh', background:'#1C0F36' }}>
       <style>{CSS}</style>
       <Sidebar/>
 
@@ -612,7 +612,7 @@ export default function PerformancePage() {
                           <div style={{ display:'flex', alignItems:'center', gap:10 }}>
                             <div style={{
                               width:30, height:30, borderRadius:'50%', flexShrink:0,
-                              background:'linear-gradient(135deg,#3088FF,#FF6B35)',
+                              background:'linear-gradient(135deg,#A175FC,#7C3AED)',
                               display:'flex', alignItems:'center', justifyContent:'center',
                               fontSize:'11px', fontWeight:700, color:'#fff',
                             }}>
@@ -640,7 +640,7 @@ export default function PerformancePage() {
                           <span style={{
                             display:'inline-flex', alignItems:'center', gap:4,
                             fontSize:'13px', fontWeight:700,
-                            color: agent.csat >= 4.9 ? '#4ade80' : agent.csat >= 4.7 ? '#3088FF' : 'rgba(248,250,252,0.65)',
+                            color: agent.csat >= 4.9 ? '#4ade80' : agent.csat >= 4.7 ? '#A175FC' : 'rgba(248,250,252,0.65)',
                           }}>
                             <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" stroke="none">
                               <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
@@ -691,7 +691,7 @@ export default function PerformancePage() {
               {/* timeline spine */}
               <div style={{
                 position:'absolute', left:18, top:8, bottom:8, width:2,
-                background:'linear-gradient(180deg,#3088FF 0%,#FF6B35 100%)',
+                background:'linear-gradient(180deg,#A175FC 0%,#FF6B35 100%)',
                 borderRadius:2, opacity:0.35,
               }}/>
 

@@ -14,7 +14,7 @@ export async function POST(request, { params }) {
   if (!client) return NextResponse.json({ error: 'Shopify not configured' }, { status: 400 })
 
   const { id } = await params
-  const { keepAddress, applyDiscount, note, tags } = await request.json()
+  const { keepAddress, note, tags, discountType, discountValue } = await request.json()
 
   // Fetch original order to copy line items + customer
   const orderRes = await shopifyFetch(client, `/orders/${id}.json`)
@@ -25,16 +25,23 @@ export async function POST(request, { params }) {
   const lineItems = (order.line_items || []).map(item => ({
     variant_id: item.variant_id,
     quantity: item.quantity,
-    ...(applyDiscount && item.discount_allocations?.length
-      ? { applied_discount: { value: item.discount_allocations[0]?.amount, value_type: 'fixed_amount', title: 'Duplicated discount' } }
-      : {}),
   })).filter(item => item.variant_id)
 
   const draftOrder = {
     line_items: lineItems,
     customer: order.customer ? { id: order.customer.id } : undefined,
-    note: note || `Duplicated from ${order.name}`,
+    note: note || `Duplicate of ${order.name}`,
     tags: tags || order.tags,
+  }
+
+  // Apply order-level discount if provided
+  if (discountType && discountValue && Number(discountValue) > 0) {
+    draftOrder.applied_discount = {
+      description: 'Discount',
+      value_type: discountType === 'percentage' ? 'percentage' : 'fixed_amount',
+      value: String(discountValue),
+      title: discountType === 'percentage' ? `${discountValue}% discount` : `€${discountValue} discount`,
+    }
   }
 
   if (keepAddress !== false && order.shipping_address) {

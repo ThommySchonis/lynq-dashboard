@@ -44,7 +44,7 @@ export async function GET(request) {
     }
   `
 
-  const res = await fetch(`https://${client.domain}/admin/api/2024-04/graphql.json`, {
+  const res = await fetch(`https://${client.domain}/admin/api/2025-04/graphql.json`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

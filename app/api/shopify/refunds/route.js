@@ -20,7 +20,7 @@ export async function GET(request) {
 
   try {
     const res = await fetch(
-      `https://${client.domain}/admin/api/2024-01/orders.json?status=any&limit=250`,
+      `https://${client.domain}/admin/api/2025-04/orders.json?status=any&limit=250`,
       { headers: { 'X-Shopify-Access-Token': client.accessToken } }
     )
     if (!res.ok) return NextResponse.json({ error: 'Shopify API error' }, { status: 502 })

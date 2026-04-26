@@ -20,7 +20,7 @@ export async function POST(request) {
 
   // Verify the token actually works before saving
   const testRes = await fetch(
-    `https://${shopDomain}/admin/api/2024-01/shop.json`,
+    `https://${shopDomain}/admin/api/2025-04/shop.json`,
     { headers: { 'X-Shopify-Access-Token': accessToken } }
   )
 

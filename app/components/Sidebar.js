@@ -5,10 +5,6 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../../lib/supabase'
 
 const CSS = `
-  @keyframes sidebarIn {
-    from { opacity:0; transform:translateX(-8px); }
-    to   { opacity:1; transform:translateX(0); }
-  }
   @keyframes avatarPop {
     from { transform:scale(.85); opacity:0; }
     to   { transform:scale(1);   opacity:1; }
@@ -25,94 +21,111 @@ const CSS = `
     }
   }
 
+  /* ── Root: collapsed by default, expands on hover ── */
   .sb-root {
-    width:220px; min-height:100vh; flex-shrink:0;
-    background:rgba(6,9,26,0.98);
+    position:fixed; left:0; top:0; bottom:0;
+    width:64px; z-index:50;
+    overflow:hidden;
+    background:rgba(20,10,44,0.97);
     border-right:1px solid rgba(255,255,255,0.055);
     display:flex; flex-direction:column;
-    padding:20px 10px 20px;
+    padding:20px 0 20px;
     font-family:var(--font-rethink),-apple-system,BlinkMacSystemFont,sans-serif;
     -webkit-font-smoothing:antialiased;
     backdrop-filter:blur(20px);
     -webkit-backdrop-filter:blur(20px);
-    position:relative; z-index:10;
+    transition:width .26s cubic-bezier(.16,1,.3,1), box-shadow .26s;
+  }
+  .sb-root:hover {
+    width:220px;
+    box-shadow:6px 0 32px rgba(0,0,0,0.35);
   }
 
-  /* Subtle top-edge highlight */
+  /* Subtle top-edge iris line */
   .sb-root::before {
-    content:'';
-    position:absolute;
+    content:''; position:absolute;
     top:0; left:0; right:0; height:1px;
-    background:linear-gradient(90deg,transparent,rgba(48,136,255,0.2),transparent);
+    background:linear-gradient(90deg,transparent,rgba(161,117,252,0.25),transparent);
   }
 
+  /* ── Logo area ── */
   .sb-logo {
-    padding:4px 10px 24px;
-    animation:sidebarIn .5s cubic-bezier(.16,1,.3,1) both;
+    padding:0 0 22px;
+    display:flex; align-items:center;
+    flex-shrink:0; overflow:hidden;
+    /* indent matches item icon position */
+    padding-left:22px;
   }
 
-  /* Section label */
+  /* ── Section label ── */
   .sb-section-label {
     font-size:9.5px; font-weight:700; letter-spacing:.1em;
     text-transform:uppercase; color:rgba(248,250,252,0.2);
-    padding:0 10px; margin:12px 0 4px;
-    user-select:none;
+    padding:0 22px; margin:12px 0 4px;
+    user-select:none; white-space:nowrap;
+    opacity:0;
+    transition:opacity .15s;
   }
+  .sb-root:hover .sb-section-label { opacity:1; }
 
-  /* Nav item */
+  /* ── Nav item ── */
   .sb-item {
-    display:flex; align-items:center; gap:10px;
-    padding:8px 10px; border-radius:10px;
+    display:flex; align-items:center;
+    padding:9px 0 9px 22px; gap:10px;
+    border-radius:10px; margin:0 8px;
     text-decoration:none; cursor:pointer;
-    transition:background .15s ease, color .15s ease, box-shadow .15s ease;
-    position:relative; user-select:none;
+    transition:background .15s, box-shadow .15s;
+    position:relative; user-select:none; white-space:nowrap;
   }
   .sb-item:hover:not(.sb-locked):not(.sb-active) {
     background:rgba(255,255,255,0.05);
   }
   .sb-item.sb-active {
-    background:rgba(48,136,255,0.12);
-    box-shadow:inset 0 0 0 1px rgba(48,136,255,0.18);
+    background:rgba(161,117,252,0.12);
+    box-shadow:inset 0 0 0 1px rgba(161,117,252,0.18);
   }
-  .sb-item.sb-locked {
-    cursor:default;
-    pointer-events:none;
-  }
+  .sb-item.sb-locked { cursor:default; pointer-events:none; }
 
-  /* Active left accent bar */
+  /* Active left accent */
   .sb-item.sb-active::before {
-    content:'';
-    position:absolute; left:0; top:50%;
+    content:''; position:absolute; left:0; top:50%;
     transform:translateY(-50%);
     width:3px; height:16px;
     border-radius:0 3px 3px 0;
-    background:linear-gradient(180deg,#3088FF,#60A5FA);
+    background:linear-gradient(180deg,#A175FC,#B990FF);
   }
 
   .sb-icon {
     display:flex; align-items:center; justify-content:center;
     width:20px; flex-shrink:0; position:relative;
   }
+
   .sb-label {
     font-size:13px; font-weight:400; letter-spacing:.005em;
-    flex:1; white-space:nowrap;
+    flex:1; white-space:nowrap; overflow:hidden;
+    opacity:0; transform:translateX(-4px);
+    transition:opacity .16s .04s, transform .2s .04s;
+    pointer-events:none;
   }
   .sb-item.sb-active .sb-label { font-weight:600; }
+  .sb-root:hover .sb-label { opacity:1; transform:translateX(0); pointer-events:auto; }
 
   /* Lock badge */
   .sb-lock {
     width:16px; height:16px; border-radius:5px;
     background:rgba(255,255,255,0.06);
     display:flex; align-items:center; justify-content:center;
-    flex-shrink:0;
+    flex-shrink:0; margin-right:2px;
+    opacity:0; transition:opacity .15s;
   }
+  .sb-root:hover .sb-lock { opacity:1; }
 
-  /* Green dot badge */
+  /* Green live dot */
   .sb-badge {
     position:absolute; top:-2px; right:-2px;
     width:7px; height:7px; border-radius:50%;
     background:#4ade80;
-    border:1.5px solid rgba(6,9,26,0.98);
+    border:1.5px solid rgba(20,10,44,0.97);
   }
   .sb-badge::after {
     content:''; position:absolute; inset:0; border-radius:50%;
@@ -120,38 +133,47 @@ const CSS = `
     animation:liveRing 2.2s ease-out infinite;
   }
 
-  /* Bottom user row */
+  /* Divider */
+  .sb-divider {
+    height:1px; background:rgba(255,255,255,0.055); margin:10px 8px;
+    flex-shrink:0;
+  }
+
+  /* ── User row ── */
   .sb-user {
     display:flex; align-items:center; gap:9px;
-    padding:8px 10px; border-radius:10px;
-    cursor:default;
-    transition:background .15s ease;
+    padding:8px 0 8px 22px;
+    border-radius:10px; margin:0 8px;
+    cursor:default; overflow:hidden;
+    transition:background .15s;
   }
   .sb-user:hover { background:rgba(255,255,255,0.04); }
 
   .sb-avatar {
-    width:30px; height:30px; border-radius:'50%';
-    background:linear-gradient(135deg,#3088FF 0%,#FF6B35 100%);
+    width:30px; height:30px; border-radius:50%;
+    background:linear-gradient(135deg,#A175FC 0%,#7C3AED 100%);
     display:flex; align-items:center; justify-content:center;
     font-size:11px; font-weight:700; color:#fff; flex-shrink:0;
     animation:avatarPop .5s cubic-bezier(.16,1,.3,1) .3s both;
-    border-radius:50%;
   }
   .sb-email {
     font-size:11.5px; color:rgba(248,250,252,0.35);
     flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+    opacity:0; transform:translateX(-4px);
+    transition:opacity .16s .04s, transform .2s .04s;
   }
+  .sb-root:hover .sb-email { opacity:1; transform:translateX(0); }
+
   .sb-logout {
     background:transparent; border:none; padding:4px; border-radius:6px;
     color:rgba(248,250,252,0.25); cursor:pointer; flex-shrink:0;
     display:flex; align-items:center; justify-content:center;
-    transition:color .15s ease, background .15s ease;
+    transition:color .15s, background .15s;
+    opacity:0; pointer-events:none;
+    margin-right:6px;
   }
+  .sb-root:hover .sb-logout { opacity:1; pointer-events:auto; }
   .sb-logout:hover { color:rgba(248,250,252,0.65); background:rgba(255,255,255,0.06); }
-
-  .sb-divider {
-    height:1px; background:rgba(255,255,255,0.055); margin:10px 0;
-  }
 `
 
 const ITEMS = [
@@ -219,8 +241,8 @@ const LOCK_SVG = (
 )
 
 export default function Sidebar() {
-  const pathname   = usePathname()
-  const [email, setEmail]     = useState('')
+  const pathname          = usePathname()
+  const [email, setEmail] = useState('')
   const [isAdmin, setIsAdmin] = useState(false)
 
   useEffect(() => {
@@ -242,88 +264,86 @@ export default function Sidebar() {
   let prevSection = undefined
 
   return (
-    <aside className="sb-root">
+    <>
       <style>{CSS}</style>
+      {/* Placeholder that holds space in the flex layout — sidebar overlays on hover */}
+      <div style={{ width:64, flexShrink:0 }} />
 
-      {/* Logo */}
-      <div className="sb-logo">
-        <img
-          src="/logo.png"
-          alt="Lynq"
-          style={{ height: 26, filter: 'brightness(0) invert(1)', objectFit: 'contain' }}
-          onError={e => { e.currentTarget.style.display = 'none' }}
-        />
-      </div>
+      <aside className="sb-root">
+        {/* Logo — clipped to icon when collapsed, full when expanded */}
+        <div className="sb-logo">
+          <img
+            src="/logo.png"
+            alt="Lynq"
+            style={{ height:26, maxWidth:'none', objectFit:'contain', objectPosition:'left center', filter:'brightness(0) invert(1)', flexShrink:0 }}
+            onError={e => { e.currentTarget.style.display='none' }}
+          />
+        </div>
 
-      {/* Nav */}
-      <nav style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-        {ITEMS.map((item, idx) => {
-          const showSection = item.section && item.section !== prevSection
-          prevSection = item.section ?? prevSection
-          const active = item.href && pathname.startsWith(item.href)
-          const delay  = idx * 30
+        {/* Nav */}
+        <nav style={{ flex:1, display:'flex', flexDirection:'column', overflow:'hidden' }}>
+          {ITEMS.map((item) => {
+            const showSection = item.section && item.section !== prevSection
+            prevSection = item.section ?? prevSection
+            const active = item.href && pathname.startsWith(item.href)
 
-          const inner = (
-            <>
-              <span className="sb-icon">
-                <span style={{ color: active ? '#60A5FA' : item.locked ? 'rgba(248,250,252,0.18)' : 'rgba(248,250,252,0.38)', display: 'flex', transition: 'color .15s' }}>
-                  {item.icon}
+            const inner = (
+              <>
+                <span className="sb-icon" title={item.label}>
+                  <span style={{ color: active ? '#B990FF' : item.locked ? 'rgba(248,250,252,0.18)' : 'rgba(248,250,252,0.38)', display:'flex', transition:'color .15s' }}>
+                    {item.icon}
+                  </span>
+                  {item.badge && <span className="sb-badge" />}
                 </span>
-                {item.badge && <span className="sb-badge" />}
-              </span>
-              <span className="sb-label" style={{ color: active ? '#F8FAFC' : item.locked ? 'rgba(248,250,252,0.22)' : 'rgba(248,250,252,0.6)' }}>
-                {item.label}
-              </span>
-              {item.locked && <span className="sb-lock">{LOCK_SVG}</span>}
-            </>
-          )
+                <span className="sb-label" style={{ color: active ? '#F8FAFC' : item.locked ? 'rgba(248,250,252,0.22)' : 'rgba(248,250,252,0.6)' }}>
+                  {item.label}
+                </span>
+                {item.locked && <span className="sb-lock">{LOCK_SVG}</span>}
+              </>
+            )
 
-          return (
-            <div key={item.label} style={{ animation: `sidebarIn .4s cubic-bezier(.16,1,.3,1) ${delay}ms both` }}>
-              {showSection && <div className="sb-section-label">{item.section}</div>}
-              {item.href
-                ? <a href={item.href} className={`sb-item${active ? ' sb-active' : ''}`}>{inner}</a>
-                : <div className={`sb-item sb-locked`}>{inner}</div>
-              }
+            return (
+              <div key={item.label}>
+                {showSection && <div className="sb-section-label">{item.section}</div>}
+                {item.href
+                  ? <a href={item.href} className={`sb-item${active ? ' sb-active' : ''}`}>{inner}</a>
+                  : <div className="sb-item sb-locked">{inner}</div>
+                }
+              </div>
+            )
+          })}
+
+          {/* Admin Panel */}
+          {isAdmin && (
+            <div>
+              <div className="sb-section-label">Admin</div>
+              <a href="/admin" className={`sb-item${pathname.startsWith('/admin') ? ' sb-active' : ''}`}>
+                <span className="sb-icon" title="Admin Panel">
+                  <span style={{ color: pathname.startsWith('/admin') ? '#B990FF' : 'rgba(248,250,252,0.38)', display:'flex', transition:'color .15s' }}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                  </span>
+                </span>
+                <span className="sb-label" style={{ color: pathname.startsWith('/admin') ? '#F8FAFC' : 'rgba(248,250,252,0.6)' }}>Admin Panel</span>
+              </a>
             </div>
-          )
-        })}
+          )}
+        </nav>
 
-        {/* Admin Panel */}
-        {isAdmin && (
-          <div style={{ animation: `sidebarIn .4s cubic-bezier(.16,1,.3,1) ${ITEMS.length * 30}ms both` }}>
-            <div className="sb-section-label">Admin</div>
-            <a href="/admin" className={`sb-item${pathname.startsWith('/admin') ? ' sb-active' : ''}`}>
-              <span className="sb-icon">
-                <span style={{ color: pathname.startsWith('/admin') ? '#60A5FA' : 'rgba(248,250,252,0.38)', display: 'flex', transition: 'color .15s' }}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-                </span>
-              </span>
-              <span className="sb-label" style={{ color: pathname.startsWith('/admin') ? '#F8FAFC' : 'rgba(248,250,252,0.6)' }}>Admin Panel</span>
-            </a>
-          </div>
-        )}
-      </nav>
+        <div className="sb-divider" />
 
-      <div className="sb-divider" />
-
-      {/* User row */}
-      <div className="sb-user">
-        <div className="sb-avatar">{initials}</div>
-        <span className="sb-email">{email || '—'}</span>
-        <button
-          className="sb-logout"
-          onClick={logout}
-          aria-label="Sign out"
-          title="Sign out"
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-            <polyline points="16 17 21 12 16 7"/>
-            <line x1="21" y1="12" x2="9" y2="12"/>
-          </svg>
-        </button>
-      </div>
-    </aside>
+        {/* User row */}
+        <div className="sb-user">
+          <div className="sb-avatar">{initials}</div>
+          <span className="sb-email">{email || '—'}</span>
+          <button className="sb-logout" onClick={logout} aria-label="Log out" title="Log out">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+              <polyline points="16 17 21 12 16 7"/>
+              <line x1="21" y1="12" x2="9" y2="12"/>
+            </svg>
+          </button>
+        </div>
+      </aside>
+    </>
   )
 }

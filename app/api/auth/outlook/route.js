@@ -6,12 +6,12 @@ export async function GET(request) {
   const userToken = searchParams.get('t')
 
   if (!userToken) {
-    return NextResponse.redirect(`${process.env.LOVABLE_APP_URL || process.env.NEXT_PUBLIC_APP_URL}/settings?outlook=error`)
+    return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/settings?outlook=error`)
   }
 
   const user = await getUserFromToken(userToken)
   if (!user) {
-    return NextResponse.redirect(`${process.env.LOVABLE_APP_URL || process.env.NEXT_PUBLIC_APP_URL}/settings?outlook=error`)
+    return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/settings?outlook=error`)
   }
 
   const clientId = process.env.MICROSOFT_CLIENT_ID

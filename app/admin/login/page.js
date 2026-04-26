@@ -35,7 +35,7 @@ export default function AdminLoginPage() {
   return (
     <div style={{
       minHeight: '100vh',
-      background: '#08101F',
+      background: '#1C0F36',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
@@ -62,7 +62,7 @@ export default function AdminLoginPage() {
               value={email}
               onChange={e => setEmail(e.target.value)}
               required
-              style={{ width: '100%', padding: '10px 14px', background: '#08101F', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff', fontSize: '14px', boxSizing: 'border-box' }}
+              style={{ width: '100%', padding: '10px 14px', background: '#1C0F36', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff', fontSize: '14px', boxSizing: 'border-box' }}
             />
           </div>
 
@@ -73,7 +73,7 @@ export default function AdminLoginPage() {
               value={password}
               onChange={e => setPassword(e.target.value)}
               required
-              style={{ width: '100%', padding: '10px 14px', background: '#08101F', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff', fontSize: '14px', boxSizing: 'border-box' }}
+              style={{ width: '100%', padding: '10px 14px', background: '#1C0F36', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff', fontSize: '14px', boxSizing: 'border-box' }}
             />
           </div>
 
@@ -84,7 +84,7 @@ export default function AdminLoginPage() {
           <button
             type="submit"
             disabled={loading}
-            style={{ width: '100%', padding: '12px', background: '#3088FF', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '14px', fontWeight: '600', cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.7 : 1 }}
+            style={{ width: '100%', padding: '12px', background: '#A175FC', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '14px', fontWeight: '600', cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.7 : 1 }}
           >
             {loading ? 'Logging in...' : 'Log in'}
           </button>

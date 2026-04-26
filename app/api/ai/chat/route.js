@@ -48,7 +48,7 @@ ${(context.refunds || []).slice(0, 20).map(r =>
     : 'No store data loaded yet.'
 
   const result = streamText({
-    model: anthropic('claude-haiku-4.5-20251001'),
+    model: anthropic('claude-haiku-4-5-20251001'),
     system: systemPrompt,
     messages: [
       {
@@ -60,7 +60,7 @@ ${(context.refunds || []).slice(0, 20).map(r =>
     onFinish: async ({ usage }) => {
       await supabaseAdmin.from('ai_usage').insert({
         route: 'chat',
-        model: 'claude-haiku-4.5-20251001',
+        model: 'claude-haiku-4-5-20251001',
         input_tokens: usage.promptTokens,
         output_tokens: usage.completionTokens,
         cost_usd: (usage.promptTokens * 0.0000008) + (usage.completionTokens * 0.000004),

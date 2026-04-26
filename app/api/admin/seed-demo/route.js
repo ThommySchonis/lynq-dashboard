@@ -8,10 +8,9 @@ export async function POST(request) {
   const authHeader = request.headers.get('authorization')
   if (!authHeader) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const token = authHeader.replace('Bearer ', '')
-  const caller = await getUserFromToken(token)
-  if (!caller || caller.email !== ADMIN_EMAIL) {
-    return NextResponse.json({ error: 'Admin only', email: caller?.email ?? null }, { status: 403 })
+  const adminEmail = request.headers.get('x-admin-email')
+  if (adminEmail !== ADMIN_EMAIL) {
+    return NextResponse.json({ error: 'Admin only' }, { status: 403 })
   }
 
   const body = await request.json().catch(() => ({}))

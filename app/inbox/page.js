@@ -1509,7 +1509,7 @@ export default function InboxPage() {
 
       {/* ═══════════════ RIGHT: Customer panel ═══════════════ */}
       {selected&&(
-        <div className="sscroll" style={{width:320,borderLeft:'1px solid rgba(255,255,255,0.07)',display:'flex',flexDirection:'column',flexShrink:0,overflowY:'auto',background:'rgba(10,4,28,0.68)',backdropFilter:'blur(24px)',WebkitBackdropFilter:'blur(24px)'}}>
+        <div className="sscroll" style={{width:320,borderLeft:'1px solid rgba(255,255,255,0.08)',display:'flex',flexDirection:'column',flexShrink:0,overflowY:'auto',background:'rgba(12,5,32,0.84)',backdropFilter:'blur(24px)',WebkitBackdropFilter:'blur(24px)'}}>
 
           {/* Customer header */}
           <div style={{padding:'16px 16px 12px',borderBottom:'1px solid rgba(255,255,255,0.055)',flexShrink:0}}>

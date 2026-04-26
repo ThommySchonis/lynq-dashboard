@@ -213,6 +213,27 @@ const CSS = `
   @keyframes urgPulse { 0%,100%{opacity:1} 50%{opacity:.45} }
   .urg-critical .urg-dot { animation:urgPulse 1.6s ease-in-out infinite; }
 
+  /* ── Rich text toolbar ── */
+  .rtbar { display:flex; align-items:center; gap:1px; padding:6px 11px; border-bottom:1px solid rgba(255,255,255,0.05); flex-wrap:nowrap; overflow-x:auto; }
+  .rtbar::-webkit-scrollbar { display:none; }
+  .rtbar-btn { min-width:26px; height:26px; display:flex; align-items:center; justify-content:center; border-radius:6px; cursor:pointer; font-size:12px; font-weight:700; font-family:inherit; color:rgba(240,236,249,0.4); transition:all .14s; border:none; background:transparent; padding:0 5px; white-space:nowrap; }
+  .rtbar-btn:hover { background:rgba(255,255,255,0.07); color:rgba(240,236,249,0.85); }
+  .rtbar-btn.rton { background:rgba(161,117,252,0.15); color:#A175FC; }
+  .rtbar-sep { width:1px; height:16px; background:rgba(255,255,255,0.08); margin:0 5px; flex-shrink:0; }
+  .compose-ta[contenteditable=true]:empty:before { content:attr(data-placeholder); color:rgba(240,236,249,0.22); pointer-events:none; display:block; }
+  /* ── Emoji picker ── */
+  .emoji-pop { position:absolute; bottom:calc(100% + 6px); left:0; background:#13092e; border:1px solid rgba(255,255,255,0.1); border-radius:14px; padding:8px; z-index:200; box-shadow:0 20px 60px rgba(0,0,0,0.7); animation:fadeUp .14s ease both; }
+  .emoji-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:1px; }
+  .emoji-btn { width:30px; height:30px; display:flex; align-items:center; justify-content:center; border-radius:6px; font-size:16px; cursor:pointer; border:none; background:transparent; transition:background .1s; line-height:1; }
+  .emoji-btn:hover { background:rgba(255,255,255,0.1); }
+  /* ── Attachments ── */
+  .attach-chip { display:inline-flex; align-items:center; gap:5px; padding:3px 9px 3px 8px; background:rgba(255,255,255,0.055); border:1px solid rgba(255,255,255,0.1); border-radius:100px; font-size:11px; color:rgba(240,236,249,0.6); }
+  /* ── Translate banner ── */
+  .xlate-bar { display:flex; align-items:center; gap:8px; padding:5px 14px; background:rgba(161,117,252,0.07); border-bottom:1px solid rgba(161,117,252,0.13); font-size:11.5px; color:rgba(161,117,252,0.85); }
+  /* ── Msg translate ── */
+  .msg-xlate-btn { font-size:10px; font-weight:600; color:rgba(240,236,249,0.28); background:none; border:none; cursor:pointer; padding:3px 0; font-family:inherit; transition:color .14s; text-decoration:underline; text-underline-offset:2px; }
+  .msg-xlate-btn:hover { color:rgba(161,117,252,0.8); }
+
   @media (prefers-reduced-motion:reduce) { *,*::before,*::after { animation-duration:.01ms !important; transition-duration:.01ms !important; } }
 `
 
@@ -238,6 +259,15 @@ const I = {
   note:       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>,
   tag:        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>,
   spin:       <div style={{width:13,height:13,border:'2px solid rgba(255,255,255,0.18)',borderTop:'2px solid #A175FC',borderRadius:'50%',animation:'spin .7s linear infinite',flexShrink:0}} />,
+  bold:       <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M6 4h8a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/><path d="M6 12h9a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/></svg>,
+  italic:     <svg width="11" height="12" viewBox="0 0 24 24" fill="currentColor"><line x1="19" y1="4" x2="10" y2="4" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/><line x1="14" y1="20" x2="5" y2="20" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/><line x1="15" y1="4" x2="9" y2="20" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/></svg>,
+  underline:  <svg width="12" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M6 3v7a6 6 0 0 0 6 6 6 6 0 0 0 6-6V3"/><line x1="4" y1="21" x2="20" y2="21"/></svg>,
+  link2:      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>,
+  image2:     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>,
+  emoji:      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>,
+  paperclip:  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>,
+  globe:      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>,
+  xsmall:     <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>,
 }
 
 // ─── Helpers ─────────────────────────────────────────────────
@@ -803,9 +833,18 @@ export default function InboxPage() {
   const [modal, setModal]             = useState(null) // { type:'refund'|'cancel'|'duplicate'|'address', order }
   // AI triage
   const [analyses, setAnalyses]       = useState({})
+  // Translation
+  const [autoTranslate, setAutoTranslate]     = useState(false)
+  const [customerLang, setCustomerLang]       = useState(null)
+  const [msgTranslations, setMsgTranslations] = useState({})
+  // Composer extras
+  const [showEmoji, setShowEmoji]   = useState(false)
+  const [attachments, setAttachments] = useState([])
 
-  const msgEnd    = useRef(null)
-  const replyRef  = useRef(null)
+  const msgEnd       = useRef(null)
+  const replyRef     = useRef(null)
+  const imgUploadRef = useRef(null)
+  const fileUploadRef= useRef(null)
 
   // ── Auth + load ──
   useEffect(()=>{
@@ -892,6 +931,8 @@ export default function InboxPage() {
 
   async function openThread(thread) {
     setSelected(thread); setMessages([]); setReply(''); setCustomer(null); setLM(true); setShowMacros(false)
+    setCustomerLang(null); setAutoTranslate(false); setMsgTranslations({}); setShowEmoji(false); setAttachments([])
+    if(replyRef.current) replyRef.current.innerHTML = ''
     if(demoMode || thread.id?.startsWith('demo-')) {
       setTimeout(()=>{ setMessages(DEMO_MESSAGES[thread.id]||[]); setLM(false); setCustomer(DEMO_CUSTOMER[thread.id]||null); setThreads(p=>p.map(t=>t.id===thread.id?{...t,unread:false}:t)) }, 400)
       return
@@ -911,6 +952,11 @@ export default function InboxPage() {
       // AI macro suggestions
       authFetch('/api/ai/macros',{method:'POST',body:JSON.stringify({subject:thread.subject,snippet:thread.snippet})},session.access_token)
         .then(r=>r.json()).then(d=>{ if(d.macros?.length) setAiMacros(d.macros) }).catch(()=>{})
+      // Detect customer language from snippet
+      if(thread.snippet) {
+        authFetch('/api/ai/translate',{method:'POST',body:JSON.stringify({text:thread.snippet,detectOnly:true})},session.access_token)
+          .then(r=>r.json()).then(d=>{ if(d.code&&d.name){ setCustomerLang(d); if(d.code!=='en') setAutoTranslate(true) } }).catch(()=>{})
+      }
     }
   }
 
@@ -919,24 +965,72 @@ export default function InboxPage() {
     setAiLoading(true)
     const res  = await authFetch('/api/ai/reply',{method:'POST',body:JSON.stringify({messages,threadId:selected.id})},session.access_token)
     const data = await res.json()
-    if(data.reply) setReply(data.reply)
-    else showT('AI reply failed','error')
+    if(data.reply){
+      if(replyRef.current){ replyRef.current.innerHTML=data.reply.replace(/\n/g,'<br>'); setReply(replyRef.current.textContent) }
+      else setReply(data.reply)
+    } else showT('AI reply failed','error')
     setAiLoading(false)
   }
 
   async function handleSend() {
-    if(!reply.trim()||!selected) return
+    const textContent = replyRef.current?.textContent || reply
+    if(!textContent.trim()||!selected) return
     if(demoMode){ showT('Demo mode — connect Gmail to send messages','error'); return }
     setSending(true)
+    let bodyToSend = replyRef.current?.innerHTML || reply
+    // Auto-translate outgoing message to customer's language
+    if(autoTranslate && customerLang && customerLang.code !== 'en') {
+      try {
+        const tres = await authFetch('/api/ai/translate',{method:'POST',body:JSON.stringify({text:textContent,targetLang:customerLang.name})},session.access_token)
+        const td = await tres.json()
+        if(td.translated) bodyToSend = td.translated
+      } catch {}
+    }
     const last=messages[messages.length-1]
-    const res=await authFetch('/api/gmail/send',{method:'POST',body:JSON.stringify({to:extractEmail(last?.from||selected.from),subject:`Re: ${selected.subject}`,body:reply,threadId:selected.id,replyToMessageId:last?.id})},session.access_token)
+    const res=await authFetch('/api/gmail/send',{method:'POST',body:JSON.stringify({to:extractEmail(last?.from||selected.from),subject:`Re: ${selected.subject}`,body:bodyToSend,threadId:selected.id,replyToMessageId:last?.id})},session.access_token)
     const data=await res.json()
-    if(data.success){showT('Message sent!','success');setReply('');loadThreads(session.access_token)}
-    else showT(data.error||'Failed to send','error')
+    if(data.success){
+      showT('Message sent!','success')
+      if(replyRef.current) replyRef.current.innerHTML=''
+      setReply(''); setAttachments([])
+      loadThreads(session.access_token)
+    } else showT(data.error||'Failed to send','error')
     setSending(false)
   }
 
   async function handleSendResolve() { await handleSend(); if(selected) saveStatus(selected.id,'resolved') }
+
+  async function translateMessage(msgId, text) {
+    setMsgTranslations(p=>({...p,[msgId]:'__loading__'}))
+    try {
+      const res = await authFetch('/api/ai/translate',{method:'POST',body:JSON.stringify({text})},session.access_token)
+      const d = await res.json()
+      setMsgTranslations(p=>({...p,[msgId]:d.translated||'Translation failed'}))
+    } catch { setMsgTranslations(p=>({...p,[msgId]:'Translation failed'})) }
+  }
+
+  function formatDoc(cmd, val) { replyRef.current?.focus(); document.execCommand(cmd, false, val||null) }
+
+  function insertLink() {
+    const url = prompt('Enter URL:')
+    if(url) { replyRef.current?.focus(); document.execCommand('createLink', false, url) }
+  }
+
+  function handleImageUpload(e) {
+    const file = e.target.files?.[0]; if(!file) return
+    const reader = new FileReader()
+    reader.onload = () => { replyRef.current?.focus(); document.execCommand('insertImage', false, reader.result); setReply(replyRef.current?.textContent||'') }
+    reader.readAsDataURL(file)
+    e.target.value = ''
+  }
+
+  function handleFileAttach(e) {
+    const files = Array.from(e.target.files||[])
+    setAttachments(p=>[...p,...files.map(f=>({name:f.name,size:f.size}))])
+    e.target.value = ''
+  }
+
+  const EMOJIS = ['😊','😀','🙏','👍','❤️','✅','⚠️','📦','🚚','💰','🔄','❌','✨','💬','🎉','😅','🤔','😢','😡','🥺','🙌','💪','🤝','⏰','🌍','🔔','⭐','📧','👋','😮','🫡','🙌']
 
   function showT(msg,type='success'){ setToast({msg,type}) }
 
@@ -1110,8 +1204,20 @@ export default function InboxPage() {
                       </div>
                       <div style={{background:isNote?'rgba(251,191,36,0.07)':isAgent?'rgba(161,117,252,0.14)':'rgba(255,255,255,0.05)',border:`1px solid ${isNote?'rgba(251,191,36,0.22)':isAgent?'rgba(161,117,252,0.22)':'rgba(255,255,255,0.07)'}`,borderRadius:isAgent?'14px 4px 14px 14px':'4px 14px 14px 14px',borderLeft:isNote?'3px solid rgba(251,191,36,0.45)':undefined,padding:'12px 15px',fontSize:13.5,lineHeight:1.72,color:'rgba(240,236,249,0.85)',whiteSpace:'pre-wrap',wordBreak:'break-word'}}>
                         {isNote&&<div style={{fontSize:10,fontWeight:700,color:'rgba(251,191,36,0.7)',letterSpacing:'.07em',textTransform:'uppercase',marginBottom:6}}>Internal note</div>}
-                        {msg.body||msg.snippet}
+                        {msgTranslations[msg.id]&&msgTranslations[msg.id]!=='__loading__'
+                          ? msgTranslations[msg.id]
+                          : (msg.body||msg.snippet)}
                       </div>
+                      {!isAgent&&!isNote&&(
+                        <div style={{textAlign:'left',marginTop:4}}>
+                          {msgTranslations[msg.id]==='__loading__'
+                            ? <span style={{fontSize:10,color:'rgba(240,236,249,0.25)'}}>Translating…</span>
+                            : msgTranslations[msg.id]
+                              ? <button className="msg-xlate-btn" onClick={()=>setMsgTranslations(p=>({...p,[msg.id]:undefined}))}>Show original</button>
+                              : <button className="msg-xlate-btn" onClick={()=>translateMessage(msg.id, msg.body||msg.snippet||'')}>Translate</button>
+                          }
+                        </div>
+                      )}
                     </div>
                   </div>
                 )
@@ -1127,7 +1233,11 @@ export default function InboxPage() {
                   macros={macros}
                   aiMacros={aiMacros}
                   customerName={extractName(selected?.from||'')}
-                  onInsert={body=>{setReply(body);setShowMacros(false);setTimeout(()=>replyRef.current?.focus(),10)}}
+                  onInsert={body=>{
+                    if(replyRef.current){replyRef.current.innerHTML=body.replace(/\n/g,'<br>');setReply(replyRef.current.textContent)}
+                    else setReply(body)
+                    setShowMacros(false);setTimeout(()=>replyRef.current?.focus(),10)
+                  }}
                   onClose={()=>setShowMacros(false)}
                 />
               )}
@@ -1149,17 +1259,78 @@ export default function InboxPage() {
                     </button>
                   </div>
 
-                  <div className="compose-box">
-                    <textarea
+                  {/* Hidden file inputs */}
+                  <input ref={imgUploadRef} type="file" accept="image/*" style={{display:'none'}} onChange={handleImageUpload} />
+                  <input ref={fileUploadRef} type="file" multiple style={{display:'none'}} onChange={handleFileAttach} />
+
+                  <div className="compose-box" onClick={()=>showEmoji&&setShowEmoji(false)}>
+                    {/* Auto-translate banner */}
+                    {autoTranslate&&customerLang&&customerLang.code!=='en'&&(
+                      <div className="xlate-bar">
+                        <span style={{display:'flex'}}>{I.globe}</span>
+                        <span style={{flex:1}}>Auto-translating to <strong>{customerLang.name}</strong></span>
+                        <button onClick={()=>setAutoTranslate(false)} style={{background:'none',border:'none',cursor:'pointer',color:'rgba(161,117,252,0.6)',display:'flex',padding:0}}>{I.xsmall}</button>
+                      </div>
+                    )}
+
+                    {/* Formatting toolbar */}
+                    <div className="rtbar">
+                      <button className="rtbar-btn" title="Bold (⌘B)" onClick={()=>formatDoc('bold')} onMouseDown={e=>e.preventDefault()}><span style={{fontWeight:800,fontSize:13}}>B</span></button>
+                      <button className="rtbar-btn" title="Italic (⌘I)" onClick={()=>formatDoc('italic')} onMouseDown={e=>e.preventDefault()}><span style={{fontStyle:'italic',fontSize:13}}>I</span></button>
+                      <button className="rtbar-btn" title="Underline (⌘U)" onClick={()=>formatDoc('underline')} onMouseDown={e=>e.preventDefault()}><span style={{textDecoration:'underline',fontSize:13}}>U</span></button>
+                      <div className="rtbar-sep" />
+                      <button className="rtbar-btn" title="Insert link" onClick={insertLink} onMouseDown={e=>e.preventDefault()}>{I.link2}</button>
+                      <button className="rtbar-btn" title="Insert image" onClick={()=>imgUploadRef.current?.click()} onMouseDown={e=>e.preventDefault()}>{I.image2}</button>
+                      <div style={{position:'relative'}}>
+                        <button className={`rtbar-btn${showEmoji?' rton':''}`} title="Emoji" onClick={()=>setShowEmoji(v=>!v)} onMouseDown={e=>e.preventDefault()}>{I.emoji}</button>
+                        {showEmoji&&(
+                          <div className="emoji-pop" onClick={e=>e.stopPropagation()}>
+                            <div className="emoji-grid">
+                              {EMOJIS.map(em=>(
+                                <button key={em} className="emoji-btn" onMouseDown={e=>{e.preventDefault();replyRef.current?.focus();document.execCommand('insertText',false,em);setReply(replyRef.current?.textContent||'');setShowEmoji(false)}}>{em}</button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                      <button className="rtbar-btn" title="Attach file" onClick={()=>fileUploadRef.current?.click()} onMouseDown={e=>e.preventDefault()}>{I.paperclip}</button>
+                      <div className="rtbar-sep" />
+                      {/* Translate toggle */}
+                      <button
+                        className={`rtbar-btn${autoTranslate?' rton':''}`}
+                        title={customerLang?`Auto-translate to ${customerLang.name}`:'Detect customer language'}
+                        onClick={()=>customerLang?setAutoTranslate(v=>!v):null}
+                        style={{gap:4,paddingLeft:6,paddingRight:8,fontSize:11,fontWeight:600,minWidth:'auto'}}
+                      >
+                        {I.globe}
+                        <span>{customerLang?customerLang.name:'Translate'}</span>
+                      </button>
+                    </div>
+
+                    {/* Attachments */}
+                    {attachments.length>0&&(
+                      <div style={{display:'flex',flexWrap:'wrap',gap:5,padding:'6px 12px 0'}}>
+                        {attachments.map((a,i)=>(
+                          <span key={i} className="attach-chip">
+                            {I.paperclip} {a.name}
+                            <button onClick={()=>setAttachments(p=>p.filter((_,j)=>j!==i))} style={{background:'none',border:'none',cursor:'pointer',color:'rgba(240,236,249,0.4)',display:'flex',padding:0,marginLeft:2}}>{I.xsmall}</button>
+                          </span>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Contenteditable composer */}
+                    <div
                       ref={replyRef}
-                      value={reply}
-                      onChange={e=>setReply(e.target.value)}
+                      contentEditable
+                      suppressContentEditableWarning
+                      data-placeholder={composerTab==='reply'?'Write a reply… (⌘+Enter to send)':'Internal note — not visible to customer…'}
+                      onInput={e=>setReply(e.currentTarget.textContent)}
                       onKeyDown={e=>{if(e.key==='Enter'&&(e.metaKey||e.ctrlKey))handleSend()}}
-                      placeholder={composerTab==='reply'?'Write a reply… (⌘+Enter to send)':'Internal note — not visible to customer…'}
-                      rows={4}
                       className="compose-ta"
-                      style={{background:composerTab==='note'?'rgba(251,191,36,0.035)':'transparent',borderBottom:`1px solid ${composerTab==='note'?'rgba(251,191,36,0.15)':'rgba(255,255,255,0.05)'}`}}
+                      style={{minHeight:96,background:composerTab==='note'?'rgba(251,191,36,0.035)':'transparent',borderBottom:`1px solid ${composerTab==='note'?'rgba(251,191,36,0.15)':'rgba(255,255,255,0.05)'}`}}
                     />
+
                     <div style={{padding:'10px 14px 12px',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
                       <button className="btn-iris" onClick={handleAiReply} disabled={aiLoading||!messages.length} style={{display:'flex',alignItems:'center',gap:6}}>
                         {aiLoading?<Spinner />:I.ai}

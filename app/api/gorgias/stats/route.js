@@ -67,9 +67,33 @@ export async function GET(request) {
     const open             = allTickets.filter(t => t.status === 'open').length
     const messagesReceived = allTickets.reduce((s, t) => s + (t.messages_count || 0), 0)
 
+    // Response times
+    const firstResponseMins = []
+    const resolutionMins    = []
+
+    allTickets.forEach(t => {
+      if (t.first_response_datetime && t.created_datetime) {
+        const diff = (new Date(t.first_response_datetime) - new Date(t.created_datetime)) / 60000
+        if (diff > 0 && diff < 7 * 24 * 60) firstResponseMins.push(diff)
+      }
+      if (t.status === 'closed' && t.created_datetime) {
+        const closeTs = t.closed_datetime || t.updated_datetime
+        if (closeTs) {
+          const diff = (new Date(closeTs) - new Date(t.created_datetime)) / 60000
+          if (diff > 0 && diff < 30 * 24 * 60) resolutionMins.push(diff)
+        }
+      }
+    })
+
+    const avgFirstResponse = firstResponseMins.length > 0
+      ? Math.round(firstResponseMins.reduce((s, v) => s + v, 0) / firstResponseMins.length)
+      : null
+    const avgResolution = resolutionMins.length > 0
+      ? Math.round(resolutionMins.reduce((s, v) => s + v, 0) / resolutionMins.length)
+      : null
+
     // Productivity
     const ticketsReplied = allTickets.filter(t => (t.messages_count || 0) >= 2).length
-    // Estimate agent messages as roughly half of total (customer + agent alternating)
     const messagesSent   = allTickets.reduce((s, t) => s + Math.max(0, Math.floor((t.messages_count || 1) / 2)), 0)
     const oneTouchCount  = allTickets.filter(t => t.status === 'closed' && (t.messages_count || 0) <= 2).length
     const oneTouchPct    = closed > 0 ? ((oneTouchCount / closed) * 100).toFixed(1) : '0.0'
@@ -110,8 +134,14 @@ export async function GET(request) {
     const weekly = Array.from(weeklyMap.values()).slice(-8)
 
     return NextResponse.json({
-      workload:     { created, closed, open, messagesReceived, weekly },
-      productivity: { ticketsReplied, messagesSent, oneTouchCount, oneTouchPct, avgMessages, channels },
+      workload:      { created, closed, open, messagesReceived, weekly },
+      responseTimes: {
+        avgFirstResponse,
+        avgResolution,
+        firstResponseSample: firstResponseMins.length,
+        resolutionSample:    resolutionMins.length,
+      },
+      productivity:  { ticketsReplied, messagesSent, oneTouchCount, oneTouchPct, avgMessages, channels },
     })
   } catch {
     return NextResponse.json({ error: 'Failed to fetch stats' }, { status: 500 })

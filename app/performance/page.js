@@ -18,6 +18,12 @@ const DEMO_PERF = {
       { label: 'Apr 13', created:  7, closed:  5 },
     ],
   },
+  responseTimes: {
+    avgFirstResponse: 452,
+    avgResolution: 1584,
+    firstResponseSample: 38,
+    resolutionSample: 38,
+  },
   productivity: {
     ticketsReplied: 42,
     messagesSent: 94,
@@ -38,13 +44,9 @@ const CSS = `
     from { opacity:0; transform:translateY(8px); }
     to   { opacity:1; transform:translateY(0); }
   }
-  @keyframes skPulse {
-    0%,100% { opacity:.45; }
-    50%     { opacity:.9; }
-  }
-  @keyframes barRise {
-    from { transform:scaleY(0); }
-    to   { transform:scaleY(1); }
+  @keyframes shimmer {
+    from { background-position:-400% 0; }
+    to   { background-position:400% 0; }
   }
 
   .perf-root * { box-sizing:border-box; margin:0; padding:0; }
@@ -54,38 +56,38 @@ const CSS = `
   }
 
   .kpi-card {
-    background:rgba(255,255,255,0.035);
-    border:1px solid rgba(255,255,255,0.07);
+    background:rgba(255,255,255,0.03);
+    border:1px solid rgba(255,255,255,0.08);
     border-radius:12px;
-    padding:20px 18px 18px;
+    padding:20px 22px;
     position:relative;
     overflow:hidden;
-    transition:border-color .2s ease, background .2s ease;
+    transition:border-color .2s ease;
     cursor:default;
   }
-  .kpi-card:hover {
-    border-color:rgba(255,255,255,0.14);
-    background:rgba(255,255,255,0.055);
-  }
+  .kpi-card:hover { border-color:rgba(255,255,255,0.15); }
   .kpi-card .top-bar {
-    position:absolute; top:0; left:0; right:0; height:2px; border-radius:12px 12px 0 0;
+    position:absolute; top:0; left:0; right:0; height:2px;
+    border-radius:12px 12px 0 0;
+    opacity:0; transition:opacity .25s ease;
   }
-  .kpi-card .accent-glow {
-    position:absolute; inset:0; pointer-events:none; border-radius:12px;
-    opacity:.6; transition:opacity .2s;
-  }
-  .kpi-card:hover .accent-glow { opacity:1; }
+  .kpi-card:hover .top-bar { opacity:1; }
 
   .panel {
-    background:rgba(255,255,255,0.035);
-    border:1px solid rgba(255,255,255,0.07);
+    background:rgba(255,255,255,0.028);
+    border:1px solid rgba(255,255,255,0.08);
     border-radius:12px;
-    padding:22px 24px;
+    padding:24px;
     transition:border-color .2s ease;
   }
-  .panel:hover { border-color:rgba(255,255,255,0.11); }
+  .panel:hover { border-color:rgba(255,255,255,0.13); }
 
-  .sk { background:rgba(255,255,255,0.07); border-radius:6px; animation:skPulse 1.4s ease-in-out infinite; }
+  .sk {
+    background:linear-gradient(90deg,rgba(255,255,255,0.04) 25%,rgba(255,255,255,0.08) 50%,rgba(255,255,255,0.04) 75%);
+    background-size:400% 100%;
+    animation:shimmer 1.8s ease-in-out infinite;
+    border-radius:8px;
+  }
 
   .range-pill {
     padding:5px 13px; border-radius:100px; border:none; font-size:12px; font-weight:600;
@@ -96,13 +98,6 @@ const CSS = `
   .ch-row { transition:background .15s; border-radius:8px; padding:8px 0; }
   .ch-row:hover { background:rgba(255,255,255,0.03); }
 
-  .bar-col:hover .bar-tooltip { opacity:1; transform:translateY(0); }
-  .bar-tooltip {
-    opacity:0; transform:translateY(4px);
-    transition:opacity .15s, transform .15s;
-    pointer-events:none;
-  }
-
   .perf-scroll::-webkit-scrollbar { width:3px; }
   .perf-scroll::-webkit-scrollbar-track { background:transparent; }
   .perf-scroll::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.08); border-radius:2px; }
@@ -110,6 +105,19 @@ const CSS = `
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function fmtNum(n) { return Math.round(n).toLocaleString('en-US') }
+
+function fmtMinutes(mins) {
+  if (mins === null || mins === undefined) return '—'
+  if (mins < 60) return `${Math.round(mins)}m`
+  if (mins < 24 * 60) {
+    const h = Math.floor(mins / 60)
+    const m = Math.round(mins % 60)
+    return m > 0 ? `${h}h ${m}m` : `${h}h`
+  }
+  const d = Math.floor(mins / (24 * 60))
+  const h = Math.round((mins % (24 * 60)) / 60)
+  return h > 0 ? `${d}d ${h}h` : `${d}d`
+}
 
 function useCountUp(target, active) {
   const [val, setVal] = useState(0)
@@ -153,7 +161,7 @@ function PageBackground() {
   return (
     <div aria-hidden style={{ position:'absolute', inset:0, overflow:'hidden', pointerEvents:'none', zIndex:0 }}>
       <div style={{ position:'absolute', top:'-8%', right:'10%', width:700, height:500, borderRadius:'50%', background:'radial-gradient(ellipse,rgba(161,117,252,0.065) 0%,transparent 70%)', filter:'blur(70px)' }}/>
-      <div style={{ position:'absolute', bottom:'15%', left:'0%', width:500, height:400, borderRadius:'50%', background:'radial-gradient(ellipse,rgba(74,222,128,0.035) 0%,transparent 70%)', filter:'blur(70px)' }}/>
+      <div style={{ position:'absolute', bottom:'15%', left:'0%', width:500, height:400, borderRadius:'50%', background:'radial-gradient(ellipse,rgba(74,222,128,0.03) 0%,transparent 70%)', filter:'blur(70px)' }}/>
     </div>
   )
 }
@@ -171,10 +179,10 @@ function SectionDivider({ title, marginTop = 8 }) {
 
 // ─── Workload KPIs ────────────────────────────────────────────────────────────
 function WorkloadKPIs({ data, loaded }) {
-  const aCreated  = useCountUp(data.created         || 0, loaded)
-  const aClosed   = useCountUp(data.closed          || 0, loaded)
-  const aOpen     = useCountUp(data.open            || 0, loaded)
-  const aMessages = useCountUp(data.messagesReceived|| 0, loaded)
+  const aCreated  = useCountUp(data.created          || 0, loaded)
+  const aClosed   = useCountUp(data.closed           || 0, loaded)
+  const aOpen     = useCountUp(data.open             || 0, loaded)
+  const aMessages = useCountUp(data.messagesReceived || 0, loaded)
 
   const closeRate = data.created > 0 ? ((data.closed / data.created) * 100).toFixed(0) : null
 
@@ -182,32 +190,32 @@ function WorkloadKPIs({ data, loaded }) {
     {
       label:'Created', value:fmtNum(aCreated), sub:'new tickets this period',
       accent:'#A175FC', grad:'linear-gradient(135deg,#A175FC,#C3A3FF)',
-      icon:<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>,
+      icon:<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>,
     },
     {
-      label:'Closed', value:fmtNum(aClosed), sub: closeRate ? `${closeRate}% close rate` : 'resolved this period',
+      label:'Closed', value:fmtNum(aClosed), sub:closeRate ? `${closeRate}% close rate` : 'resolved this period',
       accent:'#4ade80', grad:'linear-gradient(135deg,#4ade80,#86efac)',
-      icon:<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>,
+      icon:<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>,
       badge: closeRate ? { value:`${closeRate}%`, color:'#4ade80' } : null,
     },
     {
       label:'Open', value:fmtNum(aOpen), sub:'currently awaiting reply',
       accent:'#F97316', grad:'linear-gradient(135deg,#F97316,#fbbf24)',
-      icon:<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>,
+      icon:<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>,
     },
     {
       label:'Messages', value:fmtNum(aMessages), sub:'total messages received',
       accent:'#38bdf8', grad:'linear-gradient(135deg,#38bdf8,#7dd3fc)',
-      icon:<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>,
+      icon:<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>,
     },
   ]
 
   if (!loaded) return (
-    <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:12, marginBottom:16 }}>
+    <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:16, marginBottom:16 }}>
       {[0,1,2,3].map(i => (
         <div key={i} className="kpi-card">
-          <div className="sk" style={{ height:10, width:'50%', marginBottom:16 }}/>
-          <div className="sk" style={{ height:28, width:'65%', marginBottom:9 }}/>
+          <div className="sk" style={{ height:11, width:'55%', marginBottom:14 }}/>
+          <div className="sk" style={{ height:30, width:'65%', marginBottom:8 }}/>
           <div className="sk" style={{ height:9, width:'80%' }}/>
         </div>
       ))}
@@ -215,27 +223,27 @@ function WorkloadKPIs({ data, loaded }) {
   )
 
   return (
-    <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:12, marginBottom:16 }}>
+    <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:16, marginBottom:16 }}>
       {cards.map(c => (
         <div key={c.label} className="kpi-card" style={{ animation:'fadeIn .3s ease-out both' }}>
           <div className="top-bar" style={{ background:c.grad }}/>
-          <div className="accent-glow" style={{ background:`radial-gradient(circle at 15% 85%, ${c.accent}0d 0%, transparent 60%)` }}/>
-          <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:16, position:'relative', zIndex:1 }}>
-            <div style={{ width:32, height:32, borderRadius:8, background:`${c.accent}15`, display:'flex', alignItems:'center', justifyContent:'center', color:c.accent }}>{c.icon}</div>
+          <div style={{ position:'absolute', inset:0, background:`radial-gradient(circle at 100% 0%,${c.accent}08 0%,transparent 60%)`, borderRadius:12, pointerEvents:'none' }}/>
+          <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:14, position:'relative', zIndex:1 }}>
+            <div style={{ width:36, height:36, borderRadius:10, background:`${c.accent}18`, display:'flex', alignItems:'center', justifyContent:'center', color:c.accent }}>{c.icon}</div>
             {c.badge && (
               <span style={{ fontSize:10, fontWeight:800, color:c.badge.color, background:`${c.badge.color}14`, border:`1px solid ${c.badge.color}25`, borderRadius:6, padding:'2px 7px', letterSpacing:'.03em', fontVariantNumeric:'tabular-nums' }}>{c.badge.value}</span>
             )}
           </div>
-          <div style={{ fontSize:30, fontWeight:800, letterSpacing:'-0.04em', color:c.accent, lineHeight:1, marginBottom:6, fontVariantNumeric:'tabular-nums', position:'relative', zIndex:1 }}>{c.value}</div>
-          <div style={{ fontSize:10, fontWeight:700, letterSpacing:'.09em', color:'rgba(248,250,252,0.3)', textTransform:'uppercase', marginBottom:3, position:'relative', zIndex:1 }}>{c.label}</div>
-          <div style={{ fontSize:11, color:'rgba(248,250,252,0.22)', lineHeight:1.4, position:'relative', zIndex:1 }}>{c.sub}</div>
+          <div style={{ fontSize:27, fontWeight:800, letterSpacing:'-0.04em', color:c.accent, lineHeight:1, marginBottom:5, fontVariantNumeric:'tabular-nums', position:'relative', zIndex:1 }}>{c.value}</div>
+          <div style={{ fontSize:9.5, fontWeight:700, letterSpacing:'.1em', color:'rgba(248,250,252,0.32)', textTransform:'uppercase', marginBottom:4, position:'relative', zIndex:1 }}>{c.label}</div>
+          <div style={{ fontSize:11, color:'rgba(248,250,252,0.25)', lineHeight:1.4, position:'relative', zIndex:1 }}>{c.sub}</div>
         </div>
       ))}
     </div>
   )
 }
 
-// ─── Weekly chart (SVG with gridlines + tooltips) ─────────────────────────────
+// ─── Weekly chart ─────────────────────────────────────────────────────────────
 function WeeklyChart({ weekly, loaded }) {
   const [hoveredIdx, setHoveredIdx] = useState(null)
 
@@ -248,13 +256,9 @@ function WeeklyChart({ weekly, loaded }) {
   if (!weekly || weekly.length === 0) return null
 
   const maxVal = Math.max(...weekly.flatMap(w => [w.created, w.closed]), 1)
-  const BAR_H   = 100
-  const PAD_TOP = 16
-  const PAD_BOT = 26
-  const barW    = 18
-  const barGap  = 5
-  const colW    = barW * 2 + barGap + 18
-  const totalW  = weekly.length * colW
+  const BAR_H = 100, PAD_TOP = 16, PAD_BOT = 26
+  const barW = 18, barGap = 5, colW = barW * 2 + barGap + 18
+  const totalW = weekly.length * colW
   const gridPcts = [0.25, 0.5, 0.75, 1]
 
   function barY(val) { return PAD_TOP + BAR_H - (val / maxVal) * BAR_H }
@@ -275,53 +279,21 @@ function WeeklyChart({ weekly, loaded }) {
           ))}
         </div>
       </div>
-
       <div style={{ overflowX:'auto' }}>
-        <svg
-          width={totalW}
-          height={PAD_TOP + BAR_H + PAD_BOT}
-          style={{ display:'block', minWidth:'100%', overflow:'visible' }}
-        >
-          {/* Gridlines */}
+        <svg width={totalW} height={PAD_TOP + BAR_H + PAD_BOT} style={{ display:'block', minWidth:'100%', overflow:'visible' }}>
           {gridPcts.map(p => {
             const y = PAD_TOP + BAR_H - p * BAR_H
-            return (
-              <line key={p} x1={0} y1={y} x2={totalW} y2={y}
-                stroke={p === 1 ? 'rgba(255,255,255,0.09)' : 'rgba(255,255,255,0.04)'}
-                strokeWidth={1} strokeDasharray={p === 1 ? '0' : '3 4'}/>
-            )
+            return <line key={p} x1={0} y1={y} x2={totalW} y2={y} stroke={p === 1 ? 'rgba(255,255,255,0.09)' : 'rgba(255,255,255,0.04)'} strokeWidth={1} strokeDasharray={p === 1 ? '0' : '3 4'}/>
           })}
-
-          {/* Bars */}
           {weekly.map((w, i) => {
             const x = i * colW + 9
             const isHov = hoveredIdx === i
             const cH = barH(w.created), clH = barH(w.closed)
             return (
-              <g key={i}
-                onMouseEnter={() => setHoveredIdx(i)}
-                onMouseLeave={() => setHoveredIdx(null)}
-                style={{ cursor:'default' }}
-              >
-                {/* Hover zone */}
+              <g key={i} onMouseEnter={() => setHoveredIdx(i)} onMouseLeave={() => setHoveredIdx(null)} style={{ cursor:'default' }}>
                 <rect x={x - 4} y={PAD_TOP} width={barW * 2 + barGap + 8} height={BAR_H} fill="transparent"/>
-
-                {/* Created bar */}
-                <rect
-                  x={x} y={barY(w.created)}
-                  width={barW} height={Math.max(cH, 2)} rx={3}
-                  fill={isHov ? 'rgba(161,117,252,0.75)' : 'rgba(161,117,252,0.45)'}
-                  style={{ transition:'fill .15s' }}
-                />
-                {/* Closed bar */}
-                <rect
-                  x={x + barW + barGap} y={barY(w.closed)}
-                  width={barW} height={Math.max(clH, 2)} rx={3}
-                  fill={isHov ? 'rgba(74,222,128,0.75)' : 'rgba(74,222,128,0.45)'}
-                  style={{ transition:'fill .15s' }}
-                />
-
-                {/* Tooltip */}
+                <rect x={x} y={barY(w.created)} width={barW} height={Math.max(cH, 2)} rx={3} fill={isHov ? 'rgba(161,117,252,0.75)' : 'rgba(161,117,252,0.45)'} style={{ transition:'fill .15s' }}/>
+                <rect x={x + barW + barGap} y={barY(w.closed)} width={barW} height={Math.max(clH, 2)} rx={3} fill={isHov ? 'rgba(74,222,128,0.75)' : 'rgba(74,222,128,0.45)'} style={{ transition:'fill .15s' }}/>
                 {isHov && (
                   <g>
                     <rect x={x - 6} y={PAD_TOP - 36} width={60} height={30} rx={5} fill="#1e1040" stroke="rgba(255,255,255,0.12)" strokeWidth={1}/>
@@ -329,17 +301,84 @@ function WeeklyChart({ weekly, loaded }) {
                     <text x={x + 24} y={PAD_TOP - 13} textAnchor="middle" fill="#4ade80" fontSize={10} fontWeight="700">{w.closed}</text>
                   </g>
                 )}
-
-                {/* Week label */}
-                <text
-                  x={x + barW + barGap / 2} y={PAD_TOP + BAR_H + 16}
-                  textAnchor="middle" fill="rgba(248,250,252,0.28)" fontSize={9}
-                >{w.label}</text>
+                <text x={x + barW + barGap / 2} y={PAD_TOP + BAR_H + 16} textAnchor="middle" fill="rgba(248,250,252,0.28)" fontSize={9}>{w.label}</text>
               </g>
             )
           })}
         </svg>
       </div>
+    </div>
+  )
+}
+
+// ─── Response Times ───────────────────────────────────────────────────────────
+function getFirstResponseStatus(mins) {
+  if (!mins) return { color:'rgba(248,250,252,0.35)', grad:'linear-gradient(135deg,rgba(255,255,255,0.15),rgba(255,255,255,0.05))', label:'No data' }
+  if (mins < 240)  return { color:'#4ade80', grad:'linear-gradient(135deg,#4ade80,#86efac)', label:'Excellent' }
+  if (mins < 720)  return { color:'#fbbf24', grad:'linear-gradient(135deg,#fbbf24,#fde68a)', label:'Average' }
+  return { color:'#f87171', grad:'linear-gradient(135deg,#f87171,#fca5a5)', label:'Slow' }
+}
+
+function getResolutionStatus(mins) {
+  if (!mins) return { color:'rgba(248,250,252,0.35)', grad:'linear-gradient(135deg,rgba(255,255,255,0.15),rgba(255,255,255,0.05))', label:'No data' }
+  if (mins < 1440) return { color:'#4ade80', grad:'linear-gradient(135deg,#4ade80,#86efac)', label:'Excellent' }
+  if (mins < 4320) return { color:'#fbbf24', grad:'linear-gradient(135deg,#fbbf24,#fde68a)', label:'Average' }
+  return { color:'#f87171', grad:'linear-gradient(135deg,#f87171,#fca5a5)', label:'Slow' }
+}
+
+function ResponseTimesSection({ data, loaded }) {
+  if (!loaded) return (
+    <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16, marginBottom:24 }}>
+      {[0,1].map(i => (
+        <div key={i} className="kpi-card" style={{ padding:'24px 24px 22px' }}>
+          <div className="sk" style={{ height:11, width:'45%', marginBottom:20 }}/>
+          <div className="sk" style={{ height:44, width:'50%', marginBottom:10 }}/>
+          <div className="sk" style={{ height:9, width:'65%' }}/>
+        </div>
+      ))}
+    </div>
+  )
+
+  const frStatus  = getFirstResponseStatus(data.avgFirstResponse)
+  const resStatus = getResolutionStatus(data.avgResolution)
+
+  const cards = [
+    {
+      label:     'First Response Time',
+      value:     fmtMinutes(data.avgFirstResponse),
+      sub:       data.firstResponseSample ? `Based on ${data.firstResponseSample} tickets` : 'No tickets with response data',
+      benchmark: '< 4h target',
+      status:    frStatus,
+      icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>,
+    },
+    {
+      label:     'Resolution Time',
+      value:     fmtMinutes(data.avgResolution),
+      sub:       data.resolutionSample ? `Based on ${data.resolutionSample} closed tickets` : 'No closed tickets in range',
+      benchmark: '< 24h target',
+      status:    resStatus,
+      icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>,
+    },
+  ]
+
+  return (
+    <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16, marginBottom:24, animation:'fadeIn .3s ease-out both' }}>
+      {cards.map(c => (
+        <div key={c.label} className="kpi-card" style={{ padding:'24px 24px 22px' }}>
+          <div className="top-bar" style={{ background:c.status.grad }}/>
+          <div style={{ position:'absolute', inset:0, background:`radial-gradient(circle at 100% 0%,${c.status.color}08 0%,transparent 60%)`, borderRadius:12, pointerEvents:'none' }}/>
+          <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:18, position:'relative', zIndex:1 }}>
+            <div style={{ width:40, height:40, borderRadius:10, background:`${c.status.color}18`, display:'flex', alignItems:'center', justifyContent:'center', color:c.status.color }}>{c.icon}</div>
+            <span style={{ fontSize:10, fontWeight:800, color:c.status.color, background:`${c.status.color}14`, border:`1px solid ${c.status.color}25`, borderRadius:6, padding:'3px 9px', letterSpacing:'.04em' }}>{c.status.label}</span>
+          </div>
+          <div style={{ fontSize:40, fontWeight:800, letterSpacing:'-0.04em', color:c.status.color, lineHeight:1, marginBottom:8, fontVariantNumeric:'tabular-nums', position:'relative', zIndex:1 }}>{c.value}</div>
+          <div style={{ fontSize:9.5, fontWeight:700, letterSpacing:'.1em', color:'rgba(248,250,252,0.32)', textTransform:'uppercase', marginBottom:8, position:'relative', zIndex:1 }}>{c.label}</div>
+          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', position:'relative', zIndex:1 }}>
+            <div style={{ fontSize:11, color:'rgba(248,250,252,0.25)', lineHeight:1.4 }}>{c.sub}</div>
+            <div style={{ fontSize:10.5, color:'rgba(248,250,252,0.22)', background:'rgba(255,255,255,0.04)', border:'1px solid rgba(255,255,255,0.07)', borderRadius:6, padding:'2px 8px', flexShrink:0, marginLeft:16, whiteSpace:'nowrap' }}>{c.benchmark}</div>
+          </div>
+        </div>
+      ))}
     </div>
   )
 }
@@ -355,31 +394,31 @@ function ProductivityKPIs({ data, loaded }) {
     {
       label:'Tickets replied', value:fmtNum(aReplied), sub:'agents sent at least 1 reply',
       accent:'#A175FC', grad:'linear-gradient(135deg,#A175FC,#C3A3FF)',
-      icon:<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 0 0-4-4H4"/></svg>,
+      icon:<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 0 0-4-4H4"/></svg>,
     },
     {
       label:'Messages sent', value:fmtNum(aSent), sub:'outbound agent messages',
       accent:'#38bdf8', grad:'linear-gradient(135deg,#38bdf8,#7dd3fc)',
-      icon:<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>,
+      icon:<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>,
     },
     {
       label:'One-touch', value:`${aOneTouch.toFixed(1)}%`, sub:`${fmtNum(aOneTouchN)} tickets closed first reply`,
       accent:'#4ade80', grad:'linear-gradient(135deg,#4ade80,#86efac)',
-      icon:<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z"/><path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>,
+      icon:<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z"/><path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>,
     },
     {
       label:'Avg messages', value:data.avgMessages || '—', sub:'per ticket on average',
       accent:'#FB923C', grad:'linear-gradient(135deg,#F97316,#fbbf24)',
-      icon:<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><line x1="9" y1="10" x2="15" y2="10"/></svg>,
+      icon:<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><line x1="9" y1="10" x2="15" y2="10"/></svg>,
     },
   ]
 
   if (!loaded) return (
-    <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:12, marginBottom:16 }}>
+    <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:16, marginBottom:16 }}>
       {[0,1,2,3].map(i => (
         <div key={i} className="kpi-card">
-          <div className="sk" style={{ height:10, width:'50%', marginBottom:16 }}/>
-          <div className="sk" style={{ height:28, width:'65%', marginBottom:9 }}/>
+          <div className="sk" style={{ height:11, width:'55%', marginBottom:14 }}/>
+          <div className="sk" style={{ height:30, width:'65%', marginBottom:8 }}/>
           <div className="sk" style={{ height:9, width:'80%' }}/>
         </div>
       ))}
@@ -387,17 +426,17 @@ function ProductivityKPIs({ data, loaded }) {
   )
 
   return (
-    <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:12, marginBottom:16 }}>
+    <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:16, marginBottom:16 }}>
       {cards.map(c => (
         <div key={c.label} className="kpi-card" style={{ animation:'fadeIn .3s ease-out both' }}>
           <div className="top-bar" style={{ background:c.grad }}/>
-          <div className="accent-glow" style={{ background:`radial-gradient(circle at 15% 85%, ${c.accent}0d 0%, transparent 60%)` }}/>
-          <div style={{ marginBottom:16, position:'relative', zIndex:1 }}>
-            <div style={{ width:32, height:32, borderRadius:8, background:`${c.accent}15`, display:'flex', alignItems:'center', justifyContent:'center', color:c.accent }}>{c.icon}</div>
+          <div style={{ position:'absolute', inset:0, background:`radial-gradient(circle at 100% 0%,${c.accent}08 0%,transparent 60%)`, borderRadius:12, pointerEvents:'none' }}/>
+          <div style={{ marginBottom:14, position:'relative', zIndex:1 }}>
+            <div style={{ width:36, height:36, borderRadius:10, background:`${c.accent}18`, display:'flex', alignItems:'center', justifyContent:'center', color:c.accent }}>{c.icon}</div>
           </div>
-          <div style={{ fontSize:30, fontWeight:800, letterSpacing:'-0.04em', color:c.accent, lineHeight:1, marginBottom:6, fontVariantNumeric:'tabular-nums', position:'relative', zIndex:1 }}>{c.value}</div>
-          <div style={{ fontSize:10, fontWeight:700, letterSpacing:'.09em', color:'rgba(248,250,252,0.3)', textTransform:'uppercase', marginBottom:3, position:'relative', zIndex:1 }}>{c.label}</div>
-          <div style={{ fontSize:11, color:'rgba(248,250,252,0.22)', lineHeight:1.4, position:'relative', zIndex:1 }}>{c.sub}</div>
+          <div style={{ fontSize:27, fontWeight:800, letterSpacing:'-0.04em', color:c.accent, lineHeight:1, marginBottom:5, fontVariantNumeric:'tabular-nums', position:'relative', zIndex:1 }}>{c.value}</div>
+          <div style={{ fontSize:9.5, fontWeight:700, letterSpacing:'.1em', color:'rgba(248,250,252,0.32)', textTransform:'uppercase', marginBottom:4, position:'relative', zIndex:1 }}>{c.label}</div>
+          <div style={{ fontSize:11, color:'rgba(248,250,252,0.25)', lineHeight:1.4, position:'relative', zIndex:1 }}>{c.sub}</div>
         </div>
       ))}
     </div>
@@ -430,16 +469,12 @@ function ChannelBreakdown({ channels, loaded }) {
           <div style={{ fontSize:11, color:'rgba(248,250,252,0.32)' }}>{total.toLocaleString()} tickets · this period</div>
         </div>
       </div>
-
-      {/* Stacked overview bar */}
       <div style={{ display:'flex', height:7, borderRadius:5, overflow:'hidden', marginBottom:22, gap:1.5 }}>
         {channels.map(ch => {
           const color = CH_COLORS[ch.name.toLowerCase()] || 'rgba(248,250,252,0.2)'
           return <div key={ch.name} style={{ flex:ch.pct, background:color, opacity:.65, minWidth:2 }}/>
         })}
       </div>
-
-      {/* Detail rows */}
       <div style={{ display:'flex', flexDirection:'column', gap:2 }}>
         {channels.map((ch, i) => {
           const color = CH_COLORS[ch.name.toLowerCase()] || 'rgba(248,250,252,0.2)'
@@ -468,47 +503,50 @@ function ChannelBreakdown({ channels, loaded }) {
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default function PerformancePage() {
-  const [workload, setWorkload]         = useState({})
-  const [productivity, setProductivity] = useState({})
-  const [loaded, setLoaded]             = useState({ workload:false, productivity:false })
-  const [demoMode, setDemoMode]         = useState(false)
-  const [gorgiasOk, setGorgiasOk]       = useState(true)
-  const [dateRange, setDateRange]       = useState('month')
-  const [customFrom, setCustomFrom]     = useState('')
-  const [customTo, setCustomTo]         = useState('')
-  const [mounted, setMounted]           = useState(false)
+  const [workload, setWorkload]           = useState({})
+  const [responseTimes, setResponseTimes] = useState({})
+  const [productivity, setProductivity]   = useState({})
+  const [loaded, setLoaded]               = useState({ workload:false, responseTimes:false, productivity:false })
+  const [demoMode, setDemoMode]           = useState(false)
+  const [gorgiasOk, setGorgiasOk]         = useState(true)
+  const [dateRange, setDateRange]         = useState('month')
+  const [customFrom, setCustomFrom]       = useState('')
+  const [customTo, setCustomTo]           = useState('')
+  const [mounted, setMounted]             = useState(false)
   const tokenRef = useRef(null)
 
   function loadDemo() {
     setWorkload(DEMO_PERF.workload)
+    setResponseTimes(DEMO_PERF.responseTimes)
     setProductivity(DEMO_PERF.productivity)
-    setLoaded({ workload:true, productivity:true })
+    setLoaded({ workload:true, responseTimes:true, productivity:true })
     setDemoMode(true)
   }
 
   function exitDemo() {
     setDemoMode(false)
-    setWorkload({}); setProductivity({})
-    setLoaded({ workload:false, productivity:false })
+    setWorkload({}); setResponseTimes({}); setProductivity({})
+    setLoaded({ workload:false, responseTimes:false, productivity:false })
     if (tokenRef.current) fetchStats(tokenRef.current, dateRange)
   }
 
   async function fetchStats(token, rangeId, fromOverride, toOverride) {
-    setLoaded({ workload:false, productivity:false })
+    setLoaded({ workload:false, responseTimes:false, productivity:false })
     const range = rangeId === 'custom' ? { from:fromOverride, to:toOverride } : getDateRange(rangeId)
     if (!range.from || !range.to) return
     try {
       const res = await fetch(`/api/gorgias/stats?from=${range.from}&to=${range.to}`, {
         headers: { Authorization:`Bearer ${token}` },
       })
-      if (res.status === 400) { setGorgiasOk(false); setLoaded({ workload:true, productivity:true }); return }
-      if (!res.ok) { setLoaded({ workload:true, productivity:true }); return }
+      if (res.status === 400) { setGorgiasOk(false); setLoaded({ workload:true, responseTimes:true, productivity:true }); return }
+      if (!res.ok) { setLoaded({ workload:true, responseTimes:true, productivity:true }); return }
       const d = await res.json()
       setWorkload(d.workload || {})
+      setResponseTimes(d.responseTimes || {})
       setProductivity(d.productivity || {})
       setGorgiasOk(true)
     } catch {}
-    setLoaded({ workload:true, productivity:true })
+    setLoaded({ workload:true, responseTimes:true, productivity:true })
   }
 
   function selectRange(id) {
@@ -531,7 +569,7 @@ export default function PerformancePage() {
 
   if (!mounted) return null
 
-  const allLoaded = loaded.workload && loaded.productivity
+  const allLoaded = loaded.workload && loaded.responseTimes && loaded.productivity
 
   return (
     <div className="perf-root" style={{ display:'flex', minHeight:'100vh', background:'#1C0F36' }}>
@@ -594,8 +632,12 @@ export default function PerformancePage() {
           <WorkloadKPIs data={workload} loaded={loaded.workload}/>
           <WeeklyChart  weekly={workload.weekly} loaded={loaded.workload}/>
 
+          {/* Response Times */}
+          <SectionDivider title="Response Times" marginTop={8}/>
+          <ResponseTimesSection data={responseTimes} loaded={loaded.responseTimes}/>
+
           {/* Productivity */}
-          <SectionDivider title="Productivity" marginTop={16}/>
+          <SectionDivider title="Productivity" marginTop={8}/>
           <ProductivityKPIs data={productivity} loaded={loaded.productivity}/>
           <ChannelBreakdown channels={productivity.channels} loaded={loaded.productivity}/>
 

@@ -749,48 +749,6 @@ function ProductMatrix({ allRefunds, loaded }) {
 
 // ─── Repeat Refunders ─────────────────────────────────────────────────────────
 
-function RepeatRefunders({ allRefunds, loaded }) {
-  if(!loaded) return null
-  const repeaters = buildRepeatRefunders(allRefunds)
-  if(repeaters.length===0) return null
-
-  return (
-    <div className="panel" style={{ marginBottom:24, animation:'revealUp .5s ease-out .55s both' }}>
-      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:20 }}>
-        <div>
-          <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:4 }}>
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#FCD34D" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-            <div style={{ fontSize:13, fontWeight:600, color:'#F8FAFC' }}>Repeat Refunders</div>
-          </div>
-          <div style={{ fontSize:11, color:'rgba(248,250,252,0.35)' }}>Customers with 2+ refunds all-time — flag for review</div>
-        </div>
-        <div style={{ padding:'3px 12px', borderRadius:100, background:'rgba(252,211,77,0.08)', border:'1px solid rgba(252,211,77,0.22)', fontSize:11, fontWeight:700, color:'#FCD34D' }}>{repeaters.length} flagged</div>
-      </div>
-      <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
-        {repeaters.map((c,i)=>(
-          <div key={i} style={{ display:'flex', alignItems:'center', gap:14, padding:'12px 14px', borderRadius:11, background:'rgba(252,211,77,0.04)', border:'1px solid rgba(252,211,77,0.1)', transition:'background .15s' }}>
-            <div style={{ width:34, height:34, borderRadius:10, background:'rgba(252,211,77,0.1)', border:'1px solid rgba(252,211,77,0.2)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FCD34D" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-            </div>
-            <div style={{ flex:1, minWidth:0 }}>
-              <div style={{ fontSize:13, fontWeight:600, color:'#F8FAFC', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{c.customer}</div>
-              {c.email&&<div style={{ fontSize:10.5, color:'rgba(248,250,252,0.35)', marginTop:1, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{c.email}</div>}
-            </div>
-            <div style={{ textAlign:'right', flexShrink:0 }}>
-              <div style={{ fontSize:13, fontWeight:800, color:'#F87171', fontVariantNumeric:'tabular-nums' }}>{c.count}× refunded</div>
-              <div style={{ fontSize:11, color:'rgba(248,250,252,0.35)', marginTop:1 }}>{fmtEur(c.totalAmount)} total</div>
-            </div>
-            <div style={{ textAlign:'right', flexShrink:0, minWidth:80 }}>
-              <div style={{ fontSize:10.5, color:'rgba(248,250,252,0.28)' }}>Last refund</div>
-              <div style={{ fontSize:11, color:'rgba(248,250,252,0.45)', marginTop:1 }}>{fmtDateShort(c.lastRefund)}</div>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-}
-
 // ─── Breakdown panels ─────────────────────────────────────────────────────────
 
 function RefundReasons({ refunds, loaded }) {
@@ -1046,7 +1004,6 @@ export default function AnalyticsPage() {
           <ActionBoard patternActions={patternActions} aiInsights={insights} noRefunds={noRefunds} loaded={actionLoaded} onStatusChange={handleStatusChange} statuses={actionStatuses} usingFallback={usingFallback}/>
           <RefundTable refunds={refunds} loaded={loaded.refunds}/>
           <ProductMatrix allRefunds={allRefunds} loaded={loaded.allRefunds}/>
-          <RepeatRefunders allRefunds={allRefunds} loaded={loaded.allRefunds}/>
 
           {!noRefunds&&(
             <div style={{ display:'flex', gap:16, marginBottom:24, animation:'revealUp .5s ease-out .6s both' }}>

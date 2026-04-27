@@ -9,14 +9,19 @@ export default function AdminPage() {
   const [clients, setClients] = useState([])
   const [broadcasts, setBroadcasts] = useState([])
   const [notifications, setNotifications] = useState([])
+  const [teamMembers, setTeamMembers] = useState([])
   const [loading, setLoading] = useState(false)
   const [broadcastLoading, setBroadcastLoading] = useState(false)
   const [notifLoading, setNotifLoading] = useState(false)
+  const [teamLoading, setTeamLoading] = useState(false)
   const [success, setSuccess] = useState('')
   const [broadcastSuccess, setBroadcastSuccess] = useState('')
   const [notifSuccess, setNotifSuccess] = useState('')
+  const [teamSuccess, setTeamSuccess] = useState('')
+  const [teamError, setTeamError] = useState('')
   const [authorized, setAuthorized] = useState(false)
   const [activeTab, setActiveTab] = useState('clients')
+  const [teamForm, setTeamForm] = useState({ name: '', email: '', password: '', role: 'developer' })
   const [finance, setFinance] = useState(null)
   const [financeLoading, setFinanceLoading] = useState(false)
   const [broadcastForm, setBroadcastForm] = useState({ title: '', body: '', type: 'update' })
@@ -43,9 +48,49 @@ export default function AdminPage() {
       fetchClients()
       fetchBroadcasts()
       fetchNotifications()
+      fetchTeamMembers()
     }
     checkAuth()
   }, [])
+
+  async function fetchTeamMembers() {
+    const { data } = await supabase.from('team_members').select('*').order('created_at', { ascending: false })
+    if (data) setTeamMembers(data)
+  }
+
+  async function handleCreateTeamMember(e) {
+    e.preventDefault()
+    setTeamLoading(true)
+    setTeamSuccess('')
+    setTeamError('')
+
+    const { data: { session } } = await supabase.auth.getSession()
+    const res = await fetch('/api/admin/create-user', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
+      body: JSON.stringify(teamForm),
+    })
+    const d = await res.json()
+
+    if (!res.ok) {
+      setTeamError(d.error || 'Something went wrong')
+    } else {
+      setTeamSuccess(`${teamForm.name} can now log in with ${teamForm.email}`)
+      setTeamForm({ name: '', email: '', password: '', role: 'developer' })
+      fetchTeamMembers()
+    }
+    setTeamLoading(false)
+  }
+
+  async function deleteTeamMember(id, email) {
+    if (!confirm(`Remove ${email}? They will no longer be able to log in.`)) return
+    const { data: { session } } = await supabase.auth.getSession()
+    await fetch(`/api/admin/delete-user?id=${id}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${session.access_token}` },
+    })
+    fetchTeamMembers()
+  }
 
   async function fetchFinance() {
     setFinanceLoading(true)
@@ -246,6 +291,7 @@ export default function AdminPage() {
           <button style={{ ...s.tab, ...(activeTab === 'broadcasts' ? s.tabActive : s.tabInactive) }} onClick={() => setActiveTab('broadcasts')}>Broadcasts</button>
           <button style={{ ...s.tab, ...(activeTab === 'notifications' ? s.tabActive : s.tabInactive) }} onClick={() => setActiveTab('notifications')}>Notifications</button>
           <button style={{ ...s.tab, ...(activeTab === 'finance' ? s.tabActive : s.tabInactive) }} onClick={() => { setActiveTab('finance'); if (!finance) fetchFinance() }}>Finance</button>
+          <button style={{ ...s.tab, ...(activeTab === 'team' ? s.tabActive : s.tabInactive) }} onClick={() => setActiveTab('team')}>Team</button>
         </div>
 
       {activeTab === 'broadcasts' && (
@@ -478,6 +524,59 @@ export default function AdminPage() {
               </div>
             )
           })()}
+        </div>
+      )}
+
+      {activeTab === 'team' && (
+        <div style={s.grid}>
+          <div style={s.card}>
+            <div style={s.cardTitle}>Add team member</div>
+            <div style={s.cardSub}>Account is created instantly — no email confirmation required</div>
+            {teamSuccess && <div style={s.success}>{teamSuccess}</div>}
+            {teamError && <div style={{ background: 'rgba(255,107,138,0.1)', border: '1px solid rgba(255,107,138,0.3)', borderRadius: '8px', padding: '10px 14px', color: '#ff6b8a', fontSize: '13px', marginBottom: '16px' }}>{teamError}</div>}
+            <form onSubmit={handleCreateTeamMember}>
+              <label style={s.label}>Name</label>
+              <input style={s.input} value={teamForm.name} onChange={e => setTeamForm({...teamForm, name: e.target.value})} required placeholder="Jan de Vries" />
+
+              <label style={s.label}>Email</label>
+              <input style={s.input} type="email" value={teamForm.email} onChange={e => setTeamForm({...teamForm, email: e.target.value})} required placeholder="jan@lynqagency.com" />
+
+              <label style={s.label}>Password</label>
+              <input style={s.input} type="password" value={teamForm.password} onChange={e => setTeamForm({...teamForm, password: e.target.value})} required placeholder="Min. 6 characters" />
+
+              <label style={s.label}>Role</label>
+              <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
+                {['developer', 'manager'].map(r => (
+                  <button key={r} type="button" style={s.typePill(r, teamForm.role)} onClick={() => setTeamForm({...teamForm, role: r})}>
+                    {r === 'developer' ? 'Developer' : 'Manager'}
+                  </button>
+                ))}
+              </div>
+
+              <button style={s.btn} type="submit" disabled={teamLoading}>
+                {teamLoading ? 'Creating...' : 'Create account'}
+              </button>
+            </form>
+          </div>
+
+          <div style={s.card}>
+            <div style={s.cardTitle}>Team — {teamMembers.length}</div>
+            <div style={s.cardSub}>These users can log in via /login</div>
+            {teamMembers.length === 0 && <div style={{ color: '#4a7fb5', fontSize: '13px' }}>No team members yet.</div>}
+            {teamMembers.map(m => (
+              <div key={m.id} style={s.clientRow}>
+                <div>
+                  <div style={{ fontWeight: '600', fontSize: '14px' }}>{m.name}</div>
+                  <div style={{ color: '#4a7fb5', fontSize: '12px', marginTop: '2px' }}>{m.email}</div>
+                  <div style={{ fontSize: '11px', color: '#4a7fb5', marginTop: '2px' }}>{new Date(m.created_at).toLocaleDateString('en-US')}</div>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <span style={{ ...s.pill, background: 'rgba(161,117,252,0.12)', color: '#A175FC', border: '1px solid rgba(161,117,252,0.2)' }}>{m.role}</span>
+                  <button onClick={() => deleteTeamMember(m.id, m.email)} style={{ background: 'none', border: 'none', color: '#ff6b8a', cursor: 'pointer', fontSize: '14px' }}>✕</button>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 

@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { supabase } from '../../lib/supabase'
 import Sidebar from '../components/Sidebar'
+import { DEMO_REFUNDS, DEMO_KPIS, DEMO_TREND, DEMO_INSIGHTS } from '../../lib/demoData'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -889,7 +890,26 @@ export default function AnalyticsPage() {
   const [customTo,setCustomTo]=useState('')
   const [loaded,setLoaded]=useState({ kpis:false, prevKpis:false, refunds:false, allRefunds:false, trend:false, insights:false })
   const [mounted,setMounted]=useState(false)
+  const [demoMode,setDemoMode]=useState(false)
   const tokenRef=useRef(null)
+
+  function loadDemo() {
+    setKpis(DEMO_KPIS)
+    setPrevKpis({ totalOrders:24, cancelledOrders:1, totalRefunds:6, refundRate:'25.0', refundAmount:'489' })
+    setRefunds(DEMO_REFUNDS.filter(r=>new Date(r.refundedAt)>=new Date('2026-04-01')))
+    setAllRefunds(DEMO_REFUNDS)
+    setTrend(DEMO_TREND)
+    setInsights(DEMO_INSIGHTS)
+    setLoaded({ kpis:true, prevKpis:true, refunds:true, allRefunds:true, trend:true, insights:true })
+    setDemoMode(true)
+  }
+
+  function exitDemo() {
+    setDemoMode(false)
+    setKpis({}); setPrevKpis({}); setRefunds([]); setAllRefunds([]); setTrend([]); setInsights([])
+    setLoaded({ kpis:false, prevKpis:false, refunds:false, allRefunds:false, trend:false, insights:false })
+    if(tokenRef.current){ fetchAll(tokenRef.current,'month'); fetchAllTimeRefunds(tokenRef.current) }
+  }
 
   useEffect(()=>{
     setMounted(true)
@@ -971,9 +991,15 @@ export default function AnalyticsPage() {
                 <h1 style={{ fontSize:28, fontWeight:800, color:'#F8FAFC', letterSpacing:'-0.04em', lineHeight:1.15, marginBottom:5, textShadow:'none' }}>Refund Intelligence</h1>
                 <p style={{ fontSize:12.5, color:'rgba(248,250,252,0.35)' }}>Where money is lost · {rangeLabel}</p>
               </div>
-              <div style={{ display:'flex', alignItems:'center', gap:8, padding:'7px 16px', borderRadius:100, background:'rgba(255,255,255,0.04)', border:'1px solid rgba(255,255,255,0.08)', backdropFilter:'blur(10px)' }}>
-                {!allLoaded?<Spinner size={14}/>:<div style={{ width:6, height:6, borderRadius:'50%', background:'#4ade80', boxShadow:'0 0 6px rgba(74,222,128,0.5)', animation:'glowPulse 2s ease-in-out infinite' }}/>}
-                <span style={{ fontSize:10.5, fontWeight:700, letterSpacing:'.09em', color:'rgba(248,250,252,0.4)', textTransform:'uppercase' }}>{allLoaded?'Live':'Loading…'}</span>
+              <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                {demoMode
+                  ? <button onClick={exitDemo} style={{ padding:'6px 14px', borderRadius:100, background:'rgba(251,146,60,0.12)', border:'1px solid rgba(251,146,60,0.3)', color:'#FB923C', fontSize:11, fontWeight:700, cursor:'pointer', letterSpacing:'.04em', fontFamily:'inherit' }}>Exit Demo</button>
+                  : <button onClick={loadDemo} style={{ padding:'6px 14px', borderRadius:100, background:'rgba(161,117,252,0.1)', border:'1px solid rgba(161,117,252,0.25)', color:'#C3A3FF', fontSize:11, fontWeight:700, cursor:'pointer', letterSpacing:'.04em', fontFamily:'inherit' }}>Preview Demo</button>
+                }
+                <div style={{ display:'flex', alignItems:'center', gap:8, padding:'7px 16px', borderRadius:100, background:'rgba(255,255,255,0.04)', border:'1px solid rgba(255,255,255,0.08)', backdropFilter:'blur(10px)' }}>
+                  {!allLoaded?<Spinner size={14}/>:<div style={{ width:6, height:6, borderRadius:'50%', background:demoMode?'#FB923C':'#4ade80', boxShadow:`0 0 6px ${demoMode?'rgba(251,146,60,0.5)':'rgba(74,222,128,0.5)'}`, animation:'glowPulse 2s ease-in-out infinite' }}/>}
+                  <span style={{ fontSize:10.5, fontWeight:700, letterSpacing:'.09em', color:'rgba(248,250,252,0.4)', textTransform:'uppercase' }}>{!allLoaded?'Loading…':demoMode?'Demo':'Live'}</span>
+                </div>
               </div>
             </div>
             <div style={{ height:1, background:'linear-gradient(90deg,transparent,rgba(161,117,252,0.3),transparent)', margin:'20px 0 16px' }}/>
@@ -991,11 +1017,19 @@ export default function AnalyticsPage() {
             </div>
           </div>
 
-          {/* Sync banner */}
-          {loaded.kpis&&kpis.needsSync&&(
+          {/* Sync / Demo banner */}
+          {demoMode&&(
+            <div style={{ display:'flex', alignItems:'center', gap:12, background:'rgba(251,146,60,0.07)', border:'1px solid rgba(251,146,60,0.2)', borderRadius:14, padding:'12px 18px', marginBottom:24, animation:'revealUp .4s ease-out both' }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FB923C" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              <div style={{ flex:1 }}><span style={{ fontSize:12, fontWeight:700, color:'#FB923C', marginRight:8 }}>Demo mode</span><span style={{ fontSize:12, color:'rgba(248,250,252,0.45)' }}>Showing example data — connect your Shopify store in Settings to see real insights.</span></div>
+              <button onClick={exitDemo} style={{ fontSize:11, fontWeight:600, color:'rgba(251,146,60,0.7)', background:'transparent', border:'none', cursor:'pointer', fontFamily:'inherit', whiteSpace:'nowrap' }}>Exit demo →</button>
+            </div>
+          )}
+          {!demoMode&&loaded.kpis&&kpis.needsSync&&(
             <div style={{ display:'flex', alignItems:'center', gap:12, background:'rgba(161,117,252,0.07)', border:'1px solid rgba(161,117,252,0.18)', borderRadius:14, padding:'12px 18px', marginBottom:24, animation:'revealUp .4s ease-out both' }}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#A175FC" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/></svg>
               <div style={{ flex:1 }}><span style={{ fontSize:12, fontWeight:700, color:'#A175FC', marginRight:8 }}>Sync required</span><span style={{ fontSize:12, color:'rgba(248,250,252,0.55)' }}>No order data found. Go to Settings → Shopify to sync your orders.</span></div>
+              <button onClick={loadDemo} style={{ fontSize:11, fontWeight:700, color:'#C3A3FF', background:'rgba(161,117,252,0.12)', border:'1px solid rgba(161,117,252,0.25)', borderRadius:100, padding:'4px 12px', cursor:'pointer', fontFamily:'inherit', whiteSpace:'nowrap' }}>Preview demo data</button>
             </div>
           )}
 

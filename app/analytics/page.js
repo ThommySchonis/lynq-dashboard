@@ -777,36 +777,6 @@ function RefundReasons({ refunds, loaded }) {
   )
 }
 
-function TopProducts({ refunds, loaded }) {
-  const map={}; refunds.forEach(r=>{(r.products||[]).forEach(p=>{if(!map[p])map[p]={name:p,count:0,amount:0};map[p].count++;map[p].amount+=parseFloat(r.refundAmount||0)})})
-  const products=Object.values(map).sort((a,b)=>b.amount-a.amount).slice(0,6)
-  const mx=Math.max(...products.map(p=>p.amount),1)
-  return (
-    <div className="panel" style={{ flex:'1 1 0' }}>
-      <div style={{ marginBottom:18 }}><div style={{ fontSize:13, fontWeight:600, color:'#F8FAFC', marginBottom:3 }}>Most refunded products</div><div style={{ fontSize:11, color:'rgba(248,250,252,0.35)' }}>By total value refunded</div></div>
-      {!loaded?<div style={{ display:'flex', flexDirection:'column', gap:12 }}>{[0,1,2,3,4].map(i=><div key={i} style={{ display:'flex', gap:12, alignItems:'center' }}><div className="sk" style={{ width:30, height:30, borderRadius:8, flexShrink:0 }}/><div style={{ flex:1, display:'flex', flexDirection:'column', gap:5 }}><div className="sk" style={{ height:11, width:'75%' }}/><div className="sk" style={{ height:4, borderRadius:100 }}/></div><div className="sk" style={{ height:11, width:45, flexShrink:0 }}/></div>)}</div>
-      :products.length===0?<div style={{ textAlign:'center', padding:'32px 0', fontSize:12, color:'rgba(248,250,252,0.2)' }}>No data this period</div>
-      :<div style={{ display:'flex', flexDirection:'column', gap:2 }}>
-        {products.map((p,i)=>(
-          <div key={p.name} className="tbl-row" style={{ display:'flex', alignItems:'center', gap:12, padding:'9px 0' }}>
-            <div style={{ width:30, height:30, borderRadius:8, background:'rgba(239,68,68,0.1)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:11, fontWeight:800, color:'#EF4444', flexShrink:0 }}>{i+1}</div>
-            <div style={{ flex:1, overflow:'hidden' }}>
-              <div style={{ fontSize:12.5, color:'#F8FAFC', fontWeight:500, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', marginBottom:5 }} title={p.name}>{p.name}</div>
-              <div style={{ height:4, background:'rgba(255,255,255,0.05)', borderRadius:100, overflow:'hidden' }}>
-                <div className="bar-fill" style={{ height:'100%', width:`${(p.amount/mx)*100}%`, background:'linear-gradient(90deg,#EF4444,rgba(161,117,252,0.7))', borderRadius:100, animationDelay:`${.06*i}s` }}/>
-              </div>
-            </div>
-            <div style={{ flexShrink:0, textAlign:'right' }}>
-              <div style={{ fontSize:12.5, fontWeight:700, color:'#EF4444', fontVariantNumeric:'tabular-nums' }}>{fmtEur(p.amount)}</div>
-              <div style={{ fontSize:10, color:'rgba(248,250,252,0.32)', marginTop:1 }}>{p.count}× refunded</div>
-            </div>
-          </div>
-        ))}
-      </div>}
-    </div>
-  )
-}
-
 // ─── Weekly Report ────────────────────────────────────────────────────────────
 
 function WeeklyReport({ allRefunds, loaded }) {
@@ -1006,15 +976,8 @@ export default function AnalyticsPage() {
           <ProductMatrix allRefunds={allRefunds} loaded={loaded.allRefunds}/>
 
           {!noRefunds&&(
-            <div style={{ display:'flex', gap:16, marginBottom:24, animation:'revealUp .5s ease-out .6s both' }}>
+            <div style={{ marginBottom:24, animation:'revealUp .5s ease-out .6s both' }}>
               <RefundReasons refunds={refunds} loaded={loaded.refunds}/>
-              <TopProducts refunds={refunds} loaded={loaded.refunds}/>
-            </div>
-          )}
-          {!loaded.refunds&&(
-            <div style={{ display:'flex', gap:16, marginBottom:24 }}>
-              <div className="panel" style={{ flex:'1 1 0' }}><div className="sk" style={{ height:13, width:'45%', marginBottom:6 }}/><div className="sk" style={{ height:10, width:'30%', marginBottom:20 }}/>{[0,1,2,3,4].map(i=><div key={i} style={{ display:'flex', flexDirection:'column', gap:6, marginBottom:14 }}><div className="sk" style={{ height:11, width:`${60+i*7}%` }}/><div className="sk" style={{ height:5, borderRadius:100 }}/></div>)}</div>
-              <div className="panel" style={{ flex:'1 1 0' }}><div className="sk" style={{ height:13, width:'50%', marginBottom:6 }}/><div className="sk" style={{ height:10, width:'35%', marginBottom:20 }}/>{[0,1,2,3,4].map(i=><div key={i} style={{ display:'flex', gap:10, marginBottom:12 }}><div className="sk" style={{ width:30, height:30, borderRadius:8, flexShrink:0 }}/><div style={{ flex:1 }}><div className="sk" style={{ height:11, width:'75%', marginBottom:5 }}/><div className="sk" style={{ height:4, borderRadius:100 }}/></div></div>)}</div>
             </div>
           )}
 

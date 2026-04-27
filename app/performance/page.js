@@ -4,737 +4,445 @@ import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../../lib/supabase'
 import Sidebar from '../components/Sidebar'
 
-/* ─────────────────────────────────────────
-   HARDCODED DATA
-───────────────────────────────────────── */
-const AGENTS = [
-  { name: 'Sarah K.',  tickets: 47, avgResponse: '1.2h', resolution: 96, csat: 4.9 },
-  { name: 'Mike R.',   tickets: 38, avgResponse: '2.1h', resolution: 91, csat: 4.7 },
-  { name: 'Emma L.',   tickets: 52, avgResponse: '0.9h', resolution: 98, csat: 5.0 },
-  { name: 'James W.',  tickets: 29, avgResponse: '3.4h', resolution: 87, csat: 4.5 },
-  { name: 'Aria M.',   tickets: 41, avgResponse: '1.8h', resolution: 93, csat: 4.8 },
-]
+// ─── Demo data ────────────────────────────────────────────────────────────────
+const DEMO_PERF = {
+  workload: {
+    created: 47, closed: 38, open: 12, messagesReceived: 186,
+    weekly: [
+      { label: 'Mar 2',  created: 14, closed: 12 },
+      { label: 'Mar 9',  created:  9, closed:  7 },
+      { label: 'Mar 16', created: 16, closed: 13 },
+      { label: 'Mar 23', created: 12, closed: 10 },
+      { label: 'Mar 30', created: 18, closed: 15 },
+      { label: 'Apr 6',  created: 13, closed: 11 },
+      { label: 'Apr 13', created:  7, closed:  5 },
+    ],
+  },
+  productivity: {
+    ticketsReplied: 42,
+    messagesSent: 94,
+    oneTouchCount: 16,
+    oneTouchPct: '42.1',
+    avgMessages: '3.9',
+    channels: [
+      { name: 'Email',        count: 29, pct: 62 },
+      { name: 'Chat',         count: 12, pct: 26 },
+      { name: 'Contact Form', count:  6, pct: 13 },
+    ],
+  },
+}
 
-const CHART_DATA = [
-  { day: 'Mon', count: 23 },
-  { day: 'Tue', count: 31 },
-  { day: 'Wed', count: 28 },
-  { day: 'Thu', count: 38 },
-  { day: 'Fri', count: 27 },
-  { day: 'Sat', count: 12 },
-  { day: 'Sun', count:  8 },
-]
-
-const CHART_MAX = 38
-
-const FEED = [
-  { icon: 'check',   text: 'Ticket #4521 resolved by Sarah K.',         time: '2 min ago',  color: '#A175FC' },
-  { icon: 'alert',   text: 'New urgent ticket: Wrong item received',     time: '15 min ago', color: '#FF6B35' },
-  { icon: 'money',   text: 'Refund approved for order #1089',            time: '1h ago',     color: '#4ade80' },
-  { icon: 'star',    text: 'Emma L. achieved 5.0 CSAT rating',           time: '3h ago',     color: '#FFD700' },
-  { icon: 'spike',   text: 'Ticket volume spike detected (+40%)',         time: '5h ago',     color: '#FF6B35' },
-  { icon: 'report',  text: 'Weekly performance report generated',         time: '1d ago',     color: '#A175FC' },
-]
-
-/* ─────────────────────────────────────────
-   GLOBAL STYLES
-───────────────────────────────────────── */
+// ─── CSS ──────────────────────────────────────────────────────────────────────
 const CSS = `
-  @keyframes aurora1 {
-    0%,100% { transform:translate(0,0) scale(1);      opacity:.45; }
-    33%      { transform:translate(60px,-80px) scale(1.15); opacity:.65; }
-    66%      { transform:translate(-40px,40px) scale(.9);  opacity:.35; }
-  }
-  @keyframes aurora2 {
-    0%,100% { transform:translate(0,0) scale(1);      opacity:.3; }
-    40%      { transform:translate(-80px,60px) scale(1.2);  opacity:.5; }
-    70%      { transform:translate(50px,-30px) scale(.85); opacity:.25; }
-  }
-  @keyframes aurora3 {
-    0%,100% { transform:translate(0,0) scale(1);      opacity:.2; }
-    50%      { transform:translate(40px,80px) scale(1.1);  opacity:.4; }
-  }
-  @keyframes revealUp {
-    from { opacity:0; transform:translateY(22px); }
+  @keyframes fadeIn {
+    from { opacity:0; transform:translateY(8px); }
     to   { opacity:1; transform:translateY(0); }
   }
-  @keyframes barGrow {
-    from { width:0; }
-    to   { width:var(--bar-w); }
-  }
-  @keyframes ringFill {
-    from { background: conic-gradient(#1C0F36 0deg, #1C0F36 360deg); }
-    to   { background: var(--ring-final); }
-  }
-  @keyframes fadeIn {
-    from { opacity:0; }
-    to   { opacity:1; }
-  }
-  @keyframes sparkleIn {
-    from { opacity:0; transform:scaleY(0); }
-    to   { opacity:1; transform:scaleY(1); }
+  @keyframes skPulse {
+    0%,100% { opacity:.5; }
+    50%     { opacity:1; }
   }
 
   .perf-root * { box-sizing:border-box; margin:0; padding:0; }
-  .perf-root {
-    font-family:var(--font-rethink), -apple-system, BlinkMacSystemFont, sans-serif;
-    -webkit-font-smoothing:antialiased;
-  }
+  .perf-root { font-family:var(--font-rethink),'Rethink Sans',-apple-system,BlinkMacSystemFont,sans-serif; -webkit-font-smoothing:antialiased; }
 
-  /* hero kpi cards */
-  .hero-card {
+  .kpi-card {
     background:rgba(255,255,255,0.04);
-    border:1px solid rgba(255,255,255,0.08);
-    border-radius:14px;
-    padding:28px 24px 24px;
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    transition:all 0.25s ease;
-    cursor:default;
+    border:1px solid rgba(255,255,255,0.07);
+    border-radius:12px;
+    padding:20px 18px 16px;
     position:relative;
     overflow:hidden;
-  }
-  .hero-card::before {
-    content:'';
-    position:absolute;
-    inset:0;
-    background:linear-gradient(135deg,rgba(161,117,252,0.07),transparent 60%);
-    opacity:0;
-    transition:opacity 0.3s ease;
-    pointer-events:none;
-  }
-  .hero-card:hover::before { opacity:1; }
-  .hero-card:hover {
-    border-color:rgba(161,117,252,0.28);
-    transform:translateY(-3px);
-    box-shadow:0 12px 40px rgba(161,117,252,0.1);
-  }
-
-  /* table row hover */
-  .agent-row {
-    transition:background 0.18s ease;
-    border-bottom:1px solid rgba(255,255,255,0.05);
-  }
-  .agent-row:last-child { border-bottom:none; }
-  .agent-row:hover { background:rgba(161,117,252,0.06); }
-
-  /* chart bar hover */
-  .chart-bar-wrap:hover .chart-bar-inner {
-    filter:brightness(1.2);
-  }
-  .chart-bar-wrap:hover .bar-count-tooltip {
-    opacity:1;
-  }
-
-  /* feed items */
-  .feed-item {
-    display:flex;
-    gap:14px;
-    align-items:flex-start;
-    padding:14px 0;
-    border-bottom:1px solid rgba(255,255,255,0.04);
-    transition:background 0.15s ease;
+    transition:border-color .2s ease;
     cursor:default;
   }
-  .feed-item:last-child { border-bottom:none; }
-  .feed-item:hover { background:rgba(255,255,255,0.02); border-radius:10px; padding-left:8px; padding-right:8px; }
+  .kpi-card:hover { border-color:rgba(161,117,252,0.25); }
+  .kpi-card .top-bar {
+    position:absolute; top:0; left:0; right:0; height:2px; border-radius:12px 12px 0 0;
+  }
 
-  /* scrollbar */
+  .panel {
+    background:rgba(255,255,255,0.04);
+    border:1px solid rgba(255,255,255,0.07);
+    border-radius:12px;
+    padding:24px;
+    transition:border-color .2s ease;
+  }
+  .panel:hover { border-color:rgba(255,255,255,0.12); }
+
+  .sk { background:rgba(255,255,255,0.07); border-radius:6px; animation:skPulse 1.4s ease-in-out infinite; }
+
+  .range-pill {
+    padding:5px 13px; border-radius:100px; border:none; font-size:12px; font-weight:600;
+    cursor:pointer; transition:all .15s; font-family:inherit;
+  }
+
   .perf-scroll::-webkit-scrollbar { width:3px; }
   .perf-scroll::-webkit-scrollbar-track { background:transparent; }
   .perf-scroll::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.08); border-radius:2px; }
 `
 
-/* ─────────────────────────────────────────
-   AURORA BACKGROUND
-───────────────────────────────────────── */
-function AuroraBackground() {
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+function fmtNum(n) { return Math.round(n).toLocaleString('en-US') }
+
+function useCountUp(target, active) {
+  const [val, setVal] = useState(0)
+  useEffect(() => {
+    if (!active) { setVal(0); return }
+    const dur = 900, start = Date.now()
+    const run = () => {
+      const t = Math.min((Date.now() - start) / dur, 1)
+      const ease = 1 - Math.pow(1 - t, 3)
+      setVal(target * ease)
+      if (t < 1) requestAnimationFrame(run)
+      else setVal(target)
+    }
+    requestAnimationFrame(run)
+  }, [target, active])
+  return val
+}
+
+// ─── Date ranges ──────────────────────────────────────────────────────────────
+const RANGES = [
+  { id: '7d',     label: '7D' },
+  { id: '30d',    label: '30D' },
+  { id: 'month',  label: 'This month' },
+  { id: '3month', label: '3 months' },
+  { id: 'custom', label: 'Custom' },
+]
+
+function getDateRange(id) {
+  const today = new Date()
+  const pad = n => String(n).padStart(2, '0')
+  const fmt = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+  const to = fmt(today)
+  if (id === '7d')    { const f = new Date(today); f.setDate(f.getDate() - 6);   return { from: fmt(f), to } }
+  if (id === '30d')   { const f = new Date(today); f.setDate(f.getDate() - 29);  return { from: fmt(f), to } }
+  if (id === 'month') { const f = new Date(today.getFullYear(), today.getMonth(), 1); return { from: fmt(f), to } }
+  if (id === '3month'){ const f = new Date(today); f.setMonth(f.getMonth() - 3); return { from: fmt(f), to } }
+  return { from: '', to: '' }
+}
+
+// ─── PageBackground ───────────────────────────────────────────────────────────
+function PageBackground() {
   return (
     <div aria-hidden style={{ position:'absolute', inset:0, overflow:'hidden', pointerEvents:'none', zIndex:0 }}>
-      <div style={{
-        position:'absolute', top:'-15%', left:'30%',
-        width:'650px', height:'550px', borderRadius:'50%',
-        background:'radial-gradient(ellipse,rgba(161,117,252,0.10) 0%,transparent 70%)',
-        animation:'aurora1 20s ease-in-out infinite',
-        filter:'blur(50px)',
-      }}/>
-      <div style={{
-        position:'absolute', bottom:'5%', right:'8%',
-        width:'480px', height:'480px', borderRadius:'50%',
-        background:'radial-gradient(ellipse,rgba(255,107,53,0.07) 0%,transparent 70%)',
-        animation:'aurora2 24s ease-in-out infinite',
-        filter:'blur(50px)',
-      }}/>
-      <div style={{
-        position:'absolute', top:'45%', left:'-8%',
-        width:'380px', height:'380px', borderRadius:'50%',
-        background:'radial-gradient(ellipse,rgba(251,113,133,0.06) 0%,transparent 70%)',
-        animation:'aurora3 28s ease-in-out infinite',
-        filter:'blur(50px)',
-      }}/>
-      <div style={{
-        position:'absolute', inset:0,
-        backgroundImage:'linear-gradient(rgba(255,255,255,0.012) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.012) 1px,transparent 1px)',
-        backgroundSize:'64px 64px',
-        maskImage:'radial-gradient(ellipse 80% 80% at 50% 50%,black 40%,transparent 100%)',
-      }}/>
+      <div style={{ position:'absolute', top:'-10%', right:'15%', width:600, height:500, borderRadius:'50%', background:'radial-gradient(ellipse,rgba(161,117,252,0.07) 0%,transparent 70%)', filter:'blur(60px)' }}/>
+      <div style={{ position:'absolute', bottom:'10%', left:'5%', width:400, height:400, borderRadius:'50%', background:'radial-gradient(ellipse,rgba(74,222,128,0.04) 0%,transparent 70%)', filter:'blur(60px)' }}/>
     </div>
   )
 }
 
-/* ─────────────────────────────────────────
-   SVG ICONS
-───────────────────────────────────────── */
-function IconCheck() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-      <polyline points="20 6 9 17 4 12"/>
-    </svg>
-  )
+// ─── Section label ────────────────────────────────────────────────────────────
+function SectionLabel({ children }) {
+  return <div style={{ fontSize:10.5, fontWeight:700, letterSpacing:'.1em', color:'rgba(248,250,252,0.25)', textTransform:'uppercase', marginBottom:14, animation:'fadeIn .3s ease-out both' }}>{children}</div>
 }
-function IconAlert() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-      <line x1="12" y1="9" x2="12" y2="13"/>
-      <line x1="12" y1="17" x2="12.01" y2="17"/>
-    </svg>
+
+// ─── Workload KPIs ────────────────────────────────────────────────────────────
+function WorkloadKPIs({ data, loaded }) {
+  const aCreated  = useCountUp(data.created         || 0, loaded)
+  const aClosed   = useCountUp(data.closed          || 0, loaded)
+  const aOpen     = useCountUp(data.open            || 0, loaded)
+  const aMessages = useCountUp(data.messagesReceived|| 0, loaded)
+
+  const cards = [
+    { label:'CREATED',  value:fmtNum(aCreated),  sub:'new tickets this period', accent:'#A175FC', grad:'linear-gradient(135deg,#A175FC,#C3A3FF)',
+      icon:<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> },
+    { label:'CLOSED',   value:fmtNum(aClosed),   sub:'resolved this period',   accent:'#4ade80', grad:'linear-gradient(135deg,#4ade80,#86efac)',
+      icon:<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg> },
+    { label:'OPEN',     value:fmtNum(aOpen),     sub:'currently open tickets',  accent:'#F97316', grad:'linear-gradient(135deg,#F97316,#fbbf24)',
+      icon:<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> },
+    { label:'MESSAGES',  value:fmtNum(aMessages), sub:'total messages received', accent:'#38bdf8', grad:'linear-gradient(135deg,#38bdf8,#7dd3fc)',
+      icon:<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg> },
+  ]
+
+  if (!loaded) return (
+    <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:14, marginBottom:16 }}>
+      {[0,1,2,3].map(i => <div key={i} className="kpi-card"><div className="sk" style={{ height:10, width:'55%', marginBottom:14 }}/><div className="sk" style={{ height:26, width:'60%', marginBottom:8 }}/><div className="sk" style={{ height:9, width:'80%' }}/></div>)}
+    </div>
   )
-}
-function IconMoney() {
+
   return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-      <line x1="12" y1="1" x2="12" y2="23"/>
-      <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
-    </svg>
-  )
-}
-function IconStar({ filled = false }) {
-  return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill={filled ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-    </svg>
-  )
-}
-function IconSpike() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-      <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/>
-      <polyline points="16 7 22 7 22 13"/>
-    </svg>
-  )
-}
-function IconReport() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-      <polyline points="14 2 14 8 20 8"/>
-      <line x1="16" y1="13" x2="8" y2="13"/>
-      <line x1="16" y1="17" x2="8" y2="17"/>
-      <polyline points="10 9 9 9 8 9"/>
-    </svg>
+    <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:14, marginBottom:16 }}>
+      {cards.map(c => (
+        <div key={c.label} className="kpi-card" style={{ animation:'fadeIn .3s ease-out both' }}>
+          <div className="top-bar" style={{ background:c.grad }}/>
+          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:14 }}>
+            <div style={{ width:34, height:34, borderRadius:8, background:`${c.accent}18`, display:'flex', alignItems:'center', justifyContent:'center', color:c.accent }}>{c.icon}</div>
+          </div>
+          <div style={{ fontSize:26, fontWeight:800, letterSpacing:'-0.04em', color:c.accent, lineHeight:1, marginBottom:5, fontVariantNumeric:'tabular-nums' }}>{c.value}</div>
+          <div style={{ fontSize:9.5, fontWeight:700, letterSpacing:'.1em', color:'rgba(248,250,252,0.32)', textTransform:'uppercase', marginBottom:3 }}>{c.label}</div>
+          <div style={{ fontSize:11, color:'rgba(248,250,252,0.25)' }}>{c.sub}</div>
+        </div>
+      ))}
+    </div>
   )
 }
 
-function feedIcon(key, color) {
-  const s = { color }
-  switch (key) {
-    case 'check':  return <span style={s}><IconCheck/></span>
-    case 'alert':  return <span style={s}><IconAlert/></span>
-    case 'money':  return <span style={s}><IconMoney/></span>
-    case 'star':   return <span style={s}><IconStar filled/></span>
-    case 'spike':  return <span style={s}><IconSpike/></span>
-    case 'report': return <span style={s}><IconReport/></span>
-    default:       return null
-  }
-}
+// ─── Weekly chart ─────────────────────────────────────────────────────────────
+function WeeklyChart({ weekly, loaded }) {
+  if (!loaded) return (
+    <div className="panel" style={{ marginBottom:24 }}>
+      <div className="sk" style={{ height:13, width:'30%', marginBottom:6 }}/><div className="sk" style={{ height:10, width:'20%', marginBottom:20 }}/>
+      <div className="sk" style={{ height:100, borderRadius:8 }}/>
+    </div>
+  )
+  if (!weekly || weekly.length === 0) return null
 
-/* ─────────────────────────────────────────
-   PROGRESS RING  (conic-gradient)
-───────────────────────────────────────── */
-function ProgressRing({ pct }) {
-  const [animated, setAnimated] = useState(false)
-  useEffect(() => { const t = setTimeout(() => setAnimated(true), 300); return () => clearTimeout(t) }, [])
-  const deg = animated ? Math.round(pct * 3.6) : 0
+  const maxVal = Math.max(...weekly.flatMap(w => [w.created, w.closed]), 1)
+  const barH = 80
 
   return (
-    <div style={{ position:'relative', width:120, height:120, margin:'0 auto 16px' }}>
-      {/* outer glow ring */}
-      <div style={{
-        position:'absolute', inset:-4, borderRadius:'50%',
-        background:'radial-gradient(circle,rgba(161,117,252,0.12) 60%,transparent 80%)',
-      }}/>
-      {/* track */}
-      <div style={{
-        width:120, height:120, borderRadius:'50%',
-        background:'rgba(255,255,255,0.06)',
-        display:'flex', alignItems:'center', justifyContent:'center',
-        position:'relative',
-      }}>
-        {/* filled ring */}
-        <div style={{
-          position:'absolute', inset:0, borderRadius:'50%',
-          background:`conic-gradient(#A175FC 0deg, #FF6B35 ${deg}deg, rgba(255,255,255,0.08) ${deg}deg 360deg)`,
-          transition:'background 1.2s cubic-bezier(0.34,1.56,0.64,1)',
-        }}/>
-        {/* inner circle */}
-        <div style={{
-          position:'absolute', inset:14, borderRadius:'50%',
-          background:'#1C0F36',
-          display:'flex', alignItems:'center', justifyContent:'center',
-          zIndex:1,
-        }}>
-          <span style={{
-            fontSize:'22px', fontWeight:800, color:'#F8FAFC',
-            letterSpacing:'-0.03em',
-          }}>
-            {pct}%
-          </span>
+    <div className="panel" style={{ marginBottom:24, animation:'fadeIn .3s ease-out both' }}>
+      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:20 }}>
+        <div>
+          <div style={{ fontSize:13, fontWeight:600, color:'#F8FAFC', marginBottom:3 }}>Weekly ticket volume</div>
+          <div style={{ fontSize:11, color:'rgba(248,250,252,0.35)' }}>Created vs closed · per week</div>
+        </div>
+        <div style={{ display:'flex', gap:16 }}>
+          {[['#A175FC','Created'],['#4ade80','Closed']].map(([color,label]) => (
+            <span key={label} style={{ display:'flex', alignItems:'center', gap:5, fontSize:11, color:'rgba(248,250,252,0.45)' }}>
+              <span style={{ width:8, height:8, borderRadius:2, background:color, display:'inline-block' }}/>{label}
+            </span>
+          ))}
         </div>
       </div>
-    </div>
-  )
-}
-
-/* ─────────────────────────────────────────
-   SPARKLINE BARS (resolution time)
-───────────────────────────────────────── */
-const SPARKLINE = [2.1, 2.8, 1.9, 2.4, 3.1, 2.0, 2.4]
-const SPARKLINE_MAX = 3.5
-
-function SparklineBars() {
-  const [animate, setAnimate] = useState(false)
-  useEffect(() => { const t = setTimeout(() => setAnimate(true), 500); return () => clearTimeout(t) }, [])
-
-  return (
-    <div style={{ display:'flex', alignItems:'flex-end', gap:'5px', height:40, margin:'0 auto 16px', width:'fit-content' }}>
-      {SPARKLINE.map((v, i) => {
-        const h = animate ? Math.round((v / SPARKLINE_MAX) * 40) : 0
-        return (
-          <div key={i} style={{
-            width:10,
-            height: h,
-            borderRadius:'3px 3px 0 0',
-            background: i === 6
-              ? 'linear-gradient(180deg,#A175FC,#FF6B35)'
-              : 'rgba(161,117,252,0.35)',
-            transition:`height 0.7s cubic-bezier(0.34,1.56,0.64,1) ${i * 60}ms`,
-            minHeight: animate ? 3 : 0,
-          }}/>
-        )
-      })}
-    </div>
-  )
-}
-
-/* ─────────────────────────────────────────
-   CSAT STARS
-───────────────────────────────────────── */
-function CsatStars({ score }) {
-  const full    = Math.floor(score)
-  const partial = score - full
-  return (
-    <div style={{ display:'flex', gap:'4px', alignItems:'center', margin:'0 auto 16px', width:'fit-content' }}>
-      {[1,2,3,4,5].map(n => {
-        const isFull    = n <= full
-        const isPartial = n === full + 1 && partial > 0
-        return (
-          <div key={n} style={{ position:'relative', width:20, height:20, color:'rgba(255,255,255,0.15)' }}>
-            <IconStar/>
-            {(isFull || isPartial) && (
-              <div style={{
-                position:'absolute', inset:0,
-                overflow:'hidden',
-                width: isPartial ? `${Math.round(partial*100)}%` : '100%',
-                color:'#FFD700',
-              }}>
-                <IconStar filled/>
-              </div>
-            )}
+      <div style={{ display:'flex', alignItems:'flex-end', gap:12, overflowX:'auto', paddingBottom:4 }}>
+        {weekly.map((w, i) => (
+          <div key={i} style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:7, flex:'0 0 auto', minWidth:44 }}>
+            <div style={{ display:'flex', alignItems:'flex-end', gap:3, height:barH }}>
+              <div style={{ width:14, background:'rgba(161,117,252,0.45)', borderRadius:'3px 3px 0 0', height:`${(w.created / maxVal) * barH}px`, minHeight:2 }}/>
+              <div style={{ width:14, background:'rgba(74,222,128,0.45)', borderRadius:'3px 3px 0 0', height:`${(w.closed  / maxVal) * barH}px`, minHeight:2 }}/>
+            </div>
+            <div style={{ fontSize:9.5, color:'rgba(248,250,252,0.3)', whiteSpace:'nowrap' }}>{w.label}</div>
           </div>
-        )
-      })}
-    </div>
-  )
-}
-
-/* ─────────────────────────────────────────
-   RESOLUTION BAR  (table cell)
-───────────────────────────────────────── */
-function ResolutionBar({ pct }) {
-  const [animated, setAnimated] = useState(false)
-  const ref = useRef(null)
-
-  useEffect(() => {
-    const obs = new IntersectionObserver(([e]) => { if (e.isIntersecting) setAnimated(true) }, { threshold: 0.1 })
-    if (ref.current) obs.observe(ref.current)
-    return () => obs.disconnect()
-  }, [])
-
-  const color = pct >= 95 ? '#4ade80' : pct >= 90 ? '#A175FC' : '#FF6B35'
-
-  return (
-    <div ref={ref} style={{ display:'flex', alignItems:'center', gap:'10px' }}>
-      <div style={{
-        flex:1, height:5, borderRadius:'3px',
-        background:'rgba(255,255,255,0.07)', overflow:'hidden',
-      }}>
-        <div style={{
-          height:'100%', borderRadius:'3px',
-          background: color,
-          width: animated ? `${pct}%` : '0%',
-          transition:'width 0.9s cubic-bezier(0.34,1.56,0.64,1)',
-          boxShadow: `0 0 8px ${color}66`,
-        }}/>
+        ))}
       </div>
-      <span style={{ fontSize:'13px', fontWeight:600, color, minWidth:32, textAlign:'right' }}>
-        {pct}%
-      </span>
     </div>
   )
 }
 
-/* ─────────────────────────────────────────
-   CHART BAR ROW
-───────────────────────────────────────── */
-function ChartBarRow({ day, count, max, delay }) {
-  const [animated, setAnimated] = useState(false)
-  useEffect(() => { const t = setTimeout(() => setAnimated(true), delay); return () => clearTimeout(t) }, [delay])
-  const pct = (count / max) * 100
+// ─── Productivity KPIs ────────────────────────────────────────────────────────
+function ProductivityKPIs({ data, loaded }) {
+  const aReplied  = useCountUp(data.ticketsReplied || 0, loaded)
+  const aSent     = useCountUp(data.messagesSent   || 0, loaded)
+  const aOneTouch = useCountUp(parseFloat(data.oneTouchPct || 0), loaded)
+  const aOneTouchN= useCountUp(data.oneTouchCount  || 0, loaded)
+
+  const cards = [
+    { label:'TICKETS REPLIED', value:fmtNum(aReplied),             sub:'agents sent at least 1 reply', accent:'#A175FC', grad:'linear-gradient(135deg,#A175FC,#C3A3FF)',
+      icon:<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 0 0-4-4H4"/></svg> },
+    { label:'MESSAGES SENT',   value:fmtNum(aSent),                sub:'outbound agent messages',      accent:'#38bdf8', grad:'linear-gradient(135deg,#38bdf8,#7dd3fc)',
+      icon:<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg> },
+    { label:'ONE-TOUCH',       value:`${aOneTouch.toFixed(1)}%`,   sub:`${fmtNum(aOneTouchN)} tickets closed in 1 reply`, accent:'#4ade80', grad:'linear-gradient(135deg,#4ade80,#86efac)',
+      icon:<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z"/><path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg> },
+    { label:'AVG MESSAGES',    value:data.avgMessages || '—',       sub:'per ticket avg',               accent:'#FB923C', grad:'linear-gradient(135deg,#F97316,#fbbf24)',
+      icon:<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><line x1="9" y1="10" x2="15" y2="10"/></svg> },
+  ]
+
+  if (!loaded) return (
+    <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:14, marginBottom:16 }}>
+      {[0,1,2,3].map(i => <div key={i} className="kpi-card"><div className="sk" style={{ height:10, width:'55%', marginBottom:14 }}/><div className="sk" style={{ height:26, width:'60%', marginBottom:8 }}/><div className="sk" style={{ height:9, width:'80%' }}/></div>)}
+    </div>
+  )
 
   return (
-    <div className="chart-bar-wrap" style={{
-      display:'grid', gridTemplateColumns:'36px 1fr 28px',
-      alignItems:'center', gap:'12px',
-      position:'relative', cursor:'default',
-    }}>
-      <span style={{ fontSize:'12px', fontWeight:500, color:'rgba(248,250,252,0.4)', textAlign:'right' }}>
-        {day}
-      </span>
-      <div style={{
-        height:9, borderRadius:'5px',
-        background:'rgba(255,255,255,0.06)', overflow:'hidden', position:'relative',
-      }}>
-        <div className="chart-bar-inner" style={{
-          height:'100%', borderRadius:'5px',
-          background:'linear-gradient(90deg,#A175FC,#FF6B35)',
-          width: animated ? `${pct}%` : '0%',
-          transition:`width 0.8s cubic-bezier(0.34,1.56,0.64,1) ${delay}ms`,
-          boxShadow:'0 0 12px rgba(161,117,252,0.35)',
-        }}/>
+    <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:14, marginBottom:16 }}>
+      {cards.map(c => (
+        <div key={c.label} className="kpi-card" style={{ animation:'fadeIn .3s ease-out both' }}>
+          <div className="top-bar" style={{ background:c.grad }}/>
+          <div style={{ display:'flex', alignItems:'center', marginBottom:14 }}>
+            <div style={{ width:34, height:34, borderRadius:8, background:`${c.accent}18`, display:'flex', alignItems:'center', justifyContent:'center', color:c.accent }}>{c.icon}</div>
+          </div>
+          <div style={{ fontSize:26, fontWeight:800, letterSpacing:'-0.04em', color:c.accent, lineHeight:1, marginBottom:5, fontVariantNumeric:'tabular-nums' }}>{c.value}</div>
+          <div style={{ fontSize:9.5, fontWeight:700, letterSpacing:'.1em', color:'rgba(248,250,252,0.32)', textTransform:'uppercase', marginBottom:3 }}>{c.label}</div>
+          <div style={{ fontSize:11, color:'rgba(248,250,252,0.25)' }}>{c.sub}</div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+// ─── Channel breakdown ────────────────────────────────────────────────────────
+const CH_COLORS = { email:'#A175FC', chat:'#38bdf8', 'contact form':'#4ade80', sms:'#F97316', api:'#fbbf24' }
+
+function ChannelBreakdown({ channels, loaded }) {
+  if (!loaded) return (
+    <div className="panel" style={{ marginBottom:24 }}>
+      <div className="sk" style={{ height:13, width:'25%', marginBottom:6 }}/><div className="sk" style={{ height:10, width:'18%', marginBottom:20 }}/>
+      {[0,1,2].map(i => <div key={i} style={{ marginBottom:14 }}><div style={{ display:'flex', gap:12, marginBottom:6 }}><div className="sk" style={{ width:80, height:12 }}/><div className="sk" style={{ flex:1, height:12 }}/><div className="sk" style={{ width:32, height:12 }}/></div><div className="sk" style={{ height:5, borderRadius:3 }}/></div>)}
+    </div>
+  )
+  if (!channels || channels.length === 0) return null
+
+  const total = channels.reduce((s, c) => s + c.count, 0)
+
+  return (
+    <div className="panel" style={{ marginBottom:24, animation:'fadeIn .3s ease-out both' }}>
+      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:20 }}>
+        <div>
+          <div style={{ fontSize:13, fontWeight:600, color:'#F8FAFC', marginBottom:3 }}>Tickets by channel</div>
+          <div style={{ fontSize:11, color:'rgba(248,250,252,0.35)' }}>{total} total tickets this period</div>
+        </div>
       </div>
-      <span style={{ fontSize:'12px', fontWeight:600, color:'rgba(248,250,252,0.55)', textAlign:'left' }}>
-        {count}
-      </span>
+      <div style={{ display:'flex', flexDirection:'column', gap:14 }}>
+        {channels.map(ch => {
+          const color = CH_COLORS[ch.name.toLowerCase()] || 'rgba(248,250,252,0.3)'
+          return (
+            <div key={ch.name}>
+              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:7 }}>
+                <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                  <div style={{ width:8, height:8, borderRadius:2, background:color, flexShrink:0 }}/>
+                  <span style={{ fontSize:12.5, fontWeight:600, color:'rgba(248,250,252,0.7)' }}>{ch.name}</span>
+                </div>
+                <div style={{ display:'flex', alignItems:'center', gap:12 }}>
+                  <span style={{ fontSize:11, color:'rgba(248,250,252,0.3)' }}>{ch.count} tickets</span>
+                  <span style={{ fontSize:11, fontWeight:700, color, minWidth:34, textAlign:'right' }}>{ch.pct}%</span>
+                </div>
+              </div>
+              <div style={{ height:5, borderRadius:3, background:'rgba(255,255,255,0.06)', overflow:'hidden' }}>
+                <div style={{ height:'100%', borderRadius:3, background:color, width:`${ch.pct}%`, transition:'width .8s cubic-bezier(0.34,1.56,0.64,1)' }}/>
+              </div>
+            </div>
+          )
+        })}
+      </div>
     </div>
   )
 }
 
-/* ─────────────────────────────────────────
-   SECTION CARD WRAPPER
-───────────────────────────────────────── */
-function SectionCard({ children, style = {} }) {
-  return (
-    <div style={{
-      background:'rgba(255,255,255,0.04)',
-      border:'1px solid rgba(255,255,255,0.08)',
-      borderRadius:14,
-      padding:'24px',
-      ...style,
-    }}>
-      {children}
-    </div>
-  )
-}
-
-function SectionTitle({ children }) {
-  return (
-    <div style={{
-      fontSize:'13px', fontWeight:700,
-      letterSpacing:'.08em', textTransform:'uppercase',
-      color:'rgba(248,250,252,0.35)',
-      marginBottom:'20px',
-    }}>
-      {children}
-    </div>
-  )
-}
-
-/* ─────────────────────────────────────────
-   MAIN PAGE
-───────────────────────────────────────── */
+// ─── Page ─────────────────────────────────────────────────────────────────────
 export default function PerformancePage() {
-  const [mounted, setMounted] = useState(false)
+  const [workload, setWorkload]         = useState({})
+  const [productivity, setProductivity] = useState({})
+  const [loaded, setLoaded]             = useState({ workload:false, productivity:false })
+  const [demoMode, setDemoMode]         = useState(false)
+  const [gorgiasOk, setGorgiasOk]       = useState(true)
+  const [dateRange, setDateRange]       = useState('month')
+  const [customFrom, setCustomFrom]     = useState('')
+  const [customTo, setCustomTo]         = useState('')
+  const [mounted, setMounted]           = useState(false)
+  const tokenRef = useRef(null)
+
+  function loadDemo() {
+    setWorkload(DEMO_PERF.workload)
+    setProductivity(DEMO_PERF.productivity)
+    setLoaded({ workload:true, productivity:true })
+    setDemoMode(true)
+  }
+
+  function exitDemo() {
+    setDemoMode(false)
+    setWorkload({}); setProductivity({})
+    setLoaded({ workload:false, productivity:false })
+    if (tokenRef.current) fetchStats(tokenRef.current, dateRange)
+  }
+
+  async function fetchStats(token, rangeId, fromOverride, toOverride) {
+    setLoaded({ workload:false, productivity:false })
+    const range = rangeId === 'custom' ? { from:fromOverride, to:toOverride } : getDateRange(rangeId)
+    if (!range.from || !range.to) return
+
+    try {
+      const res = await fetch(`/api/gorgias/stats?from=${range.from}&to=${range.to}`, {
+        headers: { Authorization:`Bearer ${token}` },
+      })
+      if (res.status === 400) { setGorgiasOk(false); setLoaded({ workload:true, productivity:true }); return }
+      if (!res.ok) { setLoaded({ workload:true, productivity:true }); return }
+      const d = await res.json()
+      setWorkload(d.workload || {})
+      setProductivity(d.productivity || {})
+      setGorgiasOk(true)
+    } catch {}
+    setLoaded({ workload:true, productivity:true })
+  }
+
+  function selectRange(id) {
+    setDateRange(id)
+    if (id !== 'custom' && !demoMode && tokenRef.current) fetchStats(tokenRef.current, id)
+  }
+
+  function applyCustomRange(from, to) {
+    if (from && to && !demoMode && tokenRef.current) fetchStats(tokenRef.current, 'custom', from, to)
+  }
 
   useEffect(() => {
     setMounted(true)
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session) { window.location.href = '/login' }
+    supabase.auth.getSession().then(({ data:{ session } }) => {
+      if (!session) { window.location.href = '/login'; return }
+      tokenRef.current = session.access_token
+      fetchStats(session.access_token, 'month')
     })
   }, [])
 
   if (!mounted) return null
+
+  const allLoaded = loaded.workload && loaded.productivity
 
   return (
     <div className="perf-root" style={{ display:'flex', minHeight:'100vh', background:'#1C0F36' }}>
       <style>{CSS}</style>
       <Sidebar/>
 
-      {/* MAIN */}
-      <div style={{
-        flex:1, display:'flex', flexDirection:'column',
-        position:'relative', overflow:'hidden', minWidth:0,
-      }}>
-        <AuroraBackground/>
+      <div style={{ flex:1, display:'flex', flexDirection:'column', position:'relative', overflow:'hidden', minWidth:0 }}>
+        <PageBackground/>
 
-        <div
-          className="perf-scroll"
-          style={{
-            flex:1, overflowY:'auto',
-            padding:'40px 40px 60px',
-            position:'relative', zIndex:1,
-            maxWidth:1200, margin:'0 auto', width:'100%',
-          }}
-        >
+        <div className="perf-scroll" style={{ flex:1, overflowY:'auto', padding:'40px 40px 60px', position:'relative', zIndex:1, maxWidth:1200, margin:'0 auto', width:'100%' }}>
 
-          {/* ── PAGE HEADER ── */}
-          <div style={{
-            marginBottom:36,
-            animation:'revealUp 0.5s ease-out both',
-          }}>
-            <h1 style={{
-              fontSize:28, fontWeight:800,
-              letterSpacing:'-0.03em', color:'#F8FAFC',
-              marginBottom:6,
-            }}>
-              Performance
-            </h1>
-            <p style={{ fontSize:14, color:'rgba(248,250,252,0.4)', fontWeight:400 }}>
-              Customer support metrics · This month
-            </p>
+          {/* Header */}
+          <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:28, animation:'fadeIn .3s ease-out both', flexWrap:'wrap', gap:12 }}>
+            <div>
+              <h1 style={{ fontSize:22, fontWeight:800, letterSpacing:'-0.03em', color:'#F8FAFC', marginBottom:4 }}>Performance</h1>
+              <p style={{ fontSize:13, color:'rgba(248,250,252,0.38)' }}>Customer support metrics · Gorgias</p>
+            </div>
+            <div style={{ display:'flex', alignItems:'center', gap:6, flexWrap:'wrap' }}>
+              {RANGES.map(r => (
+                <button key={r.id} onClick={() => selectRange(r.id)} className="range-pill" style={{ background:dateRange===r.id?'rgba(161,117,252,0.18)':'rgba(255,255,255,0.05)', color:dateRange===r.id?'#C3A3FF':'rgba(248,250,252,0.42)', boxShadow:dateRange===r.id?'inset 0 0 0 1px rgba(161,117,252,0.4)':'inset 0 0 0 1px rgba(255,255,255,0.08)' }}>{r.label}</button>
+              ))}
+              {dateRange === 'custom' && (
+                <div style={{ display:'flex', alignItems:'center', gap:6, marginLeft:4 }}>
+                  <input type="date" style={{ padding:'5px 10px', background:'rgba(255,255,255,0.06)', border:'1px solid rgba(255,255,255,0.1)', borderRadius:8, color:'#F8FAFC', fontSize:12, fontFamily:'inherit' }} value={customFrom} max={customTo||undefined} onChange={e => { setCustomFrom(e.target.value); applyCustomRange(e.target.value, customTo) }}/>
+                  <span style={{ fontSize:11, color:'rgba(248,250,252,0.28)' }}>→</span>
+                  <input type="date" style={{ padding:'5px 10px', background:'rgba(255,255,255,0.06)', border:'1px solid rgba(255,255,255,0.1)', borderRadius:8, color:'#F8FAFC', fontSize:12, fontFamily:'inherit' }} value={customTo} min={customFrom||undefined} max={new Date().toISOString().slice(0,10)} onChange={e => { setCustomTo(e.target.value); applyCustomRange(customFrom, e.target.value) }}/>
+                </div>
+              )}
+              {!demoMode && (
+                <button onClick={loadDemo} style={{ padding:'5px 14px', borderRadius:100, background:'rgba(161,117,252,0.1)', border:'1px solid rgba(161,117,252,0.2)', color:'#C3A3FF', fontSize:12, fontWeight:600, cursor:'pointer', fontFamily:'inherit' }}>Preview demo</button>
+              )}
+            </div>
           </div>
 
-          {/* ── HERO KPI ROW ── */}
-          <div style={{
-            display:'grid', gridTemplateColumns:'repeat(3,1fr)',
-            gap:20, marginBottom:28,
-            animation:'revealUp 0.5s ease-out 0.08s both',
-          }}>
-
-            {/* 1 · Response Rate */}
-            <div className="hero-card">
-              <ProgressRing pct={94}/>
-              <div style={{ fontSize:'13px', fontWeight:600, color:'rgba(248,250,252,0.45)', letterSpacing:'.04em', textTransform:'uppercase' }}>
-                First Response Rate
-              </div>
+          {/* Demo banner */}
+          {demoMode && (
+            <div style={{ display:'flex', alignItems:'center', gap:12, background:'rgba(251,146,60,0.07)', border:'1px solid rgba(251,146,60,0.2)', borderRadius:10, padding:'12px 18px', marginBottom:24, animation:'fadeIn .4s ease-out both' }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FB923C" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              <div style={{ flex:1 }}><span style={{ fontSize:12, fontWeight:700, color:'#FB923C', marginRight:8 }}>Demo mode</span><span style={{ fontSize:12, color:'rgba(248,250,252,0.45)' }}>Showing example data — connect Gorgias in Settings to see live metrics.</span></div>
+              <button onClick={exitDemo} style={{ fontSize:11, fontWeight:600, color:'rgba(251,146,60,0.7)', background:'transparent', border:'none', cursor:'pointer', fontFamily:'inherit' }}>Exit demo →</button>
             </div>
+          )}
 
-            {/* 2 · Avg Resolution Time */}
-            <div className="hero-card">
-              <div style={{
-                fontSize:'42px', fontWeight:800,
-                letterSpacing:'-0.04em', color:'#F8FAFC',
-                marginBottom:4, lineHeight:1,
-              }}>
-                2.4h
-              </div>
-              <div style={{ fontSize:'11px', color:'rgba(248,250,252,0.3)', marginBottom:18 }}>
-                avg this week
-              </div>
-              <SparklineBars/>
-              <div style={{ fontSize:'13px', fontWeight:600, color:'rgba(248,250,252,0.45)', letterSpacing:'.04em', textTransform:'uppercase' }}>
-                Average per Ticket
-              </div>
+          {/* Gorgias not connected */}
+          {!demoMode && allLoaded && !gorgiasOk && (
+            <div style={{ display:'flex', alignItems:'center', gap:12, background:'rgba(161,117,252,0.07)', border:'1px solid rgba(161,117,252,0.18)', borderRadius:10, padding:'12px 18px', marginBottom:24, animation:'fadeIn .4s ease-out both' }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#A175FC" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+              <div style={{ flex:1 }}><span style={{ fontSize:12, fontWeight:700, color:'#A175FC', marginRight:8 }}>Gorgias not connected</span><span style={{ fontSize:12, color:'rgba(248,250,252,0.55)' }}>Go to Settings → Integrations to connect your Gorgias account.</span></div>
+              <button onClick={loadDemo} style={{ fontSize:11, fontWeight:700, color:'#C3A3FF', background:'rgba(161,117,252,0.12)', border:'1px solid rgba(161,117,252,0.25)', borderRadius:100, padding:'4px 12px', cursor:'pointer', fontFamily:'inherit', whiteSpace:'nowrap' }}>Preview demo</button>
             </div>
+          )}
 
-            {/* 3 · CSAT */}
-            <div className="hero-card">
-              <div style={{
-                fontSize:'42px', fontWeight:800,
-                letterSpacing:'-0.04em', color:'#F8FAFC',
-                marginBottom:4, lineHeight:1,
-              }}>
-                4.8
-                <span style={{ fontSize:'22px', color:'rgba(248,250,252,0.35)', fontWeight:600 }}> / 5</span>
-              </div>
-              <div style={{ fontSize:'11px', color:'rgba(248,250,252,0.3)', marginBottom:18 }}>
-                this month
-              </div>
-              <CsatStars score={4.8}/>
-              <div style={{ fontSize:'13px', fontWeight:600, color:'rgba(248,250,252,0.45)', letterSpacing:'.04em', textTransform:'uppercase' }}>
-                Customer Satisfaction
-              </div>
-            </div>
+          {/* Workload */}
+          <SectionLabel>Workload</SectionLabel>
+          <WorkloadKPIs data={workload} loaded={loaded.workload}/>
+          <WeeklyChart  weekly={workload.weekly} loaded={loaded.workload}/>
 
+          {/* Productivity */}
+          <SectionLabel>Productivity</SectionLabel>
+          <ProductivityKPIs data={productivity} loaded={loaded.productivity}/>
+          <ChannelBreakdown channels={productivity.channels} loaded={loaded.productivity}/>
+
+          <div style={{ marginTop:16, textAlign:'center', fontSize:10.5, color:'rgba(248,250,252,0.12)', letterSpacing:'.04em' }}>
+            Lynq Analytics · Gorgias data · Refreshed on load
           </div>
-
-          {/* ── BOTTOM GRID: table + chart ── */}
-          <div style={{
-            display:'grid', gridTemplateColumns:'1fr 340px',
-            gap:20, marginBottom:28,
-            animation:'revealUp 0.5s ease-out 0.16s both',
-          }}>
-
-            {/* AGENT PERFORMANCE TABLE */}
-            <SectionCard>
-              <SectionTitle>Agent Performance</SectionTitle>
-              <div style={{ overflowX:'auto' }}>
-                <table style={{ width:'100%', borderCollapse:'collapse' }}>
-                  <thead>
-                    <tr>
-                      {['Agent','Tickets','Avg Response','Resolution','CSAT'].map(h => (
-                        <th key={h} style={{
-                          textAlign: h === 'Agent' ? 'left' : 'right',
-                          fontSize:'11px', fontWeight:600,
-                          letterSpacing:'.07em', textTransform:'uppercase',
-                          color:'rgba(248,250,252,0.25)',
-                          paddingBottom:14,
-                          paddingLeft: h === 'Agent' ? 0 : 12,
-                          paddingRight: h === 'Agent' ? 12 : 0,
-                          borderBottom:'1px solid rgba(255,255,255,0.06)',
-                          whiteSpace:'nowrap',
-                        }}>
-                          {h}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {AGENTS.map((agent, i) => (
-                      <tr
-                        key={agent.name}
-                        className="agent-row"
-                        style={{ animation:`revealUp 0.4s ease-out ${0.18 + i * 0.07}s both` }}
-                      >
-                        {/* Name */}
-                        <td style={{ padding:'14px 12px 14px 0' }}>
-                          <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-                            <div style={{
-                              width:30, height:30, borderRadius:'50%', flexShrink:0,
-                              background:'linear-gradient(135deg,#A175FC,#7C3AED)',
-                              display:'flex', alignItems:'center', justifyContent:'center',
-                              fontSize:'11px', fontWeight:700, color:'#fff',
-                            }}>
-                              {agent.name.split(' ').map(w => w[0]).join('')}
-                            </div>
-                            <span style={{ fontSize:'14px', fontWeight:600, color:'#F8FAFC' }}>
-                              {agent.name}
-                            </span>
-                          </div>
-                        </td>
-                        {/* Tickets */}
-                        <td style={{ textAlign:'right', padding:'14px 12px', fontSize:'14px', fontWeight:600, color:'rgba(248,250,252,0.8)' }}>
-                          {agent.tickets}
-                        </td>
-                        {/* Avg Response */}
-                        <td style={{ textAlign:'right', padding:'14px 12px', fontSize:'14px', color:'rgba(248,250,252,0.65)' }}>
-                          {agent.avgResponse}
-                        </td>
-                        {/* Resolution — progress bar */}
-                        <td style={{ padding:'14px 12px', minWidth:120 }}>
-                          <ResolutionBar pct={agent.resolution}/>
-                        </td>
-                        {/* CSAT */}
-                        <td style={{ textAlign:'right', padding:'14px 0 14px 12px' }}>
-                          <span style={{
-                            display:'inline-flex', alignItems:'center', gap:4,
-                            fontSize:'13px', fontWeight:700,
-                            color: agent.csat >= 4.9 ? '#4ade80' : agent.csat >= 4.7 ? '#A175FC' : 'rgba(248,250,252,0.65)',
-                          }}>
-                            <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" stroke="none">
-                              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-                            </svg>
-                            {agent.csat.toFixed(1)}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </SectionCard>
-
-            {/* TICKET VOLUME CHART */}
-            <SectionCard>
-              <SectionTitle>Ticket Volume</SectionTitle>
-              <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
-                {CHART_DATA.map((row, i) => (
-                  <ChartBarRow
-                    key={row.day}
-                    day={row.day}
-                    count={row.count}
-                    max={CHART_MAX}
-                    delay={200 + i * 80}
-                  />
-                ))}
-              </div>
-              {/* total badge */}
-              <div style={{
-                marginTop:20, paddingTop:16,
-                borderTop:'1px solid rgba(255,255,255,0.06)',
-                display:'flex', justifyContent:'space-between', alignItems:'center',
-              }}>
-                <span style={{ fontSize:'12px', color:'rgba(248,250,252,0.3)' }}>Total this week</span>
-                <span style={{ fontSize:'18px', fontWeight:800, color:'#F8FAFC', letterSpacing:'-0.02em' }}>
-                  {CHART_DATA.reduce((a, b) => a + b.count, 0)}
-                </span>
-              </div>
-            </SectionCard>
-
-          </div>
-
-          {/* ── ACTIVITY FEED ── */}
-          <SectionCard style={{ animation:'revealUp 0.5s ease-out 0.28s both' }}>
-            <SectionTitle>Activity Feed</SectionTitle>
-            <div style={{ position:'relative' }}>
-              {/* timeline spine */}
-              <div style={{
-                position:'absolute', left:18, top:8, bottom:8, width:2,
-                background:'linear-gradient(180deg,#A175FC 0%,#FF6B35 100%)',
-                borderRadius:2, opacity:0.35,
-              }}/>
-
-              <div style={{ paddingLeft:0 }}>
-                {FEED.map((item, i) => (
-                  <div
-                    key={i}
-                    className="feed-item"
-                    style={{ animation:`revealUp 0.4s ease-out ${0.30 + i * 0.06}s both` }}
-                  >
-                    {/* icon bubble */}
-                    <div style={{
-                      width:36, height:36, borderRadius:'50%', flexShrink:0,
-                      background:`${item.color}15`,
-                      border:`1px solid ${item.color}30`,
-                      display:'flex', alignItems:'center', justifyContent:'center',
-                      color: item.color, zIndex:1,
-                      position:'relative',
-                    }}>
-                      {feedIcon(item.icon, item.color)}
-                    </div>
-
-                    {/* text */}
-                    <div style={{ flex:1, paddingTop:2 }}>
-                      <div style={{ fontSize:'14px', color:'rgba(248,250,252,0.88)', lineHeight:1.5, marginBottom:3 }}>
-                        {item.text}
-                      </div>
-                      <div style={{ fontSize:'12px', color:'rgba(248,250,252,0.3)', fontWeight:500 }}>
-                        {item.time}
-                      </div>
-                    </div>
-
-                    {/* dot accent */}
-                    <div style={{
-                      width:7, height:7, borderRadius:'50%', flexShrink:0, marginTop:14,
-                      background: item.color, opacity:0.5,
-                      boxShadow:`0 0 6px ${item.color}`,
-                    }}/>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </SectionCard>
 
         </div>
       </div>

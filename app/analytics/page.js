@@ -52,6 +52,11 @@ const CAT_COLORS = {
   'Not as described': { color:'#C084FC', bg:'rgba(192,132,252,0.12)', border:'rgba(192,132,252,0.28)', glow:'rgba(192,132,252,0.3)' },
   'Changed mind':     { color:'#FCD34D', bg:'rgba(252,211,77,0.12)',  border:'rgba(252,211,77,0.28)',  glow:'rgba(252,211,77,0.3)'  },
   'Other':            { color:'#94A3B8', bg:'rgba(148,163,184,0.10)', border:'rgba(148,163,184,0.22)', glow:'rgba(148,163,184,0.2)' },
+  'Customer Outreach':{ color:'#34D399', bg:'rgba(52,211,153,0.10)',  border:'rgba(52,211,153,0.25)',  glow:'rgba(52,211,153,0.2)' },
+  'Supplier':         { color:'#F59E0B', bg:'rgba(245,158,11,0.10)',  border:'rgba(245,158,11,0.25)',  glow:'rgba(245,158,11,0.2)' },
+  'Listing Fix':      { color:'#60A5FA', bg:'rgba(96,165,250,0.10)',  border:'rgba(96,165,250,0.25)',  glow:'rgba(96,165,250,0.2)' },
+  'Quality Control':  { color:'#F87171', bg:'rgba(248,113,113,0.10)', border:'rgba(248,113,113,0.25)', glow:'rgba(248,113,113,0.2)' },
+  'Operations':       { color:'#A78BFA', bg:'rgba(167,139,250,0.10)', border:'rgba(167,139,250,0.25)', glow:'rgba(167,139,250,0.2)' },
 }
 
 function categorizeReason(raw) {
@@ -67,12 +72,34 @@ function categorizeReason(raw) {
 
 // ─── Data builders ────────────────────────────────────────────────────────────
 
-const PROACTIVE_INSIGHTS = [
-  { priority:'medium', category:'Product Pages',      title:'Add a size guide to every clothing product', action:'"Wrong size" accounts for 22% of all e-commerce refunds globally. Add chest, waist and hip measurements in cm to every product page.' },
-  { priority:'medium', category:'Product Photography', title:'Show texture, true color and scale in photos', action:'"Not as described" is the second most common refund reason. Add texture close-ups and lifestyle photos in natural light.' },
-  { priority:'medium', category:'Operations',         title:'Review packaging for all fragile products', action:'"Arrived damaged" causes 14% of e-commerce refunds. Use double-walled boxes and fragile labels for delicate items.' },
-  { priority:'low',    category:'Customer Service',   title:'Offer an exchange before processing any refund', action:'Studies show 30–40% of size-related refund requests can be converted to exchanges, retaining the revenue.' },
-]
+function generateRepeatRefunderActions(allRefunds) {
+  const map = {}
+  allRefunds.forEach(r => {
+    const k = r.customerEmail || r.customer
+    if (!k) return
+    if (!map[k]) map[k] = { customer: r.customer, email: r.customerEmail, refunds: [], totalAmount: 0 }
+    map[k].refunds.push(r)
+    map[k].totalAmount += parseFloat(r.refundAmount || 0)
+  })
+  return Object.values(map)
+    .filter(c => c.refunds.length >= 2)
+    .sort((a, b) => b.refunds.length - a.refunds.length)
+    .slice(0, 3)
+    .map(c => {
+      const name = c.customer || c.email || 'Unknown customer'
+      const n = c.refunds.length
+      return {
+        id: `repeat-${(c.email||c.customer||Math.random()).toString().replace(/\s+|@|\./g,'-').toLowerCase()}`,
+        type: 'pattern',
+        priority: n >= 3 ? 'high' : 'medium',
+        category: 'Customer Outreach',
+        refundCount: n,
+        totalAmount: c.totalAmount,
+        title: `Contact repeat refunder: ${name}`,
+        action: `${name} has refunded ${n} times (${fmtEur(c.totalAmount)} total lost). Reach out personally — offer store credit or a free exchange to retain the customer and eliminate chargeback risk.`,
+      }
+    })
+}
 
 function generatePatternActions(allRefunds) {
   const map = {}
@@ -495,11 +522,7 @@ function ActionBoard({ patternActions, aiInsights, noRefunds, loaded, onStatusCh
   const [noteInps,setNoteInps]=useState({})
 
   const aiItems=(aiInsights||[]).map((ins,i)=>({ ...ins, id:`ai-${ins.category?.replace(/\s+/g,'-').toLowerCase()??i}`, type:'ai' }))
-  const patternCats=new Set(patternActions.map(a=>a.category))
-  const filteredAi=noRefunds
-    ? PROACTIVE_INSIGHTS.map((ins,i)=>({ ...ins, id:`best-${i}`, type:'best' }))
-    : aiItems.filter(ai=>!patternCats.has(ai.category))
-  const allItems=[...patternActions,...filteredAi]
+  const allItems=noRefunds?[...patternActions]:[...patternActions,...aiItems]
   const getStatus=id=>statuses[id]?.status||'open'
   const openItems=allItems.filter(a=>getStatus(a.id)==='open')
   const pickupItems=allItems.filter(a=>getStatus(a.id)==='picked_up')
@@ -527,7 +550,7 @@ function ActionBoard({ patternActions, aiInsights, noRefunds, loaded, onStatusCh
             <span style={{ fontSize:15, fontWeight:700, color:'#F8FAFC' }}>{noRefunds?'No refunds — stay ahead':'Action Board'}</span>
             {!noRefunds&&<span style={{ fontSize:11, color:'rgba(248,250,252,0.3)' }}>— {allItems.length} action{allItems.length!==1?'s':''}{patternActions.length>0&&` · ${patternActions.length} pattern-detected`}</span>}
           </div>
-          <div style={{ fontSize:11, color:'rgba(248,250,252,0.35)' }}>{noRefunds?'Proactive best practices to keep your refund rate at 0%':'Pattern-detected issues + AI recommendations — assign to your team'}</div>
+          <div style={{ fontSize:11, color:'rgba(248,250,252,0.35)' }}>{noRefunds?'No refunds in this period — all clear':'Real-time tasks based on your refund data — assign to your team'}</div>
         </div>
         <div style={{ display:'flex', alignItems:'center', gap:6 }}>
           {usingFallback&&<div style={{ fontSize:10, color:'rgba(248,250,252,0.22)', padding:'3px 9px', borderRadius:100, border:'1px solid rgba(255,255,255,0.07)' }}>Local only</div>}
@@ -566,8 +589,8 @@ function ActionBoard({ patternActions, aiInsights, noRefunds, loaded, onStatusCh
                 <div style={{ width:8, height:8, borderRadius:'50%', background:pc, marginTop:6, flexShrink:0 }}/>
                 <div style={{ flex:1, minWidth:0 }}>
                   <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:8, flexWrap:'wrap' }}>
-                    {item.type==='pattern'&&<span style={{ fontSize:9, fontWeight:800, letterSpacing:'.08em', color:'rgba(248,250,252,0.4)', background:'rgba(255,255,255,0.06)', borderRadius:100, padding:'2px 8px', textTransform:'uppercase', border:'1px solid rgba(255,255,255,0.08)' }}>PATTERN DETECTED</span>}
-                    {item.type==='best'&&<span style={{ fontSize:9, fontWeight:800, letterSpacing:'.08em', color:'#22C55E', background:'rgba(34,197,94,0.08)', borderRadius:100, padding:'2px 8px', textTransform:'uppercase', border:'1px solid rgba(34,197,94,0.2)' }}>BEST PRACTICE</span>}
+                    {item.type==='pattern'&&<span style={{ fontSize:9, fontWeight:800, letterSpacing:'.08em', color:'rgba(248,250,252,0.4)', background:'rgba(255,255,255,0.06)', borderRadius:100, padding:'2px 8px', textTransform:'uppercase', border:'1px solid rgba(255,255,255,0.08)' }}>DATA DETECTED</span>}
+                    {item.type==='ai'&&<span style={{ fontSize:9, fontWeight:800, letterSpacing:'.08em', color:'#A175FC', background:'rgba(161,117,252,0.08)', borderRadius:100, padding:'2px 8px', textTransform:'uppercase', border:'1px solid rgba(161,117,252,0.2)' }}>AI TASK</span>}
                     <CatBadge cat={item.category} small/>
                     <span style={{ fontSize:9.5, fontWeight:700, color:pc, background:pbg, borderRadius:100, padding:'1px 7px', textTransform:'uppercase', letterSpacing:'.06em' }}>{(item.priority||'low').toUpperCase()}</span>
                     {item.type==='pattern'&&<span style={{ fontSize:10, color:'rgba(248,250,252,0.35)' }}>{item.refundCount}× · {fmtEur(item.totalAmount)} lost</span>}
@@ -930,7 +953,7 @@ export default function AnalyticsPage() {
   const allLoaded=loaded.kpis&&loaded.refunds&&loaded.trend
   const rangeLabel=dateRange==='custom'&&customFrom&&customTo?`${customFrom} → ${customTo}`:RANGES.find(r=>r.id===dateRange)?.label||'This month'
   const noRefunds=loaded.refunds&&refunds.length===0
-  const patternActions=loaded.allRefunds?generatePatternActions(allRefunds):[]
+  const patternActions=loaded.allRefunds?[...generatePatternActions(allRefunds),...generateRepeatRefunderActions(allRefunds)]:[]
   const actionLoaded=loaded.insights&&loaded.allRefunds
 
   return (

@@ -42,29 +42,31 @@ export async function POST(request) {
     .slice(0, 3)
     .map(r => `${r.orderId} (€${r.refundAmount}, ${r.refundPct}% of order value, reason: ${r.reason || 'none'})`)
 
-  const prompt = `You are an e-commerce analyst for a Shopify store. Based on this refund data, provide 4-5 specific, actionable recommendations to reduce refunds.
+  const prompt = `You are a Shopify store operations manager. Based on the refund data below, generate 3-5 specific executable to-do tasks for the store owner to take action on today.
 
-Refund summary:
-- Total refunds: ${refunds.length}
-- Total amount lost: €${totalRefunded.toFixed(2)}
+STRICT RULES — violating any rule means the output is rejected:
+- Every task MUST reference a real product name, order ID, or reason from the data below
+- NO generic best practices (forbidden: "add a size guide", "improve packaging", "update your return policy")
+- Each task has one clear next step: contact supplier, email a customer, fix a specific listing, or investigate a specific order
+- Tasks should directly help recover or prevent money loss
+
+Refund data for this period:
+- Total refunds: ${refunds.length}, Total lost: €${totalRefunded.toFixed(2)}
 
 Top refund reasons:
-${topReasons.map(([r, c]) => `- "${r}": ${c} refund${c > 1 ? 's' : ''}`).join('\n')}
+${topReasons.map(([r, c]) => `- "${r}": ${c} time${c > 1 ? 's' : ''}`).join('\n')}
 
 Most refunded products:
-${topProducts.length > 0 ? topProducts.map(([p, c]) => `- "${p}": ${c} refund${c > 1 ? 's' : ''}`).join('\n') : '- No specific products identified'}
+${topProducts.length > 0 ? topProducts.map(([p, c]) => `- "${p}": refunded ${c} time${c > 1 ? 's' : ''}`).join('\n') : '- No specific products identified'}
 
 Highest-value refunds:
 ${highValue.join('\n')}
 
-Return ONLY a JSON array, no markdown, no explanation:
-[{"priority":"high","category":"Category","title":"Short title","action":"Specific actionable step"}]
+Return ONLY a valid JSON array. No markdown, no explanation, no extra text:
+[{"priority":"high","category":"Supplier","title":"Task title max 8 words","action":"Specific next step referencing actual product names and numbers from the data. State what outcome to expect."}]
 
-Rules:
-- priority: "high", "medium", or "low"
-- category examples: "Product Quality", "Shipping", "Customer Communication", "Inventory", "Operations"
-- title: max 8 words
-- action: 1-2 sentences, specific, reference actual product names or reasons from the data`
+category must be one of: "Supplier", "Customer Outreach", "Listing Fix", "Quality Control", "Operations"
+priority: "high" if product appears 3+ times or >€100 lost on one issue, "medium" if 2 times or €30-100, "low" otherwise`
 
   try {
     const { text, usage } = await generateText({

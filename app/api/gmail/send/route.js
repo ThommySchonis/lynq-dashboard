@@ -53,22 +53,45 @@ export async function POST(request) {
     }).eq('user_id', user.id)
   }
 
-  // Build RFC 2822 email
-  const emailLines = [
+  // Strip HTML tags for plain-text fallback
+  const plainText = body.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]+>/g, '').trim()
+  const isHtml = /<[a-z][\s\S]*>/i.test(body)
+
+  // Build RFC 2822 multipart email (plain + HTML)
+  const boundary = `lynq_${Date.now()}`
+  let headers = [
     `To: ${to}`,
     `Subject: ${subject}`,
-    'Content-Type: text/plain; charset=utf-8',
     'MIME-Version: 1.0',
-    '',
-    body,
   ]
-
   if (replyToMessageId) {
-    emailLines.splice(2, 0, `In-Reply-To: ${replyToMessageId}`)
-    emailLines.splice(3, 0, `References: ${replyToMessageId}`)
+    headers.push(`In-Reply-To: ${replyToMessageId}`)
+    headers.push(`References: ${replyToMessageId}`)
   }
 
-  const raw = Buffer.from(emailLines.join('\r\n'))
+  let emailBody
+  if (isHtml) {
+    headers.push(`Content-Type: multipart/alternative; boundary="${boundary}"`)
+    emailBody = [
+      '',
+      `--${boundary}`,
+      'Content-Type: text/plain; charset=utf-8',
+      '',
+      plainText,
+      '',
+      `--${boundary}`,
+      'Content-Type: text/html; charset=utf-8',
+      '',
+      `<html><body style="font-family:sans-serif;font-size:14px;line-height:1.6;color:#333">${body}</body></html>`,
+      '',
+      `--${boundary}--`,
+    ].join('\r\n')
+  } else {
+    headers.push('Content-Type: text/plain; charset=utf-8')
+    emailBody = '\r\n' + plainText
+  }
+
+  const raw = Buffer.from(headers.join('\r\n') + emailBody)
     .toString('base64')
     .replace(/\+/g, '-')
     .replace(/\//g, '_')

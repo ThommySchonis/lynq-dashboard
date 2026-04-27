@@ -398,10 +398,13 @@ export default function HomePage() {
     setIsLoading(true)
     setMessages(prev => [...prev, { role: 'user', content: t }, { role: 'assistant', content: '', isStreaming: true }])
     try {
+      // Snapshot history before adding the new streaming message.
+      // Filter out streaming placeholders; pass only completed turns.
+      const history = messages.filter(m => !m.isStreaming).map(m => ({ role: m.role, content: m.content }))
       const res = await fetch('/api/ai/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
-        body: JSON.stringify({ message: t, context: storeContext }),
+        body: JSON.stringify({ message: t, history, context: storeContext }),
       })
       if (!res.ok || !res.body) throw new Error()
       const reader = res.body.getReader()

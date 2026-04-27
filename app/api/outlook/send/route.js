@@ -61,7 +61,7 @@ export async function POST(request) {
     : {
         message: {
           subject,
-          body: { contentType: 'Text', content: body },
+          body: { contentType: 'HTML', content: body },
           toRecipients: [{ emailAddress: { address: to } }],
         },
         saveToSentItems: true,

@@ -11,7 +11,7 @@ export async function POST(request) {
   const user = await getUserFromToken(token)
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const client = await getShopifyClient(user.id)
+  const client = await getShopifyClient(user.id, user.email)
   if (!client) return NextResponse.json({ error: 'Shopify not configured' }, { status: 400 })
 
   const { orderId, keepAddress, applyDiscount, note, tags } = await request.json()

@@ -1,7 +1,8 @@
 'use client'
 
-import { usePathname } from 'next/navigation'
-import { useState, useEffect } from 'react'
+import { usePathname, useSearchParams } from 'next/navigation'
+import Link from 'next/link'
+import { useState, useEffect, Suspense } from 'react'
 import { supabase } from '../../lib/supabase'
 
 const CSS = `
@@ -189,6 +190,12 @@ const ITEMS = [
   },
   {
     section: null,
+    href: '/inbox?view=sent', label: 'Sent',
+    sentView: true,
+    icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>,
+  },
+  {
+    section: null,
     href: '/analytics', label: 'Analytics',
     icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/><line x1="2" y1="20" x2="22" y2="20"/></svg>,
   },
@@ -240,8 +247,10 @@ const LOCK_SVG = (
   </svg>
 )
 
-export default function Sidebar() {
+function SidebarContent() {
   const pathname          = usePathname()
+  const searchParams      = useSearchParams()
+  const isSentView        = pathname === '/inbox' && searchParams.get('view') === 'sent'
   const [email, setEmail] = useState('')
   const [isAdmin, setIsAdmin] = useState(false)
 
@@ -285,7 +294,13 @@ export default function Sidebar() {
           {ITEMS.map((item) => {
             const showSection = item.section && item.section !== prevSection
             prevSection = item.section ?? prevSection
-            const active = item.href && pathname.startsWith(item.href)
+            const active = item.href && (
+              item.sentView
+                ? isSentView
+                : item.href === '/inbox'
+                  ? pathname === '/inbox' && !isSentView
+                  : pathname.startsWith(item.href)
+            )
 
             const inner = (
               <>
@@ -306,7 +321,7 @@ export default function Sidebar() {
               <div key={item.label}>
                 {showSection && <div className="sb-section-label">{item.section}</div>}
                 {item.href
-                  ? <a href={item.href} className={`sb-item${active ? ' sb-active' : ''}`}>{inner}</a>
+                  ? <Link href={item.href} className={`sb-item${active ? ' sb-active' : ''}`}>{inner}</Link>
                   : <div className="sb-item sb-locked">{inner}</div>
                 }
               </div>
@@ -317,14 +332,14 @@ export default function Sidebar() {
           {isAdmin && (
             <div>
               <div className="sb-section-label">Admin</div>
-              <a href="/admin" className={`sb-item${pathname.startsWith('/admin') ? ' sb-active' : ''}`}>
+              <Link href="/admin" className={`sb-item${pathname.startsWith('/admin') ? ' sb-active' : ''}`}>
                 <span className="sb-icon" title="Admin Panel">
                   <span style={{ color: pathname.startsWith('/admin') ? '#B990FF' : 'rgba(248,250,252,0.38)', display:'flex', transition:'color .15s' }}>
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
                   </span>
                 </span>
                 <span className="sb-label" style={{ color: pathname.startsWith('/admin') ? '#F8FAFC' : 'rgba(248,250,252,0.6)' }}>Admin Panel</span>
-              </a>
+              </Link>
             </div>
           )}
         </nav>
@@ -345,5 +360,13 @@ export default function Sidebar() {
         </div>
       </aside>
     </>
+  )
+}
+
+export default function Sidebar() {
+  return (
+    <Suspense fallback={<div style={{ width:64, flexShrink:0 }} />}>
+      <SidebarContent />
+    </Suspense>
   )
 }

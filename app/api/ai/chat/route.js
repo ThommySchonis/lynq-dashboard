@@ -11,30 +11,16 @@ export async function POST(request) {
   const user = await getUserFromToken(token)
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { message, context } = await request.json()
+  const { message, history = [], context } = await request.json()
   if (!message?.trim()) return NextResponse.json({ error: 'Message required' }, { status: 400 })
 
-  const systemPrompt = `You are Lynq AI, an intelligent business analyst embedded in the Lynq customer support dashboard.
-You have access to real-time store data and answer questions about business performance, orders, refunds, and customer trends with precision.
+  // Context block is only injected on the first message to avoid sending
+  // the full dataset on every follow-up question in the conversation.
+  const isFirstMessage = history.length === 0
 
-Guidelines:
-- Be concise, confident, and data-driven — like a trusted business advisor
-- Always reference specific numbers from the context when available
-- Format currency with the € symbol
-- Use bullet points only when listing multiple items; use prose for simple answers
-- Highlight actionable insights where relevant
-- If asked something you don't have data for, say so clearly
-- Never make up numbers or orders that aren't in the context`
-
-  const storeContextBlock = context
+  const storeContextBlock = (isFirstMessage && context)
     ? `## Store Data (This Month)
-KPIs:
-- Total orders: ${context.kpis?.totalOrders ?? 'N/A'}
-- Net revenue: €${context.kpis?.netRevenue ?? 'N/A'}
-- Cancelled orders: ${context.kpis?.cancelledOrders ?? 'N/A'}
-- Total refunds: ${context.kpis?.totalRefunds ?? 'N/A'}
-- Refund rate: ${context.kpis?.refundRate ?? 'N/A'}%
-- Refund amount: €${context.kpis?.refundAmount ?? 'N/A'}
+KPIs: ${context.kpis?.totalOrders ?? 0} orders · €${context.kpis?.netRevenue ?? 0} revenue · ${context.kpis?.refundRate ?? 0}% refund rate · ${context.kpis?.cancelledOrders ?? 0} cancelled
 
 Recent orders (last 50):
 ${(context.orders || []).slice(0, 50).map(o =>
@@ -43,18 +29,31 @@ ${(context.orders || []).slice(0, 50).map(o =>
 
 Refunded orders:
 ${(context.refunds || []).slice(0, 20).map(r =>
-  `- Order ${r.orderId}: €${r.refundAmount} refunded, ${r.itemCount} item(s), products: ${r.products?.join(', ')}, customer: ${r.customer}`
+  `- Order ${r.orderId}: €${r.refundAmount} refunded, products: ${r.products?.join(', ')}, customer: ${r.customer}`
 ).join('\n')}`
-    : 'No store data loaded yet.'
+    : null
+
+  const systemPrompt = `You are Lynq AI, an intelligent business analyst embedded in the Lynq customer support dashboard.
+You have access to real-time store data and answer questions about business performance, orders, refunds, and customer trends.
+Be concise, confident, and data-driven. Reference specific numbers when available. Format currency with €. Never make up data.`
+
+  // Build messages array: prior history + current user message
+  // Context is prepended only to the first user turn
+  const historyMessages = (history || [])
+    .filter(m => m.role === 'user' || m.role === 'assistant')
+    .slice(-10) // keep last 10 turns to avoid token bloat
+    .map(m => ({ role: m.role, content: m.content }))
+
+  const userContent = storeContextBlock
+    ? `${storeContextBlock}\n\n---\n${message}`
+    : message
 
   const result = streamText({
     model: anthropic('claude-haiku-4-5-20251001'),
     system: systemPrompt,
     messages: [
-      {
-        role: 'user',
-        content: `${storeContextBlock}\n\n---\nUser question: ${message}`,
-      },
+      ...historyMessages,
+      { role: 'user', content: userContent },
     ],
     maxTokens: 800,
     onFinish: async ({ usage }) => {

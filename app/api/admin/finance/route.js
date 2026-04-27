@@ -1,4 +1,4 @@
-import { supabaseAdmin } from '../../../../lib/supabaseAdmin'
+import { supabaseAdmin, getUserFromToken } from '../../../../lib/supabaseAdmin'
 import { NextResponse } from 'next/server'
 
 const ADMIN_EMAIL = 'info@lynqagency.com'
@@ -14,8 +14,11 @@ const SUBSCRIPTIONS = [
 
 export async function GET(request) {
   const authHeader = request.headers.get('authorization')
-  const adminEmail = request.headers.get('x-admin-email')
-  if (!authHeader || adminEmail !== ADMIN_EMAIL) {
+  if (!authHeader) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const token = authHeader.replace('Bearer ', '')
+  const user = await getUserFromToken(token)
+  if (!user || user.email !== ADMIN_EMAIL) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 

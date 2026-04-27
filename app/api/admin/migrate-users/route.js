@@ -1,4 +1,4 @@
-import { supabaseAdmin } from '../../../../lib/supabaseAdmin'
+import { supabaseAdmin, getUserFromToken } from '../../../../lib/supabaseAdmin'
 import { NextResponse } from 'next/server'
 
 const ADMIN_EMAIL = 'info@lynqagency.com'
@@ -7,8 +7,12 @@ const ADMIN_EMAIL = 'info@lynqagency.com'
 // Creates each user in the main Supabase project with the same UUID
 // so all existing data (integrations, shopify_orders, etc.) stays linked
 export async function POST(request) {
-  const adminEmail = request.headers.get('x-admin-email')
-  if (adminEmail !== ADMIN_EMAIL) {
+  const authHeader = request.headers.get('authorization')
+  if (!authHeader) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const token = authHeader.replace('Bearer ', '')
+  const user = await getUserFromToken(token)
+  if (!user || user.email !== ADMIN_EMAIL) {
     return NextResponse.json({ error: 'Admin only' }, { status: 403 })
   }
 

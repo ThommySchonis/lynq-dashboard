@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, Suspense } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { supabase } from '../../lib/supabase'
 import Sidebar from '../components/Sidebar'
 
@@ -255,7 +256,19 @@ const CSS = `
   .rtbar-btn:hover { background:rgba(255,255,255,0.08); color:rgba(240,236,249,0.9); }
   .rtbar-btn.rton { background:rgba(161,117,252,0.16); color:#B48CFF; }
   .rtbar-sep { width:1px; height:18px; background:rgba(255,255,255,0.07); margin:0 6px; flex-shrink:0; }
-  .compose-ta[contenteditable=true]:empty:before { content:attr(data-placeholder); color:rgba(240,236,249,0.2); pointer-events:none; display:block; }
+  .compose-ta[contenteditable=true]:empty:before { content:attr(data-placeholder); color:rgba(240,236,249,0.3); pointer-events:none; display:block; }
+  .cm-input { color:#F0ECF9 !important; -webkit-text-fill-color:#F0ECF9 !important; background:transparent !important; }
+  .cm-input::placeholder { color:rgba(240,236,249,0.28); -webkit-text-fill-color:rgba(240,236,249,0.28); }
+  .cm-input:focus { caret-color:#A175FC; outline:none; }
+  .cm-input:-webkit-autofill,
+  .cm-input:-webkit-autofill:hover,
+  .cm-input:-webkit-autofill:focus,
+  .cm-input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 1000px rgba(14,6,38,0.98) inset !important;
+    -webkit-text-fill-color: #F0ECF9 !important;
+    caret-color: #A175FC;
+    transition: background-color 9999s ease-in-out 0s;
+  }
 
   /* ── Emoji picker — glassmorphism ── */
   .emoji-pop { position:absolute; bottom:calc(100% + 8px); left:-8px; background:rgba(12,6,32,0.94); backdrop-filter:blur(28px); -webkit-backdrop-filter:blur(28px); border:1px solid rgba(255,255,255,0.1); border-radius:16px; padding:10px; z-index:200; box-shadow:0 24px 80px rgba(0,0,0,0.72),0 0 0 1px rgba(161,117,252,0.07); animation:fadeUp .16s ease both; }
@@ -448,7 +461,7 @@ function ModalBase({ title, onClose, children, footer }) {
 }
 
 // ─── Compose New Ticket Modal ─────────────────────────────────
-function ComposeModal({ token, emailProvider, onClose, onSuccess }) {
+function ComposeModal({ token, emailProvider, connectedEmail, onClose, onSuccess }) {
   const [to, setTo]           = useState('')
   const [subject, setSubject] = useState('')
   const [body, setBody]       = useState('')
@@ -478,80 +491,129 @@ function ComposeModal({ token, emailProvider, onClose, onSuccess }) {
 
   const ready = to.trim() && subject.trim() && body.trim()
 
+  const providerLabel = emailProvider==='outlook' ? 'Outlook' : emailProvider==='custom' ? 'Custom' : 'Gmail'
+  const providerColor = emailProvider==='outlook' ? '#0078d4' : emailProvider==='custom' ? '#fb923c' : '#EA4335'
+
   return (
     <div className="modal-backdrop" onClick={e=>{if(e.target===e.currentTarget)onClose()}}>
-      <div style={{background:'linear-gradient(145deg,rgba(14,6,38,0.97) 0%,rgba(8,3,24,0.98) 100%)',border:'1px solid rgba(161,117,252,0.2)',borderTop:'1px solid rgba(161,117,252,0.32)',borderRadius:24,width:'100%',maxWidth:660,animation:'modalIn .24s cubic-bezier(.16,1,.3,1)',backdropFilter:'blur(24px)',WebkitBackdropFilter:'blur(24px)',boxShadow:'0 48px 120px rgba(0,0,0,0.85),0 0 0 1px rgba(161,117,252,0.08),0 0 120px rgba(161,117,252,0.06)',display:'flex',flexDirection:'column',maxHeight:'88vh',overflow:'hidden'}}>
+      <div style={{background:'linear-gradient(160deg,rgba(16,7,42,0.98) 0%,rgba(8,3,24,0.99) 100%)',border:'1px solid rgba(161,117,252,0.22)',borderRadius:26,width:'100%',maxWidth:680,animation:'modalIn .28s cubic-bezier(.16,1,.3,1)',backdropFilter:'blur(32px)',WebkitBackdropFilter:'blur(32px)',boxShadow:'0 60px 140px rgba(0,0,0,0.9),0 0 0 1px rgba(161,117,252,0.06),0 -1px 0 rgba(161,117,252,0.3) inset',display:'flex',flexDirection:'column',maxHeight:'90vh',overflow:'hidden',position:'relative'}}>
+
+        {/* Top accent gradient line */}
+        <div style={{position:'absolute',top:0,left:0,right:0,height:2,background:'linear-gradient(90deg,rgba(123,69,232,0) 0%,rgba(161,117,252,0.9) 30%,rgba(195,163,255,1) 50%,rgba(161,117,252,0.9) 70%,rgba(123,69,232,0) 100%)',borderRadius:'26px 26px 0 0',animation:'shimmer 3s linear infinite',backgroundSize:'200% 100%'}} />
 
         {/* Header */}
-        <div style={{padding:'20px 24px 0',display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0}}>
-          <div style={{display:'flex',alignItems:'center',gap:10}}>
-            <div style={{width:36,height:36,borderRadius:10,background:'linear-gradient(135deg,rgba(161,117,252,0.18) 0%,rgba(123,69,232,0.12) 100%)',border:'1px solid rgba(161,117,252,0.25)',display:'flex',alignItems:'center',justifyContent:'center'}}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#A175FC" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        <div style={{padding:'22px 26px 18px',display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0}}>
+          <div style={{display:'flex',alignItems:'center',gap:12}}>
+            {/* Icon */}
+            <div style={{width:42,height:42,borderRadius:13,background:'linear-gradient(135deg,rgba(161,117,252,0.22) 0%,rgba(123,69,232,0.14) 100%)',border:'1px solid rgba(161,117,252,0.32)',borderTop:'1px solid rgba(195,163,255,0.28)',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 4px 20px rgba(161,117,252,0.2),inset 0 1px 0 rgba(255,255,255,0.1)'}}>
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="url(#sendGrad)" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round">
+                <defs><linearGradient id="sendGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor="#C3A3FF"/><stop offset="100%" stopColor="#A175FC"/></linearGradient></defs>
+                <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+              </svg>
             </div>
             <div>
-              <div style={{fontSize:15,fontWeight:700,color:'#F0ECF9',letterSpacing:'-0.01em'}}>New ticket</div>
-              <div style={{fontSize:11,color:'rgba(240,236,249,0.28)',marginTop:1}}>Compose a new outbound message</div>
+              <div style={{fontSize:16,fontWeight:800,color:'#F0ECF9',letterSpacing:'-0.02em',lineHeight:1.2}}>New message</div>
+              <div style={{display:'flex',alignItems:'center',gap:6,marginTop:3}}>
+                <span style={{fontSize:10.5,color:'rgba(240,236,249,0.32)'}}>Sending via</span>
+                <span style={{display:'inline-flex',alignItems:'center',gap:4,fontSize:10.5,fontWeight:700,padding:'1px 8px',borderRadius:100,background:`${providerColor}18`,color:providerColor,border:`1px solid ${providerColor}35`,letterSpacing:'.01em'}}>
+                  <span style={{width:5,height:5,borderRadius:'50%',background:providerColor,flexShrink:0}} />
+                  {providerLabel}
+                </span>
+              </div>
             </div>
           </div>
-          <button onClick={onClose} style={{color:'rgba(240,236,249,0.3)',cursor:'pointer',display:'flex',padding:6,borderRadius:8,transition:'all .15s',border:'1px solid transparent'}} onMouseEnter={e=>{e.currentTarget.style.color='rgba(240,236,249,0.8)';e.currentTarget.style.background='rgba(255,255,255,0.06)'}} onMouseLeave={e=>{e.currentTarget.style.color='rgba(240,236,249,0.3)';e.currentTarget.style.background='transparent'}}>
+          <button onClick={onClose} style={{color:'rgba(240,236,249,0.28)',cursor:'pointer',display:'flex',padding:8,borderRadius:10,transition:'all .18s',border:'1px solid transparent',background:'transparent'}} onMouseEnter={e=>{e.currentTarget.style.color='rgba(240,236,249,0.85)';e.currentTarget.style.background='rgba(255,255,255,0.07)';e.currentTarget.style.borderColor='rgba(255,255,255,0.1)'}} onMouseLeave={e=>{e.currentTarget.style.color='rgba(240,236,249,0.28)';e.currentTarget.style.background='transparent';e.currentTarget.style.borderColor='transparent'}}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
           </button>
         </div>
 
-        {/* Fields */}
-        <div style={{padding:'18px 24px 0',flexShrink:0}}>
-          {/* To */}
-          <div style={{display:'flex',alignItems:'center',gap:10,padding:'0 0 12px',borderBottom:'1px solid rgba(255,255,255,0.06)'}}>
-            <span style={{fontSize:11.5,fontWeight:700,color:'rgba(240,236,249,0.3)',letterSpacing:'.06em',textTransform:'uppercase',width:52,flexShrink:0}}>To</span>
-            <input value={to} onChange={e=>setTo(e.target.value)} placeholder="customer@email.com" style={{flex:1,background:'transparent',border:'none',outline:'none',fontSize:13.5,color:'#F0ECF9',fontFamily:'inherit'}} />
-            <button onClick={()=>setShowCC(v=>!v)} style={{fontSize:10.5,fontWeight:600,color:showCC?'#A175FC':'rgba(240,236,249,0.22)',background:showCC?'rgba(161,117,252,0.1)':'transparent',border:`1px solid ${showCC?'rgba(161,117,252,0.25)':'rgba(255,255,255,0.08)'}`,borderRadius:6,padding:'3px 8px',cursor:'pointer',transition:'all .15s',fontFamily:'inherit',flexShrink:0}}>CC / BCC</button>
+        {/* Fields card — prominent glass surface */}
+        <div style={{margin:'0 20px',background:'linear-gradient(145deg,rgba(255,255,255,0.085) 0%,rgba(161,117,252,0.04) 100%)',border:'1px solid rgba(255,255,255,0.16)',borderTop:'1px solid rgba(255,255,255,0.24)',borderRadius:18,overflow:'hidden',flexShrink:0,boxShadow:'0 8px 32px rgba(0,0,0,0.28),inset 0 1px 0 rgba(255,255,255,0.1)'}}>
+
+          {/* From row */}
+          {connectedEmail&&(
+            <div style={{display:'flex',alignItems:'center',padding:'13px 20px',borderBottom:'1px solid rgba(255,255,255,0.09)'}}>
+              <span style={{fontSize:10,fontWeight:900,color:'rgba(240,236,249,0.38)',letterSpacing:'.14em',textTransform:'uppercase',width:64,flexShrink:0}}>From</span>
+              <div style={{display:'flex',alignItems:'center',gap:8,flex:1,minWidth:0}}>
+                <span style={{fontSize:13.5,color:'rgba(240,236,249,0.55)',fontFamily:'inherit',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{connectedEmail}</span>
+                <span style={{fontSize:8.5,fontWeight:800,padding:'2px 7px',borderRadius:5,background:'rgba(74,222,128,0.12)',color:'#4ade80',border:'1px solid rgba(74,222,128,0.22)',flexShrink:0,letterSpacing:'.06em'}}>VERIFIED</span>
+              </div>
+            </div>
+          )}
+
+          {/* To row */}
+          <div style={{display:'flex',alignItems:'center',padding:'14px 20px',borderBottom:'1px solid rgba(255,255,255,0.09)',transition:'background .18s',position:'relative'}} onMouseEnter={e=>e.currentTarget.style.background='rgba(161,117,252,0.04)'} onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
+            <span style={{fontSize:10,fontWeight:900,color:'rgba(240,236,249,0.45)',letterSpacing:'.14em',textTransform:'uppercase',width:64,flexShrink:0}}>To</span>
+            <input value={to} onChange={e=>setTo(e.target.value)} placeholder="recipient@email.com" className="cm-input" style={{flex:1,background:'transparent',border:'none',outline:'none',fontSize:14,fontFamily:'inherit',letterSpacing:'.005em'}} />
+            <button onClick={()=>setShowCC(v=>!v)} style={{fontSize:10,fontWeight:800,color:showCC?'#C3A3FF':'rgba(240,236,249,0.35)',background:showCC?'rgba(161,117,252,0.18)':'rgba(255,255,255,0.06)',border:`1px solid ${showCC?'rgba(161,117,252,0.4)':'rgba(255,255,255,0.14)'}`,borderRadius:7,padding:'4px 11px',cursor:'pointer',transition:'all .18s',fontFamily:'inherit',flexShrink:0,letterSpacing:'.06em',textTransform:'uppercase'}} onMouseEnter={e=>{if(!showCC){e.currentTarget.style.color='rgba(240,236,249,0.7)';e.currentTarget.style.borderColor='rgba(255,255,255,0.24)';e.currentTarget.style.background='rgba(255,255,255,0.09)'}}} onMouseLeave={e=>{if(!showCC){e.currentTarget.style.color='rgba(240,236,249,0.35)';e.currentTarget.style.borderColor='rgba(255,255,255,0.14)';e.currentTarget.style.background='rgba(255,255,255,0.06)'}}}>CC</button>
           </div>
-          {/* CC */}
-          {showCC&&<div style={{display:'flex',alignItems:'center',gap:10,padding:'10px 0',borderBottom:'1px solid rgba(255,255,255,0.06)'}}>
-            <span style={{fontSize:11.5,fontWeight:700,color:'rgba(240,236,249,0.3)',letterSpacing:'.06em',textTransform:'uppercase',width:52,flexShrink:0}}>CC</span>
-            <input value={cc} onChange={e=>setCC(e.target.value)} placeholder="cc@email.com" style={{flex:1,background:'transparent',border:'none',outline:'none',fontSize:13.5,color:'#F0ECF9',fontFamily:'inherit'}} />
-          </div>}
-          {/* Subject */}
-          <div style={{display:'flex',alignItems:'center',gap:10,padding:'12px 0 0',borderBottom:'1px solid rgba(255,255,255,0.06)'}}>
-            <span style={{fontSize:11.5,fontWeight:700,color:'rgba(240,236,249,0.3)',letterSpacing:'.06em',textTransform:'uppercase',width:52,flexShrink:0}}>Subject</span>
-            <input value={subject} onChange={e=>setSubject(e.target.value)} placeholder="What's this about?" onKeyDown={e=>{if(e.key==='Enter'){e.preventDefault();bodyRef.current?.focus()}}} style={{flex:1,background:'transparent',border:'none',outline:'none',fontSize:13.5,color:'#F0ECF9',fontFamily:'inherit',paddingBottom:12}} />
+
+          {/* CC row */}
+          {showCC&&(
+            <div style={{display:'flex',alignItems:'center',padding:'14px 20px',borderBottom:'1px solid rgba(255,255,255,0.09)',background:'rgba(161,117,252,0.03)'}}>
+              <span style={{fontSize:10,fontWeight:900,color:'rgba(240,236,249,0.45)',letterSpacing:'.14em',textTransform:'uppercase',width:64,flexShrink:0}}>CC</span>
+              <input value={cc} onChange={e=>setCC(e.target.value)} placeholder="cc@email.com" className="cm-input" style={{flex:1,background:'transparent',border:'none',outline:'none',fontSize:14,fontFamily:'inherit'}} />
+            </div>
+          )}
+
+          {/* Subject row */}
+          <div style={{display:'flex',alignItems:'center',padding:'14px 20px',transition:'background .18s'}} onMouseEnter={e=>e.currentTarget.style.background='rgba(161,117,252,0.04)'} onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
+            <span style={{fontSize:10,fontWeight:900,color:'rgba(240,236,249,0.45)',letterSpacing:'.14em',textTransform:'uppercase',width:64,flexShrink:0}}>Subject</span>
+            <input value={subject} onChange={e=>setSubject(e.target.value)} placeholder="What's this about?" onKeyDown={e=>{if(e.key==='Enter'){e.preventDefault();bodyRef.current?.focus()}}} className="cm-input" style={{flex:1,background:'transparent',border:'none',outline:'none',fontSize:14,fontFamily:'inherit',fontWeight:600,letterSpacing:'.005em'}} />
           </div>
         </div>
 
-        {/* Toolbar */}
-        <div className="rtbar" style={{margin:'12px 24px 0',borderRadius:10,background:'rgba(255,255,255,0.03)',border:'1px solid rgba(255,255,255,0.06)'}}>
-          {[['bold','B',700],['italic','I',600,true],['underline','U',600,false,true]].map(([cmd,lbl,fw,italic,underline])=>(
-            <button key={cmd} className="rtbar-btn" onMouseDown={e=>e.preventDefault()} onClick={()=>formatDoc(cmd)}
-              style={{fontWeight:fw,fontStyle:italic?'italic':'normal',textDecoration:underline?'underline':'none'}}>{lbl}</button>
-          ))}
-          <div className="rtbar-sep"/>
-          <button className="rtbar-btn" onMouseDown={e=>e.preventDefault()} onClick={()=>{const u=prompt('URL:');if(u)formatDoc('createLink',u)}} title="Link">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-          </button>
-          <button className="rtbar-btn" onMouseDown={e=>e.preventDefault()} onClick={()=>formatDoc('insertUnorderedList')} title="List">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
-          </button>
-        </div>
+        {/* Compose area — writing surface */}
+        <div style={{margin:'10px 20px 0',border:'1px solid rgba(255,255,255,0.1)',borderTop:'1px solid rgba(255,255,255,0.14)',borderRadius:18,overflow:'hidden',flex:1,display:'flex',flexDirection:'column',minHeight:0,position:'relative',boxShadow:'0 4px 20px rgba(0,0,0,0.22),inset 0 1px 0 rgba(255,255,255,0.06)'}}>
 
-        {/* Body */}
-        <div
-          ref={bodyRef}
-          contentEditable
-          suppressContentEditableWarning
-          data-placeholder="Write your message…"
-          onInput={e=>setBody(e.currentTarget.textContent)}
-          onKeyDown={e=>{if(e.key==='Enter'&&(e.metaKey||e.ctrlKey))handleSend()}}
-          className="compose-ta"
-          style={{flex:1,overflowY:'auto',minHeight:200,padding:'16px 24px',fontSize:13.5,lineHeight:1.82,color:'#F0ECF9'}}
-        />
+          {/* Subtle purple radial glow inside body */}
+          <div aria-hidden style={{position:'absolute',top:0,right:0,width:260,height:180,borderRadius:'50%',background:'radial-gradient(ellipse,rgba(161,117,252,0.08) 0%,transparent 70%)',pointerEvents:'none',zIndex:0}} />
+
+          {/* Toolbar */}
+          <div style={{display:'flex',alignItems:'center',gap:6,padding:'9px 16px',borderBottom:'1px solid rgba(255,255,255,0.08)',flexWrap:'nowrap',overflowX:'auto',flexShrink:0,background:'rgba(255,255,255,0.04)',backdropFilter:'blur(8px)',position:'relative',zIndex:1}}>
+            {/* Format group */}
+            <div style={{display:'inline-flex',alignItems:'center',background:'rgba(255,255,255,0.06)',borderRadius:9,padding:'2px 3px',border:'1px solid rgba(255,255,255,0.1)',gap:1}}>
+              <button className="rtbar-btn" onMouseDown={e=>e.preventDefault()} onClick={()=>formatDoc('bold')} style={{fontWeight:800,borderRadius:7,minWidth:30,fontSize:13}}>B</button>
+              <button className="rtbar-btn" onMouseDown={e=>e.preventDefault()} onClick={()=>formatDoc('italic')} style={{fontStyle:'italic',borderRadius:7,minWidth:30,fontSize:13}}>I</button>
+              <button className="rtbar-btn" onMouseDown={e=>e.preventDefault()} onClick={()=>formatDoc('underline')} style={{textDecoration:'underline',borderRadius:7,minWidth:30,fontSize:13}}>U</button>
+            </div>
+            <div style={{width:1,height:16,background:'rgba(255,255,255,0.1)',flexShrink:0}} />
+            <div style={{display:'inline-flex',alignItems:'center',background:'rgba(255,255,255,0.06)',borderRadius:9,padding:'2px 3px',border:'1px solid rgba(255,255,255,0.1)',gap:1}}>
+              <button className="rtbar-btn" onMouseDown={e=>e.preventDefault()} onClick={()=>{const u=prompt('URL:');if(u)formatDoc('createLink',u)}} title="Link" style={{borderRadius:7}}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+              </button>
+              <button className="rtbar-btn" onMouseDown={e=>e.preventDefault()} onClick={()=>formatDoc('insertUnorderedList')} title="List" style={{borderRadius:7}}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+              </button>
+            </div>
+          </div>
+
+          {/* Writing surface */}
+          <div
+            ref={bodyRef}
+            contentEditable
+            suppressContentEditableWarning
+            data-placeholder="Write your message…"
+            onInput={e=>setBody(e.currentTarget.textContent)}
+            onKeyDown={e=>{if(e.key==='Enter'&&(e.metaKey||e.ctrlKey))handleSend()}}
+            className="compose-ta"
+            style={{flex:1,overflowY:'auto',minHeight:160,padding:'18px 22px',fontSize:14,lineHeight:1.9,color:'rgba(240,236,249,0.94)',letterSpacing:'.006em',background:'linear-gradient(180deg,rgba(161,117,252,0.025) 0%,rgba(0,0,0,0) 32%)',position:'relative',zIndex:1}}
+          />
+        </div>
 
         {/* Footer */}
-        <div style={{padding:'14px 24px 20px',borderTop:'1px solid rgba(255,255,255,0.07)',display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0}}>
-          <span style={{fontSize:11,color:'rgba(240,236,249,0.18)'}}>⌘+Enter to send</span>
-          <div style={{display:'flex',gap:8}}>
-            <button className="btn-ghost" onClick={onClose} style={{padding:'9px 18px'}}>Discard</button>
-            <button className="btn-send" onClick={handleSend} disabled={!ready||sending} style={{display:'flex',alignItems:'center',gap:7,padding:'9px 20px'}}>
-              {sending?<><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{animation:'spin .8s linear infinite'}}><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>Sending…</>:<><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>Send</>}
+        <div style={{padding:'12px 20px 18px',display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0}}>
+          <div style={{display:'flex',alignItems:'center',gap:6}}>
+            <kbd style={{fontSize:10,color:'rgba(240,236,249,0.28)',background:'rgba(255,255,255,0.06)',border:'1px solid rgba(255,255,255,0.13)',borderRadius:6,padding:'2px 8px',fontFamily:'inherit'}}>⌘ Enter</kbd>
+            <span style={{fontSize:10.5,color:'rgba(240,236,249,0.22)'}}>to send</span>
+          </div>
+          <div style={{display:'flex',gap:8,alignItems:'center'}}>
+            <button className="btn-ghost" onClick={onClose} style={{padding:'9px 18px',fontSize:12.5}}>Discard</button>
+            <button onClick={handleSend} disabled={!ready||sending} style={{display:'flex',alignItems:'center',gap:8,padding:'11px 24px',fontSize:13.5,fontWeight:700,fontFamily:'inherit',background:ready&&!sending?'linear-gradient(135deg,#B48CFF 0%,#A175FC 40%,#7B45E8 100%)':'rgba(161,117,252,0.12)',color:ready&&!sending?'#fff':'rgba(161,117,252,0.35)',border:'none',borderRadius:13,cursor:ready&&!sending?'pointer':'not-allowed',transition:'all .22s cubic-bezier(.16,1,.3,1)',boxShadow:ready&&!sending?'0 6px 24px rgba(161,117,252,0.55),0 1px 0 rgba(255,255,255,0.15) inset':'none',letterSpacing:'.01em'}} onMouseEnter={e=>{if(ready&&!sending){e.currentTarget.style.transform='translateY(-2px)';e.currentTarget.style.boxShadow='0 12px 36px rgba(161,117,252,0.7),0 1px 0 rgba(255,255,255,0.18) inset'}}} onMouseLeave={e=>{e.currentTarget.style.transform='none';e.currentTarget.style.boxShadow=ready&&!sending?'0 6px 24px rgba(161,117,252,0.55),0 1px 0 rgba(255,255,255,0.15) inset':'none'}}>
+              {sending
+                ? <><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{animation:'spin .8s linear infinite'}}><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>Sending…</>
+                : <><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>Send message</>
+              }
             </button>
           </div>
         </div>
@@ -1008,10 +1070,11 @@ function MacroPanel({ macros, aiMacros, onInsert, onClose, customerName }) {
 }
 
 // ─── Main page ────────────────────────────────────────────────
-export default function InboxPage() {
+function InboxPage() {
   const [session, setSession]         = useState(null)
   const [threads, setThreads]         = useState([])
-  const [view, setView]               = useState('all')
+  const searchParams                  = useSearchParams()
+  const [view, setView]               = useState(searchParams.get('view') || 'all')
   const [selected, setSelected]       = useState(null)
   const [messages, setMessages]       = useState([])
   const [loadingThreads, setLT]       = useState(true)
@@ -1024,6 +1087,9 @@ export default function InboxPage() {
   const [search, setSearch]           = useState('')
   const [gmailOk, setGmailOk]         = useState(true)
   const [emailProvider, setEmailProvider] = useState(null) // 'gmail' | 'outlook' | 'custom' | null
+  const [connectedEmail, setConnectedEmail] = useState(null)
+  const [sentThreads, setSentThreads]   = useState([])
+  const [loadingSent, setLoadingSent]   = useState(false)
   const [demoMode, setDemoMode]       = useState(false)
   const [customer, setCustomer]       = useState(null)
   const [loadingCust, setLoadingCust] = useState(false)
@@ -1053,11 +1119,14 @@ export default function InboxPage() {
 
   // ── Auth + load ──
   useEffect(()=>{
-    supabase.auth.getSession().then(({data:{session}})=>{
+    supabase.auth.getSession().then(async ({data:{session}})=>{
       if(!session){window.location.href='/login';return}
       setSession(session)
-      loadThreads(session.access_token)
+      const detectedProvider = await loadThreads(session.access_token)
       loadMacros(session.access_token)
+      if(searchParams.get('view')==='sent'){
+        loadSentThreads(session.access_token, detectedProvider)
+      }
     })
   },[])
 
@@ -1112,36 +1181,56 @@ export default function InboxPage() {
     const gmailData = await gmailRes.json()
     if(gmailData.connected!==false){
       setGmailOk(true); setDemoMode(false); setEmailProvider('gmail')
+      setConnectedEmail(gmailData.email||null)
       const thr = gmailData.threads||[]
       setThreads(thr); setLT(false)
       analyzeThreads(thr, token)
-      return
+      return 'gmail'
     }
 
     const outlookRes  = await authFetch('/api/outlook/threads',{},token)
     const outlookData = await outlookRes.json()
     if(outlookData.connected!==false && outlookData.threads?.length){
       setGmailOk(false); setDemoMode(false); setEmailProvider('outlook')
+      setConnectedEmail(outlookData.email||null)
       const thr = outlookData.threads||[]
       setThreads(thr); setLT(false)
       analyzeThreads(thr, token)
-      return
+      return 'outlook'
     }
 
     const customRes  = await authFetch('/api/custom-email/threads',{},token)
     const customData = await customRes.json()
     if(customData.connected!==false && customData.threads?.length){
       setGmailOk(false); setDemoMode(false); setEmailProvider('custom')
+      setConnectedEmail(customData.email||null)
       const thr = customData.threads||[]
       setThreads(thr); setLT(false)
       analyzeThreads(thr, token)
-      return
+      return 'custom'
     }
 
     // No provider connected — demo mode
     setGmailOk(false); setDemoMode(true); setEmailProvider(null)
     setThreads(DEMO_THREADS); setLT(false)
     analyzeThreads(DEMO_THREADS, token)
+    return null
+  }
+
+  async function loadSentThreads(token, provider) {
+    setLoadingSent(true)
+    setSentThreads([])
+    try {
+      const p = provider || emailProvider
+      // Only Gmail has a dedicated sent route; Outlook/custom fallback to gmail if not connected
+      const path = p==='outlook' ? '/api/outlook/sent-threads'
+                 : p==='custom'  ? '/api/custom-email/sent-threads'
+                 : '/api/gmail/sent-threads'
+      const res  = await authFetch(path, {}, token)
+      const data = await res.json()
+      setSentThreads(data.threads||[])
+    } catch {}
+    setLoadingSent(false)
   }
 
   async function analyzeThreads(threadList, token) {
@@ -1289,7 +1378,7 @@ export default function InboxPage() {
 
   if(!session) return null
 
-  const VIEWS = [{id:'all',label:'All'},{id:'open',label:'Open'},{id:'pending',label:'Pending'},{id:'resolved',label:'Resolved'}]
+  const VIEWS = [{id:'all',label:'All'},{id:'open',label:'Open'},{id:'pending',label:'Pending'},{id:'resolved',label:'Resolved'},{id:'sent',label:'Sent'}]
 
   // ── Render ──
   return (
@@ -1344,11 +1433,12 @@ export default function InboxPage() {
           </div>
 
           {/* View tabs */}
-          <div style={{display:'flex',borderBottom:'1px solid rgba(255,255,255,0.055)'}}>
+          <div style={{display:'flex',borderBottom:'1px solid rgba(255,255,255,0.055)',overflowX:'auto'}} className="sscroll">
             {VIEWS.map(v=>(
-              <button key={v.id} className={`vtab${view===v.id?' on':''}`} onClick={()=>setView(v.id)}>
+              <button key={v.id} className={`vtab${view===v.id?' on':''}`} onClick={()=>{ setView(v.id); if(v.id==='sent'&&session) loadSentThreads(session.access_token, emailProvider) }}>
                 {v.label}
-                {counts[v.id]>0&&<span style={{marginLeft:4,background:view===v.id?'rgba(161,117,252,0.2)':'rgba(255,255,255,0.08)',color:view===v.id?'#A175FC':'rgba(240,236,249,0.3)',fontSize:9,fontWeight:700,padding:'1px 5px',borderRadius:100}}>{counts[v.id]}</span>}
+                {v.id!=='sent'&&counts[v.id]>0&&<span style={{marginLeft:4,background:view===v.id?'rgba(161,117,252,0.2)':'rgba(255,255,255,0.08)',color:view===v.id?'#A175FC':'rgba(240,236,249,0.3)',fontSize:9,fontWeight:700,padding:'1px 5px',borderRadius:100}}>{counts[v.id]}</span>}
+                {v.id==='sent'&&sentThreads.length>0&&<span style={{marginLeft:4,background:view===v.id?'rgba(161,117,252,0.2)':'rgba(255,255,255,0.08)',color:view===v.id?'#A175FC':'rgba(240,236,249,0.3)',fontSize:9,fontWeight:700,padding:'1px 5px',borderRadius:100}}>{sentThreads.length}</span>}
               </button>
             ))}
           </div>
@@ -1362,7 +1452,7 @@ export default function InboxPage() {
               <a href="/settings" style={{fontSize:10.5,fontWeight:700,color:'#A175FC',textDecoration:'none',flexShrink:0}}>Connect →</a>
             </div>
           )}
-          {loadingThreads&&[0,1,2,3,4].map(i=>(
+          {(view==='sent'?loadingSent:loadingThreads)&&[0,1,2,3,4].map(i=>(
             <div key={i} style={{padding:'12px 14px',borderBottom:'1px solid rgba(255,255,255,0.04)',display:'flex',gap:10,opacity:1-i*.16}}>
               <div className="skel" style={{width:34,height:34,borderRadius:'50%',flexShrink:0}} />
               <div style={{flex:1,display:'flex',flexDirection:'column',gap:7}}>
@@ -1372,10 +1462,12 @@ export default function InboxPage() {
               </div>
             </div>
           ))}
-          {!loadingThreads&&sortedFiltered.length===0&&gmailOk&&<div style={{padding:'40px 20px',textAlign:'center',color:'rgba(240,236,249,0.25)',fontSize:12.5}}>No threads in this view</div>}
-          {sortedFiltered.map(thread=>{
+          {view==='sent'&&!loadingSent&&sentThreads.length===0&&<div style={{padding:'40px 20px',textAlign:'center',color:'rgba(240,236,249,0.25)',fontSize:12.5}}>No sent messages</div>}
+          {view!=='sent'&&!loadingThreads&&sortedFiltered.length===0&&gmailOk&&<div style={{padding:'40px 20px',textAlign:'center',color:'rgba(240,236,249,0.25)',fontSize:12.5}}>No threads in this view</div>}
+          {(view==='sent' ? sentThreads : sortedFiltered).map(thread=>{
             const active=selected?.id===thread.id
-            const name=extractName(thread.from)
+            const isSentView = view==='sent'
+            const name = isSentView ? extractName(thread.to) : extractName(thread.from)
             const status=getStatus(thread.id)
             const analysis=analyses[thread.id]
             const URGENCY_UI={
@@ -1396,13 +1488,31 @@ export default function InboxPage() {
                     {thread.unread&&<span style={{position:'absolute',top:0,right:0,width:8,height:8,borderRadius:'50%',background:'#A175FC',border:'1.5px solid #0D0719',boxShadow:'0 0 6px rgba(161,117,252,0.6)'}} />}
                   </div>
                   <div style={{flex:1,minWidth:0}}>
-                    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:2}}>
-                      <span style={{fontSize:12.5,fontWeight:thread.unread?700:500,color:thread.unread?'#F0ECF9':'rgba(240,236,249,0.7)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',maxWidth:145}}>{name}</span>
-                      <span style={{fontSize:10,color:'rgba(240,236,249,0.28)',flexShrink:0,marginLeft:4}}>{formatDate(thread.date)}</span>
-                    </div>
-                    <div style={{fontSize:11.5,color:thread.unread?'rgba(240,236,249,0.7)':'rgba(240,236,249,0.4)',fontWeight:thread.unread?600:400,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',marginBottom:3}}>{thread.subject}</div>
-                    <div style={{fontSize:10.5,color:'rgba(240,236,249,0.25)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',marginBottom:5}}>{thread.snippet}</div>
-                    <div style={{display:'flex',alignItems:'center',gap:5,flexWrap:'wrap'}}>
+                    {isSentView ? (
+                      /* Sent view: subject is the primary identifier */
+                      <>
+                        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:3}}>
+                          <span style={{fontSize:12.5,fontWeight:600,color:'rgba(240,236,249,0.88)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',maxWidth:160,letterSpacing:'-0.01em'}}>{thread.subject||'(no subject)'}</span>
+                          <span style={{fontSize:10,color:'rgba(240,236,249,0.28)',flexShrink:0,marginLeft:4}}>{formatDate(thread.date)}</span>
+                        </div>
+                        <div style={{display:'flex',alignItems:'center',gap:4,marginBottom:3}}>
+                          <span style={{fontSize:9,fontWeight:800,color:'rgba(161,117,252,0.5)',letterSpacing:'.06em',textTransform:'uppercase',flexShrink:0}}>To</span>
+                          <span style={{fontSize:11,color:'rgba(240,236,249,0.38)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{name||extractEmail(thread.to)}</span>
+                        </div>
+                      </>
+                    ) : (
+                      /* Inbox view: sender name is the primary identifier */
+                      <>
+                        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:2}}>
+                          <span style={{fontSize:12.5,fontWeight:thread.unread?700:500,color:thread.unread?'#F0ECF9':'rgba(240,236,249,0.7)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',maxWidth:145}}>{name}</span>
+                          <span style={{fontSize:10,color:'rgba(240,236,249,0.28)',flexShrink:0,marginLeft:4}}>{formatDate(thread.date)}</span>
+                        </div>
+                        <div style={{fontSize:11.5,color:thread.unread?'rgba(240,236,249,0.7)':'rgba(240,236,249,0.4)',fontWeight:thread.unread?600:400,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',marginBottom:3}}>{thread.subject}</div>
+                      </>
+                    )}
+                    {!isSentView&&<div style={{fontSize:10.5,color:'rgba(240,236,249,0.25)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',marginBottom:5}}>{thread.snippet}</div>}
+                    {isSentView&&thread.snippet&&<div style={{fontSize:10.5,color:'rgba(240,236,249,0.22)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',marginBottom:4,fontStyle:'italic'}}>{thread.snippet}</div>}
+                    {!isSentView&&<div style={{display:'flex',alignItems:'center',gap:5,flexWrap:'wrap'}}>
                       {analysis&&urg&&urg!=='low'&&(
                         <span className={`urg-pill urg-${urg}`} style={{background:urgUI.bg,color:urgUI.color,border:`1px solid ${urgUI.border}`}}>
                           <span className="urg-dot" style={{background:urgUI.color}} />
@@ -1413,7 +1523,10 @@ export default function InboxPage() {
                         <span style={{fontSize:9.5,color:'rgba(240,236,249,0.28)',fontWeight:600}}>{analysis.intent}</span>
                       )}
                       <TicketBadge status={status} />
-                    </div>
+                    </div>}
+                    {isSentView&&<div style={{display:'flex',alignItems:'center',gap:5}}>
+                      <span style={{fontSize:9,fontWeight:700,padding:'1px 7px',borderRadius:100,background:'rgba(161,117,252,0.1)',color:'rgba(161,117,252,0.6)',border:'1px solid rgba(161,117,252,0.18)',letterSpacing:'.04em'}}>Sent</span>
+                    </div>}
                   </div>
                 </div>
               </div>
@@ -1791,7 +1904,7 @@ export default function InboxPage() {
       )}
 
       {/* ═══════════════ Modals ═══════════════ */}
-      {modal?.type==='compose'   && <ComposeModal emailProvider={emailProvider} token={session.access_token} onClose={()=>setModal(null)} onSuccess={(msg,type)=>{handleModalSuccess(msg,type);loadThreads(session.access_token)}} />}
+      {modal?.type==='compose'   && <ComposeModal emailProvider={emailProvider} connectedEmail={connectedEmail} token={session.access_token} onClose={()=>setModal(null)} onSuccess={(msg,type)=>{handleModalSuccess(msg,type);loadThreads(session.access_token)}} />}
       {modal?.type==='refund'    && <RefundModal      order={modal.order} token={session.access_token} onClose={()=>setModal(null)} onSuccess={handleModalSuccess} />}
       {modal?.type==='cancel'    && <CancelModal      order={modal.order} token={session.access_token} onClose={()=>setModal(null)} onSuccess={handleModalSuccess} />}
       {modal?.type==='duplicate' && <DuplicateModal   order={modal.order} token={session.access_token} onClose={()=>setModal(null)} onSuccess={handleModalSuccess} />}
@@ -1801,5 +1914,13 @@ export default function InboxPage() {
 
       {toast&&<Toast msg={toast.msg} type={toast.type} onDone={()=>setToast(null)} />}
     </div>
+  )
+}
+
+export default function InboxPageWrapper() {
+  return (
+    <Suspense fallback={null}>
+      <InboxPage />
+    </Suspense>
   )
 }

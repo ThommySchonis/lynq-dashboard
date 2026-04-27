@@ -199,42 +199,44 @@ const CSS = `
   .an-root{font-family:var(--font-rethink),-apple-system,BlinkMacSystemFont,sans-serif;-webkit-font-smoothing:antialiased}
   .an-scroll::-webkit-scrollbar{width:3px}
   .an-scroll::-webkit-scrollbar-track{background:transparent}
-  .an-scroll::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.08);border-radius:2px}
+  .an-scroll::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.1);border-radius:2px}
 
   .date-inp{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);border-radius:8px;color:#F8FAFC;padding:4px 10px;font-size:11.5px;font-family:inherit;cursor:pointer;outline:none;color-scheme:dark;transition:border-color .15s}
   .date-inp:focus{border-color:rgba(161,117,252,0.5)}
   .date-inp::-webkit-calendar-picker-indicator{filter:invert(.6);cursor:pointer}
 
   .kpi-card{
-    background:rgba(255,255,255,0.03);
-    border:1px solid rgba(255,255,255,0.08);
+    background:rgba(255,255,255,0.052);
+    border:1px solid rgba(255,255,255,0.1);
     border-radius:12px;padding:20px 22px;
     position:relative;overflow:hidden;
-    transition:border-color .2s ease;
+    transition:border-color .2s ease, background .2s ease;
     cursor:default;
+    box-shadow:0 4px 28px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.08);
   }
-  .kpi-card:hover{border-color:rgba(255,255,255,0.15)}
+  .kpi-card:hover{border-color:rgba(255,255,255,0.18);background:rgba(255,255,255,0.07)}
   .kpi-card .top-bar{position:absolute;top:0;left:0;right:0;height:2px;opacity:0;transition:opacity .25s ease}
   .kpi-card:hover .top-bar{opacity:1}
   .kpi-glow{text-shadow:none}
 
   .panel{
-    background:rgba(255,255,255,0.028);
-    border:1px solid rgba(255,255,255,0.08);
+    background:rgba(255,255,255,0.042);
+    border:1px solid rgba(255,255,255,0.1);
     border-radius:12px;padding:24px;
     transition:border-color .2s ease;
+    box-shadow:0 4px 24px rgba(0,0,0,0.22);
   }
-  .panel:hover{border-color:rgba(255,255,255,0.13)}
+  .panel:hover{border-color:rgba(255,255,255,0.16)}
 
-  .action-card{border-radius:10px;background:rgba(255,255,255,0.022);border:1px solid rgba(255,255,255,0.07);padding:16px 18px;transition:background .2s,border-color .2s;cursor:default;border-left-width:3px}
-  .action-card:hover{background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.13)}
+  .action-card{border-radius:10px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.09);padding:16px 18px;transition:background .2s,border-color .2s;cursor:default;border-left-width:3px;box-shadow:0 2px 16px rgba(0,0,0,0.2)}
+  .action-card:hover{background:rgba(255,255,255,0.065);border-color:rgba(255,255,255,0.15)}
   .action-card.done-card{opacity:.45}
 
   .tab-btn{padding:6px 16px;border-radius:100px;font-size:11.5px;font-weight:700;cursor:pointer;border:none;font-family:inherit;letter-spacing:.02em;transition:all .15s ease}
   .range-pill{padding:5px 14px;border-radius:100px;font-size:11.5px;font-weight:600;cursor:pointer;border:none;font-family:inherit;transition:all .15s ease}
   .filter-pill{padding:4px 12px;border-radius:100px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid transparent;font-family:inherit;transition:all .15s ease;white-space:nowrap}
   .tbl-row{transition:background .15s ease;cursor:default}
-  .tbl-row:hover{background:rgba(255,255,255,0.03)}
+  .tbl-row:hover{background:rgba(255,255,255,0.04)}
 
   .sk{background:linear-gradient(90deg,rgba(255,255,255,0.04) 25%,rgba(255,255,255,0.08) 50%,rgba(255,255,255,0.04) 75%);background-size:400% 100%;animation:shimmer 1.8s ease-in-out infinite;border-radius:8px}
   .bar-fill{transform-origin:left;animation:growX .6s cubic-bezier(.34,1.56,.64,1) both}
@@ -251,7 +253,7 @@ const CSS = `
   .name-inp::placeholder{color:rgba(248,250,252,.3)}
 
   .matrix-row{transition:background .15s;border-radius:10px}
-  .matrix-row:hover{background:rgba(255,255,255,.035)}
+  .matrix-row:hover{background:rgba(255,255,255,.045)}
 `
 
 // ─── Aurora + Grid ────────────────────────────────────────────────────────────
@@ -259,8 +261,9 @@ const CSS = `
 function PageBackground() {
   return (
     <div aria-hidden style={{ position:'absolute', inset:0, overflow:'hidden', pointerEvents:'none', zIndex:0 }}>
-      <div style={{ position:'absolute', top:0, right:0, width:600, height:500, background:'radial-gradient(ellipse at top right,rgba(161,117,252,0.1) 0%,transparent 65%)', pointerEvents:'none' }}/>
-      <div style={{ position:'absolute', bottom:0, left:0, width:400, height:400, background:'radial-gradient(ellipse at bottom left,rgba(161,117,252,0.05) 0%,transparent 65%)', pointerEvents:'none' }}/>
+      <div style={{ position:'absolute', top:'-5%', right:'5%', width:750, height:550, borderRadius:'50%', background:'radial-gradient(ellipse,rgba(161,117,252,0.08) 0%,transparent 68%)', filter:'blur(80px)', pointerEvents:'none' }}/>
+      <div style={{ position:'absolute', top:'30%', left:'-5%', width:600, height:450, borderRadius:'50%', background:'radial-gradient(ellipse,rgba(161,117,252,0.04) 0%,transparent 70%)', filter:'blur(90px)', pointerEvents:'none' }}/>
+      <div style={{ position:'absolute', bottom:'10%', right:'20%', width:400, height:300, borderRadius:'50%', background:'radial-gradient(ellipse,rgba(74,222,128,0.03) 0%,transparent 70%)', filter:'blur(60px)', pointerEvents:'none' }}/>
     </div>
   )
 }
@@ -354,12 +357,12 @@ function KpiRow({ kpis, prevKpis, refunds, loaded }) {
           <div className="top-bar" style={{ background:c.grad }}/>
           <div style={{ position:'absolute', inset:0, background:`radial-gradient(circle at 100% 0%,${c.accent}08 0%,transparent 60%)`, borderRadius:12, pointerEvents:'none' }}/>
           <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:14 }}>
-            <div style={{ width:36, height:36, borderRadius:10, background:`${c.accent}18`, display:'flex', alignItems:'center', justifyContent:'center', color:c.accent, boxShadow:'none' }}>{c.icon}</div>
+            <div style={{ width:36, height:36, borderRadius:10, background:`${c.accent}1a`, border:`1px solid ${c.accent}20`, display:'flex', alignItems:'center', justifyContent:'center', color:c.accent }}>{c.icon}</div>
             <DeltaBadge delta={loaded.prevKpis?c.delta:null} lowerIsBetter={c.lowerBetter}/>
           </div>
           <div className="kpi-glow" style={{ fontSize:27, fontWeight:800, letterSpacing:'-0.04em', color:c.accent, lineHeight:1, marginBottom:5, fontVariantNumeric:'tabular-nums' }}>{c.value}</div>
-          <div style={{ fontSize:9.5, fontWeight:700, letterSpacing:'.1em', color:'rgba(248,250,252,0.32)', textTransform:'uppercase', marginBottom:4 }}>{c.label}</div>
-          <div style={{ fontSize:11, color:'rgba(248,250,252,0.25)', lineHeight:1.4 }}>{c.sub}</div>
+          <div style={{ fontSize:9.5, fontWeight:700, letterSpacing:'.11em', color:'rgba(248,250,252,0.35)', textTransform:'uppercase', marginBottom:4 }}>{c.label}</div>
+          <div style={{ fontSize:11, color:'rgba(248,250,252,0.28)', lineHeight:1.5 }}>{c.sub}</div>
         </div>
       ))}
     </div>
@@ -890,7 +893,7 @@ export default function AnalyticsPage() {
   const actionLoaded=loaded.insights&&loaded.allRefunds
 
   return (
-    <div className="an-root" style={{ display:'flex', minHeight:'100vh', background:'#0B0819' }}>
+    <div className="an-root" style={{ display:'flex', minHeight:'100vh', background:'#1C0F36' }}>
       <style>{CSS}</style>
       <Sidebar/>
       <main className="an-scroll" style={{ flex:1, overflowY:'auto', padding:'36px 44px', position:'relative' }}>

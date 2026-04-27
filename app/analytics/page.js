@@ -190,10 +190,10 @@ const CSS = `
     transition:transform .25s ease,box-shadow .25s ease,border-color .25s ease;
     cursor:default;
   }
-  .kpi-card:hover{transform:translateY(-4px);border-color:rgba(161,117,252,0.3);box-shadow:0 20px 60px rgba(0,0,0,.35),0 0 0 1px rgba(161,117,252,0.15),0 0 40px rgba(161,117,252,0.06)}
+  .kpi-card:hover{transform:translateY(-4px);border-color:rgba(161,117,252,0.25);box-shadow:0 20px 60px rgba(0,0,0,.35)}
   .kpi-card .top-bar{position:absolute;top:0;left:0;right:0;height:2px;opacity:0;transition:opacity .25s ease}
   .kpi-card:hover .top-bar{opacity:1}
-  .kpi-glow{text-shadow:0 0 30px currentColor}
+  .kpi-glow{text-shadow:none}
 
   .panel{
     background:rgba(255,255,255,0.028);
@@ -337,7 +337,7 @@ function KpiRow({ kpis, prevKpis, refunds, loaded }) {
           <div className="top-bar" style={{ background:c.grad }}/>
           <div style={{ position:'absolute', inset:0, background:`radial-gradient(circle at 100% 0%,${c.accent}08 0%,transparent 60%)`, borderRadius:18, pointerEvents:'none' }}/>
           <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:14 }}>
-            <div style={{ width:36, height:36, borderRadius:10, background:`${c.accent}18`, display:'flex', alignItems:'center', justifyContent:'center', color:c.accent, boxShadow:`0 0 16px ${c.accent}20` }}>{c.icon}</div>
+            <div style={{ width:36, height:36, borderRadius:10, background:`${c.accent}18`, display:'flex', alignItems:'center', justifyContent:'center', color:c.accent, boxShadow:'none' }}>{c.icon}</div>
             <DeltaBadge delta={loaded.prevKpis?c.delta:null} lowerIsBetter={c.lowerBetter}/>
           </div>
           <div className="kpi-glow" style={{ fontSize:27, fontWeight:800, letterSpacing:'-0.04em', color:c.accent, lineHeight:1, marginBottom:5, fontVariantNumeric:'tabular-nums' }}>{c.value}</div>
@@ -365,12 +365,12 @@ function RevenueTrendChart({ trend, loaded, rangeLabel }) {
     <div className="panel" style={{ marginBottom:24, animation:'revealUp .5s ease-out .28s both' }}>
       <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:16 }}>
         <div><div style={{ fontSize:13, fontWeight:600, color:'#F8FAFC', marginBottom:3 }}>Revenue Trend</div><div style={{ fontSize:11, color:'rgba(248,250,252,0.35)' }}>{rangeLabel} · daily net revenue</div></div>
-        <div style={{ fontSize:16, fontWeight:700, color:'#A175FC', letterSpacing:'-0.02em', textShadow:'0 0 20px rgba(161,117,252,0.4)' }}>{fmtEur(tot)}</div>
+        <div style={{ fontSize:16, fontWeight:700, color:'#A175FC', letterSpacing:'-0.02em' }}>{fmtEur(tot)}</div>
       </div>
       <svg viewBox={`0 0 ${W} ${H}`} style={{ width:'100%', overflow:'visible' }} aria-hidden>
         <defs>
           <linearGradient id="tg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#A175FC" stopOpacity="0.25"/><stop offset="100%" stopColor="#A175FC" stopOpacity="0"/></linearGradient>
-          <filter id="glow"><feGaussianBlur stdDeviation="2" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+          <filter id="glow"><feGaussianBlur stdDeviation="1" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
         </defs>
         {[0,.5,1].map((s,i)=>{ const y=pT+s*(H-pT-pB); return <line key={i} x1={pL} y1={y} x2={W-pR} y2={y} stroke="rgba(255,255,255,0.05)" strokeWidth="1"/> })}
         <polygon points={area} fill="url(#tg)"/>
@@ -413,7 +413,7 @@ function DonutReasonChart({ refunds, loaded }) {
             {slices.map((s,i)=>(
               <circle key={i} cx="65" cy="65" r={r} fill="none" stroke={s.color} strokeWidth="18"
                 strokeDasharray={`${s.dashLen} ${C}`} strokeDashoffset={s.offset} strokeLinecap="butt"
-                style={{ filter:`drop-shadow(0 0 6px ${s.color}60)` }}
+                style={{ filter:'none' }}
               />
             ))}
           </svg>
@@ -427,7 +427,7 @@ function DonutReasonChart({ refunds, loaded }) {
           {segments.map((s,i)=>(
             <div key={s.cat} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:8 }}>
               <div style={{ display:'flex', alignItems:'center', gap:7 }}>
-                <div style={{ width:8, height:8, borderRadius:'50%', background:s.color, flexShrink:0, boxShadow:`0 0 6px ${s.color}` }}/>
+                <div style={{ width:8, height:8, borderRadius:'50%', background:s.color, flexShrink:0 }}/>
                 <span style={{ fontSize:11.5, color:'rgba(248,250,252,0.65)', fontWeight:500 }}>{s.cat}</span>
               </div>
               <div style={{ display:'flex', alignItems:'center', gap:7, flexShrink:0 }}>
@@ -456,7 +456,7 @@ function MonthlyTrendChart({ allRefunds, loaded }) {
           <div style={{ fontSize:13, fontWeight:600, color:'#F8FAFC', marginBottom:3 }}>Monthly Refunds</div>
           <div style={{ fontSize:11, color:'rgba(248,250,252,0.35)' }}>Last 6 months — count + amount</div>
         </div>
-        <div style={{ fontSize:13, fontWeight:700, color:'#EF4444', textShadow:'0 0 16px rgba(239,68,68,0.4)' }}>{fmtEur(totalLost)}</div>
+        <div style={{ fontSize:13, fontWeight:700, color:'#EF4444' }}>{fmtEur(totalLost)}</div>
       </div>
       <div style={{ display:'flex', alignItems:'flex-end', gap:10, height:110 }}>
         {months.map((m,i)=>{
@@ -480,7 +480,7 @@ function MonthlyTrendChart({ allRefunds, loaded }) {
       {/* Amount sparkline */}
       <svg viewBox="0 0 300 28" style={{ width:'100%', marginTop:12 }} aria-hidden>
         <defs><linearGradient id="sparkG" x1="0" y1="0" x2="1" y2="0">{months.map((_,i)=><stop key={i} offset={`${(i/(months.length-1))*100}%`} stopColor="#EF4444" stopOpacity={0.4+i*0.1}/>)}</linearGradient></defs>
-        {months.map((m,i)=>{ const x=(i/(months.length-1))*280+10; const y=28-(m.amount/maxAmt)*22-3; return <circle key={i} cx={x} cy={y} r="2.5" fill="#EF4444" style={{ filter:'drop-shadow(0 0 4px rgba(239,68,68,0.6))' }}/> })}
+        {months.map((m,i)=>{ const x=(i/(months.length-1))*280+10; const y=28-(m.amount/maxAmt)*22-3; return <circle key={i} cx={x} cy={y} r="2.5" fill="#EF4444" style={{ filter:'none' }}/> })}
         <polyline points={months.map((m,i)=>{ const x=(i/(months.length-1))*280+10; const y=28-(m.amount/maxAmt)*22-3; return `${x},${y}` }).join(' ')} fill="none" stroke="url(#sparkG)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
       </svg>
     </div>
@@ -542,7 +542,7 @@ function ActionBoard({ patternActions, aiInsights, noRefunds, loaded, onStatusCh
 
       {!noRefunds&&allItems.length>0&&(
         <div style={{ height:3, background:'rgba(255,255,255,0.06)', borderRadius:100, marginBottom:16, overflow:'hidden' }}>
-          <div style={{ height:'100%', borderRadius:100, width:`${(doneItems.length/allItems.length)*100}%`, background:'linear-gradient(90deg,#22C55E,#86efac)', transition:'width .4s ease', boxShadow:'0 0 10px rgba(34,197,94,0.4)' }}/>
+          <div style={{ height:'100%', borderRadius:100, width:`${(doneItems.length/allItems.length)*100}%`, background:'linear-gradient(90deg,#22C55E,#86efac)', transition:'width .4s ease' }}/>
         </div>
       )}
 
@@ -563,7 +563,7 @@ function ActionBoard({ patternActions, aiInsights, noRefunds, loaded, onStatusCh
           return (
             <div key={item.id} className={`action-card${isDone?' done-card':''}`}>
               <div style={{ display:'flex', alignItems:'flex-start', gap:12 }}>
-                <div style={{ width:8, height:8, borderRadius:'50%', background:pc, marginTop:6, flexShrink:0, boxShadow:`0 0 8px ${pc}` }}/>
+                <div style={{ width:8, height:8, borderRadius:'50%', background:pc, marginTop:6, flexShrink:0 }}/>
                 <div style={{ flex:1, minWidth:0 }}>
                   <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:8, flexWrap:'wrap' }}>
                     {item.type==='pattern'&&<span style={{ fontSize:9, fontWeight:800, letterSpacing:'.08em', color:'rgba(248,250,252,0.4)', background:'rgba(255,255,255,0.06)', borderRadius:100, padding:'2px 8px', textTransform:'uppercase', border:'1px solid rgba(255,255,255,0.08)' }}>PATTERN DETECTED</span>}
@@ -650,7 +650,7 @@ function RefundTable({ refunds, loaded }) {
                     <td style={{ padding:'11px 14px', fontSize:12, color:'rgba(248,250,252,0.48)', maxWidth:160 }}><div style={{ overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }} title={(r.products||[]).join(', ')}>{(r.products||[]).join(', ')||'—'}</div></td>
                     <td style={{ padding:'11px 14px' }}><CatBadge cat={r.category} small/></td>
                     <td style={{ padding:'11px 14px', textAlign:'right', whiteSpace:'nowrap' }}><span style={{ fontSize:11, fontWeight:700, color:pc, background:pb, borderRadius:5, padding:'2px 8px', display:'inline-block' }}>{r.refundPct}%</span></td>
-                    <td style={{ padding:'11px 0 11px 14px', textAlign:'right', fontSize:13, fontWeight:800, color:'#F87171', fontVariantNumeric:'tabular-nums', whiteSpace:'nowrap', textShadow:'0 0 12px rgba(248,113,113,0.3)' }}>{fmtEur(r.refundAmount)}</td>
+                    <td style={{ padding:'11px 0 11px 14px', textAlign:'right', fontSize:13, fontWeight:800, color:'#F87171', fontVariantNumeric:'tabular-nums', whiteSpace:'nowrap', textShadow:'none' }}>{fmtEur(r.refundAmount)}</td>
                   </tr>
                 )})}
               </tbody>
@@ -782,7 +782,7 @@ function RefundReasons({ refunds, loaded }) {
         {reasons.map((r,i)=>{ const cc=CAT_COLORS[r.cat]||CAT_COLORS.Other; return (
           <div key={r.cat}>
             <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:7 }}>
-              <div style={{ display:'flex', alignItems:'center', gap:8 }}><div style={{ width:7, height:7, borderRadius:'50%', background:cc.color, flexShrink:0, boxShadow:`0 0 6px ${cc.color}` }}/><span style={{ fontSize:12, color:'rgba(248,250,252,0.7)', fontWeight:500 }}>{r.cat}</span></div>
+              <div style={{ display:'flex', alignItems:'center', gap:8 }}><div style={{ width:7, height:7, borderRadius:'50%', background:cc.color, flexShrink:0 }}/><span style={{ fontSize:12, color:'rgba(248,250,252,0.7)', fontWeight:500 }}>{r.cat}</span></div>
               <div style={{ display:'flex', alignItems:'center', gap:7, flexShrink:0 }}><span style={{ fontSize:11, color:'rgba(248,250,252,0.38)', fontVariantNumeric:'tabular-nums' }}>{fmtEur(r.amount)}</span><span style={{ fontSize:10, fontWeight:700, color:cc.color, background:cc.bg, borderRadius:5, padding:'1px 7px', border:`1px solid ${cc.border}` }}>{r.count}×</span></div>
             </div>
             <div style={{ height:5, background:'rgba(255,255,255,0.05)', borderRadius:100, overflow:'hidden' }}>
@@ -839,7 +839,7 @@ function WeeklyReport({ allRefunds, loaded }) {
         {weeks.map((w,i)=>{ const cc=w.topReason?(CAT_COLORS[w.topReason]||CAT_COLORS.Other):null; return (
           <div key={i} style={{ borderRadius:13, padding:'14px 16px', background:w.isCurrentWeek?'rgba(161,117,252,0.07)':'rgba(255,255,255,0.025)', border:`1px solid ${w.isCurrentWeek?'rgba(161,117,252,0.22)':'rgba(255,255,255,0.06)'}`, boxShadow:w.isCurrentWeek?'0 0 20px rgba(161,117,252,0.06)':'none' }}>
             <div style={{ fontSize:10.5, fontWeight:700, color:w.isCurrentWeek?'#C3A3FF':'rgba(248,250,252,0.38)', letterSpacing:'.04em', marginBottom:10, textTransform:'uppercase' }}>{w.label}</div>
-            <div style={{ fontSize:24, fontWeight:800, color:w.refundCount===0?'#4ade80':'#F87171', letterSpacing:'-0.04em', marginBottom:2, fontVariantNumeric:'tabular-nums', textShadow:w.refundCount>0?'0 0 16px rgba(248,113,113,0.35)':'0 0 16px rgba(74,222,128,0.3)' }}>{w.refundCount}</div>
+            <div style={{ fontSize:24, fontWeight:800, color:w.refundCount===0?'#4ade80':'#F87171', letterSpacing:'-0.04em', marginBottom:2, fontVariantNumeric:'tabular-nums', textShadow:'none' }}>{w.refundCount}</div>
             <div style={{ fontSize:10, color:'rgba(248,250,252,0.28)', marginBottom:10 }}>refund{w.refundCount!==1?'s':''}</div>
             {w.refundCount>0&&<><div style={{ fontSize:12.5, fontWeight:700, color:'rgba(248,250,252,0.65)', fontVariantNumeric:'tabular-nums', marginBottom:8 }}>{fmtEur(w.totalAmount)} lost</div>{w.topReason&&<div style={{ marginBottom:4 }}><CatBadge cat={w.topReason} small/></div>}{w.topProduct&&<div style={{ fontSize:10, color:'rgba(248,250,252,0.28)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', marginTop:4 }} title={w.topProduct}>{w.topProduct}</div>}</>}
             {w.refundCount===0&&<div style={{ fontSize:10.5, color:'rgba(74,222,128,0.55)' }}>No refunds</div>}
@@ -945,11 +945,11 @@ export default function AnalyticsPage() {
           <div style={{ marginBottom:28, animation:'revealUp .5s ease-out 0s both' }}>
             <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
               <div>
-                <h1 style={{ fontSize:28, fontWeight:800, color:'#F8FAFC', letterSpacing:'-0.04em', lineHeight:1.15, marginBottom:5, textShadow:'0 0 40px rgba(161,117,252,0.25)' }}>Refund Intelligence</h1>
+                <h1 style={{ fontSize:28, fontWeight:800, color:'#F8FAFC', letterSpacing:'-0.04em', lineHeight:1.15, marginBottom:5, textShadow:'none' }}>Refund Intelligence</h1>
                 <p style={{ fontSize:12.5, color:'rgba(248,250,252,0.35)' }}>Where money is lost · {rangeLabel}</p>
               </div>
               <div style={{ display:'flex', alignItems:'center', gap:8, padding:'7px 16px', borderRadius:100, background:'rgba(255,255,255,0.04)', border:'1px solid rgba(255,255,255,0.08)', backdropFilter:'blur(10px)' }}>
-                {!allLoaded?<Spinner size={14}/>:<div style={{ width:6, height:6, borderRadius:'50%', background:'#4ade80', boxShadow:'0 0 10px rgba(74,222,128,0.8)', animation:'glowPulse 2s ease-in-out infinite' }}/>}
+                {!allLoaded?<Spinner size={14}/>:<div style={{ width:6, height:6, borderRadius:'50%', background:'#4ade80', boxShadow:'0 0 6px rgba(74,222,128,0.5)', animation:'glowPulse 2s ease-in-out infinite' }}/>}
                 <span style={{ fontSize:10.5, fontWeight:700, letterSpacing:'.09em', color:'rgba(248,250,252,0.4)', textTransform:'uppercase' }}>{allLoaded?'Live':'Loading…'}</span>
               </div>
             </div>

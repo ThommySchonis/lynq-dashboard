@@ -48,6 +48,10 @@ const CSS = `
     from { background-position:-400% 0; }
     to   { background-position:400% 0; }
   }
+  @keyframes spinArc {
+    from { stroke-dashoffset:94; }
+    to   { stroke-dashoffset:0; }
+  }
 
   .perf-root * { box-sizing:border-box; margin:0; padding:0; }
   .perf-root {
@@ -56,16 +60,20 @@ const CSS = `
   }
 
   .kpi-card {
-    background:rgba(255,255,255,0.03);
-    border:1px solid rgba(255,255,255,0.08);
+    background:rgba(255,255,255,0.052);
+    border:1px solid rgba(255,255,255,0.1);
     border-radius:12px;
     padding:20px 22px;
     position:relative;
     overflow:hidden;
-    transition:border-color .2s ease;
+    transition:border-color .2s ease, background .2s ease;
     cursor:default;
+    box-shadow:0 4px 28px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.08);
   }
-  .kpi-card:hover { border-color:rgba(255,255,255,0.15); }
+  .kpi-card:hover {
+    border-color:rgba(255,255,255,0.18);
+    background:rgba(255,255,255,0.07);
+  }
   .kpi-card .top-bar {
     position:absolute; top:0; left:0; right:0; height:2px;
     border-radius:12px 12px 0 0;
@@ -73,17 +81,39 @@ const CSS = `
   }
   .kpi-card:hover .top-bar { opacity:1; }
 
+  .rt-card {
+    background:rgba(255,255,255,0.052);
+    border:1px solid rgba(255,255,255,0.1);
+    border-radius:12px;
+    position:relative;
+    overflow:hidden;
+    transition:border-color .2s ease, background .2s ease;
+    cursor:default;
+    box-shadow:0 4px 28px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.08);
+  }
+  .rt-card:hover {
+    border-color:rgba(255,255,255,0.18);
+    background:rgba(255,255,255,0.07);
+  }
+  .rt-card .top-bar {
+    position:absolute; top:0; left:0; right:0; height:2px;
+    border-radius:12px 12px 0 0;
+    opacity:0; transition:opacity .25s ease;
+  }
+  .rt-card:hover .top-bar { opacity:1; }
+
   .panel {
-    background:rgba(255,255,255,0.028);
-    border:1px solid rgba(255,255,255,0.08);
+    background:rgba(255,255,255,0.042);
+    border:1px solid rgba(255,255,255,0.1);
     border-radius:12px;
     padding:24px;
     transition:border-color .2s ease;
+    box-shadow:0 4px 24px rgba(0,0,0,0.22);
   }
-  .panel:hover { border-color:rgba(255,255,255,0.13); }
+  .panel:hover { border-color:rgba(255,255,255,0.16); }
 
   .sk {
-    background:linear-gradient(90deg,rgba(255,255,255,0.04) 25%,rgba(255,255,255,0.08) 50%,rgba(255,255,255,0.04) 75%);
+    background:linear-gradient(90deg,rgba(255,255,255,0.04) 25%,rgba(255,255,255,0.09) 50%,rgba(255,255,255,0.04) 75%);
     background-size:400% 100%;
     animation:shimmer 1.8s ease-in-out infinite;
     border-radius:8px;
@@ -96,18 +126,18 @@ const CSS = `
   .range-pill:hover { opacity:.85; }
 
   .ch-row { transition:background .15s; border-radius:8px; padding:8px 0; }
-  .ch-row:hover { background:rgba(255,255,255,0.03); }
+  .ch-row:hover { background:rgba(255,255,255,0.04); }
 
   .perf-scroll::-webkit-scrollbar { width:3px; }
   .perf-scroll::-webkit-scrollbar-track { background:transparent; }
-  .perf-scroll::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.08); border-radius:2px; }
+  .perf-scroll::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.1); border-radius:2px; }
 `
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function fmtNum(n) { return Math.round(n).toLocaleString('en-US') }
 
 function fmtMinutes(mins) {
-  if (mins === null || mins === undefined) return '—'
+  if (mins === null || mins === undefined) return null
   if (mins < 60) return `${Math.round(mins)}m`
   if (mins < 24 * 60) {
     const h = Math.floor(mins / 60)
@@ -160,8 +190,9 @@ function getDateRange(id) {
 function PageBackground() {
   return (
     <div aria-hidden style={{ position:'absolute', inset:0, overflow:'hidden', pointerEvents:'none', zIndex:0 }}>
-      <div style={{ position:'absolute', top:'-8%', right:'10%', width:700, height:500, borderRadius:'50%', background:'radial-gradient(ellipse,rgba(161,117,252,0.065) 0%,transparent 70%)', filter:'blur(70px)' }}/>
-      <div style={{ position:'absolute', bottom:'15%', left:'0%', width:500, height:400, borderRadius:'50%', background:'radial-gradient(ellipse,rgba(74,222,128,0.03) 0%,transparent 70%)', filter:'blur(70px)' }}/>
+      <div style={{ position:'absolute', top:'-5%', right:'5%', width:750, height:550, borderRadius:'50%', background:'radial-gradient(ellipse,rgba(161,117,252,0.08) 0%,transparent 68%)', filter:'blur(80px)' }}/>
+      <div style={{ position:'absolute', top:'30%', left:'-5%', width:600, height:450, borderRadius:'50%', background:'radial-gradient(ellipse,rgba(161,117,252,0.04) 0%,transparent 70%)', filter:'blur(90px)' }}/>
+      <div style={{ position:'absolute', bottom:'10%', right:'20%', width:400, height:300, borderRadius:'50%', background:'radial-gradient(ellipse,rgba(74,222,128,0.03) 0%,transparent 70%)', filter:'blur(60px)' }}/>
     </div>
   )
 }
@@ -169,10 +200,14 @@ function PageBackground() {
 // ─── Section divider ──────────────────────────────────────────────────────────
 function SectionDivider({ title, marginTop = 8 }) {
   return (
-    <div style={{ display:'flex', alignItems:'center', gap:14, marginBottom:18, marginTop, animation:'fadeIn .3s ease-out both' }}>
-      <div style={{ height:1, flex:1, background:'rgba(255,255,255,0.07)' }}/>
-      <span style={{ fontSize:10.5, fontWeight:700, letterSpacing:'.12em', color:'rgba(248,250,252,0.28)', textTransform:'uppercase', flexShrink:0 }}>{title}</span>
-      <div style={{ height:1, flex:1, background:'rgba(255,255,255,0.07)' }}/>
+    <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:20, marginTop, animation:'fadeIn .3s ease-out both' }}>
+      <div style={{ height:1, flex:1, background:'rgba(255,255,255,0.08)' }}/>
+      <div style={{ display:'flex', alignItems:'center', gap:7 }}>
+        <div style={{ width:5, height:5, borderRadius:'50%', background:'#A175FC', opacity:.55, flexShrink:0 }}/>
+        <span style={{ fontSize:10.5, fontWeight:700, letterSpacing:'.14em', color:'rgba(248,250,252,0.32)', textTransform:'uppercase', flexShrink:0 }}>{title}</span>
+        <div style={{ width:5, height:5, borderRadius:'50%', background:'#A175FC', opacity:.55, flexShrink:0 }}/>
+      </div>
+      <div style={{ height:1, flex:1, background:'rgba(255,255,255,0.08)' }}/>
     </div>
   )
 }
@@ -227,16 +262,16 @@ function WorkloadKPIs({ data, loaded }) {
       {cards.map(c => (
         <div key={c.label} className="kpi-card" style={{ animation:'fadeIn .3s ease-out both' }}>
           <div className="top-bar" style={{ background:c.grad }}/>
-          <div style={{ position:'absolute', inset:0, background:`radial-gradient(circle at 100% 0%,${c.accent}08 0%,transparent 60%)`, borderRadius:12, pointerEvents:'none' }}/>
-          <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:14, position:'relative', zIndex:1 }}>
-            <div style={{ width:36, height:36, borderRadius:10, background:`${c.accent}18`, display:'flex', alignItems:'center', justifyContent:'center', color:c.accent }}>{c.icon}</div>
+          <div style={{ position:'absolute', inset:0, background:`radial-gradient(circle at 100% 0%,${c.accent}0d 0%,transparent 55%)`, borderRadius:12, pointerEvents:'none' }}/>
+          <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:16, position:'relative', zIndex:1 }}>
+            <div style={{ width:38, height:38, borderRadius:10, background:`${c.accent}1a`, border:`1px solid ${c.accent}20`, display:'flex', alignItems:'center', justifyContent:'center', color:c.accent }}>{c.icon}</div>
             {c.badge && (
-              <span style={{ fontSize:10, fontWeight:800, color:c.badge.color, background:`${c.badge.color}14`, border:`1px solid ${c.badge.color}25`, borderRadius:6, padding:'2px 7px', letterSpacing:'.03em', fontVariantNumeric:'tabular-nums' }}>{c.badge.value}</span>
+              <span style={{ fontSize:10, fontWeight:800, color:c.badge.color, background:`${c.badge.color}14`, border:`1px solid ${c.badge.color}28`, borderRadius:6, padding:'2px 8px', letterSpacing:'.03em', fontVariantNumeric:'tabular-nums' }}>{c.badge.value}</span>
             )}
           </div>
-          <div style={{ fontSize:27, fontWeight:800, letterSpacing:'-0.04em', color:c.accent, lineHeight:1, marginBottom:5, fontVariantNumeric:'tabular-nums', position:'relative', zIndex:1 }}>{c.value}</div>
-          <div style={{ fontSize:9.5, fontWeight:700, letterSpacing:'.1em', color:'rgba(248,250,252,0.32)', textTransform:'uppercase', marginBottom:4, position:'relative', zIndex:1 }}>{c.label}</div>
-          <div style={{ fontSize:11, color:'rgba(248,250,252,0.25)', lineHeight:1.4, position:'relative', zIndex:1 }}>{c.sub}</div>
+          <div style={{ fontSize:28, fontWeight:800, letterSpacing:'-0.04em', color:c.accent, lineHeight:1, marginBottom:5, fontVariantNumeric:'tabular-nums', position:'relative', zIndex:1 }}>{c.value}</div>
+          <div style={{ fontSize:9.5, fontWeight:700, letterSpacing:'.11em', color:'rgba(248,250,252,0.35)', textTransform:'uppercase', marginBottom:4, position:'relative', zIndex:1 }}>{c.label}</div>
+          <div style={{ fontSize:11, color:'rgba(248,250,252,0.28)', lineHeight:1.5, position:'relative', zIndex:1 }}>{c.sub}</div>
         </div>
       ))}
     </div>
@@ -268,13 +303,13 @@ function WeeklyChart({ weekly, loaded }) {
     <div className="panel" style={{ marginBottom:24, animation:'fadeIn .3s ease-out both' }}>
       <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:18 }}>
         <div>
-          <div style={{ fontSize:13, fontWeight:600, color:'#F8FAFC', marginBottom:3 }}>Weekly ticket volume</div>
-          <div style={{ fontSize:11, color:'rgba(248,250,252,0.32)' }}>Created vs closed per week</div>
+          <div style={{ fontSize:13, fontWeight:700, color:'#F8FAFC', marginBottom:3 }}>Weekly ticket volume</div>
+          <div style={{ fontSize:11, color:'rgba(248,250,252,0.35)' }}>Created vs closed per week</div>
         </div>
         <div style={{ display:'flex', gap:18 }}>
           {[['#A175FC','Created'],['#4ade80','Closed']].map(([color, label]) => (
             <span key={label} style={{ display:'flex', alignItems:'center', gap:6, fontSize:11, color:'rgba(248,250,252,0.4)' }}>
-              <span style={{ width:10, height:10, borderRadius:3, background:color, display:'inline-block', opacity:.7 }}/>{label}
+              <span style={{ width:10, height:10, borderRadius:3, background:color, display:'inline-block', opacity:.75 }}/>{label}
             </span>
           ))}
         </div>
@@ -283,25 +318,24 @@ function WeeklyChart({ weekly, loaded }) {
         <svg width={totalW} height={PAD_TOP + BAR_H + PAD_BOT} style={{ display:'block', minWidth:'100%', overflow:'visible' }}>
           {gridPcts.map(p => {
             const y = PAD_TOP + BAR_H - p * BAR_H
-            return <line key={p} x1={0} y1={y} x2={totalW} y2={y} stroke={p === 1 ? 'rgba(255,255,255,0.09)' : 'rgba(255,255,255,0.04)'} strokeWidth={1} strokeDasharray={p === 1 ? '0' : '3 4'}/>
+            return <line key={p} x1={0} y1={y} x2={totalW} y2={y} stroke={p === 1 ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.05)'} strokeWidth={1} strokeDasharray={p === 1 ? '0' : '3 4'}/>
           })}
           {weekly.map((w, i) => {
             const x = i * colW + 9
             const isHov = hoveredIdx === i
-            const cH = barH(w.created), clH = barH(w.closed)
             return (
               <g key={i} onMouseEnter={() => setHoveredIdx(i)} onMouseLeave={() => setHoveredIdx(null)} style={{ cursor:'default' }}>
                 <rect x={x - 4} y={PAD_TOP} width={barW * 2 + barGap + 8} height={BAR_H} fill="transparent"/>
-                <rect x={x} y={barY(w.created)} width={barW} height={Math.max(cH, 2)} rx={3} fill={isHov ? 'rgba(161,117,252,0.75)' : 'rgba(161,117,252,0.45)'} style={{ transition:'fill .15s' }}/>
-                <rect x={x + barW + barGap} y={barY(w.closed)} width={barW} height={Math.max(clH, 2)} rx={3} fill={isHov ? 'rgba(74,222,128,0.75)' : 'rgba(74,222,128,0.45)'} style={{ transition:'fill .15s' }}/>
+                <rect x={x} y={barY(w.created)} width={barW} height={Math.max(barH(w.created), 2)} rx={3} fill={isHov ? 'rgba(161,117,252,0.8)' : 'rgba(161,117,252,0.5)'} style={{ transition:'fill .15s' }}/>
+                <rect x={x + barW + barGap} y={barY(w.closed)} width={barW} height={Math.max(barH(w.closed), 2)} rx={3} fill={isHov ? 'rgba(74,222,128,0.8)' : 'rgba(74,222,128,0.5)'} style={{ transition:'fill .15s' }}/>
                 {isHov && (
                   <g>
-                    <rect x={x - 6} y={PAD_TOP - 36} width={60} height={30} rx={5} fill="#1e1040" stroke="rgba(255,255,255,0.12)" strokeWidth={1}/>
-                    <text x={x + 24} y={PAD_TOP - 24} textAnchor="middle" fill="#A175FC" fontSize={10} fontWeight="700">{w.created}</text>
-                    <text x={x + 24} y={PAD_TOP - 13} textAnchor="middle" fill="#4ade80" fontSize={10} fontWeight="700">{w.closed}</text>
+                    <rect x={x - 6} y={PAD_TOP - 38} width={62} height={32} rx={6} fill="#1a0d35" stroke="rgba(255,255,255,0.14)" strokeWidth={1}/>
+                    <text x={x + 25} y={PAD_TOP - 25} textAnchor="middle" fill="#A175FC" fontSize={10} fontWeight="700">{w.created} created</text>
+                    <text x={x + 25} y={PAD_TOP - 13} textAnchor="middle" fill="#4ade80" fontSize={10} fontWeight="700">{w.closed} closed</text>
                   </g>
                 )}
-                <text x={x + barW + barGap / 2} y={PAD_TOP + BAR_H + 16} textAnchor="middle" fill="rgba(248,250,252,0.28)" fontSize={9}>{w.label}</text>
+                <text x={x + barW + barGap / 2} y={PAD_TOP + BAR_H + 16} textAnchor="middle" fill="rgba(248,250,252,0.3)" fontSize={9}>{w.label}</text>
               </g>
             )
           })}
@@ -313,14 +347,14 @@ function WeeklyChart({ weekly, loaded }) {
 
 // ─── Response Times ───────────────────────────────────────────────────────────
 function getFirstResponseStatus(mins) {
-  if (!mins) return { color:'rgba(248,250,252,0.35)', grad:'linear-gradient(135deg,rgba(255,255,255,0.15),rgba(255,255,255,0.05))', label:'No data' }
+  if (mins == null) return { color:'rgba(248,250,252,0.3)', grad:'linear-gradient(135deg,rgba(255,255,255,0.18),rgba(255,255,255,0.06))', label:'No data' }
   if (mins < 240)  return { color:'#4ade80', grad:'linear-gradient(135deg,#4ade80,#86efac)', label:'Excellent' }
   if (mins < 720)  return { color:'#fbbf24', grad:'linear-gradient(135deg,#fbbf24,#fde68a)', label:'Average' }
   return { color:'#f87171', grad:'linear-gradient(135deg,#f87171,#fca5a5)', label:'Slow' }
 }
 
 function getResolutionStatus(mins) {
-  if (!mins) return { color:'rgba(248,250,252,0.35)', grad:'linear-gradient(135deg,rgba(255,255,255,0.15),rgba(255,255,255,0.05))', label:'No data' }
+  if (mins == null) return { color:'rgba(248,250,252,0.3)', grad:'linear-gradient(135deg,rgba(255,255,255,0.18),rgba(255,255,255,0.06))', label:'No data' }
   if (mins < 1440) return { color:'#4ade80', grad:'linear-gradient(135deg,#4ade80,#86efac)', label:'Excellent' }
   if (mins < 4320) return { color:'#fbbf24', grad:'linear-gradient(135deg,#fbbf24,#fde68a)', label:'Average' }
   return { color:'#f87171', grad:'linear-gradient(135deg,#f87171,#fca5a5)', label:'Slow' }
@@ -330,9 +364,10 @@ function ResponseTimesSection({ data, loaded }) {
   if (!loaded) return (
     <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16, marginBottom:24 }}>
       {[0,1].map(i => (
-        <div key={i} className="kpi-card" style={{ padding:'24px 24px 22px' }}>
+        <div key={i} className="rt-card" style={{ padding:'26px 26px 22px' }}>
           <div className="sk" style={{ height:11, width:'45%', marginBottom:20 }}/>
-          <div className="sk" style={{ height:44, width:'50%', marginBottom:10 }}/>
+          <div className="sk" style={{ height:48, width:'52%', marginBottom:10 }}/>
+          <div className="sk" style={{ height:1, marginBottom:14 }}/>
           <div className="sk" style={{ height:9, width:'65%' }}/>
         </div>
       ))}
@@ -341,20 +376,22 @@ function ResponseTimesSection({ data, loaded }) {
 
   const frStatus  = getFirstResponseStatus(data.avgFirstResponse)
   const resStatus = getResolutionStatus(data.avgResolution)
+  const frValue   = fmtMinutes(data.avgFirstResponse)
+  const resValue  = fmtMinutes(data.avgResolution)
 
   const cards = [
     {
       label:     'First Response Time',
-      value:     fmtMinutes(data.avgFirstResponse),
-      sub:       data.firstResponseSample ? `Based on ${data.firstResponseSample} tickets` : 'No tickets with response data',
+      value:     frValue,
+      sub:       data.firstResponseSample ? `Based on ${data.firstResponseSample} tickets` : 'No tickets with response data yet',
       benchmark: '< 4h target',
       status:    frStatus,
       icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>,
     },
     {
       label:     'Resolution Time',
-      value:     fmtMinutes(data.avgResolution),
-      sub:       data.resolutionSample ? `Based on ${data.resolutionSample} closed tickets` : 'No closed tickets in range',
+      value:     resValue,
+      sub:       data.resolutionSample ? `Based on ${data.resolutionSample} closed tickets` : 'No closed tickets in this range',
       benchmark: '< 24h target',
       status:    resStatus,
       icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>,
@@ -363,22 +400,57 @@ function ResponseTimesSection({ data, loaded }) {
 
   return (
     <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16, marginBottom:24, animation:'fadeIn .3s ease-out both' }}>
-      {cards.map(c => (
-        <div key={c.label} className="kpi-card" style={{ padding:'24px 24px 22px' }}>
-          <div className="top-bar" style={{ background:c.status.grad }}/>
-          <div style={{ position:'absolute', inset:0, background:`radial-gradient(circle at 100% 0%,${c.status.color}08 0%,transparent 60%)`, borderRadius:12, pointerEvents:'none' }}/>
-          <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:18, position:'relative', zIndex:1 }}>
-            <div style={{ width:40, height:40, borderRadius:10, background:`${c.status.color}18`, display:'flex', alignItems:'center', justifyContent:'center', color:c.status.color }}>{c.icon}</div>
-            <span style={{ fontSize:10, fontWeight:800, color:c.status.color, background:`${c.status.color}14`, border:`1px solid ${c.status.color}25`, borderRadius:6, padding:'3px 9px', letterSpacing:'.04em' }}>{c.status.label}</span>
+      {cards.map(c => {
+        const noData = c.value === null
+        return (
+          <div key={c.label} className="rt-card" style={{ padding:'26px 26px 22px' }}>
+            <div className="top-bar" style={{ background:c.status.grad }}/>
+            <div style={{ position:'absolute', inset:0, background:`radial-gradient(circle at 100% 0%,${noData ? 'rgba(255,255,255,0.03)' : c.status.color + '09'} 0%,transparent 55%)`, borderRadius:12, pointerEvents:'none' }}/>
+
+            {noData ? (
+              /* ── No-data state ── */
+              <div style={{ display:'flex', alignItems:'center', gap:20, position:'relative', zIndex:1 }}>
+                {/* Dashed ring */}
+                <div style={{ width:64, height:64, borderRadius:'50%', border:'1.5px dashed rgba(255,255,255,0.12)', flexShrink:0, display:'flex', alignItems:'center', justifyContent:'center', position:'relative' }}>
+                  <div style={{ width:40, height:40, borderRadius:'50%', background:'rgba(255,255,255,0.04)', display:'flex', alignItems:'center', justifyContent:'center', color:'rgba(248,250,252,0.2)' }}>
+                    {c.icon}
+                  </div>
+                </div>
+                {/* Text */}
+                <div>
+                  <div style={{ fontSize:9.5, fontWeight:700, letterSpacing:'.12em', color:'rgba(248,250,252,0.28)', textTransform:'uppercase', marginBottom:7 }}>{c.label}</div>
+                  <div style={{ fontSize:14, fontWeight:700, color:'rgba(248,250,252,0.25)', marginBottom:5 }}>No data yet</div>
+                  <div style={{ fontSize:11, color:'rgba(248,250,252,0.18)', lineHeight:1.5, marginBottom:10 }}>{c.sub}</div>
+                  <div style={{ display:'inline-flex', alignItems:'center', gap:5, fontSize:10.5, color:'rgba(248,250,252,0.22)', background:'rgba(255,255,255,0.05)', border:'1px solid rgba(255,255,255,0.08)', borderRadius:6, padding:'2px 9px' }}>
+                    <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    {c.benchmark}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              /* ── Has data state ── */
+              <div style={{ position:'relative', zIndex:1 }}>
+                {/* Icon + badge row */}
+                <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:20 }}>
+                  <div style={{ width:40, height:40, borderRadius:10, background:`${c.status.color}1a`, border:`1px solid ${c.status.color}22`, display:'flex', alignItems:'center', justifyContent:'center', color:c.status.color }}>{c.icon}</div>
+                  <span style={{ fontSize:10, fontWeight:800, color:c.status.color, background:`${c.status.color}15`, border:`1px solid ${c.status.color}28`, borderRadius:6, padding:'3px 10px', letterSpacing:'.04em' }}>{c.status.label}</span>
+                </div>
+                {/* Value */}
+                <div style={{ fontSize:44, fontWeight:800, letterSpacing:'-0.05em', color:c.status.color, lineHeight:1, marginBottom:7, fontVariantNumeric:'tabular-nums' }}>{c.value}</div>
+                {/* Label */}
+                <div style={{ fontSize:9.5, fontWeight:700, letterSpacing:'.11em', color:'rgba(248,250,252,0.32)', textTransform:'uppercase', marginBottom:14 }}>{c.label}</div>
+                {/* Divider */}
+                <div style={{ height:1, background:'rgba(255,255,255,0.08)', marginBottom:12 }}/>
+                {/* Footer */}
+                <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+                  <div style={{ fontSize:11, color:'rgba(248,250,252,0.3)', lineHeight:1.4 }}>{c.sub}</div>
+                  <div style={{ fontSize:10.5, color:c.status.color, background:`${c.status.color}12`, border:`1px solid ${c.status.color}22`, borderRadius:6, padding:'2px 9px', flexShrink:0, marginLeft:14, whiteSpace:'nowrap' }}>{c.benchmark}</div>
+                </div>
+              </div>
+            )}
           </div>
-          <div style={{ fontSize:40, fontWeight:800, letterSpacing:'-0.04em', color:c.status.color, lineHeight:1, marginBottom:8, fontVariantNumeric:'tabular-nums', position:'relative', zIndex:1 }}>{c.value}</div>
-          <div style={{ fontSize:9.5, fontWeight:700, letterSpacing:'.1em', color:'rgba(248,250,252,0.32)', textTransform:'uppercase', marginBottom:8, position:'relative', zIndex:1 }}>{c.label}</div>
-          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', position:'relative', zIndex:1 }}>
-            <div style={{ fontSize:11, color:'rgba(248,250,252,0.25)', lineHeight:1.4 }}>{c.sub}</div>
-            <div style={{ fontSize:10.5, color:'rgba(248,250,252,0.22)', background:'rgba(255,255,255,0.04)', border:'1px solid rgba(255,255,255,0.07)', borderRadius:6, padding:'2px 8px', flexShrink:0, marginLeft:16, whiteSpace:'nowrap' }}>{c.benchmark}</div>
-          </div>
-        </div>
-      ))}
+        )
+      })}
     </div>
   )
 }
@@ -430,13 +502,13 @@ function ProductivityKPIs({ data, loaded }) {
       {cards.map(c => (
         <div key={c.label} className="kpi-card" style={{ animation:'fadeIn .3s ease-out both' }}>
           <div className="top-bar" style={{ background:c.grad }}/>
-          <div style={{ position:'absolute', inset:0, background:`radial-gradient(circle at 100% 0%,${c.accent}08 0%,transparent 60%)`, borderRadius:12, pointerEvents:'none' }}/>
-          <div style={{ marginBottom:14, position:'relative', zIndex:1 }}>
-            <div style={{ width:36, height:36, borderRadius:10, background:`${c.accent}18`, display:'flex', alignItems:'center', justifyContent:'center', color:c.accent }}>{c.icon}</div>
+          <div style={{ position:'absolute', inset:0, background:`radial-gradient(circle at 100% 0%,${c.accent}0d 0%,transparent 55%)`, borderRadius:12, pointerEvents:'none' }}/>
+          <div style={{ marginBottom:16, position:'relative', zIndex:1 }}>
+            <div style={{ width:38, height:38, borderRadius:10, background:`${c.accent}1a`, border:`1px solid ${c.accent}20`, display:'flex', alignItems:'center', justifyContent:'center', color:c.accent }}>{c.icon}</div>
           </div>
-          <div style={{ fontSize:27, fontWeight:800, letterSpacing:'-0.04em', color:c.accent, lineHeight:1, marginBottom:5, fontVariantNumeric:'tabular-nums', position:'relative', zIndex:1 }}>{c.value}</div>
-          <div style={{ fontSize:9.5, fontWeight:700, letterSpacing:'.1em', color:'rgba(248,250,252,0.32)', textTransform:'uppercase', marginBottom:4, position:'relative', zIndex:1 }}>{c.label}</div>
-          <div style={{ fontSize:11, color:'rgba(248,250,252,0.25)', lineHeight:1.4, position:'relative', zIndex:1 }}>{c.sub}</div>
+          <div style={{ fontSize:28, fontWeight:800, letterSpacing:'-0.04em', color:c.accent, lineHeight:1, marginBottom:5, fontVariantNumeric:'tabular-nums', position:'relative', zIndex:1 }}>{c.value}</div>
+          <div style={{ fontSize:9.5, fontWeight:700, letterSpacing:'.11em', color:'rgba(248,250,252,0.35)', textTransform:'uppercase', marginBottom:4, position:'relative', zIndex:1 }}>{c.label}</div>
+          <div style={{ fontSize:11, color:'rgba(248,250,252,0.28)', lineHeight:1.5, position:'relative', zIndex:1 }}>{c.sub}</div>
         </div>
       ))}
     </div>
@@ -463,18 +535,20 @@ function ChannelBreakdown({ channels, loaded }) {
 
   return (
     <div className="panel" style={{ marginBottom:24, animation:'fadeIn .3s ease-out both' }}>
-      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:16 }}>
+      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:18 }}>
         <div>
-          <div style={{ fontSize:13, fontWeight:600, color:'#F8FAFC', marginBottom:3 }}>Tickets by channel</div>
-          <div style={{ fontSize:11, color:'rgba(248,250,252,0.32)' }}>{total.toLocaleString()} tickets · this period</div>
+          <div style={{ fontSize:13, fontWeight:700, color:'#F8FAFC', marginBottom:3 }}>Tickets by channel</div>
+          <div style={{ fontSize:11, color:'rgba(248,250,252,0.35)' }}>{total.toLocaleString()} tickets · this period</div>
         </div>
       </div>
+      {/* Stacked bar */}
       <div style={{ display:'flex', height:7, borderRadius:5, overflow:'hidden', marginBottom:22, gap:1.5 }}>
         {channels.map(ch => {
           const color = CH_COLORS[ch.name.toLowerCase()] || 'rgba(248,250,252,0.2)'
-          return <div key={ch.name} style={{ flex:ch.pct, background:color, opacity:.65, minWidth:2 }}/>
+          return <div key={ch.name} style={{ flex:ch.pct, background:color, opacity:.7, minWidth:2 }}/>
         })}
       </div>
+      {/* Rows */}
       <div style={{ display:'flex', flexDirection:'column', gap:2 }}>
         {channels.map((ch, i) => {
           const color = CH_COLORS[ch.name.toLowerCase()] || 'rgba(248,250,252,0.2)'
@@ -482,16 +556,16 @@ function ChannelBreakdown({ channels, loaded }) {
             <div key={ch.name} className="ch-row" style={{ animation:`fadeIn .3s ease-out ${i * 60}ms both` }}>
               <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:7, paddingLeft:4, paddingRight:4 }}>
                 <div style={{ display:'flex', alignItems:'center', gap:9 }}>
-                  <div style={{ width:8, height:8, borderRadius:2, background:color, flexShrink:0, opacity:.8 }}/>
-                  <span style={{ fontSize:12.5, fontWeight:600, color:'rgba(248,250,252,0.72)' }}>{ch.name}</span>
+                  <div style={{ width:8, height:8, borderRadius:2, background:color, flexShrink:0, opacity:.85 }}/>
+                  <span style={{ fontSize:12.5, fontWeight:600, color:'rgba(248,250,252,0.75)' }}>{ch.name}</span>
                 </div>
                 <div style={{ display:'flex', alignItems:'center', gap:12 }}>
-                  <span style={{ fontSize:11, color:'rgba(248,250,252,0.28)', fontVariantNumeric:'tabular-nums' }}>{ch.count.toLocaleString()}</span>
+                  <span style={{ fontSize:11, color:'rgba(248,250,252,0.3)', fontVariantNumeric:'tabular-nums' }}>{ch.count.toLocaleString()}</span>
                   <span style={{ fontSize:12, fontWeight:800, color, minWidth:36, textAlign:'right', fontVariantNumeric:'tabular-nums' }}>{ch.pct}%</span>
                 </div>
               </div>
-              <div style={{ height:4, borderRadius:3, background:'rgba(255,255,255,0.05)', overflow:'hidden', marginLeft:4, marginRight:4 }}>
-                <div style={{ height:'100%', borderRadius:3, background:color, width:`${ch.pct}%`, opacity:.6, transition:'width .9s cubic-bezier(0.34,1.56,0.64,1)' }}/>
+              <div style={{ height:4, borderRadius:3, background:'rgba(255,255,255,0.06)', overflow:'hidden', marginLeft:4, marginRight:4 }}>
+                <div style={{ height:'100%', borderRadius:3, background:color, width:`${ch.pct}%`, opacity:.65, transition:'width .9s cubic-bezier(0.34,1.56,0.64,1)' }}/>
               </div>
             </div>
           )
@@ -582,66 +656,74 @@ export default function PerformancePage() {
         <div className="perf-scroll" style={{ flex:1, overflowY:'auto', padding:'40px 40px 60px', position:'relative', zIndex:1, maxWidth:1200, margin:'0 auto', width:'100%' }}>
 
           {/* Header */}
-          <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:32, animation:'fadeIn .3s ease-out both', flexWrap:'wrap', gap:12 }}>
+          <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:36, animation:'fadeIn .3s ease-out both', flexWrap:'wrap', gap:12 }}>
             <div>
-              <h1 style={{ fontSize:22, fontWeight:800, letterSpacing:'-0.03em', color:'#F8FAFC', marginBottom:4 }}>Performance</h1>
-              <p style={{ fontSize:13, color:'rgba(248,250,252,0.35)', lineHeight:1.5 }}>Customer support metrics · Gorgias</p>
+              <h1 style={{ fontSize:22, fontWeight:800, letterSpacing:'-0.03em', color:'#F8FAFC', marginBottom:5 }}>Performance</h1>
+              <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                <div style={{ width:6, height:6, borderRadius:'50%', background:'#A175FC', opacity:.6 }}/>
+                <p style={{ fontSize:13, color:'rgba(248,250,252,0.38)', lineHeight:1.5 }}>Customer support metrics · Gorgias</p>
+              </div>
             </div>
             <div style={{ display:'flex', alignItems:'center', gap:5, flexWrap:'wrap' }}>
               {RANGES.map(r => (
                 <button key={r.id} onClick={() => selectRange(r.id)} className="range-pill"
                   style={{
-                    background: dateRange === r.id ? 'rgba(161,117,252,0.18)' : 'rgba(255,255,255,0.05)',
-                    color:      dateRange === r.id ? '#C3A3FF' : 'rgba(248,250,252,0.4)',
-                    boxShadow:  dateRange === r.id ? 'inset 0 0 0 1px rgba(161,117,252,0.4)' : 'inset 0 0 0 1px rgba(255,255,255,0.08)',
+                    background: dateRange === r.id ? 'rgba(161,117,252,0.18)' : 'rgba(255,255,255,0.06)',
+                    color:      dateRange === r.id ? '#C3A3FF' : 'rgba(248,250,252,0.42)',
+                    boxShadow:  dateRange === r.id ? 'inset 0 0 0 1px rgba(161,117,252,0.4)' : 'inset 0 0 0 1px rgba(255,255,255,0.09)',
                   }}>{r.label}</button>
               ))}
               {dateRange === 'custom' && (
                 <div style={{ display:'flex', alignItems:'center', gap:6, marginLeft:2 }}>
-                  <input type="date" style={{ padding:'5px 10px', background:'rgba(255,255,255,0.06)', border:'1px solid rgba(255,255,255,0.1)', borderRadius:8, color:'#F8FAFC', fontSize:12, fontFamily:'inherit' }} value={customFrom} max={customTo||undefined} onChange={e => { setCustomFrom(e.target.value); applyCustomRange(e.target.value, customTo) }}/>
+                  <input type="date" style={{ padding:'5px 10px', background:'rgba(255,255,255,0.07)', border:'1px solid rgba(255,255,255,0.12)', borderRadius:8, color:'#F8FAFC', fontSize:12, fontFamily:'inherit' }} value={customFrom} max={customTo||undefined} onChange={e => { setCustomFrom(e.target.value); applyCustomRange(e.target.value, customTo) }}/>
                   <span style={{ fontSize:11, color:'rgba(248,250,252,0.25)' }}>→</span>
-                  <input type="date" style={{ padding:'5px 10px', background:'rgba(255,255,255,0.06)', border:'1px solid rgba(255,255,255,0.1)', borderRadius:8, color:'#F8FAFC', fontSize:12, fontFamily:'inherit' }} value={customTo} min={customFrom||undefined} max={new Date().toISOString().slice(0,10)} onChange={e => { setCustomTo(e.target.value); applyCustomRange(customFrom, e.target.value) }}/>
+                  <input type="date" style={{ padding:'5px 10px', background:'rgba(255,255,255,0.07)', border:'1px solid rgba(255,255,255,0.12)', borderRadius:8, color:'#F8FAFC', fontSize:12, fontFamily:'inherit' }} value={customTo} min={customFrom||undefined} max={new Date().toISOString().slice(0,10)} onChange={e => { setCustomTo(e.target.value); applyCustomRange(customFrom, e.target.value) }}/>
                 </div>
               )}
               {!demoMode && (
-                <button onClick={loadDemo} style={{ padding:'5px 14px', borderRadius:100, background:'rgba(161,117,252,0.1)', border:'1px solid rgba(161,117,252,0.22)', color:'#C3A3FF', fontSize:12, fontWeight:600, cursor:'pointer', fontFamily:'inherit' }}>Preview demo</button>
+                <button onClick={loadDemo} style={{ padding:'5px 14px', borderRadius:100, background:'rgba(161,117,252,0.12)', border:'1px solid rgba(161,117,252,0.25)', color:'#C3A3FF', fontSize:12, fontWeight:600, cursor:'pointer', fontFamily:'inherit' }}>Preview demo</button>
               )}
             </div>
           </div>
 
           {/* Demo banner */}
           {demoMode && (
-            <div style={{ display:'flex', alignItems:'center', gap:12, background:'rgba(251,146,60,0.07)', border:'1px solid rgba(251,146,60,0.18)', borderRadius:10, padding:'12px 18px', marginBottom:24, animation:'fadeIn .4s ease-out both' }}>
+            <div style={{ display:'flex', alignItems:'center', gap:12, background:'rgba(251,146,60,0.08)', border:'1px solid rgba(251,146,60,0.2)', borderRadius:10, padding:'13px 18px', marginBottom:28, animation:'fadeIn .4s ease-out both' }}>
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#FB923C" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-              <div style={{ flex:1 }}><span style={{ fontSize:12, fontWeight:700, color:'#FB923C', marginRight:8 }}>Demo mode</span><span style={{ fontSize:12, color:'rgba(248,250,252,0.42)' }}>Showing example data — connect Gorgias in Settings to see live metrics.</span></div>
+              <div style={{ flex:1 }}><span style={{ fontSize:12, fontWeight:700, color:'#FB923C', marginRight:8 }}>Demo mode</span><span style={{ fontSize:12, color:'rgba(248,250,252,0.45)' }}>Showing example data — connect Gorgias in Settings to see live metrics.</span></div>
               <button onClick={exitDemo} style={{ fontSize:11, fontWeight:600, color:'rgba(251,146,60,0.65)', background:'transparent', border:'none', cursor:'pointer', fontFamily:'inherit', whiteSpace:'nowrap' }}>Exit demo →</button>
             </div>
           )}
 
           {/* Gorgias not connected */}
           {!demoMode && allLoaded && !gorgiasOk && (
-            <div style={{ display:'flex', alignItems:'center', gap:12, background:'rgba(161,117,252,0.07)', border:'1px solid rgba(161,117,252,0.18)', borderRadius:10, padding:'12px 18px', marginBottom:24, animation:'fadeIn .4s ease-out both' }}>
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#A175FC" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-              <div style={{ flex:1 }}><span style={{ fontSize:12, fontWeight:700, color:'#A175FC', marginRight:8 }}>Gorgias not connected</span><span style={{ fontSize:12, color:'rgba(248,250,252,0.5)' }}>Go to Settings → Integrations to connect your Gorgias account.</span></div>
-              <button onClick={loadDemo} style={{ fontSize:11, fontWeight:700, color:'#C3A3FF', background:'rgba(161,117,252,0.12)', border:'1px solid rgba(161,117,252,0.25)', borderRadius:100, padding:'4px 12px', cursor:'pointer', fontFamily:'inherit', whiteSpace:'nowrap' }}>Preview demo</button>
+            <div style={{ display:'flex', alignItems:'center', gap:14, background:'rgba(161,117,252,0.08)', border:'1px solid rgba(161,117,252,0.2)', borderRadius:10, padding:'14px 20px', marginBottom:28, animation:'fadeIn .4s ease-out both' }}>
+              <div style={{ width:36, height:36, borderRadius:9, background:'rgba(161,117,252,0.15)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#A175FC" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+              </div>
+              <div style={{ flex:1 }}>
+                <div style={{ fontSize:13, fontWeight:700, color:'#C3A3FF', marginBottom:2 }}>Gorgias not connected</div>
+                <div style={{ fontSize:12, color:'rgba(248,250,252,0.45)' }}>Go to Settings → Integrations to connect your Gorgias account and start tracking live metrics.</div>
+              </div>
+              <button onClick={loadDemo} style={{ fontSize:11, fontWeight:700, color:'#C3A3FF', background:'rgba(161,117,252,0.15)', border:'1px solid rgba(161,117,252,0.3)', borderRadius:100, padding:'6px 14px', cursor:'pointer', fontFamily:'inherit', whiteSpace:'nowrap' }}>Preview demo</button>
             </div>
           )}
 
-          {/* Workload */}
+          {/* ── Workload ── */}
           <SectionDivider title="Workload"/>
           <WorkloadKPIs data={workload} loaded={loaded.workload}/>
           <WeeklyChart  weekly={workload.weekly} loaded={loaded.workload}/>
 
-          {/* Response Times */}
+          {/* ── Response Times ── */}
           <SectionDivider title="Response Times" marginTop={8}/>
           <ResponseTimesSection data={responseTimes} loaded={loaded.responseTimes}/>
 
-          {/* Productivity */}
+          {/* ── Productivity ── */}
           <SectionDivider title="Productivity" marginTop={8}/>
           <ProductivityKPIs data={productivity} loaded={loaded.productivity}/>
           <ChannelBreakdown channels={productivity.channels} loaded={loaded.productivity}/>
 
-          <div style={{ marginTop:20, textAlign:'center', fontSize:10.5, color:'rgba(248,250,252,0.1)', letterSpacing:'.04em' }}>
+          <div style={{ marginTop:24, textAlign:'center', fontSize:10.5, color:'rgba(248,250,252,0.1)', letterSpacing:'.05em' }}>
             Lynq Analytics · Gorgias data · Refreshed on load
           </div>
 

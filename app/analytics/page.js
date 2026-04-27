@@ -187,12 +187,7 @@ function useCountUp(target, loaded) {
 // ─── CSS ──────────────────────────────────────────────────────────────────────
 
 const CSS = `
-  @keyframes auroraA{0%,100%{transform:translate(0,0) scale(1);opacity:.7}33%{transform:translate(70px,-90px) scale(1.28);opacity:.9}66%{transform:translate(-50px,45px) scale(.88);opacity:.55}}
-  @keyframes auroraB{0%,100%{transform:translate(0,0) scale(1);opacity:.6}40%{transform:translate(-90px,65px) scale(1.22);opacity:.85}75%{transform:translate(55px,-40px) scale(.82);opacity:.45}}
-  @keyframes auroraC{0%,100%{transform:translate(0,0) scale(1);opacity:.5}55%{transform:translate(45px,80px) scale(1.18);opacity:.75}}
-  @keyframes auroraD{0%,100%{transform:translate(0,0) scale(1);opacity:.55}45%{transform:translate(-60px,-55px) scale(1.3);opacity:.8}}
-  @keyframes auroraE{0%,100%{transform:translate(0,0) scale(1);opacity:.5}60%{transform:translate(80px,40px) scale(1.2);opacity:.75}}
-  @keyframes revealUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
   @keyframes shimmer{from{background-position:-400% 0}to{background-position:400% 0}}
   @keyframes spin{to{transform:rotate(360deg)}}
   @keyframes growX{from{transform:scaleX(0)}to{transform:scaleX(1)}}
@@ -212,27 +207,27 @@ const CSS = `
 
   .kpi-card{
     background:rgba(255,255,255,0.03);
-    border:1px solid rgba(255,255,255,0.07);
-    border-radius:18px;padding:22px 24px;
+    border:1px solid rgba(255,255,255,0.08);
+    border-radius:12px;padding:20px 22px;
     position:relative;overflow:hidden;
-    transition:transform .25s ease,box-shadow .25s ease,border-color .25s ease;
+    transition:border-color .2s ease;
     cursor:default;
   }
-  .kpi-card:hover{transform:translateY(-4px);border-color:rgba(161,117,252,0.25);box-shadow:0 20px 60px rgba(0,0,0,.35)}
+  .kpi-card:hover{border-color:rgba(255,255,255,0.15)}
   .kpi-card .top-bar{position:absolute;top:0;left:0;right:0;height:2px;opacity:0;transition:opacity .25s ease}
   .kpi-card:hover .top-bar{opacity:1}
   .kpi-glow{text-shadow:none}
 
   .panel{
     background:rgba(255,255,255,0.028);
-    border:1px solid rgba(255,255,255,0.07);
-    border-radius:18px;padding:24px;
-    transition:border-color .25s ease,box-shadow .25s ease;
+    border:1px solid rgba(255,255,255,0.08);
+    border-radius:12px;padding:24px;
+    transition:border-color .2s ease;
   }
-  .panel:hover{border-color:rgba(255,255,255,0.11);box-shadow:0 8px 40px rgba(0,0,0,.2)}
+  .panel:hover{border-color:rgba(255,255,255,0.13)}
 
-  .action-card{border-radius:13px;background:rgba(255,255,255,0.022);border:1px solid rgba(255,255,255,0.06);padding:18px 20px;transition:background .2s,border-color .2s;cursor:default}
-  .action-card:hover{background:rgba(255,255,255,0.045);border-color:rgba(161,117,252,0.25)}
+  .action-card{border-radius:10px;background:rgba(255,255,255,0.022);border:1px solid rgba(255,255,255,0.07);padding:16px 18px;transition:background .2s,border-color .2s;cursor:default;border-left-width:3px}
+  .action-card:hover{background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.13)}
   .action-card.done-card{opacity:.45}
 
   .tab-btn{padding:6px 16px;border-radius:100px;font-size:11.5px;font-weight:700;cursor:pointer;border:none;font-family:inherit;letter-spacing:.02em;transition:all .15s ease}
@@ -261,17 +256,11 @@ const CSS = `
 
 // ─── Aurora + Grid ────────────────────────────────────────────────────────────
 
-function AuroraBackground() {
-  const blob = (style) => <div style={{ position:'absolute', borderRadius:'50%', filter:'blur(70px)', ...style }}/>
+function PageBackground() {
   return (
     <div aria-hidden style={{ position:'absolute', inset:0, overflow:'hidden', pointerEvents:'none', zIndex:0 }}>
-      {/* Grid overlay */}
-      <div style={{ position:'absolute', inset:0, backgroundImage:'linear-gradient(rgba(255,255,255,0.018) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.018) 1px,transparent 1px)', backgroundSize:'52px 52px', maskImage:'radial-gradient(ellipse 80% 60% at 50% 0%,black 40%,transparent 100%)', WebkitMaskImage:'radial-gradient(ellipse 80% 60% at 50% 0%,black 40%,transparent 100%)' }}/>
-      {blob({ top:'-8%', right:'10%',  width:800, height:700, background:'radial-gradient(ellipse,rgba(161,117,252,0.22) 0%,transparent 70%)', animation:'auroraA 22s ease-in-out infinite' })}
-      {blob({ bottom:'0%', left:'2%',  width:650, height:600, background:'radial-gradient(ellipse,rgba(255,107,53,0.13) 0%,transparent 70%)',  animation:'auroraB 28s ease-in-out infinite' })}
-      {blob({ top:'35%', right:'-5%', width:500, height:500, background:'radial-gradient(ellipse,rgba(34,211,238,0.08) 0%,transparent 70%)',  animation:'auroraC 33s ease-in-out infinite' })}
-      {blob({ top:'-5%', left:'20%',  width:450, height:400, background:'radial-gradient(ellipse,rgba(239,68,68,0.07) 0%,transparent 70%)',   animation:'auroraD 26s ease-in-out infinite' })}
-      {blob({ bottom:'20%', right:'30%', width:550, height:500, background:'radial-gradient(ellipse,rgba(192,132,252,0.1) 0%,transparent 70%)', animation:'auroraE 35s ease-in-out infinite' })}
+      <div style={{ position:'absolute', top:0, right:0, width:600, height:500, background:'radial-gradient(ellipse at top right,rgba(161,117,252,0.1) 0%,transparent 65%)', pointerEvents:'none' }}/>
+      <div style={{ position:'absolute', bottom:0, left:0, width:400, height:400, background:'radial-gradient(ellipse at bottom left,rgba(161,117,252,0.05) 0%,transparent 65%)', pointerEvents:'none' }}/>
     </div>
   )
 }
@@ -290,7 +279,7 @@ function AlertBanner({ rate, loaded }) {
   const border=isCrit?'rgba(239,68,68,0.3)':isHigh?'rgba(249,115,22,0.25)':'rgba(251,191,36,0.25)'
   const color=isCrit?'#f87171':isHigh?'#fb923c':'#fbbf24'
   return (
-    <div style={{ display:'flex', alignItems:'center', gap:12, background:bg, border:`1px solid ${border}`, borderRadius:14, padding:'13px 20px', marginBottom:24, animation:'revealUp .4s ease-out both', boxShadow:`0 0 30px ${isCrit?'rgba(239,68,68,0.08)':'rgba(249,115,22,0.06)'}` }}>
+    <div style={{ display:'flex', alignItems:'center', gap:12, background:bg, border:`1px solid ${border}`, borderRadius:10, padding:'13px 20px', marginBottom:24, animation:'fadeIn .4s ease-out both' }}>
       <div style={{ animation:'pulseRed 2s ease-in-out infinite', borderRadius:'50%', flexShrink:0 }}>
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
       </div>
@@ -343,7 +332,7 @@ function KpiRow({ kpis, prevKpis, refunds, loaded }) {
 
   if(!loaded.kpis&&!loaded.refunds) return (
     <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:16, marginBottom:28 }}>
-      {[0,1,2,3].map(i=><div key={i} className="kpi-card" style={{ animation:`revealUp .5s ease-out ${.1+i*.07}s both` }}><div className="sk" style={{ height:11, width:'55%', marginBottom:14 }}/><div className="sk" style={{ height:30, width:'70%', marginBottom:8 }}/><div className="sk" style={{ height:9, width:'85%' }}/></div>)}
+      {[0,1,2,3].map(i=><div key={i} className="kpi-card" style={{ animation:'fadeIn .3s ease-out both' }}><div className="sk" style={{ height:11, width:'55%', marginBottom:14 }}/><div className="sk" style={{ height:30, width:'70%', marginBottom:8 }}/><div className="sk" style={{ height:9, width:'85%' }}/></div>)}
     </div>
   )
 
@@ -361,9 +350,9 @@ function KpiRow({ kpis, prevKpis, refunds, loaded }) {
   return (
     <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:16, marginBottom:28 }}>
       {cards.map((c,i)=>(
-        <div key={c.label} className="kpi-card" style={{ animation:`revealUp .5s ease-out ${.1+i*.07}s both` }}>
+        <div key={c.label} className="kpi-card" style={{ animation:'fadeIn .3s ease-out both' }}>
           <div className="top-bar" style={{ background:c.grad }}/>
-          <div style={{ position:'absolute', inset:0, background:`radial-gradient(circle at 100% 0%,${c.accent}08 0%,transparent 60%)`, borderRadius:18, pointerEvents:'none' }}/>
+          <div style={{ position:'absolute', inset:0, background:`radial-gradient(circle at 100% 0%,${c.accent}08 0%,transparent 60%)`, borderRadius:12, pointerEvents:'none' }}/>
           <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:14 }}>
             <div style={{ width:36, height:36, borderRadius:10, background:`${c.accent}18`, display:'flex', alignItems:'center', justifyContent:'center', color:c.accent, boxShadow:'none' }}>{c.icon}</div>
             <DeltaBadge delta={loaded.prevKpis?c.delta:null} lowerIsBetter={c.lowerBetter}/>
@@ -390,7 +379,7 @@ function RevenueTrendChart({ trend, loaded, rangeLabel }) {
   const step=Math.ceil(trend.length/6)
   const xlbls=pts.filter((_,i)=>i===0||i%step===0||i===pts.length-1)
   return (
-    <div className="panel" style={{ marginBottom:24, animation:'revealUp .5s ease-out .28s both' }}>
+    <div className="panel" style={{ marginBottom:24, animation:'fadeIn .3s ease-out both' }}>
       <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:16 }}>
         <div><div style={{ fontSize:13, fontWeight:600, color:'#F8FAFC', marginBottom:3 }}>Revenue Trend</div><div style={{ fontSize:11, color:'rgba(248,250,252,0.35)' }}>{rangeLabel} · daily net revenue</div></div>
         <div style={{ fontSize:16, fontWeight:700, color:'#A175FC', letterSpacing:'-0.02em' }}>{fmtEur(tot)}</div>
@@ -541,7 +530,7 @@ function ActionBoard({ patternActions, aiInsights, noRefunds, loaded, onStatusCh
   const PRIO_BG={high:'rgba(248,113,113,0.1)',medium:'rgba(251,146,60,0.08)',low:'rgba(161,117,252,0.08)'}
 
   return (
-    <div className="panel" style={{ marginBottom:24, animation:'revealUp .5s ease-out .35s both' }}>
+    <div className="panel" style={{ marginBottom:24, animation:'fadeIn .3s ease-out both' }}>
       <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:20, flexWrap:'wrap', gap:12 }}>
         <div>
           <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:4 }}>
@@ -585,16 +574,12 @@ function ActionBoard({ patternActions, aiInsights, noRefunds, loaded, onStatusCh
           const pc=PRIO_C[item.priority]||'#94A3B8', pbg=PRIO_BG[item.priority]||'rgba(148,163,184,0.08)'
           const isDone=status==='done'
           return (
-            <div key={item.id} className={`action-card${isDone?' done-card':''}`}>
+            <div key={item.id} className={`action-card${isDone?' done-card':''}`} style={{ borderLeftColor:pc }}>
               <div style={{ display:'flex', alignItems:'flex-start', gap:12 }}>
-                <div style={{ width:8, height:8, borderRadius:'50%', background:pc, marginTop:6, flexShrink:0 }}/>
                 <div style={{ flex:1, minWidth:0 }}>
-                  <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:8, flexWrap:'wrap' }}>
-                    {item.type==='pattern'&&<span style={{ fontSize:9, fontWeight:800, letterSpacing:'.08em', color:'rgba(248,250,252,0.4)', background:'rgba(255,255,255,0.06)', borderRadius:100, padding:'2px 8px', textTransform:'uppercase', border:'1px solid rgba(255,255,255,0.08)' }}>DATA DETECTED</span>}
-                    {item.type==='ai'&&<span style={{ fontSize:9, fontWeight:800, letterSpacing:'.08em', color:'#A175FC', background:'rgba(161,117,252,0.08)', borderRadius:100, padding:'2px 8px', textTransform:'uppercase', border:'1px solid rgba(161,117,252,0.2)' }}>AI TASK</span>}
+                  <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:6, flexWrap:'wrap' }}>
                     <CatBadge cat={item.category} small/>
-                    <span style={{ fontSize:9.5, fontWeight:700, color:pc, background:pbg, borderRadius:100, padding:'1px 7px', textTransform:'uppercase', letterSpacing:'.06em' }}>{(item.priority||'low').toUpperCase()}</span>
-                    {item.type==='pattern'&&<span style={{ fontSize:10, color:'rgba(248,250,252,0.35)' }}>{item.refundCount}× · {fmtEur(item.totalAmount)} lost</span>}
+                    {item.type==='pattern'&&item.refundCount&&<span style={{ fontSize:10.5, color:'rgba(248,250,252,0.35)', fontVariantNumeric:'tabular-nums' }}>{item.refundCount}× · {fmtEur(item.totalAmount)} lost</span>}
                   </div>
                   <div style={{ fontSize:13.5, fontWeight:700, color:isDone?'rgba(248,250,252,0.4)':'#F8FAFC', marginBottom:6, lineHeight:1.35, textDecoration:isDone?'line-through':'none' }}>{item.title}</div>
                   <div style={{ fontSize:12, color:'rgba(248,250,252,0.5)', lineHeight:1.65, marginBottom:status!=='open'?10:0 }}>{item.action}</div>
@@ -627,7 +612,7 @@ function RefundTable({ refunds, loaded }) {
   const SortIco=({col})=>{ if(sortCol!==col)return<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.18)" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="2" x2="12" y2="22"/></svg>; return sortDir==='desc'?<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="rgba(248,250,252,.55)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>:<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="rgba(248,250,252,.55)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="18 15 12 9 6 15"/></svg> }
 
   return (
-    <div className="panel" style={{ marginBottom:24, animation:'revealUp .5s ease-out .45s both' }}>
+    <div className="panel" style={{ marginBottom:24, animation:'fadeIn .3s ease-out both' }}>
       <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:16, flexWrap:'wrap', gap:10 }}>
         <div><div style={{ fontSize:13, fontWeight:600, color:'#F8FAFC', marginBottom:3 }}>Refund History</div><div style={{ fontSize:11, color:'rgba(248,250,252,0.35)' }}>{loaded?`${filtered.length} of ${enriched.length} refund${enriched.length!==1?'s':''} · ${catFilter==='All'?'all categories':catFilter}`:'Loading…'}</div></div>
         {loaded&&enriched.length>0&&<div style={{ padding:'3px 12px', borderRadius:100, background:'rgba(239,68,68,0.08)', border:'1px solid rgba(239,68,68,0.2)', fontSize:11, fontWeight:700, color:'#EF4444' }}>{enriched.length} refunds</div>}
@@ -643,7 +628,7 @@ function RefundTable({ refunds, loaded }) {
 
       {loaded&&enriched.length===0&&(
         <div style={{ display:'flex', flexDirection:'column', alignItems:'center', padding:'48px 0', gap:12 }}>
-          <div style={{ width:48, height:48, borderRadius:14, background:'rgba(74,222,128,0.08)', display:'flex', alignItems:'center', justifyContent:'center', boxShadow:'0 0 20px rgba(74,222,128,0.12)' }}>
+          <div style={{ width:48, height:48, borderRadius:8, background:'rgba(74,222,128,0.08)', display:'flex', alignItems:'center', justifyContent:'center' }}>
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4ade80" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
           </div>
           <div style={{ textAlign:'center' }}><div style={{ fontSize:14, fontWeight:600, color:'rgba(248,250,252,0.7)', marginBottom:4 }}>No refunds this period</div><div style={{ fontSize:12, color:'rgba(248,250,252,0.28)' }}>Keep it up — no refunded orders found</div></div>
@@ -705,7 +690,7 @@ function ProductMatrix({ allRefunds, loaded }) {
   const maxAmt=Math.max(...products.map(p=>p.amount),1)
 
   return (
-    <div className="panel" style={{ marginBottom:24, animation:'revealUp .5s ease-out .5s both' }}>
+    <div className="panel" style={{ marginBottom:24, animation:'fadeIn .3s ease-out both' }}>
       <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:20 }}>
         <div><div style={{ fontSize:13, fontWeight:600, color:'#F8FAFC', marginBottom:3 }}>Product Refund Matrix</div><div style={{ fontSize:11, color:'rgba(248,250,252,0.35)' }}>All-time · products with 1+ refund · sorted by count</div></div>
         <div style={{ padding:'3px 12px', borderRadius:100, background:'rgba(161,117,252,0.08)', border:'1px solid rgba(161,117,252,0.2)', fontSize:11, fontWeight:700, color:'#A175FC' }}>{products.length} products</div>
@@ -785,11 +770,11 @@ function WeeklyReport({ allRefunds, loaded }) {
   )
   const weeks = buildWeeklyReport(allRefunds)
   return (
-    <div className="panel" style={{ marginBottom:24, animation:'revealUp .5s ease-out .65s both' }}>
+    <div className="panel" style={{ marginBottom:24, animation:'fadeIn .3s ease-out both' }}>
       <div style={{ marginBottom:18 }}><div style={{ fontSize:13, fontWeight:600, color:'#F8FAFC', marginBottom:3 }}>Weekly Overview</div><div style={{ fontSize:11, color:'rgba(248,250,252,0.35)' }}>Last 4 weeks (Sun–Sat) · all refunds</div></div>
       <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:12 }}>
         {weeks.map((w,i)=>{ const cc=w.topReason?(CAT_COLORS[w.topReason]||CAT_COLORS.Other):null; return (
-          <div key={i} style={{ borderRadius:13, padding:'14px 16px', background:w.isCurrentWeek?'rgba(161,117,252,0.07)':'rgba(255,255,255,0.025)', border:`1px solid ${w.isCurrentWeek?'rgba(161,117,252,0.22)':'rgba(255,255,255,0.06)'}`, boxShadow:w.isCurrentWeek?'0 0 20px rgba(161,117,252,0.06)':'none' }}>
+          <div key={i} style={{ borderRadius:10, padding:'14px 16px', background:w.isCurrentWeek?'rgba(161,117,252,0.07)':'rgba(255,255,255,0.025)', border:`1px solid ${w.isCurrentWeek?'rgba(161,117,252,0.22)':'rgba(255,255,255,0.06)'}` }}>
             <div style={{ fontSize:10.5, fontWeight:700, color:w.isCurrentWeek?'#C3A3FF':'rgba(248,250,252,0.38)', letterSpacing:'.04em', marginBottom:10, textTransform:'uppercase' }}>{w.label}</div>
             <div style={{ fontSize:24, fontWeight:800, color:w.refundCount===0?'#4ade80':'#F87171', letterSpacing:'-0.04em', marginBottom:2, fontVariantNumeric:'tabular-nums', textShadow:'none' }}>{w.refundCount}</div>
             <div style={{ fontSize:10, color:'rgba(248,250,252,0.28)', marginBottom:10 }}>refund{w.refundCount!==1?'s':''}</div>
@@ -909,11 +894,11 @@ export default function AnalyticsPage() {
       <style>{CSS}</style>
       <Sidebar/>
       <main className="an-scroll" style={{ flex:1, overflowY:'auto', padding:'36px 44px', position:'relative' }}>
-        <AuroraBackground/>
+        <PageBackground/>
         <div style={{ position:'relative', zIndex:1, maxWidth:1200, margin:'0 auto' }}>
 
           {/* Header */}
-          <div style={{ marginBottom:28, animation:'revealUp .5s ease-out 0s both' }}>
+          <div style={{ marginBottom:28, animation:'fadeIn .5s ease-out 0s both' }}>
             <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
               <div>
                 <h1 style={{ fontSize:28, fontWeight:800, color:'#F8FAFC', letterSpacing:'-0.04em', lineHeight:1.15, marginBottom:5, textShadow:'none' }}>Refund Intelligence</h1>
@@ -930,7 +915,7 @@ export default function AnalyticsPage() {
                 </div>
               </div>
             </div>
-            <div style={{ height:1, background:'linear-gradient(90deg,transparent,rgba(161,117,252,0.3),transparent)', margin:'20px 0 16px' }}/>
+            <div style={{ height:'1px', background:'rgba(255,255,255,0.07)', margin:'20px 0 16px' }}/>
             <div style={{ display:'flex', alignItems:'center', gap:6, flexWrap:'wrap' }}>
               {RANGES.map(r=>(
                 <button key={r.id} onClick={()=>selectRange(r.id)} className="range-pill" style={{ background:dateRange===r.id?'rgba(161,117,252,0.18)':'rgba(255,255,255,0.05)', color:dateRange===r.id?'#C3A3FF':'rgba(248,250,252,0.42)', boxShadow:dateRange===r.id?'inset 0 0 0 1px rgba(161,117,252,0.4),0 0 12px rgba(161,117,252,0.08)':'inset 0 0 0 1px rgba(255,255,255,0.08)' }}>{r.label}</button>
@@ -947,14 +932,14 @@ export default function AnalyticsPage() {
 
           {/* Sync / Demo banner */}
           {demoMode&&(
-            <div style={{ display:'flex', alignItems:'center', gap:12, background:'rgba(251,146,60,0.07)', border:'1px solid rgba(251,146,60,0.2)', borderRadius:14, padding:'12px 18px', marginBottom:24, animation:'revealUp .4s ease-out both' }}>
+            <div style={{ display:'flex', alignItems:'center', gap:12, background:'rgba(251,146,60,0.07)', border:'1px solid rgba(251,146,60,0.2)', borderRadius:10, padding:'12px 18px', marginBottom:24, animation:'fadeIn .4s ease-out both' }}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FB923C" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
               <div style={{ flex:1 }}><span style={{ fontSize:12, fontWeight:700, color:'#FB923C', marginRight:8 }}>Demo mode</span><span style={{ fontSize:12, color:'rgba(248,250,252,0.45)' }}>Showing example data — connect your Shopify store in Settings to see real insights.</span></div>
               <button onClick={exitDemo} style={{ fontSize:11, fontWeight:600, color:'rgba(251,146,60,0.7)', background:'transparent', border:'none', cursor:'pointer', fontFamily:'inherit', whiteSpace:'nowrap' }}>Exit demo →</button>
             </div>
           )}
           {!demoMode&&loaded.kpis&&kpis.needsSync&&(
-            <div style={{ display:'flex', alignItems:'center', gap:12, background:'rgba(161,117,252,0.07)', border:'1px solid rgba(161,117,252,0.18)', borderRadius:14, padding:'12px 18px', marginBottom:24, animation:'revealUp .4s ease-out both' }}>
+            <div style={{ display:'flex', alignItems:'center', gap:12, background:'rgba(161,117,252,0.07)', border:'1px solid rgba(161,117,252,0.18)', borderRadius:10, padding:'12px 18px', marginBottom:24, animation:'fadeIn .4s ease-out both' }}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#A175FC" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/></svg>
               <div style={{ flex:1 }}><span style={{ fontSize:12, fontWeight:700, color:'#A175FC', marginRight:8 }}>Sync required</span><span style={{ fontSize:12, color:'rgba(248,250,252,0.55)' }}>No order data found. Go to Settings → Shopify to sync your orders.</span></div>
               <button onClick={loadDemo} style={{ fontSize:11, fontWeight:700, color:'#C3A3FF', background:'rgba(161,117,252,0.12)', border:'1px solid rgba(161,117,252,0.25)', borderRadius:100, padding:'4px 12px', cursor:'pointer', fontFamily:'inherit', whiteSpace:'nowrap' }}>Preview demo data</button>
@@ -966,7 +951,7 @@ export default function AnalyticsPage() {
           <RevenueTrendChart trend={trend} loaded={loaded.trend} rangeLabel={rangeLabel}/>
 
           {/* Donut + Monthly side by side */}
-          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16, marginBottom:24, animation:'revealUp .5s ease-out .3s both' }}>
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16, marginBottom:24, animation:'fadeIn .3s ease-out both' }}>
             <DonutReasonChart refunds={refunds} loaded={loaded.refunds}/>
             <MonthlyTrendChart allRefunds={allRefunds} loaded={loaded.allRefunds}/>
           </div>
@@ -976,7 +961,7 @@ export default function AnalyticsPage() {
           <ProductMatrix allRefunds={allRefunds} loaded={loaded.allRefunds}/>
 
           {!noRefunds&&(
-            <div style={{ marginBottom:24, animation:'revealUp .5s ease-out .6s both' }}>
+            <div style={{ marginBottom:24, animation:'fadeIn .3s ease-out both' }}>
               <RefundReasons refunds={refunds} loaded={loaded.refunds}/>
             </div>
           )}

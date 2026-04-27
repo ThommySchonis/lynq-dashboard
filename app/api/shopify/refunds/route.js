@@ -23,32 +23,73 @@ export async function GET(request) {
   }
 
   try {
-    let url = `https://${client.domain}/admin/api/2025-04/orders.json?status=any&limit=250`
-    if (from) url += `&processed_at_min=${from}T00:00:00`
-    if (to)   url += `&processed_at_max=${to}T23:59:59`
+    // Filter by updated_at so we catch orders that were refunded in the requested period
+    // (e.g. a March order refunded in April shows up in April's data)
+    let nextUrl = `https://${client.domain}/admin/api/2025-04/orders.json?status=any&limit=250`
+    if (from) nextUrl += `&updated_at_min=${from}T00:00:00`
+    if (to)   nextUrl += `&updated_at_max=${to}T23:59:59`
 
-    const res = await fetch(url, { headers: { 'X-Shopify-Access-Token': client.accessToken } })
-    if (!res.ok) return NextResponse.json({ error: 'Shopify API error' }, { status: 502 })
-    const { orders } = await res.json()
+    const allOrders = []
 
-    const refunded = orders
+    // Paginate through all pages
+    while (nextUrl) {
+      const res = await fetch(nextUrl, {
+        headers: { 'X-Shopify-Access-Token': client.accessToken },
+      })
+
+      // Respect Shopify rate limiting
+      if (res.status === 429) {
+        const wait = parseInt(res.headers.get('Retry-After') || '2') * 1000
+        await new Promise(r => setTimeout(r, wait))
+        continue
+      }
+
+      if (!res.ok) return NextResponse.json({ error: 'Shopify API error' }, { status: 502 })
+
+      const data = await res.json()
+      allOrders.push(...(data.orders || []))
+
+      const link = res.headers.get('link')
+      const next = link?.match(/<([^>]+)>;\s*rel="next"/)
+      nextUrl = next ? next[1] : null
+    }
+
+    const fromTs = from ? `${from}T00:00:00` : null
+    const toTs   = to   ? `${to}T23:59:59`   : null
+
+    const refunded = allOrders
       .filter(o => o.refunds && o.refunds.length > 0)
-      .map(o => {
-        const orderTotal = parseFloat(o.total_price || 0)
+      .flatMap(o => {
+        const orderTotal = parseFloat(
+          o.total_price_set?.presentment_money?.amount || o.total_price || 0
+        )
 
-        // Sum all refund transaction amounts
-        const refundTotal = o.refunds.reduce((sum, r) =>
-          sum + (r.transactions || []).reduce((ts, t) => ts + parseFloat(t.amount || 0), 0), 0)
+        // Only include refunds whose created_at falls within the requested date range
+        const inRange = (o.refunds || []).filter(r => {
+          if (!fromTs && !toTs) return true
+          if (fromTs && r.created_at < fromTs) return false
+          if (toTs   && r.created_at > toTs)   return false
+          return true
+        })
 
-        // Collect refunded line items
-        const items = o.refunds.flatMap(r => r.refund_line_items || [])
+        if (inRange.length === 0) return []
+
+        const refundTotal = inRange.reduce((sum, r) =>
+          sum + (r.transactions || []).reduce((ts, t) =>
+            ts + parseFloat(t.amount_set?.presentment_money?.amount || t.amount || 0), 0), 0)
+
+        if (refundTotal <= 0) return []
+
+        const items = inRange.flatMap(r => r.refund_line_items || [])
         const productNames = [...new Set(items.map(i => i.line_item?.title).filter(Boolean))]
 
-        // Determine reason — use refund note, then cancel_reason
-        const refundNote = o.refunds.map(r => r.note).filter(Boolean).join('; ')
+        const refundNote = inRange.map(r => r.note).filter(Boolean).join('; ')
         const reason = refundNote || o.cancel_reason || null
 
-        return {
+        // Use the most recent refund's timestamp as refundedAt
+        const refundedAt = inRange.map(r => r.created_at).sort().at(-1)
+
+        return [{
           orderId: o.name,
           orderIdNumeric: o.id,
           customer: o.customer
@@ -61,8 +102,8 @@ export async function GET(request) {
           itemCount: items.reduce((s, i) => s + (i.quantity || 0), 0),
           products: productNames,
           reason,
-          refundedAt: o.refunds[0].created_at,
-        }
+          refundedAt,
+        }]
       })
       .sort((a, b) => new Date(b.refundedAt) - new Date(a.refundedAt))
 

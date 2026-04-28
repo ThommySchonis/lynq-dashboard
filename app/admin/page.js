@@ -24,6 +24,9 @@ export default function AdminPage() {
   const [teamForm, setTeamForm] = useState({ name: '', email: '', password: '', role: 'developer' })
   const [finance, setFinance] = useState(null)
   const [financeLoading, setFinanceLoading] = useState(false)
+  const [timeData, setTimeData] = useState(null)
+  const [timeLoading, setTimeLoading] = useState(false)
+  const [timeFilter, setTimeFilter] = useState('week')
   const [broadcastForm, setBroadcastForm] = useState({ title: '', body: '', type: 'update' })
   const [notifForm, setNotifForm] = useState({ title: '', body: '', type: 'info' })
   const [form, setForm] = useState({
@@ -56,6 +59,19 @@ export default function AdminPage() {
   async function fetchTeamMembers() {
     const { data } = await supabase.from('team_members').select('*').order('created_at', { ascending: false })
     if (data) setTeamMembers(data)
+  }
+
+  async function fetchTimeData(f = timeFilter) {
+    setTimeLoading(true)
+    const { data: { session } } = await supabase.auth.getSession()
+    const res = await fetch(`/api/time?filter=${f}`, {
+      headers: { Authorization: `Bearer ${session.access_token}` },
+    })
+    if (res.ok) {
+      const d = await res.json()
+      setTimeData(d)
+    }
+    setTimeLoading(false)
   }
 
   async function handleCreateTeamMember(e) {
@@ -292,6 +308,7 @@ export default function AdminPage() {
           <button style={{ ...s.tab, ...(activeTab === 'notifications' ? s.tabActive : s.tabInactive) }} onClick={() => setActiveTab('notifications')}>Notifications</button>
           <button style={{ ...s.tab, ...(activeTab === 'finance' ? s.tabActive : s.tabInactive) }} onClick={() => { setActiveTab('finance'); if (!finance) fetchFinance() }}>Finance</button>
           <button style={{ ...s.tab, ...(activeTab === 'team' ? s.tabActive : s.tabInactive) }} onClick={() => setActiveTab('team')}>Team</button>
+          <button style={{ ...s.tab, ...(activeTab === 'time' ? s.tabActive : s.tabInactive) }} onClick={() => { setActiveTab('time'); fetchTimeData(timeFilter) }}>Time Tracking</button>
         </div>
 
       {activeTab === 'broadcasts' && (
@@ -579,6 +596,137 @@ export default function AdminPage() {
           </div>
         </div>
       )}
+
+      {activeTab === 'time' && (() => {
+        const fmtSec = (sec) => {
+          if (!sec || sec <= 0) return '—'
+          const h = Math.floor(sec / 3600), m = Math.round((sec % 3600) / 60)
+          return h === 0 ? `${m}m` : m > 0 ? `${h}h ${m}m` : `${h}h`
+        }
+        const fmtT = (iso) => iso ? new Date(iso).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }) : '—'
+        const fmtD = (iso) => iso ? new Date(iso).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) : '—'
+        const durSec = (s) => s.clocked_out_at
+          ? Math.round((new Date(s.clocked_out_at) - new Date(s.clocked_in_at)) / 1000)
+          : (s.active_seconds || 0) + (s.idle_seconds || 0)
+
+        const sessions = timeData?.sessions || []
+        const members = timeData?.members || []
+        const activeCount = timeData?.active_count ?? 0
+        const totalSec = sessions.reduce((sum, s) => sum + durSec(s), 0)
+
+        const exportCSV = () => {
+          const rows = [['Name', 'Date', 'Clock In', 'Clock Out', 'Duration (h)', 'Report']]
+          sessions.forEach(s => {
+            const dur = s.clocked_out_at
+              ? ((new Date(s.clocked_out_at) - new Date(s.clocked_in_at)) / 3600000).toFixed(2)
+              : ''
+            rows.push([
+              s.member_name || '',
+              fmtD(s.clocked_in_at),
+              fmtT(s.clocked_in_at),
+              fmtT(s.clocked_out_at),
+              dur,
+              (s.eod_report || '').replace(/"/g, '""'),
+            ])
+          })
+          const csv = rows.map(r => r.map(c => `"${c}"`).join(',')).join('\n')
+          const a = document.createElement('a')
+          a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }))
+          a.download = `time-tracking-${timeFilter}-${new Date().toISOString().slice(0,10)}.csv`
+          a.click()
+        }
+
+        return (
+          <div>
+            {/* Filter + export row */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
+              <div style={{ display: 'flex', gap: 6 }}>
+                {[['today','Today'],['week','This week'],['month','This month']].map(([id, label]) => (
+                  <button key={id} onClick={() => { setTimeFilter(id); fetchTimeData(id) }}
+                    style={{ padding: '7px 16px', borderRadius: 8, border: '1px solid', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: "'Inter Tight', sans-serif", transition: 'all .15s',
+                      borderColor: timeFilter === id ? '#A175FC' : 'rgba(255,255,255,0.08)',
+                      background: timeFilter === id ? 'rgba(161,117,252,0.15)' : 'transparent',
+                      color: timeFilter === id ? '#A175FC' : '#4a7fb5' }}>
+                    {label}
+                  </button>
+                ))}
+              </div>
+              <button onClick={exportCSV} style={{ padding: '7px 16px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.04)', color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: "'Inter Tight', sans-serif", transition: 'all .15s' }}>
+                Export CSV
+              </button>
+            </div>
+
+            {/* Summary cards */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 24 }}>
+              {[
+                { label: 'Active now', value: activeCount, color: '#4ade80' },
+                { label: 'Total hours', value: fmtSec(totalSec), color: '#A175FC' },
+                { label: 'Sessions', value: sessions.length, color: '#60a5fa' },
+              ].map(({ label, value, color }) => (
+                <div key={label} style={s.statCard}>
+                  <div style={{ ...s.statNum, color }}>{value}</div>
+                  <div style={s.statLabel}>{label}</div>
+                </div>
+              ))}
+            </div>
+
+            {timeLoading ? (
+              <div style={{ textAlign: 'center', padding: '32px', color: '#4a7fb5', fontSize: 13 }}>Loading…</div>
+            ) : sessions.length === 0 ? (
+              <div style={{ ...s.card, textAlign: 'center', color: '#4a7fb5', fontSize: 13 }}>No sessions in this period.</div>
+            ) : (
+              <div style={s.card}>
+                {/* Table header */}
+                <div style={{ display: 'grid', gridTemplateColumns: '140px 110px 75px 75px 80px 1fr', gap: 12, padding: '0 0 10px', borderBottom: '1px solid rgba(255,255,255,0.06)', marginBottom: 4 }}>
+                  {['Employee', 'Date', 'In', 'Out', 'Hours', 'Report'].map(h => (
+                    <div key={h} style={{ fontSize: 10, fontWeight: 700, color: '#4a7fb5', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{h}</div>
+                  ))}
+                </div>
+                {sessions.map(s2 => {
+                  const sec = durSec(s2)
+                  const hrs = sec > 0 ? (sec / 3600).toFixed(2) : '—'
+                  return (
+                    <div key={s2.id} style={{ display: 'grid', gridTemplateColumns: '140px 110px 75px 75px 80px 1fr', gap: 12, alignItems: 'start', padding: '12px 0', borderBottom: '1px solid rgba(255,255,255,0.04)', cursor: 'default' }}>
+                      <div>
+                        <div style={{ fontSize: 12.5, fontWeight: 600, color: '#fff' }}>{s2.member_name}</div>
+                        <div style={{ fontSize: 11, color: '#4a7fb5', marginTop: 1 }}>{s2.member_email}</div>
+                      </div>
+                      <div style={{ fontSize: 12.5, color: 'rgba(255,255,255,0.6)' }}>{fmtD(s2.clocked_in_at)}</div>
+                      <div style={{ fontSize: 12.5, color: 'rgba(255,255,255,0.6)', fontVariantNumeric: 'tabular-nums' }}>{fmtT(s2.clocked_in_at)}</div>
+                      <div style={{ fontSize: 12.5, color: s2.clocked_out_at ? 'rgba(255,255,255,0.6)' : '#4ade80', fontVariantNumeric: 'tabular-nums' }}>
+                        {s2.clocked_out_at ? fmtT(s2.clocked_out_at) : 'Active'}
+                      </div>
+                      <div style={{ fontSize: 12.5, fontWeight: 700, color: '#fff' }}>{hrs}</div>
+                      <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', lineHeight: 1.45, wordBreak: 'break-word' }}>
+                        {s2.eod_report || <span style={{ color: 'rgba(255,255,255,0.2)', fontStyle: 'italic' }}>No report</span>}
+                      </div>
+                    </div>
+                  )
+                })}
+
+                {/* Per member summary */}
+                {members.length > 0 && (
+                  <div style={{ marginTop: 24, paddingTop: 20, borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: '#4a7fb5', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 12 }}>Summary per employee</div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12 }}>
+                      {members.map(m => (
+                        <div key={m.id} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 10, padding: '14px 16px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
+                            <div style={{ width: 6, height: 6, borderRadius: '50%', background: m.is_active ? '#4ade80' : 'rgba(255,255,255,0.15)', flexShrink: 0 }} />
+                            <div style={{ fontSize: 12.5, fontWeight: 600, color: '#fff' }}>{m.name}</div>
+                          </div>
+                          <div style={{ fontSize: 22, fontWeight: 800, color: '#A175FC', letterSpacing: '-0.03em' }}>{fmtSec(m.total_seconds)}</div>
+                          <div style={{ fontSize: 11, color: '#4a7fb5', marginTop: 2 }}>{m.sessions_count} session{m.sessions_count !== 1 ? 's' : ''}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )
+      })()}
 
       {activeTab === 'clients' && <div style={s.grid}>
         {/* New client form */}

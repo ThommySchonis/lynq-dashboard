@@ -283,30 +283,12 @@ export default function SupplyChainPage() {
     setLoading(true)
     setError('')
     try {
-      // 1 — Get Shopify orders for order numbers
-      const shopifyRes = await fetch('/api/shopify/orders', {
+      const res = await fetch('/api/parcel-panel/tracking', {
         headers: { Authorization: `Bearer ${sessionToken}` },
       })
-      if (!shopifyRes.ok) throw new Error('Could not load orders')
-      const { orders: shopifyOrders } = await shopifyRes.json()
-
-      if (!shopifyOrders?.length) { setOrders([]); setLoading(false); return }
-
-      // Extract order numbers (Shopify returns e.g. "#1001")
-      const orderNums = shopifyOrders
-        .filter(o => o.fulfillmentStatus !== 'unfulfilled')
-        .slice(0, 20)
-        .map(o => o.name.replace('#', ''))
-
-      if (!orderNums.length) { setOrders([]); setLoading(false); return }
-
-      // 2 — Get Parcel Panel tracking
-      const ppRes = await fetch(`/api/parcel-panel/tracking?orders=${orderNums.join(',')}`, {
-        headers: { Authorization: `Bearer ${sessionToken}` },
-      })
-      if (!ppRes.ok) throw new Error('Parcel Panel not configured for this account')
-      const { orders: tracked } = await ppRes.json()
-      setOrders(tracked || [])
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Could not load shipments')
+      setOrders(data.orders || [])
     } catch (e) {
       setError(e.message)
     } finally {

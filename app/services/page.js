@@ -21,25 +21,26 @@ const CSS = `
   .sv-scroll::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.1);border-radius:2px }
 
   .svc-card {
-    background:#241352;
-    border:1px solid rgba(255,255,255,0.12);
-    border-radius:18px;padding:28px;
+    background:linear-gradient(148deg,#271555 0%,#1e1042 55%,#190d38 100%);
+    border:1px solid rgba(255,255,255,0.1);
+    border-radius:20px;padding:30px;
     display:flex;flex-direction:column;
     position:relative;overflow:hidden;
-    transition:transform .25s,border-color .22s,box-shadow .25s;
+    cursor:pointer;
+    box-shadow:0 4px 20px rgba(0,0,0,0.35);
+    transition:transform .28s cubic-bezier(.16,1,.3,1),border-color .22s,box-shadow .28s cubic-bezier(.16,1,.3,1);
   }
   .svc-card:hover {
-    transform:translateY(-3px);
-    box-shadow:0 14px 44px rgba(0,0,0,0.3);
+    transform:translateY(-5px);
   }
 
   .svc-icon {
-    width:50px;height:50px;border-radius:13px;
+    width:54px;height:54px;border-radius:14px;
     display:flex;align-items:center;justify-content:center;
-    flex-shrink:0;margin-bottom:20px;
-    transition:transform .2s;
+    flex-shrink:0;margin-bottom:22px;
+    transition:transform .22s,box-shadow .22s;
   }
-  .svc-card:hover .svc-icon { transform:scale(1.06) }
+  .svc-card:hover .svc-icon { transform:scale(1.08) }
 
   .req-btn {
     width:100%;padding:11px 20px;border-radius:10px;
@@ -226,12 +227,17 @@ const GUARANTEE_ITEMS = [
 
 function GuaranteeBlock() {
   return (
-    <div style={{ margin:'16px 0 20px', padding:'14px 16px', borderRadius:10, background:'rgba(74,222,128,0.05)', border:'1px solid rgba(74,222,128,0.18)' }}>
-      <div style={{ fontSize:10, fontWeight:800, color:'#4ade80', textTransform:'uppercase', letterSpacing:'.07em', marginBottom:10 }}>Our Guarantee</div>
+    <div style={{ margin:'16px 0 20px', padding:'16px 18px', borderRadius:12, background:'linear-gradient(135deg,rgba(74,222,128,0.08) 0%,rgba(74,222,128,0.03) 100%)', border:'1px solid rgba(74,222,128,0.22)', boxShadow:'0 0 24px rgba(74,222,128,0.06),inset 0 1px 0 rgba(74,222,128,0.08)' }}>
+      <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:12 }}>
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="#4ade80" style={{ flexShrink:0 }}><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+        <div style={{ fontSize:10, fontWeight:800, color:'#4ade80', textTransform:'uppercase', letterSpacing:'.08em' }}>Our Guarantee</div>
+      </div>
       {GUARANTEE_ITEMS.map(item => (
-        <div key={item} style={{ display:'flex', alignItems:'flex-start', gap:8, marginBottom:7 }}>
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#4ade80" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink:0, marginTop:1 }}><polyline points="20 6 9 17 4 12"/></svg>
-          <span style={{ fontSize:12, color:'rgba(255,255,255,0.75)', lineHeight:1.45 }}>{item}</span>
+        <div key={item} style={{ display:'flex', alignItems:'flex-start', gap:9, marginBottom:8 }}>
+          <div style={{ width:16, height:16, borderRadius:'50%', background:'rgba(74,222,128,0.15)', border:'1px solid rgba(74,222,128,0.3)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, marginTop:1 }}>
+            <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#4ade80" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <span style={{ fontSize:12.5, color:'rgba(255,255,255,0.82)', lineHeight:1.45 }}>{item}</span>
         </div>
       ))}
     </div>
@@ -256,35 +262,43 @@ function ServiceCard({ svc, i, onRequest }) {
   return (
     <div
       className="svc-card"
-      style={{ animation:`fadeUp .45s ease ${i * 75}ms both`, borderColor: hovered ? svc.cardBorderHover : 'rgba(255,255,255,0.08)' }}
+      style={{
+        animation:`fadeUp .45s ease ${i * 75}ms both`,
+        borderColor: hovered ? svc.cardBorderHover : 'rgba(255,255,255,0.1)',
+        boxShadow: hovered
+          ? `0 20px 56px rgba(0,0,0,0.45), 0 0 0 1px ${svc.accent}22, 0 0 40px ${svc.accent}12`
+          : '0 4px 20px rgba(0,0,0,0.35)',
+      }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
       {/* Top accent stripe */}
-      <div style={{ position:'absolute', top:0, left:0, right:0, height:2, background:`linear-gradient(90deg,${svc.accent}99,${svc.accent}22,transparent)` }} />
+      <div style={{ position:'absolute', top:0, left:0, right:0, height:3, background:`linear-gradient(90deg,${svc.accent},${svc.accent}44,transparent)`, borderRadius:'20px 20px 0 0' }} />
 
       {/* Badge top-right */}
       {svc.badge && (
-        <div style={{ position:'absolute', top:20, right:20 }}>
+        <div style={{ position:'absolute', top:22, right:22 }}>
           <Badge badge={svc.badge} />
         </div>
       )}
 
       {/* Icon */}
-      <div className="svc-icon" style={{ background:svc.iconBg, border:`1px solid ${svc.iconBorder}` }}>
+      <div className="svc-icon" style={{ background:`linear-gradient(145deg,${svc.accent}22,${svc.accent}0a)`, border:`1px solid ${svc.iconBorder}`, boxShadow: hovered ? `0 0 20px ${svc.accent}30` : 'none' }}>
         {svc.icon(svc.accent)}
       </div>
 
       {/* Content */}
-      <h2 style={{ fontSize:17.5, fontWeight:800, color:'#F8FAFC', letterSpacing:'-0.03em', lineHeight:1.25, marginBottom:10 }}>{svc.title}</h2>
-      <p style={{ fontSize:13.5, color:'rgba(255,255,255,0.72)', lineHeight:1.68, marginBottom:22, flex:1 }}>{svc.description}</p>
+      <h2 style={{ fontSize:18, fontWeight:800, color:'#F8FAFC', letterSpacing:'-0.035em', lineHeight:1.2, marginBottom:10 }}>{svc.title}</h2>
+      <p style={{ fontSize:13.5, color:'rgba(255,255,255,0.72)', lineHeight:1.7, marginBottom:20, flex:1 }}>{svc.description}</p>
 
       {/* Feature bullets */}
-      <div style={{ display:'flex', flexDirection:'column', gap:8, marginBottom:24 }}>
+      <div style={{ display:'flex', flexDirection:'column', gap:7, marginBottom:4 }}>
         {svc.features.map(f => (
           <div key={f} style={{ display:'flex', alignItems:'flex-start', gap:9 }}>
-            <FeatureDot color={svc.accent} />
-            <span style={{ fontSize:12.5, color:'rgba(255,255,255,0.65)', lineHeight:1.45 }}>{f}</span>
+            <div style={{ width:15, height:15, borderRadius:'50%', background:`${svc.accent}18`, border:`1px solid ${svc.accent}44`, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, marginTop:2 }}>
+              <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke={svc.accent} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+            <span style={{ fontSize:12.5, color:'rgba(255,255,255,0.7)', lineHeight:1.45 }}>{f}</span>
           </div>
         ))}
       </div>
@@ -293,10 +307,7 @@ function ServiceCard({ svc, i, onRequest }) {
       <GuaranteeBlock />
 
       {/* CTA */}
-      <button
-        className="req-btn"
-        onClick={onRequest}
-      >
+      <button className="req-btn" onClick={onRequest}>
         Request More Info
       </button>
     </div>
@@ -308,18 +319,23 @@ function TrainCard({ svc, onRequest }) {
   return (
     <div
       className="svc-card"
-      style={{ borderColor: hovered ? svc.cardBorderHover : 'rgba(255,255,255,0.08)' }}
+      style={{
+        borderColor: hovered ? svc.cardBorderHover : 'rgba(255,255,255,0.1)',
+        boxShadow: hovered
+          ? `0 20px 56px rgba(0,0,0,0.45), 0 0 0 1px ${svc.accent}22, 0 0 40px ${svc.accent}12`
+          : '0 4px 20px rgba(0,0,0,0.35)',
+      }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
       {/* Top accent stripe */}
-      <div style={{ position:'absolute', top:0, left:0, right:0, height:2, background:`linear-gradient(90deg,${svc.accent}99,${svc.accent}22,transparent)` }} />
+      <div style={{ position:'absolute', top:0, left:0, right:0, height:3, background:`linear-gradient(90deg,${svc.accent},${svc.accent}44,transparent)`, borderRadius:'20px 20px 0 0' }} />
 
       <div style={{ display:'flex', gap:32, alignItems:'flex-start', flexWrap:'wrap' }}>
         {/* Left */}
         <div style={{ flex:'1 1 300px' }}>
           <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:18 }}>
-            <div className="svc-icon" style={{ background:svc.iconBg, border:`1px solid ${svc.iconBorder}`, marginBottom:0 }}>
+            <div className="svc-icon" style={{ background:`linear-gradient(145deg,${svc.accent}22,${svc.accent}0a)`, border:`1px solid ${svc.iconBorder}`, marginBottom:0, boxShadow: hovered ? `0 0 20px ${svc.accent}30` : 'none' }}>
               {svc.icon(svc.accent)}
             </div>
             <div>
@@ -335,11 +351,13 @@ function TrainCard({ svc, onRequest }) {
 
         {/* Right */}
         <div style={{ flex:'0 1 260px', display:'flex', flexDirection:'column', gap:16 }}>
-          <div style={{ display:'flex', flexDirection:'column', gap:9 }}>
+          <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
             {svc.features.map(f => (
               <div key={f} style={{ display:'flex', alignItems:'flex-start', gap:9 }}>
-                <FeatureDot color={svc.accent} />
-                <span style={{ fontSize:12.5, color:'rgba(255,255,255,0.65)', lineHeight:1.45 }}>{f}</span>
+                <div style={{ width:15, height:15, borderRadius:'50%', background:`${svc.accent}18`, border:`1px solid ${svc.accent}44`, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, marginTop:2 }}>
+                  <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke={svc.accent} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                </div>
+                <span style={{ fontSize:12.5, color:'rgba(255,255,255,0.7)', lineHeight:1.45 }}>{f}</span>
               </div>
             ))}
           </div>
@@ -525,7 +543,7 @@ export default function ServicesPage() {
               </div>
               <span style={{ fontSize:11.5, fontWeight:700, color:'rgba(255,255,255,0.52)', textTransform:'uppercase', letterSpacing:'.08em' }}>Services</span>
             </div>
-            <h1 style={{ fontSize:34, fontWeight:800, color:'#F8FAFC', letterSpacing:'-0.045em', lineHeight:1.1, marginBottom:12 }}>Grow Your Team</h1>
+            <h1 style={{ fontSize:36, fontWeight:800, letterSpacing:'-0.045em', lineHeight:1.1, marginBottom:12, background:'linear-gradient(135deg,#F8FAFC 0%,#c4a8ff 100%)', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent', backgroundClip:'text' }}>Grow Your Team</h1>
             <p style={{ fontSize:14.5, color:'rgba(255,255,255,0.62)', lineHeight:1.65, maxWidth:500 }}>
               World-class e-commerce specialists, trained to your brand standards and ready to perform from day one.
             </p>

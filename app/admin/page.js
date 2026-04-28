@@ -612,20 +612,27 @@ export default function AdminPage() {
         const sessions = timeData?.sessions || []
         const members = timeData?.members || []
         const activeCount = timeData?.active_count ?? 0
-        const totalSec = sessions.reduce((sum, s) => sum + durSec(s), 0)
+        const pausedCount = timeData?.paused_count ?? 0
+        const workedSec = (s) => {
+          if (!s.clocked_out_at) return s.active_seconds || 0
+          const total = Math.round((new Date(s.clocked_out_at) - new Date(s.clocked_in_at)) / 1000)
+          return Math.max(0, total - (s.paused_seconds || 0))
+        }
+        const totalSec = sessions.reduce((sum, s) => sum + workedSec(s), 0)
 
         const exportCSV = () => {
-          const rows = [['Name', 'Date', 'Clock In', 'Clock Out', 'Duration (h)', 'Report']]
+          const rows = [['Name', 'Date', 'Clock In', 'Clock Out', 'Worked (h)', 'Break (h)', 'Report']]
           sessions.forEach(s => {
-            const dur = s.clocked_out_at
-              ? ((new Date(s.clocked_out_at) - new Date(s.clocked_in_at)) / 3600000).toFixed(2)
-              : ''
+            const wSec = workedSec(s)
+            const worked = s.clocked_out_at ? (wSec / 3600).toFixed(2) : ''
+            const brk = s.paused_seconds > 0 ? (s.paused_seconds / 3600).toFixed(2) : '0'
             rows.push([
               s.member_name || '',
               fmtD(s.clocked_in_at),
               fmtT(s.clocked_in_at),
               fmtT(s.clocked_out_at),
-              dur,
+              worked,
+              brk,
               (s.eod_report || '').replace(/"/g, '""'),
             ])
           })
@@ -657,15 +664,17 @@ export default function AdminPage() {
             </div>
 
             {/* Summary cards */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 24 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 24 }}>
               {[
-                { label: 'Active now', value: activeCount, color: '#4ade80' },
-                { label: 'Total hours', value: fmtSec(totalSec), color: '#A175FC' },
-                { label: 'Sessions', value: sessions.length, color: '#60a5fa' },
-              ].map(({ label, value, color }) => (
+                { label: 'Active now', value: activeCount, color: '#4ade80', sub: pausedCount > 0 ? `${pausedCount} on break` : null },
+                { label: 'Total worked', value: fmtSec(totalSec), color: '#A175FC', sub: null },
+                { label: 'Sessions', value: sessions.filter(s2 => s2.clocked_out_at).length, color: '#60a5fa', sub: null },
+                { label: 'Team members', value: members.length, color: '#f59e0b', sub: null },
+              ].map(({ label, value, color, sub }) => (
                 <div key={label} style={s.statCard}>
                   <div style={{ ...s.statNum, color }}>{value}</div>
                   <div style={s.statLabel}>{label}</div>
+                  {sub && <div style={{ fontSize: '11px', color: '#fbbf24', marginTop: '3px', fontWeight: 600 }}>{sub}</div>}
                 </div>
               ))}
             </div>
@@ -676,17 +685,42 @@ export default function AdminPage() {
               <div style={{ ...s.card, textAlign: 'center', color: '#4a7fb5', fontSize: 13 }}>No sessions in this period.</div>
             ) : (
               <div style={s.card}>
+                {/* Per member summary */}
+                {members.length > 0 && (
+                  <div style={{ marginBottom: 24 }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: '#4a7fb5', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 12 }}>Per employee</div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(210px, 1fr))', gap: 12 }}>
+                      {members.map(m => (
+                        <div key={m.id} style={{ background: 'rgba(255,255,255,0.03)', border: `1px solid ${m.is_paused ? 'rgba(251,191,36,0.2)' : m.is_active ? 'rgba(74,222,128,0.15)' : 'rgba(255,255,255,0.06)'}`, borderRadius: 10, padding: '14px 16px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
+                            <div style={{ width: 7, height: 7, borderRadius: '50%', flexShrink: 0, background: m.is_paused ? '#fbbf24' : m.is_active ? '#4ade80' : 'rgba(255,255,255,0.15)', boxShadow: m.is_paused ? '0 0 6px rgba(251,191,36,0.6)' : m.is_active ? '0 0 6px rgba(74,222,128,0.6)' : 'none' }} />
+                            <div style={{ fontSize: 12.5, fontWeight: 700, color: '#fff' }}>{m.name}</div>
+                            {m.is_paused && <span style={{ marginLeft: 'auto', fontSize: 10, fontWeight: 600, color: '#fbbf24', background: 'rgba(251,191,36,0.1)', border: '1px solid rgba(251,191,36,0.2)', borderRadius: 4, padding: '2px 7px' }}>Break</span>}
+                            {m.is_active && !m.is_paused && <span style={{ marginLeft: 'auto', fontSize: 10, fontWeight: 600, color: '#4ade80', background: 'rgba(74,222,128,0.1)', border: '1px solid rgba(74,222,128,0.2)', borderRadius: 4, padding: '2px 7px' }}>Active</span>}
+                          </div>
+                          <div style={{ fontSize: 22, fontWeight: 800, color: '#A175FC', letterSpacing: '-0.03em', marginBottom: 4 }}>{fmtSec(m.worked_seconds)}</div>
+                          <div style={{ display: 'flex', gap: 10, fontSize: 11, color: '#4a7fb5' }}>
+                            <span>{m.sessions_count} session{m.sessions_count !== 1 ? 's' : ''}</span>
+                            {m.paused_seconds > 0 && <span style={{ color: 'rgba(251,191,36,0.6)' }}>Break {fmtSec(m.paused_seconds)}</span>}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {/* Table header */}
-                <div style={{ display: 'grid', gridTemplateColumns: '140px 110px 75px 75px 80px 1fr', gap: 12, padding: '0 0 10px', borderBottom: '1px solid rgba(255,255,255,0.06)', marginBottom: 4 }}>
-                  {['Employee', 'Date', 'In', 'Out', 'Hours', 'Report'].map(h => (
+                <div style={{ display: 'grid', gridTemplateColumns: '140px 110px 65px 65px 70px 60px 1fr', gap: 10, padding: '10px 0', borderTop: members.length > 0 ? '1px solid rgba(255,255,255,0.06)' : 'none', borderBottom: '1px solid rgba(255,255,255,0.06)', marginBottom: 4 }}>
+                  {['Employee', 'Date', 'In', 'Out', 'Worked', 'Break', 'Report'].map(h => (
                     <div key={h} style={{ fontSize: 10, fontWeight: 700, color: '#4a7fb5', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{h}</div>
                   ))}
                 </div>
                 {sessions.map(s2 => {
-                  const sec = durSec(s2)
-                  const hrs = sec > 0 ? (sec / 3600).toFixed(2) : '—'
+                  const wSec = workedSec(s2)
+                  const hrs = wSec > 0 ? (wSec / 3600).toFixed(2) : (s2.clocked_out_at ? '0.00' : '—')
+                  const brk = s2.paused_seconds > 0 ? fmtSec(s2.paused_seconds) : '—'
                   return (
-                    <div key={s2.id} style={{ display: 'grid', gridTemplateColumns: '140px 110px 75px 75px 80px 1fr', gap: 12, alignItems: 'start', padding: '12px 0', borderBottom: '1px solid rgba(255,255,255,0.04)', cursor: 'default' }}>
+                    <div key={s2.id} style={{ display: 'grid', gridTemplateColumns: '140px 110px 65px 65px 70px 60px 1fr', gap: 10, alignItems: 'start', padding: '11px 0', borderBottom: '1px solid rgba(255,255,255,0.04)', cursor: 'default' }}>
                       <div>
                         <div style={{ fontSize: 12.5, fontWeight: 600, color: '#fff' }}>{s2.member_name}</div>
                         <div style={{ fontSize: 11, color: '#4a7fb5', marginTop: 1 }}>{s2.member_email}</div>
@@ -696,32 +730,14 @@ export default function AdminPage() {
                       <div style={{ fontSize: 12.5, color: s2.clocked_out_at ? 'rgba(255,255,255,0.6)' : '#4ade80', fontVariantNumeric: 'tabular-nums' }}>
                         {s2.clocked_out_at ? fmtT(s2.clocked_out_at) : 'Active'}
                       </div>
-                      <div style={{ fontSize: 12.5, fontWeight: 700, color: '#fff' }}>{hrs}</div>
+                      <div style={{ fontSize: 12.5, fontWeight: 700, color: '#fff' }}>{hrs}h</div>
+                      <div style={{ fontSize: 12.5, color: s2.paused_seconds > 0 ? 'rgba(251,191,36,0.7)' : 'rgba(255,255,255,0.25)' }}>{brk}</div>
                       <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', lineHeight: 1.45, wordBreak: 'break-word' }}>
                         {s2.eod_report || <span style={{ color: 'rgba(255,255,255,0.2)', fontStyle: 'italic' }}>No report</span>}
                       </div>
                     </div>
                   )
                 })}
-
-                {/* Per member summary */}
-                {members.length > 0 && (
-                  <div style={{ marginTop: 24, paddingTop: 20, borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-                    <div style={{ fontSize: 11, fontWeight: 700, color: '#4a7fb5', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 12 }}>Summary per employee</div>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12 }}>
-                      {members.map(m => (
-                        <div key={m.id} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 10, padding: '14px 16px' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
-                            <div style={{ width: 6, height: 6, borderRadius: '50%', background: m.is_active ? '#4ade80' : 'rgba(255,255,255,0.15)', flexShrink: 0 }} />
-                            <div style={{ fontSize: 12.5, fontWeight: 600, color: '#fff' }}>{m.name}</div>
-                          </div>
-                          <div style={{ fontSize: 22, fontWeight: 800, color: '#A175FC', letterSpacing: '-0.03em' }}>{fmtSec(m.total_seconds)}</div>
-                          <div style={{ fontSize: 11, color: '#4a7fb5', marginTop: 2 }}>{m.sessions_count} session{m.sessions_count !== 1 ? 's' : ''}</div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
               </div>
             )}
           </div>

@@ -143,10 +143,9 @@ function PageBackground() {
 
 // ─── Clock-out Modal ─────────────────────────────────────────────────────────
 
-function ClockOutModal({ session, pausedSeconds, onConfirm, onCancel, submitting }) {
+function ClockOutModal({ session, elapsedSec, pausedSeconds, onConfirm, onCancel, submitting }) {
   const [report, setReport] = useState('')
-  const nowSec = Math.round((Date.now() - new Date(session.clocked_in_at)) / 1000)
-  const activeSec = Math.max(0, nowSec - pausedSeconds)
+  const activeSec = elapsedSec
 
   return (
     <div className="modal-overlay">
@@ -172,7 +171,7 @@ function ClockOutModal({ session, pausedSeconds, onConfirm, onCancel, submitting
             style={{ padding: '10px 22px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: 'rgba(255,255,255,0.45)', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
             Cancel
           </button>
-          <button onClick={() => onConfirm(report, activeSec)} disabled={submitting || !report.trim()}
+          <button onClick={() => onConfirm(report)} disabled={submitting || !report.trim()}
             style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 24px', borderRadius: 8, border: 'none', background: report.trim() ? '#A175FC' : 'rgba(161,117,252,0.25)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: report.trim() ? 'pointer' : 'not-allowed', fontFamily: 'inherit', boxShadow: report.trim() ? '0 4px 16px rgba(161,117,252,0.35)' : 'none', transition: 'all .15s' }}>
             {submitting ? <><Spinner size={14} />Clocking out…</> : 'Clock Out →'}
           </button>
@@ -191,33 +190,44 @@ const FILTERS = [
 ]
 
 export default function TimeTrackingPage() {
-  const [loading, setLoading]               = useState(true)
-  const [isAdmin, setIsAdmin]               = useState(false)
-  const [adminData, setAdminData]           = useState(null)
-  const [accessError, setAccessError]       = useState(false)
-  const [member, setMember]                 = useState(null)
-  const [sessions, setSessions]             = useState([])
-  const [activeSession, setActiveSession]   = useState(null)
-  const [elapsed, setElapsed]               = useState(0)       // total seconds since clock-in
-  const [isPaused, setIsPaused]             = useState(false)
-  const [pausedTotal, setPausedTotal]       = useState(0)       // accumulated paused seconds
-  const [pauseStart, setPauseStart]         = useState(null)    // when current pause started
-  const [todaySeconds, setTodaySeconds]     = useState(0)
-  const [filter, setFilter]                 = useState('week')
-  const [showModal, setShowModal]           = useState(false)
-  const [clockingIn, setClockingIn]         = useState(false)
-  const [submitting, setSubmitting]         = useState(false)
-  const [error, setError]                   = useState('')
+  const [loading, setLoading]             = useState(true)
+  const [isAdmin, setIsAdmin]             = useState(false)
+  const [adminData, setAdminData]         = useState(null)
+  const [accessError, setAccessError]     = useState(false)
+  const [member, setMember]               = useState(null)
+  const [sessions, setSessions]           = useState([])
+  const [activeSession, setActiveSession] = useState(null)
+  // elapsed = active-only seconds (stops while paused, restored on reload)
+  const [elapsed, setElapsed]             = useState(0)
+  const [isPaused, setIsPaused]           = useState(false)
+  const [todaySeconds, setTodaySeconds]   = useState(0)
+  const [filter, setFilter]               = useState('week')
+  const [showModal, setShowModal]         = useState(false)
+  const [clockingIn, setClockingIn]       = useState(false)
+  const [submitting, setSubmitting]       = useState(false)
+  const [error, setError]                 = useState('')
 
   const timerRef     = useRef(null)
   const heartbeatRef = useRef(null)
   const sessionRef   = useRef(null)
-  const pausedRef    = useRef(0)
 
   const getToken = useCallback(async () => {
     const { data: { session } } = await supabase.auth.getSession()
     return session?.access_token || null
   }, [])
+
+  // Restore correct elapsed from server session (handles page reload)
+  function restoreElapsed(s) {
+    if (!s) return 0
+    const total = Math.round((Date.now() - new Date(s.clocked_in_at)) / 1000)
+    const paused = s.paused_seconds || 0
+    if (s.status === 'paused' && s.paused_at) {
+      // freeze at the point pause started, minus prior paused time
+      const atPause = Math.round((new Date(s.paused_at) - new Date(s.clocked_in_at)) / 1000)
+      return Math.max(0, atPause - paused)
+    }
+    return Math.max(0, total - paused)
+  }
 
   const fetchData = useCallback(async (f) => {
     const token = await getToken()
@@ -230,28 +240,35 @@ export default function TimeTrackingPage() {
     setMember(d.member)
     setSessions(d.sessions || [])
     setTodaySeconds(d.today_seconds || 0)
-    // Only update active session if not currently tracking locally (avoid flicker)
-    if (!sessionRef.current || !d.active_session) {
-      setActiveSession(d.active_session || null)
-      sessionRef.current = d.active_session || null
+    // Only overwrite local session state on first load (not during active tracking)
+    if (!sessionRef.current) {
+      const active = d.active_session || null
+      setActiveSession(active)
+      sessionRef.current = active
+      if (active) {
+        setIsPaused(active.status === 'paused')
+        setElapsed(restoreElapsed(active))
+      }
+    } else {
+      // Refresh session data (e.g. after clock-out) without clobbering timer
+      setSessions(d.sessions || [])
+      setTodaySeconds(d.today_seconds || 0)
     }
     setLoading(false)
   }, [getToken])
 
   useEffect(() => { fetchData(filter) }, [filter])
 
-  // Live elapsed timer — only ticks when not paused
+  // Timer — ticks only when not paused
   useEffect(() => {
     clearInterval(timerRef.current)
     if (activeSession && !isPaused) {
-      const base = Math.round((Date.now() - new Date(activeSession.clocked_in_at)) / 1000)
-      setElapsed(base)
       timerRef.current = setInterval(() => setElapsed(s => s + 1), 1000)
     }
     return () => clearInterval(timerRef.current)
   }, [activeSession?.id, isPaused])
 
-  // Heartbeat every 30s — only when active (not paused)
+  // Heartbeat every 30s — only when active
   useEffect(() => {
     clearInterval(heartbeatRef.current)
     if (!activeSession || isPaused) return
@@ -287,29 +304,48 @@ export default function TimeTrackingPage() {
     setActiveSession(d.session)
     sessionRef.current = d.session
     setElapsed(0)
-    setPausedTotal(0)
-    pausedRef.current = 0
     setIsPaused(false)
     setClockingIn(false)
   }
 
-  function handlePause() {
-    setIsPaused(true)
-    setPauseStart(Date.now())
+  async function handlePause() {
+    if (!activeSession) return
+    const token = await getToken()
+    await fetch('/api/time', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ action: 'pause', session_id: activeSession.id }),
+    })
     clearInterval(timerRef.current)
     clearInterval(heartbeatRef.current)
+    setIsPaused(true)
+    // Update local session so paused_at is tracked
+    const updated = { ...activeSession, status: 'paused', paused_at: new Date().toISOString() }
+    setActiveSession(updated)
+    sessionRef.current = updated
   }
 
-  function handleResume() {
-    const pausedNow = pauseStart ? Math.round((Date.now() - pauseStart) / 1000) : 0
-    const newTotal = pausedTotal + pausedNow
-    setPausedTotal(newTotal)
-    pausedRef.current = newTotal
-    setPauseStart(null)
+  async function handleResume() {
+    if (!activeSession) return
+    const token = await getToken()
+    const res = await fetch('/api/time', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ action: 'resume', session_id: activeSession.id }),
+    })
+    const d = await res.json()
+    const updated = {
+      ...activeSession,
+      status: 'active',
+      paused_at: null,
+      paused_seconds: d.paused_seconds ?? activeSession.paused_seconds,
+    }
+    setActiveSession(updated)
+    sessionRef.current = updated
     setIsPaused(false)
   }
 
-  async function handleClockOut(report, activeSec) {
+  async function handleClockOut(report) {
     setSubmitting(true)
     const token = await getToken()
     await fetch('/api/time', {
@@ -320,22 +356,28 @@ export default function TimeTrackingPage() {
     setActiveSession(null)
     sessionRef.current = null
     setElapsed(0)
-    setPausedTotal(0)
-    pausedRef.current = 0
     setIsPaused(false)
     setShowModal(false)
     setSubmitting(false)
     await fetchData('today')
-    setTimeout(() => fetchData(filter), 200)
+    setTimeout(() => { fetchData(filter) }, 200)
   }
 
-  // Computed pause duration (including current ongoing pause)
-  const currentPausedSec = isPaused && pauseStart
-    ? pausedTotal + Math.round((Date.now() - pauseStart) / 1000)
-    : pausedTotal
+  // Break time = server paused_seconds + any ongoing pause since paused_at
+  const pausedSec = (() => {
+    if (!activeSession) return 0
+    const base = activeSession.paused_seconds || 0
+    if (isPaused && activeSession.paused_at) {
+      return base + Math.round((Date.now() - new Date(activeSession.paused_at)) / 1000)
+    }
+    return base
+  })()
 
-  const activeSec = Math.max(0, elapsed - currentPausedSec)
-  const totalPeriodSec = sessions.reduce((s, sess) => s + durSec(sess), 0)
+  const totalPeriodSec = sessions.reduce((sum, s) => {
+    if (!s.clocked_out_at) return sum
+    const total = Math.round((new Date(s.clocked_out_at) - new Date(s.clocked_in_at)) / 1000)
+    return sum + Math.max(0, total - (s.paused_seconds || 0))
+  }, 0)
 
   // ─── Loading ────────────────────────────────────────────────────────────────
 
@@ -451,11 +493,11 @@ export default function TimeTrackingPage() {
                       {isPaused ? '⏸ Paused' : '● Working'}
                     </div>
                     <div style={{ fontSize: 46, fontWeight: 800, letterSpacing: '-0.04em', color: '#F8FAFC', fontVariantNumeric: 'tabular-nums', lineHeight: 1, marginBottom: 8, animation: isPaused ? 'pauseBlink 2s ease-in-out infinite' : 'none' }}>
-                      {fmtElapsed(activeSec)}
+                      {fmtElapsed(elapsed)}
                     </div>
                     <div style={{ fontSize: 12.5, color: 'rgba(255,255,255,0.38)', display: 'flex', gap: 12, flexWrap: 'wrap' }}>
                       <span>Started {fmtTime(activeSession.clocked_in_at)}</span>
-                      {isPaused && pausedTotal > 0 && <span style={{ color: 'rgba(251,191,36,0.6)' }}>Paused {fmtDur(currentPausedSec)}</span>}
+                      {pausedSec > 0 && <span style={{ color: 'rgba(251,191,36,0.6)' }}>Break {fmtDur(pausedSec)}</span>}
                     </div>
                   </>
                 ) : (
@@ -525,7 +567,7 @@ export default function TimeTrackingPage() {
               },
               {
                 label: 'Today',
-                value: fmtDur(todaySeconds + (isActive && !isPaused ? activeSec : 0)),
+                value: fmtDur(todaySeconds + (isActive && !isPaused ? elapsed : 0)),
                 sub: 'Hours clocked today',
                 accent: '#4ade80',
                 icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>,
@@ -597,7 +639,8 @@ export default function TimeTrackingPage() {
       {showModal && activeSession && (
         <ClockOutModal
           session={activeSession}
-          pausedSeconds={currentPausedSec}
+          elapsedSec={elapsed}
+          pausedSeconds={pausedSec}
           onConfirm={handleClockOut}
           onCancel={() => setShowModal(false)}
           submitting={submitting}

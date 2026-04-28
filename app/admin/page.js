@@ -312,62 +312,151 @@ export default function AdminPage() {
           <button style={{ ...s.tab, ...(activeTab === 'time' ? s.tabActive : s.tabInactive) }} onClick={() => { setActiveTab('time'); fetchTimeData(timeFilter) }}>Time Tracking</button>
         </div>
 
-      {activeTab === 'broadcasts' && (
-        <div style={s.grid}>
-          {/* Broadcast schrijven */}
-          <div style={s.card}>
-            <div style={s.cardTitle}>Push new message</div>
-            <div style={s.cardSub}>Visible in the Value Feed of all clients</div>
-            {broadcastSuccess && <div style={s.success}>{broadcastSuccess}</div>}
-            <form onSubmit={handleBroadcast}>
-              <label style={s.label}>Type</label>
-              <div style={{ display: 'flex', gap: '8px', marginBottom: '14px', flexWrap: 'wrap' }}>
-                {['update', 'tip', 'video', 'industry'].map(t => (
-                  <button key={t} type="button" style={s.typePill(t, broadcastForm.type)} onClick={() => setBroadcastForm({...broadcastForm, type: t})}>
-                    {t === 'update' ? 'Update' : t === 'tip' ? 'Tip' : t === 'video' ? 'Video' : 'Industry'}
-                  </button>
-                ))}
-              </div>
-              <label style={s.label}>Title</label>
-              <input style={s.input} value={broadcastForm.title} onChange={e => setBroadcastForm({...broadcastForm, title: e.target.value})} required placeholder="Message subject" />
-              {broadcastForm.type === 'video' && (
-                <>
-                  <label style={s.label}>YouTube URL</label>
-                  <input style={s.input} value={broadcastForm.youtube_url} onChange={e => setBroadcastForm({...broadcastForm, youtube_url: e.target.value})} placeholder="https://youtube.com/watch?v=..." />
-                </>
-              )}
-              <label style={s.label}>{broadcastForm.type === 'video' ? 'Description (optional)' : 'Message'}</label>
-              <textarea style={s.textarea} value={broadcastForm.body} onChange={e => setBroadcastForm({...broadcastForm, body: e.target.value})} required={broadcastForm.type !== 'video'} placeholder={broadcastForm.type === 'video' ? 'What will viewers learn from this video…' : 'Write your message here...'} />
-              <button style={s.btn} type="submit" disabled={broadcastLoading}>
-                {broadcastLoading ? 'Pushing...' : '📤 Push to all clients'}
-              </button>
-            </form>
-          </div>
+      {activeTab === 'broadcasts' && (() => {
+        const getYtId = (url) => {
+          if (!url) return null
+          const m = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/)
+          return m ? m[1] : null
+        }
+        const TYPE_CFG = {
+          update:   { label: 'Update',   desc: 'Share news or announcements',   accent: '#4ade80', bg: 'rgba(74,222,128,0.08)',  border: 'rgba(74,222,128,0.25)',
+            icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg> },
+          tip:      { label: 'Tip',      desc: 'Share a strategy or trick',      accent: '#fbbf24', bg: 'rgba(251,191,36,0.08)',  border: 'rgba(251,191,36,0.25)',
+            icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> },
+          video:    { label: 'Video',    desc: 'Embed a YouTube video',          accent: '#A175FC', bg: 'rgba(161,117,252,0.08)', border: 'rgba(161,117,252,0.25)',
+            icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg> },
+          industry: { label: 'Industry', desc: 'Market or industry insights',    accent: '#60a5fa', bg: 'rgba(96,165,250,0.08)',  border: 'rgba(96,165,250,0.25)',
+            icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 20h20M4 20V10l8-6 8 6v10"/><path d="M10 20v-6h4v6"/></svg> },
+        }
+        const cfg = TYPE_CFG[broadcastForm.type] || TYPE_CFG.update
+        const ytId = broadcastForm.type === 'video' ? getYtId(broadcastForm.youtube_url) : null
+        const canSubmit = broadcastForm.title.trim() && (broadcastForm.type === 'video' ? true : broadcastForm.body.trim())
 
-          {/* Broadcast geschiedenis */}
-          <div style={s.card}>
-            <div style={s.cardTitle}>Sent — {broadcasts.length}</div>
-            {broadcasts.length === 0 && <div style={{ color: '#4a7fb5', fontSize: '13px' }}>No messages sent yet.</div>}
-            {broadcasts.map(b => (
-              <div key={b.id} style={s.broadcastRow}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                  <div>
-                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '4px' }}>
-                      <span style={{ ...s.pill, background: b.type === 'tip' ? 'rgba(161,117,252,0.15)' : b.type === 'video' ? 'rgba(255,209,102,0.15)' : 'rgba(78,204,163,0.15)', color: b.type === 'tip' ? '#A175FC' : b.type === 'video' ? '#ffd166' : '#4ecca3' }}>
-                        {b.type === 'update' ? '📢 Update' : b.type === 'tip' ? '💡 Tip' : '🎥 Video'}
-                      </span>
-                      <span style={{ fontSize: '11px', color: '#4a7fb5' }}>{new Date(b.created_at).toLocaleDateString('en-US')}</span>
-                    </div>
-                    <div style={{ fontWeight: '600', fontSize: '14px', marginBottom: '4px' }}>{b.title}</div>
-                    <div style={{ fontSize: '12px', color: '#4a7fb5', lineHeight: '1.5' }}>{b.body}</div>
+        return (
+          <div style={s.grid}>
+
+            {/* ── Create form ── */}
+            <div style={s.card}>
+              <div style={s.cardTitle}>New post</div>
+              <div style={s.cardSub}>Published instantly to the Value Feed of all clients</div>
+
+              {broadcastSuccess && <div style={s.success}>{broadcastSuccess}</div>}
+
+              <form onSubmit={handleBroadcast}>
+                {/* Type selector */}
+                <label style={s.label}>Content type</label>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 20 }}>
+                  {Object.entries(TYPE_CFG).map(([id, t]) => (
+                    <button key={id} type="button"
+                      onClick={() => setBroadcastForm({...broadcastForm, type: id})}
+                      style={{ padding: '11px 14px', borderRadius: 10, border: `1px solid ${broadcastForm.type === id ? t.border : 'rgba(255,255,255,0.07)'}`, background: broadcastForm.type === id ? t.bg : 'transparent', cursor: 'pointer', textAlign: 'left', transition: 'all .15s', fontFamily: "'Inter Tight', sans-serif" }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span style={{ color: broadcastForm.type === id ? t.accent : 'rgba(255,255,255,0.25)', display: 'flex', transition: 'color .15s' }}>{t.icon}</span>
+                        <div>
+                          <div style={{ fontSize: 12.5, fontWeight: 700, color: broadcastForm.type === id ? '#fff' : 'rgba(255,255,255,0.45)', transition: 'color .15s' }}>{t.label}</div>
+                          <div style={{ fontSize: 10.5, color: 'rgba(255,255,255,0.25)', marginTop: 1 }}>{t.desc}</div>
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+
+                {/* YouTube URL + thumbnail preview */}
+                {broadcastForm.type === 'video' && (
+                  <div style={{ marginBottom: 14 }}>
+                    <label style={s.label}>YouTube URL</label>
+                    <input style={s.input} value={broadcastForm.youtube_url} onChange={e => setBroadcastForm({...broadcastForm, youtube_url: e.target.value})} placeholder="https://youtube.com/watch?v=..." />
+                    {ytId && (
+                      <div style={{ borderRadius: 8, overflow: 'hidden', position: 'relative', paddingTop: '36%', marginTop: -6, marginBottom: 14 }}>
+                        <img src={`https://img.youtube.com/vi/${ytId}/maxresdefault.jpg`} alt="thumb" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+                        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, transparent 50%, rgba(13,6,32,0.85) 100%)' }} />
+                        <div style={{ position: 'absolute', bottom: 8, left: 10, fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,0.55)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Thumbnail preview</div>
+                        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
+                          <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'rgba(255,255,255,0.15)', border: '1.5px solid rgba(255,255,255,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="#fff" style={{ marginLeft: 2 }}><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                  <button onClick={() => deleteBroadcast(b.id)} style={{ background: 'none', border: 'none', color: '#ff6b8a', cursor: 'pointer', fontSize: '14px', marginLeft: '12px', flexShrink: 0 }}>✕</button>
+                )}
+
+                {/* Title */}
+                <label style={s.label}>Title</label>
+                <input style={{ ...s.input, fontSize: 14, fontWeight: 600 }} value={broadcastForm.title} onChange={e => setBroadcastForm({...broadcastForm, title: e.target.value})} required placeholder={broadcastForm.type === 'tip' ? 'Your tip in one sentence…' : broadcastForm.type === 'video' ? 'Video title…' : 'Post title…'} />
+
+                {/* Body */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 5 }}>
+                  <label style={{ ...s.label, marginBottom: 0 }}>{broadcastForm.type === 'video' ? 'Description' : 'Content'} {broadcastForm.type === 'video' && <span style={{ fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>(optional)</span>}</label>
+                  <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.2)' }}>{broadcastForm.body.length} chars</span>
+                </div>
+                <textarea style={{ ...s.textarea, minHeight: 110 }} value={broadcastForm.body} onChange={e => setBroadcastForm({...broadcastForm, body: e.target.value})} required={broadcastForm.type !== 'video'} placeholder={broadcastForm.type === 'tip' ? 'Explain the tip in detail — be specific and actionable…' : broadcastForm.type === 'video' ? 'What will viewers learn or take away from this video…' : broadcastForm.type === 'industry' ? 'Share the insight and what it means for clients…' : 'Write your update here…'} />
+
+                <button style={{ ...s.btn, opacity: canSubmit ? 1 : 0.45, cursor: canSubmit ? 'pointer' : 'not-allowed', background: cfg.accent === '#A175FC' ? '#A175FC' : cfg.accent === '#4ade80' ? 'linear-gradient(135deg,#22c55e,#4ade80)' : cfg.accent === '#fbbf24' ? 'linear-gradient(135deg,#f59e0b,#fbbf24)' : '#A175FC', color: cfg.accent === '#fbbf24' ? '#1a0835' : '#fff', boxShadow: `0 4px 16px ${cfg.accent}40` }} type="submit" disabled={broadcastLoading || !canSubmit}>
+                  {broadcastLoading ? 'Publishing…' : `Publish ${cfg.label}`}
+                </button>
+              </form>
+            </div>
+
+            {/* ── Post history ── */}
+            <div style={s.card}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
+                <div>
+                  <div style={s.cardTitle}>Published — {broadcasts.length}</div>
+                  <div style={{ ...s.cardSub, marginBottom: 0 }}>Live in the Value Feed</div>
                 </div>
               </div>
-            ))}
+
+              {broadcasts.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '32px 0', color: '#4a7fb5', fontSize: 13 }}>No posts yet. Create your first one.</div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  {broadcasts.map(b => {
+                    const tc = TYPE_CFG[b.type] || TYPE_CFG.update
+                    const bYtId = b.type === 'video' ? getYtId(b.youtube_url) : null
+                    return (
+                      <div key={b.id} style={{ display: 'flex', gap: 12, alignItems: 'flex-start', padding: '12px 0', borderBottom: '1px solid rgba(255,255,255,0.05)', transition: 'background .15s', borderRadius: 8 }}>
+                        {/* Video thumbnail or type icon */}
+                        {bYtId ? (
+                          <div style={{ width: 72, height: 46, borderRadius: 7, overflow: 'hidden', flexShrink: 0, background: '#0d0620', position: 'relative' }}>
+                            <img src={`https://img.youtube.com/vi/${bYtId}/mqdefault.jpg`} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                              <svg width="10" height="10" viewBox="0 0 24 24" fill="rgba(255,255,255,0.8)"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                            </div>
+                          </div>
+                        ) : (
+                          <div style={{ width: 34, height: 34, borderRadius: 8, background: tc.bg, border: `1px solid ${tc.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: tc.accent, flexShrink: 0, marginTop: 2 }}>
+                            {tc.icon}
+                          </div>
+                        )}
+
+                        {/* Content */}
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
+                            <span style={{ fontSize: 10, fontWeight: 700, color: tc.accent, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{tc.label}</span>
+                            <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.25)' }}>{new Date(b.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                          </div>
+                          <div style={{ fontSize: 13, fontWeight: 600, color: '#fff', lineHeight: 1.3, marginBottom: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{b.title}</div>
+                          {b.body && <div style={{ fontSize: 11.5, color: 'rgba(255,255,255,0.35)', lineHeight: 1.4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{b.body}</div>}
+                        </div>
+
+                        {/* Delete */}
+                        <button onClick={() => deleteBroadcast(b.id)}
+                          style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.2)', cursor: 'pointer', padding: '4px 6px', borderRadius: 6, transition: 'color .15s, background .15s', flexShrink: 0 }}
+                          onMouseEnter={e => { e.currentTarget.style.color='#f87171'; e.currentTarget.style.background='rgba(248,113,113,0.08)' }}
+                          onMouseLeave={e => { e.currentTarget.style.color='rgba(255,255,255,0.2)'; e.currentTarget.style.background='none' }}>
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+                        </button>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+
           </div>
-        </div>
-      )}
+        )
+      })()}
 
       {activeTab === 'notifications' && (
         <div style={s.grid}>

@@ -90,11 +90,11 @@ const CSS = `
   .cal-btn:hover { background:rgba(255,255,255,0.09);border-color:rgba(255,255,255,0.2) }
 
   .react-btn {
-    display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:100px;
-    font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit;
+    display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:8px;
+    font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;
     border:1px solid transparent;background:transparent;transition:all .15s;line-height:1;
   }
-  .react-btn:hover { background:rgba(255,255,255,0.05);border-color:rgba(255,255,255,0.08) }
+  .react-btn:hover { background:rgba(255,255,255,0.05) }
 `
 
 // ── Constants ────────────────────────────────────────────────────────────────
@@ -329,9 +329,9 @@ function Reactions({ item, reactions, userId, onReact }) {
         const active = !!userId && reactions.some(r => r.broadcast_id === item.id && r.user_id === userId && r.emoji === id)
         return (
           <button key={id} className="react-btn" onClick={() => onReact(item.id, id)} style={{
-            color: active ? accent : 'rgba(255,255,255,0.3)',
-            background: active ? `${accent}18` : 'transparent',
-            borderColor: active ? `${accent}30` : 'transparent',
+            color:       active ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.28)',
+            background:  active ? 'rgba(255,255,255,0.07)'  : 'transparent',
+            borderColor: active ? 'rgba(255,255,255,0.1)'   : 'transparent',
           }}>
             {svg}
             {count > 0 && count}

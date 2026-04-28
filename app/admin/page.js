@@ -35,6 +35,7 @@ export default function AdminPage() {
   const [mcSuccess, setMcSuccess] = useState('')
   const [mcError, setMcError] = useState('')
   const [editingZoom, setEditingZoom] = useState(null)
+  const [inquiries, setInquiries] = useState([])
   const [notifForm, setNotifForm] = useState({ title: '', body: '', type: 'info' })
   const [form, setForm] = useState({
     company_name: '',
@@ -61,9 +62,20 @@ export default function AdminPage() {
       fetchTeamMembers()
       fetchMasterclasses()
       fetchBroadcastReactions()
+      fetchInquiries()
     }
     checkAuth()
   }, [])
+
+  async function fetchInquiries() {
+    const { data } = await supabase.from('service_inquiries').select('*').order('created_at', { ascending: false })
+    if (data) setInquiries(data)
+  }
+
+  async function markInquiryRead(id) {
+    await supabase.from('service_inquiries').update({ status: 'read' }).eq('id', id)
+    setInquiries(prev => prev.map(i => i.id === id ? { ...i, status: 'read' } : i))
+  }
 
   async function fetchBroadcastReactions() {
     const { data } = await supabase.from('broadcast_reactions').select('broadcast_id, emoji')
@@ -370,6 +382,14 @@ export default function AdminPage() {
           <button style={{ ...s.tab, ...(activeTab === 'team' ? s.tabActive : s.tabInactive) }} onClick={() => setActiveTab('team')}>Team</button>
           <button style={{ ...s.tab, ...(activeTab === 'time' ? s.tabActive : s.tabInactive) }} onClick={() => { setActiveTab('time'); fetchTimeData(timeFilter) }}>Time Tracking</button>
           <button style={{ ...s.tab, ...(activeTab === 'events' ? s.tabActive : s.tabInactive) }} onClick={() => setActiveTab('events')}>Events</button>
+          <button style={{ ...s.tab, ...(activeTab === 'inquiries' ? s.tabActive : s.tabInactive), position:'relative' }} onClick={() => setActiveTab('inquiries')}>
+            Inquiries
+            {inquiries.filter(i => i.status === 'new').length > 0 && (
+              <span style={{ marginLeft:6, fontSize:10, fontWeight:800, background:'#f87171', color:'#fff', borderRadius:100, padding:'1px 6px', lineHeight:1.4 }}>
+                {inquiries.filter(i => i.status === 'new').length}
+              </span>
+            )}
+          </button>
         </div>
 
       {activeTab === 'broadcasts' && (() => {
@@ -1032,6 +1052,78 @@ export default function AdminPage() {
                 )
               })}
             </div>
+          </div>
+        )
+      })()}
+
+      {activeTab === 'inquiries' && (() => {
+        const SERVICE_COLORS = {
+          'Customer Service Agent': '#A175FC',
+          'Dispute Manager': '#4ade80',
+          'Supply Chain Manager': '#60a5fa',
+          'Senior Backend Manager': '#f59e0b',
+          'Train Your Existing Team': '#f97316',
+          'General Inquiry': '#A175FC',
+        }
+        const unread = inquiries.filter(i => i.status === 'new')
+        const read   = inquiries.filter(i => i.status === 'read')
+
+        return (
+          <div>
+            {/* KPI row */}
+            <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:16, maxWidth:480, marginBottom:28 }}>
+              {[
+                { label:'Total', value: inquiries.length, color:'#A175FC' },
+                { label:'New', value: unread.length, color:'#f87171' },
+                { label:'Read', value: read.length, color:'#4ade80' },
+              ].map(({ label, value, color }) => (
+                <div key={label} style={s.statCard}>
+                  <div style={{ ...s.statNum, color }}>{value}</div>
+                  <div style={s.statLabel}>{label}</div>
+                </div>
+              ))}
+            </div>
+
+            {inquiries.length === 0 ? (
+              <div style={{ ...s.card, textAlign:'center', color:'#4a7fb5', fontSize:13 }}>No inquiries yet.</div>
+            ) : (
+              <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
+                {inquiries.map(inq => {
+                  const color = SERVICE_COLORS[inq.service] || '#A175FC'
+                  const isNew = inq.status === 'new'
+                  return (
+                    <div key={inq.id} style={{ background: isNew ? 'rgba(248,113,113,0.04)' : '#241352', border: `1px solid ${isNew ? 'rgba(248,113,113,0.18)' : 'rgba(255,255,255,0.07)'}`, borderRadius:12, padding:'18px 20px', display:'flex', gap:16, alignItems:'flex-start' }}>
+                      {/* Color dot */}
+                      <div style={{ width:8, height:8, borderRadius:'50%', background:color, flexShrink:0, marginTop:5, boxShadow:`0 0 8px ${color}80` }} />
+
+                      {/* Content */}
+                      <div style={{ flex:1, minWidth:0 }}>
+                        <div style={{ display:'flex', alignItems:'center', gap:8, flexWrap:'wrap', marginBottom:6 }}>
+                          <span style={{ fontSize:11, fontWeight:800, color, background:`${color}18`, border:`1px solid ${color}30`, borderRadius:100, padding:'2px 9px', textTransform:'uppercase', letterSpacing:'.05em' }}>{inq.service}</span>
+                          {isNew && <span style={{ fontSize:10, fontWeight:800, color:'#f87171', background:'rgba(248,113,113,0.1)', border:'1px solid rgba(248,113,113,0.25)', borderRadius:100, padding:'2px 8px', letterSpacing:'.05em', textTransform:'uppercase' }}>New</span>}
+                          <span style={{ fontSize:11, color:'#4a7fb5', marginLeft:'auto' }}>{new Date(inq.created_at).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' })}</span>
+                        </div>
+                        <div style={{ fontSize:13, fontWeight:600, color:'rgba(255,255,255,0.8)', marginBottom:4 }}>{inq.client_email || '—'}</div>
+                        {inq.message
+                          ? <p style={{ fontSize:13, color:'rgba(255,255,255,0.45)', lineHeight:1.6, whiteSpace:'pre-wrap', wordBreak:'break-word' }}>{inq.message}</p>
+                          : <p style={{ fontSize:12.5, color:'rgba(255,255,255,0.22)', fontStyle:'italic' }}>No specific question</p>
+                        }
+                      </div>
+
+                      {/* Mark as read */}
+                      {isNew && (
+                        <button onClick={() => markInquiryRead(inq.id)}
+                          style={{ flexShrink:0, padding:'6px 12px', borderRadius:7, border:'1px solid rgba(74,222,128,0.25)', background:'rgba(74,222,128,0.06)', color:'#4ade80', fontSize:11.5, fontWeight:700, cursor:'pointer', fontFamily:"'Inter Tight',sans-serif", transition:'all .15s', whiteSpace:'nowrap' }}
+                          onMouseEnter={e => e.currentTarget.style.background='rgba(74,222,128,0.12)'}
+                          onMouseLeave={e => e.currentTarget.style.background='rgba(74,222,128,0.06)'}>
+                          Mark read
+                        </button>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            )}
           </div>
         )
       })()}

@@ -27,7 +27,7 @@ export default function AdminPage() {
   const [timeData, setTimeData] = useState(null)
   const [timeLoading, setTimeLoading] = useState(false)
   const [timeFilter, setTimeFilter] = useState('week')
-  const [broadcastForm, setBroadcastForm] = useState({ title: '', body: '', type: 'update' })
+  const [broadcastForm, setBroadcastForm] = useState({ title: '', body: '', type: 'update', youtube_url: '' })
   const [notifForm, setNotifForm] = useState({ title: '', body: '', type: 'info' })
   const [form, setForm] = useState({
     company_name: '',
@@ -160,12 +160,13 @@ export default function AdminPage() {
       title: broadcastForm.title,
       body: broadcastForm.body,
       type: broadcastForm.type,
+      youtube_url: broadcastForm.youtube_url?.trim() || null,
     })
     if (error) {
       alert('Error: ' + error.message)
     } else {
       setBroadcastSuccess('Message pushed to all clients!')
-      setBroadcastForm({ title: '', body: '', type: 'update' })
+      setBroadcastForm({ title: '', body: '', type: 'update', youtube_url: '' })
       fetchBroadcasts()
     }
     setBroadcastLoading(false)
@@ -320,17 +321,23 @@ export default function AdminPage() {
             {broadcastSuccess && <div style={s.success}>{broadcastSuccess}</div>}
             <form onSubmit={handleBroadcast}>
               <label style={s.label}>Type</label>
-              <div style={{ display: 'flex', gap: '8px', marginBottom: '14px' }}>
-                {['update', 'tip', 'video'].map(t => (
+              <div style={{ display: 'flex', gap: '8px', marginBottom: '14px', flexWrap: 'wrap' }}>
+                {['update', 'tip', 'video', 'industry'].map(t => (
                   <button key={t} type="button" style={s.typePill(t, broadcastForm.type)} onClick={() => setBroadcastForm({...broadcastForm, type: t})}>
-                    {t === 'update' ? '📢 Update' : t === 'tip' ? '💡 Tip' : '🎥 Video'}
+                    {t === 'update' ? 'Update' : t === 'tip' ? 'Tip' : t === 'video' ? 'Video' : 'Industry'}
                   </button>
                 ))}
               </div>
               <label style={s.label}>Title</label>
               <input style={s.input} value={broadcastForm.title} onChange={e => setBroadcastForm({...broadcastForm, title: e.target.value})} required placeholder="Message subject" />
-              <label style={s.label}>Message</label>
-              <textarea style={s.textarea} value={broadcastForm.body} onChange={e => setBroadcastForm({...broadcastForm, body: e.target.value})} required placeholder="Write your message here..." />
+              {broadcastForm.type === 'video' && (
+                <>
+                  <label style={s.label}>YouTube URL</label>
+                  <input style={s.input} value={broadcastForm.youtube_url} onChange={e => setBroadcastForm({...broadcastForm, youtube_url: e.target.value})} placeholder="https://youtube.com/watch?v=..." />
+                </>
+              )}
+              <label style={s.label}>{broadcastForm.type === 'video' ? 'Description (optional)' : 'Message'}</label>
+              <textarea style={s.textarea} value={broadcastForm.body} onChange={e => setBroadcastForm({...broadcastForm, body: e.target.value})} required={broadcastForm.type !== 'video'} placeholder={broadcastForm.type === 'video' ? 'What will viewers learn from this video…' : 'Write your message here...'} />
               <button style={s.btn} type="submit" disabled={broadcastLoading}>
                 {broadcastLoading ? 'Pushing...' : '📤 Push to all clients'}
               </button>

@@ -27,7 +27,12 @@ export default function AdminPage() {
   const [timeData, setTimeData] = useState(null)
   const [timeLoading, setTimeLoading] = useState(false)
   const [timeFilter, setTimeFilter] = useState('week')
-  const [broadcastForm, setBroadcastForm] = useState({ title: '', body: '', type: 'update', youtube_url: '' })
+  const [broadcastForm, setBroadcastForm] = useState({ title: '', body: '', type: 'update', youtube_url: '', topic: '' })
+  const [masterclasses, setMasterclasses] = useState([])
+  const [mcForm, setMcForm] = useState({ title: '', speaker: '', description: '', scheduled_at: '', zoom_url: '' })
+  const [mcLoading, setMcLoading] = useState(false)
+  const [mcSuccess, setMcSuccess] = useState('')
+  const [mcError, setMcError] = useState('')
   const [notifForm, setNotifForm] = useState({ title: '', body: '', type: 'info' })
   const [form, setForm] = useState({
     company_name: '',
@@ -52,9 +57,40 @@ export default function AdminPage() {
       fetchBroadcasts()
       fetchNotifications()
       fetchTeamMembers()
+      fetchMasterclasses()
     }
     checkAuth()
   }, [])
+
+  async function fetchMasterclasses() {
+    const { data } = await supabase.from('masterclasses').select('*').order('scheduled_at', { ascending: false })
+    if (data) setMasterclasses(data)
+  }
+
+  async function handleCreateMasterclass(e) {
+    e.preventDefault()
+    setMcLoading(true); setMcSuccess(''); setMcError('')
+    const { error } = await supabase.from('masterclasses').insert({
+      title:        mcForm.title,
+      speaker:      mcForm.speaker?.trim() || null,
+      description:  mcForm.description?.trim() || null,
+      scheduled_at: new Date(mcForm.scheduled_at).toISOString(),
+      zoom_url:     mcForm.zoom_url?.trim() || null,
+    })
+    if (error) { setMcError(error.message) }
+    else {
+      setMcSuccess('Masterclass scheduled!')
+      setMcForm({ title: '', speaker: '', description: '', scheduled_at: '', zoom_url: '' })
+      fetchMasterclasses()
+    }
+    setMcLoading(false)
+  }
+
+  async function deleteMasterclass(id) {
+    if (!confirm('Delete this masterclass?')) return
+    await supabase.from('masterclasses').delete().eq('id', id)
+    fetchMasterclasses()
+  }
 
   async function fetchTeamMembers() {
     const { data } = await supabase.from('team_members').select('*').order('created_at', { ascending: false })
@@ -161,12 +197,13 @@ export default function AdminPage() {
       body: broadcastForm.body,
       type: broadcastForm.type,
       youtube_url: broadcastForm.youtube_url?.trim() || null,
+      topic:       broadcastForm.topic?.trim() || null,
     })
     if (error) {
       alert('Error: ' + error.message)
     } else {
       setBroadcastSuccess('Message pushed to all clients!')
-      setBroadcastForm({ title: '', body: '', type: 'update', youtube_url: '' })
+      setBroadcastForm({ title: '', body: '', type: 'update', youtube_url: '', topic: '' })
       fetchBroadcasts()
     }
     setBroadcastLoading(false)
@@ -310,6 +347,7 @@ export default function AdminPage() {
           <button style={{ ...s.tab, ...(activeTab === 'finance' ? s.tabActive : s.tabInactive) }} onClick={() => { setActiveTab('finance'); if (!finance) fetchFinance() }}>Finance</button>
           <button style={{ ...s.tab, ...(activeTab === 'team' ? s.tabActive : s.tabInactive) }} onClick={() => setActiveTab('team')}>Team</button>
           <button style={{ ...s.tab, ...(activeTab === 'time' ? s.tabActive : s.tabInactive) }} onClick={() => { setActiveTab('time'); fetchTimeData(timeFilter) }}>Time Tracking</button>
+          <button style={{ ...s.tab, ...(activeTab === 'events' ? s.tabActive : s.tabInactive) }} onClick={() => setActiveTab('events')}>Events</button>
         </div>
 
       {activeTab === 'broadcasts' && (() => {
@@ -357,6 +395,18 @@ export default function AdminPage() {
                           <div style={{ fontSize: 10.5, color: 'rgba(255,255,255,0.25)', marginTop: 1 }}>{t.desc}</div>
                         </div>
                       </div>
+                    </button>
+                  ))}
+                </div>
+
+                {/* Topic selector */}
+                <label style={s.label}>Topic <span style={{ fontWeight:400, textTransform:'none', letterSpacing:0, color:'rgba(255,255,255,0.25)' }}>(optional)</span></label>
+                <div style={{ display:'flex', gap:6, flexWrap:'wrap', marginBottom:20 }}>
+                  {['Media Buying','Creative Strategy','Supply Chain','Customer Service','Creatives','Email Marketing','Analytics'].map(t => (
+                    <button key={t} type="button"
+                      onClick={() => setBroadcastForm({...broadcastForm, topic: broadcastForm.topic === t ? '' : t})}
+                      style={{ padding:'5px 13px', borderRadius:100, border:`1px solid ${broadcastForm.topic === t ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.08)'}`, background: broadcastForm.topic === t ? 'rgba(255,255,255,0.1)' : 'transparent', color: broadcastForm.topic === t ? '#fff' : 'rgba(255,255,255,0.38)', fontSize:12, fontWeight:600, cursor:'pointer', fontFamily:"'Inter Tight', sans-serif", transition:'all .15s' }}>
+                      {t}
                     </button>
                   ))}
                 </div>
@@ -836,6 +886,86 @@ export default function AdminPage() {
                 })}
               </div>
             )}
+          </div>
+        )
+      })()}
+
+      {activeTab === 'events' && (() => {
+        const fmtDT = (iso) => new Date(iso).toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' })
+        const isPast = (iso) => new Date(iso) < new Date()
+
+        return (
+          <div style={s.grid}>
+            {/* Create masterclass */}
+            <div style={s.card}>
+              <div style={s.cardTitle}>Schedule masterclass</div>
+              <div style={s.cardSub}>Appears as "Upcoming Masterclass" in the Value Feed</div>
+              {mcSuccess && <div style={s.success}>{mcSuccess}</div>}
+              {mcError && <div style={{ background:'rgba(248,113,113,0.1)', border:'1px solid rgba(248,113,113,0.25)', borderRadius:8, padding:'10px 14px', color:'#f87171', fontSize:13, marginBottom:16 }}>{mcError}</div>}
+              <form onSubmit={handleCreateMasterclass}>
+                <label style={s.label}>Title</label>
+                <input style={s.input} value={mcForm.title} onChange={e => setMcForm({...mcForm, title: e.target.value})} required placeholder="How to scale Meta Ads without burning budget" />
+
+                <label style={s.label}>Speaker <span style={{ fontWeight:400, textTransform:'none', letterSpacing:0, color:'rgba(255,255,255,0.25)' }}>(optional)</span></label>
+                <input style={s.input} value={mcForm.speaker} onChange={e => setMcForm({...mcForm, speaker: e.target.value})} placeholder="Name · Role or company" />
+
+                <label style={s.label}>Description <span style={{ fontWeight:400, textTransform:'none', letterSpacing:0, color:'rgba(255,255,255,0.25)' }}>(optional)</span></label>
+                <textarea style={{ ...s.textarea, minHeight:80 }} value={mcForm.description} onChange={e => setMcForm({...mcForm, description: e.target.value})} placeholder="What will attendees learn? What should they prepare?" />
+
+                <label style={s.label}>Date & time</label>
+                <input style={{ ...s.input, colorScheme:'dark' }} type="datetime-local" value={mcForm.scheduled_at} onChange={e => setMcForm({...mcForm, scheduled_at: e.target.value})} required />
+
+                <label style={s.label}>Zoom link <span style={{ fontWeight:400, textTransform:'none', letterSpacing:0, color:'rgba(255,255,255,0.25)' }}>(add before session)</span></label>
+                <input style={s.input} value={mcForm.zoom_url} onChange={e => setMcForm({...mcForm, zoom_url: e.target.value})} placeholder="https://zoom.us/j/..." />
+
+                <button style={s.btn} type="submit" disabled={mcLoading}>
+                  {mcLoading ? 'Scheduling…' : 'Schedule masterclass'}
+                </button>
+              </form>
+            </div>
+
+            {/* Masterclass list */}
+            <div style={s.card}>
+              <div style={s.cardTitle}>Masterclasses — {masterclasses.length}</div>
+              <div style={{ ...s.cardSub, marginBottom: masterclasses.length ? 20 : 0 }}>Upcoming sessions are shown live in the Value Feed</div>
+
+              {masterclasses.length === 0 && <div style={{ color:'#4a7fb5', fontSize:13 }}>No masterclasses scheduled yet.</div>}
+
+              {masterclasses.map(mc => {
+                const past = isPast(mc.scheduled_at)
+                return (
+                  <div key={mc.id} style={{ padding:'14px 0', borderBottom:'1px solid rgba(255,255,255,0.05)', display:'flex', gap:14, alignItems:'flex-start' }}>
+                    {/* Date badge */}
+                    <div style={{ flexShrink:0, width:44, textAlign:'center', background: past ? 'rgba(255,255,255,0.03)' : 'rgba(161,117,252,0.1)', border:`1px solid ${past ? 'rgba(255,255,255,0.06)' : 'rgba(161,117,252,0.2)'}`, borderRadius:10, padding:'8px 4px' }}>
+                      <div style={{ fontSize:18, fontWeight:800, color: past ? 'rgba(255,255,255,0.25)' : '#A175FC', lineHeight:1 }}>{new Date(mc.scheduled_at).getDate()}</div>
+                      <div style={{ fontSize:9, fontWeight:700, color: past ? 'rgba(255,255,255,0.2)' : 'rgba(161,117,252,0.7)', textTransform:'uppercase', letterSpacing:'.05em', marginTop:2 }}>{new Date(mc.scheduled_at).toLocaleDateString('en-US',{month:'short'})}</div>
+                    </div>
+
+                    {/* Info */}
+                    <div style={{ flex:1, minWidth:0 }}>
+                      <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:3 }}>
+                        <span style={{ fontSize:11, fontWeight:700, color: past ? 'rgba(255,255,255,0.2)' : '#A175FC', textTransform:'uppercase', letterSpacing:'.05em' }}>{past ? 'Past' : 'Upcoming'}</span>
+                        <span style={{ fontSize:11, color:'rgba(255,255,255,0.25)' }}>{fmtDT(mc.scheduled_at)}</span>
+                      </div>
+                      <div style={{ fontSize:13.5, fontWeight:700, color: past ? 'rgba(255,255,255,0.35)' : '#fff', lineHeight:1.3, marginBottom:2 }}>{mc.title}</div>
+                      {mc.speaker && <div style={{ fontSize:11.5, color:'rgba(255,255,255,0.35)' }}>with {mc.speaker}</div>}
+                      {mc.zoom_url
+                        ? <div style={{ fontSize:11, color:'#4ade80', marginTop:4, display:'flex', alignItems:'center', gap:4 }}><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Zoom link set</div>
+                        : <div style={{ fontSize:11, color:'rgba(255,255,255,0.25)', marginTop:4 }}>No Zoom link yet</div>
+                      }
+                    </div>
+
+                    {/* Delete */}
+                    <button onClick={() => deleteMasterclass(mc.id)}
+                      style={{ background:'none', border:'none', color:'rgba(255,255,255,0.2)', cursor:'pointer', padding:'4px 6px', borderRadius:6, transition:'color .15s, background .15s', flexShrink:0 }}
+                      onMouseEnter={e => { e.currentTarget.style.color='#f87171'; e.currentTarget.style.background='rgba(248,113,113,0.08)' }}
+                      onMouseLeave={e => { e.currentTarget.style.color='rgba(255,255,255,0.2)'; e.currentTarget.style.background='none' }}>
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+                    </button>
+                  </div>
+                )
+              })}
+            </div>
           </div>
         )
       })()}

@@ -207,9 +207,10 @@ export default function TimeTrackingPage() {
   const [submitting, setSubmitting]       = useState(false)
   const [error, setError]                 = useState('')
 
-  const timerRef     = useRef(null)
-  const heartbeatRef = useRef(null)
-  const sessionRef   = useRef(null)
+  const timerRef      = useRef(null)
+  const heartbeatRef  = useRef(null)
+  const breakTimerRef = useRef(null)
+  const sessionRef    = useRef(null)
 
   const getToken = useCallback(async () => {
     const { data: { session } } = await supabase.auth.getSession()
@@ -259,6 +260,17 @@ export default function TimeTrackingPage() {
 
   useEffect(() => { fetchData(filter) }, [filter])
 
+  // Warn before closing tab while clocked in
+  useEffect(() => {
+    const handler = (e) => {
+      if (!sessionRef.current) return
+      e.preventDefault()
+      e.returnValue = ''
+    }
+    window.addEventListener('beforeunload', handler)
+    return () => window.removeEventListener('beforeunload', handler)
+  }, [])
+
   // Timer — ticks only when not paused
   useEffect(() => {
     clearInterval(timerRef.current)
@@ -266,6 +278,16 @@ export default function TimeTrackingPage() {
       timerRef.current = setInterval(() => setElapsed(s => s + 1), 1000)
     }
     return () => clearInterval(timerRef.current)
+  }, [activeSession?.id, isPaused])
+
+  // Break timer — ticks only while paused, so break counter display stays live
+  const [, setBreakTick] = useState(0)
+  useEffect(() => {
+    clearInterval(breakTimerRef.current)
+    if (activeSession && isPaused) {
+      breakTimerRef.current = setInterval(() => setBreakTick(t => t + 1), 1000)
+    }
+    return () => clearInterval(breakTimerRef.current)
   }, [activeSession?.id, isPaused])
 
   // Heartbeat every 30s — only when active
@@ -567,7 +589,7 @@ export default function TimeTrackingPage() {
               },
               {
                 label: 'Today',
-                value: fmtDur(todaySeconds + (isActive && !isPaused ? elapsed : 0)),
+                value: fmtDur(todaySeconds + (isActive ? elapsed : 0)),
                 sub: 'Hours clocked today',
                 accent: '#4ade80',
                 icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>,

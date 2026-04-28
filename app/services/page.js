@@ -21,8 +21,8 @@ const CSS = `
   .sv-scroll::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.1);border-radius:2px }
 
   .svc-card {
-    background:rgba(255,255,255,0.038);
-    border:1px solid rgba(255,255,255,0.08);
+    background:#241352;
+    border:1px solid rgba(255,255,255,0.12);
     border-radius:18px;padding:28px;
     display:flex;flex-direction:column;
     position:relative;overflow:hidden;
@@ -242,14 +242,14 @@ function ServiceCard({ svc, i, onRequest }) {
 
       {/* Content */}
       <h2 style={{ fontSize:17.5, fontWeight:800, color:'#F8FAFC', letterSpacing:'-0.03em', lineHeight:1.25, marginBottom:10 }}>{svc.title}</h2>
-      <p style={{ fontSize:13.5, color:'rgba(255,255,255,0.42)', lineHeight:1.68, marginBottom:22, flex:1 }}>{svc.description}</p>
+      <p style={{ fontSize:13.5, color:'rgba(255,255,255,0.72)', lineHeight:1.68, marginBottom:22, flex:1 }}>{svc.description}</p>
 
       {/* Feature bullets */}
       <div style={{ display:'flex', flexDirection:'column', gap:8, marginBottom:24 }}>
         {svc.features.map(f => (
           <div key={f} style={{ display:'flex', alignItems:'flex-start', gap:9 }}>
             <FeatureDot color={svc.accent} />
-            <span style={{ fontSize:12.5, color:'rgba(255,255,255,0.48)', lineHeight:1.45 }}>{f}</span>
+            <span style={{ fontSize:12.5, color:'rgba(255,255,255,0.65)', lineHeight:1.45 }}>{f}</span>
           </div>
         ))}
       </div>
@@ -258,7 +258,7 @@ function ServiceCard({ svc, i, onRequest }) {
       <button
         className="req-btn"
         onClick={onRequest}
-        style={{ background:'transparent', border:`1px solid ${hovered ? svc.accent + 'aa' : 'rgba(255,255,255,0.12)'}`, color: hovered ? svc.accent : 'rgba(255,255,255,0.55)' }}
+        style={{ background:'transparent', border:`1px solid ${hovered ? svc.accent + 'aa' : 'rgba(255,255,255,0.2)'}`, color: hovered ? svc.accent : 'rgba(255,255,255,0.78)' }}
       >
         Request More Info
       </button>
@@ -290,10 +290,10 @@ function TrainCard({ svc, onRequest }) {
                 <h2 style={{ fontSize:18.5, fontWeight:800, color:'#F8FAFC', letterSpacing:'-0.03em' }}>{svc.title}</h2>
                 <Badge badge={svc.badge} />
               </div>
-              <p style={{ fontSize:12, color:'rgba(255,255,255,0.28)', fontWeight:500 }}>For brands with an in-house team</p>
+              <p style={{ fontSize:12, color:'rgba(255,255,255,0.52)', fontWeight:500 }}>For brands with an in-house team</p>
             </div>
           </div>
-          <p style={{ fontSize:13.5, color:'rgba(255,255,255,0.42)', lineHeight:1.7 }}>{svc.description}</p>
+          <p style={{ fontSize:13.5, color:'rgba(255,255,255,0.72)', lineHeight:1.7 }}>{svc.description}</p>
         </div>
 
         {/* Right */}
@@ -302,14 +302,14 @@ function TrainCard({ svc, onRequest }) {
             {svc.features.map(f => (
               <div key={f} style={{ display:'flex', alignItems:'flex-start', gap:9 }}>
                 <FeatureDot color={svc.accent} />
-                <span style={{ fontSize:12.5, color:'rgba(255,255,255,0.48)', lineHeight:1.45 }}>{f}</span>
+                <span style={{ fontSize:12.5, color:'rgba(255,255,255,0.65)', lineHeight:1.45 }}>{f}</span>
               </div>
             ))}
           </div>
           <button
             className="req-btn"
             onClick={onRequest}
-            style={{ background:'transparent', border:`1px solid ${hovered ? svc.accent + 'aa' : 'rgba(255,255,255,0.12)'}`, color: hovered ? svc.accent : 'rgba(255,255,255,0.55)' }}
+            style={{ background:'transparent', border:`1px solid ${hovered ? svc.accent + 'aa' : 'rgba(255,255,255,0.2)'}`, color: hovered ? svc.accent : 'rgba(255,255,255,0.78)' }}
           >
             Request More Info
           </button>
@@ -342,7 +342,7 @@ function InquiryForm({ service, message, setMessage, onSubmit, submitting, error
         ) : (
           <div>
             <h3 style={{ fontSize:22, fontWeight:800, color:'#F8FAFC', letterSpacing:'-0.04em', marginBottom:6 }}>Let's talk</h3>
-            <p style={{ fontSize:13.5, color:'rgba(255,255,255,0.38)' }}>Tell us what you're looking for and we'll find the right fit.</p>
+            <p style={{ fontSize:13.5, color:'rgba(255,255,255,0.62)' }}>Tell us what you're looking for and we'll find the right fit.</p>
           </div>
         )}
       </div>
@@ -354,7 +354,7 @@ function InquiryForm({ service, message, setMessage, onSubmit, submitting, error
       </div>
 
       <form onSubmit={onSubmit}>
-        <label style={{ display:'block', fontSize:10.5, fontWeight:700, color:'rgba(255,255,255,0.28)', textTransform:'uppercase', letterSpacing:'.07em', marginBottom:7 }}>
+        <label style={{ display:'block', fontSize:10.5, fontWeight:700, color:'rgba(255,255,255,0.5)', textTransform:'uppercase', letterSpacing:'.07em', marginBottom:7 }}>
           Your question <span style={{ fontWeight:400, textTransform:'none', letterSpacing:0 }}>(optional)</span>
         </label>
         <textarea
@@ -391,7 +391,7 @@ function SuccessState({ onClose, serviceName }) {
           {serviceName}
         </div>
       )}
-      <p style={{ fontSize:14, color:'rgba(255,255,255,0.38)', lineHeight:1.7, marginBottom:30, maxWidth:320, margin:'0 auto 30px' }}>
+      <p style={{ fontSize:14, color:'rgba(255,255,255,0.62)', lineHeight:1.7, marginBottom:30, maxWidth:320, margin:'0 auto 30px' }}>
         Your inquiry is with the Lynq & Flow team. We'll reach out within <strong style={{ color:'rgba(255,255,255,0.6)' }}>24 hours</strong>.
       </p>
       <button onClick={onClose} style={{ padding:'11px 30px', borderRadius:10, border:'1px solid rgba(255,255,255,0.12)', background:'rgba(255,255,255,0.05)', color:'rgba(255,255,255,0.65)', fontSize:13, fontWeight:600, cursor:'pointer', fontFamily:'inherit', transition:'all .15s' }}
@@ -469,10 +469,10 @@ export default function ServicesPage() {
                   <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
                 </svg>
               </div>
-              <span style={{ fontSize:11.5, fontWeight:700, color:'rgba(255,255,255,0.28)', textTransform:'uppercase', letterSpacing:'.08em' }}>Services</span>
+              <span style={{ fontSize:11.5, fontWeight:700, color:'rgba(255,255,255,0.52)', textTransform:'uppercase', letterSpacing:'.08em' }}>Services</span>
             </div>
             <h1 style={{ fontSize:34, fontWeight:800, color:'#F8FAFC', letterSpacing:'-0.045em', lineHeight:1.1, marginBottom:12 }}>Grow Your Team</h1>
-            <p style={{ fontSize:14.5, color:'rgba(255,255,255,0.38)', lineHeight:1.65, maxWidth:500 }}>
+            <p style={{ fontSize:14.5, color:'rgba(255,255,255,0.62)', lineHeight:1.65, maxWidth:500 }}>
               World-class e-commerce specialists, trained to your brand standards and ready to perform from day one.
             </p>
             <div style={{ height:1, background:'rgba(255,255,255,0.07)', marginTop:28 }} />
@@ -495,12 +495,12 @@ export default function ServicesPage() {
             <div style={{
               display:'flex', alignItems:'center', justifyContent:'space-between', flexWrap:'wrap', gap:16,
               padding:'24px 30px', borderRadius:16,
-              background:'rgba(255,255,255,0.03)',
-              border:'1px solid rgba(255,255,255,0.07)',
+              background:'#241352',
+              border:'1px solid rgba(255,255,255,0.12)',
             }}>
               <div>
                 <p style={{ fontSize:15.5, fontWeight:700, color:'#F8FAFC', marginBottom:4 }}>Not sure which role you need?</p>
-                <p style={{ fontSize:13.5, color:'rgba(255,255,255,0.35)' }}>We'll help you figure out the perfect fit for your brand and team size.</p>
+                <p style={{ fontSize:13.5, color:'rgba(255,255,255,0.62)' }}>We'll help you figure out the perfect fit for your brand and team size.</p>
               </div>
               <button
                 onClick={() => openModal({ id:'general', title:'General Inquiry', accent:'#A175FC', icon:null, iconBg:'rgba(161,117,252,0.1)', iconBorder:'rgba(161,117,252,0.2)' })}

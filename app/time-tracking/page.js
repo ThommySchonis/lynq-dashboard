@@ -193,6 +193,7 @@ const FILTERS = [
 export default function TimeTrackingPage() {
   const [loading, setLoading]               = useState(true)
   const [isAdmin, setIsAdmin]               = useState(false)
+  const [adminData, setAdminData]           = useState(null)
   const [accessError, setAccessError]       = useState(false)
   const [member, setMember]                 = useState(null)
   const [sessions, setSessions]             = useState([])
@@ -225,7 +226,7 @@ export default function TimeTrackingPage() {
     if (res.status === 403) { setAccessError(true); setLoading(false); return }
     if (!res.ok) { setLoading(false); return }
     const d = await res.json()
-    if (d.is_admin) { setIsAdmin(true); setLoading(false); return }
+    if (d.is_admin) { setIsAdmin(true); setAdminData(d); setLoading(false); return }
     setMember(d.member)
     setSessions(d.sessions || [])
     setTodaySeconds(d.today_seconds || 0)
@@ -344,28 +345,146 @@ export default function TimeTrackingPage() {
     </div>
   )
 
-  // ─── Admin redirect ──────────────────────────────────────────────────────────
+  // ─── Admin overview ─────────────────────────────────────────────────────────
 
-  if (isAdmin) return (
-    <div className="tt-root" style={{ display: 'flex', minHeight: '100vh', background: '#1C0F36', color: '#F8FAFC' }}>
-      <style>{CSS}</style>
-      <Sidebar />
-      <main style={{ flex: 1, padding: '36px 44px', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ textAlign: 'center', maxWidth: 420 }}>
-          <div style={{ width: 56, height: 56, borderRadius: 16, background: 'rgba(161,117,252,0.12)', border: '1px solid rgba(161,117,252,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#A175FC" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+  if (isAdmin) {
+    const ad = adminData || {}
+    const adSessions = ad.sessions || []
+    const adMembers  = ad.members  || []
+    const adActive   = ad.active_count ?? 0
+    const adTotal    = adSessions.reduce((s, x) => s + durSec(x), 0)
+
+    const exportCSV = () => {
+      const rows = [['Name', 'Date', 'Clock In', 'Clock Out', 'Duration (h)', 'Report']]
+      adSessions.forEach(s => {
+        const hrs = s.clocked_out_at
+          ? ((new Date(s.clocked_out_at) - new Date(s.clocked_in_at)) / 3600000).toFixed(2)
+          : ''
+        rows.push([s.member_name||'', fmtDate(s.clocked_in_at), fmtTime(s.clocked_in_at),
+          fmtTime(s.clocked_out_at), hrs, (s.eod_report||'').replace(/"/g,'""')])
+      })
+      const csv = rows.map(r => r.map(c => `"${c}"`).join(',')).join('\n')
+      const a = document.createElement('a')
+      a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }))
+      a.download = `hours-${filter}-${new Date().toISOString().slice(0,10)}.csv`
+      a.click()
+    }
+
+    return (
+      <div className="tt-root" style={{ display: 'flex', minHeight: '100vh', background: '#1C0F36', color: '#F8FAFC' }}>
+        <style>{CSS}</style>
+        <PageBackground />
+        <Sidebar />
+        <main className="tt-scroll" style={{ flex: 1, overflowY: 'auto', padding: '36px 44px', position: 'relative' }}>
+          <div style={{ position: 'relative', zIndex: 1, maxWidth: 1100, margin: '0 auto' }}>
+
+            {/* Header */}
+            <div style={{ animation: 'fadeIn .4s ease both', marginBottom: 28 }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+                <div>
+                  <h1 style={{ fontSize: 28, fontWeight: 800, color: '#F8FAFC', letterSpacing: '-0.04em', lineHeight: 1.15, marginBottom: 5 }}>Time Tracking</h1>
+                  <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.38)' }}>Overview of all team hours and daily reports</div>
+                </div>
+                <button onClick={exportCSV} style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '9px 18px', borderRadius: 9, border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.7)', fontSize: 12.5, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', transition: 'all .15s', flexShrink: 0 }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                  Export CSV
+                </button>
+              </div>
+              <div style={{ height: 1, background: 'rgba(255,255,255,0.07)', margin: '20px 0 16px' }} />
+              <div style={{ display: 'flex', gap: 6 }}>
+                {FILTERS.map(f => (
+                  <button key={f.id} className="range-pill" onClick={() => { setFilter(f.id); fetchData(f.id) }} style={{
+                    background: filter === f.id ? '#A175FC' : 'rgba(255,255,255,0.05)',
+                    color: filter === f.id ? '#fff' : 'rgba(255,255,255,0.42)',
+                    border: `1px solid ${filter === f.id ? 'transparent' : 'rgba(255,255,255,0.08)'}`,
+                    boxShadow: filter === f.id ? '0 2px 10px rgba(161,117,252,0.3)' : 'none',
+                  }}>{f.label}</button>
+                ))}
+              </div>
+            </div>
+
+            {/* KPI row */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14, marginBottom: 20, animation: 'fadeIn .4s ease .05s both' }}>
+              {[
+                { label: 'Active Now', value: adActive, sub: `${adActive === 1 ? 'person' : 'people'} clocked in`, accent: '#4ade80',
+                  icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> },
+                { label: FILTERS.find(f=>f.id===filter)?.label || 'Period', value: fmtDur(adTotal), sub: `${adSessions.length} sessions total`, accent: '#A175FC',
+                  icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg> },
+                { label: 'Team Members', value: adMembers.length, sub: 'Registered employees', accent: '#60a5fa',
+                  icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> },
+              ].map(({ label, value, sub, accent, icon }) => (
+                <div key={label} className="kpi-card">
+                  <div className="top-bar" style={{ background: `linear-gradient(90deg, ${accent}60, ${accent}20)` }} />
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+                    <div style={{ fontSize: 10.5, fontWeight: 700, color: 'rgba(255,255,255,0.35)', letterSpacing: '0.07em', textTransform: 'uppercase' }}>{label}</div>
+                    <div style={{ width: 34, height: 34, borderRadius: 9, background: `${accent}1a`, border: `1px solid ${accent}20`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: accent }}>{icon}</div>
+                  </div>
+                  <div style={{ fontSize: 28, fontWeight: 800, letterSpacing: '-0.04em', color: '#F8FAFC', lineHeight: 1.1, marginBottom: 4 }}>{value}</div>
+                  <div style={{ fontSize: 11.5, color: 'rgba(255,255,255,0.32)', fontWeight: 500 }}>{sub}</div>
+                </div>
+              ))}
+            </div>
+
+            {/* Per-member cards */}
+            {adMembers.length > 0 && (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12, marginBottom: 20, animation: 'fadeIn .4s ease .1s both' }}>
+                {adMembers.map(m => (
+                  <div key={m.id} className="kpi-card" style={{ padding: '16px 18px' }}>
+                    <div className="top-bar" style={{ background: m.is_active ? 'linear-gradient(90deg,rgba(74,222,128,0.5),rgba(74,222,128,0.1))' : 'linear-gradient(90deg,rgba(161,117,252,0.3),rgba(161,117,252,0.05))' }} />
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 10 }}>
+                      <div style={{ width: 7, height: 7, borderRadius: '50%', background: m.is_active ? '#4ade80' : 'rgba(255,255,255,0.18)', boxShadow: m.is_active ? '0 0 6px rgba(74,222,128,0.6)' : 'none', animation: m.is_active ? 'glowPulse 2s ease-in-out infinite' : 'none', flexShrink: 0 }} />
+                      <div style={{ fontSize: 12.5, fontWeight: 700, color: '#F8FAFC', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.name}</div>
+                    </div>
+                    <div style={{ fontSize: 22, fontWeight: 800, color: '#A175FC', letterSpacing: '-0.03em', marginBottom: 2 }}>{fmtDur(m.total_seconds)}</div>
+                    <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)' }}>{m.sessions_count} session{m.sessions_count !== 1 ? 's' : ''} · {m.role}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Sessions table */}
+            <div className="panel" style={{ animation: 'fadeIn .4s ease .15s both' }}>
+              <div style={{ marginBottom: 16 }}>
+                <div style={{ fontSize: 14, fontWeight: 700, color: '#F8FAFC' }}>All Sessions</div>
+                <div style={{ fontSize: 11.5, color: 'rgba(255,255,255,0.32)', marginTop: 2 }}>Clock times, durations and daily reports per team member</div>
+              </div>
+              {adSessions.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '36px 0', color: 'rgba(255,255,255,0.22)', fontSize: 13 }}>No sessions in this period yet.</div>
+              ) : (
+                <>
+                  <div style={{ display: 'grid', gridTemplateColumns: '130px 120px 72px 72px 80px 1fr', gap: 12, padding: '0 14px 10px', borderBottom: '1px solid rgba(255,255,255,0.07)', marginBottom: 2 }}>
+                    {['Employee', 'Date', 'In', 'Out', 'Hours', 'Report'].map(h => (
+                      <div key={h} style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>{h}</div>
+                    ))}
+                  </div>
+                  {adSessions.map(s => {
+                    const sec = durSec(s)
+                    const hrs = s.clocked_out_at ? (sec / 3600).toFixed(2) : null
+                    return (
+                      <div key={s.id} style={{ display: 'grid', gridTemplateColumns: '130px 120px 72px 72px 80px 1fr', gap: 12, alignItems: 'start', padding: '12px 14px', borderRadius: 8, borderBottom: '1px solid rgba(255,255,255,0.04)', transition: 'background .15s', cursor: 'default' }}
+                        onMouseEnter={e => e.currentTarget.style.background='rgba(255,255,255,0.04)'}
+                        onMouseLeave={e => e.currentTarget.style.background='transparent'}>
+                        <div>
+                          <div style={{ fontSize: 12.5, fontWeight: 600, color: '#F8FAFC' }}>{s.member_name}</div>
+                          <div style={{ fontSize: 10.5, color: 'rgba(255,255,255,0.28)', marginTop: 1 }}>{s.member_email}</div>
+                        </div>
+                        <div style={{ fontSize: 12.5, color: 'rgba(255,255,255,0.55)' }}>{fmtDate(s.clocked_in_at)}</div>
+                        <div style={{ fontSize: 12.5, color: 'rgba(255,255,255,0.55)', fontVariantNumeric: 'tabular-nums' }}>{fmtTime(s.clocked_in_at)}</div>
+                        <div style={{ fontSize: 12.5, fontVariantNumeric: 'tabular-nums', color: s.clocked_out_at ? 'rgba(255,255,255,0.55)' : '#4ade80' }}>{s.clocked_out_at ? fmtTime(s.clocked_out_at) : 'Active'}</div>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: '#F8FAFC' }}>{hrs ? `${hrs}h` : '—'}</div>
+                        <div className="report-cell">{s.eod_report || <span style={{ color: 'rgba(255,255,255,0.18)', fontStyle: 'italic' }}>No report</span>}</div>
+                      </div>
+                    )
+                  })}
+                </>
+              )}
+            </div>
+
           </div>
-          <div style={{ fontSize: 20, fontWeight: 800, color: '#F8FAFC', letterSpacing: '-0.03em', marginBottom: 8 }}>Time overview in Admin Panel</div>
-          <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.38)', lineHeight: 1.6, marginBottom: 24 }}>
-            As admin you can view all team hours, EOD reports and export payroll data from the Admin Panel → Time Tracking tab.
-          </div>
-          <a href="/admin" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '11px 24px', borderRadius: 10, background: '#A175FC', color: '#fff', fontSize: 13, fontWeight: 700, textDecoration: 'none', fontFamily: 'inherit', boxShadow: '0 4px 20px rgba(161,117,252,0.35)' }}>
-            Go to Admin Panel →
-          </a>
-        </div>
-      </main>
-    </div>
-  )
+        </main>
+      </div>
+    )
+  }
 
   // ─── Access error ────────────────────────────────────────────────────────────
 

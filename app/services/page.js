@@ -78,13 +78,25 @@ const CSS = `
   }
   .close-btn:hover { color:#fff;background:rgba(255,255,255,0.07) }
 
+  .tel-input {
+    width:100%;padding:12px 14px;
+    background:rgba(255,255,255,0.04);
+    border:1px solid rgba(255,255,255,0.09);
+    border-radius:10px;color:#F8FAFC;
+    font-size:13.5px;font-family:inherit;
+    box-sizing:border-box;
+    transition:border-color .15s;outline:none;
+  }
+  .tel-input::placeholder { color:rgba(255,255,255,0.25) }
+  .tel-input:focus { border-color:rgba(161,117,252,0.45) }
+
   .msg-input {
     width:100%;padding:12px 14px;
     background:rgba(255,255,255,0.04);
     border:1px solid rgba(255,255,255,0.09);
     border-radius:10px;color:#F8FAFC;
     font-size:13.5px;font-family:inherit;
-    resize:none;min-height:110px;
+    resize:none;min-height:90px;
     box-sizing:border-box;
     transition:border-color .15s;outline:none;
     line-height:1.65;
@@ -204,7 +216,27 @@ const TRAIN_SERVICE = {
   ),
 }
 
+const GUARANTEE_ITEMS = [
+  'Dedicated trainer assigned to your account',
+  '2-week personal onboarding included',
+  'Daily performance report sent directly to you',
+]
+
 // ── Sub-components ────────────────────────────────────────────────────────────
+
+function GuaranteeBlock() {
+  return (
+    <div style={{ margin:'16px 0 20px', padding:'14px 16px', borderRadius:10, background:'rgba(74,222,128,0.05)', border:'1px solid rgba(74,222,128,0.18)' }}>
+      <div style={{ fontSize:10, fontWeight:800, color:'#4ade80', textTransform:'uppercase', letterSpacing:'.07em', marginBottom:10 }}>Our Guarantee</div>
+      {GUARANTEE_ITEMS.map(item => (
+        <div key={item} style={{ display:'flex', alignItems:'flex-start', gap:8, marginBottom:7 }}>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#4ade80" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink:0, marginTop:1 }}><polyline points="20 6 9 17 4 12"/></svg>
+          <span style={{ fontSize:12, color:'rgba(255,255,255,0.75)', lineHeight:1.45 }}>{item}</span>
+        </div>
+      ))}
+    </div>
+  )
+}
 
 function Badge({ badge }) {
   if (!badge) return null
@@ -257,6 +289,9 @@ function ServiceCard({ svc, i, onRequest }) {
         ))}
       </div>
 
+      {/* Guarantee */}
+      <GuaranteeBlock />
+
       {/* CTA */}
       <button
         className="req-btn"
@@ -299,7 +334,7 @@ function TrainCard({ svc, onRequest }) {
         </div>
 
         {/* Right */}
-        <div style={{ flex:'0 1 260px', display:'flex', flexDirection:'column', gap:20 }}>
+        <div style={{ flex:'0 1 260px', display:'flex', flexDirection:'column', gap:16 }}>
           <div style={{ display:'flex', flexDirection:'column', gap:9 }}>
             {svc.features.map(f => (
               <div key={f} style={{ display:'flex', alignItems:'flex-start', gap:9 }}>
@@ -308,6 +343,7 @@ function TrainCard({ svc, onRequest }) {
               </div>
             ))}
           </div>
+          <GuaranteeBlock />
           <button
             className="req-btn"
             onClick={onRequest}
@@ -320,7 +356,7 @@ function TrainCard({ svc, onRequest }) {
   )
 }
 
-function InquiryForm({ service, message, setMessage, onSubmit, submitting, error, onClose }) {
+function InquiryForm({ service, phone, setPhone, message, setMessage, onSubmit, submitting, error, onClose }) {
   const isGeneral = service.id === 'general'
   return (
     <>
@@ -355,6 +391,20 @@ function InquiryForm({ service, message, setMessage, onSubmit, submitting, error
       </div>
 
       <form onSubmit={onSubmit}>
+        {/* Phone number */}
+        <label style={{ display:'block', fontSize:10.5, fontWeight:700, color:'rgba(255,255,255,0.5)', textTransform:'uppercase', letterSpacing:'.07em', marginBottom:7 }}>
+          WhatsApp number <span style={{ color:'#f87171', fontWeight:800 }}>*</span>
+        </label>
+        <input
+          type="tel"
+          className="tel-input"
+          required
+          value={phone}
+          onChange={e => setPhone(e.target.value)}
+          placeholder="+31 6 12345678"
+          style={{ marginBottom:18 }}
+        />
+
         <label style={{ display:'block', fontSize:10.5, fontWeight:700, color:'rgba(255,255,255,0.5)', textTransform:'uppercase', letterSpacing:'.07em', marginBottom:7 }}>
           Your question <span style={{ fontWeight:400, textTransform:'none', letterSpacing:0 }}>(optional)</span>
         </label>
@@ -409,6 +459,7 @@ function SuccessState({ onClose, serviceName }) {
 export default function ServicesPage() {
   const [activeService, setActiveService] = useState(null)
   const [message, setMessage]             = useState('')
+  const [phone, setPhone]                 = useState('')
   const [submitting, setSubmitting]       = useState(false)
   const [submitted, setSubmitted]         = useState(false)
   const [error, setError]                 = useState('')
@@ -430,6 +481,7 @@ export default function ServicesPage() {
   function openModal(svc) {
     setActiveService(svc)
     setMessage('')
+    setPhone('')
     setSubmitted(false)
     setError('')
   }
@@ -444,6 +496,7 @@ export default function ServicesPage() {
       client_email: userEmail,
       service:      activeService.title,
       message:      message.trim() || null,
+      phone_number: phone.trim() || null,
     })
     setSubmitting(false)
     if (dbErr) setError(dbErr.message)
@@ -524,6 +577,8 @@ export default function ServicesPage() {
               ? <SuccessState onClose={() => setActiveService(null)} serviceName={activeService.title} />
               : <InquiryForm
                   service={activeService}
+                  phone={phone}
+                  setPhone={setPhone}
                   message={message}
                   setMessage={setMessage}
                   onSubmit={handleSubmit}

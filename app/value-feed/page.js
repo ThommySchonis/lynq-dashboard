@@ -99,8 +99,6 @@ const TYPE_CFG = {
   industry: { label: 'Industry', accent: '#60a5fa', bg: 'rgba(96,165,250,0.1)',   border: 'rgba(96,165,250,0.22)' },
 }
 
-const TOPICS = ['Media Buying', 'Creative Strategy', 'Supply Chain', 'Customer Service', 'Creatives', 'Email Marketing', 'Analytics']
-
 const TYPE_FILTERS = [
   { id: 'all',      label: 'All' },
   { id: 'video',    label: 'Videos' },
@@ -113,8 +111,12 @@ const TYPE_FILTERS = [
 
 function getYouTubeId(url) {
   if (!url) return null
-  const m = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/)
+  const m = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/)
   return m ? m[1] : null
+}
+
+function isNew(iso) {
+  return (Date.now() - new Date(iso)) < 7 * 86400000
 }
 
 function fmtDate(iso) {
@@ -253,6 +255,9 @@ function VideoCard({ item, i }) {
         <div style={{ display:'flex', alignItems:'center', gap:7, marginBottom:10, flexWrap:'wrap' }}>
           <span className="type-badge" style={{ background:cfg.bg, border:`1px solid ${cfg.border}`, color:cfg.accent }}>Video</span>
           <TopicTag topic={item.topic} />
+          {isNew(item.created_at) && (
+            <span style={{ display:'inline-flex', alignItems:'center', padding:'2px 8px', borderRadius:100, fontSize:10, fontWeight:800, letterSpacing:'.06em', textTransform:'uppercase', background:'rgba(74,222,128,0.12)', border:'1px solid rgba(74,222,128,0.25)', color:'#4ade80' }}>New</span>
+          )}
           <span style={{ fontSize:11, color:'rgba(255,255,255,0.28)', marginLeft:'auto' }}>{fmtDate(item.created_at)}</span>
         </div>
         <h3 style={{ fontSize:16.5, fontWeight:800, color:'#F8FAFC', letterSpacing:'-0.028em', lineHeight:1.3, marginBottom:8 }}>{item.title}</h3>
@@ -285,10 +290,13 @@ function TextCard({ item, i }) {
             {cfg.label}
           </span>
           <TopicTag topic={item.topic} />
+          {isNew(item.created_at) && (
+            <span style={{ display:'inline-flex', alignItems:'center', padding:'2px 8px', borderRadius:100, fontSize:10, fontWeight:800, letterSpacing:'.06em', textTransform:'uppercase', background:'rgba(74,222,128,0.12)', border:'1px solid rgba(74,222,128,0.25)', color:'#4ade80' }}>New</span>
+          )}
           <span style={{ fontSize:11, color:'rgba(255,255,255,0.28)', marginLeft:'auto' }}>{fmtDate(item.created_at)}</span>
         </div>
         <h3 style={{ fontSize:15.5, fontWeight:800, color:'#F8FAFC', letterSpacing:'-0.025em', lineHeight:1.35, marginBottom:10 }}>{item.title}</h3>
-        {item.body && <p style={{ fontSize:13, color:'rgba(255,255,255,0.5)', lineHeight:1.7, whiteSpace:'pre-wrap' }}>{item.body}</p>}
+        {item.body && <p style={{ fontSize:13, color:'rgba(255,255,255,0.5)', lineHeight:1.7, whiteSpace:'pre-wrap', overflowWrap:'break-word' }}>{item.body}</p>}
       </div>
     </div>
   )
@@ -367,16 +375,21 @@ export default function ValueFeedPage() {
 
             {/* Type filters */}
             <div style={{ display:'flex', gap:6, flexWrap:'wrap', marginBottom: activeTopics.length > 0 ? 10 : 0 }}>
-              {TYPE_FILTERS.filter(f => f.id === 'all' || posts.some(p => p.type === f.id)).map(f => (
-                <button key={f.id} className="f-pill" onClick={() => setTypeFilter(f.id)} style={{
-                  background: typeFilter === f.id ? '#A175FC' : 'rgba(255,255,255,0.05)',
-                  color:      typeFilter === f.id ? '#fff' : 'rgba(255,255,255,0.42)',
-                  border:    `1px solid ${typeFilter === f.id ? 'transparent' : 'rgba(255,255,255,0.08)'}`,
-                  boxShadow:  typeFilter === f.id ? '0 2px 12px rgba(161,117,252,0.35)' : 'none',
-                }}>
-                  {f.label}
-                </button>
-              ))}
+              {TYPE_FILTERS.filter(f => f.id === 'all' || posts.some(p => p.type === f.id)).map(f => {
+                const count = f.id === 'all' ? posts.length : posts.filter(p => p.type === f.id).length
+                return (
+                  <button key={f.id} className="f-pill" onClick={() => setTypeFilter(f.id)} style={{
+                    background: typeFilter === f.id ? '#A175FC' : 'rgba(255,255,255,0.05)',
+                    color:      typeFilter === f.id ? '#fff' : 'rgba(255,255,255,0.42)',
+                    border:    `1px solid ${typeFilter === f.id ? 'transparent' : 'rgba(255,255,255,0.08)'}`,
+                    boxShadow:  typeFilter === f.id ? '0 2px 12px rgba(161,117,252,0.35)' : 'none',
+                    display: 'flex', alignItems: 'center', gap: 6,
+                  }}>
+                    {f.label}
+                    <span style={{ fontSize:10, opacity: typeFilter === f.id ? 0.7 : 0.45, background: typeFilter === f.id ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.1)', borderRadius:100, padding:'1px 6px', fontWeight:700 }}>{count}</span>
+                  </button>
+                )
+              })}
             </div>
 
             {/* Topic filters — only shown if posts have topics */}

@@ -33,6 +33,7 @@ export default function AdminPage() {
   const [mcLoading, setMcLoading] = useState(false)
   const [mcSuccess, setMcSuccess] = useState('')
   const [mcError, setMcError] = useState('')
+  const [editingZoom, setEditingZoom] = useState(null)
   const [notifForm, setNotifForm] = useState({ title: '', body: '', type: 'info' })
   const [form, setForm] = useState({
     company_name: '',
@@ -89,6 +90,12 @@ export default function AdminPage() {
   async function deleteMasterclass(id) {
     if (!confirm('Delete this masterclass?')) return
     await supabase.from('masterclasses').delete().eq('id', id)
+    fetchMasterclasses()
+  }
+
+  async function updateZoomUrl(id, url) {
+    await supabase.from('masterclasses').update({ zoom_url: url?.trim() || null }).eq('id', id)
+    setEditingZoom(null)
     fetchMasterclasses()
   }
 
@@ -949,10 +956,33 @@ export default function AdminPage() {
                       </div>
                       <div style={{ fontSize:13.5, fontWeight:700, color: past ? 'rgba(255,255,255,0.35)' : '#fff', lineHeight:1.3, marginBottom:2 }}>{mc.title}</div>
                       {mc.speaker && <div style={{ fontSize:11.5, color:'rgba(255,255,255,0.35)' }}>with {mc.speaker}</div>}
-                      {mc.zoom_url
-                        ? <div style={{ fontSize:11, color:'#4ade80', marginTop:4, display:'flex', alignItems:'center', gap:4 }}><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Zoom link set</div>
-                        : <div style={{ fontSize:11, color:'rgba(255,255,255,0.25)', marginTop:4 }}>No Zoom link yet</div>
-                      }
+                      {editingZoom?.id === mc.id ? (
+                        <div style={{ marginTop:6, display:'flex', gap:6, alignItems:'center' }}>
+                          <input
+                            style={{ flex:1, padding:'5px 9px', background:'#180d30', border:'1px solid rgba(161,117,252,0.35)', borderRadius:6, color:'#fff', fontSize:11.5, fontFamily:"'Inter Tight', sans-serif", outline:'none' }}
+                            value={editingZoom.url}
+                            onChange={e => setEditingZoom({...editingZoom, url: e.target.value})}
+                            placeholder="https://zoom.us/j/..."
+                            onKeyDown={e => { if (e.key === 'Enter') updateZoomUrl(mc.id, editingZoom.url); if (e.key === 'Escape') setEditingZoom(null) }}
+                            autoFocus
+                          />
+                          <button onClick={() => updateZoomUrl(mc.id, editingZoom.url)} style={{ padding:'5px 10px', background:'#A175FC', border:'none', borderRadius:6, color:'#fff', fontSize:11, fontWeight:700, cursor:'pointer', fontFamily:"'Inter Tight', sans-serif", whiteSpace:'nowrap' }}>Save</button>
+                          <button onClick={() => setEditingZoom(null)} style={{ padding:'5px 10px', background:'rgba(255,255,255,0.06)', border:'1px solid rgba(255,255,255,0.1)', borderRadius:6, color:'rgba(255,255,255,0.5)', fontSize:11, fontWeight:600, cursor:'pointer', fontFamily:"'Inter Tight', sans-serif" }}>✕</button>
+                        </div>
+                      ) : (
+                        <div style={{ display:'flex', alignItems:'center', gap:6, marginTop:4 }}>
+                          {mc.zoom_url
+                            ? <div style={{ fontSize:11, color:'#4ade80', display:'flex', alignItems:'center', gap:4 }}><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Zoom link set</div>
+                            : <div style={{ fontSize:11, color:'rgba(255,255,255,0.25)' }}>No Zoom link yet</div>
+                          }
+                          <button onClick={() => setEditingZoom({ id: mc.id, url: mc.zoom_url || '' })}
+                            style={{ background:'none', border:'none', color:'rgba(255,255,255,0.25)', cursor:'pointer', padding:'2px 4px', borderRadius:4, transition:'color .15s', display:'flex', alignItems:'center' }}
+                            onMouseEnter={e => e.currentTarget.style.color='#A175FC'}
+                            onMouseLeave={e => e.currentTarget.style.color='rgba(255,255,255,0.25)'}>
+                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                          </button>
+                        </div>
+                      )}
                     </div>
 
                     {/* Delete */}

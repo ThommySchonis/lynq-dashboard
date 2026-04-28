@@ -46,7 +46,10 @@ const CSS = `
     font-size:13px;font-weight:700;cursor:pointer;
     font-family:inherit;letter-spacing:.015em;
     transition:all .15s;
+    background:#A175FC;color:#fff;border:none;
+    box-shadow:0 4px 20px rgba(161,117,252,0.38);
   }
+  .req-btn:hover { background:#b88fff;transform:translateY(-1px);box-shadow:0 6px 24px rgba(161,117,252,0.48) }
 
   .modal-overlay {
     position:fixed;inset:0;z-index:100;
@@ -258,7 +261,6 @@ function ServiceCard({ svc, i, onRequest }) {
       <button
         className="req-btn"
         onClick={onRequest}
-        style={{ background:'transparent', border:`1px solid ${hovered ? svc.accent + 'aa' : 'rgba(255,255,255,0.2)'}`, color: hovered ? svc.accent : 'rgba(255,255,255,0.78)' }}
       >
         Request More Info
       </button>
@@ -309,7 +311,6 @@ function TrainCard({ svc, onRequest }) {
           <button
             className="req-btn"
             onClick={onRequest}
-            style={{ background:'transparent', border:`1px solid ${hovered ? svc.accent + 'aa' : 'rgba(255,255,255,0.2)'}`, color: hovered ? svc.accent : 'rgba(255,255,255,0.78)' }}
           >
             Request More Info
           </button>

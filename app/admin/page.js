@@ -28,6 +28,7 @@ export default function AdminPage() {
   const [timeLoading, setTimeLoading] = useState(false)
   const [timeFilter, setTimeFilter] = useState('week')
   const [broadcastForm, setBroadcastForm] = useState({ title: '', body: '', type: 'update', youtube_url: '', topic: '' })
+  const [broadcastReactions, setBroadcastReactions] = useState([])
   const [masterclasses, setMasterclasses] = useState([])
   const [mcForm, setMcForm] = useState({ title: '', speaker: '', description: '', scheduled_at: '', zoom_url: '' })
   const [mcLoading, setMcLoading] = useState(false)
@@ -59,9 +60,21 @@ export default function AdminPage() {
       fetchNotifications()
       fetchTeamMembers()
       fetchMasterclasses()
+      fetchBroadcastReactions()
     }
     checkAuth()
   }, [])
+
+  async function fetchBroadcastReactions() {
+    const { data } = await supabase.from('broadcast_reactions').select('broadcast_id, emoji')
+    if (data) setBroadcastReactions(data)
+  }
+
+  async function togglePin(id, isPinned) {
+    if (!isPinned) await supabase.from('broadcasts').update({ is_pinned: false }).eq('is_pinned', true)
+    await supabase.from('broadcasts').update({ is_pinned: !isPinned }).eq('id', id)
+    fetchBroadcasts()
+  }
 
   async function fetchMasterclasses() {
     const { data } = await supabase.from('masterclasses').select('*').order('scheduled_at', { ascending: false })
@@ -212,6 +225,7 @@ export default function AdminPage() {
       setBroadcastSuccess('Message pushed to all clients!')
       setBroadcastForm({ title: '', body: '', type: 'update', youtube_url: '', topic: '' })
       fetchBroadcasts()
+      fetchBroadcastReactions()
     }
     setBroadcastLoading(false)
   }
@@ -219,6 +233,7 @@ export default function AdminPage() {
   async function deleteBroadcast(id) {
     await supabase.from('broadcasts').delete().eq('id', id)
     fetchBroadcasts()
+    fetchBroadcastReactions()
   }
 
   async function fetchClients() {
@@ -491,11 +506,32 @@ export default function AdminPage() {
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
                             <span style={{ fontSize: 10, fontWeight: 700, color: tc.accent, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{tc.label}</span>
+                            {b.is_pinned && <span style={{ fontSize: 10, fontWeight: 700, color: '#f59e0b', background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.25)', borderRadius: 4, padding: '1px 6px' }}>Pinned</span>}
                             <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.25)' }}>{new Date(b.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
                           </div>
                           <div style={{ fontSize: 13, fontWeight: 600, color: '#fff', lineHeight: 1.3, marginBottom: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{b.title}</div>
                           {b.body && <div style={{ fontSize: 11.5, color: 'rgba(255,255,255,0.35)', lineHeight: 1.4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{b.body}</div>}
+                          {/* Reaction counts */}
+                          {(() => {
+                            const tu = broadcastReactions.filter(r => r.broadcast_id === b.id && r.emoji === 'thumbs_up').length
+                            const fi = broadcastReactions.filter(r => r.broadcast_id === b.id && r.emoji === 'fire').length
+                            if (!tu && !fi) return null
+                            return (
+                              <div style={{ display: 'flex', gap: 8, marginTop: 5 }}>
+                                {tu > 0 && <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: 11, fontWeight: 700, color: '#60a5fa' }}><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M7 10v12"/><path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2h0a3.13 3.13 0 0 1 3 3.88z"/></svg>{tu}</span>}
+                                {fi > 0 && <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: 11, fontWeight: 700, color: '#f97316' }}><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>{fi}</span>}
+                              </div>
+                            )
+                          })()}
                         </div>
+
+                        {/* Pin toggle */}
+                        <button onClick={() => togglePin(b.id, b.is_pinned)} title={b.is_pinned ? 'Unpin' : 'Pin to top'}
+                          style={{ background: 'none', border: 'none', color: b.is_pinned ? '#f59e0b' : 'rgba(255,255,255,0.2)', cursor: 'pointer', padding: '4px 6px', borderRadius: 6, transition: 'color .15s, background .15s', flexShrink: 0 }}
+                          onMouseEnter={e => { e.currentTarget.style.color='#f59e0b'; e.currentTarget.style.background='rgba(245,158,11,0.1)' }}
+                          onMouseLeave={e => { e.currentTarget.style.color=b.is_pinned?'#f59e0b':'rgba(255,255,255,0.2)'; e.currentTarget.style.background='none' }}>
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill={b.is_pinned ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V17z"/></svg>
+                        </button>
 
                         {/* Delete */}
                         <button onClick={() => deleteBroadcast(b.id)}

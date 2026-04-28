@@ -88,6 +88,13 @@ const CSS = `
     transition:background .15s,border-color .15s;
   }
   .cal-btn:hover { background:rgba(255,255,255,0.09);border-color:rgba(255,255,255,0.2) }
+
+  .react-btn {
+    display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:100px;
+    font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit;
+    border:1px solid transparent;background:transparent;transition:all .15s;line-height:1;
+  }
+  .react-btn:hover { background:rgba(255,255,255,0.05);border-color:rgba(255,255,255,0.08) }
 `
 
 // ── Constants ────────────────────────────────────────────────────────────────
@@ -230,13 +237,13 @@ function TopicTag({ topic }) {
   return <span className="topic-tag">{topic}</span>
 }
 
-function VideoCard({ item, i }) {
+function VideoCard({ item, i, reactions, userId, onReact, isPinned }) {
   const ytId = getYouTubeId(item.youtube_url)
   const thumb = ytId ? `https://img.youtube.com/vi/${ytId}/maxresdefault.jpg` : null
   const cfg = TYPE_CFG.video
 
   return (
-    <div className="feed-card" style={{ animation:`fadeUp .45s ease ${i*60}ms both` }}>
+    <div className="feed-card" style={{ animation:`fadeUp .45s ease ${i*60}ms both`, ...(isPinned && { borderColor:'rgba(245,158,11,0.35)', boxShadow:'0 4px 24px rgba(0,0,0,0.25),0 0 0 1px rgba(245,158,11,0.08),inset 0 1px 0 rgba(255,255,255,0.06)' }) }}>
       <a href={item.youtube_url || '#'} target="_blank" rel="noopener noreferrer" style={{ display:'block', textDecoration:'none' }}>
         <div className="vid-thumb">
           {thumb && <img src={thumb} alt={item.title} />}
@@ -255,6 +262,7 @@ function VideoCard({ item, i }) {
         <div style={{ display:'flex', alignItems:'center', gap:7, marginBottom:10, flexWrap:'wrap' }}>
           <span className="type-badge" style={{ background:cfg.bg, border:`1px solid ${cfg.border}`, color:cfg.accent }}>Video</span>
           <TopicTag topic={item.topic} />
+          {isPinned && <span style={{ display:'inline-flex', alignItems:'center', gap:4, padding:'2px 9px', borderRadius:100, fontSize:10, fontWeight:800, letterSpacing:'.06em', textTransform:'uppercase', background:'rgba(245,158,11,0.1)', border:'1px solid rgba(245,158,11,0.28)', color:'#f59e0b' }}><svg width="8" height="8" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M16 9V4l1-1V2H7v1l1 1v5l-2 3h4v7l1 1 1-1v-7h4l-2-3z"/></svg>Pinned</span>}
           {isNew(item.created_at) && (
             <span style={{ display:'inline-flex', alignItems:'center', padding:'2px 8px', borderRadius:100, fontSize:10, fontWeight:800, letterSpacing:'.06em', textTransform:'uppercase', background:'rgba(74,222,128,0.12)', border:'1px solid rgba(74,222,128,0.25)', color:'#4ade80' }}>New</span>
           )}
@@ -268,12 +276,13 @@ function VideoCard({ item, i }) {
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
           </a>
         )}
+        <Reactions item={item} reactions={reactions} userId={userId} onReact={onReact} />
       </div>
     </div>
   )
 }
 
-function TextCard({ item, i }) {
+function TextCard({ item, i, reactions, userId, onReact, isPinned }) {
   const cfg = TYPE_CFG[item.type] || TYPE_CFG.update
   const icons = {
     tip:      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>,
@@ -281,8 +290,8 @@ function TextCard({ item, i }) {
     industry: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 20h20M4 20V10l8-6 8 6v10"/><path d="M10 20v-6h4v6"/></svg>,
   }
   return (
-    <div className="feed-card" style={{ animation:`fadeUp .45s ease ${i*60}ms both`, position:'relative' }}>
-      <div style={{ position:'absolute', top:0, left:0, right:0, height:2, background:`linear-gradient(90deg,${cfg.accent}80,${cfg.accent}20,transparent)` }} />
+    <div className="feed-card" style={{ animation:`fadeUp .45s ease ${i*60}ms both`, position:'relative', ...(isPinned && { borderColor:'rgba(245,158,11,0.35)', boxShadow:'0 4px 24px rgba(0,0,0,0.25),0 0 0 1px rgba(245,158,11,0.08),inset 0 1px 0 rgba(255,255,255,0.06)' }) }}>
+      <div style={{ position:'absolute', top:0, left:0, right:0, height:2, background: isPinned ? 'linear-gradient(90deg,rgba(245,158,11,0.8),rgba(245,158,11,0.2),transparent)' : `linear-gradient(90deg,${cfg.accent}80,${cfg.accent}20,transparent)` }} />
       <div style={{ padding:'22px 24px' }}>
         <div style={{ display:'flex', alignItems:'center', gap:7, marginBottom:12, flexWrap:'wrap' }}>
           <span className="type-badge" style={{ background:cfg.bg, border:`1px solid ${cfg.border}`, color:cfg.accent }}>
@@ -290,6 +299,7 @@ function TextCard({ item, i }) {
             {cfg.label}
           </span>
           <TopicTag topic={item.topic} />
+          {isPinned && <span style={{ display:'inline-flex', alignItems:'center', gap:4, padding:'2px 9px', borderRadius:100, fontSize:10, fontWeight:800, letterSpacing:'.06em', textTransform:'uppercase', background:'rgba(245,158,11,0.1)', border:'1px solid rgba(245,158,11,0.28)', color:'#f59e0b' }}><svg width="8" height="8" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M16 9V4l1-1V2H7v1l1 1v5l-2 3h4v7l1 1 1-1v-7h4l-2-3z"/></svg>Pinned</span>}
           {isNew(item.created_at) && (
             <span style={{ display:'inline-flex', alignItems:'center', padding:'2px 8px', borderRadius:100, fontSize:10, fontWeight:800, letterSpacing:'.06em', textTransform:'uppercase', background:'rgba(74,222,128,0.12)', border:'1px solid rgba(74,222,128,0.25)', color:'#4ade80' }}>New</span>
           )}
@@ -297,7 +307,37 @@ function TextCard({ item, i }) {
         </div>
         <h3 style={{ fontSize:15.5, fontWeight:800, color:'#F8FAFC', letterSpacing:'-0.025em', lineHeight:1.35, marginBottom:10 }}>{item.title}</h3>
         {item.body && <p style={{ fontSize:13, color:'rgba(255,255,255,0.5)', lineHeight:1.7, whiteSpace:'pre-wrap', overflowWrap:'break-word' }}>{item.body}</p>}
+        <Reactions item={item} reactions={reactions} userId={userId} onReact={onReact} />
       </div>
+    </div>
+  )
+}
+
+function Reactions({ item, reactions, userId, onReact }) {
+  const TYPES = [
+    { id:'thumbs_up', accent:'#60a5fa',
+      svg: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M7 10v12"/><path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2h0a3.13 3.13 0 0 1 3 3.88z"/></svg>
+    },
+    { id:'fire', accent:'#f97316',
+      svg: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
+    },
+  ]
+  return (
+    <div style={{ borderTop:'1px solid rgba(255,255,255,0.06)', marginTop:14, paddingTop:12, display:'flex', gap:3 }}>
+      {TYPES.map(({ id, accent, svg }) => {
+        const count = reactions.filter(r => r.broadcast_id === item.id && r.emoji === id).length
+        const active = !!userId && reactions.some(r => r.broadcast_id === item.id && r.user_id === userId && r.emoji === id)
+        return (
+          <button key={id} className="react-btn" onClick={() => onReact(item.id, id)} style={{
+            color: active ? accent : 'rgba(255,255,255,0.3)',
+            background: active ? `${accent}18` : 'transparent',
+            borderColor: active ? `${accent}30` : 'transparent',
+          }}>
+            {svg}
+            {count > 0 && count}
+          </button>
+        )
+      })}
     </div>
   )
 }
@@ -324,26 +364,45 @@ export default function ValueFeedPage() {
   const [loading, setLoading]           = useState(true)
   const [typeFilter, setTypeFilter]     = useState('all')
   const [topicFilter, setTopicFilter]   = useState('all')
+  const [reactions, setReactions]       = useState([])
+  const [userId, setUserId]             = useState(null)
 
   useEffect(() => {
     Promise.all([
+      supabase.auth.getSession(),
       supabase.from('broadcasts').select('*').order('created_at', { ascending: false }),
       supabase.from('masterclasses').select('*').gte('scheduled_at', new Date().toISOString()).order('scheduled_at', { ascending: true }),
-    ]).then(([{ data: p }, { data: mc }]) => {
+      supabase.from('broadcast_reactions').select('broadcast_id, user_id, emoji'),
+    ]).then(([{ data: { session } }, { data: p }, { data: mc }, { data: r }]) => {
+      setUserId(session?.user?.id || null)
       setPosts(p || [])
       setMasterclasses(mc || [])
+      setReactions(r || [])
       setLoading(false)
     })
   }, [])
 
-  // Active topics from existing posts only
-  const activeTopics = [...new Set(posts.map(p => p.topic).filter(Boolean))]
+  async function toggleReaction(broadcastId, emoji) {
+    if (!userId) return
+    const has = reactions.some(r => r.broadcast_id === broadcastId && r.user_id === userId && r.emoji === emoji)
+    if (has) {
+      setReactions(prev => prev.filter(r => !(r.broadcast_id === broadcastId && r.user_id === userId && r.emoji === emoji)))
+      await supabase.from('broadcast_reactions').delete().eq('broadcast_id', broadcastId).eq('user_id', userId).eq('emoji', emoji)
+    } else {
+      setReactions(prev => [...prev, { broadcast_id: broadcastId, user_id: userId, emoji }])
+      await supabase.from('broadcast_reactions').insert({ broadcast_id: broadcastId, user_id: userId, emoji })
+    }
+  }
+
+  const pinnedPost    = posts.find(p => p.is_pinned) || null
+  const activeTopics  = [...new Set(posts.map(p => p.topic).filter(Boolean))]
 
   const visible = posts.filter(p => {
     if (typeFilter  !== 'all' && p.type  !== typeFilter)  return false
     if (topicFilter !== 'all' && p.topic !== topicFilter) return false
     return true
   })
+  const feedPosts = visible.filter(p => !p.is_pinned)
 
   return (
     <div className="vf-root" style={{ display:'flex', minHeight:'100vh', background:'#1C0F36', color:'#F8FAFC' }}>
@@ -412,6 +471,20 @@ export default function ValueFeedPage() {
             )}
           </div>
 
+          {/* Pinned post */}
+          {!loading && pinnedPost && (
+            <div style={{ marginBottom:16 }}>
+              <div style={{ fontSize:10, fontWeight:700, color:'rgba(245,158,11,0.55)', textTransform:'uppercase', letterSpacing:'.08em', marginBottom:8, display:'flex', alignItems:'center', gap:5 }}>
+                <svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M16 9V4l1-1V2H7v1l1 1v5l-2 3h4v7l1 1 1-1v-7h4l-2-3z"/></svg>
+                Pinned
+              </div>
+              {pinnedPost.type === 'video'
+                ? <VideoCard item={pinnedPost} i={0} reactions={reactions} userId={userId} onReact={toggleReaction} isPinned />
+                : <TextCard  item={pinnedPost} i={0} reactions={reactions} userId={userId} onReact={toggleReaction} isPinned />
+              }
+            </div>
+          )}
+
           {/* Upcoming masterclasses */}
           {!loading && masterclasses.length > 0 && (
             <div style={{ marginBottom:24, animation:'fadeUp .4s ease .05s both' }}>
@@ -426,7 +499,7 @@ export default function ValueFeedPage() {
             <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
               {[0,1,2].map(i => <SkeletonCard key={i} i={i} />)}
             </div>
-          ) : visible.length === 0 ? (
+          ) : feedPosts.length === 0 && !pinnedPost ? (
             <div style={{ textAlign:'center', padding:'64px 0' }}>
               <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ margin:'0 auto 12px', display:'block' }}><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
               <div style={{ fontSize:15, fontWeight:700, color:'rgba(255,255,255,0.3)', marginBottom:4 }}>Nothing here yet</div>
@@ -441,10 +514,10 @@ export default function ValueFeedPage() {
             </div>
           ) : (
             <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
-              {visible.map((item, i) =>
+              {feedPosts.map((item, i) =>
                 item.type === 'video'
-                  ? <VideoCard key={item.id} item={item} i={i} />
-                  : <TextCard  key={item.id} item={item} i={i} />
+                  ? <VideoCard key={item.id} item={item} i={i} reactions={reactions} userId={userId} onReact={toggleReaction} />
+                  : <TextCard  key={item.id} item={item} i={i} reactions={reactions} userId={userId} onReact={toggleReaction} />
               )}
             </div>
           )}

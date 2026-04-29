@@ -616,27 +616,8 @@ function ModalBase({ title, onClose, children, footer }) {
 }
 
 // ─── Compose View (full-screen inline, no backdrop) ──────────
-function ComposeView({ token, emailProvider, connectedEmail, onClose, onSuccess, macros=[] }) {
-  return (
-    <div style={{flex:1,display:'flex',flexDirection:'column',overflow:'hidden',borderLeft:'1px solid var(--border)',background:'var(--bg-surface)',position:'relative',zIndex:1}}>
-      <ComposeInner token={token} emailProvider={emailProvider} connectedEmail={connectedEmail} onClose={onClose} onSuccess={onSuccess} macros={macros} />
-    </div>
-  )
-}
-
-// ─── Compose New Ticket Modal ─────────────────────────────────
-function ComposeModal({ token, emailProvider, connectedEmail, onClose, onSuccess, macros=[] }) {
-  return (
-    <div className="modal-backdrop" onClick={e=>{if(e.target===e.currentTarget)onClose()}}>
-      <div style={{background:'var(--bg-surface)',border:'1px solid var(--border)',borderRadius:14,width:'100%',maxWidth:920,maxHeight:'92vh',display:'flex',flexDirection:'column',overflow:'hidden',animation:'modalIn .22s cubic-bezier(.16,1,.3,1)',boxShadow:'0 24px 72px rgba(0,0,0,0.16)'}}>
-        <ComposeInner token={token} emailProvider={emailProvider} connectedEmail={connectedEmail} onClose={onClose} onSuccess={onSuccess} macros={macros} />
-      </div>
-    </div>
-  )
-}
-
-// ─── Compose Inner (shared by ComposeView + ComposeModal) ─────
-function ComposeInner({ token, emailProvider, connectedEmail, onClose, onSuccess, macros=[] }) {
+// ─── Create Ticket (full-screen inline view) ──────────────────
+function CreateTicketView({ token, emailProvider, connectedEmail, onClose, onSuccess, macros=[] }) {
   const [to, setTo]               = useState('')
   const [subject, setSubject]     = useState('')
   const [body, setBody]           = useState('')
@@ -690,7 +671,7 @@ function ComposeInner({ token, emailProvider, connectedEmail, onClose, onSuccess
   const suggested   = liveMacros.slice(0,5)
 
   return (
-    <>
+    <div style={{flex:1,display:'flex',flexDirection:'column',overflow:'hidden',borderLeft:'1px solid var(--border)',background:'var(--bg-surface)',position:'relative',zIndex:1}}>
 
         {/* ── Top bar: Subject + controls ── */}
         <div style={{borderBottom:'1px solid var(--border)',flexShrink:0}}>
@@ -878,7 +859,7 @@ function ComposeInner({ token, emailProvider, connectedEmail, onClose, onSuccess
           </div>
 
         </div>
-    </>
+    </div>
   )
 }
 
@@ -2291,7 +2272,7 @@ function InboxPage() {
 
       {/* ═══════════════ CENTER + RIGHT (or Compose view) ═══════════════ */}
       {composeOpen ? (
-        <ComposeView
+        <CreateTicketView
           emailProvider={emailProvider}
           connectedEmail={connectedEmail}
           token={session?.access_token}
@@ -2818,7 +2799,7 @@ function InboxPage() {
       </>)}
 
       {/* ═══════════════ Modals ═══════════════ */}
-      {modal?.type==='compose'   && <ComposeModal emailProvider={emailProvider} connectedEmail={connectedEmail} token={session.access_token} macros={macros} onClose={()=>setModal(null)} onSuccess={(msg,type)=>{handleModalSuccess(msg,type);loadThreads(session.access_token)}} />}
+      {modal?.type==='compose'   && <CreateTicketView emailProvider={emailProvider} connectedEmail={connectedEmail} token={session.access_token} macros={macros} onClose={()=>setModal(null)} onSuccess={(msg,type)=>{handleModalSuccess(msg,type);loadThreads(session.access_token)}} />}
       {modal?.type==='refund'    && <RefundModal      order={modal.order} token={session.access_token} onClose={()=>setModal(null)} onSuccess={handleModalSuccess} />}
       {modal?.type==='cancel'    && <CancelModal      order={modal.order} token={session.access_token} onClose={()=>setModal(null)} onSuccess={handleModalSuccess} />}
       {modal?.type==='duplicate' && <DuplicateModal   order={modal.order} token={session.access_token} onClose={()=>setModal(null)} onSuccess={handleModalSuccess} />}

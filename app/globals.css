@@ -1,64 +1,147 @@
 @import "tailwindcss";
 
+/* ── Theme tokens — light is default ────────────────────────────────────────── */
 :root {
-  /* Lynq & Flow Brand Colors */
-  --bg: #1C0F36;           /* Cosmic Ink */
-  --surface: #241352;      /* Cosmic Ink surface */
-  --surface-2: #2D1A6A;    /* Elevated surface */
-  --accent: #A175FC;       /* Iris Electric */
-  --accent-hover: #B990FF;
-  --accent-dim: rgba(161, 117, 252, 0.15);
-  --accent-gradient: linear-gradient(135deg, #A175FC 0%, #7C3AED 100%);
-  --border: rgba(161, 117, 252, 0.1);
-  --border-hover: rgba(161, 117, 252, 0.25);
-  --text: #F8FAFC;
-  --text-muted: rgba(248, 250, 252, 0.45);
-  --text-subtle: rgba(248, 250, 252, 0.25);
-  --success: #4ade80;
-  --warning: #fb923c;
-  --danger: #f87171;
-  --info: #A175FC;
+  /* Backgrounds */
+  --bg-page:      #ECEEF3;
+  --bg-surface:   #FFFFFF;
+  --bg-surface-2: #F4F6FA;
+  --bg-row:       #FFFFFF;
+  --bg-input:     rgba(0,0,0,0.03);
+
+  /* Text */
+  --text-1: #0F172A;
+  --text-2: #475569;
+  --text-3: #94A3B8;
+
+  /* Borders */
+  --border:        #E2E8F0;
+  --border-hover:  #CBD5E1;
+  --divider:       rgba(0,0,0,0.06);
+
+  /* Accent (purple — slightly deeper on light for contrast) */
+  --accent:        #7C5CFC;
+  --accent-hover:  #6d4af8;
+  --accent-soft:   rgba(124,92,252,0.08);
+  --accent-border: rgba(124,92,252,0.2);
+  --accent-text:   #7C5CFC;
+  --accent-gradient: linear-gradient(135deg,#7C5CFC 0%,#6d4af8 100%);
+
+  /* Shadows */
+  --shadow-card:       0 1px 3px rgba(15,23,42,0.06), 0 0 0 1px rgba(15,23,42,0.04);
+  --shadow-card-hover: 0 4px 20px rgba(15,23,42,0.1), 0 0 0 1px rgba(15,23,42,0.05);
+  --shadow-row:        0 1px 2px rgba(15,23,42,0.05);
+  --shadow-row-hover:  0 4px 16px rgba(15,23,42,0.09);
+
+  /* Sidebar */
+  --sidebar-bg:             #FFFFFF;
+  --sidebar-border:         rgba(0,0,0,0.07);
+  --sidebar-active-bg:      rgba(124,92,252,0.08);
+  --sidebar-active-border:  rgba(124,92,252,0.16);
+  --sidebar-hover:          rgba(0,0,0,0.04);
+  --sidebar-icon-inactive:  rgba(15,23,42,0.38);
+  --sidebar-label-inactive: rgba(15,23,42,0.6);
+  --sidebar-label-active:   #0F172A;
+  --sidebar-icon-active:    #7C5CFC;
+  --sidebar-section-label:  rgba(15,23,42,0.28);
+  --sidebar-logo-filter:    none;
+
+  /* Skeleton */
+  --skeleton-from: rgba(0,0,0,0.05);
+  --skeleton-to:   rgba(0,0,0,0.08);
+
+  /* Scrollbar */
+  --scrollbar: rgba(0,0,0,0.12);
+  --scrollbar-hover: rgba(0,0,0,0.2);
+
+  /* Status (adjusted for light contrast) */
+  --success: #16a34a;
+  --warning: #d97706;
+  --danger:  #dc2626;
+  --info:    #7C5CFC;
 }
 
+/* ── Dark mode override ───────────────────────────────────────────────────── */
+[data-theme="dark"] {
+  --bg-page:      #1C0F36;
+  --bg-surface:   #241352;
+  --bg-surface-2: #1e1042;
+  --bg-row:       #221248;
+  --bg-input:     rgba(255,255,255,0.04);
+
+  --text-1: #F8FAFC;
+  --text-2: rgba(248,250,252,0.65);
+  --text-3: rgba(248,250,252,0.38);
+
+  --border:       rgba(255,255,255,0.07);
+  --border-hover: rgba(255,255,255,0.14);
+  --divider:      rgba(255,255,255,0.06);
+
+  --accent:        #A175FC;
+  --accent-hover:  #B990FF;
+  --accent-soft:   rgba(161,117,252,0.12);
+  --accent-border: rgba(161,117,252,0.22);
+  --accent-text:   #C4A0FF;
+  --accent-gradient: linear-gradient(135deg,#A175FC 0%,#7C3AED 100%);
+
+  --shadow-card:       none;
+  --shadow-card-hover: 0 6px 24px rgba(0,0,0,0.3);
+  --shadow-row:        none;
+  --shadow-row-hover:  0 6px 24px rgba(0,0,0,0.3);
+
+  --sidebar-bg:             #0f0826;
+  --sidebar-border:         rgba(255,255,255,0.07);
+  --sidebar-active-bg:      rgba(161,117,252,0.16);
+  --sidebar-active-border:  rgba(161,117,252,0.16);
+  --sidebar-hover:          rgba(255,255,255,0.055);
+  --sidebar-icon-inactive:  rgba(248,250,252,0.6);
+  --sidebar-label-inactive: rgba(248,250,252,0.78);
+  --sidebar-label-active:   #F8FAFC;
+  --sidebar-icon-active:    #C4A0FF;
+  --sidebar-section-label:  rgba(248,250,252,0.18);
+  --sidebar-logo-filter:    brightness(0) invert(1);
+
+  --skeleton-from: rgba(255,255,255,0.04);
+  --skeleton-to:   rgba(255,255,255,0.07);
+
+  --scrollbar: rgba(255,255,255,0.1);
+  --scrollbar-hover: rgba(255,255,255,0.2);
+
+  --success: #4ade80;
+  --warning: #fb923c;
+  --danger:  #f87171;
+  --info:    #A175FC;
+}
+
+/* ── Base ────────────────────────────────────────────────────────────────── */
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
 
-html,
-body {
+html, body {
   height: 100%;
-  background: var(--bg);
-  color: var(--text);
-  font-family: 'Inter Tight', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: var(--bg-page);
+  color: var(--text-1);
+  font-family: var(--font-rethink), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   font-size: 14px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Scrollbar */
-::-webkit-scrollbar {
-  width: 4px;
-  height: 4px;
-}
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 2px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.2);
-}
+/* ── Scrollbar ───────────────────────────────────────────────────────────── */
+::-webkit-scrollbar         { width: 4px; height: 4px }
+::-webkit-scrollbar-track   { background: transparent }
+::-webkit-scrollbar-thumb   { background: var(--scrollbar); border-radius: 2px }
+::-webkit-scrollbar-thumb:hover { background: var(--scrollbar-hover) }
 
-/* Input base */
+/* ── Inputs ──────────────────────────────────────────────────────────────── */
 input, textarea, select {
-  background: var(--bg);
+  background: var(--bg-input);
   border: 1px solid var(--border);
-  color: var(--text);
+  color: var(--text-1);
   border-radius: 8px;
   padding: 10px 14px;
   font-size: 14px;
@@ -67,25 +150,18 @@ input, textarea, select {
   transition: border-color 0.15s ease;
   width: 100%;
 }
+input:focus, textarea:focus, select:focus { border-color: var(--accent) }
+input::placeholder, textarea::placeholder { color: var(--text-3) }
 
-input:focus, textarea:focus, select:focus {
-  border-color: var(--accent);
-}
+/* ── Buttons ─────────────────────────────────────────────────────────────── */
+button { font-family: inherit; cursor: pointer; border: none; outline: none; transition: all 0.15s ease }
 
-input::placeholder, textarea::placeholder {
-  color: var(--text-subtle);
-}
+/* ── Selection ───────────────────────────────────────────────────────────── */
+::selection { background: rgba(124,92,252,0.2) }
 
-/* Button base */
-button {
-  font-family: inherit;
-  cursor: pointer;
-  border: none;
-  outline: none;
-  transition: all 0.15s ease;
-}
-
-/* Selection */
-::selection {
-  background: rgba(48, 136, 255, 0.3);
+/* ── Transitions for theme switching ─────────────────────────────────────── */
+*, *::before, *::after {
+  transition-property: background-color, border-color, color, box-shadow, fill, stroke;
+  transition-duration: 0.2s;
+  transition-timing-function: ease;
 }

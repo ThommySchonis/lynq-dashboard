@@ -8,7 +8,7 @@ import Sidebar from '../components/Sidebar'
 const STATUS = {
   PENDING:          { label: 'Pending',          color: '#94a3b8', bg: 'rgba(148,163,184,0.1)',  border: 'rgba(148,163,184,0.2)'  },
   INFO_RECEIVED:    { label: 'Info Received',     color: '#60a5fa', bg: 'rgba(96,165,250,0.1)',   border: 'rgba(96,165,250,0.2)'   },
-  IN_TRANSIT:       { label: 'In Transit',        color: '#A175FC', bg: 'rgba(161,117,252,0.12)', border: 'rgba(161,117,252,0.22)' },
+  IN_TRANSIT:       { label: 'In Transit',        color: 'var(--accent)', bg: 'rgba(161,117,252,0.12)', border: 'rgba(161,117,252,0.22)' },
   OUT_FOR_DELIVERY: { label: 'Out for Delivery',  color: '#f59e0b', bg: 'rgba(245,158,11,0.1)',   border: 'rgba(245,158,11,0.2)'   },
   DELIVERED:        { label: 'Delivered',         color: '#4ade80', bg: 'rgba(74,222,128,0.1)',   border: 'rgba(74,222,128,0.2)'   },
   EXCEPTION:        { label: 'Exception',         color: '#f87171', bg: 'rgba(248,113,113,0.1)',  border: 'rgba(248,113,113,0.2)'  },
@@ -46,7 +46,7 @@ const ATTENTION = {
   OVERDUE: {
     label: 'Overdue in Transit',
     desc: 'Shipment has been in transit for 7+ days with no tracking updates.',
-    color: '#A175FC', bg: 'rgba(161,117,252,0.07)', border: 'rgba(161,117,252,0.18)',
+    color: 'var(--accent)', bg: 'rgba(161,117,252,0.07)', border: 'rgba(161,117,252,0.18)',
     priority: 3,
     message: (name, num) =>
       `Hi ${name}, we want to give you an update on your order ${num}. Your package is taking a little longer than expected to arrive. We are monitoring this closely and will let you know as soon as there's an update. Thank you for your patience! 🙏`,
@@ -100,7 +100,7 @@ const CSS = `
   @keyframes fadeUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
   @keyframes fadeIn { from{opacity:0} to{opacity:1} }
   @keyframes spin   { to{transform:rotate(360deg)} }
-  @keyframes pulse  { 0%,100%{opacity:1} 50%{opacity:.4} }
+  @keyframes skWave { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
 
   @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
 
@@ -108,46 +108,49 @@ const CSS = `
   .sc-root { font-family:var(--font-rethink),-apple-system,BlinkMacSystemFont,sans-serif;-webkit-font-smoothing:antialiased }
   .sc-scroll::-webkit-scrollbar       { width:3px }
   .sc-scroll::-webkit-scrollbar-track { background:transparent }
-  .sc-scroll::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.1);border-radius:2px }
+  .sc-scroll::-webkit-scrollbar-thumb { background:var(--scrollbar);border-radius:2px }
 
   .sc-card {
-    background:linear-gradient(148deg,#271555 0%,#1e1042 55%,#190d38 100%);
-    border:1px solid rgba(255,255,255,0.1);
+    background:var(--bg-surface);
+    border:1px solid var(--border);
     border-radius:16px; padding:20px 22px;
+    box-shadow:var(--shadow-card);
     transition:border-color .2s,box-shadow .2s;
   }
+  .sc-card:hover { border-color:var(--border-hover);box-shadow:var(--shadow-card-hover) }
 
   .sc-row {
-    background:linear-gradient(148deg,#221248 0%,#1b0e3a 100%);
-    border:1px solid rgba(255,255,255,0.08);
+    background:var(--bg-row);
+    border:1px solid var(--border);
     border-radius:14px; overflow:hidden;
+    box-shadow:var(--shadow-row);
     transition:border-color .2s,box-shadow .2s;
   }
-  .sc-row:hover { border-color:rgba(255,255,255,0.14);box-shadow:0 6px 24px rgba(0,0,0,0.3) }
+  .sc-row:hover { border-color:var(--border-hover);box-shadow:var(--shadow-row-hover) }
 
   .sc-attn {
     border-radius:14px; overflow:hidden;
     transition:box-shadow .2s,transform .2s;
   }
-  .sc-attn:hover { transform:translateY(-1px);box-shadow:0 8px 28px rgba(0,0,0,0.35) }
+  .sc-attn:hover { transform:translateY(-1px);box-shadow:var(--shadow-card-hover) }
 
   .sc-search {
     width:100%; padding:10px 14px 10px 38px;
-    background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.09);
-    border-radius:10px; color:#F8FAFC; font-size:13.5px; font-family:inherit;
+    background:var(--bg-input); border:1px solid var(--border);
+    border-radius:10px; color:var(--text-1); font-size:13.5px; font-family:inherit;
     outline:none; transition:border-color .15s;
   }
-  .sc-search::placeholder { color:rgba(255,255,255,0.25) }
-  .sc-search:focus { border-color:rgba(161,117,252,0.4) }
+  .sc-search::placeholder { color:var(--text-3) }
+  .sc-search:focus { border-color:var(--accent-border) }
 
   .sc-tab {
     padding:6px 13px; border-radius:8px; border:1px solid transparent;
     font-size:12px; font-weight:600; cursor:pointer; font-family:inherit;
     transition:all .15s; white-space:nowrap; background:transparent;
-    color:rgba(255,255,255,0.45);
+    color:var(--text-3);
   }
-  .sc-tab:hover:not(.sc-tab-active) { color:rgba(255,255,255,0.7);background:rgba(255,255,255,0.05) }
-  .sc-tab-active { background:rgba(161,117,252,0.12);border-color:rgba(161,117,252,0.25);color:#C4A0FF }
+  .sc-tab:hover:not(.sc-tab-active) { color:var(--text-2);background:var(--bg-surface-2) }
+  .sc-tab-active { background:var(--accent-soft);border-color:var(--accent-border);color:var(--accent-text) }
 
   .sc-btn {
     display:inline-flex; align-items:center; gap:5px;
@@ -158,28 +161,28 @@ const CSS = `
 
   .sc-spinner {
     width:16px;height:16px;border-radius:50%;
-    border:2px solid rgba(161,117,252,0.2);border-top-color:#A175FC;
+    border:2px solid var(--accent-border);border-top-color:var(--accent);
     animation:spin .7s linear infinite;
   }
 
   .sc-skeleton {
-    background:linear-gradient(90deg,rgba(255,255,255,0.04) 25%,rgba(255,255,255,0.07) 50%,rgba(255,255,255,0.04) 75%);
+    background:linear-gradient(90deg,var(--skeleton-from) 25%,var(--skeleton-to) 50%,var(--skeleton-from) 75%);
     background-size:200% 100%;
-    animation:pulse 1.5s ease-in-out infinite;
+    animation:skWave 1.5s ease-in-out infinite;
     border-radius:6px;
   }
 
   .cp-dot  { width:10px;height:10px;border-radius:50%;flex-shrink:0;margin-top:3px }
-  .cp-line { width:1px;flex:1;min-height:18px;background:rgba(255,255,255,0.08);margin:3px 0 3px 4.5px }
+  .cp-line { width:1px;flex:1;min-height:18px;background:var(--border);margin:3px 0 3px 4.5px }
 
   .sc-setup-input {
     width:100%; padding:12px 16px;
-    background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.12);
-    border-radius:10px; color:#F8FAFC; font-size:14px; font-family:inherit;
+    background:var(--bg-input); border:1px solid var(--border);
+    border-radius:10px; color:var(--text-1); font-size:14px; font-family:inherit;
     outline:none; transition:border-color .15s;
   }
-  .sc-setup-input:focus { border-color:rgba(161,117,252,0.5);background:rgba(255,255,255,0.06) }
-  .sc-setup-input::placeholder { color:rgba(255,255,255,0.2) }
+  .sc-setup-input:focus { border-color:var(--accent-border);background:var(--bg-surface-2) }
+  .sc-setup-input::placeholder { color:var(--text-3) }
 `
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -210,9 +213,9 @@ function StatusBadge({ status }) {
 }
 
 function CarrierBadge({ name, logoUrl }) {
-  if (!name) return <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)' }}>—</span>
+  if (!name) return <span style={{ fontSize: 12, color: 'var(--text-3)' }}>—</span>
   return (
-    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '3px 10px', borderRadius: 8, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', fontSize: 12, color: 'rgba(255,255,255,0.7)', fontWeight: 500 }}>
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '3px 10px', borderRadius: 8, background: 'var(--bg-surface-2)', border: '1px solid var(--border)', fontSize: 12, color: 'var(--text-2)', fontWeight: 500 }}>
       {logoUrl && <img src={logoUrl} alt={name} style={{ height: 13, objectFit: 'contain', filter: 'brightness(0) invert(1)', opacity: .7 }} />}
       {name}
     </span>
@@ -227,7 +230,7 @@ function CopyBtn({ text }) {
     setTimeout(() => setCopied(false), 2000)
   }
   return (
-    <button className="sc-btn" onClick={copy} style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.7)', border: '1px solid rgba(255,255,255,0.1)' }}>
+    <button className="sc-btn" onClick={copy} style={{ background: 'var(--bg-surface-2)', color: 'var(--text-2)', border: '1px solid var(--border)' }}>
       {copied
         ? <><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Copied!</>
         : <><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>Copy message</>}
@@ -236,7 +239,7 @@ function CopyBtn({ text }) {
 }
 
 function CheckpointTimeline({ checkpoints }) {
-  if (!checkpoints?.length) return <p style={{ fontSize: 12.5, color: 'rgba(255,255,255,0.3)', padding: '12px 0' }}>No tracking events yet.</p>
+  if (!checkpoints?.length) return <p style={{ fontSize: 12.5, color: 'var(--text-3)', padding: '12px 0' }}>No tracking events yet.</p>
   return (
     <div style={{ display: 'flex', flexDirection: 'column' }}>
       {checkpoints.map((cp, i) => {
@@ -249,8 +252,8 @@ function CheckpointTimeline({ checkpoints }) {
             </div>
             <div style={{ paddingBottom: 16, flex: 1, minWidth: 0 }}>
               <p style={{ fontSize: 13, color: i === 0 ? '#F8FAFC' : 'rgba(255,255,255,0.6)', lineHeight: 1.45, marginBottom: 3 }}>{cp.detail}</p>
-              {cp.location && <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', marginBottom: 2 }}>{cp.location}</p>}
-              <p style={{ fontSize: 11.5, color: 'rgba(255,255,255,0.3)' }}>{fmtTime(cp.checkpoint_time)}</p>
+              {cp.location && <p style={{ fontSize: 11, color: 'var(--text-3)', marginBottom: 2 }}>{cp.location}</p>}
+              <p style={{ fontSize: 11.5, color: 'var(--text-3)' }}>{fmtTime(cp.checkpoint_time)}</p>
             </div>
           </div>
         )
@@ -274,12 +277,12 @@ function AttentionCard({ item, onDismiss }) {
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginBottom: 10 }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 4 }}>
-              <span style={{ fontSize: 13.5, fontWeight: 700, color: '#F8FAFC' }}>{orderNum}</span>
+              <span style={{ fontSize: 13.5, fontWeight: 700, color: 'var(--text-1)' }}>{orderNum}</span>
               <span style={{ fontSize: 10.5, fontWeight: 700, color: cfg.color, background: `${cfg.color}18`, border: `1px solid ${cfg.color}30`, padding: '2px 8px', borderRadius: 100 }}>{cfg.label}</span>
             </div>
-            <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)' }}>
+            <p style={{ fontSize: 12, color: 'var(--text-2)' }}>
               {order.customer?.name || 'Unknown customer'}
-              {carrier && <span style={{ color: 'rgba(255,255,255,0.28)', marginLeft: 6 }}>· {carrier}</span>}
+              {carrier && <span style={{ color: 'var(--text-3)', marginLeft: 6 }}>· {carrier}</span>}
             </p>
           </div>
           {daysSince !== null && (
@@ -290,7 +293,7 @@ function AttentionCard({ item, onDismiss }) {
         </div>
 
         {/* Last event or description */}
-        <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)', marginBottom: 14, lineHeight: 1.55 }}>
+        <p style={{ fontSize: 12, color: 'var(--text-2)', marginBottom: 14, lineHeight: 1.55 }}>
           {lastDetail || cfg.desc}
         </p>
 
@@ -305,7 +308,7 @@ function AttentionCard({ item, onDismiss }) {
             </a>
           )}
           <button className="sc-btn" onClick={() => onDismiss(item.key)}
-            style={{ background: 'transparent', color: 'rgba(255,255,255,0.3)', border: '1px solid rgba(255,255,255,0.08)' }}>
+            style={{ background: 'transparent', color: 'var(--text-3)', border: '1px solid var(--border)' }}>
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
             Mark resolved
           </button>
@@ -333,23 +336,23 @@ function ShipmentRow({ order, i, attentionKey }) {
       >
         <div style={{ minWidth: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3 }}>
-            <span style={{ fontSize: 14, fontWeight: 700, color: '#F8FAFC' }}>{order.order_number}</span>
+            <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-1)' }}>{order.order_number}</span>
             <StatusBadge status={shipment.status} />
           </div>
-          <p style={{ fontSize: 12.5, color: 'rgba(255,255,255,0.5)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          <p style={{ fontSize: 12.5, color: 'var(--text-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {order.customer?.name || '—'}
           </p>
         </div>
 
-        <p style={{ fontSize: 12.5, color: 'rgba(255,255,255,0.5)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{products}</p>
+        <p style={{ fontSize: 12.5, color: 'var(--text-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{products}</p>
 
         <CarrierBadge name={carrierName} logoUrl={carrierLogo} />
 
         <div style={{ textAlign: 'right', minWidth: 90 }}>
-          <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', marginBottom: 2 }}>
+          <p style={{ fontSize: 11, color: 'var(--text-3)', marginBottom: 2 }}>
             {shipment.status === 'DELIVERED' ? 'Delivered' : shipment.estimated_delivery_date ? 'Est. delivery' : 'Shipped'}
           </p>
-          <p style={{ fontSize: 12.5, color: 'rgba(255,255,255,0.75)', fontWeight: 600 }}>
+          <p style={{ fontSize: 12.5, color: 'var(--text-2)', fontWeight: 600 }}>
             {shipment.status === 'DELIVERED'
               ? fmt(shipment.delivery_date)
               : shipment.estimated_delivery_date
@@ -358,7 +361,7 @@ function ShipmentRow({ order, i, attentionKey }) {
           </p>
         </div>
 
-        <div style={{ color: 'rgba(255,255,255,0.25)', transition: 'transform .2s', transform: expanded ? 'rotate(180deg)' : 'none', display: 'flex' }}>
+        <div style={{ color: 'var(--text-3)', transition: 'transform .2s', transform: expanded ? 'rotate(180deg)' : 'none', display: 'flex' }}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
         </div>
       </div>
@@ -367,7 +370,7 @@ function ShipmentRow({ order, i, attentionKey }) {
         <div style={{ borderTop: '1px solid rgba(255,255,255,0.07)', padding: '20px 20px 22px 24px', animation: 'fadeIn .2s ease both' }}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 28 }}>
             <div>
-              <p style={{ fontSize: 10.5, fontWeight: 700, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 14 }}>Tracking Details</p>
+              <p style={{ fontSize: 10.5, fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 14 }}>Tracking Details</p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 {[
                   ['Tracking #',        shipment.tracking_number],
@@ -379,14 +382,14 @@ function ShipmentRow({ order, i, attentionKey }) {
                 ].filter(([, v]) => v && v !== '—').map(([label, val]) => (
                   <div key={label} style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
                     <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.32)', minWidth: 130, flexShrink: 0 }}>{label}</span>
-                    <span style={{ fontSize: 12.5, color: 'rgba(255,255,255,0.75)', wordBreak: 'break-all' }}>{val}</span>
+                    <span style={{ fontSize: 12.5, color: 'var(--text-2)', wordBreak: 'break-all' }}>{val}</span>
                   </div>
                 ))}
               </div>
               {order.shipping_address && (
                 <div style={{ marginTop: 18 }}>
-                  <p style={{ fontSize: 10.5, fontWeight: 700, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 8 }}>Ship to</p>
-                  <p style={{ fontSize: 12.5, color: 'rgba(255,255,255,0.6)', lineHeight: 1.65 }}>
+                  <p style={{ fontSize: 10.5, fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 8 }}>Ship to</p>
+                  <p style={{ fontSize: 12.5, color: 'var(--text-2)', lineHeight: 1.65 }}>
                     {order.shipping_address.name}<br />
                     {order.shipping_address.city}{order.shipping_address.province_code ? `, ${order.shipping_address.province_code}` : ''} {order.shipping_address.zip}<br />
                     {order.shipping_address.country}
@@ -395,14 +398,14 @@ function ShipmentRow({ order, i, attentionKey }) {
               )}
               {order.tracking_link && (
                 <a href={order.tracking_link} target="_blank" rel="noopener noreferrer"
-                  style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginTop: 16, padding: '8px 14px', borderRadius: 8, background: 'rgba(161,117,252,0.1)', border: '1px solid rgba(161,117,252,0.2)', color: '#A175FC', fontSize: 12.5, fontWeight: 600, textDecoration: 'none' }}>
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginTop: 16, padding: '8px 14px', borderRadius: 8, background: 'rgba(161,117,252,0.1)', border: '1px solid rgba(161,117,252,0.2)', color: 'var(--accent)', fontSize: 12.5, fontWeight: 600, textDecoration: 'none' }}>
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
                   Track on carrier site
                 </a>
               )}
             </div>
             <div>
-              <p style={{ fontSize: 10.5, fontWeight: 700, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 14 }}>Tracking Events</p>
+              <p style={{ fontSize: 10.5, fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 14 }}>Tracking Events</p>
               <CheckpointTimeline checkpoints={shipment.checkpoints} />
             </div>
           </div>
@@ -445,19 +448,19 @@ function SetupScreen({ token, onConnected }) {
           <polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/>
         </svg>
       </div>
-      <h2 style={{ fontSize: 26, fontWeight: 800, letterSpacing: '-0.04em', color: '#F8FAFC', marginBottom: 10 }}>Connect Parcel Panel</h2>
+      <h2 style={{ fontSize: 26, fontWeight: 800, letterSpacing: '-0.04em', color: 'var(--text-1)', marginBottom: 10 }}>Connect Parcel Panel</h2>
       <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.48)', maxWidth: 420, lineHeight: 1.7, marginBottom: 36 }}>
         Link your Parcel Panel account to track all shipments, detect delivery issues automatically, and get proactive alerts — all in one place.
       </p>
 
       <div style={{ width: '100%', maxWidth: 420, textAlign: 'left' }}>
         {/* Steps */}
-        <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 14, padding: '18px 20px', marginBottom: 20 }}>
-          <p style={{ fontSize: 10.5, fontWeight: 700, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '.1em', marginBottom: 14 }}>How to find your API key</p>
+        <div style={{ background: 'var(--bg-surface-2)', border: '1px solid var(--border)', borderRadius: 14, padding: '18px 20px', marginBottom: 20 }}>
+          <p style={{ fontSize: 10.5, fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '.1em', marginBottom: 14 }}>How to find your API key</p>
           {['Open the Parcel Panel app in your Shopify admin', 'Go to Integration', 'Scroll to the bottom — your API key is listed there'].map((step, i) => (
             <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', marginBottom: i < 2 ? 10 : 0 }}>
-              <div style={{ width: 20, height: 20, borderRadius: 6, background: 'rgba(161,117,252,0.15)', border: '1px solid rgba(161,117,252,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 800, color: '#A175FC', flexShrink: 0 }}>{i + 1}</div>
-              <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.58)', lineHeight: 1.5, paddingTop: 2 }}>{step}</p>
+              <div style={{ width: 20, height: 20, borderRadius: 6, background: 'rgba(161,117,252,0.15)', border: '1px solid rgba(161,117,252,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 800, color: 'var(--accent)', flexShrink: 0 }}>{i + 1}</div>
+              <p style={{ fontSize: 13, color: 'var(--text-2)', lineHeight: 1.5, paddingTop: 2 }}>{step}</p>
             </div>
           ))}
         </div>
@@ -584,7 +587,7 @@ export default function SupplyChainPage() {
 
   // ── KPI config ──
   const KPIS = [
-    { label: 'In Transit',       value: counts.inTransit,                          color: '#A175FC',
+    { label: 'In Transit',       value: counts.inTransit,                          color: 'var(--accent)',
       icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 17H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v3"/><rect x="9" y="11" width="14" height="10" rx="1"/><circle cx="12" cy="21" r="1"/><circle cx="20" cy="21" r="1"/></svg> },
     { label: 'Out for Delivery', value: counts.outForDel,                          color: '#f59e0b',
       icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> },
@@ -599,7 +602,7 @@ export default function SupplyChainPage() {
   ]
 
   return (
-    <div className="sc-root" style={{ display: 'flex', minHeight: '100vh', background: '#1C0F36', color: '#F8FAFC' }}>
+    <div className="sc-root" style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg-page)', color: 'var(--text-1)' }}>
       <style>{CSS}</style>
       <Sidebar />
 
@@ -620,7 +623,7 @@ export default function SupplyChainPage() {
                       <polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/>
                     </svg>
                   </div>
-                  <span style={{ fontSize: 11.5, fontWeight: 700, color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase', letterSpacing: '.08em' }}>Supply Chain</span>
+                  <span style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--text-2)', textTransform: 'uppercase', letterSpacing: '.08em' }}>Supply Chain</span>
                 </div>
                 <h1 style={{ fontSize: 32, fontWeight: 800, letterSpacing: '-0.045em', lineHeight: 1.1, marginBottom: 8, background: 'linear-gradient(135deg,#F8FAFC 0%,#c4a8ff 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
                   Shipment Tracker
@@ -636,7 +639,7 @@ export default function SupplyChainPage() {
                 <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexShrink: 0, paddingTop: 4 }}>
                   <button
                     onClick={() => loadData(token)} disabled={loading}
-                    style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 9, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.65)', fontSize: 12.5, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', transition: 'all .15s' }}>
+                    style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 9, background: 'var(--bg-surface-2)', border: '1px solid var(--border)', color: 'var(--text-2)', fontSize: 12.5, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', transition: 'all .15s' }}>
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={loading ? { animation: 'spin .8s linear infinite' } : {}}>
                       <polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
                     </svg>
@@ -645,7 +648,7 @@ export default function SupplyChainPage() {
                 </div>
               )}
             </div>
-            {!notConfigured && <div style={{ height: 1, background: 'rgba(255,255,255,0.07)', marginTop: 22 }} />}
+            {!notConfigured && <div style={{ height: 1, background: 'var(--bg-surface-2)', marginTop: 22 }} />}
           </div>
 
           {/* ── Setup ── */}
@@ -677,8 +680,8 @@ export default function SupplyChainPage() {
               <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'rgba(248,113,113,0.1)', border: '1px solid rgba(248,113,113,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#f87171" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
               </div>
-              <p style={{ fontSize: 15, fontWeight: 700, color: '#F8FAFC', marginBottom: 6 }}>Could not load shipments</p>
-              <p style={{ fontSize: 13.5, color: 'rgba(255,255,255,0.4)', marginBottom: 20 }}>{error}</p>
+              <p style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-1)', marginBottom: 6 }}>Could not load shipments</p>
+              <p style={{ fontSize: 13.5, color: 'var(--text-3)', marginBottom: 20 }}>{error}</p>
               <button onClick={() => loadData(token)} style={{ padding: '9px 20px', borderRadius: 9, background: '#A175FC', color: '#fff', border: 'none', fontSize: 13.5, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
                 Try again
               </button>
@@ -693,11 +696,11 @@ export default function SupplyChainPage() {
                 {KPIS.map(({ label, value, color, sub, icon }) => (
                   <div key={label} className="sc-card">
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-                      <span style={{ fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.38)', letterSpacing: '.02em' }}>{label}</span>
+                      <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-3)', letterSpacing: '.02em' }}>{label}</span>
                       <div style={{ width: 26, height: 26, borderRadius: 7, background: `${color}18`, border: `1px solid ${color}28`, display: 'flex', alignItems: 'center', justifyContent: 'center', color }}>{icon}</div>
                     </div>
                     <div style={{ fontSize: 26, fontWeight: 800, color, letterSpacing: '-0.04em', lineHeight: 1 }}>{value}</div>
-                    {sub && <p style={{ fontSize: 10.5, color: 'rgba(255,255,255,0.3)', marginTop: 5 }}>{sub}</p>}
+                    {sub && <p style={{ fontSize: 10.5, color: 'var(--text-3)', marginTop: 5 }}>{sub}</p>}
                   </div>
                 ))}
               </div>
@@ -708,12 +711,12 @@ export default function SupplyChainPage() {
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
                       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#f87171" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                      <span style={{ fontSize: 14, fontWeight: 700, color: '#F8FAFC' }}>Action Required</span>
+                      <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-1)' }}>Action Required</span>
                       <span style={{ fontSize: 11, fontWeight: 800, background: 'rgba(248,113,113,0.15)', border: '1px solid rgba(248,113,113,0.28)', color: '#f87171', padding: '2px 8px', borderRadius: 100 }}>{attentionItems.length}</span>
                     </div>
                     {attentionItems.length > 3 && (
                       <button onClick={() => setShowAllAttention(a => !a)}
-                        style={{ background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.38)', fontSize: 12.5, cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600 }}>
+                        style={{ background: 'transparent', border: 'none', color: 'var(--text-3)', fontSize: 12.5, cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600 }}>
                         {showAllAttention ? 'Show less' : `Show all ${attentionItems.length}`}
                       </button>
                     )}
@@ -731,7 +734,7 @@ export default function SupplyChainPage() {
                 {/* Search + filter */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14, flexWrap: 'wrap' }}>
                   <div style={{ position: 'relative', flex: '1 1 200px', minWidth: 170 }}>
-                    <svg style={{ position: 'absolute', left: 11, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'rgba(255,255,255,0.28)' }} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                    <svg style={{ position: 'absolute', left: 11, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--text-3)' }} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                     <input className="sc-search" value={search} onChange={e => setSearch(e.target.value)} placeholder="Search order, customer, tracking #…" />
                   </div>
                   <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
@@ -753,12 +756,12 @@ export default function SupplyChainPage() {
                   </div>
                 </div>
 
-                <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.28)', marginBottom: 10 }}>
+                <p style={{ fontSize: 12, color: 'var(--text-3)', marginBottom: 10 }}>
                   {filtered.length} shipment{filtered.length !== 1 ? 's' : ''}{filter !== 'All' ? ` · ${filter}` : ''}
                 </p>
 
                 {filtered.length === 0 ? (
-                  <div className="sc-card" style={{ textAlign: 'center', padding: '40px 20px', color: 'rgba(255,255,255,0.3)', fontSize: 13.5 }}>
+                  <div className="sc-card" style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--text-3)', fontSize: 13.5 }}>
                     {orders.length === 0
                       ? 'No shipments found. Orders will appear here once tracking is active in Parcel Panel.'
                       : 'No shipments match this filter.'}

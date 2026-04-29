@@ -18,20 +18,22 @@ const CSS = `
   .sv-root    { font-family:var(--font-rethink),-apple-system,BlinkMacSystemFont,sans-serif;-webkit-font-smoothing:antialiased }
   .sv-scroll::-webkit-scrollbar       { width:3px }
   .sv-scroll::-webkit-scrollbar-track { background:transparent }
-  .sv-scroll::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.1);border-radius:2px }
+  .sv-scroll::-webkit-scrollbar-thumb { background:var(--scrollbar);border-radius:2px }
 
   .svc-card {
-    background:linear-gradient(148deg,#271555 0%,#1e1042 55%,#190d38 100%);
-    border:1px solid rgba(255,255,255,0.1);
+    background:var(--bg-surface);
+    border:1px solid var(--border);
     border-radius:20px;padding:30px;
     display:flex;flex-direction:column;
     position:relative;overflow:hidden;
     cursor:pointer;
-    box-shadow:0 4px 20px rgba(0,0,0,0.35);
+    box-shadow:var(--shadow-card);
     transition:transform .28s cubic-bezier(.16,1,.3,1),border-color .22s,box-shadow .28s cubic-bezier(.16,1,.3,1);
   }
   .svc-card:hover {
     transform:translateY(-5px);
+    border-color:var(--border-hover);
+    box-shadow:var(--shadow-card-hover);
   }
 
   .svc-icon {
@@ -62,7 +64,7 @@ const CSS = `
   }
   .modal-card {
     background:linear-gradient(160deg,#1e1042 0%,#170d38 100%);
-    border:1px solid rgba(255,255,255,0.1);
+    border:1px solid var(--border);
     border-radius:22px;padding:36px;
     max-width:480px;width:100%;
     animation:slideUp .28s cubic-bezier(.16,1,.3,1) both;
@@ -72,37 +74,37 @@ const CSS = `
 
   .close-btn {
     position:absolute;top:16px;right:16px;
-    background:none;border:none;color:rgba(255,255,255,0.28);
+    background:none;border:none;color:var(--text-3);
     cursor:pointer;padding:6px;border-radius:8px;
     display:flex;align-items:center;justify-content:center;
     transition:color .15s,background .15s;
   }
-  .close-btn:hover { color:#fff;background:rgba(255,255,255,0.07) }
+  .close-btn:hover { color:#fff;background:var(--bg-surface-2) }
 
   .tel-input {
     width:100%;padding:12px 14px;
-    background:rgba(255,255,255,0.04);
-    border:1px solid rgba(255,255,255,0.09);
-    border-radius:10px;color:#F8FAFC;
+    background:var(--bg-input);
+    border:1px solid var(--border);
+    border-radius:10px;color:var(--text-1);
     font-size:13.5px;font-family:inherit;
     box-sizing:border-box;
     transition:border-color .15s;outline:none;
   }
-  .tel-input::placeholder { color:rgba(255,255,255,0.25) }
+  .tel-input::placeholder { color:var(--text-3) }
   .tel-input:focus { border-color:rgba(161,117,252,0.45) }
 
   .msg-input {
     width:100%;padding:12px 14px;
-    background:rgba(255,255,255,0.04);
-    border:1px solid rgba(255,255,255,0.09);
-    border-radius:10px;color:#F8FAFC;
+    background:var(--bg-input);
+    border:1px solid var(--border);
+    border-radius:10px;color:var(--text-1);
     font-size:13.5px;font-family:inherit;
     resize:none;min-height:90px;
     box-sizing:border-box;
     transition:border-color .15s;outline:none;
     line-height:1.65;
   }
-  .msg-input::placeholder { color:rgba(255,255,255,0.25) }
+  .msg-input::placeholder { color:var(--text-3) }
   .msg-input:focus { border-color:rgba(161,117,252,0.45) }
 
   .send-btn {
@@ -124,7 +126,7 @@ const SERVICES = [
   {
     id: 'customer_service_agent',
     title: 'Customer Service Agent',
-    badge: { label: 'Most Popular', color: '#A175FC', bg: 'rgba(161,117,252,0.12)', border: 'rgba(161,117,252,0.28)' },
+    badge: { label: 'Most Popular', color: 'var(--accent)', bg: 'rgba(161,117,252,0.12)', border: 'rgba(161,117,252,0.28)' },
     description: 'A trained specialist who handles all incoming customer inquiries — tracking, refunds, returns, and general support. Fully onboarded to your brand voice and policies.',
     accent: '#A175FC',
     iconBg: 'rgba(161,117,252,0.1)',
@@ -288,8 +290,8 @@ function ServiceCard({ svc, i, onRequest }) {
       </div>
 
       {/* Content */}
-      <h2 style={{ fontSize:18, fontWeight:800, color:'#F8FAFC', letterSpacing:'-0.035em', lineHeight:1.2, marginBottom:10 }}>{svc.title}</h2>
-      <p style={{ fontSize:13.5, color:'rgba(255,255,255,0.72)', lineHeight:1.7, marginBottom:20, flex:1 }}>{svc.description}</p>
+      <h2 style={{ fontSize:18, fontWeight:800, color:'var(--text-1)', letterSpacing:'-0.035em', lineHeight:1.2, marginBottom:10 }}>{svc.title}</h2>
+      <p style={{ fontSize:13.5, color:'var(--text-2)', lineHeight:1.7, marginBottom:20, flex:1 }}>{svc.description}</p>
 
       {/* Feature bullets */}
       <div style={{ display:'flex', flexDirection:'column', gap:7, marginBottom:4 }}>
@@ -298,7 +300,7 @@ function ServiceCard({ svc, i, onRequest }) {
             <div style={{ width:15, height:15, borderRadius:'50%', background:`${svc.accent}18`, border:`1px solid ${svc.accent}44`, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, marginTop:2 }}>
               <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke={svc.accent} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
             </div>
-            <span style={{ fontSize:12.5, color:'rgba(255,255,255,0.7)', lineHeight:1.45 }}>{f}</span>
+            <span style={{ fontSize:12.5, color:'var(--text-2)', lineHeight:1.45 }}>{f}</span>
           </div>
         ))}
       </div>
@@ -340,13 +342,13 @@ function TrainCard({ svc, onRequest }) {
             </div>
             <div>
               <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:4 }}>
-                <h2 style={{ fontSize:18.5, fontWeight:800, color:'#F8FAFC', letterSpacing:'-0.03em' }}>{svc.title}</h2>
+                <h2 style={{ fontSize:18.5, fontWeight:800, color:'var(--text-1)', letterSpacing:'-0.03em' }}>{svc.title}</h2>
                 <Badge badge={svc.badge} />
               </div>
               <p style={{ fontSize:12, color:'rgba(255,255,255,0.52)', fontWeight:500 }}>For brands with an in-house team</p>
             </div>
           </div>
-          <p style={{ fontSize:13.5, color:'rgba(255,255,255,0.72)', lineHeight:1.7 }}>{svc.description}</p>
+          <p style={{ fontSize:13.5, color:'var(--text-2)', lineHeight:1.7 }}>{svc.description}</p>
         </div>
 
         {/* Right */}
@@ -357,7 +359,7 @@ function TrainCard({ svc, onRequest }) {
                 <div style={{ width:15, height:15, borderRadius:'50%', background:`${svc.accent}18`, border:`1px solid ${svc.accent}44`, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, marginTop:2 }}>
                   <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke={svc.accent} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
                 </div>
-                <span style={{ fontSize:12.5, color:'rgba(255,255,255,0.7)', lineHeight:1.45 }}>{f}</span>
+                <span style={{ fontSize:12.5, color:'var(--text-2)', lineHeight:1.45 }}>{f}</span>
               </div>
             ))}
           </div>
@@ -391,12 +393,12 @@ function InquiryForm({ service, phone, setPhone, message, setMessage, onSubmit, 
             </div>
             <div>
               <div style={{ fontSize:10.5, fontWeight:700, color:service.accent, textTransform:'uppercase', letterSpacing:'.07em', marginBottom:3 }}>Service Inquiry</div>
-              <h3 style={{ fontSize:18, fontWeight:800, color:'#F8FAFC', letterSpacing:'-0.03em', lineHeight:1.2 }}>{service.title}</h3>
+              <h3 style={{ fontSize:18, fontWeight:800, color:'var(--text-1)', letterSpacing:'-0.03em', lineHeight:1.2 }}>{service.title}</h3>
             </div>
           </div>
         ) : (
           <div>
-            <h3 style={{ fontSize:22, fontWeight:800, color:'#F8FAFC', letterSpacing:'-0.04em', marginBottom:6 }}>Let's talk</h3>
+            <h3 style={{ fontSize:22, fontWeight:800, color:'var(--text-1)', letterSpacing:'-0.04em', marginBottom:6 }}>Let's talk</h3>
             <p style={{ fontSize:13.5, color:'rgba(255,255,255,0.62)' }}>Tell us what you're looking for and we'll find the right fit.</p>
           </div>
         )}
@@ -405,12 +407,12 @@ function InquiryForm({ service, phone, setPhone, message, setMessage, onSubmit, 
       {/* Reply time */}
       <div style={{ display:'flex', alignItems:'center', gap:8, padding:'10px 14px', borderRadius:9, background:'rgba(161,117,252,0.07)', border:'1px solid rgba(161,117,252,0.15)', marginBottom:24 }}>
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#A175FC" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-        <span style={{ fontSize:12.5, color:'rgba(255,255,255,0.5)' }}>We reply within <strong style={{ color:'rgba(255,255,255,0.75)' }}>24 hours</strong></span>
+        <span style={{ fontSize:12.5, color:'var(--text-2)' }}>We reply within <strong style={{ color:'var(--text-2)' }}>24 hours</strong></span>
       </div>
 
       <form onSubmit={onSubmit}>
         {/* Phone number */}
-        <label style={{ display:'block', fontSize:10.5, fontWeight:700, color:'rgba(255,255,255,0.5)', textTransform:'uppercase', letterSpacing:'.07em', marginBottom:7 }}>
+        <label style={{ display:'block', fontSize:10.5, fontWeight:700, color:'var(--text-2)', textTransform:'uppercase', letterSpacing:'.07em', marginBottom:7 }}>
           WhatsApp number <span style={{ color:'#f87171', fontWeight:800 }}>*</span>
         </label>
         <input
@@ -423,7 +425,7 @@ function InquiryForm({ service, phone, setPhone, message, setMessage, onSubmit, 
           style={{ marginBottom:18 }}
         />
 
-        <label style={{ display:'block', fontSize:10.5, fontWeight:700, color:'rgba(255,255,255,0.5)', textTransform:'uppercase', letterSpacing:'.07em', marginBottom:7 }}>
+        <label style={{ display:'block', fontSize:10.5, fontWeight:700, color:'var(--text-2)', textTransform:'uppercase', letterSpacing:'.07em', marginBottom:7 }}>
           Your question <span style={{ fontWeight:400, textTransform:'none', letterSpacing:0 }}>(optional)</span>
         </label>
         <textarea
@@ -454,16 +456,16 @@ function SuccessState({ onClose, serviceName }) {
       <div style={{ width:68, height:68, borderRadius:'50%', background:'rgba(74,222,128,0.1)', border:'1.5px solid rgba(74,222,128,0.3)', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 22px', animation:'checkPop .45s cubic-bezier(.16,1,.3,1) both' }}>
         <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#4ade80" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
       </div>
-      <h3 style={{ fontSize:22, fontWeight:800, color:'#F8FAFC', letterSpacing:'-0.04em', marginBottom:8 }}>Request sent!</h3>
+      <h3 style={{ fontSize:22, fontWeight:800, color:'var(--text-1)', letterSpacing:'-0.04em', marginBottom:8 }}>Request sent!</h3>
       {serviceName && serviceName !== 'General Inquiry' && (
-        <div style={{ display:'inline-flex', alignItems:'center', padding:'4px 12px', borderRadius:100, background:'rgba(255,255,255,0.05)', border:'1px solid rgba(255,255,255,0.1)', fontSize:12, color:'rgba(255,255,255,0.45)', marginBottom:14 }}>
+        <div style={{ display:'inline-flex', alignItems:'center', padding:'4px 12px', borderRadius:100, background:'var(--bg-surface-2)', border:'1px solid var(--border)', fontSize:12, color:'var(--text-2)', marginBottom:14 }}>
           {serviceName}
         </div>
       )}
       <p style={{ fontSize:14, color:'rgba(255,255,255,0.62)', lineHeight:1.7, marginBottom:30, maxWidth:320, margin:'0 auto 30px' }}>
-        Your inquiry is with the Lynq & Flow team. We'll reach out within <strong style={{ color:'rgba(255,255,255,0.6)' }}>24 hours</strong>.
+        Your inquiry is with the Lynq & Flow team. We'll reach out within <strong style={{ color:'var(--text-2)' }}>24 hours</strong>.
       </p>
-      <button onClick={onClose} style={{ padding:'11px 30px', borderRadius:10, border:'1px solid rgba(255,255,255,0.12)', background:'rgba(255,255,255,0.05)', color:'rgba(255,255,255,0.65)', fontSize:13, fontWeight:600, cursor:'pointer', fontFamily:'inherit', transition:'all .15s' }}
+      <button onClick={onClose} style={{ padding:'11px 30px', borderRadius:10, border:'1px solid var(--border)', background:'var(--bg-surface-2)', color:'var(--text-2)', fontSize:13, fontWeight:600, cursor:'pointer', fontFamily:'inherit', transition:'all .15s' }}
         onMouseEnter={e => e.currentTarget.style.background='rgba(255,255,255,0.09)'}
         onMouseLeave={e => e.currentTarget.style.background='rgba(255,255,255,0.05)'}>
         Close
@@ -522,7 +524,7 @@ export default function ServicesPage() {
   }
 
   return (
-    <div className="sv-root" style={{ display:'flex', minHeight:'100vh', background:'#1C0F36', color:'#F8FAFC' }}>
+    <div className="sv-root" style={{ display:'flex', minHeight:'100vh', background:'var(--bg-page)', color:'var(--text-1)' }}>
       <style>{CSS}</style>
       <Sidebar />
 
@@ -547,7 +549,7 @@ export default function ServicesPage() {
             <p style={{ fontSize:14.5, color:'rgba(255,255,255,0.62)', lineHeight:1.65, maxWidth:500 }}>
               World-class e-commerce specialists, trained to your brand standards and ready to perform from day one.
             </p>
-            <div style={{ height:1, background:'rgba(255,255,255,0.07)', marginTop:28 }} />
+            <div style={{ height:1, background:'var(--bg-surface-2)', marginTop:28 }} />
           </div>
 
           {/* ── 2 × 2 grid ── */}
@@ -567,11 +569,11 @@ export default function ServicesPage() {
             <div style={{
               display:'flex', alignItems:'center', justifyContent:'space-between', flexWrap:'wrap', gap:16,
               padding:'24px 30px', borderRadius:16,
-              background:'#241352',
-              border:'1px solid rgba(255,255,255,0.12)',
+              background:'var(--bg-surface)',
+              border:'1px solid var(--border)',
             }}>
               <div>
-                <p style={{ fontSize:15.5, fontWeight:700, color:'#F8FAFC', marginBottom:4 }}>Not sure which role you need?</p>
+                <p style={{ fontSize:15.5, fontWeight:700, color:'var(--text-1)', marginBottom:4 }}>Not sure which role you need?</p>
                 <p style={{ fontSize:13.5, color:'rgba(255,255,255,0.62)' }}>We'll help you figure out the perfect fit for your brand and team size.</p>
               </div>
               <button

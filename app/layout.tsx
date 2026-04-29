@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import { Rethink_Sans } from "next/font/google";
 import "./globals.css";
+import ThemeProvider from "./components/ThemeProvider";
 
 const rethinkSans = Rethink_Sans({
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+  weight: ["400", "500", "600", "700", "800"],
   variable: "--font-rethink",
 });
 
@@ -15,12 +16,20 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+}: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" className={rethinkSans.variable}>
-      <body>{children}</body>
+      <head>
+        {/* Anti-flash: set theme before first paint */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){var t=localStorage.getItem('lynq-theme')||'light';document.documentElement.setAttribute('data-theme',t);})();`,
+          }}
+        />
+      </head>
+      <body>
+        <ThemeProvider>{children}</ThemeProvider>
+      </body>
     </html>
   );
 }

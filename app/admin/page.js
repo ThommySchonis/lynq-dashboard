@@ -295,42 +295,42 @@ export default function AdminPage() {
   }
 
   const s = {
-    page: { minHeight: '100vh', background: '#1C0F36', fontFamily: "'Inter Tight', sans-serif", color: '#fff' },
-    topbar: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 40px', height: '64px', background: '#180d30', borderBottom: '1px solid rgba(255,255,255,0.07)', position: 'sticky', top: 0, zIndex: 10 },
-    topbarLogo: { height: '28px', filter: 'brightness(0) invert(1)' },
+    page: { minHeight: '100vh', background: 'var(--bg-page)', fontFamily: "'Inter Tight', sans-serif", color: 'var(--text-1)' },
+    topbar: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 40px', height: '64px', background: 'var(--bg-surface)', borderBottom: '1px solid var(--border)', position: 'sticky', top: 0, zIndex: 10, boxShadow: 'var(--shadow-row)' },
+    topbarLogo: { height: '28px', filter: 'var(--sidebar-logo-filter)' },
     topbarRight: { display: 'flex', alignItems: 'center', gap: '16px' },
-    topbarEmail: { fontSize: '12px', color: '#4a7fb5' },
-    logoutBtn: { padding: '7px 16px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: '#4a7fb5', fontSize: '12px', fontWeight: '600', cursor: 'pointer', fontFamily: "'Inter Tight', sans-serif", transition: 'all 0.15s' },
+    topbarEmail: { fontSize: '12px', color: 'var(--text-3)' },
+    logoutBtn: { padding: '7px 16px', background: 'var(--bg-surface-2)', border: '1px solid var(--border)', borderRadius: '8px', color: 'var(--text-2)', fontSize: '12px', fontWeight: '600', cursor: 'pointer', fontFamily: "'Inter Tight', sans-serif", transition: 'all 0.15s' },
     content: { padding: '36px 40px', maxWidth: '1200px' },
     pageHeader: { marginBottom: '32px' },
-    pageTitle: { fontSize: '22px', fontWeight: '800', marginBottom: '4px' },
-    pageSub: { color: '#4a7fb5', fontSize: '13px' },
+    pageTitle: { fontSize: '22px', fontWeight: '800', marginBottom: '4px', color: 'var(--text-1)' },
+    pageSub: { color: 'var(--text-3)', fontSize: '13px' },
     statsRow: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginBottom: '32px', maxWidth: '600px' },
-    statCard: { background: '#241352', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '12px', padding: '20px 24px' },
-    statNum: { fontSize: '28px', fontWeight: '800', color: '#fff', lineHeight: 1 },
-    statLabel: { fontSize: '11px', color: '#4a7fb5', marginTop: '4px', fontWeight: '500', textTransform: 'uppercase', letterSpacing: '0.05em' },
-    tabBar: { display: 'flex', gap: '2px', marginBottom: '28px', background: 'rgba(255,255,255,0.04)', padding: '4px', borderRadius: '10px', width: 'fit-content' },
+    statCard: { background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: '12px', padding: '20px 24px', boxShadow: 'var(--shadow-card)' },
+    statNum: { fontSize: '28px', fontWeight: '800', color: 'var(--text-1)', lineHeight: 1 },
+    statLabel: { fontSize: '11px', color: 'var(--text-3)', marginTop: '4px', fontWeight: '500', textTransform: 'uppercase', letterSpacing: '0.05em' },
+    tabBar: { display: 'flex', gap: '2px', marginBottom: '28px', background: 'var(--bg-surface-2)', border: '1px solid var(--border)', padding: '4px', borderRadius: '10px', width: 'fit-content' },
     tab: { padding: '8px 20px', borderRadius: '7px', border: 'none', fontSize: '13px', fontWeight: '600', cursor: 'pointer', transition: 'all 0.15s', fontFamily: "'Inter Tight', sans-serif" },
-    tabActive: { background: '#A175FC', color: '#fff', boxShadow: '0 2px 8px rgba(161,117,252,0.3)' },
-    tabInactive: { background: 'transparent', color: '#4a7fb5' },
+    tabActive: { background: 'var(--accent)', color: '#fff', boxShadow: '0 2px 8px var(--accent-border)' },
+    tabInactive: { background: 'transparent', color: 'var(--text-2)' },
     grid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' },
-    card: { background: '#241352', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '14px', padding: '28px' },
-    cardTitle: { fontSize: '15px', fontWeight: '700', marginBottom: '6px', color: '#fff' },
-    cardSub: { fontSize: '12px', color: '#4a7fb5', marginBottom: '24px' },
-    divider: { height: '1px', background: 'rgba(255,255,255,0.06)', margin: '16px 0' },
-    label: { display: 'block', fontSize: '11px', color: '#4a7fb5', marginBottom: '5px', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.04em' },
-    input: { width: '100%', padding: '10px 14px', background: '#180d30', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: '#fff', fontSize: '13px', boxSizing: 'border-box', marginBottom: '14px', fontFamily: "'Inter Tight', sans-serif", transition: 'border-color 0.15s' },
-    textarea: { width: '100%', padding: '10px 14px', background: '#180d30', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: '#fff', fontSize: '13px', boxSizing: 'border-box', marginBottom: '14px', fontFamily: "'Inter Tight', sans-serif", resize: 'vertical', minHeight: '100px' },
-    btn: { width: '100%', padding: '11px', background: '#A175FC', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: '700', cursor: 'pointer', marginTop: '6px', fontFamily: "'Inter Tight', sans-serif", letterSpacing: '0.02em', transition: 'opacity 0.15s' },
+    card: { background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: '14px', padding: '28px', boxShadow: 'var(--shadow-card)' },
+    cardTitle: { fontSize: '15px', fontWeight: '700', marginBottom: '6px', color: 'var(--text-1)' },
+    cardSub: { fontSize: '12px', color: 'var(--text-3)', marginBottom: '24px' },
+    divider: { height: '1px', background: 'var(--border)', margin: '16px 0' },
+    label: { display: 'block', fontSize: '11px', color: 'var(--text-3)', marginBottom: '5px', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.04em' },
+    input: { width: '100%', padding: '10px 14px', background: 'var(--bg-input)', border: '1px solid var(--border)', borderRadius: '8px', color: 'var(--text-1)', fontSize: '13px', boxSizing: 'border-box', marginBottom: '14px', fontFamily: "'Inter Tight', sans-serif", transition: 'border-color 0.15s' },
+    textarea: { width: '100%', padding: '10px 14px', background: 'var(--bg-input)', border: '1px solid var(--border)', borderRadius: '8px', color: 'var(--text-1)', fontSize: '13px', boxSizing: 'border-box', marginBottom: '14px', fontFamily: "'Inter Tight', sans-serif", resize: 'vertical', minHeight: '100px' },
+    btn: { width: '100%', padding: '11px', background: 'var(--accent)', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: '700', cursor: 'pointer', marginTop: '6px', fontFamily: "'Inter Tight', sans-serif", letterSpacing: '0.02em', transition: 'opacity 0.15s' },
     success: { background: 'rgba(78,204,163,0.1)', border: '1px solid rgba(78,204,163,0.3)', borderRadius: '8px', padding: '10px 14px', color: '#4ecca3', fontSize: '13px', marginBottom: '16px' },
-    clientRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' },
+    clientRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 0', borderBottom: '1px solid var(--border)' },
     pill: { padding: '3px 10px', borderRadius: '20px', fontSize: '11px', fontWeight: '600', background: 'rgba(78,204,163,0.12)', color: '#4ecca3', border: '1px solid rgba(78,204,163,0.2)' },
-    typePill: (t, selected) => ({ padding: '7px 14px', borderRadius: '8px', border: '1px solid', fontSize: '12px', fontWeight: '600', cursor: 'pointer', fontFamily: "'Inter Tight', sans-serif", transition: 'all 0.15s', borderColor: selected === t ? '#A175FC' : 'rgba(255,255,255,0.08)', background: selected === t ? 'rgba(161,117,252,0.15)' : 'transparent', color: selected === t ? '#A175FC' : '#4a7fb5' }),
-    broadcastRow: { padding: '16px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' },
+    typePill: (t, selected) => ({ padding: '7px 14px', borderRadius: '8px', border: '1px solid', fontSize: '12px', fontWeight: '600', cursor: 'pointer', fontFamily: "'Inter Tight', sans-serif", transition: 'all 0.15s', borderColor: selected === t ? 'var(--accent)' : 'var(--border)', background: selected === t ? 'var(--accent-soft)' : 'transparent', color: selected === t ? 'var(--accent)' : 'var(--text-2)' }),
+    broadcastRow: { padding: '16px 0', borderBottom: '1px solid var(--border)' },
   }
 
   if (!authorized) return (
-    <div style={{ minHeight: '100vh', background: '#1C0F36', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#4a7fb5', fontFamily: "'Inter Tight', sans-serif" }}>
+    <div style={{ minHeight: '100vh', background: 'var(--bg-page)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#4a7fb5', fontFamily: "'Inter Tight', sans-serif" }}>
       Checking access...
     </div>
   )
@@ -434,7 +434,7 @@ export default function AdminPage() {
                         <span style={{ color: broadcastForm.type === id ? t.accent : 'rgba(255,255,255,0.25)', display: 'flex', transition: 'color .15s' }}>{t.icon}</span>
                         <div>
                           <div style={{ fontSize: 12.5, fontWeight: 700, color: broadcastForm.type === id ? '#fff' : 'rgba(255,255,255,0.45)', transition: 'color .15s' }}>{t.label}</div>
-                          <div style={{ fontSize: 10.5, color: 'rgba(255,255,255,0.25)', marginTop: 1 }}>{t.desc}</div>
+                          <div style={{ fontSize: 10.5, color: 'var(--text-3)', marginTop: 1 }}>{t.desc}</div>
                         </div>
                       </div>
                     </button>
@@ -442,7 +442,7 @@ export default function AdminPage() {
                 </div>
 
                 {/* Topic selector */}
-                <label style={s.label}>Topic <span style={{ fontWeight:400, textTransform:'none', letterSpacing:0, color:'rgba(255,255,255,0.25)' }}>(optional)</span></label>
+                <label style={s.label}>Topic <span style={{ fontWeight:400, textTransform:'none', letterSpacing:0, color:'var(--text-3)' }}>(optional)</span></label>
                 <div style={{ display:'flex', gap:6, flexWrap:'wrap', marginBottom:20 }}>
                   {['Media Buying','Creative Strategy','Supply Chain','Customer Service','Creatives','Email Marketing','Analytics'].map(t => (
                     <button key={t} type="button"
@@ -462,7 +462,7 @@ export default function AdminPage() {
                       <div style={{ borderRadius: 8, overflow: 'hidden', position: 'relative', paddingTop: '36%', marginTop: -6, marginBottom: 14 }}>
                         <img src={`https://img.youtube.com/vi/${ytId}/maxresdefault.jpg`} alt="thumb" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
                         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, transparent 50%, rgba(13,6,32,0.85) 100%)' }} />
-                        <div style={{ position: 'absolute', bottom: 8, left: 10, fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,0.55)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Thumbnail preview</div>
+                        <div style={{ position: 'absolute', bottom: 8, left: 10, fontSize: 10, fontWeight: 600, color: 'var(--text-2)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Thumbnail preview</div>
                         <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
                           <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'rgba(255,255,255,0.15)', border: '1.5px solid rgba(255,255,255,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                             <svg width="13" height="13" viewBox="0 0 24 24" fill="#fff" style={{ marginLeft: 2 }}><polygon points="5 3 19 12 5 21 5 3"/></svg>
@@ -527,10 +527,10 @@ export default function AdminPage() {
                           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
                             <span style={{ fontSize: 10, fontWeight: 700, color: tc.accent, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{tc.label}</span>
                             {b.is_pinned && <span style={{ fontSize: 10, fontWeight: 700, color: '#f59e0b', background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.25)', borderRadius: 4, padding: '1px 6px' }}>Pinned</span>}
-                            <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.25)' }}>{new Date(b.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                            <span style={{ fontSize: 10, color: 'var(--text-3)' }}>{new Date(b.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
                           </div>
                           <div style={{ fontSize: 13, fontWeight: 600, color: '#fff', lineHeight: 1.3, marginBottom: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{b.title}</div>
-                          {b.body && <div style={{ fontSize: 11.5, color: 'rgba(255,255,255,0.35)', lineHeight: 1.4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{b.body}</div>}
+                          {b.body && <div style={{ fontSize: 11.5, color: 'var(--text-3)', lineHeight: 1.4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{b.body}</div>}
                           {/* Reaction counts */}
                           {(() => {
                             const tu = broadcastReactions.filter(r => r.broadcast_id === b.id && r.emoji === 'thumbs_up').length
@@ -690,7 +690,7 @@ export default function AdminPage() {
                         <div style={{ fontSize: '11px', color: '#4a7fb5' }}>
                           {fmtN(v.calls)} calls · {fmtN(v.input_tokens)} in · {fmtN(v.output_tokens)} out tokens
                         </div>
-                        <div style={{ marginTop: '6px', height: '3px', background: 'rgba(255,255,255,0.06)', borderRadius: '2px' }}>
+                        <div style={{ marginTop: '6px', height: '3px', background: 'var(--bg-surface-2)', borderRadius: '2px' }}>
                           <div style={{ height: '3px', background: purple, borderRadius: '2px', width: `${Math.min(100, (v.calls / Math.max(...Object.values(ai.byRoute).map(r => r.calls))) * 100)}%` }} />
                         </div>
                       </div>
@@ -735,7 +735,7 @@ export default function AdminPage() {
                               <span style={{ fontSize: '12px', color: '#4a7fb5' }}>{new Date(date).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}</span>
                               <span style={{ fontSize: '12px', fontWeight: '600', color: purple }}>{fmt(cost)} <span style={{ color: '#4a7fb5', fontWeight: '400' }}>· {calls}x</span></span>
                             </div>
-                            <div style={{ height: '3px', background: 'rgba(255,255,255,0.06)', borderRadius: '2px' }}>
+                            <div style={{ height: '3px', background: 'var(--bg-surface-2)', borderRadius: '2px' }}>
                               <div style={{ height: '3px', background: purple, borderRadius: '2px', width: `${pct}%`, opacity: 0.7 }} />
                             </div>
                           </div>
@@ -797,7 +797,7 @@ export default function AdminPage() {
                   <div style={{ fontSize: '11px', color: '#4a7fb5', marginTop: '2px' }}>{new Date(m.created_at).toLocaleDateString('en-US')}</div>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <span style={{ ...s.pill, background: 'rgba(161,117,252,0.12)', color: '#A175FC', border: '1px solid rgba(161,117,252,0.2)' }}>{m.role}</span>
+                  <span style={{ ...s.pill, background: 'rgba(161,117,252,0.12)', color: 'var(--accent)', border: '1px solid rgba(161,117,252,0.2)' }}>{m.role}</span>
                   <button onClick={() => deleteTeamMember(m.id, m.email)} style={{ background: 'none', border: 'none', color: '#ff6b8a', cursor: 'pointer', fontSize: '14px' }}>✕</button>
                 </div>
               </div>
@@ -867,7 +867,7 @@ export default function AdminPage() {
                   </button>
                 ))}
               </div>
-              <button onClick={exportCSV} style={{ padding: '7px 16px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.04)', color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: "'Inter Tight', sans-serif", transition: 'all .15s' }}>
+              <button onClick={exportCSV} style={{ padding: '7px 16px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg-input)', color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: "'Inter Tight', sans-serif", transition: 'all .15s' }}>
                 Export CSV
               </button>
             </div>
@@ -876,7 +876,7 @@ export default function AdminPage() {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 24 }}>
               {[
                 { label: 'Active now', value: activeCount, color: '#4ade80', sub: pausedCount > 0 ? `${pausedCount} on break` : null },
-                { label: 'Total worked', value: fmtSec(totalSec), color: '#A175FC', sub: null },
+                { label: 'Total worked', value: fmtSec(totalSec), color: 'var(--accent)', sub: null },
                 { label: 'Sessions', value: sessions.filter(s2 => s2.clocked_out_at).length, color: '#60a5fa', sub: null },
                 { label: 'Team members', value: members.length, color: '#f59e0b', sub: null },
               ].map(({ label, value, color, sub }) => (
@@ -900,14 +900,14 @@ export default function AdminPage() {
                     <div style={{ fontSize: 11, fontWeight: 700, color: '#4a7fb5', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 12 }}>Per employee</div>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(210px, 1fr))', gap: 12 }}>
                       {members.map(m => (
-                        <div key={m.id} style={{ background: 'rgba(255,255,255,0.03)', border: `1px solid ${m.is_paused ? 'rgba(251,191,36,0.2)' : m.is_active ? 'rgba(74,222,128,0.15)' : 'rgba(255,255,255,0.06)'}`, borderRadius: 10, padding: '14px 16px' }}>
+                        <div key={m.id} style={{ background: 'var(--bg-surface-2)', border: `1px solid ${m.is_paused ? 'rgba(251,191,36,0.2)' : m.is_active ? 'rgba(74,222,128,0.15)' : 'rgba(255,255,255,0.06)'}`, borderRadius: 10, padding: '14px 16px' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
                             <div style={{ width: 7, height: 7, borderRadius: '50%', flexShrink: 0, background: m.is_paused ? '#fbbf24' : m.is_active ? '#4ade80' : 'rgba(255,255,255,0.15)', boxShadow: m.is_paused ? '0 0 6px rgba(251,191,36,0.6)' : m.is_active ? '0 0 6px rgba(74,222,128,0.6)' : 'none' }} />
                             <div style={{ fontSize: 12.5, fontWeight: 700, color: '#fff' }}>{m.name}</div>
                             {m.is_paused && <span style={{ marginLeft: 'auto', fontSize: 10, fontWeight: 600, color: '#fbbf24', background: 'rgba(251,191,36,0.1)', border: '1px solid rgba(251,191,36,0.2)', borderRadius: 4, padding: '2px 7px' }}>Break</span>}
                             {m.is_active && !m.is_paused && <span style={{ marginLeft: 'auto', fontSize: 10, fontWeight: 600, color: '#4ade80', background: 'rgba(74,222,128,0.1)', border: '1px solid rgba(74,222,128,0.2)', borderRadius: 4, padding: '2px 7px' }}>Active</span>}
                           </div>
-                          <div style={{ fontSize: 22, fontWeight: 800, color: '#A175FC', letterSpacing: '-0.03em', marginBottom: 4 }}>{fmtSec(m.worked_seconds)}</div>
+                          <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--accent)', letterSpacing: '-0.03em', marginBottom: 4 }}>{fmtSec(m.worked_seconds)}</div>
                           <div style={{ display: 'flex', gap: 10, fontSize: 11, color: '#4a7fb5' }}>
                             <span>{m.sessions_count} session{m.sessions_count !== 1 ? 's' : ''}</span>
                             {m.paused_seconds > 0 && <span style={{ color: 'rgba(251,191,36,0.6)' }}>Break {fmtSec(m.paused_seconds)}</span>}
@@ -934,14 +934,14 @@ export default function AdminPage() {
                         <div style={{ fontSize: 12.5, fontWeight: 600, color: '#fff' }}>{s2.member_name}</div>
                         <div style={{ fontSize: 11, color: '#4a7fb5', marginTop: 1 }}>{s2.member_email}</div>
                       </div>
-                      <div style={{ fontSize: 12.5, color: 'rgba(255,255,255,0.6)' }}>{fmtD(s2.clocked_in_at)}</div>
-                      <div style={{ fontSize: 12.5, color: 'rgba(255,255,255,0.6)', fontVariantNumeric: 'tabular-nums' }}>{fmtT(s2.clocked_in_at)}</div>
+                      <div style={{ fontSize: 12.5, color: 'var(--text-2)' }}>{fmtD(s2.clocked_in_at)}</div>
+                      <div style={{ fontSize: 12.5, color: 'var(--text-2)', fontVariantNumeric: 'tabular-nums' }}>{fmtT(s2.clocked_in_at)}</div>
                       <div style={{ fontSize: 12.5, color: s2.clocked_out_at ? 'rgba(255,255,255,0.6)' : '#4ade80', fontVariantNumeric: 'tabular-nums' }}>
                         {s2.clocked_out_at ? fmtT(s2.clocked_out_at) : 'Active'}
                       </div>
                       <div style={{ fontSize: 12.5, fontWeight: 700, color: '#fff' }}>{hrs}h</div>
                       <div style={{ fontSize: 12.5, color: s2.paused_seconds > 0 ? 'rgba(251,191,36,0.7)' : 'rgba(255,255,255,0.25)' }}>{brk}</div>
-                      <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', lineHeight: 1.45, wordBreak: 'break-word' }}>
+                      <div style={{ fontSize: 12, color: 'var(--text-2)', lineHeight: 1.45, wordBreak: 'break-word' }}>
                         {s2.eod_report || <span style={{ color: 'rgba(255,255,255,0.2)', fontStyle: 'italic' }}>No report</span>}
                       </div>
                     </div>
@@ -969,16 +969,16 @@ export default function AdminPage() {
                 <label style={s.label}>Title</label>
                 <input style={s.input} value={mcForm.title} onChange={e => setMcForm({...mcForm, title: e.target.value})} required placeholder="How to scale Meta Ads without burning budget" />
 
-                <label style={s.label}>Speaker <span style={{ fontWeight:400, textTransform:'none', letterSpacing:0, color:'rgba(255,255,255,0.25)' }}>(optional)</span></label>
+                <label style={s.label}>Speaker <span style={{ fontWeight:400, textTransform:'none', letterSpacing:0, color:'var(--text-3)' }}>(optional)</span></label>
                 <input style={s.input} value={mcForm.speaker} onChange={e => setMcForm({...mcForm, speaker: e.target.value})} placeholder="Name · Role or company" />
 
-                <label style={s.label}>Description <span style={{ fontWeight:400, textTransform:'none', letterSpacing:0, color:'rgba(255,255,255,0.25)' }}>(optional)</span></label>
+                <label style={s.label}>Description <span style={{ fontWeight:400, textTransform:'none', letterSpacing:0, color:'var(--text-3)' }}>(optional)</span></label>
                 <textarea style={{ ...s.textarea, minHeight:80 }} value={mcForm.description} onChange={e => setMcForm({...mcForm, description: e.target.value})} placeholder="What will attendees learn? What should they prepare?" />
 
                 <label style={s.label}>Date & time</label>
                 <input style={{ ...s.input, colorScheme:'dark' }} type="datetime-local" value={mcForm.scheduled_at} onChange={e => setMcForm({...mcForm, scheduled_at: e.target.value})} required />
 
-                <label style={s.label}>Zoom link <span style={{ fontWeight:400, textTransform:'none', letterSpacing:0, color:'rgba(255,255,255,0.25)' }}>(add before session)</span></label>
+                <label style={s.label}>Zoom link <span style={{ fontWeight:400, textTransform:'none', letterSpacing:0, color:'var(--text-3)' }}>(add before session)</span></label>
                 <input style={s.input} value={mcForm.zoom_url} onChange={e => setMcForm({...mcForm, zoom_url: e.target.value})} placeholder="https://zoom.us/j/..." />
 
                 <button style={s.btn} type="submit" disabled={mcLoading}>
@@ -1008,10 +1008,10 @@ export default function AdminPage() {
                     <div style={{ flex:1, minWidth:0 }}>
                       <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:3 }}>
                         <span style={{ fontSize:11, fontWeight:700, color: past ? 'rgba(255,255,255,0.2)' : '#A175FC', textTransform:'uppercase', letterSpacing:'.05em' }}>{past ? 'Past' : 'Upcoming'}</span>
-                        <span style={{ fontSize:11, color:'rgba(255,255,255,0.25)' }}>{fmtDT(mc.scheduled_at)}</span>
+                        <span style={{ fontSize:11, color:'var(--text-3)' }}>{fmtDT(mc.scheduled_at)}</span>
                       </div>
                       <div style={{ fontSize:13.5, fontWeight:700, color: past ? 'rgba(255,255,255,0.35)' : '#fff', lineHeight:1.3, marginBottom:2 }}>{mc.title}</div>
-                      {mc.speaker && <div style={{ fontSize:11.5, color:'rgba(255,255,255,0.35)' }}>with {mc.speaker}</div>}
+                      {mc.speaker && <div style={{ fontSize:11.5, color:'var(--text-3)' }}>with {mc.speaker}</div>}
                       {editingZoom?.id === mc.id ? (
                         <div style={{ marginTop:6, display:'flex', gap:6, alignItems:'center' }}>
                           <input
@@ -1023,16 +1023,16 @@ export default function AdminPage() {
                             autoFocus
                           />
                           <button onClick={() => updateZoomUrl(mc.id, editingZoom.url)} style={{ padding:'5px 10px', background:'#A175FC', border:'none', borderRadius:6, color:'#fff', fontSize:11, fontWeight:700, cursor:'pointer', fontFamily:"'Inter Tight', sans-serif", whiteSpace:'nowrap' }}>Save</button>
-                          <button onClick={() => setEditingZoom(null)} style={{ padding:'5px 10px', background:'rgba(255,255,255,0.06)', border:'1px solid rgba(255,255,255,0.1)', borderRadius:6, color:'rgba(255,255,255,0.5)', fontSize:11, fontWeight:600, cursor:'pointer', fontFamily:"'Inter Tight', sans-serif" }}>✕</button>
+                          <button onClick={() => setEditingZoom(null)} style={{ padding:'5px 10px', background:'var(--bg-surface-2)', border:'1px solid var(--border)', borderRadius:6, color:'var(--text-2)', fontSize:11, fontWeight:600, cursor:'pointer', fontFamily:"'Inter Tight', sans-serif" }}>✕</button>
                         </div>
                       ) : (
                         <div style={{ display:'flex', alignItems:'center', gap:6, marginTop:4 }}>
                           {mc.zoom_url
                             ? <div style={{ fontSize:11, color:'#4ade80', display:'flex', alignItems:'center', gap:4 }}><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Zoom link set</div>
-                            : <div style={{ fontSize:11, color:'rgba(255,255,255,0.25)' }}>No Zoom link yet</div>
+                            : <div style={{ fontSize:11, color:'var(--text-3)' }}>No Zoom link yet</div>
                           }
                           <button onClick={() => setEditingZoom({ id: mc.id, url: mc.zoom_url || '' })}
-                            style={{ background:'none', border:'none', color:'rgba(255,255,255,0.25)', cursor:'pointer', padding:'2px 4px', borderRadius:4, transition:'color .15s', display:'flex', alignItems:'center' }}
+                            style={{ background:'none', border:'none', color:'var(--text-3)', cursor:'pointer', padding:'2px 4px', borderRadius:4, transition:'color .15s', display:'flex', alignItems:'center' }}
                             onMouseEnter={e => e.currentTarget.style.color='#A175FC'}
                             onMouseLeave={e => e.currentTarget.style.color='rgba(255,255,255,0.25)'}>
                             <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
@@ -1092,7 +1092,7 @@ export default function AdminPage() {
                   const color = SERVICE_COLORS[inq.service] || '#A175FC'
                   const isNew = inq.status === 'new'
                   return (
-                    <div key={inq.id} style={{ background: isNew ? 'rgba(248,113,113,0.04)' : '#241352', border: `1px solid ${isNew ? 'rgba(248,113,113,0.18)' : 'rgba(255,255,255,0.07)'}`, borderRadius:12, padding:'18px 20px', display:'flex', gap:16, alignItems:'flex-start' }}>
+                    <div key={inq.id} style={{ background: isNew ? 'rgba(248,113,113,0.04)' : 'var(--bg-surface)', border: `1px solid ${isNew ? 'rgba(248,113,113,0.18)' : 'rgba(255,255,255,0.07)'}`, borderRadius:12, padding:'18px 20px', display:'flex', gap:16, alignItems:'flex-start' }}>
                       {/* Color dot */}
                       <div style={{ width:8, height:8, borderRadius:'50%', background:color, flexShrink:0, marginTop:5, boxShadow:`0 0 8px ${color}80` }} />
 
@@ -1120,8 +1120,8 @@ export default function AdminPage() {
                           )}
                         </div>
                         {inq.message
-                          ? <p style={{ fontSize:13, color:'rgba(255,255,255,0.45)', lineHeight:1.6, whiteSpace:'pre-wrap', wordBreak:'break-word' }}>{inq.message}</p>
-                          : <p style={{ fontSize:12.5, color:'rgba(255,255,255,0.22)', fontStyle:'italic' }}>No specific question</p>
+                          ? <p style={{ fontSize:13, color:'var(--text-2)', lineHeight:1.6, whiteSpace:'pre-wrap', wordBreak:'break-word' }}>{inq.message}</p>
+                          : <p style={{ fontSize:12.5, color:'var(--text-3)', fontStyle:'italic' }}>No specific question</p>
                         }
                       </div>
 
@@ -1161,7 +1161,7 @@ export default function AdminPage() {
             <label style={s.label}>Password</label>
             <input style={s.input} type="password" value={form.password} onChange={e => setForm({...form, password: e.target.value})} required placeholder="Min. 6 characters" />
 
-            <div style={{ height: '1px', background: 'rgba(255,255,255,0.06)', margin: '6px 0 16px' }} />
+            <div style={{ height: '1px', background: 'var(--bg-surface-2)', margin: '6px 0 16px' }} />
 
             <label style={s.label}>Gorgias domain</label>
             <input style={s.input} value={form.gorgias_domain} onChange={e => setForm({...form, gorgias_domain: e.target.value})} placeholder="smithsisters.gorgias.com" />
@@ -1175,7 +1175,7 @@ export default function AdminPage() {
             <label style={s.label}>Shopify API key</label>
             <input style={s.input} value={form.shopify_api_key} onChange={e => setForm({...form, shopify_api_key: e.target.value})} placeholder="API key" />
 
-            <div style={{ height: '1px', background: 'rgba(255,255,255,0.06)', margin: '6px 0 16px' }} />
+            <div style={{ height: '1px', background: 'var(--bg-surface-2)', margin: '6px 0 16px' }} />
 
             <label style={s.label}>Parcel Panel API key</label>
             <input style={s.input} value={form.parcel_panel_api_key} onChange={e => setForm({...form, parcel_panel_api_key: e.target.value})} placeholder="Parcel Panel API key" />

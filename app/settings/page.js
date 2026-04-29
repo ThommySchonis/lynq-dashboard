@@ -28,11 +28,11 @@ const CSS = `
   }
 
   .settings-input {
-    background:rgba(255,255,255,0.05);
-    border:1px solid rgba(255,255,255,0.1);
+    background:var(--bg-surface-2);
+    border:1px solid var(--border);
     border-radius:8px;
     padding:10px 14px;
-    color:#F8FAFC;
+    color:var(--text-1);
     width:100%;
     outline:none;
     font-size:14px;
@@ -69,7 +69,7 @@ const CSS = `
     font-family:inherit;
   }
   .tab-item:hover {
-    background:rgba(255,255,255,0.05);
+    background:var(--bg-surface-2);
     color:rgba(248,250,252,0.85);
   }
   .tab-item.active {
@@ -79,10 +79,11 @@ const CSS = `
   }
 
   .settings-card {
-    background:rgba(255,255,255,0.04);
-    border:1px solid rgba(255,255,255,0.08);
+    background:var(--bg-surface);
+    border:1px solid var(--border);
     border-radius:14px;
     padding:24px;
+    box-shadow:var(--shadow-card);
     animation:revealUp 0.35s ease-out both;
   }
 
@@ -134,18 +135,20 @@ const CSS = `
   }
 
   .integration-card {
-    background:rgba(255,255,255,0.04);
-    border:1px solid rgba(255,255,255,0.08);
+    background:var(--bg-surface);
+    border:1px solid var(--border);
     border-radius:14px;
     padding:20px 24px;
     display:flex;
     align-items:center;
     gap:16px;
+    box-shadow:var(--shadow-card);
     transition:all 0.2s ease;
   }
   .integration-card:hover {
-    border-color:rgba(255,255,255,0.12);
-    background:rgba(255,255,255,0.05);
+    border-color:var(--border-hover);
+    background:var(--bg-surface-2);
+    box-shadow:var(--shadow-card-hover);
   }
 
   .toggle-track {
@@ -175,7 +178,7 @@ const CSS = `
     align-items:center;
     justify-content:space-between;
     padding:16px 0;
-    border-bottom:1px solid rgba(255,255,255,0.05);
+    border-bottom:1px solid var(--border);
   }
   .notification-row:last-child { border-bottom:none; }
 
@@ -190,7 +193,7 @@ const CSS = `
     background:transparent;
     border:none;
     cursor:pointer;
-    color:rgba(248,250,252,0.35);
+    color:var(--text-3);
     display:flex;
     align-items:center;
     justify-content:center;
@@ -202,7 +205,7 @@ const CSS = `
   .label-text {
     font-size:12px;
     font-weight:600;
-    color:rgba(248,250,252,0.45);
+    color:var(--text-2);
     text-transform:uppercase;
     letter-spacing:0.07em;
     margin-bottom:8px;
@@ -216,7 +219,7 @@ const CSS = `
     border:1px solid rgba(161,117,252,0.3);
     border-radius:10px;
     padding:14px 20px;
-    color:#F8FAFC;
+    color:var(--text-1);
     font-size:14px;
     font-weight:500;
     z-index:9999;
@@ -235,8 +238,8 @@ const CSS = `
     display:flex;
     align-items:center;
     gap:12px;
-    background:rgba(255,255,255,0.05);
-    border:1px solid rgba(255,255,255,0.1);
+    background:var(--bg-surface-2);
+    border:1px solid var(--border);
     border-radius:8px;
     padding:8px 14px;
     transition:all 0.2s ease;
@@ -267,7 +270,7 @@ const CSS = `
   .section-header h2 {
     font-size:18px;
     font-weight:700;
-    color:#F8FAFC;
+    color:var(--text-1);
     margin-bottom:4px;
   }
   .section-header p {
@@ -283,7 +286,7 @@ const CSS = `
 
   .scrollbar-thin::-webkit-scrollbar { width:3px; }
   .scrollbar-thin::-webkit-scrollbar-track { background:transparent; }
-  .scrollbar-thin::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.08); border-radius:2px; }
+  .scrollbar-thin::-webkit-scrollbar-thumb { background:var(--bg-surface-2); border-radius:2px; }
 `
 
 /* ─── SVG Icons ─── */
@@ -532,7 +535,7 @@ function ProfileTab({ session }) {
       <div className="settings-card" style={{ display:'flex', alignItems:'center', gap:20, animationDelay:'0.05s' }}>
         <Avatar email={email} name={displayName} size={56}/>
         <div>
-          <div style={{ color:'#F8FAFC', fontWeight:600, fontSize:15, marginBottom:4 }}>
+          <div style={{ color:'var(--text-1)', fontWeight:600, fontSize:15, marginBottom:4 }}>
             {displayName || email.split('@')[0]}
           </div>
           <div style={{ color:'rgba(248,250,252,0.4)', fontSize:13 }}>{email}</div>
@@ -565,12 +568,12 @@ function ProfileTab({ session }) {
               />
               <span style={{
                 position:'absolute', right:12, top:'50%', transform:'translateY(-50%)',
-                color:'rgba(248,250,252,0.3)',
+                color:'var(--text-3)',
               }}>
                 <IconLock/>
               </span>
             </div>
-            <div style={{ fontSize:12, color:'rgba(248,250,252,0.3)', marginTop:6 }}>
+            <div style={{ fontSize:12, color:'var(--text-3)', marginTop:6 }}>
               Email is managed by your authentication provider
             </div>
           </div>
@@ -670,7 +673,7 @@ function IntegrationsTab({ session }) {
 
             {/* Info */}
             <div style={{ flex:1, minWidth:0 }}>
-              <div style={{ color:'#F8FAFC', fontWeight:600, fontSize:14, marginBottom:3 }}>
+              <div style={{ color:'var(--text-1)', fontWeight:600, fontSize:14, marginBottom:3 }}>
                 {item.label}
               </div>
               <div style={{ color:'rgba(248,250,252,0.4)', fontSize:13 }}>
@@ -683,17 +686,17 @@ function IntegrationsTab({ session }) {
               {loading && !item.comingSoon ? (
                 <div style={{
                   width:80, height:30, borderRadius:8,
-                  background:'rgba(255,255,255,0.04)',
+                  background:'var(--bg-input)',
                   border:'1px solid rgba(255,255,255,0.06)',
                   animation:'revealUp 0.5s ease both',
                 }}/>
               ) : item.comingSoon ? (
                 <span style={{
                   padding:'5px 12px', borderRadius:20,
-                  background:'rgba(255,255,255,0.05)',
-                  border:'1px solid rgba(255,255,255,0.08)',
+                  background:'var(--bg-surface-2)',
+                  border:'1px solid var(--border)',
                   fontSize:12, fontWeight:600,
-                  color:'rgba(248,250,252,0.3)',
+                  color:'var(--text-3)',
                 }}>
                   Coming Soon
                 </span>
@@ -813,10 +816,10 @@ function BrandTab({ session }) {
                 value={primaryColor}
                 onChange={e => setPrimaryColor(e.target.value)}
               />
-              <span style={{ color:'#F8FAFC', fontSize:14, fontWeight:500, letterSpacing:'0.02em' }}>
+              <span style={{ color:'var(--text-1)', fontSize:14, fontWeight:500, letterSpacing:'0.02em' }}>
                 {primaryColor.toUpperCase()}
               </span>
-              <span style={{ fontSize:12, color:'rgba(248,250,252,0.35)', marginLeft:4 }}>
+              <span style={{ fontSize:12, color:'var(--text-3)', marginLeft:4 }}>
                 — Click to change
               </span>
             </label>
@@ -887,7 +890,7 @@ function NotificationsTab() {
             style={{ animation:`revealUp 0.3s ease-out ${0.05 + i * 0.07}s both` }}
           >
             <div>
-              <div style={{ color:'#F8FAFC', fontWeight:500, fontSize:14, marginBottom:4 }}>
+              <div style={{ color:'var(--text-1)', fontWeight:500, fontSize:14, marginBottom:4 }}>
                 {row.title}
               </div>
               <div style={{ color:'rgba(248,250,252,0.4)', fontSize:13 }}>
@@ -962,7 +965,7 @@ function SecurityTab({ session }) {
 
       {/* Change password */}
       <div className="settings-card" style={{ animationDelay:'0.05s' }}>
-        <div style={{ color:'#F8FAFC', fontWeight:600, fontSize:15, marginBottom:20 }}>
+        <div style={{ color:'var(--text-1)', fontWeight:600, fontSize:15, marginBottom:20 }}>
           Change Password
         </div>
         <div className="field-group">
@@ -993,18 +996,18 @@ function SecurityTab({ session }) {
 
       {/* Session info */}
       <div className="settings-card" style={{ animationDelay:'0.12s' }}>
-        <div style={{ color:'#F8FAFC', fontWeight:600, fontSize:15, marginBottom:16 }}>
+        <div style={{ color:'var(--text-1)', fontWeight:600, fontSize:15, marginBottom:16 }}>
           Current Session
         </div>
         <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
           <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-            <span style={{ fontSize:13, color:'rgba(248,250,252,0.45)' }}>Signed in as</span>
-            <span style={{ fontSize:13, color:'#F8FAFC', fontWeight:500 }}>{email}</span>
+            <span style={{ fontSize:13, color:'var(--text-2)' }}>Signed in as</span>
+            <span style={{ fontSize:13, color:'var(--text-1)', fontWeight:500 }}>{email}</span>
           </div>
-          <div style={{ height:1, background:'rgba(255,255,255,0.05)' }}/>
+          <div style={{ height:1, background:'var(--bg-surface-2)' }}/>
           <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-            <span style={{ fontSize:13, color:'rgba(248,250,252,0.45)' }}>Last sign-in</span>
-            <span style={{ fontSize:13, color:'#F8FAFC', fontWeight:500 }}>{lastSignIn}</span>
+            <span style={{ fontSize:13, color:'var(--text-2)' }}>Last sign-in</span>
+            <span style={{ fontSize:13, color:'var(--text-1)', fontWeight:500 }}>{lastSignIn}</span>
           </div>
         </div>
       </div>
@@ -1069,7 +1072,7 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="settings-root" style={{ display:'flex', minHeight:'100vh', background:'#1C0F36' }}>
+    <div className="settings-root" style={{ display:'flex', minHeight:'100vh', background:'var(--bg-page)' }}>
       <style>{CSS}</style>
       <Sidebar/>
 
@@ -1083,7 +1086,7 @@ export default function SettingsPage() {
           <div style={{ marginBottom:32, animation:'revealUp 0.4s ease-out both' }}>
             <h1 style={{
               fontSize:28, fontWeight:800, letterSpacing:'-0.03em',
-              color:'#F8FAFC',
+              color:'var(--text-1)',
             }}>
               Settings
             </h1>
@@ -1103,8 +1106,8 @@ export default function SettingsPage() {
             {/* Left nav */}
             <nav
               style={{
-                background:'rgba(255,255,255,0.03)',
-                border:'1px solid rgba(255,255,255,0.07)',
+                background:'var(--bg-surface-2)',
+                border:'1px solid var(--border)',
                 borderRadius:14,
                 padding:'8px',
                 display:'flex',

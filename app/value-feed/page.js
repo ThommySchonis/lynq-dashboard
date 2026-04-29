@@ -17,19 +17,19 @@ const CSS = `
   .vf-root    { font-family:var(--font-rethink),-apple-system,BlinkMacSystemFont,sans-serif;-webkit-font-smoothing:antialiased }
   .vf-scroll::-webkit-scrollbar       { width:3px }
   .vf-scroll::-webkit-scrollbar-track { background:transparent }
-  .vf-scroll::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.1);border-radius:2px }
+  .vf-scroll::-webkit-scrollbar-thumb { background:var(--scrollbar);border-radius:2px }
 
   .feed-card {
-    background:rgba(255,255,255,0.048);
-    border:1px solid rgba(255,255,255,0.09);
+    background:var(--bg-surface);
+    border:1px solid var(--border);
     border-radius:14px;overflow:hidden;
-    box-shadow:0 4px 24px rgba(0,0,0,0.25),inset 0 1px 0 rgba(255,255,255,0.06);
+    box-shadow:var(--shadow-card);
     transition:border-color .2s,transform .25s,box-shadow .25s;
   }
   .feed-card:hover {
-    border-color:rgba(255,255,255,0.15);
+    border-color:var(--border-hover);
     transform:translateY(-3px);
-    box-shadow:0 12px 40px rgba(0,0,0,0.4),inset 0 1px 0 rgba(255,255,255,0.09);
+    box-shadow:var(--shadow-card-hover);
   }
 
   .mc-card {
@@ -59,7 +59,7 @@ const CSS = `
   .feed-card:hover .play-circle { background:rgba(161,117,252,0.45);border-color:rgba(161,117,252,0.7);transform:scale(1.1) }
 
   .type-badge { display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:100px;font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase }
-  .topic-tag  { display:inline-flex;align-items:center;padding:3px 9px;border-radius:100px;font-size:10px;font-weight:600;letter-spacing:.04em;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.5) }
+  .topic-tag  { display:inline-flex;align-items:center;padding:3px 9px;border-radius:100px;font-size:10px;font-weight:600;letter-spacing:.04em;background:var(--bg-surface-2);border:1px solid var(--border);color:var(--text-2) }
 
   .f-pill { padding:6px 16px;border-radius:100px;font-size:12px;font-weight:600;cursor:pointer;border:none;font-family:inherit;transition:all .15s }
   .t-pill { padding:5px 14px;border-radius:100px;font-size:11.5px;font-weight:600;cursor:pointer;border:1px solid;font-family:inherit;transition:all .15s }
@@ -67,7 +67,7 @@ const CSS = `
   .watch-link { display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:700;text-decoration:none;transition:gap .2s }
   .watch-link:hover { gap:10px }
 
-  .sk { background:linear-gradient(90deg,rgba(255,255,255,0.04) 25%,rgba(255,255,255,0.08) 50%,rgba(255,255,255,0.04) 75%);background-size:400% 100%;animation:shimmer 1.8s ease-in-out infinite;border-radius:8px }
+  .sk { background:linear-gradient(90deg,var(--skeleton-from) 25%,var(--skeleton-to) 50%,var(--skeleton-from) 75%);background-size:400% 100%;animation:shimmer 1.8s ease-in-out infinite;border-radius:8px }
 
   .join-btn {
     display:inline-flex;align-items:center;gap:8px;
@@ -82,19 +82,19 @@ const CSS = `
   .cal-btn {
     display:inline-flex;align-items:center;gap:7px;
     padding:11px 18px;border-radius:10px;
-    border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.05);
-    color:rgba(255,255,255,0.65);font-size:13px;font-weight:600;
+    border:1px solid var(--border);background:var(--bg-surface-2);
+    color:var(--text-2);font-size:13px;font-weight:600;
     cursor:pointer;font-family:inherit;text-decoration:none;
     transition:background .15s,border-color .15s;
   }
-  .cal-btn:hover { background:rgba(255,255,255,0.09);border-color:rgba(255,255,255,0.2) }
+  .cal-btn:hover { background:rgba(255,255,255,0.09);border-color:var(--text-3) }
 
   .react-btn {
     display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:8px;
     font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;
     border:1px solid transparent;background:transparent;transition:all .15s;line-height:1;
   }
-  .react-btn:hover { background:rgba(255,255,255,0.05) }
+  .react-btn:hover { background:var(--bg-surface-2) }
 `
 
 // ── Constants ────────────────────────────────────────────────────────────────
@@ -192,15 +192,15 @@ function MasterclassCard({ mc, i }) {
         </div>
 
         {/* Title + speaker */}
-        <h2 style={{ fontSize:22, fontWeight:800, color:'#F8FAFC', letterSpacing:'-0.035em', lineHeight:1.25, marginBottom:8 }}>
+        <h2 style={{ fontSize:22, fontWeight:800, color:'var(--text-1)', letterSpacing:'-0.035em', lineHeight:1.25, marginBottom:8 }}>
           {mc.title}
         </h2>
         {mc.speaker && (
-          <p style={{ fontSize:13, color:'rgba(255,255,255,0.5)', marginBottom:6, fontWeight:500 }}>
-            with <span style={{ color:'rgba(255,255,255,0.75)', fontWeight:600 }}>{mc.speaker}</span>
+          <p style={{ fontSize:13, color:'var(--text-2)', marginBottom:6, fontWeight:500 }}>
+            with <span style={{ color:'var(--text-2)', fontWeight:600 }}>{mc.speaker}</span>
           </p>
         )}
-        <p style={{ fontSize:12.5, color:'rgba(255,255,255,0.38)', marginBottom: mc.description ? 10 : 20, letterSpacing:'.01em' }}>
+        <p style={{ fontSize:12.5, color:'var(--text-3)', marginBottom: mc.description ? 10 : 20, letterSpacing:'.01em' }}>
           {fmtEventDate(mc.scheduled_at)}
         </p>
         {mc.description && (
@@ -217,7 +217,7 @@ function MasterclassCard({ mc, i }) {
               Join Zoom session
             </a>
           ) : (
-            <div style={{ display:'inline-flex', alignItems:'center', gap:7, padding:'11px 18px', borderRadius:10, background:'rgba(255,255,255,0.04)', border:'1px solid rgba(255,255,255,0.08)', color:'rgba(255,255,255,0.35)', fontSize:13, fontWeight:600 }}>
+            <div style={{ display:'inline-flex', alignItems:'center', gap:7, padding:'11px 18px', borderRadius:10, background:'var(--bg-input)', border:'1px solid var(--border)', color:'var(--text-3)', fontSize:13, fontWeight:600 }}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
               Zoom link coming soon
             </div>
@@ -251,7 +251,7 @@ function VideoCard({ item, i, reactions, userId, onReact, isPinned }) {
           <div className="vid-grad" />
           <div className="play-ring"><div className="play-circle"><svg width="18" height="18" viewBox="0 0 24 24" fill="#fff" style={{ marginLeft:2 }}><polygon points="5 3 19 12 5 21 5 3"/></svg></div></div>
           <div style={{ position:'absolute', top:12, left:12 }}>
-            <span className="type-badge" style={{ background:'rgba(0,0,0,0.55)', border:'1px solid rgba(255,255,255,0.12)', color:'#fff', backdropFilter:'blur(8px)' }}>
+            <span className="type-badge" style={{ background:'rgba(0,0,0,0.55)', border:'1px solid var(--border)', color:'#fff', backdropFilter:'blur(8px)' }}>
               <svg width="8" height="8" viewBox="0 0 24 24" fill="#A175FC"><polygon points="5 3 19 12 5 21 5 3"/></svg>
               YouTube
             </span>
@@ -266,9 +266,9 @@ function VideoCard({ item, i, reactions, userId, onReact, isPinned }) {
           {isNew(item.created_at) && (
             <span style={{ display:'inline-flex', alignItems:'center', padding:'2px 8px', borderRadius:100, fontSize:10, fontWeight:800, letterSpacing:'.06em', textTransform:'uppercase', background:'rgba(74,222,128,0.12)', border:'1px solid rgba(74,222,128,0.25)', color:'#4ade80' }}>New</span>
           )}
-          <span style={{ fontSize:11, color:'rgba(255,255,255,0.28)', marginLeft:'auto' }}>{fmtDate(item.created_at)}</span>
+          <span style={{ fontSize:11, color:'var(--text-3)', marginLeft:'auto' }}>{fmtDate(item.created_at)}</span>
         </div>
-        <h3 style={{ fontSize:16.5, fontWeight:800, color:'#F8FAFC', letterSpacing:'-0.028em', lineHeight:1.3, marginBottom:8 }}>{item.title}</h3>
+        <h3 style={{ fontSize:16.5, fontWeight:800, color:'var(--text-1)', letterSpacing:'-0.028em', lineHeight:1.3, marginBottom:8 }}>{item.title}</h3>
         {item.body && <p style={{ fontSize:13, color:'rgba(255,255,255,0.48)', lineHeight:1.65, marginBottom:16, display:'-webkit-box', WebkitLineClamp:3, WebkitBoxOrient:'vertical', overflow:'hidden' }}>{item.body}</p>}
         {item.youtube_url && (
           <a href={item.youtube_url} target="_blank" rel="noopener noreferrer" className="watch-link" style={{ color:cfg.accent }}>
@@ -303,10 +303,10 @@ function TextCard({ item, i, reactions, userId, onReact, isPinned }) {
           {isNew(item.created_at) && (
             <span style={{ display:'inline-flex', alignItems:'center', padding:'2px 8px', borderRadius:100, fontSize:10, fontWeight:800, letterSpacing:'.06em', textTransform:'uppercase', background:'rgba(74,222,128,0.12)', border:'1px solid rgba(74,222,128,0.25)', color:'#4ade80' }}>New</span>
           )}
-          <span style={{ fontSize:11, color:'rgba(255,255,255,0.28)', marginLeft:'auto' }}>{fmtDate(item.created_at)}</span>
+          <span style={{ fontSize:11, color:'var(--text-3)', marginLeft:'auto' }}>{fmtDate(item.created_at)}</span>
         </div>
-        <h3 style={{ fontSize:15.5, fontWeight:800, color:'#F8FAFC', letterSpacing:'-0.025em', lineHeight:1.35, marginBottom:10 }}>{item.title}</h3>
-        {item.body && <p style={{ fontSize:13, color:'rgba(255,255,255,0.5)', lineHeight:1.7, whiteSpace:'pre-wrap', overflowWrap:'break-word' }}>{item.body}</p>}
+        <h3 style={{ fontSize:15.5, fontWeight:800, color:'var(--text-1)', letterSpacing:'-0.025em', lineHeight:1.35, marginBottom:10 }}>{item.title}</h3>
+        {item.body && <p style={{ fontSize:13, color:'var(--text-2)', lineHeight:1.7, whiteSpace:'pre-wrap', overflowWrap:'break-word' }}>{item.body}</p>}
         <Reactions item={item} reactions={reactions} userId={userId} onReact={onReact} />
       </div>
     </div>
@@ -344,7 +344,7 @@ function Reactions({ item, reactions, userId, onReact }) {
 
 function SkeletonCard({ i }) {
   return (
-    <div style={{ background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.07)', borderRadius:14, overflow:'hidden', animation:`fadeUp .3s ease ${i*50}ms both` }}>
+    <div style={{ background:'var(--bg-surface-2)', border:'1px solid var(--border)', borderRadius:14, overflow:'hidden', animation:`fadeUp .3s ease ${i*50}ms both` }}>
       <div className="sk" style={{ height:190 }} />
       <div style={{ padding:'18px 22px 22px', display:'flex', flexDirection:'column', gap:10 }}>
         <div style={{ display:'flex', gap:8 }}><div className="sk" style={{ height:20, width:60 }} /><div className="sk" style={{ height:20, width:80 }} /></div>
@@ -405,7 +405,7 @@ export default function ValueFeedPage() {
   const feedPosts = visible.filter(p => !p.is_pinned)
 
   return (
-    <div className="vf-root" style={{ display:'flex', minHeight:'100vh', background:'#1C0F36', color:'#F8FAFC' }}>
+    <div className="vf-root" style={{ display:'flex', minHeight:'100vh', background:'var(--bg-page)', color:'var(--text-1)' }}>
       <style>{CSS}</style>
       <PageBg />
       <Sidebar />
@@ -417,20 +417,20 @@ export default function ValueFeedPage() {
           <div style={{ animation:'fadeUp .4s ease both', marginBottom:28 }}>
             <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', flexWrap:'wrap', gap:12 }}>
               <div>
-                <h1 style={{ fontSize:28, fontWeight:800, color:'#F8FAFC', letterSpacing:'-0.04em', lineHeight:1.15, marginBottom:6 }}>Value Feed</h1>
-                <p style={{ fontSize:13.5, color:'rgba(255,255,255,0.38)', fontWeight:500, lineHeight:1.55 }}>
+                <h1 style={{ fontSize:28, fontWeight:800, color:'var(--text-1)', letterSpacing:'-0.04em', lineHeight:1.15, marginBottom:6 }}>Value Feed</h1>
+                <p style={{ fontSize:13.5, color:'var(--text-3)', fontWeight:500, lineHeight:1.55 }}>
                   Exclusive tips, strategies and videos from the Lynq & Flow team.
                 </p>
               </div>
               {!loading && posts.length > 0 && (
-                <div style={{ display:'flex', alignItems:'center', gap:7, padding:'7px 14px', borderRadius:100, background:'rgba(255,255,255,0.04)', border:'1px solid rgba(255,255,255,0.08)', flexShrink:0 }}>
+                <div style={{ display:'flex', alignItems:'center', gap:7, padding:'7px 14px', borderRadius:100, background:'var(--bg-input)', border:'1px solid var(--border)', flexShrink:0 }}>
                   <div style={{ width:6, height:6, borderRadius:'50%', background:'#A175FC', boxShadow:'0 0 8px rgba(161,117,252,0.7)', animation:'pulse 2s ease-in-out infinite' }} />
-                  <span style={{ fontSize:11.5, fontWeight:600, color:'rgba(255,255,255,0.5)' }}>{posts.length} post{posts.length !== 1 ? 's' : ''}</span>
+                  <span style={{ fontSize:11.5, fontWeight:600, color:'var(--text-2)' }}>{posts.length} post{posts.length !== 1 ? 's' : ''}</span>
                 </div>
               )}
             </div>
 
-            <div style={{ height:1, background:'rgba(255,255,255,0.07)', margin:'20px 0 16px' }} />
+            <div style={{ height:1, background:'var(--bg-surface-2)', margin:'20px 0 16px' }} />
 
             {/* Type filters */}
             <div style={{ display:'flex', gap:6, flexWrap:'wrap', marginBottom: activeTopics.length > 0 ? 10 : 0 }}>
@@ -502,12 +502,12 @@ export default function ValueFeedPage() {
           ) : feedPosts.length === 0 && !pinnedPost ? (
             <div style={{ textAlign:'center', padding:'64px 0' }}>
               <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ margin:'0 auto 12px', display:'block' }}><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-              <div style={{ fontSize:15, fontWeight:700, color:'rgba(255,255,255,0.3)', marginBottom:4 }}>Nothing here yet</div>
+              <div style={{ fontSize:15, fontWeight:700, color:'var(--text-3)', marginBottom:4 }}>Nothing here yet</div>
               <div style={{ fontSize:13, color:'rgba(255,255,255,0.2)' }}>
                 {typeFilter !== 'all' || topicFilter !== 'all' ? 'No posts match this filter.' : 'Your Lynq team will post exclusive content here soon.'}
               </div>
               {(typeFilter !== 'all' || topicFilter !== 'all') && (
-                <button onClick={() => { setTypeFilter('all'); setTopicFilter('all') }} style={{ marginTop:14, padding:'8px 20px', borderRadius:8, border:'1px solid rgba(255,255,255,0.1)', background:'transparent', color:'rgba(255,255,255,0.45)', fontSize:12, fontWeight:600, cursor:'pointer', fontFamily:'inherit' }}>
+                <button onClick={() => { setTypeFilter('all'); setTopicFilter('all') }} style={{ marginTop:14, padding:'8px 20px', borderRadius:8, border:'1px solid var(--border)', background:'transparent', color:'var(--text-2)', fontSize:12, fontWeight:600, cursor:'pointer', fontFamily:'inherit' }}>
                   Clear filters
                 </button>
               )}

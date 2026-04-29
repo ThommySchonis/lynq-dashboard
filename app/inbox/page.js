@@ -132,7 +132,7 @@ const CSS = `
   /* ── View tabs — pill style ── */
   .vtab { padding:5px 12px; background:transparent; cursor:pointer; font-size:11.5px; font-weight:500; font-family:inherit; border-radius:8px; transition:all .18s; color:rgba(240,236,249,0.32); white-space:nowrap; letter-spacing:.01em; border:1px solid transparent; }
   .vtab.on { color:#B48CFF; background:rgba(161,117,252,0.13); border-color:rgba(161,117,252,0.2); font-weight:700; }
-  .vtab:hover:not(.on) { color:rgba(240,236,249,0.65); background:rgba(255,255,255,0.045); }
+  .vtab:hover:not(.on) { color:var(--text-2); background:var(--bg-input); }
 
   /* ── Composer tab ── */
   .ctab { padding:9px 15px; background:transparent; cursor:pointer; font-size:12.5px; font-weight:500; font-family:inherit; border-bottom:2px solid transparent; transition:color .15s,border-color .15s; color:rgba(240,236,249,0.3); }
@@ -142,46 +142,46 @@ const CSS = `
   /* ── Scrollbar ── */
   .sscroll::-webkit-scrollbar { width:3px; }
   .sscroll::-webkit-scrollbar-track { background:transparent; }
-  .sscroll::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.07); border-radius:2px; }
+  .sscroll::-webkit-scrollbar-thumb { background:var(--bg-surface-2); border-radius:2px; }
 
   /* ── Skeleton ── */
-  .skel { background:linear-gradient(90deg,rgba(255,255,255,0.028) 25%,rgba(255,255,255,0.065) 50%,rgba(255,255,255,0.028) 75%); background-size:400% 100%; animation:shimmer 1.8s linear infinite; border-radius:6px; }
+  .skel { background:linear-gradient(90deg,var(--skeleton-from) 25%,var(--skeleton-to) 50%,var(--skeleton-from) 75%); background-size:400% 100%; animation:shimmer 1.8s linear infinite; border-radius:6px; }
 
   /* ── Status dropdown ── */
-  .sdrop { position:absolute; top:calc(100% + 6px); right:0; background:rgba(14,7,34,0.96); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px); border:1px solid rgba(255,255,255,0.1); border-radius:13px; padding:5px; z-index:100; min-width:155px; box-shadow:0 24px 64px rgba(0,0,0,0.65),0 0 0 1px rgba(255,255,255,0.04); animation:fadeUp .14s ease both; }
+  .sdrop { position:absolute; top:calc(100% + 6px); right:0; background:rgba(14,7,34,0.96); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px); border:1px solid var(--border); border-radius:13px; padding:5px; z-index:100; min-width:155px; box-shadow:0 24px 64px rgba(0,0,0,0.65),0 0 0 1px rgba(255,255,255,0.04); animation:fadeUp .14s ease both; }
   .sopt  { padding:9px 12px; border-radius:8px; cursor:pointer; font-size:12.5px; font-weight:600; display:flex; align-items:center; gap:8px; transition:background .12s; font-family:inherit; width:100%; text-align:left; }
-  .sopt:hover { background:rgba(255,255,255,0.06); }
+  .sopt:hover { background:var(--bg-surface-2); }
 
   /* ── Inbox search ── */
-  .isearch { width:100%; padding:9px 12px 9px 34px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.065); border-radius:10px; color:#F0ECF9; font-size:12.5px; outline:none; transition:all .2s; }
-  .isearch:focus { border-color:rgba(161,117,252,0.4); background:rgba(161,117,252,0.05); box-shadow:0 0 0 3px rgba(161,117,252,0.08); }
+  .isearch { width:100%; padding:9px 12px 9px 34px; background:var(--bg-input); border:1px solid rgba(255,255,255,0.065); border-radius:10px; color:#F0ECF9; font-size:12.5px; outline:none; transition:all .2s; }
+  .isearch:focus { border-color:var(--accent-border); background:rgba(161,117,252,0.05); box-shadow:0 0 0 3px rgba(161,117,252,0.08); }
   .isearch::placeholder { color:rgba(240,236,249,0.18); }
 
   /* ── Macro ── */
   .macro-panel { display:flex; border-top:1px solid rgba(255,255,255,0.05); animation:fadeUp .18s ease both; max-height:260px; }
   .macro-list { width:230px; border-right:1px solid rgba(255,255,255,0.05); overflow-y:auto; flex-shrink:0; }
   .macro-item { padding:10px 14px; cursor:pointer; transition:background .12s; border-left:2px solid transparent; }
-  .macro-item:hover { background:rgba(255,255,255,0.03); }
+  .macro-item:hover { background:var(--bg-surface-2); }
   .macro-item.mi-active { background:rgba(161,117,252,0.09); border-left-color:#A175FC; }
   .macro-preview { flex:1; padding:14px 16px; overflow-y:auto; font-size:13px; line-height:1.75; color:rgba(240,236,249,0.6); white-space:pre-wrap; }
   .macro-var { color:#A175FC; background:rgba(161,117,252,0.12); padding:1px 5px; border-radius:4px; font-weight:600; font-size:11px; }
   .macro-suggest { padding:4px 14px 6px; font-size:9.5px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:rgba(240,236,249,0.22); }
-  .macro-tag { font-size:10px; font-weight:600; padding:1px 6px; border-radius:4px; background:rgba(255,255,255,0.06); color:rgba(240,236,249,0.32); }
+  .macro-tag { font-size:10px; font-weight:600; padding:1px 6px; border-radius:4px; background:var(--bg-surface-2); color:rgba(240,236,249,0.32); }
 
   /* ── Compose textarea ── */
   .compose-ta { width:100%; resize:none; outline:none; font-family:inherit; background:transparent; border:none; padding:14px 16px; font-size:13.5px; color:#F0ECF9; line-height:1.78; letter-spacing:.005em; }
 
   /* ── Compose box ── */
-  .compose-box { margin:0 16px 16px; border:1px solid rgba(255,255,255,0.09); border-top:1px solid rgba(255,255,255,0.13); border-radius:18px; overflow:hidden; background:linear-gradient(145deg,rgba(255,255,255,0.04) 0%,rgba(255,255,255,0.02) 100%); transition:border-color .25s,box-shadow .25s; backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); box-shadow:0 4px 24px rgba(0,0,0,0.2); }
-  .compose-box:focus-within { border-color:rgba(161,117,252,0.5); border-top-color:rgba(161,117,252,0.6); box-shadow:0 0 0 3px rgba(161,117,252,0.09),0 8px 40px rgba(161,117,252,0.1); }
+  .compose-box { margin:0 16px 16px; border:1px solid var(--border); border-top:1px solid rgba(255,255,255,0.13); border-radius:18px; overflow:hidden; background:linear-gradient(145deg,rgba(255,255,255,0.04) 0%,rgba(255,255,255,0.02) 100%); transition:border-color .25s,box-shadow .25s; backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); box-shadow:0 4px 24px rgba(0,0,0,0.2); }
+  .compose-box:focus-within { border-color:var(--accent-border); border-top-color:rgba(161,117,252,0.6); box-shadow:0 0 0 3px rgba(161,117,252,0.09),0 8px 40px rgba(161,117,252,0.1); }
 
   /* ── Buttons ── */
   .btn-send { padding:9px 20px; font-size:13px; font-weight:600; font-family:inherit; background:linear-gradient(135deg,#A175FC 0%,#7B45E8 100%); color:#fff; border-radius:10px; cursor:pointer; transition:all .2s cubic-bezier(.16,1,.3,1); box-shadow:0 2px 14px rgba(161,117,252,0.45); letter-spacing:.01em; }
   .btn-send:hover:not(:disabled) { background:linear-gradient(135deg,#BA96FF 0%,#9B6FFF 100%); box-shadow:0 6px 24px rgba(161,117,252,0.6); transform:translateY(-1px); }
   .btn-send:active:not(:disabled) { transform:translateY(0); box-shadow:0 2px 8px rgba(161,117,252,0.4); }
   .btn-send:disabled { opacity:.28; cursor:not-allowed; transform:none; box-shadow:none; }
-  .btn-ghost { padding:9px 16px; font-size:12.5px; font-weight:500; font-family:inherit; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.09); color:rgba(240,236,249,0.45); border-radius:10px; cursor:pointer; transition:all .15s; }
-  .btn-ghost:hover:not(:disabled) { border-color:rgba(255,255,255,0.18); color:rgba(240,236,249,0.85); background:rgba(255,255,255,0.07); }
+  .btn-ghost { padding:9px 16px; font-size:12.5px; font-weight:500; font-family:inherit; background:var(--bg-input); border:1px solid var(--border); color:rgba(240,236,249,0.45); border-radius:10px; cursor:pointer; transition:all .15s; }
+  .btn-ghost:hover:not(:disabled) { border-color:var(--text-3); color:rgba(240,236,249,0.85); background:var(--bg-surface-2); }
   .btn-ghost:disabled { opacity:.28; cursor:not-allowed; }
   .btn-close { padding:9px 16px; font-size:12.5px; font-weight:600; font-family:inherit; background:rgba(74,222,128,0.07); border:1px solid rgba(74,222,128,0.2); color:rgba(74,222,128,0.75); border-radius:10px; cursor:pointer; transition:all .18s; display:flex; align-items:center; gap:5px; }
   .btn-close:hover:not(:disabled) { background:rgba(74,222,128,0.13); border-color:rgba(74,222,128,0.38); color:#4ade80; box-shadow:0 2px 12px rgba(74,222,128,0.15); }
@@ -195,10 +195,10 @@ const CSS = `
   .btn-iris:disabled { opacity:.3; cursor:not-allowed; }
 
   /* ── Order card ── */
-  .order-card { background:linear-gradient(145deg,rgba(255,255,255,0.05) 0%,rgba(161,117,252,0.02) 100%); border:1px solid rgba(255,255,255,0.09); border-top:1px solid rgba(255,255,255,0.13); border-radius:18px; padding:16px 16px 14px; margin-bottom:10px; position:relative; overflow:hidden; transition:all .24s cubic-bezier(.16,1,.3,1); box-shadow:0 4px 20px rgba(0,0,0,0.2); }
+  .order-card { background:var(--bg-surface); border:1px solid var(--border); border-radius:18px; padding:16px 16px 14px; margin-bottom:10px; position:relative; overflow:hidden; transition:all .24s cubic-bezier(.16,1,.3,1); box-shadow:var(--shadow-card); }
   .order-card::before { content:''; position:absolute; left:0; top:0; bottom:0; width:3px; background:linear-gradient(180deg,#C3A3FF 0%,rgba(161,117,252,0.1) 100%); border-radius:0 3px 3px 0; }
   .order-card::after { content:''; position:absolute; inset:0; background:radial-gradient(ellipse 50% 35% at 85% 0%,rgba(161,117,252,0.07) 0%,transparent 65%); pointer-events:none; }
-  .order-card:hover { border-color:rgba(161,117,252,0.32); box-shadow:0 20px 60px rgba(0,0,0,0.38),0 0 0 1px rgba(161,117,252,0.12),0 0 80px rgba(161,117,252,0.06); transform:translateY(-1px); }
+  .order-card:hover { border-color:var(--accent-border); box-shadow:var(--shadow-card-hover); transform:translateY(-1px); }
 
   /* ── Order actions grid ── */
   .order-actions { display:grid; grid-template-columns:1fr 1fr; gap:5px; padding-top:11px; border-top:1px solid rgba(255,255,255,0.05); margin-top:4px; }
@@ -215,27 +215,27 @@ const CSS = `
   .modal-box { background:linear-gradient(145deg,rgba(20,10,50,0.98) 0%,rgba(10,5,28,0.98) 100%); border:1px solid rgba(161,117,252,0.2); border-radius:22px; padding:28px 30px; box-shadow:0 48px 120px rgba(0,0,0,0.8),0 0 0 1px rgba(161,117,252,0.08),0 0 120px rgba(161,117,252,0.04); width:100%; max-width:560px; animation:modalIn .24s cubic-bezier(.16,1,.3,1); max-height:88vh; display:flex; flex-direction:column; overflow:hidden; }
   .modal-body { overflow-y:auto; flex:1; }
   .modal-body::-webkit-scrollbar { width:3px; }
-  .modal-body::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.08); border-radius:2px; }
-  .modal-input { width:100%; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.09); border-radius:10px; padding:11px 14px; font-size:13.5px; color:#F0ECF9; outline:none; transition:border-color .2s,box-shadow .2s; font-family:inherit; }
-  .modal-input:focus { border-color:rgba(161,117,252,0.5); box-shadow:0 0 0 3px rgba(161,117,252,0.1); }
+  .modal-body::-webkit-scrollbar-thumb { background:var(--bg-surface-2); border-radius:2px; }
+  .modal-input { width:100%; background:var(--bg-surface-2); border:1px solid var(--border); border-radius:10px; padding:11px 14px; font-size:13.5px; color:#F0ECF9; outline:none; transition:border-color .2s,box-shadow .2s; font-family:inherit; }
+  .modal-input:focus { border-color:var(--accent-border); box-shadow:0 0 0 3px rgba(161,117,252,0.1); }
   .modal-input::placeholder { color:rgba(240,236,249,0.2); }
-  .modal-select { width:100%; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.09); border-radius:10px; padding:11px 14px; font-size:13.5px; color:#F0ECF9; outline:none; font-family:inherit; cursor:pointer; }
+  .modal-select { width:100%; background:var(--bg-surface-2); border:1px solid var(--border); border-radius:10px; padding:11px 14px; font-size:13.5px; color:#F0ECF9; outline:none; font-family:inherit; cursor:pointer; }
   .modal-select option { background:#130a2e; }
   .modal-label { font-size:10.5px; font-weight:700; letter-spacing:.07em; text-transform:uppercase; color:rgba(240,236,249,0.3); margin-bottom:7px; display:block; }
   .modal-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
   .chk-row { display:flex; align-items:center; gap:9px; cursor:pointer; user-select:none; }
-  .chk-box { width:18px; height:18px; border-radius:5px; border:1.5px solid rgba(255,255,255,0.13); background:rgba(255,255,255,0.04); display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:all .15s; }
+  .chk-box { width:18px; height:18px; border-radius:5px; border:1.5px solid rgba(255,255,255,0.13); background:var(--bg-input); display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:all .15s; }
   .chk-box.chk-on { background:#A175FC; border-color:#A175FC; box-shadow:0 0 14px rgba(161,117,252,0.5); }
   .li-row { display:flex; align-items:center; gap:12px; padding:11px 0; border-bottom:1px solid rgba(255,255,255,0.05); }
   .li-row:last-child { border-bottom:none; }
-  .qty-btn { width:28px; height:28px; border-radius:7px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.09); color:rgba(240,236,249,0.65); font-size:15px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all .15s; flex-shrink:0; }
+  .qty-btn { width:28px; height:28px; border-radius:7px; background:var(--bg-surface-2); border:1px solid var(--border); color:rgba(240,236,249,0.65); font-size:15px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all .15s; flex-shrink:0; }
   .qty-btn:hover:not(:disabled) { background:rgba(161,117,252,0.18); border-color:rgba(161,117,252,0.35); color:#B48CFF; }
   .qty-btn:disabled { opacity:.28; cursor:not-allowed; }
 
   /* ── Info grid ── */
   .info-label { font-size:10px; font-weight:700; color:rgba(240,236,249,0.25); letter-spacing:.07em; text-transform:uppercase; }
   .info-val   { font-size:12.5px; color:rgba(240,236,249,0.75); margin-top:2px; line-height:1.5; }
-  .stat-card  { background:linear-gradient(145deg,rgba(255,255,255,0.055) 0%,rgba(161,117,252,0.018) 100%); border:1px solid rgba(255,255,255,0.09); border-top:1px solid rgba(255,255,255,0.13); border-radius:14px; padding:13px 15px; transition:all .22s cubic-bezier(.16,1,.3,1); box-shadow:0 4px 16px rgba(0,0,0,0.18); }
+  .stat-card  { background:linear-gradient(145deg,rgba(255,255,255,0.055) 0%,rgba(161,117,252,0.018) 100%); border:1px solid var(--border); border-top:1px solid rgba(255,255,255,0.13); border-radius:14px; padding:13px 15px; transition:all .22s cubic-bezier(.16,1,.3,1); box-shadow:0 4px 16px rgba(0,0,0,0.18); }
   .stat-card:hover { border-color:rgba(161,117,252,0.3); background:linear-gradient(145deg,rgba(255,255,255,0.07) 0%,rgba(161,117,252,0.03) 100%); box-shadow:0 8px 28px rgba(0,0,0,0.28),0 0 0 1px rgba(161,117,252,0.1); transform:translateY(-1px); }
 
   /* ── Tracking ── */
@@ -253,9 +253,9 @@ const CSS = `
   .rtbar { display:flex; align-items:center; gap:1px; padding:7px 12px; border-bottom:1px solid rgba(255,255,255,0.048); flex-wrap:nowrap; overflow-x:auto; }
   .rtbar::-webkit-scrollbar { display:none; }
   .rtbar-btn { min-width:30px; height:30px; display:flex; align-items:center; justify-content:center; border-radius:7px; cursor:pointer; font-size:12px; font-weight:700; font-family:inherit; color:rgba(240,236,249,0.38); transition:all .16s; border:none; background:transparent; padding:0 6px; white-space:nowrap; gap:4px; }
-  .rtbar-btn:hover { background:rgba(255,255,255,0.08); color:rgba(240,236,249,0.9); }
+  .rtbar-btn:hover { background:var(--bg-surface-2); color:rgba(240,236,249,0.9); }
   .rtbar-btn.rton { background:rgba(161,117,252,0.16); color:#B48CFF; }
-  .rtbar-sep { width:1px; height:18px; background:rgba(255,255,255,0.07); margin:0 6px; flex-shrink:0; }
+  .rtbar-sep { width:1px; height:18px; background:var(--bg-surface-2); margin:0 6px; flex-shrink:0; }
   .compose-ta[contenteditable=true]:empty:before { content:attr(data-placeholder); color:rgba(240,236,249,0.3); pointer-events:none; display:block; }
   .cm-input { color:#F0ECF9 !important; -webkit-text-fill-color:#F0ECF9 !important; background:transparent !important; }
   .cm-input::placeholder { color:rgba(240,236,249,0.28); -webkit-text-fill-color:rgba(240,236,249,0.28); }
@@ -271,7 +271,7 @@ const CSS = `
   }
 
   /* ── Emoji picker — glassmorphism ── */
-  .emoji-pop { position:absolute; bottom:calc(100% + 8px); left:-8px; background:rgba(12,6,32,0.94); backdrop-filter:blur(28px); -webkit-backdrop-filter:blur(28px); border:1px solid rgba(255,255,255,0.1); border-radius:16px; padding:10px; z-index:200; box-shadow:0 24px 80px rgba(0,0,0,0.72),0 0 0 1px rgba(161,117,252,0.07); animation:fadeUp .16s ease both; }
+  .emoji-pop { position:absolute; bottom:calc(100% + 8px); left:-8px; background:rgba(12,6,32,0.94); backdrop-filter:blur(28px); -webkit-backdrop-filter:blur(28px); border:1px solid var(--border); border-radius:16px; padding:10px; z-index:200; box-shadow:0 24px 80px rgba(0,0,0,0.72),0 0 0 1px rgba(161,117,252,0.07); animation:fadeUp .16s ease both; }
   .emoji-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:2px; }
   .emoji-btn { width:32px; height:32px; display:flex; align-items:center; justify-content:center; border-radius:8px; font-size:17px; cursor:pointer; border:none; background:transparent; transition:background .1s; }
   .emoji-btn:hover { background:rgba(161,117,252,0.15); }
@@ -424,7 +424,7 @@ function StatusMenu({ current, onChange, onClose }) {
         <button key={k} className="sopt" onClick={()=>{onChange(k);onClose()}} style={{color:s.color}}>
           <span style={{width:8,height:8,borderRadius:'50%',background:s.color,flexShrink:0}} />
           {s.label}
-          {current===k&&<span style={{marginLeft:'auto',fontSize:10,color:'rgba(255,255,255,0.4)'}}>✓</span>}
+          {current===k&&<span style={{marginLeft:'auto',fontSize:10,color:'var(--text-3)'}}>✓</span>}
         </button>
       ))}
     </div>
@@ -564,21 +564,21 @@ function ComposeModal({ token, emailProvider, connectedEmail, onClose, onSuccess
         </div>
 
         {/* Compose area — writing surface */}
-        <div style={{margin:'10px 20px 0',border:'1px solid rgba(255,255,255,0.1)',borderTop:'1px solid rgba(255,255,255,0.14)',borderRadius:18,overflow:'hidden',flex:1,display:'flex',flexDirection:'column',minHeight:0,position:'relative',boxShadow:'0 4px 20px rgba(0,0,0,0.22),inset 0 1px 0 rgba(255,255,255,0.06)'}}>
+        <div style={{margin:'10px 20px 0',border:'1px solid var(--border)',borderTop:'1px solid rgba(255,255,255,0.14)',borderRadius:18,overflow:'hidden',flex:1,display:'flex',flexDirection:'column',minHeight:0,position:'relative',boxShadow:'0 4px 20px rgba(0,0,0,0.22),inset 0 1px 0 rgba(255,255,255,0.06)'}}>
 
           {/* Subtle purple radial glow inside body */}
           <div aria-hidden style={{position:'absolute',top:0,right:0,width:260,height:180,borderRadius:'50%',background:'radial-gradient(ellipse,rgba(161,117,252,0.08) 0%,transparent 70%)',pointerEvents:'none',zIndex:0}} />
 
           {/* Toolbar */}
-          <div style={{display:'flex',alignItems:'center',gap:6,padding:'9px 16px',borderBottom:'1px solid rgba(255,255,255,0.08)',flexWrap:'nowrap',overflowX:'auto',flexShrink:0,background:'rgba(255,255,255,0.04)',backdropFilter:'blur(8px)',position:'relative',zIndex:1}}>
+          <div style={{display:'flex',alignItems:'center',gap:6,padding:'9px 16px',borderBottom:'1px solid rgba(255,255,255,0.08)',flexWrap:'nowrap',overflowX:'auto',flexShrink:0,background:'var(--bg-input)',backdropFilter:'blur(8px)',position:'relative',zIndex:1}}>
             {/* Format group */}
-            <div style={{display:'inline-flex',alignItems:'center',background:'rgba(255,255,255,0.06)',borderRadius:9,padding:'2px 3px',border:'1px solid rgba(255,255,255,0.1)',gap:1}}>
+            <div style={{display:'inline-flex',alignItems:'center',background:'var(--bg-surface-2)',borderRadius:9,padding:'2px 3px',border:'1px solid var(--border)',gap:1}}>
               <button className="rtbar-btn" onMouseDown={e=>e.preventDefault()} onClick={()=>formatDoc('bold')} style={{fontWeight:800,borderRadius:7,minWidth:30,fontSize:13}}>B</button>
               <button className="rtbar-btn" onMouseDown={e=>e.preventDefault()} onClick={()=>formatDoc('italic')} style={{fontStyle:'italic',borderRadius:7,minWidth:30,fontSize:13}}>I</button>
               <button className="rtbar-btn" onMouseDown={e=>e.preventDefault()} onClick={()=>formatDoc('underline')} style={{textDecoration:'underline',borderRadius:7,minWidth:30,fontSize:13}}>U</button>
             </div>
             <div style={{width:1,height:16,background:'rgba(255,255,255,0.1)',flexShrink:0}} />
-            <div style={{display:'inline-flex',alignItems:'center',background:'rgba(255,255,255,0.06)',borderRadius:9,padding:'2px 3px',border:'1px solid rgba(255,255,255,0.1)',gap:1}}>
+            <div style={{display:'inline-flex',alignItems:'center',background:'var(--bg-surface-2)',borderRadius:9,padding:'2px 3px',border:'1px solid var(--border)',gap:1}}>
               <button className="rtbar-btn" onMouseDown={e=>e.preventDefault()} onClick={()=>{const u=prompt('URL:');if(u)formatDoc('createLink',u)}} title="Link" style={{borderRadius:7}}>
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
               </button>
@@ -604,7 +604,7 @@ function ComposeModal({ token, emailProvider, connectedEmail, onClose, onSuccess
         {/* Footer */}
         <div style={{padding:'12px 20px 18px',display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0}}>
           <div style={{display:'flex',alignItems:'center',gap:6}}>
-            <kbd style={{fontSize:10,color:'rgba(240,236,249,0.28)',background:'rgba(255,255,255,0.06)',border:'1px solid rgba(255,255,255,0.13)',borderRadius:6,padding:'2px 8px',fontFamily:'inherit'}}>⌘ Enter</kbd>
+            <kbd style={{fontSize:10,color:'rgba(240,236,249,0.28)',background:'var(--bg-surface-2)',border:'1px solid rgba(255,255,255,0.13)',borderRadius:6,padding:'2px 8px',fontFamily:'inherit'}}>⌘ Enter</kbd>
             <span style={{fontSize:10.5,color:'rgba(240,236,249,0.22)'}}>to send</span>
           </div>
           <div style={{display:'flex',gap:8,alignItems:'center'}}>
@@ -670,7 +670,7 @@ function RefundModal({ order, token, onClose, onSuccess }) {
       </>}
     >
       {/* 3-way mode toggle */}
-      <div style={{display:'flex',gap:5,marginBottom:18,padding:'4px',background:'rgba(255,255,255,0.04)',borderRadius:11,border:'1px solid rgba(255,255,255,0.07)'}}>
+      <div style={{display:'flex',gap:5,marginBottom:18,padding:'4px',background:'var(--bg-input)',borderRadius:11,border:'1px solid var(--border)'}}>
         {MODES.map(o=>(
           <button key={o.v} onClick={()=>setMode(o.v)} style={{flex:1,padding:'8px 10px',borderRadius:8,fontSize:12,fontWeight:600,fontFamily:'inherit',cursor:'pointer',transition:'all .15s',background:mode===o.v?'rgba(161,117,252,0.2)':'transparent',color:mode===o.v?'#C3A3FF':'rgba(240,236,249,0.35)',border:mode===o.v?'1px solid rgba(161,117,252,0.35)':'1px solid transparent',boxShadow:mode===o.v?'0 2px 8px rgba(161,117,252,0.15)':'none'}}>{o.l}</button>
         ))}
@@ -731,7 +731,7 @@ function RefundModal({ order, token, onClose, onSuccess }) {
         <input className="modal-input" value={reason} onChange={e=>setReason(e.target.value)} placeholder="Reason for refund…" />
       </div>
 
-      <div style={{background:'rgba(255,255,255,0.03)',border:'1px solid rgba(255,255,255,0.07)',borderRadius:12,padding:'13px 15px'}}>
+      <div style={{background:'var(--bg-surface-2)',border:'1px solid var(--border)',borderRadius:12,padding:'13px 15px'}}>
         <div style={{display:'flex',justifyContent:'space-between',paddingTop:0}}>
           <span style={{fontSize:14,fontWeight:700,color:'#F0ECF9'}}>Refund total</span>
           <span style={{fontSize:15,fontWeight:800,color: totalRefund>0?'#4ade80':'rgba(240,236,249,0.3)'}}>{fmtPrice(totalRefund,order.currency)}</span>
@@ -819,7 +819,7 @@ function DuplicateModal({ order, token, onClose, onSuccess }) {
       </>}
     >
       {/* Products */}
-      <div style={{background:'rgba(255,255,255,0.03)',border:'1px solid rgba(255,255,255,0.07)',borderRadius:10,padding:'10px 14px',marginBottom:14}}>
+      <div style={{background:'var(--bg-surface-2)',border:'1px solid var(--border)',borderRadius:10,padding:'10px 14px',marginBottom:14}}>
         {(order.lineItems||[]).map(li=>(
           <div key={li.id} style={{display:'flex',justifyContent:'space-between',padding:'5px 0',borderBottom:'1px solid rgba(255,255,255,0.05)'}}>
             <span style={{fontSize:12.5,color:'rgba(240,236,249,0.7)'}}>{li.quantity}× {li.title}{li.variantTitle?` · ${li.variantTitle}`:''}</span>
@@ -1037,7 +1037,7 @@ function MacroPanel({ macros, aiMacros, onInsert, onClose, customerName }) {
                   <div style={{fontSize:12.5,fontWeight:600,color:active?.id===m.id?'#A175FC':'rgba(240,236,249,0.8)',marginBottom:3}}>{m.name}</div>
                 </div>
               ))}
-              <div style={{height:1,background:'rgba(255,255,255,0.06)',margin:'4px 0'}} />
+              <div style={{height:1,background:'var(--bg-surface-2)',margin:'4px 0'}} />
             </>
           )}
           {filtered.length===0 && <div style={{padding:'20px 14px',fontSize:12,color:'rgba(240,236,249,0.25)',textAlign:'center'}}>No macros found</div>}
@@ -1415,7 +1415,7 @@ function InboxPage() {
           <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:10}}>
             <div style={{display:'flex',alignItems:'center',gap:8}}>
               <span style={{fontSize:15,fontWeight:700,color:'#F0ECF9',letterSpacing:'-0.01em'}}>Inbox</span>
-              <span title="Shortcuts: j/k navigate · r reply" style={{fontSize:9.5,color:'rgba(240,236,249,0.2)',background:'rgba(255,255,255,0.06)',padding:'2px 6px',borderRadius:4,cursor:'default'}}>j/k/r</span>
+              <span title="Shortcuts: j/k navigate · r reply" style={{fontSize:9.5,color:'rgba(240,236,249,0.2)',background:'var(--bg-surface-2)',padding:'2px 6px',borderRadius:4,cursor:'default'}}>j/k/r</span>
             </div>
             <div style={{display:'flex',alignItems:'center',gap:4}}>
               <button onClick={()=>loadThreads(session.access_token)} style={{background:'transparent',color:'rgba(240,236,249,0.32)',cursor:'pointer',display:'flex',padding:5,borderRadius:7,transition:'all .15s'}} onMouseEnter={e=>{e.currentTarget.style.color='rgba(240,236,249,0.7)';e.currentTarget.style.background='rgba(255,255,255,0.06)'}} onMouseLeave={e=>{e.currentTarget.style.color='rgba(240,236,249,0.32)';e.currentTarget.style.background='transparent'}} title="Refresh">{I.refresh}</button>
@@ -1555,7 +1555,7 @@ function InboxPage() {
                 <div style={{display:'flex',gap:6,alignItems:'center',flexShrink:0}}>
                   {/* Status dropdown */}
                   <div style={{position:'relative'}}>
-                    <button onClick={()=>setStatusMenu(s=>!s)} style={{display:'flex',alignItems:'center',gap:6,padding:'6px 12px',background:'rgba(255,255,255,0.055)',border:'1px solid rgba(255,255,255,0.1)',borderRadius:8,cursor:'pointer',fontSize:12,fontWeight:600,color:'rgba(240,236,249,0.75)',fontFamily:'inherit',transition:'all .15s'}} onMouseEnter={e=>e.currentTarget.style.borderColor='rgba(255,255,255,0.2)'} onMouseLeave={e=>e.currentTarget.style.borderColor='rgba(255,255,255,0.1)'}>
+                    <button onClick={()=>setStatusMenu(s=>!s)} style={{display:'flex',alignItems:'center',gap:6,padding:'6px 12px',background:'rgba(255,255,255,0.055)',border:'1px solid var(--border)',borderRadius:8,cursor:'pointer',fontSize:12,fontWeight:600,color:'rgba(240,236,249,0.75)',fontFamily:'inherit',transition:'all .15s'}} onMouseEnter={e=>e.currentTarget.style.borderColor='rgba(255,255,255,0.2)'} onMouseLeave={e=>e.currentTarget.style.borderColor='rgba(255,255,255,0.1)'}>
                       <span style={{width:7,height:7,borderRadius:'50%',background:STATUS[getStatus(selected.id)]?.color,flexShrink:0}} />
                       {STATUS[getStatus(selected.id)]?.label}
                       {I.chevron}
@@ -1636,7 +1636,7 @@ function InboxPage() {
                       ))}
                     </div>
                     {/* Macro trigger button */}
-                    <button onClick={()=>setShowMacros(true)} title="Macros (⌘M)" style={{display:'flex',alignItems:'center',gap:5,padding:'5px 10px',background:'transparent',border:'1px solid rgba(255,255,255,0.08)',borderRadius:7,cursor:'pointer',fontSize:11,fontWeight:600,color:'rgba(240,236,249,0.4)',transition:'all .15s',fontFamily:'inherit'}} onMouseEnter={e=>{e.currentTarget.style.borderColor='rgba(161,117,252,0.3)';e.currentTarget.style.color='#A175FC';e.currentTarget.style.background='rgba(161,117,252,0.08)'}} onMouseLeave={e=>{e.currentTarget.style.borderColor='rgba(255,255,255,0.08)';e.currentTarget.style.color='rgba(240,236,249,0.4)';e.currentTarget.style.background='transparent'}}>
+                    <button onClick={()=>setShowMacros(true)} title="Macros (⌘M)" style={{display:'flex',alignItems:'center',gap:5,padding:'5px 10px',background:'transparent',border:'1px solid var(--border)',borderRadius:7,cursor:'pointer',fontSize:11,fontWeight:600,color:'rgba(240,236,249,0.4)',transition:'all .15s',fontFamily:'inherit'}} onMouseEnter={e=>{e.currentTarget.style.borderColor='rgba(161,117,252,0.3)';e.currentTarget.style.color='#A175FC';e.currentTarget.style.background='rgba(161,117,252,0.08)'}} onMouseLeave={e=>{e.currentTarget.style.borderColor='rgba(255,255,255,0.08)';e.currentTarget.style.color='rgba(240,236,249,0.4)';e.currentTarget.style.background='transparent'}}>
                       <span style={{display:'flex'}}>{I.lightning}</span>
                       Macros
                       {aiMacros.length>0&&<span style={{background:'rgba(161,117,252,0.2)',color:'#A175FC',fontSize:9,fontWeight:700,padding:'1px 5px',borderRadius:4}}>AI</span>}
@@ -1862,7 +1862,7 @@ function InboxPage() {
                           <span style={{display:'flex'}}>{I.mappin}</span>
                           <span style={{fontSize:9.5,fontWeight:700,letterSpacing:'.07em',textTransform:'uppercase'}}>Shipping address</span>
                         </div>
-                        <button onClick={()=>setModal({type:'address',order})} style={{display:'flex',alignItems:'center',gap:3,color:'rgba(240,236,249,0.3)',cursor:'pointer',fontSize:10,fontWeight:600,padding:'2px 6px',borderRadius:5,border:'1px solid rgba(255,255,255,0.07)',background:'transparent',transition:'all .15s'}} onMouseEnter={e=>{e.currentTarget.style.color='#A175FC';e.currentTarget.style.borderColor='rgba(161,117,252,0.3)'}} onMouseLeave={e=>{e.currentTarget.style.color='rgba(240,236,249,0.3)';e.currentTarget.style.borderColor='rgba(255,255,255,0.07)'}}>
+                        <button onClick={()=>setModal({type:'address',order})} style={{display:'flex',alignItems:'center',gap:3,color:'rgba(240,236,249,0.3)',cursor:'pointer',fontSize:10,fontWeight:600,padding:'2px 6px',borderRadius:5,border:'1px solid var(--border)',background:'transparent',transition:'all .15s'}} onMouseEnter={e=>{e.currentTarget.style.color='#A175FC';e.currentTarget.style.borderColor='rgba(161,117,252,0.3)'}} onMouseLeave={e=>{e.currentTarget.style.color='rgba(240,236,249,0.3)';e.currentTarget.style.borderColor='rgba(255,255,255,0.07)'}}>
                           <span style={{display:'flex'}}>{I.edit}</span> Edit
                         </button>
                       </div>

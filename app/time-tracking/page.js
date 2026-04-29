@@ -20,44 +20,44 @@ const CSS = `
   .tt-root{font-family:var(--font-rethink),-apple-system,BlinkMacSystemFont,sans-serif;-webkit-font-smoothing:antialiased}
   .tt-scroll::-webkit-scrollbar{width:3px}
   .tt-scroll::-webkit-scrollbar-track{background:transparent}
-  .tt-scroll::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.1);border-radius:2px}
+  .tt-scroll::-webkit-scrollbar-thumb{background:var(--scrollbar);border-radius:2px}
 
   .kpi-card{
-    background:rgba(255,255,255,0.052);
-    border:1px solid rgba(255,255,255,0.1);
+    background:var(--bg-surface);
+    border:1px solid var(--border);
     border-radius:12px;padding:20px 22px;
     position:relative;overflow:hidden;
-    transition:border-color .2s ease, background .2s ease;
+    transition:border-color .2s ease, background .2s ease, box-shadow .2s ease;
     cursor:default;
-    box-shadow:0 4px 28px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.08);
+    box-shadow:var(--shadow-card);
   }
-  .kpi-card:hover{border-color:rgba(255,255,255,0.18);background:rgba(255,255,255,0.07)}
+  .kpi-card:hover{border-color:var(--border-hover);background:var(--bg-surface-2);box-shadow:var(--shadow-card-hover)}
   .kpi-card .top-bar{position:absolute;top:0;left:0;right:0;height:2px;opacity:0;transition:opacity .25s ease}
   .kpi-card:hover .top-bar{opacity:1}
 
   .panel{
-    background:rgba(255,255,255,0.042);
-    border:1px solid rgba(255,255,255,0.1);
+    background:var(--bg-surface);
+    border:1px solid var(--border);
     border-radius:12px;padding:24px;
-    box-shadow:0 4px 24px rgba(0,0,0,0.22);
-    transition:border-color .2s ease;
+    box-shadow:var(--shadow-card);
+    transition:border-color .2s ease, box-shadow .2s ease;
   }
 
   .status-card{
-    background:rgba(255,255,255,0.045);
-    border:1px solid rgba(255,255,255,0.1);
+    background:var(--bg-surface);
+    border:1px solid var(--border);
     border-radius:14px;padding:28px 32px;
     position:relative;overflow:hidden;
-    box-shadow:0 4px 32px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.08);
-    transition:border-color .3s ease, background .3s ease;
+    box-shadow:var(--shadow-card);
+    transition:border-color .3s ease, background .3s ease, box-shadow .3s ease;
   }
   .status-card.active{
-    border-color:rgba(74,222,128,0.2);
-    background:linear-gradient(135deg, rgba(74,222,128,0.04) 0%, rgba(255,255,255,0.045) 60%);
+    border-color:rgba(74,222,128,0.25);
+    background:linear-gradient(135deg, rgba(74,222,128,0.04) 0%, var(--bg-surface) 60%);
   }
   .status-card.paused{
-    border-color:rgba(251,191,36,0.25);
-    background:linear-gradient(135deg, rgba(251,191,36,0.05) 0%, rgba(255,255,255,0.045) 60%);
+    border-color:rgba(251,191,36,0.3);
+    background:linear-gradient(135deg, rgba(251,191,36,0.05) 0%, var(--bg-surface) 60%);
   }
 
   .clock-btn{
@@ -75,23 +75,23 @@ const CSS = `
   .btn-pause{background:rgba(251,191,36,0.1);color:#fbbf24;border:1px solid rgba(251,191,36,0.2)!important}
   .btn-pause:hover:not(:disabled){background:rgba(251,191,36,0.18);border-color:rgba(251,191,36,0.35)!important;transform:translateY(-1px)}
   .btn-resume{background:rgba(161,117,252,0.12);color:#A175FC;border:1px solid rgba(161,117,252,0.25)!important}
-  .btn-resume:hover:not(:disabled){background:rgba(161,117,252,0.2);border-color:rgba(161,117,252,0.4)!important;transform:translateY(-1px)}
+  .btn-resume:hover:not(:disabled){background:rgba(161,117,252,0.2);border-color:var(--accent-border)!important;transform:translateY(-1px)}
 
   .range-pill{padding:5px 14px;border-radius:100px;font-size:11.5px;font-weight:600;cursor:pointer;border:none;font-family:inherit;transition:all .15s ease}
 
-  .sk{background:linear-gradient(90deg,rgba(255,255,255,0.04) 25%,rgba(255,255,255,0.08) 50%,rgba(255,255,255,0.04) 75%);background-size:400% 100%;animation:shimmer 1.8s ease-in-out infinite;border-radius:8px}
+  .sk{background:linear-gradient(90deg,var(--skeleton-from) 25%,var(--skeleton-to) 50%,var(--skeleton-from) 75%);background-size:400% 100%;animation:shimmer 1.8s ease-in-out infinite;border-radius:8px}
 
   .log-row{display:grid;grid-template-columns:120px 72px 72px 82px 1fr;gap:12px;align-items:start;padding:13px 14px;border-radius:8px;transition:background .15s;cursor:default}
-  .log-row:hover{background:rgba(255,255,255,0.04)}
-  .log-header{display:grid;grid-template-columns:120px 72px 72px 82px 1fr;gap:12px;padding:0 14px 10px;border-bottom:1px solid rgba(255,255,255,0.07);margin-bottom:2px}
-  .report-cell{font-size:12.5px;color:rgba(255,255,255,0.5);line-height:1.45;word-break:break-word;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .log-row:hover{background:var(--bg-input)}
+  .log-header{display:grid;grid-template-columns:120px 72px 72px 82px 1fr;gap:12px;padding:0 14px 10px;border-bottom:1px solid var(--border);margin-bottom:2px}
+  .report-cell{font-size:12.5px;color:var(--text-2);line-height:1.45;word-break:break-word;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
   .log-row:hover .report-cell{-webkit-line-clamp:unset}
 
   .modal-overlay{position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.72);backdrop-filter:blur(10px);padding:24px}
-  .modal-box{background:#1a0e38;border:1px solid rgba(255,255,255,0.12);border-radius:16px;padding:32px;width:100%;max-width:500px;box-shadow:0 24px 80px rgba(0,0,0,0.65),inset 0 1px 0 rgba(255,255,255,0.08)}
-  .modal-ta{width:100%;min-height:120px;resize:vertical;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:10px;color:#F8FAFC;font-size:13.5px;font-family:inherit;padding:14px 16px;outline:none;transition:border-color .15s;line-height:1.55}
-  .modal-ta:focus{border-color:rgba(161,117,252,0.5)}
-  .modal-ta::placeholder{color:rgba(255,255,255,0.25)}
+  .modal-box{background:var(--bg-surface);border:1px solid var(--border);border-radius:16px;padding:32px;width:100%;max-width:500px;box-shadow:var(--shadow-card)}
+  .modal-ta{width:100%;min-height:120px;resize:vertical;background:var(--bg-input);border:1px solid var(--border);border-radius:10px;color:var(--text-1);font-size:13.5px;font-family:inherit;padding:14px 16px;outline:none;transition:border-color .15s;line-height:1.55}
+  .modal-ta:focus{border-color:var(--accent-border)}
+  .modal-ta::placeholder{color:var(--text-3)}
 
   .err-toast{display:flex;align-items:center;gap:10px;background:rgba(248,113,113,0.1);border:1px solid rgba(248,113,113,0.25);border-radius:10px;padding:12px 16px;color:#f87171;font-size:13px;font-weight:500;animation:fadeIn .25s ease both}
 `
@@ -150,13 +150,13 @@ function ClockOutModal({ session, elapsedSec, pausedSeconds, onConfirm, onCancel
   return (
     <div className="modal-overlay">
       <div className="modal-box">
-        <h2 style={{ fontSize: 17, fontWeight: 800, color: '#F8FAFC', letterSpacing: '-0.03em', marginBottom: 4 }}>End of Day Report</h2>
-        <div style={{ fontSize: 12.5, color: 'rgba(255,255,255,0.35)', marginBottom: 20 }}>
+        <h2 style={{ fontSize: 17, fontWeight: 800, color: 'var(--text-1)', letterSpacing: '-0.03em', marginBottom: 4 }}>End of Day Report</h2>
+        <div style={{ fontSize: 12.5, color: 'var(--text-3)', marginBottom: 20 }}>
           Clock-in: {fmtTime(session.clocked_in_at)} · Active: {fmtDur(activeSec)}
           {pausedSeconds > 0 && <> · Paused: {fmtDur(pausedSeconds)}</>}
         </div>
-        <div style={{ height: 1, background: 'rgba(255,255,255,0.07)', marginBottom: 18 }} />
-        <label style={{ display: 'block', fontSize: 10.5, fontWeight: 700, color: 'rgba(255,255,255,0.35)', letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: 8 }}>
+        <div style={{ height: 1, background: 'var(--bg-surface-2)', marginBottom: 18 }} />
+        <label style={{ display: 'block', fontSize: 10.5, fontWeight: 700, color: 'var(--text-3)', letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: 8 }}>
           What did you work on today? <span style={{ color: '#f87171' }}>*</span>
         </label>
         <textarea
@@ -168,7 +168,7 @@ function ClockOutModal({ session, elapsedSec, pausedSeconds, onConfirm, onCancel
         />
         <div style={{ display: 'flex', gap: 10, marginTop: 18, justifyContent: 'flex-end' }}>
           <button onClick={onCancel} disabled={submitting}
-            style={{ padding: '10px 22px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: 'rgba(255,255,255,0.45)', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+            style={{ padding: '10px 22px', borderRadius: 8, border: '1px solid var(--border)', background: 'transparent', color: 'var(--text-2)', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
             Cancel
           </button>
           <button onClick={() => onConfirm(report)} disabled={submitting || !report.trim()}
@@ -404,7 +404,7 @@ export default function TimeTrackingPage() {
   // ─── Loading ────────────────────────────────────────────────────────────────
 
   if (loading) return (
-    <div style={{ minHeight: '100vh', background: '#1C0F36', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+    <div style={{ minHeight: '100vh', background: 'var(--bg-page)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <Spinner size={28} />
     </div>
   )
@@ -414,11 +414,11 @@ export default function TimeTrackingPage() {
   // ─── Access error ────────────────────────────────────────────────────────────
 
   if (accessError) return (
-    <div className="tt-root" style={{ display: 'flex', minHeight: '100vh', background: '#1C0F36', color: '#F8FAFC' }}>
+    <div className="tt-root" style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg-page)', color: 'var(--text-1)' }}>
       <style>{CSS}</style>
       <Sidebar />
       <main style={{ flex: 1, padding: '36px 44px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ textAlign: 'center', color: 'rgba(255,255,255,0.35)', fontSize: 13 }}>
+        <div style={{ textAlign: 'center', color: 'var(--text-3)', fontSize: 13 }}>
           Your account is not set up for time tracking. Ask your admin to add you as a team member.
         </div>
       </main>
@@ -432,7 +432,7 @@ export default function TimeTrackingPage() {
   // ─── Main UI ─────────────────────────────────────────────────────────────────
 
   return (
-    <div className="tt-root" style={{ display: 'flex', minHeight: '100vh', background: '#1C0F36', color: '#F8FAFC' }}>
+    <div className="tt-root" style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg-page)', color: 'var(--text-1)' }}>
       <style>{CSS}</style>
       <PageBackground />
       <Sidebar />
@@ -444,15 +444,15 @@ export default function TimeTrackingPage() {
           <div style={{ animation: 'fadeIn .4s ease both', marginBottom: 28 }}>
             <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
               <div>
-                <h1 style={{ fontSize: 28, fontWeight: 800, color: '#F8FAFC', letterSpacing: '-0.04em', lineHeight: 1.15, marginBottom: 5 }}>
+                <h1 style={{ fontSize: 28, fontWeight: 800, color: 'var(--text-1)', letterSpacing: '-0.04em', lineHeight: 1.15, marginBottom: 5 }}>
                   Time Tracking
                 </h1>
-                <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.38)', fontWeight: 500 }}>
+                <div style={{ fontSize: 13, color: 'var(--text-3)', fontWeight: 500 }}>
                   {member ? `Hey ${member.name} — track your daily hours` : 'Track your daily work hours'}
                 </div>
               </div>
               {/* Status pill */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 16px', borderRadius: 100, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', backdropFilter: 'blur(10px)', flexShrink: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 16px', borderRadius: 100, background: 'var(--bg-input)', border: '1px solid var(--border)', backdropFilter: 'blur(10px)', flexShrink: 0 }}>
                 <div style={{
                   width: 6, height: 6, borderRadius: '50%',
                   background: isPaused ? '#fbbf24' : isActive ? '#4ade80' : 'rgba(255,255,255,0.18)',
@@ -465,7 +465,7 @@ export default function TimeTrackingPage() {
               </div>
             </div>
 
-            <div style={{ height: 1, background: 'rgba(255,255,255,0.07)', margin: '20px 0 16px' }} />
+            <div style={{ height: 1, background: 'var(--bg-surface-2)', margin: '20px 0 16px' }} />
 
             {/* Filter pills */}
             <div style={{ display: 'flex', gap: 6 }}>
@@ -487,9 +487,9 @@ export default function TimeTrackingPage() {
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'rgba(161,117,252,0.07)', border: '1px solid rgba(161,117,252,0.2)', borderRadius: 10, padding: '12px 18px', marginBottom: 20, animation: 'fadeIn .4s ease both' }}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#A175FC" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
               <div style={{ flex: 1 }}>
-                <span style={{ fontSize: 12, fontWeight: 700, color: '#A175FC', marginRight: 6 }}>Admin preview</span>
-                <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>This is exactly what team members see when they log in. View all hours in the</span>
-                <a href="/admin" style={{ fontSize: 12, color: '#A175FC', marginLeft: 4, textDecoration: 'underline', cursor: 'pointer' }}>Admin Panel → Time Tracking</a>
+                <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--accent)', marginRight: 6 }}>Admin preview</span>
+                <span style={{ fontSize: 12, color: 'var(--text-3)' }}>This is exactly what team members see when they log in. View all hours in the</span>
+                <a href="/admin" style={{ fontSize: 12, color: 'var(--accent)', marginLeft: 4, textDecoration: 'underline', cursor: 'pointer' }}>Admin Panel → Time Tracking</a>
               </div>
             </div>
           )}
@@ -514,24 +514,24 @@ export default function TimeTrackingPage() {
                     <div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 10, color: isPaused ? '#fbbf24' : '#4ade80' }}>
                       {isPaused ? '⏸ Paused' : '● Working'}
                     </div>
-                    <div style={{ fontSize: 46, fontWeight: 800, letterSpacing: '-0.04em', color: '#F8FAFC', fontVariantNumeric: 'tabular-nums', lineHeight: 1, marginBottom: 8, animation: isPaused ? 'pauseBlink 2s ease-in-out infinite' : 'none' }}>
+                    <div style={{ fontSize: 46, fontWeight: 800, letterSpacing: '-0.04em', color: 'var(--text-1)', fontVariantNumeric: 'tabular-nums', lineHeight: 1, marginBottom: 8, animation: isPaused ? 'pauseBlink 2s ease-in-out infinite' : 'none' }}>
                       {fmtElapsed(elapsed)}
                     </div>
-                    <div style={{ fontSize: 12.5, color: 'rgba(255,255,255,0.38)', display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+                    <div style={{ fontSize: 12.5, color: 'var(--text-3)', display: 'flex', gap: 12, flexWrap: 'wrap' }}>
                       <span>Started {fmtTime(activeSession.clocked_in_at)}</span>
                       {pausedSec > 0 && <span style={{ color: 'rgba(251,191,36,0.6)' }}>Break {fmtDur(pausedSec)}</span>}
                     </div>
                   </>
                 ) : (
                   <>
-                    <div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 10, color: 'rgba(255,255,255,0.22)' }}>
+                    <div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 10, color: 'var(--text-3)' }}>
                       Not clocked in
                     </div>
-                    <div style={{ fontSize: 30, fontWeight: 800, letterSpacing: '-0.03em', color: 'rgba(255,255,255,0.45)', marginBottom: 8 }}>
+                    <div style={{ fontSize: 30, fontWeight: 800, letterSpacing: '-0.03em', color: 'var(--text-2)', marginBottom: 8 }}>
                       Ready to start
                     </div>
                     {sessions.length > 0 && sessions[0]?.clocked_out_at && (
-                      <div style={{ fontSize: 12.5, color: 'rgba(255,255,255,0.28)' }}>
+                      <div style={{ fontSize: 12.5, color: 'var(--text-3)' }}>
                         Last session: {fmtDate(sessions[0].clocked_in_at)} · {fmtDur(durSec(sessions[0]))}
                       </div>
                     )}
@@ -609,12 +609,12 @@ export default function TimeTrackingPage() {
               <div key={label} className="kpi-card">
                 <div className="top-bar" style={{ background: `linear-gradient(90deg, ${accent}60, ${accent}20)` }} />
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-                  <div style={{ fontSize: 10.5, fontWeight: 700, color: 'rgba(255,255,255,0.35)', letterSpacing: '0.07em', textTransform: 'uppercase' }}>{label}</div>
+                  <div style={{ fontSize: 10.5, fontWeight: 700, color: 'var(--text-3)', letterSpacing: '0.07em', textTransform: 'uppercase' }}>{label}</div>
                   <div style={{ width: 34, height: 34, borderRadius: 9, background: `${accent}1a`, border: `1px solid ${accent}20`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: accent }}>
                     {icon}
                   </div>
                 </div>
-                <div style={{ fontSize: 28, fontWeight: 800, letterSpacing: '-0.04em', color: '#F8FAFC', lineHeight: 1.1, marginBottom: 4 }}>{value}</div>
+                <div style={{ fontSize: 28, fontWeight: 800, letterSpacing: '-0.04em', color: 'var(--text-1)', lineHeight: 1.1, marginBottom: 4 }}>{value}</div>
                 <div style={{ fontSize: 11.5, color: 'rgba(255,255,255,0.32)', fontWeight: 500 }}>{sub}</div>
               </div>
             ))}
@@ -623,31 +623,31 @@ export default function TimeTrackingPage() {
           {/* ── Work Log ─────────────────────────────────────────────────────── */}
           <div className="panel" style={{ animation: 'fadeIn .4s ease .15s both' }}>
             <div style={{ marginBottom: 16 }}>
-              <div style={{ fontSize: 14, fontWeight: 700, color: '#F8FAFC' }}>Work Log</div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-1)' }}>Work Log</div>
               <div style={{ fontSize: 11.5, color: 'rgba(255,255,255,0.32)', marginTop: 2 }}>Your sessions with end-of-day reports</div>
             </div>
 
             {sessions.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '36px 0', color: 'rgba(255,255,255,0.22)', fontSize: 13 }}>
+              <div style={{ textAlign: 'center', padding: '36px 0', color: 'var(--text-3)', fontSize: 13 }}>
                 No sessions in this period yet. Clock in to start tracking.
               </div>
             ) : (
               <>
                 <div className="log-header">
                   {['Date', 'In', 'Out', 'Hours', 'Report'].map(h => (
-                    <div key={h} style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>{h}</div>
+                    <div key={h} style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>{h}</div>
                   ))}
                 </div>
                 {sessions.map(s => (
                   <div key={s.id} className="log-row">
-                    <div style={{ fontSize: 12.5, color: 'rgba(255,255,255,0.6)', fontWeight: 500 }}>{fmtDate(s.clocked_in_at)}</div>
-                    <div style={{ fontSize: 12.5, color: 'rgba(255,255,255,0.6)', fontVariantNumeric: 'tabular-nums' }}>{fmtTime(s.clocked_in_at)}</div>
+                    <div style={{ fontSize: 12.5, color: 'var(--text-2)', fontWeight: 500 }}>{fmtDate(s.clocked_in_at)}</div>
+                    <div style={{ fontSize: 12.5, color: 'var(--text-2)', fontVariantNumeric: 'tabular-nums' }}>{fmtTime(s.clocked_in_at)}</div>
                     <div style={{ fontSize: 12.5, fontVariantNumeric: 'tabular-nums', color: s.clocked_out_at ? 'rgba(255,255,255,0.6)' : '#4ade80' }}>
                       {s.clocked_out_at ? fmtTime(s.clocked_out_at) : 'Active'}
                     </div>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: '#F8FAFC' }}>{fmtDur(durSec(s))}</div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-1)' }}>{fmtDur(durSec(s))}</div>
                     <div className="report-cell">
-                      {s.eod_report || <span style={{ color: 'rgba(255,255,255,0.18)', fontStyle: 'italic' }}>No report</span>}
+                      {s.eod_report || <span style={{ color: 'var(--text-3)', fontStyle: 'italic' }}>No report</span>}
                     </div>
                   </div>
                 ))}

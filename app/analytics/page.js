@@ -199,46 +199,46 @@ const CSS = `
   .an-root{font-family:var(--font-rethink),-apple-system,BlinkMacSystemFont,sans-serif;-webkit-font-smoothing:antialiased}
   .an-scroll::-webkit-scrollbar{width:3px}
   .an-scroll::-webkit-scrollbar-track{background:transparent}
-  .an-scroll::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.1);border-radius:2px}
+  .an-scroll::-webkit-scrollbar-thumb{background:var(--scrollbar);border-radius:2px}
 
-  .date-inp{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);border-radius:8px;color:#F8FAFC;padding:4px 10px;font-size:11.5px;font-family:inherit;cursor:pointer;outline:none;color-scheme:dark;transition:border-color .15s}
-  .date-inp:focus{border-color:rgba(161,117,252,0.5)}
+  .date-inp{background:var(--bg-surface-2);border:1px solid var(--border);border-radius:8px;color:var(--text-1);padding:4px 10px;font-size:11.5px;font-family:inherit;cursor:pointer;outline:none;color-scheme:dark;transition:border-color .15s}
+  .date-inp:focus{border-color:var(--accent-border)}
   .date-inp::-webkit-calendar-picker-indicator{filter:invert(.6);cursor:pointer}
 
   .kpi-card{
-    background:rgba(255,255,255,0.052);
-    border:1px solid rgba(255,255,255,0.1);
+    background:var(--bg-surface);
+    border:1px solid var(--border);
     border-radius:12px;padding:20px 22px;
     position:relative;overflow:hidden;
-    transition:border-color .2s ease, background .2s ease;
+    transition:border-color .2s ease, background .2s ease, box-shadow .2s ease;
     cursor:default;
-    box-shadow:0 4px 28px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.08);
+    box-shadow:var(--shadow-card);
   }
-  .kpi-card:hover{border-color:rgba(255,255,255,0.18);background:rgba(255,255,255,0.07)}
+  .kpi-card:hover{border-color:var(--border-hover);background:var(--bg-surface-2);box-shadow:var(--shadow-card-hover)}
   .kpi-card .top-bar{position:absolute;top:0;left:0;right:0;height:2px;opacity:0;transition:opacity .25s ease}
   .kpi-card:hover .top-bar{opacity:1}
   .kpi-glow{text-shadow:none}
 
   .panel{
-    background:rgba(255,255,255,0.042);
-    border:1px solid rgba(255,255,255,0.1);
+    background:var(--bg-surface);
+    border:1px solid var(--border);
     border-radius:12px;padding:24px;
-    transition:border-color .2s ease;
-    box-shadow:0 4px 24px rgba(0,0,0,0.22);
+    transition:border-color .2s ease, box-shadow .2s ease;
+    box-shadow:var(--shadow-card);
   }
-  .panel:hover{border-color:rgba(255,255,255,0.16)}
+  .panel:hover{border-color:var(--border-hover);box-shadow:var(--shadow-card-hover)}
 
-  .action-card{border-radius:10px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.09);padding:16px 18px;transition:background .2s,border-color .2s;cursor:default;border-left-width:3px;box-shadow:0 2px 16px rgba(0,0,0,0.2)}
-  .action-card:hover{background:rgba(255,255,255,0.065);border-color:rgba(255,255,255,0.15)}
+  .action-card{border-radius:10px;background:var(--bg-input);border:1px solid var(--border);padding:16px 18px;transition:background .2s,border-color .2s,box-shadow .2s;cursor:default;border-left-width:3px;box-shadow:var(--shadow-row)}
+  .action-card:hover{background:var(--bg-surface-2);border-color:var(--border-hover);box-shadow:var(--shadow-row-hover)}
   .action-card.done-card{opacity:.45}
 
   .tab-btn{padding:6px 16px;border-radius:100px;font-size:11.5px;font-weight:700;cursor:pointer;border:none;font-family:inherit;letter-spacing:.02em;transition:all .15s ease}
   .range-pill{padding:5px 14px;border-radius:100px;font-size:11.5px;font-weight:600;cursor:pointer;border:none;font-family:inherit;transition:all .15s ease}
   .filter-pill{padding:4px 12px;border-radius:100px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid transparent;font-family:inherit;transition:all .15s ease;white-space:nowrap}
   .tbl-row{transition:background .15s ease;cursor:default}
-  .tbl-row:hover{background:rgba(255,255,255,0.04)}
+  .tbl-row:hover{background:var(--bg-input)}
 
-  .sk{background:linear-gradient(90deg,rgba(255,255,255,0.04) 25%,rgba(255,255,255,0.08) 50%,rgba(255,255,255,0.04) 75%);background-size:400% 100%;animation:shimmer 1.8s ease-in-out infinite;border-radius:8px}
+  .sk{background:linear-gradient(90deg,var(--skeleton-from) 25%,var(--skeleton-to) 50%,var(--skeleton-from) 75%);background-size:400% 100%;animation:shimmer 1.8s ease-in-out infinite;border-radius:8px}
   .bar-fill{transform-origin:left;animation:growX .6s cubic-bezier(.34,1.56,.64,1) both}
   .bar-col{transform-origin:bottom;animation:barGrow .5s cubic-bezier(.34,1.56,.64,1) both}
 
@@ -248,7 +248,7 @@ const CSS = `
   .btn-done:hover{background:rgba(74,222,128,.2)}
   .btn-reopen{padding:4px 11px;border-radius:8px;font-size:10.5px;font-weight:600;cursor:pointer;border:1px solid rgba(255,255,255,.08);font-family:inherit;background:transparent;color:rgba(248,250,252,.28);transition:all .15s}
   .btn-reopen:hover{border-color:rgba(255,255,255,.18);color:rgba(248,250,252,.55)}
-  .name-inp{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:7px;color:#F8FAFC;padding:4px 10px;font-size:11.5px;font-family:inherit;outline:none;transition:border-color .15s;width:140px}
+  .name-inp{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:7px;color:var(--text-1);padding:4px 10px;font-size:11.5px;font-family:inherit;outline:none;transition:border-color .15s;width:140px}
   .name-inp:focus{border-color:rgba(161,117,252,.45)}
   .name-inp::placeholder{color:rgba(248,250,252,.3)}
 
@@ -288,7 +288,7 @@ function AlertBanner({ rate, loaded }) {
       </div>
       <div style={{ flex:1 }}>
         <span style={{ fontSize:12, fontWeight:700, color, marginRight:8, textTransform:'uppercase', letterSpacing:'.06em' }}>{isCrit?'Critical':isHigh?'High':'Warning'}</span>
-        <span style={{ fontSize:12, color:'rgba(248,250,252,0.65)', lineHeight:1.5 }}>
+        <span style={{ fontSize:12, color:'var(--text-2)', lineHeight:1.5 }}>
           {isCrit?`Your refund rate is ${r}% — industry average is 2–5%. Immediate action required.`:isHigh?`Your refund rate of ${r}% is significantly above the 2–5% e-commerce average.`:`Your refund rate of ${r}% is above the 2–5% benchmark.`}
         </span>
       </div>
@@ -361,7 +361,7 @@ function KpiRow({ kpis, prevKpis, refunds, loaded }) {
             <DeltaBadge delta={loaded.prevKpis?c.delta:null} lowerIsBetter={c.lowerBetter}/>
           </div>
           <div className="kpi-glow" style={{ fontSize:27, fontWeight:800, letterSpacing:'-0.04em', color:c.accent, lineHeight:1, marginBottom:5, fontVariantNumeric:'tabular-nums' }}>{c.value}</div>
-          <div style={{ fontSize:9.5, fontWeight:700, letterSpacing:'.11em', color:'rgba(248,250,252,0.35)', textTransform:'uppercase', marginBottom:4 }}>{c.label}</div>
+          <div style={{ fontSize:9.5, fontWeight:700, letterSpacing:'.11em', color:'var(--text-3)', textTransform:'uppercase', marginBottom:4 }}>{c.label}</div>
           <div style={{ fontSize:11, color:'rgba(248,250,252,0.28)', lineHeight:1.5 }}>{c.sub}</div>
         </div>
       ))}
@@ -384,7 +384,7 @@ function RevenueTrendChart({ trend, loaded, rangeLabel }) {
   return (
     <div className="panel" style={{ marginBottom:24, animation:'fadeIn .3s ease-out both' }}>
       <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:16 }}>
-        <div><div style={{ fontSize:13, fontWeight:600, color:'#F8FAFC', marginBottom:3 }}>Revenue Trend</div><div style={{ fontSize:11, color:'rgba(248,250,252,0.35)' }}>{rangeLabel} · daily net revenue</div></div>
+        <div><div style={{ fontSize:13, fontWeight:600, color:'var(--text-1)', marginBottom:3 }}>Revenue Trend</div><div style={{ fontSize:11, color:'var(--text-3)' }}>{rangeLabel} · daily net revenue</div></div>
         <div style={{ fontSize:16, fontWeight:700, color:'#A175FC', letterSpacing:'-0.02em' }}>{fmtEur(tot)}</div>
       </div>
       <svg viewBox={`0 0 ${W} ${H}`} style={{ width:'100%', overflow:'visible' }} aria-hidden>
@@ -422,8 +422,8 @@ function DonutReasonChart({ refunds, loaded }) {
   return (
     <div className="panel" style={{ flex:'1 1 0' }}>
       <div style={{ marginBottom:18 }}>
-        <div style={{ fontSize:13, fontWeight:600, color:'#F8FAFC', marginBottom:3 }}>Refund Reasons</div>
-        <div style={{ fontSize:11, color:'rgba(248,250,252,0.35)' }}>Distribution this period</div>
+        <div style={{ fontSize:13, fontWeight:600, color:'var(--text-1)', marginBottom:3 }}>Refund Reasons</div>
+        <div style={{ fontSize:11, color:'var(--text-3)' }}>Distribution this period</div>
       </div>
       <div style={{ display:'flex', alignItems:'center', gap:24 }}>
         {/* Donut */}
@@ -438,8 +438,8 @@ function DonutReasonChart({ refunds, loaded }) {
             ))}
           </svg>
           <div style={{ position:'absolute', inset:0, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center' }}>
-            <div style={{ fontSize:22, fontWeight:800, color:'#F8FAFC', letterSpacing:'-0.04em', lineHeight:1 }}>{total}</div>
-            <div style={{ fontSize:9.5, color:'rgba(248,250,252,0.35)', fontWeight:600, textTransform:'uppercase', letterSpacing:'.06em' }}>refunds</div>
+            <div style={{ fontSize:22, fontWeight:800, color:'var(--text-1)', letterSpacing:'-0.04em', lineHeight:1 }}>{total}</div>
+            <div style={{ fontSize:9.5, color:'var(--text-3)', fontWeight:600, textTransform:'uppercase', letterSpacing:'.06em' }}>refunds</div>
           </div>
         </div>
         {/* Legend */}
@@ -448,10 +448,10 @@ function DonutReasonChart({ refunds, loaded }) {
             <div key={s.cat} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:8 }}>
               <div style={{ display:'flex', alignItems:'center', gap:7 }}>
                 <div style={{ width:8, height:8, borderRadius:'50%', background:s.color, flexShrink:0 }}/>
-                <span style={{ fontSize:11.5, color:'rgba(248,250,252,0.65)', fontWeight:500 }}>{s.cat}</span>
+                <span style={{ fontSize:11.5, color:'var(--text-2)', fontWeight:500 }}>{s.cat}</span>
               </div>
               <div style={{ display:'flex', alignItems:'center', gap:7, flexShrink:0 }}>
-                <span style={{ fontSize:11, color:'rgba(248,250,252,0.38)', fontVariantNumeric:'tabular-nums' }}>{s.val}×</span>
+                <span style={{ fontSize:11, color:'var(--text-3)', fontVariantNumeric:'tabular-nums' }}>{s.val}×</span>
                 <span style={{ fontSize:10.5, fontWeight:700, color:s.color, minWidth:28, textAlign:'right' }}>{s.pct}%</span>
               </div>
             </div>
@@ -473,8 +473,8 @@ function MonthlyTrendChart({ allRefunds, loaded }) {
     <div className="panel" style={{ flex:'1 1 0' }}>
       <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:18 }}>
         <div>
-          <div style={{ fontSize:13, fontWeight:600, color:'#F8FAFC', marginBottom:3 }}>Monthly Refunds</div>
-          <div style={{ fontSize:11, color:'rgba(248,250,252,0.35)' }}>Last 6 months — count + amount</div>
+          <div style={{ fontSize:13, fontWeight:600, color:'var(--text-1)', marginBottom:3 }}>Monthly Refunds</div>
+          <div style={{ fontSize:11, color:'var(--text-3)' }}>Last 6 months — count + amount</div>
         </div>
         <div style={{ fontSize:13, fontWeight:700, color:'#EF4444' }}>{fmtEur(totalLost)}</div>
       </div>
@@ -540,13 +540,13 @@ function ActionBoard({ patternActions, aiInsights, noRefunds, loaded, onStatusCh
             {noRefunds
               ? <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22C55E" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
               : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#F97316" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>}
-            <span style={{ fontSize:15, fontWeight:700, color:'#F8FAFC' }}>{noRefunds?'No refunds — stay ahead':'Action Board'}</span>
-            {!noRefunds&&<span style={{ fontSize:11, color:'rgba(248,250,252,0.3)' }}>— {allItems.length} action{allItems.length!==1?'s':''}{patternActions.length>0&&` · ${patternActions.length} pattern-detected`}</span>}
+            <span style={{ fontSize:15, fontWeight:700, color:'var(--text-1)' }}>{noRefunds?'No refunds — stay ahead':'Action Board'}</span>
+            {!noRefunds&&<span style={{ fontSize:11, color:'var(--text-3)' }}>— {allItems.length} action{allItems.length!==1?'s':''}{patternActions.length>0&&` · ${patternActions.length} pattern-detected`}</span>}
           </div>
-          <div style={{ fontSize:11, color:'rgba(248,250,252,0.35)' }}>{noRefunds?'No refunds in this period — all clear':'Real-time tasks based on your refund data — assign to your team'}</div>
+          <div style={{ fontSize:11, color:'var(--text-3)' }}>{noRefunds?'No refunds in this period — all clear':'Real-time tasks based on your refund data — assign to your team'}</div>
         </div>
         <div style={{ display:'flex', alignItems:'center', gap:6 }}>
-          {usingFallback&&<div style={{ fontSize:10, color:'rgba(248,250,252,0.22)', padding:'3px 9px', borderRadius:100, border:'1px solid rgba(255,255,255,0.07)' }}>Local only</div>}
+          {usingFallback&&<div style={{ fontSize:10, color:'rgba(248,250,252,0.22)', padding:'3px 9px', borderRadius:100, border:'1px solid var(--border)' }}>Local only</div>}
           {!noRefunds&&(['open','picked_up','done']).map(tab=>{
             const cnt=tab==='open'?openItems.length:tab==='picked_up'?pickupItems.length:doneItems.length
             const isAct=activeTab===tab
@@ -557,7 +557,7 @@ function ActionBoard({ patternActions, aiInsights, noRefunds, loaded, onStatusCh
       </div>
 
       {!noRefunds&&allItems.length>0&&(
-        <div style={{ height:3, background:'rgba(255,255,255,0.06)', borderRadius:100, marginBottom:16, overflow:'hidden' }}>
+        <div style={{ height:3, background:'var(--bg-surface-2)', borderRadius:100, marginBottom:16, overflow:'hidden' }}>
           <div style={{ height:'100%', borderRadius:100, width:`${(doneItems.length/allItems.length)*100}%`, background:'linear-gradient(90deg,#22C55E,#86efac)', transition:'width .4s ease' }}/>
         </div>
       )}
@@ -567,7 +567,7 @@ function ActionBoard({ patternActions, aiInsights, noRefunds, loaded, onStatusCh
           <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke={activeTab==='done'?'rgba(74,222,128,0.4)':'rgba(255,255,255,0.12)'} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ display:'block', margin:'0 auto 10px' }}>
             {activeTab==='done'?<><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></>:<><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></>}
           </svg>
-          <div style={{ fontSize:13, color:'rgba(248,250,252,0.3)' }}>{activeTab==='open'?'All actions picked up or done':activeTab==='picked_up'?'No actions currently in progress':'No completed actions yet'}</div>
+          <div style={{ fontSize:13, color:'var(--text-3)' }}>{activeTab==='open'?'All actions picked up or done':activeTab==='picked_up'?'No actions currently in progress':'No completed actions yet'}</div>
         </div>
       )}
 
@@ -582,12 +582,12 @@ function ActionBoard({ patternActions, aiInsights, noRefunds, loaded, onStatusCh
                 <div style={{ flex:1, minWidth:0 }}>
                   <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:6, flexWrap:'wrap' }}>
                     <CatBadge cat={item.category} small/>
-                    {item.type==='pattern'&&item.refundCount&&<span style={{ fontSize:10.5, color:'rgba(248,250,252,0.35)', fontVariantNumeric:'tabular-nums' }}>{item.refundCount}× · {fmtEur(item.totalAmount)} lost</span>}
+                    {item.type==='pattern'&&item.refundCount&&<span style={{ fontSize:10.5, color:'var(--text-3)', fontVariantNumeric:'tabular-nums' }}>{item.refundCount}× · {fmtEur(item.totalAmount)} lost</span>}
                   </div>
                   <div style={{ fontSize:13.5, fontWeight:700, color:isDone?'rgba(248,250,252,0.4)':'#F8FAFC', marginBottom:6, lineHeight:1.35, textDecoration:isDone?'line-through':'none' }}>{item.title}</div>
                   <div style={{ fontSize:12, color:'rgba(248,250,252,0.5)', lineHeight:1.65, marginBottom:status!=='open'?10:0 }}>{item.action}</div>
                   {status==='picked_up'&&st.pickedUpBy&&<div style={{ fontSize:11, color:'rgba(161,117,252,0.7)', marginBottom:8 }}>Picked up by <strong style={{ color:'#C3A3FF' }}>{st.pickedUpBy}</strong></div>}
-                  {isDone&&<div style={{ fontSize:11, color:'rgba(74,222,128,0.7)', marginBottom:8 }}>{st.pickedUpBy&&<>Completed by <strong style={{ color:'#4ade80' }}>{st.pickedUpBy}</strong>{st.resultNote?' — ':''}</>}{st.resultNote&&<span style={{ color:'rgba(248,250,252,0.45)' }}>{st.resultNote}</span>}</div>}
+                  {isDone&&<div style={{ fontSize:11, color:'rgba(74,222,128,0.7)', marginBottom:8 }}>{st.pickedUpBy&&<>Completed by <strong style={{ color:'#4ade80' }}>{st.pickedUpBy}</strong>{st.resultNote?' — ':''}</>}{st.resultNote&&<span style={{ color:'var(--text-2)' }}>{st.resultNote}</span>}</div>}
                 </div>
                 <div style={{ display:'flex', flexDirection:'column', gap:5, alignItems:'flex-end', flexShrink:0 }}>
                   {status==='open'&&<><input className="name-inp" placeholder="Your name (optional)" value={nameInps[item.id]||''} onChange={e=>setNameInps(p=>({...p,[item.id]:e.target.value}))}/><button className="btn-pickup" onClick={()=>onStatusChange(item.id,'picked_up',nameInps[item.id],'')}>Pick Up</button></>}
@@ -617,13 +617,13 @@ function RefundTable({ refunds, loaded }) {
   return (
     <div className="panel" style={{ marginBottom:24, animation:'fadeIn .3s ease-out both' }}>
       <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:16, flexWrap:'wrap', gap:10 }}>
-        <div><div style={{ fontSize:13, fontWeight:600, color:'#F8FAFC', marginBottom:3 }}>Refund History</div><div style={{ fontSize:11, color:'rgba(248,250,252,0.35)' }}>{loaded?`${filtered.length} of ${enriched.length} refund${enriched.length!==1?'s':''} · ${catFilter==='All'?'all categories':catFilter}`:'Loading…'}</div></div>
+        <div><div style={{ fontSize:13, fontWeight:600, color:'var(--text-1)', marginBottom:3 }}>Refund History</div><div style={{ fontSize:11, color:'var(--text-3)' }}>{loaded?`${filtered.length} of ${enriched.length} refund${enriched.length!==1?'s':''} · ${catFilter==='All'?'all categories':catFilter}`:'Loading…'}</div></div>
         {loaded&&enriched.length>0&&<div style={{ padding:'3px 12px', borderRadius:100, background:'rgba(239,68,68,0.08)', border:'1px solid rgba(239,68,68,0.2)', fontSize:11, fontWeight:700, color:'#EF4444' }}>{enriched.length} refunds</div>}
       </div>
 
       {loaded&&enriched.length>0&&(
         <div style={{ display:'flex', gap:5, flexWrap:'wrap', marginBottom:16 }}>
-          {CATEGORIES.map(cat=>{ const cc=cat==='All'?null:CAT_COLORS[cat]; const cnt=cat==='All'?enriched.length:enriched.filter(r=>r.category===cat).length; if(cnt===0&&cat!=='All')return null; const isAct=catFilter===cat; return <button key={cat} onClick={()=>{setCatFilter(cat);setShowAll(false)}} className="filter-pill" style={{ background:isAct?(cc?cc.bg:'rgba(255,255,255,0.08)'):'transparent', color:isAct?(cc?cc.color:'#F8FAFC'):'rgba(248,250,252,0.38)', borderColor:isAct?(cc?cc.border:'rgba(255,255,255,0.2)'):'rgba(255,255,255,0.08)' }}>{cat} <span style={{ opacity:.6, fontSize:10 }}>{cnt}</span></button> })}
+          {CATEGORIES.map(cat=>{ const cc=cat==='All'?null:CAT_COLORS[cat]; const cnt=cat==='All'?enriched.length:enriched.filter(r=>r.category===cat).length; if(cnt===0&&cat!=='All')return null; const isAct=catFilter===cat; return <button key={cat} onClick={()=>{setCatFilter(cat);setShowAll(false)}} className="filter-pill" style={{ background:isAct?(cc?cc.bg:'rgba(255,255,255,0.08)'):'transparent', color:isAct?(cc?cc.color:'var(--text-1)'):'rgba(248,250,252,0.38)', borderColor:isAct?(cc?cc.border:'rgba(255,255,255,0.2)'):'rgba(255,255,255,0.08)' }}>{cat} <span style={{ opacity:.6, fontSize:10 }}>{cnt}</span></button> })}
         </div>
       )}
 
@@ -638,7 +638,7 @@ function RefundTable({ refunds, loaded }) {
         </div>
       )}
 
-      {loaded&&filtered.length===0&&enriched.length>0&&<div style={{ textAlign:'center', padding:'32px 0', fontSize:12, color:'rgba(248,250,252,0.3)' }}>No refunds in category "{catFilter}"</div>}
+      {loaded&&filtered.length===0&&enriched.length>0&&<div style={{ textAlign:'center', padding:'32px 0', fontSize:12, color:'var(--text-3)' }}>No refunds in category "{catFilter}"</div>}
 
       {loaded&&display.length>0&&(
         <>
@@ -656,9 +656,9 @@ function RefundTable({ refunds, loaded }) {
               <tbody>
                 {display.map((r,ri)=>{ const pct=parseFloat(r.refundPct||0); const pc=pct>=80?'#F87171':pct>=40?'#FB923C':'rgba(248,250,252,0.45)'; const pb=pct>=80?'rgba(248,113,113,0.1)':pct>=40?'rgba(251,146,60,0.1)':'rgba(255,255,255,0.05)'; return (
                   <tr key={`${r.orderId}-${ri}`} className="tbl-row" style={{ borderBottom:ri<display.length-1?'1px solid rgba(255,255,255,0.04)':'none' }}>
-                    <td style={{ padding:'11px 14px 11px 0', fontSize:11.5, color:'rgba(248,250,252,0.38)', whiteSpace:'nowrap' }}>{fmtDate(r.refundedAt)}</td>
+                    <td style={{ padding:'11px 14px 11px 0', fontSize:11.5, color:'var(--text-3)', whiteSpace:'nowrap' }}>{fmtDate(r.refundedAt)}</td>
                     <td style={{ padding:'11px 14px', fontSize:12, fontWeight:700, color:'rgba(248,250,252,0.52)', whiteSpace:'nowrap' }}>{r.orderId}</td>
-                    <td style={{ padding:'11px 14px', maxWidth:130 }}><div style={{ fontSize:12.5, color:'#F8FAFC', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }} title={r.customer}>{r.customer}</div>{r.customerEmail&&<div style={{ fontSize:10, color:'rgba(248,250,252,0.26)', marginTop:1, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{r.customerEmail}</div>}</td>
+                    <td style={{ padding:'11px 14px', maxWidth:130 }}><div style={{ fontSize:12.5, color:'var(--text-1)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }} title={r.customer}>{r.customer}</div>{r.customerEmail&&<div style={{ fontSize:10, color:'rgba(248,250,252,0.26)', marginTop:1, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{r.customerEmail}</div>}</td>
                     <td style={{ padding:'11px 14px', fontSize:12, color:'rgba(248,250,252,0.48)', maxWidth:160 }}><div style={{ overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }} title={(r.products||[]).join(', ')}>{(r.products||[]).join(', ')||'—'}</div></td>
                     <td style={{ padding:'11px 14px' }}><CatBadge cat={r.category} small/></td>
                     <td style={{ padding:'11px 14px', textAlign:'right', whiteSpace:'nowrap' }}><span style={{ fontSize:11, fontWeight:700, color:pc, background:pb, borderRadius:5, padding:'2px 8px', display:'inline-block' }}>{r.refundPct}%</span></td>
@@ -670,7 +670,7 @@ function RefundTable({ refunds, loaded }) {
           </div>
           {sorted.length>20&&!showAll&&(
             <div style={{ marginTop:16, textAlign:'center' }}>
-              <button onClick={()=>setShowAll(true)} style={{ padding:'7px 20px', borderRadius:100, background:'rgba(255,255,255,0.05)', border:'1px solid rgba(255,255,255,0.1)', color:'rgba(248,250,252,0.5)', fontSize:12, fontWeight:600, cursor:'pointer', fontFamily:'inherit', transition:'all .15s' }} onMouseEnter={e=>{e.currentTarget.style.background='rgba(255,255,255,0.08)';e.currentTarget.style.color='#F8FAFC'}} onMouseLeave={e=>{e.currentTarget.style.background='rgba(255,255,255,0.05)';e.currentTarget.style.color='rgba(248,250,252,0.5)'}}>Show all {sorted.length} refunds</button>
+              <button onClick={()=>setShowAll(true)} style={{ padding:'7px 20px', borderRadius:100, background:'var(--bg-surface-2)', border:'1px solid var(--border)', color:'rgba(248,250,252,0.5)', fontSize:12, fontWeight:600, cursor:'pointer', fontFamily:'inherit', transition:'all .15s' }} onMouseEnter={e=>{e.currentTarget.style.background='rgba(255,255,255,0.08)';e.currentTarget.style.color='#F8FAFC'}} onMouseLeave={e=>{e.currentTarget.style.background='rgba(255,255,255,0.05)';e.currentTarget.style.color='rgba(248,250,252,0.5)'}}>Show all {sorted.length} refunds</button>
             </div>
           )}
         </>
@@ -695,7 +695,7 @@ function ProductMatrix({ allRefunds, loaded }) {
   return (
     <div className="panel" style={{ marginBottom:24, animation:'fadeIn .3s ease-out both' }}>
       <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:20 }}>
-        <div><div style={{ fontSize:13, fontWeight:600, color:'#F8FAFC', marginBottom:3 }}>Product Refund Matrix</div><div style={{ fontSize:11, color:'rgba(248,250,252,0.35)' }}>All-time · products with 1+ refund · sorted by count</div></div>
+        <div><div style={{ fontSize:13, fontWeight:600, color:'var(--text-1)', marginBottom:3 }}>Product Refund Matrix</div><div style={{ fontSize:11, color:'var(--text-3)' }}>All-time · products with 1+ refund · sorted by count</div></div>
         <div style={{ padding:'3px 12px', borderRadius:100, background:'rgba(161,117,252,0.08)', border:'1px solid rgba(161,117,252,0.2)', fontSize:11, fontWeight:700, color:'#A175FC' }}>{products.length} products</div>
       </div>
       <table style={{ width:'100%', borderCollapse:'collapse' }}>
@@ -712,17 +712,17 @@ function ProductMatrix({ allRefunds, loaded }) {
             const cc=CAT_COLORS[p.topCat]||CAT_COLORS.Other
             return (
               <tr key={p.name} className="matrix-row" style={{ borderBottom:i<products.length-1?'1px solid rgba(255,255,255,0.04)':'none' }}>
-                <td style={{ padding:'11px 0', fontSize:12, fontWeight:700, color:'rgba(248,250,252,0.3)', width:28 }}>{i+1}</td>
+                <td style={{ padding:'11px 0', fontSize:12, fontWeight:700, color:'var(--text-3)', width:28 }}>{i+1}</td>
                 <td style={{ padding:'11px 14px' }}>
-                  <div style={{ fontSize:12.5, color:'#F8FAFC', fontWeight:500, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', maxWidth:200 }} title={p.name}>{p.name}</div>
-                  <div style={{ marginTop:5, height:3, background:'rgba(255,255,255,0.05)', borderRadius:100, overflow:'hidden', maxWidth:180 }}>
+                  <div style={{ fontSize:12.5, color:'var(--text-1)', fontWeight:500, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', maxWidth:200 }} title={p.name}>{p.name}</div>
+                  <div style={{ marginTop:5, height:3, background:'var(--bg-surface-2)', borderRadius:100, overflow:'hidden', maxWidth:180 }}>
                     <div className="bar-fill" style={{ height:'100%', width:`${(p.amount/maxAmt)*100}%`, background:`linear-gradient(90deg,#EF4444,rgba(161,117,252,0.7))`, borderRadius:100, animationDelay:`${i*.05}s` }}/>
                   </div>
                 </td>
                 <td style={{ padding:'11px 14px' }}><CatBadge cat={p.topCat} small/></td>
                 <td style={{ padding:'11px 14px', textAlign:'right', fontSize:13, fontWeight:800, color:'#F87171', fontVariantNumeric:'tabular-nums' }}>{p.count}</td>
                 <td style={{ padding:'11px 14px', textAlign:'right', fontSize:12, fontWeight:600, color:'rgba(248,250,252,0.5)', fontVariantNumeric:'tabular-nums' }}>{p.avgPct}%</td>
-                <td style={{ padding:'11px 14px', textAlign:'right', fontSize:12.5, fontWeight:700, color:'rgba(248,250,252,0.65)', fontVariantNumeric:'tabular-nums' }}>{fmtEur(p.amount)}</td>
+                <td style={{ padding:'11px 14px', textAlign:'right', fontSize:12.5, fontWeight:700, color:'var(--text-2)', fontVariantNumeric:'tabular-nums' }}>{fmtEur(p.amount)}</td>
                 <td style={{ padding:'11px 0 11px 14px', textAlign:'right' }}>
                   <span style={{ fontSize:10, fontWeight:700, color:risk.color, background:risk.bg, border:`1px solid ${risk.border}`, borderRadius:100, padding:'2px 9px' }}>{risk.label}</span>
                 </td>
@@ -745,7 +745,7 @@ function RefundReasons({ refunds, loaded }) {
   const mx=Math.max(...reasons.map(r=>r.amount),1)
   return (
     <div className="panel" style={{ flex:'1 1 0' }}>
-      <div style={{ marginBottom:18 }}><div style={{ fontSize:13, fontWeight:600, color:'#F8FAFC', marginBottom:3 }}>Why refunds happen</div><div style={{ fontSize:11, color:'rgba(248,250,252,0.35)' }}>By total amount lost</div></div>
+      <div style={{ marginBottom:18 }}><div style={{ fontSize:13, fontWeight:600, color:'var(--text-1)', marginBottom:3 }}>Why refunds happen</div><div style={{ fontSize:11, color:'var(--text-3)' }}>By total amount lost</div></div>
       {!loaded?<div style={{ display:'flex', flexDirection:'column', gap:14 }}>{[0,1,2,3,4].map(i=><div key={i} style={{ display:'flex', flexDirection:'column', gap:6 }}><div className="sk" style={{ height:11, width:`${50+i*9}%` }}/><div className="sk" style={{ height:5, borderRadius:100 }}/></div>)}</div>
       :reasons.length===0?<div style={{ textAlign:'center', padding:'32px 0', fontSize:12, color:'rgba(248,250,252,0.2)' }}>No data this period</div>
       :<div style={{ display:'flex', flexDirection:'column', gap:14 }}>
@@ -753,9 +753,9 @@ function RefundReasons({ refunds, loaded }) {
           <div key={r.cat}>
             <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:7 }}>
               <div style={{ display:'flex', alignItems:'center', gap:8 }}><div style={{ width:7, height:7, borderRadius:'50%', background:cc.color, flexShrink:0 }}/><span style={{ fontSize:12, color:'rgba(248,250,252,0.7)', fontWeight:500 }}>{r.cat}</span></div>
-              <div style={{ display:'flex', alignItems:'center', gap:7, flexShrink:0 }}><span style={{ fontSize:11, color:'rgba(248,250,252,0.38)', fontVariantNumeric:'tabular-nums' }}>{fmtEur(r.amount)}</span><span style={{ fontSize:10, fontWeight:700, color:cc.color, background:cc.bg, borderRadius:5, padding:'1px 7px', border:`1px solid ${cc.border}` }}>{r.count}×</span></div>
+              <div style={{ display:'flex', alignItems:'center', gap:7, flexShrink:0 }}><span style={{ fontSize:11, color:'var(--text-3)', fontVariantNumeric:'tabular-nums' }}>{fmtEur(r.amount)}</span><span style={{ fontSize:10, fontWeight:700, color:cc.color, background:cc.bg, borderRadius:5, padding:'1px 7px', border:`1px solid ${cc.border}` }}>{r.count}×</span></div>
             </div>
-            <div style={{ height:5, background:'rgba(255,255,255,0.05)', borderRadius:100, overflow:'hidden' }}>
+            <div style={{ height:5, background:'var(--bg-surface-2)', borderRadius:100, overflow:'hidden' }}>
               <div className="bar-fill" style={{ height:'100%', width:`${(r.amount/mx)*100}%`, borderRadius:100, background:`linear-gradient(90deg,${cc.color},${cc.color}66)`, animationDelay:`${.08*i}s` }}/>
             </div>
           </div>
@@ -774,14 +774,14 @@ function WeeklyReport({ allRefunds, loaded }) {
   const weeks = buildWeeklyReport(allRefunds)
   return (
     <div className="panel" style={{ marginBottom:24, animation:'fadeIn .3s ease-out both' }}>
-      <div style={{ marginBottom:18 }}><div style={{ fontSize:13, fontWeight:600, color:'#F8FAFC', marginBottom:3 }}>Weekly Overview</div><div style={{ fontSize:11, color:'rgba(248,250,252,0.35)' }}>Last 4 weeks (Sun–Sat) · all refunds</div></div>
+      <div style={{ marginBottom:18 }}><div style={{ fontSize:13, fontWeight:600, color:'var(--text-1)', marginBottom:3 }}>Weekly Overview</div><div style={{ fontSize:11, color:'var(--text-3)' }}>Last 4 weeks (Sun–Sat) · all refunds</div></div>
       <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:12 }}>
         {weeks.map((w,i)=>{ const cc=w.topReason?(CAT_COLORS[w.topReason]||CAT_COLORS.Other):null; return (
           <div key={i} style={{ borderRadius:10, padding:'14px 16px', background:w.isCurrentWeek?'rgba(161,117,252,0.07)':'rgba(255,255,255,0.025)', border:`1px solid ${w.isCurrentWeek?'rgba(161,117,252,0.22)':'rgba(255,255,255,0.06)'}` }}>
             <div style={{ fontSize:10.5, fontWeight:700, color:w.isCurrentWeek?'#C3A3FF':'rgba(248,250,252,0.38)', letterSpacing:'.04em', marginBottom:10, textTransform:'uppercase' }}>{w.label}</div>
             <div style={{ fontSize:24, fontWeight:800, color:w.refundCount===0?'#4ade80':'#F87171', letterSpacing:'-0.04em', marginBottom:2, fontVariantNumeric:'tabular-nums', textShadow:'none' }}>{w.refundCount}</div>
             <div style={{ fontSize:10, color:'rgba(248,250,252,0.28)', marginBottom:10 }}>refund{w.refundCount!==1?'s':''}</div>
-            {w.refundCount>0&&<><div style={{ fontSize:12.5, fontWeight:700, color:'rgba(248,250,252,0.65)', fontVariantNumeric:'tabular-nums', marginBottom:8 }}>{fmtEur(w.totalAmount)} lost</div>{w.topReason&&<div style={{ marginBottom:4 }}><CatBadge cat={w.topReason} small/></div>}{w.topProduct&&<div style={{ fontSize:10, color:'rgba(248,250,252,0.28)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', marginTop:4 }} title={w.topProduct}>{w.topProduct}</div>}</>}
+            {w.refundCount>0&&<><div style={{ fontSize:12.5, fontWeight:700, color:'var(--text-2)', fontVariantNumeric:'tabular-nums', marginBottom:8 }}>{fmtEur(w.totalAmount)} lost</div>{w.topReason&&<div style={{ marginBottom:4 }}><CatBadge cat={w.topReason} small/></div>}{w.topProduct&&<div style={{ fontSize:10, color:'rgba(248,250,252,0.28)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', marginTop:4 }} title={w.topProduct}>{w.topProduct}</div>}</>}
             {w.refundCount===0&&<div style={{ fontSize:10.5, color:'rgba(74,222,128,0.55)' }}>No refunds</div>}
           </div>
         )})}
@@ -893,7 +893,7 @@ export default function AnalyticsPage() {
   const actionLoaded=loaded.insights&&loaded.allRefunds
 
   return (
-    <div className="an-root" style={{ display:'flex', minHeight:'100vh', background:'#1C0F36' }}>
+    <div className="an-root" style={{ display:'flex', minHeight:'100vh', background:'var(--bg-page)' }}>
       <style>{CSS}</style>
       <Sidebar/>
       <main className="an-scroll" style={{ flex:1, overflowY:'auto', padding:'36px 44px', position:'relative' }}>
@@ -904,21 +904,21 @@ export default function AnalyticsPage() {
           <div style={{ marginBottom:28, animation:'fadeIn .5s ease-out 0s both' }}>
             <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
               <div>
-                <h1 style={{ fontSize:28, fontWeight:800, color:'#F8FAFC', letterSpacing:'-0.04em', lineHeight:1.15, marginBottom:5, textShadow:'none' }}>Refund Intelligence</h1>
-                <p style={{ fontSize:12.5, color:'rgba(248,250,252,0.35)' }}>Where money is lost · {rangeLabel}</p>
+                <h1 style={{ fontSize:28, fontWeight:800, color:'var(--text-1)', letterSpacing:'-0.04em', lineHeight:1.15, marginBottom:5, textShadow:'none' }}>Refund Intelligence</h1>
+                <p style={{ fontSize:12.5, color:'var(--text-3)' }}>Where money is lost · {rangeLabel}</p>
               </div>
               <div style={{ display:'flex', alignItems:'center', gap:8 }}>
                 {demoMode
                   ? <button onClick={exitDemo} style={{ padding:'6px 14px', borderRadius:100, background:'rgba(251,146,60,0.12)', border:'1px solid rgba(251,146,60,0.3)', color:'#FB923C', fontSize:11, fontWeight:700, cursor:'pointer', letterSpacing:'.04em', fontFamily:'inherit' }}>Exit Demo</button>
                   : <button onClick={loadDemo} style={{ padding:'6px 14px', borderRadius:100, background:'rgba(161,117,252,0.1)', border:'1px solid rgba(161,117,252,0.25)', color:'#C3A3FF', fontSize:11, fontWeight:700, cursor:'pointer', letterSpacing:'.04em', fontFamily:'inherit' }}>Preview Demo</button>
                 }
-                <div style={{ display:'flex', alignItems:'center', gap:8, padding:'7px 16px', borderRadius:100, background:'rgba(255,255,255,0.04)', border:'1px solid rgba(255,255,255,0.08)', backdropFilter:'blur(10px)' }}>
+                <div style={{ display:'flex', alignItems:'center', gap:8, padding:'7px 16px', borderRadius:100, background:'var(--bg-input)', border:'1px solid var(--border)', backdropFilter:'blur(10px)' }}>
                   {!allLoaded?<Spinner size={14}/>:<div style={{ width:6, height:6, borderRadius:'50%', background:demoMode?'#FB923C':'#4ade80', boxShadow:`0 0 6px ${demoMode?'rgba(251,146,60,0.5)':'rgba(74,222,128,0.5)'}`, animation:'glowPulse 2s ease-in-out infinite' }}/>}
                   <span style={{ fontSize:10.5, fontWeight:700, letterSpacing:'.09em', color:'rgba(248,250,252,0.4)', textTransform:'uppercase' }}>{!allLoaded?'Loading…':demoMode?'Demo':'Live'}</span>
                 </div>
               </div>
             </div>
-            <div style={{ height:'1px', background:'rgba(255,255,255,0.07)', margin:'20px 0 16px' }}/>
+            <div style={{ height:'1px', background:'var(--bg-surface-2)', margin:'20px 0 16px' }}/>
             <div style={{ display:'flex', alignItems:'center', gap:6, flexWrap:'wrap' }}>
               {RANGES.map(r=>(
                 <button key={r.id} onClick={()=>selectRange(r.id)} className="range-pill" style={{ background:dateRange===r.id?'rgba(161,117,252,0.18)':'rgba(255,255,255,0.05)', color:dateRange===r.id?'#C3A3FF':'rgba(248,250,252,0.42)', boxShadow:dateRange===r.id?'inset 0 0 0 1px rgba(161,117,252,0.4),0 0 12px rgba(161,117,252,0.08)':'inset 0 0 0 1px rgba(255,255,255,0.08)' }}>{r.label}</button>
@@ -937,14 +937,14 @@ export default function AnalyticsPage() {
           {demoMode&&(
             <div style={{ display:'flex', alignItems:'center', gap:12, background:'rgba(251,146,60,0.07)', border:'1px solid rgba(251,146,60,0.2)', borderRadius:10, padding:'12px 18px', marginBottom:24, animation:'fadeIn .4s ease-out both' }}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FB923C" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-              <div style={{ flex:1 }}><span style={{ fontSize:12, fontWeight:700, color:'#FB923C', marginRight:8 }}>Demo mode</span><span style={{ fontSize:12, color:'rgba(248,250,252,0.45)' }}>Showing example data — connect your Shopify store in Settings to see real insights.</span></div>
+              <div style={{ flex:1 }}><span style={{ fontSize:12, fontWeight:700, color:'#FB923C', marginRight:8 }}>Demo mode</span><span style={{ fontSize:12, color:'var(--text-2)' }}>Showing example data — connect your Shopify store in Settings to see real insights.</span></div>
               <button onClick={exitDemo} style={{ fontSize:11, fontWeight:600, color:'rgba(251,146,60,0.7)', background:'transparent', border:'none', cursor:'pointer', fontFamily:'inherit', whiteSpace:'nowrap' }}>Exit demo →</button>
             </div>
           )}
           {!demoMode&&loaded.kpis&&kpis.needsSync&&(
             <div style={{ display:'flex', alignItems:'center', gap:12, background:'rgba(161,117,252,0.07)', border:'1px solid rgba(161,117,252,0.18)', borderRadius:10, padding:'12px 18px', marginBottom:24, animation:'fadeIn .4s ease-out both' }}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#A175FC" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/></svg>
-              <div style={{ flex:1 }}><span style={{ fontSize:12, fontWeight:700, color:'#A175FC', marginRight:8 }}>Sync required</span><span style={{ fontSize:12, color:'rgba(248,250,252,0.55)' }}>No order data found. Go to Settings → Shopify to sync your orders.</span></div>
+              <div style={{ flex:1 }}><span style={{ fontSize:12, fontWeight:700, color:'#A175FC', marginRight:8 }}>Sync required</span><span style={{ fontSize:12, color:'var(--text-2)' }}>No order data found. Go to Settings → Shopify to sync your orders.</span></div>
               <button onClick={loadDemo} style={{ fontSize:11, fontWeight:700, color:'#C3A3FF', background:'rgba(161,117,252,0.12)', border:'1px solid rgba(161,117,252,0.25)', borderRadius:100, padding:'4px 12px', cursor:'pointer', fontFamily:'inherit', whiteSpace:'nowrap' }}>Preview demo data</button>
             </div>
           )}

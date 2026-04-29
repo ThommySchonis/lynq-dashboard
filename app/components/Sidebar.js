@@ -4,6 +4,7 @@ import { usePathname, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { useState, useEffect, Suspense } from 'react'
 import { supabase } from '../../lib/supabase'
+import { useTheme } from './ThemeProvider'
 
 const CSS = `
   @keyframes avatarPop {
@@ -13,10 +14,6 @@ const CSS = `
   @keyframes liveRing {
     0%,100% { transform:scale(1); opacity:.7 }
     50%      { transform:scale(1.9); opacity:0 }
-  }
-  @keyframes fadeSlide {
-    from { opacity:0; transform:translateX(-6px) }
-    to   { opacity:1; transform:translateX(0) }
   }
 
   @media (prefers-reduced-motion:reduce) {
@@ -29,10 +26,9 @@ const CSS = `
   /* ── Root ── */
   .sb-root {
     position:fixed; left:0; top:0; bottom:0;
-    width:64px; z-index:50;
-    overflow:hidden;
-    background:linear-gradient(180deg,#0f0826 0%,#0d0720 100%);
-    border-right:1px solid rgba(255,255,255,0.07);
+    width:64px; z-index:50; overflow:hidden;
+    background:var(--sidebar-bg);
+    border-right:1px solid var(--sidebar-border);
     display:flex; flex-direction:column;
     padding:16px 0 16px;
     font-family:var(--font-rethink),-apple-system,BlinkMacSystemFont,sans-serif;
@@ -41,14 +37,17 @@ const CSS = `
   }
   .sb-root:hover {
     width:236px;
+    box-shadow:8px 0 32px rgba(0,0,0,0.08);
+  }
+  [data-theme="dark"] .sb-root:hover {
     box-shadow:8px 0 40px rgba(0,0,0,0.45);
   }
 
-  /* Top purple iris line */
+  /* Top accent line */
   .sb-root::before {
     content:''; position:absolute;
     top:0; left:0; right:0; height:1px;
-    background:linear-gradient(90deg,transparent 0%,rgba(161,117,252,0.4) 50%,transparent 100%);
+    background:linear-gradient(90deg,transparent 0%,var(--accent-border) 50%,transparent 100%);
   }
 
   /* ── Logo ── */
@@ -58,16 +57,14 @@ const CSS = `
     flex-shrink:0; overflow:hidden;
   }
   .sb-logo-divider {
-    height:1px;
-    background:rgba(255,255,255,0.06);
-    margin:0 10px 14px;
-    flex-shrink:0;
+    height:1px; background:var(--divider);
+    margin:0 10px 14px; flex-shrink:0;
   }
 
   /* ── Section label ── */
   .sb-section-label {
     font-size:9px; font-weight:700; letter-spacing:.12em;
-    text-transform:uppercase; color:rgba(248,250,252,0.18);
+    text-transform:uppercase; color:var(--sidebar-section-label);
     padding:0 20px; margin:14px 0 3px;
     user-select:none; white-space:nowrap;
     opacity:0; transition:opacity .18s;
@@ -75,11 +72,9 @@ const CSS = `
   .sb-root:hover .sb-section-label { opacity:1 }
 
   .sb-section-divider {
-    height:1px; background:rgba(255,255,255,0.05);
-    margin:10px 10px 10px;
-    flex-shrink:0;
-    opacity:1;
-    transition:opacity .18s;
+    height:1px; background:var(--divider);
+    margin:10px; flex-shrink:0;
+    opacity:1; transition:opacity .18s;
   }
   .sb-root:hover .sb-section-divider { opacity:0; height:0; margin:0 }
 
@@ -90,14 +85,14 @@ const CSS = `
     border-radius:10px; margin:1px 8px;
     text-decoration:none; cursor:pointer;
     position:relative; user-select:none; white-space:nowrap;
-    transition:background .15s, box-shadow .15s;
+    transition:background .15s;
   }
   .sb-item:hover:not(.sb-locked):not(.sb-active) {
-    background:rgba(255,255,255,0.055);
+    background:var(--sidebar-hover);
   }
   .sb-item.sb-active {
-    background:linear-gradient(90deg,rgba(161,117,252,0.16) 0%,rgba(161,117,252,0.07) 100%);
-    box-shadow:inset 0 0 0 1px rgba(161,117,252,0.16);
+    background:var(--sidebar-active-bg);
+    box-shadow:inset 0 0 0 1px var(--sidebar-active-border);
   }
   .sb-item.sb-locked { cursor:default; pointer-events:none; }
 
@@ -106,8 +101,8 @@ const CSS = `
     content:''; position:absolute; left:0; top:50%;
     transform:translateY(-50%);
     width:3px; height:18px; border-radius:0 3px 3px 0;
-    background:linear-gradient(180deg,#A175FC 0%,#C4A0FF 100%);
-    box-shadow:0 0 8px rgba(161,117,252,0.6);
+    background:var(--accent-gradient);
+    box-shadow:0 0 8px var(--accent-border);
   }
 
   /* ── Icon ── */
@@ -130,7 +125,7 @@ const CSS = `
   /* ── Lock badge ── */
   .sb-lock {
     width:17px; height:17px; border-radius:5px;
-    background:rgba(255,255,255,0.05);
+    background:var(--bg-surface-2);
     display:flex; align-items:center; justify-content:center;
     flex-shrink:0; margin-right:4px;
     opacity:0; transition:opacity .15s;
@@ -141,8 +136,7 @@ const CSS = `
   .sb-badge {
     position:absolute; top:-2px; right:-2px;
     width:7px; height:7px; border-radius:50%;
-    background:#4ade80;
-    border:1.5px solid #0f0826;
+    background:#4ade80; border:1.5px solid var(--sidebar-bg);
   }
   .sb-badge::after {
     content:''; position:absolute; inset:0; border-radius:50%;
@@ -152,26 +146,23 @@ const CSS = `
 
   /* ── Divider ── */
   .sb-divider {
-    height:1px; background:rgba(255,255,255,0.07); margin:12px 10px;
-    flex-shrink:0;
+    height:1px; background:var(--divider); margin:12px 10px; flex-shrink:0;
   }
 
   /* ── User row ── */
   .sb-user {
     display:flex; align-items:center; gap:10px;
-    padding:8px 0 8px 16px;
-    border-radius:10px; margin:0 8px;
-    cursor:default; overflow:hidden;
-    transition:background .15s;
+    padding:8px 0 8px 16px; border-radius:10px; margin:0 8px;
+    cursor:default; overflow:hidden; transition:background .15s;
   }
-  .sb-user:hover { background:rgba(255,255,255,0.05) }
+  .sb-user:hover { background:var(--sidebar-hover) }
 
   .sb-avatar {
     width:32px; height:32px; border-radius:10px;
-    background:linear-gradient(135deg,#A175FC 0%,#6d28d9 100%);
+    background:var(--accent-gradient);
     display:flex; align-items:center; justify-content:center;
     font-size:12px; font-weight:700; color:#fff; flex-shrink:0;
-    box-shadow:0 0 0 2px rgba(161,117,252,0.25);
+    box-shadow:0 0 0 2px var(--accent-border);
     animation:avatarPop .5s cubic-bezier(.16,1,.3,1) .3s both;
     letter-spacing:.02em;
   }
@@ -184,14 +175,12 @@ const CSS = `
   .sb-root:hover .sb-user-info { opacity:1; transform:translateX(0) }
 
   .sb-user-name {
-    font-size:12.5px; font-weight:600; color:rgba(248,250,252,0.88);
-    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-    line-height:1.3;
+    font-size:12.5px; font-weight:600; color:var(--text-1);
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis; line-height:1.3;
   }
   .sb-user-status {
     display:flex; align-items:center; gap:5px;
-    font-size:10.5px; color:rgba(248,250,252,0.35);
-    margin-top:1px;
+    font-size:10.5px; color:var(--text-3); margin-top:1px;
   }
   .sb-online-dot {
     width:6px; height:6px; border-radius:50%; background:#4ade80; flex-shrink:0;
@@ -199,14 +188,25 @@ const CSS = `
 
   .sb-logout {
     background:transparent; border:none; padding:5px; border-radius:7px;
-    color:rgba(248,250,252,0.22); cursor:pointer; flex-shrink:0;
+    color:var(--text-3); cursor:pointer; flex-shrink:0;
     display:flex; align-items:center; justify-content:center;
     transition:color .15s, background .15s;
-    opacity:0; pointer-events:none;
-    margin-right:4px;
+    opacity:0; pointer-events:none; margin-right:4px;
   }
   .sb-root:hover .sb-logout { opacity:1; pointer-events:auto }
-  .sb-logout:hover { color:rgba(248,250,252,0.7); background:rgba(255,255,255,0.07) }
+  .sb-logout:hover { color:var(--text-2); background:var(--sidebar-hover) }
+
+  /* ── Theme toggle ── */
+  .sb-theme-btn {
+    display:flex; align-items:center; justify-content:center;
+    width:32px; height:32px; border-radius:9px; flex-shrink:0;
+    background:var(--bg-surface-2); border:1px solid var(--border);
+    color:var(--text-2); cursor:pointer;
+    transition:color .15s, background .15s, border-color .15s;
+    opacity:0; pointer-events:none; margin-right:4px;
+  }
+  .sb-root:hover .sb-theme-btn { opacity:1; pointer-events:auto }
+  .sb-theme-btn:hover { color:var(--accent); background:var(--accent-soft); border-color:var(--accent-border) }
 `
 
 const TOP_ITEMS = [
@@ -274,15 +274,16 @@ const BOTTOM_ITEMS = [
 ]
 
 const LOCK_SVG = (
-  <svg width="10" height="10" viewBox="0 0 24 24" fill="rgba(248,250,252,0.22)">
+  <svg width="10" height="10" viewBox="0 0 24 24" fill="var(--text-3)">
     <path d="M17 11V7A5 5 0 0 0 7 7v4H5a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-9a1 1 0 0 0-1-1h-2zM9 11V7a3 3 0 0 1 6 0v4H9z"/>
   </svg>
 )
 
 function SidebarContent() {
-  const pathname       = usePathname()
-  const searchParams   = useSearchParams()
-  const isSentView     = pathname === '/inbox' && searchParams.get('view') === 'sent'
+  const pathname     = usePathname()
+  const searchParams = useSearchParams()
+  const isSentView   = pathname === '/inbox' && searchParams.get('view') === 'sent'
+  const { theme, toggle } = useTheme()
   const [email, setEmail]   = useState('')
   const [isAdmin, setIsAdmin] = useState(false)
 
@@ -313,12 +314,12 @@ function SidebarContent() {
           ? pathname === '/inbox' && !isSentView
           : pathname.startsWith(item.href)
     )
-    const iconColor  = active ? '#C4A0FF' : item.locked ? 'rgba(248,250,252,0.18)' : 'rgba(248,250,252,0.6)'
-    const labelColor = active ? '#F8FAFC'  : item.locked ? 'rgba(248,250,252,0.22)' : 'rgba(248,250,252,0.78)'
+    const iconColor  = active ? 'var(--sidebar-icon-active)'    : item.locked ? 'var(--text-3)' : 'var(--sidebar-icon-inactive)'
+    const labelColor = active ? 'var(--sidebar-label-active)'   : item.locked ? 'var(--text-3)' : 'var(--sidebar-label-inactive)'
     const inner = (
       <>
         <span className="sb-icon" title={item.label}>
-          <span style={{ color: iconColor, display:'flex', transition:'color .15s' }}>{item.icon}</span>
+          <span style={{ color: iconColor, display: 'flex', transition: 'color .15s' }}>{item.icon}</span>
           {item.badge && <span className="sb-badge" />}
         </span>
         <span className="sb-label" style={{ color: labelColor }}>{item.label}</span>
@@ -330,10 +331,24 @@ function SidebarContent() {
       : <div key={item.label} className="sb-item sb-locked">{inner}</div>
   }
 
+  const SunIcon = () => (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+      <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+    </svg>
+  )
+  const MoonIcon = () => (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+    </svg>
+  )
+
   return (
     <>
       <style>{CSS}</style>
-      <div style={{ width:64, flexShrink:0 }} />
+      <div style={{ width: 64, flexShrink: 0 }} />
 
       <aside className="sb-root">
         {/* Logo */}
@@ -341,16 +356,15 @@ function SidebarContent() {
           <img
             src="/logo.png"
             alt="Lynq"
-            style={{ height:24, maxWidth:'none', objectFit:'contain', objectPosition:'left center', filter:'brightness(0) invert(1)', flexShrink:0 }}
-            onError={e => { e.currentTarget.style.display='none' }}
+            style={{ height: 24, maxWidth: 'none', objectFit: 'contain', objectPosition: 'left center', filter: 'var(--sidebar-logo-filter)', flexShrink: 0 }}
+            onError={e => { e.currentTarget.style.display = 'none' }}
           />
         </div>
         <div className="sb-logo-divider" />
 
         {/* Nav */}
-        <nav style={{ flex:1, display:'flex', flexDirection:'column', overflow:'hidden' }}>
-          {/* Top items */}
-          <div style={{ flex:1 }}>
+        <nav style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+          <div style={{ flex: 1 }}>
             {TOP_ITEMS.map((item) => {
               const showSection = item.section && item.section !== prevSection
               prevSection = item.section ?? prevSection
@@ -368,20 +382,19 @@ function SidebarContent() {
             })}
           </div>
 
-          {/* Bottom items: Feedback, Settings, Admin */}
           <div>
             <div className="sb-section-divider" />
             {BOTTOM_ITEMS.map(item => renderItem(item))}
             {isAdmin && (
               <Link href="/admin" className={`sb-item${pathname.startsWith('/admin') ? ' sb-active' : ''}`}>
                 <span className="sb-icon" title="Admin Panel">
-                  <span style={{ color: pathname.startsWith('/admin') ? '#C4A0FF' : 'rgba(248,250,252,0.6)', display:'flex', transition:'color .15s' }}>
+                  <span style={{ color: pathname.startsWith('/admin') ? 'var(--sidebar-icon-active)' : 'var(--sidebar-icon-inactive)', display: 'flex', transition: 'color .15s' }}>
                     <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
                     </svg>
                   </span>
                 </span>
-                <span className="sb-label" style={{ color: pathname.startsWith('/admin') ? '#F8FAFC' : 'rgba(248,250,252,0.78)' }}>Admin Panel</span>
+                <span className="sb-label" style={{ color: pathname.startsWith('/admin') ? 'var(--sidebar-label-active)' : 'var(--sidebar-label-inactive)' }}>Admin Panel</span>
               </Link>
             )}
           </div>
@@ -399,6 +412,9 @@ function SidebarContent() {
               Online
             </div>
           </div>
+          <button className="sb-theme-btn" onClick={toggle} aria-label="Toggle theme" title={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}>
+            {theme === 'light' ? <MoonIcon /> : <SunIcon />}
+          </button>
           <button className="sb-logout" onClick={logout} aria-label="Log out" title="Log out">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
@@ -414,7 +430,7 @@ function SidebarContent() {
 
 export default function Sidebar() {
   return (
-    <Suspense fallback={<div style={{ width:64, flexShrink:0 }} />}>
+    <Suspense fallback={<div style={{ width: 64, flexShrink: 0 }} />}>
       <SidebarContent />
     </Suspense>
   )

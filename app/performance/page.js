@@ -44,40 +44,40 @@ const CSS = `
   .pf-root{font-family:var(--font-rethink),-apple-system,BlinkMacSystemFont,sans-serif;-webkit-font-smoothing:antialiased}
   .pf-scroll::-webkit-scrollbar{width:3px}
   .pf-scroll::-webkit-scrollbar-track{background:transparent}
-  .pf-scroll::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.1);border-radius:2px}
+  .pf-scroll::-webkit-scrollbar-thumb{background:var(--scrollbar);border-radius:2px}
 
-  .date-inp{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);border-radius:8px;color:#F8FAFC;padding:4px 10px;font-size:11.5px;font-family:inherit;cursor:pointer;outline:none;color-scheme:dark;transition:border-color .15s}
-  .date-inp:focus{border-color:rgba(161,117,252,0.5)}
+  .date-inp{background:var(--bg-surface-2);border:1px solid var(--border);border-radius:8px;color:var(--text-1);padding:4px 10px;font-size:11.5px;font-family:inherit;cursor:pointer;outline:none;color-scheme:dark;transition:border-color .15s}
+  .date-inp:focus{border-color:var(--accent-border)}
   .date-inp::-webkit-calendar-picker-indicator{filter:invert(.6);cursor:pointer}
 
   .kpi-card{
-    background:rgba(255,255,255,0.052);
-    border:1px solid rgba(255,255,255,0.1);
+    background:var(--bg-surface);
+    border:1px solid var(--border);
     border-radius:12px;padding:20px 22px;
     position:relative;overflow:hidden;
-    transition:border-color .2s ease, background .2s ease;
+    transition:border-color .2s ease, background .2s ease, box-shadow .2s ease;
     cursor:default;
-    box-shadow:0 4px 28px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.08);
+    box-shadow:var(--shadow-card);
   }
-  .kpi-card:hover{border-color:rgba(255,255,255,0.18);background:rgba(255,255,255,0.07)}
+  .kpi-card:hover{border-color:var(--border-hover);background:var(--bg-surface-2);box-shadow:var(--shadow-card-hover)}
   .kpi-card .top-bar{position:absolute;top:0;left:0;right:0;height:2px;opacity:0;transition:opacity .25s ease}
   .kpi-card:hover .top-bar{opacity:1}
 
   .panel{
-    background:rgba(255,255,255,0.042);
-    border:1px solid rgba(255,255,255,0.1);
+    background:var(--bg-surface);
+    border:1px solid var(--border);
     border-radius:12px;padding:24px;
-    transition:border-color .2s ease;
-    box-shadow:0 4px 24px rgba(0,0,0,0.22);
+    transition:border-color .2s ease, box-shadow .2s ease;
+    box-shadow:var(--shadow-card);
   }
-  .panel:hover{border-color:rgba(255,255,255,0.16)}
+  .panel:hover{border-color:var(--border-hover);box-shadow:var(--shadow-card-hover)}
 
   .range-pill{padding:5px 14px;border-radius:100px;font-size:11.5px;font-weight:600;cursor:pointer;border:none;font-family:inherit;transition:all .15s ease}
 
-  .sk{background:linear-gradient(90deg,rgba(255,255,255,0.04) 25%,rgba(255,255,255,0.08) 50%,rgba(255,255,255,0.04) 75%);background-size:400% 100%;animation:shimmer 1.8s ease-in-out infinite;border-radius:8px}
+  .sk{background:linear-gradient(90deg,var(--skeleton-from) 25%,var(--skeleton-to) 50%,var(--skeleton-from) 75%);background-size:400% 100%;animation:shimmer 1.8s ease-in-out infinite;border-radius:8px}
 
   .ch-row{transition:background .15s;border-radius:8px;padding:8px 0}
-  .ch-row:hover{background:rgba(255,255,255,0.04)}
+  .ch-row:hover{background:var(--bg-input)}
 `
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -138,9 +138,9 @@ function PageBackground() {
 function SectionDivider({ title, marginTop=8 }) {
   return (
     <div style={{ display:'flex', alignItems:'center', gap:14, marginBottom:18, marginTop, animation:'fadeIn .3s ease-out both' }}>
-      <div style={{ height:1, flex:1, background:'rgba(255,255,255,0.07)' }}/>
+      <div style={{ height:1, flex:1, background:'var(--bg-surface-2)' }}/>
       <span style={{ fontSize:10.5, fontWeight:700, letterSpacing:'.13em', color:'rgba(248,250,252,0.28)', textTransform:'uppercase', flexShrink:0 }}>{title}</span>
-      <div style={{ height:1, flex:1, background:'rgba(255,255,255,0.07)' }}/>
+      <div style={{ height:1, flex:1, background:'var(--bg-surface-2)' }}/>
     </div>
   )
 }
@@ -215,7 +215,7 @@ function WeeklyChart({ weekly, loaded }) {
     <div className="panel" style={{ marginBottom:24, animation:'fadeIn .3s ease-out both' }}>
       <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:18 }}>
         <div>
-          <div style={{ fontSize:13, fontWeight:600, color:'#F8FAFC', marginBottom:3 }}>Weekly ticket volume</div>
+          <div style={{ fontSize:13, fontWeight:600, color:'var(--text-1)', marginBottom:3 }}>Weekly ticket volume</div>
           <div style={{ fontSize:11, color:'rgba(248,250,252,0.32)' }}>Created vs closed per week</div>
         </div>
         <div style={{ display:'flex', gap:18 }}>
@@ -249,7 +249,7 @@ function WeeklyChart({ weekly, loaded }) {
 
 // ─── Response Times ───────────────────────────────────────────────────────────
 function getRTStatus(mins, thresholds) {
-  if (mins==null) return { color:'rgba(248,250,252,0.3)', grad:'linear-gradient(135deg,rgba(255,255,255,0.15),rgba(255,255,255,0.05))', label:'No data' }
+  if (mins==null) return { color:'var(--text-3)', grad:'linear-gradient(135deg,rgba(255,255,255,0.15),rgba(255,255,255,0.05))', label:'No data' }
   if (mins<thresholds[0]) return { color:'#4ade80', grad:'linear-gradient(135deg,#4ade80,#86efac)', label:'Excellent' }
   if (mins<thresholds[1]) return { color:'#fbbf24', grad:'linear-gradient(135deg,#fbbf24,#fde68a)', label:'Average' }
   return { color:'#f87171', grad:'linear-gradient(135deg,#f87171,#fca5a5)', label:'Slow' }
@@ -288,7 +288,7 @@ function ResponseTimesSection({ data, loaded }) {
                   <div style={{ fontSize:9.5, fontWeight:700, letterSpacing:'.1em', color:'rgba(248,250,252,0.28)', textTransform:'uppercase', marginBottom:7 }}>{c.label}</div>
                   <div style={{ fontSize:14, fontWeight:700, color:'rgba(248,250,252,0.25)', marginBottom:5 }}>No data yet</div>
                   <div style={{ fontSize:11, color:'rgba(248,250,252,0.18)', lineHeight:1.5, marginBottom:10 }}>{c.sub}</div>
-                  <span style={{ display:'inline-flex', alignItems:'center', gap:5, fontSize:10.5, color:'rgba(248,250,252,0.22)', background:'rgba(255,255,255,0.05)', border:'1px solid rgba(255,255,255,0.08)', borderRadius:6, padding:'2px 9px' }}>
+                  <span style={{ display:'inline-flex', alignItems:'center', gap:5, fontSize:10.5, color:'rgba(248,250,252,0.22)', background:'var(--bg-surface-2)', border:'1px solid var(--border)', borderRadius:6, padding:'2px 9px' }}>
                     <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                     {c.benchmark}
                   </span>
@@ -302,7 +302,7 @@ function ResponseTimesSection({ data, loaded }) {
                 </div>
                 <div style={{ fontSize:38, fontWeight:800, letterSpacing:'-0.04em', color:c.status.color, lineHeight:1, marginBottom:7, fontVariantNumeric:'tabular-nums' }}>{c.value}</div>
                 <div style={{ fontSize:9.5, fontWeight:700, letterSpacing:'.1em', color:'rgba(248,250,252,0.32)', textTransform:'uppercase', marginBottom:14 }}>{c.label}</div>
-                <div style={{ height:1, background:'rgba(255,255,255,0.07)', marginBottom:12 }}/>
+                <div style={{ height:1, background:'var(--bg-surface-2)', marginBottom:12 }}/>
                 <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
                   <div style={{ fontSize:11, color:'rgba(248,250,252,0.25)', lineHeight:1.4 }}>{c.sub}</div>
                   <span style={{ fontSize:10.5, color:c.status.color, background:`${c.status.color}12`, border:`1px solid ${c.status.color}22`, borderRadius:6, padding:'2px 9px', flexShrink:0, marginLeft:12, whiteSpace:'nowrap' }}>{c.benchmark}</span>
@@ -379,7 +379,7 @@ function ChannelBreakdown({ channels, loaded }) {
     <div className="panel" style={{ marginBottom:24, animation:'fadeIn .3s ease-out both' }}>
       <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:16 }}>
         <div>
-          <div style={{ fontSize:13, fontWeight:600, color:'#F8FAFC', marginBottom:3 }}>Tickets by channel</div>
+          <div style={{ fontSize:13, fontWeight:600, color:'var(--text-1)', marginBottom:3 }}>Tickets by channel</div>
           <div style={{ fontSize:11, color:'rgba(248,250,252,0.32)' }}>{total.toLocaleString()} tickets · this period</div>
         </div>
       </div>
@@ -401,7 +401,7 @@ function ChannelBreakdown({ channels, loaded }) {
                   <span style={{ fontSize:12, fontWeight:800, color, minWidth:36, textAlign:'right', fontVariantNumeric:'tabular-nums' }}>{ch.pct}%</span>
                 </div>
               </div>
-              <div style={{ height:4, borderRadius:3, background:'rgba(255,255,255,0.05)', overflow:'hidden', marginLeft:4, marginRight:4 }}>
+              <div style={{ height:4, borderRadius:3, background:'var(--bg-surface-2)', overflow:'hidden', marginLeft:4, marginRight:4 }}>
                 <div style={{ height:'100%', borderRadius:3, background:color, width:`${ch.pct}%`, opacity:.65, transition:'width .9s cubic-bezier(0.34,1.56,0.64,1)' }}/>
               </div>
             </div>
@@ -468,7 +468,7 @@ export default function PerformancePage() {
   if (!mounted) return null
 
   return (
-    <div className="pf-root" style={{ display:'flex', minHeight:'100vh', background:'#1C0F36' }}>
+    <div className="pf-root" style={{ display:'flex', minHeight:'100vh', background:'var(--bg-page)' }}>
       <style>{CSS}</style>
       <Sidebar/>
 
@@ -480,15 +480,15 @@ export default function PerformancePage() {
           <div style={{ marginBottom:28, animation:'fadeIn .5s ease-out both' }}>
             <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
               <div>
-                <h1 style={{ fontSize:28, fontWeight:800, color:'#F8FAFC', letterSpacing:'-0.04em', lineHeight:1.15, marginBottom:5, textShadow:'none' }}>Performance</h1>
-                <p style={{ fontSize:12.5, color:'rgba(248,250,252,0.35)' }}>Customer support metrics · Gorgias</p>
+                <h1 style={{ fontSize:28, fontWeight:800, color:'var(--text-1)', letterSpacing:'-0.04em', lineHeight:1.15, marginBottom:5, textShadow:'none' }}>Performance</h1>
+                <p style={{ fontSize:12.5, color:'var(--text-3)' }}>Customer support metrics · Gorgias</p>
               </div>
               <div style={{ display:'flex', alignItems:'center', gap:8 }}>
                 {demoMode
                   ? <button onClick={exitDemo} style={{ padding:'6px 14px', borderRadius:100, background:'rgba(251,146,60,0.12)', border:'1px solid rgba(251,146,60,0.3)', color:'#FB923C', fontSize:11, fontWeight:700, cursor:'pointer', letterSpacing:'.04em', fontFamily:'inherit' }}>Exit Demo</button>
                   : <button onClick={loadDemo} style={{ padding:'6px 14px', borderRadius:100, background:'rgba(161,117,252,0.1)', border:'1px solid rgba(161,117,252,0.25)', color:'#C3A3FF', fontSize:11, fontWeight:700, cursor:'pointer', letterSpacing:'.04em', fontFamily:'inherit' }}>Preview Demo</button>
                 }
-                <div style={{ display:'flex', alignItems:'center', gap:8, padding:'7px 16px', borderRadius:100, background:'rgba(255,255,255,0.04)', border:'1px solid rgba(255,255,255,0.08)', backdropFilter:'blur(10px)' }}>
+                <div style={{ display:'flex', alignItems:'center', gap:8, padding:'7px 16px', borderRadius:100, background:'var(--bg-input)', border:'1px solid var(--border)', backdropFilter:'blur(10px)' }}>
                   {!allLoaded
                     ? <Spinner size={14}/>
                     : <div style={{ width:6, height:6, borderRadius:'50%', background:demoMode?'#FB923C':gorgiasOk?'#4ade80':'#f87171', boxShadow:`0 0 6px ${demoMode?'rgba(251,146,60,0.5)':gorgiasOk?'rgba(74,222,128,0.5)':'rgba(248,113,113,0.5)'}`, animation:'glowPulse 2s ease-in-out infinite' }}/>
@@ -499,7 +499,7 @@ export default function PerformancePage() {
                 </div>
               </div>
             </div>
-            <div style={{ height:'1px', background:'rgba(255,255,255,0.07)', margin:'20px 0 16px' }}/>
+            <div style={{ height:'1px', background:'var(--bg-surface-2)', margin:'20px 0 16px' }}/>
             <div style={{ display:'flex', alignItems:'center', gap:6, flexWrap:'wrap' }}>
               {RANGES.map(r=>(
                 <button key={r.id} onClick={()=>selectRange(r.id)} className="range-pill" style={{ background:dateRange===r.id?'rgba(161,117,252,0.18)':'rgba(255,255,255,0.05)', color:dateRange===r.id?'#C3A3FF':'rgba(248,250,252,0.42)', boxShadow:dateRange===r.id?'inset 0 0 0 1px rgba(161,117,252,0.4),0 0 12px rgba(161,117,252,0.08)':'inset 0 0 0 1px rgba(255,255,255,0.08)' }}>{r.label}</button>
@@ -518,7 +518,7 @@ export default function PerformancePage() {
           {demoMode&&(
             <div style={{ display:'flex', alignItems:'center', gap:12, background:'rgba(251,146,60,0.07)', border:'1px solid rgba(251,146,60,0.2)', borderRadius:10, padding:'12px 18px', marginBottom:24, animation:'fadeIn .4s ease-out both' }}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FB923C" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-              <div style={{ flex:1 }}><span style={{ fontSize:12, fontWeight:700, color:'#FB923C', marginRight:8 }}>Demo mode</span><span style={{ fontSize:12, color:'rgba(248,250,252,0.45)' }}>Showing example data — connect Gorgias in Settings to see live metrics.</span></div>
+              <div style={{ flex:1 }}><span style={{ fontSize:12, fontWeight:700, color:'#FB923C', marginRight:8 }}>Demo mode</span><span style={{ fontSize:12, color:'var(--text-2)' }}>Showing example data — connect Gorgias in Settings to see live metrics.</span></div>
               <button onClick={exitDemo} style={{ fontSize:11, fontWeight:600, color:'rgba(251,146,60,0.7)', background:'transparent', border:'none', cursor:'pointer', fontFamily:'inherit', whiteSpace:'nowrap' }}>Exit demo →</button>
             </div>
           )}

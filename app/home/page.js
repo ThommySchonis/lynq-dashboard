@@ -44,7 +44,7 @@ const SUGGESTIONS = [
   },
   {
     text: "What's my refund rate trend?",
-    color: '#A175FC',
+    color: 'var(--accent)',
     icon: (
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
         <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/>
@@ -147,79 +147,68 @@ const CSS = `
   .chip {
     display:inline-flex; align-items:center; gap:9px;
     padding:9px 15px;
-    background:rgba(255,255,255,0.038);
-    border:1px solid rgba(255,255,255,0.075);
+    background:var(--bg-surface);
+    border:1px solid var(--border);
     border-radius:13px;
-    color:rgba(248,250,252,0.48);
+    color:var(--text-2);
     font-size:12.5px; font-family:inherit;
     cursor:pointer;
     transition:all .24s cubic-bezier(.16,1,.3,1);
     white-space:nowrap;
-    backdrop-filter:blur(10px);
-    box-shadow:0 1px 2px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.04);
+    box-shadow:var(--shadow-row);
   }
   .chip:hover {
-    background:rgba(255,255,255,0.075);
-    border-color:rgba(255,255,255,0.15);
-    color:#F8FAFC;
+    background:var(--bg-surface-2);
+    border-color:var(--border-hover);
+    color:var(--text-1);
     transform:translateY(-2px);
-    box-shadow:0 2px 8px rgba(0,0,0,0.3), 0 8px 28px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.08);
+    box-shadow:var(--shadow-card-hover);
   }
   .chip .ci { flex-shrink:0; display:flex; transition:transform .2s cubic-bezier(.16,1,.3,1); }
   .chip:hover .ci { transform:translateY(-1px); }
 
   /* ── Chat input ── */
   .chat-box {
-    background:rgba(255,255,255,0.05);
-    border:1px solid rgba(255,255,255,0.11);
+    background:var(--bg-surface);
+    border:1px solid var(--border);
     border-radius:22px;
     transition:all .3s cubic-bezier(.16,1,.3,1);
-    backdrop-filter:blur(28px) saturate(180%);
-    -webkit-backdrop-filter:blur(28px) saturate(180%);
-    box-shadow:0 2px 8px rgba(0,0,0,0.3), 0 8px 32px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.08);
+    box-shadow:var(--shadow-card);
   }
   .chat-box:focus-within {
-    border-color:rgba(161,117,252,0.52);
-    background:rgba(161,117,252,0.035);
-    box-shadow:0 0 0 1px rgba(161,117,252,0.16),
-               0 4px 24px rgba(161,117,252,0.14),
-               0 16px 56px rgba(0,0,0,0.28),
-               inset 0 1px 0 rgba(255,255,255,0.1);
+    border-color:var(--accent-border);
+    background:var(--bg-surface);
+    box-shadow:0 0 0 3px rgba(124,92,252,0.1), var(--shadow-card-hover);
   }
   .chat-box textarea {
     background:transparent; border:none; outline:none;
-    color:#F8FAFC; font-size:15px; line-height:1.65; resize:none;
+    color:var(--text-1); font-size:15px; line-height:1.65; resize:none;
     font-family:inherit; width:100%; padding:0;
     max-height:180px; overflow-y:auto;
   }
-  .chat-box textarea::placeholder { color:rgba(248,250,252,0.22); }
+  .chat-box textarea::placeholder { color:var(--text-3); }
 
   /* ── Hero chat box ── */
   .chat-box-hero {
-    background:rgba(8, 4, 20, 0.62);
-    border:1px solid rgba(255,255,255,0.09);
+    background:var(--bg-surface);
+    border:1px solid var(--border);
     border-radius:24px;
     transition:border-color .3s cubic-bezier(.16,1,.3,1), box-shadow .3s cubic-bezier(.16,1,.3,1), background .3s;
-    backdrop-filter:blur(24px) saturate(140%);
-    -webkit-backdrop-filter:blur(24px) saturate(140%);
-    box-shadow:0 4px 24px rgba(0,0,0,0.5), 0 16px 56px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.06);
+    box-shadow:var(--shadow-card);
     animation:inputReveal .62s cubic-bezier(.16,1,.3,1) .22s both;
   }
   .chat-box-hero:focus-within {
-    border-color:rgba(161,117,252,0.45);
-    background:rgba(8, 4, 20, 0.68);
-    box-shadow:0 0 0 1px rgba(161,117,252,0.14),
-               0 4px 24px rgba(161,117,252,0.1),
-               0 16px 56px rgba(0,0,0,0.38),
-               inset 0 1px 0 rgba(255,255,255,0.08);
+    border-color:var(--accent-border);
+    background:var(--bg-surface);
+    box-shadow:0 0 0 3px rgba(124,92,252,0.1), var(--shadow-card-hover);
   }
   .chat-box-hero textarea {
     background:transparent; border:none; outline:none;
-    color:#F8FAFC; font-size:16px; line-height:1.7; resize:none;
+    color:var(--text-1); font-size:16px; line-height:1.7; resize:none;
     font-family:inherit; width:100%; padding:0;
     max-height:200px; overflow-y:auto;
   }
-  .chat-box-hero textarea::placeholder { color:rgba(248,250,252,0.22); font-size:16px; }
+  .chat-box-hero textarea::placeholder { color:var(--text-3); font-size:16px; }
 
   /* ── Send button ── */
   .send-btn {
@@ -248,17 +237,15 @@ const CSS = `
 
   /* ── Bubbles ── */
   .msg-user {
-    background:rgba(255,255,255,0.075);
-    border:1px solid rgba(255,255,255,0.13);
+    background:var(--accent-soft);
+    border:1px solid var(--accent-border);
     border-radius:20px 20px 5px 20px;
-    backdrop-filter:blur(14px);
-    box-shadow:0 2px 8px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.08);
+    box-shadow:var(--shadow-row);
   }
   .msg-ai {
-    background:rgba(255,255,255,0.038);
-    border:1px solid rgba(255,255,255,0.07);
+    background:var(--bg-surface-2);
+    border:1px solid var(--border);
     border-radius:20px 20px 20px 5px;
-    backdrop-filter:blur(14px);
   }
 
   /* ── Float cards ── */
@@ -266,28 +253,26 @@ const CSS = `
     position:absolute;
     display:flex; align-items:center; gap:9px;
     padding:8px 13px;
-    background:rgba(255,255,255,0.035);
-    border:1px solid rgba(255,255,255,0.065);
+    background:var(--bg-surface);
+    border:1px solid var(--border);
     border-radius:12px;
-    backdrop-filter:blur(10px);
     white-space:nowrap; pointer-events:none; opacity:0;
-    box-shadow:0 2px 8px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.045);
+    box-shadow:var(--shadow-card);
   }
 
   /* ── Status pill ── */
   .status-pill {
     display:inline-flex; align-items:center; gap:10px;
     padding:6px 16px 6px 10px; border-radius:100px;
-    background:rgba(255,255,255,0.04);
-    border:1px solid rgba(255,255,255,0.08);
-    backdrop-filter:blur(12px);
-    box-shadow:0 1px 3px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.05);
+    background:var(--bg-input);
+    border:1px solid var(--border);
+    box-shadow:var(--shadow-row);
   }
 
   /* ── Scrollbar ── */
   .chat-scroll::-webkit-scrollbar { width:3px; }
   .chat-scroll::-webkit-scrollbar-track { background:transparent; }
-  .chat-scroll::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.07); border-radius:2px; }
+  .chat-scroll::-webkit-scrollbar-thumb { background:var(--bg-surface-2); border-radius:2px; }
 `
 
 
@@ -438,7 +423,7 @@ export default function HomePage() {
   if (!mounted) return null
 
   return (
-    <div className="h-root" style={{ display: 'flex', minHeight: '100vh', background: '#1C0F36' }}>
+    <div className="h-root" style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg-page)' }}>
       <style>{CSS}</style>
       <Sidebar />
 
@@ -485,7 +470,7 @@ export default function HomePage() {
               </div>
 
               {/* Heading */}
-              <h1 style={{ fontSize: 'clamp(36px,5.2vw,60px)', fontWeight: 800, letterSpacing: '-0.036em', lineHeight: 1.07, color: '#F8FAFC', marginBottom: 14, animation: 'revealUp .58s cubic-bezier(.16,1,.3,1) .07s both' }}>
+              <h1 style={{ fontSize: 'clamp(36px,5.2vw,60px)', fontWeight: 800, letterSpacing: '-0.036em', lineHeight: 1.07, color: 'var(--text-1)', marginBottom: 14, animation: 'revealUp .58s cubic-bezier(.16,1,.3,1) .07s both' }}>
                 Welcome back,{' '}
                 <span style={{
                   background: 'linear-gradient(120deg,#FFFFFF 0%,#C4B5FD 28%,#A175FC 58%,#7C3AED 100%)',
@@ -499,7 +484,7 @@ export default function HomePage() {
               </h1>
 
               {/* Subtitle */}
-              <p style={{ fontSize: 15, color: 'rgba(248,250,252,0.3)', lineHeight: 1.8, maxWidth: 340, marginBottom: 36, fontWeight: 400, animation: 'revealUp .58s cubic-bezier(.16,1,.3,1) .14s both' }}>
+              <p style={{ fontSize: 15, color: 'var(--text-3)', lineHeight: 1.8, maxWidth: 340, marginBottom: 36, fontWeight: 400, animation: 'revealUp .58s cubic-bezier(.16,1,.3,1) .14s both' }}>
                 {contextLoaded
                   ? 'Ask anything about your store — revenue, refunds, orders, trends.'
                   : 'Connecting to your store data…'}

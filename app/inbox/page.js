@@ -2094,8 +2094,8 @@ function InboxPage() {
                     <span style={{fontSize:12.5,fontWeight:thread.unread?700:600,color:'var(--text-1)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',flex:1}}>
                       {isSentView?'To: '+(name||extractEmail(thread.to)):name}
                     </span>
-                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{color:'var(--text-3)',flexShrink:0}}><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-                    <span style={{fontSize:10.5,color:'var(--text-3)',flexShrink:0,whiteSpace:'nowrap'}}>{formatDate(thread.date)}</span>
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{color:'var(--text-1)',flexShrink:0}}><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                    <span style={{fontSize:10.5,color:'var(--text-1)',flexShrink:0,whiteSpace:'nowrap'}}>{formatDate(thread.date)}</span>
                     {thread.unread&&<span style={{width:7,height:7,borderRadius:'50%',background:'#ef4444',flexShrink:0,boxShadow:'0 0 0 1.5px rgba(239,68,68,0.25)'}} />}
                   </div>
                   {/* Row 2: subject */}

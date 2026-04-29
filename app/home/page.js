@@ -338,9 +338,18 @@ export default function HomePage() {
       <div ref={containerRef} onMouseMove={onMouseMove} style={{ flex:1, position:'relative', overflow:'hidden', display:'flex', flexDirection:'column', minHeight:'100vh' }}>
 
         {/* ── Orbs ── */}
-        <div aria-hidden style={{ position:'absolute', top:'-150px', right:'-150px', width:'700px', height:'700px', borderRadius:'50%', background:'radial-gradient(circle, rgba(161,117,252,0.45), transparent 70%)', filter:'blur(80px)', zIndex:0, pointerEvents:'none' }} />
-        <div aria-hidden style={{ position:'absolute', bottom:'-150px', left:'-150px', width:'650px', height:'650px', borderRadius:'50%', background:'radial-gradient(circle, rgba(96,165,250,0.38), transparent 70%)', filter:'blur(80px)', zIndex:0, pointerEvents:'none' }} />
-        <div aria-hidden style={{ position:'absolute', top:'20%', left:'5%', width:'450px', height:'450px', borderRadius:'50%', background:'radial-gradient(circle, rgba(244,114,182,0.25), transparent 70%)', filter:'blur(80px)', zIndex:0, pointerEvents:'none' }} />
+        <motion.div aria-hidden
+          animate={{ x:[0,-40,20,-10,0], y:[0,30,-20,15,0] }}
+          transition={{ duration:20, repeat:Infinity, ease:'easeInOut' }}
+          style={{ position:'absolute', top:'-150px', right:'-150px', width:'700px', height:'700px', borderRadius:'50%', background:'radial-gradient(circle, rgba(161,117,252,0.45), transparent 70%)', filter:'blur(80px)', zIndex:0, pointerEvents:'none' }} />
+        <motion.div aria-hidden
+          animate={{ x:[0,50,-20,30,0], y:[0,-40,25,-15,0] }}
+          transition={{ duration:25, repeat:Infinity, ease:'easeInOut' }}
+          style={{ position:'absolute', bottom:'-150px', left:'-150px', width:'650px', height:'650px', borderRadius:'50%', background:'radial-gradient(circle, rgba(96,165,250,0.38), transparent 70%)', filter:'blur(80px)', zIndex:0, pointerEvents:'none' }} />
+        <motion.div aria-hidden
+          animate={{ x:[0,-30,40,-20,0], y:[0,20,-35,10,0] }}
+          transition={{ duration:18, repeat:Infinity, ease:'easeInOut' }}
+          style={{ position:'absolute', top:'20%', left:'5%', width:'450px', height:'450px', borderRadius:'50%', background:'radial-gradient(circle, rgba(244,114,182,0.25), transparent 70%)', filter:'blur(80px)', zIndex:0, pointerEvents:'none' }} />
 
         {/* ── Background layers (dot grid, beam, spotlight) ── */}
         <div aria-hidden style={{ position:'absolute', inset:0, pointerEvents:'none', zIndex:0 }}>
@@ -365,14 +374,14 @@ export default function HomePage() {
               <div style={{ display:'flex', flexDirection:'column', alignItems:'center', textAlign:'center' }}>
 
                 {/* Status badge */}
-                <motion.div initial={{ opacity:0, y:12 }} animate={{ opacity:1, y:0 }} transition={{ duration:0.6, delay:0.2, ease:EASE }}
+                <motion.div initial={{ opacity:0, y:16 }} animate={{ opacity:1, y:0 }} transition={{ duration:0.7, delay:0, ease:EASE }}
                   style={{ display:'inline-flex', alignItems:'center', gap:8, background:'rgba(255,255,255,0.85)', border:'1px solid rgba(0,0,0,0.08)', backdropFilter:'blur(10px)', WebkitBackdropFilter:'blur(10px)', borderRadius:20, padding:'5px 14px', marginBottom:24 }}>
                   <div className="pulse-dot" style={{ width:7, height:7, borderRadius:'50%', background:'#22C55E', flexShrink:0 }} />
                   <span style={{ fontSize:12, fontWeight:500, color:'#555' }}>{greeting}</span>
                 </motion.div>
 
                 {/* Headline */}
-                <motion.h1 initial={{ opacity:0, y:12 }} animate={{ opacity:1, y:0 }} transition={{ duration:0.65, delay:0.3, ease:EASE }}
+                <motion.h1 initial={{ opacity:0, y:16 }} animate={{ opacity:1, y:0 }} transition={{ duration:0.7, delay:0.12, ease:EASE }}
                   className="hp-headline"
                   style={{ fontSize:'clamp(36px, 5vw, 52px)', fontWeight:800, letterSpacing:'-0.025em', lineHeight:1.05, textAlign:'center', marginBottom:14, color:'#111' }}>
                   Welcome back,{' '}
@@ -380,13 +389,13 @@ export default function HomePage() {
                 </motion.h1>
 
                 {/* Subtitle */}
-                <motion.p initial={{ opacity:0, y:12 }} animate={{ opacity:1, y:0 }} transition={{ duration:0.65, delay:0.4, ease:EASE }}
+                <motion.p initial={{ opacity:0, y:16 }} animate={{ opacity:1, y:0 }} transition={{ duration:0.7, delay:0.22, ease:EASE }}
                   style={{ fontSize:15, color:'#888', textAlign:'center', lineHeight:1.6, maxWidth:380, marginBottom:32 }}>
                   Your store is running. Ask anything —<br />your AI knows everything.
                 </motion.p>
 
                 {/* Search bar */}
-                <motion.div initial={{ opacity:0, y:12 }} animate={{ opacity:1, y:0 }} transition={{ duration:0.65, delay:0.5, ease:EASE }}
+                <motion.div initial={{ opacity:0, y:16 }} animate={{ opacity:1, y:0 }} transition={{ duration:0.7, delay:0.32, ease:EASE }}
                   className="hp-search"
                   style={{ width:'min(500px, 90%)', marginBottom:18, position:'relative' }}>
                   {/* Animated border glow */}
@@ -413,7 +422,7 @@ export default function HomePage() {
                 </motion.div>
 
                 {/* Suggestion chips */}
-                <motion.div initial={{ opacity:0, y:12 }} animate={{ opacity:1, y:0 }} transition={{ duration:0.65, delay:0.6, ease:EASE }}
+                <motion.div initial={{ opacity:0, y:16 }} animate={{ opacity:1, y:0 }} transition={{ duration:0.7, delay:0.42, ease:EASE }}
                   style={{ display:'flex', flexWrap:'wrap', gap:8, justifyContent:'center' }}>
                   {CHIPS.map((chip, i) => (
                     <motion.button key={chip.key} className="chip-btn"

@@ -335,23 +335,15 @@ export default function HomePage() {
       <style>{CSS}</style>
       <Sidebar />
 
-      <div ref={containerRef} onMouseMove={onMouseMove} style={{ flex:1, position:'relative', overflow:'hidden', display:'flex', flexDirection:'column' }}>
+      <div ref={containerRef} onMouseMove={onMouseMove} style={{ flex:1, position:'relative', overflow:'hidden', display:'flex', flexDirection:'column', minHeight:'100vh' }}>
 
-        {/* ── Background layers ── */}
+        {/* ── Orbs — direct children so they're never clipped ── */}
+        <div aria-hidden style={{ position:'absolute', top:'-200px', right:'-100px', width:'600px', height:'600px', borderRadius:'50%', background:'radial-gradient(circle, rgba(161,117,252,0.35), transparent 70%)', filter:'blur(70px)', zIndex:0, pointerEvents:'none' }} />
+        <div aria-hidden style={{ position:'absolute', bottom:'-200px', left:'-100px', width:'550px', height:'550px', borderRadius:'50%', background:'radial-gradient(circle, rgba(96,165,250,0.28), transparent 70%)', filter:'blur(70px)', zIndex:0, pointerEvents:'none' }} />
+        <div aria-hidden style={{ position:'absolute', top:'30%', left:'20%', width:'400px', height:'400px', borderRadius:'50%', background:'radial-gradient(circle, rgba(244,114,182,0.2), transparent 70%)', filter:'blur(70px)', zIndex:0, pointerEvents:'none' }} />
+
+        {/* ── Background layers (dot grid, beam, spotlight) ── */}
         <div aria-hidden style={{ position:'absolute', inset:0, pointerEvents:'none', zIndex:0 }}>
-
-          {/* Orb 1 */}
-          <motion.div animate={{ y:[0,25,-15,0], x:[0,-20,15,0] }} transition={{ duration:14, repeat:Infinity, ease:'easeInOut' }}
-            style={{ position:'absolute', top:-180, right:-100, width:500, height:500, borderRadius:'50%', background:'radial-gradient(circle, rgba(161,117,252,0.22), transparent 70%)', filter:'blur(100px)' }} />
-          {/* Orb 2 */}
-          <motion.div animate={{ y:[0,-30,20,0], x:[0,20,-15,0] }} transition={{ duration:18, repeat:Infinity, ease:'easeInOut' }}
-            style={{ position:'absolute', bottom:-150, left:-80, width:450, height:450, borderRadius:'50%', background:'radial-gradient(circle, rgba(96,165,250,0.18), transparent 70%)', filter:'blur(100px)' }} />
-          {/* Orb 3 */}
-          <motion.div animate={{ y:[0,20,-25,0], x:[0,-30,20,0] }} transition={{ duration:11, repeat:Infinity, ease:'easeInOut' }}
-            style={{ position:'absolute', top:'30%', left:'22%', width:350, height:350, borderRadius:'50%', background:'radial-gradient(circle, rgba(244,114,182,0.13), transparent 70%)', filter:'blur(100px)' }} />
-          {/* Orb 4 */}
-          <motion.div animate={{ y:[0,-20,15,0] }} transition={{ duration:16, repeat:Infinity, ease:'easeInOut' }}
-            style={{ position:'absolute', bottom:'8%', right:'12%', width:280, height:280, borderRadius:'50%', background:'radial-gradient(circle, rgba(52,211,153,0.10), transparent 70%)', filter:'blur(100px)' }} />
 
           {/* Dot grid */}
           <div style={{ position:'absolute', inset:0, backgroundImage:'radial-gradient(circle, rgba(0,0,0,0.055) 1px, transparent 1px)', backgroundSize:'28px 28px' }} />
@@ -369,7 +361,7 @@ export default function HomePage() {
         {/* ── HERO STATE ── */}
         {!hasMsg && (
           <>
-            <div style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', paddingBottom:60, position:'relative', zIndex:1 }}>
+            <div style={{ minHeight:'100vh', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', paddingBottom:80, position:'relative', zIndex:1 }}>
               <div style={{ display:'flex', flexDirection:'column', alignItems:'center', textAlign:'center' }}>
 
                 {/* Status badge */}
@@ -384,7 +376,7 @@ export default function HomePage() {
                   className="hp-headline"
                   style={{ fontSize:'clamp(36px, 5vw, 52px)', fontWeight:800, letterSpacing:'-0.025em', lineHeight:1.05, textAlign:'center', marginBottom:14, color:'#111' }}>
                   Welcome back,{' '}
-                  <span className="name-gradient">{userName || 'there'}</span>
+                  <span style={{ background:'linear-gradient(135deg, #A175FC 0%, #818CF8 45%, #60A5FA 100%)', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent', backgroundClip:'text', display:'inline-block' }}>{userName || 'there'}</span>
                 </motion.h1>
 
                 {/* Subtitle */}

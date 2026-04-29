@@ -147,18 +147,20 @@ const CSS = `
   .chip {
     display:inline-flex; align-items:center; gap:9px;
     padding:9px 15px;
-    background:var(--bg-surface);
-    border:1px solid var(--border);
+    background:var(--glass-bg);
+    border:1px solid var(--glass-border);
     border-radius:13px;
     color:var(--text-2);
     font-size:12.5px; font-family:inherit;
     cursor:pointer;
     transition:all .24s cubic-bezier(.16,1,.3,1);
     white-space:nowrap;
-    box-shadow:var(--shadow-row);
+    box-shadow:var(--glass-shadow);
+    backdrop-filter:blur(10px) saturate(140%);
+    -webkit-backdrop-filter:blur(10px) saturate(140%);
   }
   .chip:hover {
-    background:var(--bg-surface-2);
+    background:rgba(255,255,255,0.9);
     border-color:var(--border-hover);
     color:var(--text-1);
     transform:translateY(-2px);
@@ -190,16 +192,18 @@ const CSS = `
 
   /* ── Hero chat box ── */
   .chat-box-hero {
-    background:var(--bg-surface);
-    border:1px solid var(--border);
+    background:var(--glass-bg);
+    border:1px solid var(--glass-border);
     border-radius:24px;
     transition:border-color .3s cubic-bezier(.16,1,.3,1), box-shadow .3s cubic-bezier(.16,1,.3,1), background .3s;
-    box-shadow:var(--shadow-card);
+    box-shadow:var(--glass-shadow);
+    backdrop-filter:blur(20px) saturate(160%);
+    -webkit-backdrop-filter:blur(20px) saturate(160%);
     animation:inputReveal .62s cubic-bezier(.16,1,.3,1) .22s both;
   }
   .chat-box-hero:focus-within {
     border-color:var(--accent-border);
-    background:var(--bg-surface);
+    background:rgba(255,255,255,0.88);
     box-shadow:0 0 0 3px rgba(124,92,252,0.1), var(--shadow-card-hover);
   }
   .chat-box-hero textarea {
@@ -253,20 +257,24 @@ const CSS = `
     position:absolute;
     display:flex; align-items:center; gap:9px;
     padding:8px 13px;
-    background:var(--bg-surface);
-    border:1px solid var(--border);
+    background:var(--glass-bg);
+    border:1px solid var(--glass-border);
     border-radius:12px;
     white-space:nowrap; pointer-events:none; opacity:0;
-    box-shadow:var(--shadow-card);
+    box-shadow:var(--glass-shadow);
+    backdrop-filter:blur(var(--glass-blur)) saturate(150%);
+    -webkit-backdrop-filter:blur(var(--glass-blur)) saturate(150%);
   }
 
   /* ── Status pill ── */
   .status-pill {
     display:inline-flex; align-items:center; gap:10px;
     padding:6px 16px 6px 10px; border-radius:100px;
-    background:var(--bg-input);
-    border:1px solid var(--border);
-    box-shadow:var(--shadow-row);
+    background:var(--glass-bg);
+    border:1px solid var(--glass-border);
+    box-shadow:var(--glass-shadow);
+    backdrop-filter:blur(8px) saturate(130%);
+    -webkit-backdrop-filter:blur(8px) saturate(130%);
   }
 
   /* ── Scrollbar ── */
@@ -277,7 +285,7 @@ const CSS = `
   /* ── Aurora layers — subtle in light, full in dark ── */
   .aurora-l1 {
     position:absolute; top:-28%; left:10%; width:900px; height:800px; border-radius:50%;
-    background:radial-gradient(ellipse,rgba(124,92,252,0.07) 0%,transparent 70%);
+    background:radial-gradient(ellipse,rgba(124,92,252,0.14) 0%,rgba(124,92,252,0.06) 45%,transparent 70%);
     animation:auroraA 22s ease-in-out infinite; filter:blur(55px);
   }
   [data-theme="dark"] .aurora-l1 {
@@ -285,12 +293,18 @@ const CSS = `
   }
   .aurora-l4 {
     position:absolute; top:2%; left:2%; width:380px; height:380px; border-radius:50%;
-    background:radial-gradient(ellipse,rgba(124,92,252,0.04) 0%,transparent 72%);
+    background:radial-gradient(ellipse,rgba(124,92,252,0.10) 0%,transparent 72%);
     animation:auroraD 19s ease-in-out infinite; filter:blur(42px);
   }
   [data-theme="dark"] .aurora-l4 {
     background:radial-gradient(ellipse,rgba(139,92,246,0.48) 0%,rgba(109,40,217,0.18) 50%,transparent 72%);
   }
+  .aurora-l5 {
+    position:absolute; bottom:-8%; right:4%; width:580px; height:480px; border-radius:50%;
+    background:radial-gradient(ellipse,rgba(99,102,241,0.09) 0%,rgba(124,92,252,0.04) 50%,transparent 72%);
+    animation:auroraB 28s ease-in-out infinite; filter:blur(60px);
+  }
+  [data-theme="dark"] .aurora-l5 { opacity:0; }
   .aurora-grid {
     position:absolute; inset:0;
     background-image:linear-gradient(rgba(15,23,42,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(15,23,42,0.04) 1px,transparent 1px);
@@ -472,8 +486,10 @@ export default function HomePage() {
 
           {/* Layer 1 — brand purple bloom (subtle light, full dark) */}
           <div className="aurora-l1" />
-          {/* Layer 4 — violet accent (subtle light, full dark) */}
+          {/* Layer 4 — violet accent top-left */}
           <div className="aurora-l4" />
+          {/* Layer 5 — indigo bottom-right (light only) */}
+          <div className="aurora-l5" />
 
           {/* Dot grid (dark dots in light, white lines in dark) */}
           <div className="aurora-grid" />

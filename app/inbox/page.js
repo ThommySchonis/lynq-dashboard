@@ -451,6 +451,73 @@ function Toast({ msg, type, onDone }) {
   )
 }
 
+function escapeHtml(value = '') {
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
+function normalizeSafeUrl(value, { allowImages = false } = {}) {
+  if (typeof window === 'undefined') return ''
+  try {
+    const url = new URL(String(value || '').trim(), window.location.origin)
+    const safeProtocols = allowImages ? ['http:', 'https:', 'data:'] : ['http:', 'https:', 'mailto:', 'tel:']
+    if (!safeProtocols.includes(url.protocol)) return ''
+    if (url.protocol === 'data:' && !/^data:image\/(png|jpe?g|gif|webp);base64,/i.test(String(value))) return ''
+    return ['mailto:', 'tel:'].includes(url.protocol) ? url.href : url.toString()
+  } catch {
+    return ''
+  }
+}
+
+function sanitizeHtml(html = '') {
+  if (typeof document === 'undefined') return escapeHtml(html).replace(/\n/g, '<br>')
+
+  const allowedTags = new Set(['A','B','BR','BLOCKQUOTE','CODE','DIV','EM','I','LI','OL','P','PRE','SPAN','STRONG','U','UL','IMG'])
+  const template = document.createElement('template')
+  template.innerHTML = String(html)
+
+  template.content.querySelectorAll('script,style,iframe,object,embed,form,meta,link').forEach(node => node.remove())
+  template.content.querySelectorAll('*').forEach(node => {
+    if (!allowedTags.has(node.tagName)) {
+      node.replaceWith(...node.childNodes)
+      return
+    }
+
+    ;[...node.attributes].forEach(attr => {
+      const name = attr.name.toLowerCase()
+      if (name.startsWith('on') || name === 'style') node.removeAttribute(attr.name)
+    })
+
+    if (node.tagName === 'A') {
+      const href = normalizeSafeUrl(node.getAttribute('href'))
+      if (href) {
+        node.setAttribute('href', href)
+        node.setAttribute('rel', 'noopener noreferrer')
+        node.setAttribute('target', '_blank')
+      } else {
+        node.removeAttribute('href')
+      }
+    } else if (node.tagName === 'IMG') {
+      const src = normalizeSafeUrl(node.getAttribute('src'), { allowImages: true })
+      if (src) node.setAttribute('src', src)
+      else node.remove()
+      node.removeAttribute('srcset')
+    } else {
+      ;[...node.attributes].forEach(attr => node.removeAttribute(attr.name))
+    }
+  })
+
+  return template.innerHTML
+}
+
+function plainTextToSafeHtml(text = '') {
+  return escapeHtml(text).replace(/\n/g, '<br>')
+}
+
 function StatusMenu({ current, onChange, onClose }) {
   const ref=useRef(null)
   useEffect(()=>{ function h(e){if(ref.current&&!ref.current.contains(e.target))onClose()} document.addEventListener('mousedown',h); return ()=>document.removeEventListener('mousedown',h) },[onClose])
@@ -510,14 +577,20 @@ function ComposeModal({ token, emailProvider, connectedEmail, onClose, onSuccess
   useEffect(()=>{ setTimeout(()=>bodyRef.current?.focus(), 120) },[])
 
   function formatDoc(cmd, val) { bodyRef.current?.focus(); document.execCommand(cmd, false, val||null) }
+  function insertComposeLink() {
+    const safeUrl = normalizeSafeUrl(prompt('URL:'))
+    if(!safeUrl) { onSuccess('Only http, https, or mailto links are allowed','error'); return }
+    formatDoc('createLink', safeUrl)
+  }
 
   async function handleSend() {
     if(!to.trim()||!subject.trim()||!(bodyRef.current?.textContent?.trim())) return
     setSending(true)
+    const safeBody = sanitizeHtml(bodyRef.current?.innerHTML || '')
     const sendPath = emailProvider==='outlook' ? '/api/outlook/send' : emailProvider==='custom' ? '/api/custom-email/send' : '/api/gmail/send'
     const res = await authFetch(sendPath, {
       method:'POST',
-      body: JSON.stringify({ to:to.trim(), subject:subject.trim(), body:bodyRef.current.innerHTML, cc:cc.trim()||undefined }),
+      body: JSON.stringify({ to:to.trim(), subject:subject.trim(), body:safeBody, cc:cc.trim()||undefined }),
     }, token)
     const data = await res.json()
     setSending(false)
@@ -615,7 +688,7 @@ function ComposeModal({ token, emailProvider, connectedEmail, onClose, onSuccess
             </div>
             <div style={{width:1,height:16,background:'var(--bg-surface-2)',flexShrink:0}} />
             <div style={{display:'inline-flex',alignItems:'center',background:'var(--bg-surface-2)',borderRadius:9,padding:'2px 3px',border:'1px solid var(--border)',gap:1}}>
-              <button className="rtbar-btn" onMouseDown={e=>e.preventDefault()} onClick={()=>{const u=prompt('URL:');if(u)formatDoc('createLink',u)}} title="Link" style={{borderRadius:7}}>
+              <button className="rtbar-btn" onMouseDown={e=>e.preventDefault()} onClick={insertComposeLink} title="Link" style={{borderRadius:7}}>
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
               </button>
               <button className="rtbar-btn" onMouseDown={e=>e.preventDefault()} onClick={()=>formatDoc('insertUnorderedList')} title="List" style={{borderRadius:7}}>
@@ -1319,7 +1392,7 @@ function InboxPage() {
     const res  = await authFetch('/api/ai/reply',{method:'POST',body:JSON.stringify({messages,threadId:selected.id})},session.access_token)
     const data = await res.json()
     if(data.reply){
-      if(replyRef.current){ replyRef.current.innerHTML=data.reply.replace(/\n/g,'<br>'); setReply(replyRef.current.textContent) }
+      if(replyRef.current){ replyRef.current.innerHTML=plainTextToSafeHtml(data.reply); setReply(replyRef.current.textContent) }
       else setReply(data.reply)
     } else showT('AI reply failed','error')
     setAiLoading(false)
@@ -1330,13 +1403,13 @@ function InboxPage() {
     if(!textContent.trim()||!selected) return false
     if(demoMode||!emailProvider){ showT('Demo mode — connect an email provider to send messages','error'); return false }
     setSending(true)
-    let bodyToSend = replyRef.current?.innerHTML || reply
+    let bodyToSend = sanitizeHtml(replyRef.current?.innerHTML || reply)
     // Auto-translate outgoing message to customer's language
     if(autoTranslate && customerLang && customerLang.code !== 'en') {
       try {
         const tres = await authFetch('/api/ai/translate',{method:'POST',body:JSON.stringify({text:textContent,targetLang:customerLang.name})},session.access_token)
         const td = await tres.json()
-        if(td.translated) bodyToSend = td.translated
+        if(td.translated) bodyToSend = plainTextToSafeHtml(td.translated)
       } catch {}
     }
     const last=messages[messages.length-1]
@@ -1390,13 +1463,20 @@ function InboxPage() {
 
   function insertLink() {
     const url = prompt('Enter URL:')
-    if(url) { replyRef.current?.focus(); document.execCommand('createLink', false, url) }
+    const safeUrl = normalizeSafeUrl(url)
+    if(url && !safeUrl) { showT('Only http, https, or mailto links are allowed','error'); return }
+    if(safeUrl) { replyRef.current?.focus(); document.execCommand('createLink', false, safeUrl) }
   }
 
   function handleImageUpload(e) {
     const file = e.target.files?.[0]; if(!file) return
+    if(!/^image\/(png|jpe?g|gif|webp)$/i.test(file.type)){ showT('Unsupported image type','error'); e.target.value=''; return }
     const reader = new FileReader()
-    reader.onload = () => { replyRef.current?.focus(); document.execCommand('insertImage', false, reader.result); setReply(replyRef.current?.textContent||'') }
+    reader.onload = () => {
+      const src = normalizeSafeUrl(reader.result, { allowImages: true })
+      if(!src){ showT('Unsupported image type','error'); return }
+      replyRef.current?.focus(); document.execCommand('insertImage', false, src); setReply(replyRef.current?.textContent||'')
+    }
     reader.readAsDataURL(file)
     e.target.value = ''
   }
@@ -1651,7 +1731,8 @@ function InboxPage() {
                   aiMacros={aiMacros}
                   customerName={extractName(selected?.from||'')}
                   onInsert={body=>{
-                    if(replyRef.current){replyRef.current.innerHTML=body.replace(/\n/g,'<br>');setReply(replyRef.current.textContent)}
+                    const safeBody = plainTextToSafeHtml(body)
+                    if(replyRef.current){replyRef.current.innerHTML=safeBody;setReply(replyRef.current.textContent)}
                     else setReply(body)
                     setShowMacros(false);setTimeout(()=>replyRef.current?.focus(),10)
                   }}

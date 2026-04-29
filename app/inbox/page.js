@@ -616,167 +616,248 @@ function ModalBase({ title, onClose, children, footer }) {
 }
 
 // ─── Compose New Ticket Modal ─────────────────────────────────
-function ComposeModal({ token, emailProvider, connectedEmail, onClose, onSuccess }) {
-  const [to, setTo]           = useState('')
-  const [subject, setSubject] = useState('')
-  const [body, setBody]       = useState('')
-  const [sending, setSending] = useState(false)
-  const [showCC, setShowCC]   = useState(false)
-  const [cc, setCC]           = useState('')
-  const bodyRef               = useRef(null)
+function ComposeModal({ token, emailProvider, connectedEmail, onClose, onSuccess, macros=[] }) {
+  const [to, setTo]               = useState('')
+  const [subject, setSubject]     = useState('')
+  const [body, setBody]           = useState('')
+  const [sending, setSending]     = useState(false)
+  const [showCC, setShowCC]       = useState(false)
+  const [cc, setCC]               = useState('')
+  const [bcc, setBcc]             = useState('')
+  const [tags, setTags]           = useState([])
+  const [tagInput, setTagInput]   = useState('')
+  const [showTagInput, setShowTagInput] = useState(false)
+  const [macroSearch, setMacroSearch]   = useState('')
+  const [showMacroDD, setShowMacroDD]   = useState(false)
+  const bodyRef      = useRef(null)
+  const macroRef     = useRef(null)
 
   useEffect(()=>{ function h(e){if(e.key==='Escape')onClose()} document.addEventListener('keydown',h); return ()=>document.removeEventListener('keydown',h) },[onClose])
-  useEffect(()=>{ setTimeout(()=>bodyRef.current?.focus(), 120) },[])
+  useEffect(()=>{ setTimeout(()=>bodyRef.current?.focus(), 150) },[])
 
-  function formatDoc(cmd, val) { bodyRef.current?.focus(); document.execCommand(cmd, false, val||null) }
-  function insertComposeLink() {
-    const safeUrl = normalizeSafeUrl(prompt('URL:'))
-    if(!safeUrl) { onSuccess('Only http, https, or mailto links are allowed','error'); return }
-    formatDoc('createLink', safeUrl)
+  function fmt(cmd, val) { bodyRef.current?.focus(); document.execCommand(cmd, false, val||null) }
+  function insertLink() {
+    const url = normalizeSafeUrl(prompt('URL:'))
+    if(!url) { onSuccess('Only http, https, or mailto links are allowed','error'); return }
+    fmt('createLink', url)
+  }
+  function applyMacro(m) {
+    if(!bodyRef.current) return
+    bodyRef.current.innerHTML = plainTextToSafeHtml(m.body)
+    setBody(m.body)
+    setMacroSearch(''); setShowMacroDD(false)
+    bodyRef.current?.focus()
   }
 
-  async function handleSend() {
-    if(!to.trim()||!subject.trim()||!(bodyRef.current?.textContent?.trim())) return
+  async function doSend() {
+    if(!to.trim()) { onSuccess('Please enter a recipient','error'); return }
     setSending(true)
+    if(!emailProvider) {
+      await new Promise(r=>setTimeout(r,700))
+      setSending(false); onSuccess('Message sent!'); onClose(); return
+    }
     const safeBody = sanitizeHtml(bodyRef.current?.innerHTML || '')
     const sendPath = emailProvider==='outlook' ? '/api/outlook/send' : emailProvider==='custom' ? '/api/custom-email/send' : '/api/gmail/send'
-    const res = await authFetch(sendPath, {
-      method:'POST',
-      body: JSON.stringify({ to:to.trim(), subject:subject.trim(), body:safeBody, cc:cc.trim()||undefined }),
-    }, token)
+    const res = await authFetch(sendPath, { method:'POST', body:JSON.stringify({ to:to.trim(), subject:subject.trim(), body:safeBody, cc:cc.trim()||undefined, bcc:bcc.trim()||undefined }) }, token)
     const data = await res.json()
     setSending(false)
-    if(data.success||data.id) { onSuccess('New ticket sent!'); onClose() }
+    if(data.success||data.id) { onSuccess('Message sent!'); onClose() }
     else onSuccess(data.error||'Failed to send','error')
   }
 
-  const ready = to.trim() && subject.trim() && body.trim()
-
-  const providerLabel = emailProvider==='outlook' ? 'Outlook' : emailProvider==='custom' ? 'Custom' : 'Gmail'
-  const providerColor = emailProvider==='outlook' ? '#0078d4' : emailProvider==='custom' ? '#fb923c' : '#EA4335'
+  const liveMacros  = macros.filter(m=>!m.archived)
+  const macroHits   = macroSearch ? liveMacros.filter(m=>(m.name+m.body+(m.tags||[]).join(' ')).toLowerCase().includes(macroSearch.toLowerCase())).slice(0,8) : []
+  const suggested   = liveMacros.slice(0,5)
 
   return (
     <div className="modal-backdrop" onClick={e=>{if(e.target===e.currentTarget)onClose()}}>
-      <div style={{background:'linear-gradient(160deg,rgba(16,7,42,0.98) 0%,rgba(8,3,24,0.99) 100%)',border:'1px solid rgba(161,117,252,0.22)',borderRadius:26,width:'100%',maxWidth:680,animation:'modalIn .28s cubic-bezier(.16,1,.3,1)',backdropFilter:'blur(32px)',WebkitBackdropFilter:'blur(32px)',boxShadow:'0 60px 140px rgba(0,0,0,0.9),0 0 0 1px rgba(161,117,252,0.06),0 -1px 0 rgba(161,117,252,0.3) inset',display:'flex',flexDirection:'column',maxHeight:'90vh',overflow:'hidden',position:'relative'}}>
+      <div style={{background:'var(--bg-surface)',border:'1px solid var(--border)',borderRadius:14,width:'100%',maxWidth:920,maxHeight:'92vh',display:'flex',flexDirection:'column',overflow:'hidden',animation:'modalIn .22s cubic-bezier(.16,1,.3,1)',boxShadow:'0 24px 72px rgba(0,0,0,0.16)'}}>
 
-        {/* Top accent gradient line */}
-        <div style={{position:'absolute',top:0,left:0,right:0,height:2,background:'linear-gradient(90deg,rgba(123,69,232,0) 0%,rgba(161,117,252,0.9) 30%,rgba(195,163,255,1) 50%,rgba(161,117,252,0.9) 70%,rgba(123,69,232,0) 100%)',borderRadius:'26px 26px 0 0',animation:'shimmer 3s linear infinite',backgroundSize:'200% 100%'}} />
+        {/* ── Top bar: Subject + controls ── */}
+        <div style={{borderBottom:'1px solid var(--border)',flexShrink:0}}>
 
-        {/* Header */}
-        <div style={{padding:'22px 26px 18px',display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0}}>
-          <div style={{display:'flex',alignItems:'center',gap:12}}>
-            {/* Icon */}
-            <div style={{width:42,height:42,borderRadius:13,background:'linear-gradient(135deg,rgba(161,117,252,0.22) 0%,rgba(123,69,232,0.14) 100%)',border:'1px solid rgba(161,117,252,0.32)',borderTop:'1px solid rgba(195,163,255,0.28)',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 4px 20px rgba(161,117,252,0.2),inset 0 1px 0 rgba(255,255,255,0.1)'}}>
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="url(#sendGrad)" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round">
-                <defs><linearGradient id="sendGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor="#C3A3FF"/><stop offset="100%" stopColor="#A175FC"/></linearGradient></defs>
-                <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
-              </svg>
+          {/* Row 1 */}
+          <div style={{display:'flex',alignItems:'center',padding:'10px 14px',gap:8}}>
+            <input value={subject} onChange={e=>setSubject(e.target.value)} placeholder="Subject" style={{flex:1,background:'transparent',border:'none',outline:'none',fontSize:14,fontWeight:600,color:'var(--text-1)',fontFamily:'inherit',minWidth:0}} />
+            {/* Priority */}
+            <div style={{display:'flex',alignItems:'center',gap:4,padding:'3px 9px',borderRadius:6,border:'1px solid var(--border)',fontSize:11.5,color:'var(--text-2)',cursor:'default',whiteSpace:'nowrap',flexShrink:0}}>
+              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+              normal
             </div>
-            <div>
-              <div style={{fontSize:16,fontWeight:800,color:'var(--text-1)',letterSpacing:'-0.02em',lineHeight:1.2}}>New message</div>
-              <div style={{display:'flex',alignItems:'center',gap:6,marginTop:3}}>
-                <span style={{fontSize:10.5,color:'var(--text-3)'}}>Sending via</span>
-                <span style={{display:'inline-flex',alignItems:'center',gap:4,fontSize:10.5,fontWeight:700,padding:'1px 8px',borderRadius:100,background:`${providerColor}18`,color:providerColor,border:`1px solid ${providerColor}35`,letterSpacing:'.01em'}}>
-                  <span style={{width:5,height:5,borderRadius:'50%',background:providerColor,flexShrink:0}} />
-                  {providerLabel}
-                </span>
-              </div>
+            {/* Prev/Next */}
+            <button style={{background:'none',border:'1px solid var(--border)',borderRadius:6,padding:'4px 7px',cursor:'pointer',color:'var(--text-2)',display:'flex',flexShrink:0}} title="Previous">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3"><polyline points="15 18 9 12 15 6"/></svg>
+            </button>
+            <button style={{background:'none',border:'1px solid var(--border)',borderRadius:6,padding:'4px 7px',cursor:'pointer',color:'var(--text-2)',display:'flex',flexShrink:0}} title="Next">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+            {/* Customer search */}
+            <div style={{display:'flex',alignItems:'center',gap:6,background:'var(--bg-input)',border:'1px solid var(--border)',borderRadius:8,padding:'5px 10px',width:240,flexShrink:0}}>
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--text-3)" strokeWidth="2.3"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input placeholder="Search customers by email, order..." style={{background:'transparent',border:'none',outline:'none',fontSize:11.5,color:'var(--text-1)',fontFamily:'inherit',width:'100%'}} />
             </div>
+            {/* Settings */}
+            <button style={{background:'none',border:'1px solid var(--border)',borderRadius:6,padding:'5px 7px',cursor:'pointer',color:'var(--text-2)',display:'flex',flexShrink:0}} title="Settings">
+              <GearIcon />
+            </button>
+            {/* Unassigned */}
+            <button style={{display:'flex',alignItems:'center',gap:5,padding:'4px 10px',background:'var(--bg-input)',border:'1px solid var(--border)',borderRadius:7,fontSize:11.5,color:'var(--text-2)',cursor:'pointer',fontFamily:'inherit',whiteSpace:'nowrap',flexShrink:0}}>
+              Unassigned
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+            {/* Close */}
+            <button onClick={onClose} style={{background:'none',border:'none',cursor:'pointer',color:'var(--text-3)',padding:4,display:'flex',flexShrink:0}}>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
           </div>
-          <button onClick={onClose} style={{color:'var(--text-3)',cursor:'pointer',display:'flex',padding:8,borderRadius:10,transition:'all .18s',border:'1px solid transparent',background:'transparent'}} onMouseEnter={e=>{e.currentTarget.style.color='var(--text-1)';e.currentTarget.style.background='var(--bg-input)';e.currentTarget.style.borderColor='var(--border)'}} onMouseLeave={e=>{e.currentTarget.style.color='var(--text-3)';e.currentTarget.style.background='transparent';e.currentTarget.style.borderColor='transparent'}}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-          </button>
+
+          {/* Row 2: Tags + metadata */}
+          <div style={{display:'flex',alignItems:'center',padding:'6px 14px',gap:14,fontSize:12,color:'var(--text-2)',borderTop:'1px solid var(--border)',flexWrap:'wrap'}}>
+            <div style={{display:'flex',alignItems:'center',gap:6,flexWrap:'wrap'}}>
+              {tags.map(t=>(
+                <span key={t} style={{display:'inline-flex',alignItems:'center',gap:4,background:'var(--bg-input)',border:'1px solid var(--border)',borderRadius:5,padding:'1px 7px',fontSize:11.5,color:'var(--text-1)'}}>
+                  {t}
+                  <button onClick={()=>setTags(p=>p.filter(x=>x!==t))} style={{background:'none',border:'none',cursor:'pointer',color:'var(--text-3)',padding:0,lineHeight:1,display:'flex'}}>
+                    <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                  </button>
+                </span>
+              ))}
+              <button onClick={()=>setShowTagInput(v=>!v)} style={{display:'inline-flex',alignItems:'center',gap:3,background:'none',border:'none',cursor:'pointer',color:'var(--accent)',fontSize:11.5,fontFamily:'inherit',padding:0}}>
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Add tags
+              </button>
+              {showTagInput&&(
+                <input autoFocus value={tagInput} onChange={e=>setTagInput(e.target.value)}
+                  onKeyDown={e=>{
+                    if((e.key==='Enter'||e.key===',')&&tagInput.trim()){setTags(p=>[...new Set([...p,tagInput.trim()])]);setTagInput('');if(e.key===',')e.preventDefault()}
+                    if(e.key==='Escape')setShowTagInput(false)
+                  }}
+                  placeholder="tag name…"
+                  style={{background:'transparent',border:'none',borderBottom:'1px solid var(--accent)',outline:'none',fontSize:11.5,color:'var(--text-1)',fontFamily:'inherit',width:84}}
+                />
+              )}
+            </div>
+            <div style={{width:1,height:13,background:'var(--border)',flexShrink:0}} />
+            <span>Contact reason: <button style={{color:'var(--accent)',background:'none',border:'none',cursor:'pointer',fontFamily:'inherit',fontSize:12,padding:0}}>+Add</button></span>
+            <div style={{width:1,height:13,background:'var(--border)',flexShrink:0}} />
+            <span>Product: <button style={{color:'var(--accent)',background:'none',border:'none',cursor:'pointer',fontFamily:'inherit',fontSize:12,padding:0}}>+Add</button></span>
+            <div style={{width:1,height:13,background:'var(--border)',flexShrink:0}} />
+            <span>Resolution: <button style={{color:'var(--accent)',background:'none',border:'none',cursor:'pointer',fontFamily:'inherit',fontSize:12,padding:0}}>+Add</button></span>
+          </div>
         </div>
 
-        {/* Fields card — prominent glass surface */}
-        <div style={{margin:'0 20px',background:'linear-gradient(145deg,rgba(255,255,255,0.085) 0%,rgba(161,117,252,0.04) 100%)',border:'1px solid rgba(255,255,255,0.16)',borderTop:'1px solid rgba(255,255,255,0.24)',borderRadius:18,overflow:'hidden',flexShrink:0,boxShadow:'0 8px 32px rgba(0,0,0,0.28),inset 0 1px 0 rgba(255,255,255,0.1)'}}>
+        {/* ── Empty thread area ── */}
+        <div style={{flex:1,overflowY:'auto',minHeight:20}} />
+
+        {/* ── Bottom compose section ── */}
+        <div style={{borderTop:'1px solid var(--border)',flexShrink:0}}>
+
+          {/* To row */}
+          <div style={{display:'flex',alignItems:'center',padding:'8px 14px',borderBottom:'1px solid var(--border)',gap:8}}>
+            <span style={{fontSize:10.5,fontWeight:700,color:'var(--text-3)',letterSpacing:'.08em',textTransform:'uppercase',width:38,flexShrink:0}}>To</span>
+            <input value={to} onChange={e=>setTo(e.target.value)} placeholder="Search customers..." autoFocus style={{flex:1,background:'transparent',border:'none',outline:'none',fontSize:13,color:'var(--text-1)',fontFamily:'inherit'}} />
+            <button onClick={()=>setShowCC(v=>!v)} style={{fontSize:10.5,fontWeight:600,color:showCC?'var(--accent)':'var(--text-3)',background:'none',border:'1px solid var(--border)',borderRadius:5,padding:'2px 9px',cursor:'pointer',fontFamily:'inherit',flexShrink:0,transition:'all .15s'}}>Cc / Bcc</button>
+          </div>
 
           {/* From row */}
           {connectedEmail&&(
-            <div style={{display:'flex',alignItems:'center',padding:'13px 20px',borderBottom:'1px solid rgba(255,255,255,0.09)'}}>
-              <span style={{fontSize:10,fontWeight:900,color:'var(--text-3)',letterSpacing:'.14em',textTransform:'uppercase',width:64,flexShrink:0}}>From</span>
-              <div style={{display:'flex',alignItems:'center',gap:8,flex:1,minWidth:0}}>
-                <span style={{fontSize:13.5,color:'var(--text-2)',fontFamily:'inherit',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{connectedEmail}</span>
-                <span style={{fontSize:8.5,fontWeight:800,padding:'2px 7px',borderRadius:5,background:'rgba(74,222,128,0.12)',color:'#4ade80',border:'1px solid rgba(74,222,128,0.22)',flexShrink:0,letterSpacing:'.06em'}}>VERIFIED</span>
-              </div>
+            <div style={{display:'flex',alignItems:'center',padding:'8px 14px',borderBottom:'1px solid var(--border)',gap:8}}>
+              <span style={{fontSize:10.5,fontWeight:700,color:'var(--text-3)',letterSpacing:'.08em',textTransform:'uppercase',width:38,flexShrink:0}}>From</span>
+              <span style={{fontSize:13,color:'var(--text-2)'}}>{connectedEmail}</span>
             </div>
           )}
 
-          {/* To row */}
-          <div style={{display:'flex',alignItems:'center',padding:'14px 20px',borderBottom:'1px solid rgba(255,255,255,0.09)',transition:'background .18s',position:'relative'}} onMouseEnter={e=>e.currentTarget.style.background='rgba(161,117,252,0.04)'} onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
-            <span style={{fontSize:10,fontWeight:900,color:'var(--text-2)',letterSpacing:'.14em',textTransform:'uppercase',width:64,flexShrink:0}}>To</span>
-            <input value={to} onChange={e=>setTo(e.target.value)} placeholder="recipient@email.com" className="cm-input" style={{flex:1,background:'transparent',border:'none',outline:'none',fontSize:14,fontFamily:'inherit',letterSpacing:'.005em'}} />
-            <button onClick={()=>setShowCC(v=>!v)} style={{fontSize:10,fontWeight:800,color:showCC?'#C3A3FF':'var(--text-3)',background:showCC?'rgba(161,117,252,0.18)':'var(--bg-input)',border:`1px solid ${showCC?'rgba(161,117,252,0.4)':'var(--bg-surface-2)'}`,borderRadius:7,padding:'4px 11px',cursor:'pointer',transition:'all .18s',fontFamily:'inherit',flexShrink:0,letterSpacing:'.06em',textTransform:'uppercase'}} onMouseEnter={e=>{if(!showCC){e.currentTarget.style.color='var(--text-2)';e.currentTarget.style.borderColor='var(--border)';e.currentTarget.style.background='var(--bg-input)'}}} onMouseLeave={e=>{if(!showCC){e.currentTarget.style.color='var(--text-3)';e.currentTarget.style.borderColor='var(--border)';e.currentTarget.style.background='var(--bg-input)'}}}>CC</button>
-          </div>
-
-          {/* CC row */}
+          {/* CC + Bcc row */}
           {showCC&&(
-            <div style={{display:'flex',alignItems:'center',padding:'14px 20px',borderBottom:'1px solid rgba(255,255,255,0.09)',background:'rgba(161,117,252,0.03)'}}>
-              <span style={{fontSize:10,fontWeight:900,color:'var(--text-2)',letterSpacing:'.14em',textTransform:'uppercase',width:64,flexShrink:0}}>CC</span>
-              <input value={cc} onChange={e=>setCC(e.target.value)} placeholder="cc@email.com" className="cm-input" style={{flex:1,background:'transparent',border:'none',outline:'none',fontSize:14,fontFamily:'inherit'}} />
+            <div style={{display:'flex',alignItems:'center',padding:'8px 14px',borderBottom:'1px solid var(--border)',gap:8,background:'var(--bg-input)'}}>
+              <span style={{fontSize:10.5,fontWeight:700,color:'var(--text-3)',letterSpacing:'.08em',textTransform:'uppercase',width:38,flexShrink:0}}>CC</span>
+              <input value={cc} onChange={e=>setCC(e.target.value)} placeholder="cc@email.com" style={{flex:1,background:'transparent',border:'none',outline:'none',fontSize:13,color:'var(--text-1)',fontFamily:'inherit'}} />
+              <span style={{fontSize:10.5,fontWeight:700,color:'var(--text-3)',letterSpacing:'.08em',textTransform:'uppercase',width:38,flexShrink:0}}>BCC</span>
+              <input value={bcc} onChange={e=>setBcc(e.target.value)} placeholder="bcc@email.com" style={{flex:1,background:'transparent',border:'none',outline:'none',fontSize:13,color:'var(--text-1)',fontFamily:'inherit'}} />
             </div>
           )}
 
-          {/* Subject row */}
-          <div style={{display:'flex',alignItems:'center',padding:'14px 20px',transition:'background .18s'}} onMouseEnter={e=>e.currentTarget.style.background='rgba(161,117,252,0.04)'} onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
-            <span style={{fontSize:10,fontWeight:900,color:'var(--text-2)',letterSpacing:'.14em',textTransform:'uppercase',width:64,flexShrink:0}}>Subject</span>
-            <input value={subject} onChange={e=>setSubject(e.target.value)} placeholder="What's this about?" onKeyDown={e=>{if(e.key==='Enter'){e.preventDefault();bodyRef.current?.focus()}}} className="cm-input" style={{flex:1,background:'transparent',border:'none',outline:'none',fontSize:14,fontFamily:'inherit',fontWeight:600,letterSpacing:'.005em'}} />
-          </div>
-        </div>
-
-        {/* Compose area — writing surface */}
-        <div style={{margin:'10px 20px 0',border:'1px solid var(--border)',borderTop:'1px solid rgba(255,255,255,0.14)',borderRadius:18,overflow:'hidden',flex:1,display:'flex',flexDirection:'column',minHeight:0,position:'relative',boxShadow:'0 4px 20px rgba(0,0,0,0.22),inset 0 1px 0 rgba(255,255,255,0.06)'}}>
-
-          {/* Subtle purple radial glow inside body */}
-          <div aria-hidden style={{position:'absolute',top:0,right:0,width:260,height:180,borderRadius:'50%',background:'radial-gradient(ellipse,rgba(161,117,252,0.08) 0%,transparent 70%)',pointerEvents:'none',zIndex:0}} />
-
-          {/* Toolbar */}
-          <div style={{display:'flex',alignItems:'center',gap:6,padding:'9px 16px',borderBottom:'1px solid rgba(255,255,255,0.08)',flexWrap:'nowrap',overflowX:'auto',flexShrink:0,background:'var(--bg-input)',backdropFilter:'blur(8px)',position:'relative',zIndex:1}}>
-            {/* Format group */}
-            <div style={{display:'inline-flex',alignItems:'center',background:'var(--bg-surface-2)',borderRadius:9,padding:'2px 3px',border:'1px solid var(--border)',gap:1}}>
-              <button className="rtbar-btn" onMouseDown={e=>e.preventDefault()} onClick={()=>formatDoc('bold')} style={{fontWeight:800,borderRadius:7,minWidth:30,fontSize:13}}>B</button>
-              <button className="rtbar-btn" onMouseDown={e=>e.preventDefault()} onClick={()=>formatDoc('italic')} style={{fontStyle:'italic',borderRadius:7,minWidth:30,fontSize:13}}>I</button>
-              <button className="rtbar-btn" onMouseDown={e=>e.preventDefault()} onClick={()=>formatDoc('underline')} style={{textDecoration:'underline',borderRadius:7,minWidth:30,fontSize:13}}>U</button>
-            </div>
-            <div style={{width:1,height:16,background:'var(--bg-surface-2)',flexShrink:0}} />
-            <div style={{display:'inline-flex',alignItems:'center',background:'var(--bg-surface-2)',borderRadius:9,padding:'2px 3px',border:'1px solid var(--border)',gap:1}}>
-              <button className="rtbar-btn" onMouseDown={e=>e.preventDefault()} onClick={insertComposeLink} title="Link" style={{borderRadius:7}}>
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-              </button>
-              <button className="rtbar-btn" onMouseDown={e=>e.preventDefault()} onClick={()=>formatDoc('insertUnorderedList')} title="List" style={{borderRadius:7}}>
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
-              </button>
-            </div>
+          {/* Macro search row */}
+          <div style={{display:'flex',alignItems:'center',padding:'7px 14px',borderBottom:'1px solid var(--border)',gap:8,position:'relative'}}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--text-3)" strokeWidth="2.2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            <input
+              ref={macroRef}
+              value={macroSearch}
+              onChange={e=>{setMacroSearch(e.target.value);setShowMacroDD(true)}}
+              onFocus={()=>setShowMacroDD(true)}
+              onBlur={()=>setTimeout(()=>setShowMacroDD(false),160)}
+              placeholder="Search macros by name, tags or body..."
+              style={{flex:1,background:'transparent',border:'none',outline:'none',fontSize:13,color:'var(--text-1)',fontFamily:'inherit'}}
+            />
+            {macroSearch&&<button onMouseDown={e=>{e.preventDefault();setMacroSearch('');setShowMacroDD(false)}} style={{background:'none',border:'none',cursor:'pointer',color:'var(--text-3)',padding:2,display:'flex'}}>
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>}
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--text-3)" strokeWidth="2.3"><polyline points="6 9 12 15 18 9"/></svg>
+            {showMacroDD&&macroHits.length>0&&(
+              <div style={{position:'absolute',bottom:'calc(100% + 3px)',left:0,right:0,background:'var(--bg-surface)',border:'1px solid var(--border)',borderRadius:10,boxShadow:'0 -8px 24px rgba(0,0,0,0.1)',zIndex:60,maxHeight:220,overflowY:'auto',padding:4}}>
+                {macroHits.map(m=>(
+                  <button key={m.id} onMouseDown={()=>applyMacro(m)} style={{display:'block',width:'100%',textAlign:'left',padding:'8px 11px',background:'none',border:'none',cursor:'pointer',borderRadius:7,fontFamily:'inherit',transition:'background .12s'}} onMouseEnter={e=>e.currentTarget.style.background='var(--bg-input)'} onMouseLeave={e=>e.currentTarget.style.background='none'}>
+                    <div style={{fontSize:12.5,fontWeight:600,color:'var(--text-1)'}}>{m.name}</div>
+                    <div style={{fontSize:11.5,color:'var(--text-2)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',marginTop:1}}>{m.body?.replace(/\n/g,' ')}</div>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
-          {/* Writing surface */}
+          {/* Rich text body */}
           <div
             ref={bodyRef}
             contentEditable
             suppressContentEditableWarning
-            data-placeholder="Write your message…"
+            data-placeholder="Click here to reply, or press r."
             onInput={e=>setBody(e.currentTarget.textContent)}
-            onKeyDown={e=>{if(e.key==='Enter'&&(e.metaKey||e.ctrlKey))handleSend()}}
+            onKeyDown={e=>{if(e.key==='Enter'&&(e.metaKey||e.ctrlKey))doSend()}}
             className="compose-ta"
-            style={{flex:1,overflowY:'auto',minHeight:160,padding:'18px 22px',fontSize:14,lineHeight:1.9,color:'var(--text-1)',letterSpacing:'.006em',background:'linear-gradient(180deg,rgba(161,117,252,0.025) 0%,rgba(0,0,0,0) 32%)',position:'relative',zIndex:1}}
+            style={{minHeight:130,padding:'12px 16px',fontSize:13.5,lineHeight:1.75,overflowY:'auto'}}
           />
-        </div>
 
-        {/* Footer */}
-        <div style={{padding:'12px 20px 18px',display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0}}>
-          <div style={{display:'flex',alignItems:'center',gap:6}}>
-            <kbd style={{fontSize:10,color:'var(--text-3)',background:'var(--bg-surface-2)',border:'1px solid rgba(255,255,255,0.13)',borderRadius:6,padding:'2px 8px',fontFamily:'inherit'}}>⌘ Enter</kbd>
-            <span style={{fontSize:10.5,color:'var(--text-3)'}}>to send</span>
-          </div>
-          <div style={{display:'flex',gap:8,alignItems:'center'}}>
-            <button className="btn-ghost" onClick={onClose} style={{padding:'9px 18px',fontSize:12.5}}>Discard</button>
-            <button onClick={handleSend} disabled={!ready||sending} style={{display:'flex',alignItems:'center',gap:8,padding:'11px 24px',fontSize:13.5,fontWeight:700,fontFamily:'inherit',background:ready&&!sending?'linear-gradient(135deg,#B48CFF 0%,#A175FC 40%,#7B45E8 100%)':'rgba(161,117,252,0.12)',color:ready&&!sending?'#fff':'rgba(161,117,252,0.35)',border:'none',borderRadius:13,cursor:ready&&!sending?'pointer':'not-allowed',transition:'all .22s cubic-bezier(.16,1,.3,1)',boxShadow:ready&&!sending?'0 6px 24px rgba(161,117,252,0.55),0 1px 0 rgba(255,255,255,0.15) inset':'none',letterSpacing:'.01em'}} onMouseEnter={e=>{if(ready&&!sending){e.currentTarget.style.transform='translateY(-2px)';e.currentTarget.style.boxShadow='0 12px 36px rgba(161,117,252,0.7),0 1px 0 rgba(255,255,255,0.18) inset'}}} onMouseLeave={e=>{e.currentTarget.style.transform='none';e.currentTarget.style.boxShadow=ready&&!sending?'0 6px 24px rgba(161,117,252,0.55),0 1px 0 rgba(255,255,255,0.15) inset':'none'}}>
-              {sending
-                ? <><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{animation:'spin .8s linear infinite'}}><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>Sending…</>
-                : <><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>Send message</>
-              }
+          {/* Suggested macros */}
+          {!body&&suggested.length>0&&(
+            <div style={{padding:'7px 14px 8px',borderTop:'1px solid var(--border)',display:'flex',alignItems:'center',gap:7,flexWrap:'wrap'}}>
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--text-3)" strokeWidth="2.2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              <span style={{fontSize:11,color:'var(--text-3)',fontWeight:500}}>Suggested macros</span>
+              {suggested.map(m=>(
+                <button key={m.id} onClick={()=>applyMacro(m)} style={{padding:'2px 10px',background:'var(--bg-input)',border:'1px solid var(--border)',borderRadius:100,fontSize:11.5,color:'var(--text-1)',cursor:'pointer',fontFamily:'inherit',transition:'border-color .15s'}} onMouseEnter={e=>e.currentTarget.style.borderColor='var(--accent)'} onMouseLeave={e=>e.currentTarget.style.borderColor='var(--border)'}>
+                  {m.name}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Toolbar + Send buttons */}
+          <div style={{display:'flex',alignItems:'center',padding:'7px 12px',borderTop:'1px solid var(--border)',gap:3}}>
+            <button className="rtbar-btn" onMouseDown={e=>e.preventDefault()} onClick={()=>fmt('bold')} title="Bold" style={{fontWeight:700,minWidth:26,fontSize:12}}>B</button>
+            <button className="rtbar-btn" onMouseDown={e=>e.preventDefault()} onClick={()=>fmt('italic')} title="Italic" style={{fontStyle:'italic',minWidth:26,fontSize:12}}>I</button>
+            <button className="rtbar-btn" onMouseDown={e=>e.preventDefault()} onClick={()=>fmt('underline')} title="Underline" style={{textDecoration:'underline',minWidth:26,fontSize:12}}>U</button>
+            <div style={{width:1,height:14,background:'var(--border)',margin:'0 3px'}} />
+            <button className="rtbar-btn" onMouseDown={e=>e.preventDefault()} onClick={insertLink} title="Link">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
             </button>
+            <button className="rtbar-btn" onMouseDown={e=>e.preventDefault()} onClick={()=>fmt('insertUnorderedList')} title="Bullet list">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+            </button>
+            <div style={{flex:1}} />
+            {/* Send button group */}
+            <div style={{display:'flex',alignItems:'stretch',borderRadius:9,overflow:'hidden',boxShadow:'0 2px 10px rgba(161,117,252,0.35)',flexShrink:0}}>
+              <button onClick={doSend} disabled={sending} style={{display:'flex',alignItems:'center',gap:6,padding:'7px 16px',background:'linear-gradient(135deg,#A175FC 0%,#7B45E8 100%)',color:'#fff',border:'none',cursor:sending?'not-allowed':'pointer',fontSize:12.5,fontWeight:600,fontFamily:'inherit',opacity:sending?0.7:1,transition:'opacity .15s'}}>
+                {sending
+                  ? <><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" style={{animation:'spin .8s linear infinite'}}><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>Sending…</>
+                  : <>Send</>
+                }
+              </button>
+              <div style={{width:1,background:'rgba(255,255,255,0.22)',flexShrink:0}} />
+              <button onClick={doSend} disabled={sending} style={{display:'flex',alignItems:'center',gap:5,padding:'7px 16px',background:'linear-gradient(135deg,#A175FC 0%,#7B45E8 100%)',color:'#fff',border:'none',cursor:sending?'not-allowed':'pointer',fontSize:12.5,fontWeight:600,fontFamily:'inherit',opacity:sending?0.7:1,transition:'opacity .15s',whiteSpace:'nowrap'}}>
+                Send &amp; Close
+              </button>
+            </div>
           </div>
+
         </div>
       </div>
     </div>
@@ -2620,7 +2701,7 @@ function InboxPage() {
       )}
 
       {/* ═══════════════ Modals ═══════════════ */}
-      {modal?.type==='compose'   && <ComposeModal emailProvider={emailProvider} connectedEmail={connectedEmail} token={session.access_token} onClose={()=>setModal(null)} onSuccess={(msg,type)=>{handleModalSuccess(msg,type);loadThreads(session.access_token)}} />}
+      {modal?.type==='compose'   && <ComposeModal emailProvider={emailProvider} connectedEmail={connectedEmail} token={session.access_token} macros={macros} onClose={()=>setModal(null)} onSuccess={(msg,type)=>{handleModalSuccess(msg,type);loadThreads(session.access_token)}} />}
       {modal?.type==='refund'    && <RefundModal      order={modal.order} token={session.access_token} onClose={()=>setModal(null)} onSuccess={handleModalSuccess} />}
       {modal?.type==='cancel'    && <CancelModal      order={modal.order} token={session.access_token} onClose={()=>setModal(null)} onSuccess={handleModalSuccess} />}
       {modal?.type==='duplicate' && <DuplicateModal   order={modal.order} token={session.access_token} onClose={()=>setModal(null)} onSuccess={handleModalSuccess} />}

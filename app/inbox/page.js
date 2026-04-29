@@ -1152,6 +1152,64 @@ function NoteModal({ order, token, onClose, onSuccess }) {
   )
 }
 
+// ─── Ticket action bar ────────────────────────────────────────
+function TicketActionBar({ meta, status, onClose, onAddTag, onRemoveTag, onFieldChange }) {
+  const fieldButton = (key, label) => (
+    <button
+      onClick={() => onFieldChange(key, label)}
+      style={{display:'inline-flex',alignItems:'center',gap:4,border:'none',background:'transparent',padding:0,cursor:'pointer',fontSize:10.5,color:'var(--text-3)',fontFamily:'inherit'}}
+    >
+      <span style={{color:'var(--text-2)',fontWeight:600}}>{label}:</span>
+      <span>{meta[key] || '+Add'}</span>
+    </button>
+  )
+
+  return (
+    <div style={{display:'flex',alignItems:'center',gap:18,padding:'9px 0 0',marginTop:9,borderTop:'1px solid var(--border)',minHeight:34,flexWrap:'wrap'}}>
+      <button
+        onClick={onClose}
+        style={{display:'inline-flex',alignItems:'center',gap:5,padding:'4px 9px',border:'1px solid var(--border)',borderRadius:7,background:status==='closed'?'var(--bg-surface-2)':'var(--bg-surface)',color:'var(--text-2)',fontSize:11,fontWeight:600,cursor:'pointer',fontFamily:'inherit'}}
+        title="Close ticket"
+      >
+        <span style={{fontSize:12}}>✓</span>
+        {status==='closed' ? 'Closed' : 'Close'}
+      </button>
+
+      <div style={{display:'flex',alignItems:'center',gap:6,flexWrap:'wrap'}}>
+        {(meta.tags||[]).map(tag=>(
+          <button
+            key={tag}
+            onClick={() => onRemoveTag(tag)}
+            title="Remove tag"
+            style={{display:'inline-flex',alignItems:'center',gap:4,padding:'3px 7px',border:'1px solid var(--border)',borderRadius:999,background:'var(--bg-surface-2)',color:'var(--text-2)',fontSize:10.5,fontWeight:600,cursor:'pointer',fontFamily:'inherit'}}
+          >
+            {tag}
+            <span style={{color:'var(--text-3)'}}>×</span>
+          </button>
+        ))}
+        <button onClick={onAddTag} style={{border:'none',background:'transparent',cursor:'pointer',fontSize:10.5,color:'var(--text-3)',fontFamily:'inherit',padding:0}}>+Add tag</button>
+      </div>
+
+      <div style={{display:'grid',gridTemplateColumns:'minmax(120px,1fr) minmax(120px,1fr) minmax(120px,1fr)',gap:'18px',flex:'1 1 420px',minWidth:320}}>
+        {fieldButton('contactReason', 'Contact reason')}
+        {fieldButton('product', 'Product')}
+        {fieldButton('resolution', 'Resolution')}
+      </div>
+
+      <select
+        value={meta.assignee || 'Unassigned'}
+        onChange={e=>onFieldChange('assignee', e.target.value)}
+        style={{marginLeft:'auto',border:'1px solid var(--border)',borderRadius:8,background:'var(--bg-surface)',color:'var(--text-2)',fontSize:11,padding:'4px 8px',fontFamily:'inherit',outline:'none'}}
+      >
+        <option>Unassigned</option>
+        <option>Support</option>
+        <option>Admin</option>
+        <option>Escalated</option>
+      </select>
+    </div>
+  )
+}
+
 // ─── Macro Panel ──────────────────────────────────────────────
 function GearIcon() {
   return (
@@ -1674,6 +1732,7 @@ function InboxPage() {
   const [custFieldsOpen, setCustFieldsOpen] = useState(true)
   const [custShowMore, setCustShowMore]     = useState(false)
   const [checkedThreads, setCheckedThreads] = useState({})
+  const [ticketMeta, setTicketMeta]         = useState(()=>{ try{return JSON.parse(localStorage.getItem('lynq_ticket_meta')||'{}')}catch{return{}} })
 
   const msgEnd       = useRef(null)
   const replyRef     = useRef(null)
@@ -1710,6 +1769,29 @@ function InboxPage() {
   // ── Status helpers ──
   function saveStatus(id,s){ const u={...statuses,[id]:s}; setStatuses(u); localStorage.setItem('lynq_statuses',JSON.stringify(u)) }
   const getStatus = id => statuses[id]||'open'
+  const getTicketMeta = id => ticketMeta[id] || { tags:[], assignee:'Unassigned', contactReason:'', product:'', resolution:'' }
+  function updateTicketMeta(id, patch) {
+    const current = getTicketMeta(id)
+    const next = { ...ticketMeta, [id]: { ...current, ...patch } }
+    setTicketMeta(next)
+    localStorage.setItem('lynq_ticket_meta', JSON.stringify(next))
+  }
+  function addTicketTag(id) {
+    const tag = prompt('Add tag:')
+    if(!tag?.trim()) return
+    const current = getTicketMeta(id)
+    const tags = [...new Set([...(current.tags||[]), tag.trim()])]
+    updateTicketMeta(id, { tags })
+  }
+  function removeTicketTag(id, tag) {
+    const current = getTicketMeta(id)
+    updateTicketMeta(id, { tags: (current.tags || []).filter(t=>t!==tag) })
+  }
+  function updateTicketField(id, key, label) {
+    const value = prompt(`${label}:`)
+    if(value === null) return
+    updateTicketMeta(id, { [key]: value.trim() })
+  }
 
   // ── Filtered + priority-sorted threads ──
   const URGENCY_SCORE = { critical:4, high:3, medium:2, low:1 }
@@ -2142,6 +2224,14 @@ function InboxPage() {
                   </div>
                 </div>
               </div>
+              <TicketActionBar
+                meta={getTicketMeta(selected.id)}
+                status={getStatus(selected.id)}
+                onClose={() => saveStatus(selected.id, 'closed')}
+                onAddTag={() => addTicketTag(selected.id)}
+                onRemoveTag={(tag) => removeTicketTag(selected.id, tag)}
+                onFieldChange={(field, labelOrValue) => field === 'assignee' ? updateTicketMeta(selected.id, { assignee: labelOrValue }) : updateTicketField(selected.id, field, labelOrValue)}
+              />
             </div>
 
             {/* Messages */}

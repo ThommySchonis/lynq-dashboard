@@ -132,9 +132,9 @@ const CSS = `
   .trow-active::after { content:''; position:absolute; left:0; top:0; bottom:0; width:3px; background:linear-gradient(180deg,#C3A3FF 0%,#7B45E8 100%); border-radius:0 2px 2px 0; }
 
   /* ── View tabs — pill style ── */
-  .vtab { padding:5px 12px; background:transparent; cursor:pointer; font-size:11.5px; font-weight:500; font-family:inherit; border-radius:8px; transition:all .18s; color:var(--text-3); white-space:nowrap; letter-spacing:.01em; border:1px solid transparent; }
-  .vtab.on { color:#B48CFF; background:rgba(161,117,252,0.13); border-color:rgba(161,117,252,0.2); font-weight:700; }
-  .vtab:hover:not(.on) { color:var(--text-2); background:var(--bg-input); }
+  .vtab { padding:6px 12px; background:transparent; cursor:pointer; font-size:11.5px; font-weight:500; font-family:inherit; border-radius:0; transition:all .18s; color:var(--text-3); white-space:nowrap; letter-spacing:.01em; border:none; border-bottom:2px solid transparent; }
+  .vtab.on { color:var(--text-1); border-bottom-color:var(--accent); font-weight:600; background:transparent; }
+  .vtab:hover:not(.on) { color:var(--text-2); }
 
   /* ── Composer tab ── */
   .ctab { padding:9px 15px; background:transparent; cursor:pointer; font-size:12.5px; font-weight:500; font-family:inherit; border-bottom:2px solid transparent; transition:color .15s,border-color .15s; color:var(--text-3); }
@@ -294,63 +294,66 @@ const CSS = `
   .msg-xlate-btn { font-size:10px; font-weight:600; color:var(--text-3); background:none; border:none; cursor:pointer; padding:2px 7px; font-family:inherit; transition:all .15s; border-radius:5px; }
   .msg-xlate-btn:hover { color:#A175FC; background:rgba(161,117,252,0.1); }
 
-  /* ── Message bubbles ── */
+  /* ── Message bubbles — clean, email-style ── */
   .msg-in  {
-    background: var(--bg-surface);
-    border: 1px solid var(--border);
-    border-left: 3px solid rgba(124,92,252,0.25);
-    border-radius: 3px 18px 18px 18px;
-    padding: 15px 18px;
+    background: #FFFFFF;
+    border: 1px solid #E2E8F0;
+    border-radius: 2px 14px 14px 14px;
+    padding: 14px 18px;
     font-size: 13.5px;
-    line-height: 1.82;
-    color: var(--text-1);
+    line-height: 1.75;
+    color: #0F172A;
     white-space: pre-wrap;
     word-break: break-word;
-    box-shadow: var(--shadow-card);
+    box-shadow: 0 1px 3px rgba(15,23,42,0.05);
   }
   [data-theme="dark"] .msg-in {
-    background: linear-gradient(145deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.04) 100%);
+    background: rgba(255,255,255,0.06);
     border: 1px solid rgba(255,255,255,0.1);
-    border-left: 3px solid rgba(161,117,252,0.45);
-    box-shadow: 0 8px 40px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.12);
+    border-radius: 2px 14px 14px 14px;
+    color: var(--text-1);
+    box-shadow: none;
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
   }
   .msg-out {
-    background: var(--accent-soft);
-    border: 1px solid var(--accent-border);
-    border-radius: 18px 3px 18px 18px;
-    padding: 15px 18px;
+    background: #F8FAFC;
+    border: 1px solid #E2E8F0;
+    border-radius: 14px 2px 14px 14px;
+    padding: 14px 18px;
     font-size: 13.5px;
-    line-height: 1.82;
-    color: var(--text-1);
+    line-height: 1.75;
+    color: #0F172A;
     white-space: pre-wrap;
     word-break: break-word;
-    box-shadow: var(--shadow-card);
+    box-shadow: 0 1px 3px rgba(15,23,42,0.05);
   }
   [data-theme="dark"] .msg-out {
-    background: linear-gradient(145deg, rgba(80,40,160,0.72) 0%, rgba(45,18,105,0.82) 100%);
-    border: 1px solid rgba(161,117,252,0.28);
-    box-shadow: 0 8px 40px rgba(60,20,140,0.35), inset 0 1px 0 rgba(255,255,255,0.09);
+    background: rgba(124,92,252,0.14);
+    border: 1px solid rgba(161,117,252,0.22);
+    border-radius: 14px 2px 14px 14px;
+    color: var(--text-1);
+    box-shadow: none;
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
   }
   .msg-note {
-    background: rgba(251,191,36,0.06);
-    border: 1px solid rgba(251,191,36,0.22);
-    border-left: 3px solid rgba(251,191,36,0.55);
-    border-radius: 3px 18px 18px 18px;
-    padding: 15px 18px;
+    background: #FFFBEB;
+    border: 1px solid #FDE68A;
+    border-left: 3px solid #F59E0B;
+    border-radius: 2px 14px 14px 14px;
+    padding: 14px 18px;
     font-size: 13.5px;
-    line-height: 1.82;
-    color: var(--text-1);
+    line-height: 1.75;
+    color: #0F172A;
     white-space: pre-wrap;
     word-break: break-word;
-    box-shadow: var(--shadow-card);
   }
   [data-theme="dark"] .msg-note {
-    background: linear-gradient(145deg, rgba(251,191,36,0.1) 0%, rgba(251,191,36,0.05) 100%);
-    box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+    background: rgba(251,191,36,0.08);
+    border: 1px solid rgba(251,191,36,0.2);
+    border-left: 3px solid rgba(251,191,36,0.5);
+    color: var(--text-1);
   }
   .msg-sender { font-size:10.5px; color:var(--text-2); font-weight:700; letter-spacing:.01em; }
   .msg-time   { font-size:10px; color:var(--text-3); margin-left:7px; font-weight:400; }
@@ -362,18 +365,12 @@ const CSS = `
   .in-panel-l { background:var(--bg-surface); border-right:1px solid var(--border); }
   [data-theme="dark"] .in-panel-l { background:rgba(10,4,28,0.52); backdrop-filter:blur(24px); -webkit-backdrop-filter:blur(24px); border-right:1px solid rgba(255,255,255,0.07); }
 
-  .in-al1 { position:absolute; top:-25%; left:12%; width:1000px; height:900px; border-radius:50%; background:radial-gradient(ellipse,rgba(124,92,252,0.10) 0%,transparent 70%); animation:auroraA 22s ease-in-out infinite; filter:blur(55px); }
-  [data-theme="dark"] .in-al1 { background:radial-gradient(ellipse,rgba(161,117,252,0.62) 0%,rgba(124,58,237,0.32) 38%,rgba(109,40,217,0.1) 60%,transparent 74%); }
-
-  .in-al4 { position:absolute; top:2%; left:3%; width:420px; height:420px; border-radius:50%; background:radial-gradient(ellipse,rgba(124,92,252,0.07) 0%,transparent 72%); animation:auroraD 19s ease-in-out infinite; filter:blur(42px); }
-  [data-theme="dark"] .in-al4 { background:radial-gradient(ellipse,rgba(139,92,246,0.55) 0%,rgba(109,40,217,0.22) 50%,transparent 72%); }
-
-  .in-al6 { position:absolute; bottom:10%; left:30%; width:500px; height:500px; border-radius:50%; background:radial-gradient(ellipse,rgba(99,102,241,0.06) 0%,transparent 70%); animation:auroraB 26s ease-in-out infinite reverse; filter:blur(58px); }
-  [data-theme="dark"] .in-al6 { background:radial-gradient(ellipse,rgba(107,63,196,0.38) 0%,rgba(75,40,148,0.14) 48%,transparent 70%); }
-
-  .in-grid { position:absolute; inset:0; background-image:linear-gradient(rgba(15,23,42,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(15,23,42,0.04) 1px,transparent 1px); background-size:72px 72px; mask-image:radial-gradient(ellipse 90% 85% at 50% 22%,black 25%,transparent 100%); -webkit-mask-image:radial-gradient(ellipse 90% 85% at 50% 22%,black 25%,transparent 100%); }
-  [data-theme="dark"] .in-grid { background-image:linear-gradient(rgba(255,255,255,0.018) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.018) 1px,transparent 1px); }
-
+  /* Aurora — hidden in light mode (work tool), full in dark */
+  .in-al1, .in-al4, .in-al6, .in-grid { display:none; }
+  [data-theme="dark"] .in-al1 { display:block; position:absolute; top:-25%; left:12%; width:1000px; height:900px; border-radius:50%; background:radial-gradient(ellipse,rgba(161,117,252,0.62) 0%,rgba(124,58,237,0.32) 38%,rgba(109,40,217,0.1) 60%,transparent 74%); animation:auroraA 22s ease-in-out infinite; filter:blur(55px); }
+  [data-theme="dark"] .in-al4 { display:block; position:absolute; top:2%; left:3%; width:420px; height:420px; border-radius:50%; background:radial-gradient(ellipse,rgba(139,92,246,0.55) 0%,rgba(109,40,217,0.22) 50%,transparent 72%); animation:auroraD 19s ease-in-out infinite; filter:blur(42px); }
+  [data-theme="dark"] .in-al6 { display:block; position:absolute; bottom:10%; left:30%; width:500px; height:500px; border-radius:50%; background:radial-gradient(ellipse,rgba(107,63,196,0.38) 0%,rgba(75,40,148,0.14) 48%,transparent 70%); animation:auroraB 26s ease-in-out infinite reverse; filter:blur(58px); }
+  [data-theme="dark"] .in-grid { display:block; position:absolute; inset:0; background-image:linear-gradient(rgba(255,255,255,0.018) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.018) 1px,transparent 1px); background-size:72px 72px; }
   .in-vig { position:absolute; inset:0; }
   [data-theme="dark"] .in-vig { background:radial-gradient(ellipse 115% 105% at 50% 50%,transparent 32%,rgba(10,5,32,0.42) 70%,rgba(10,5,32,0.82) 100%); }
 
@@ -1447,7 +1444,7 @@ function InboxPage() {
             </div>
             <div style={{display:'flex',alignItems:'center',gap:4}}>
               <button onClick={()=>loadThreads(session.access_token)} style={{background:'transparent',color:'var(--text-3)',cursor:'pointer',display:'flex',padding:5,borderRadius:7,transition:'all .15s'}} onMouseEnter={e=>{e.currentTarget.style.color='var(--text-2)';e.currentTarget.style.background='var(--bg-input)'}} onMouseLeave={e=>{e.currentTarget.style.color='var(--text-3)';e.currentTarget.style.background='transparent'}} title="Refresh">{I.refresh}</button>
-              <button onClick={()=>setModal({type:'compose'})} style={{display:'flex',alignItems:'center',gap:5,padding:'5px 10px',borderRadius:8,background:'linear-gradient(135deg,rgba(161,117,252,0.18) 0%,rgba(123,69,232,0.12) 100%)',border:'1px solid rgba(161,117,252,0.28)',color:'#C3A3FF',cursor:'pointer',fontSize:11.5,fontWeight:700,fontFamily:'inherit',transition:'all .2s',letterSpacing:'.01em'}} onMouseEnter={e=>{e.currentTarget.style.background='linear-gradient(135deg,rgba(161,117,252,0.28) 0%,rgba(123,69,232,0.2) 100%)';e.currentTarget.style.boxShadow='0 4px 16px rgba(161,117,252,0.2)'}} onMouseLeave={e=>{e.currentTarget.style.background='linear-gradient(135deg,rgba(161,117,252,0.18) 0%,rgba(123,69,232,0.12) 100%)';e.currentTarget.style.boxShadow='none'}} title="New ticket">
+              <button onClick={()=>setModal({type:'compose'})} style={{display:'flex',alignItems:'center',gap:5,padding:'5px 11px',borderRadius:8,background:'var(--accent)',border:'none',color:'#fff',cursor:'pointer',fontSize:11.5,fontWeight:600,fontFamily:'inherit',transition:'all .18s',letterSpacing:'.01em'}} onMouseEnter={e=>{e.currentTarget.style.background='var(--accent-hover)'}} onMouseLeave={e=>{e.currentTarget.style.background='var(--accent)'}} title="New ticket">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                 New
               </button>
@@ -1461,7 +1458,7 @@ function InboxPage() {
           </div>
 
           {/* View tabs */}
-          <div style={{display:'flex',borderBottom:'1px solid rgba(255,255,255,0.055)',overflowX:'auto'}} className="sscroll">
+          <div style={{display:'flex',borderBottom:'1px solid var(--border)',overflowX:'auto'}} className="sscroll">
             {VIEWS.map(v=>(
               <button key={v.id} className={`vtab${view===v.id?' on':''}`} onClick={()=>{ setView(v.id); if(v.id==='sent'&&session) loadSentThreads(session.access_token, emailProvider) }}>
                 {v.label}
@@ -1481,7 +1478,7 @@ function InboxPage() {
             </div>
           )}
           {(view==='sent'?loadingSent:loadingThreads)&&[0,1,2,3,4].map(i=>(
-            <div key={i} style={{padding:'12px 14px',borderBottom:'1px solid rgba(255,255,255,0.04)',display:'flex',gap:10,opacity:1-i*.16}}>
+            <div key={i} style={{padding:'12px 14px',borderBottom:'1px solid var(--border)',display:'flex',gap:10,opacity:1-i*.16}}>
               <div className="skel" style={{width:34,height:34,borderRadius:'50%',flexShrink:0}} />
               <div style={{flex:1,display:'flex',flexDirection:'column',gap:7}}>
                 <div className="skel" style={{height:11,width:'65%'}} />
@@ -1513,7 +1510,7 @@ function InboxPage() {
                 <div style={{display:'flex',gap:10}}>
                   <div style={{position:'relative',flexShrink:0}}>
                     <Avatar name={name} size={33} />
-                    {thread.unread&&<span style={{position:'absolute',top:0,right:0,width:8,height:8,borderRadius:'50%',background:'#A175FC',border:'1.5px solid #0D0719',boxShadow:'0 0 6px rgba(161,117,252,0.6)'}} />}
+                    {thread.unread&&<span style={{position:'absolute',top:0,right:0,width:8,height:8,borderRadius:'50%',background:'var(--accent)',border:'1.5px solid var(--bg-surface)'}} />}
                   </div>
                   <div style={{flex:1,minWidth:0}}>
                     {isSentView ? (
@@ -1524,7 +1521,7 @@ function InboxPage() {
                           <span style={{fontSize:10,color:'var(--text-3)',flexShrink:0,marginLeft:4}}>{formatDate(thread.date)}</span>
                         </div>
                         <div style={{display:'flex',alignItems:'center',gap:4,marginBottom:3}}>
-                          <span style={{fontSize:9,fontWeight:800,color:'rgba(161,117,252,0.5)',letterSpacing:'.06em',textTransform:'uppercase',flexShrink:0}}>To</span>
+                          <span style={{fontSize:9,fontWeight:700,color:'var(--text-3)',letterSpacing:'.06em',textTransform:'uppercase',flexShrink:0}}>To</span>
                           <span style={{fontSize:11,color:'var(--text-3)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{name||extractEmail(thread.to)}</span>
                         </div>
                       </>
@@ -1553,7 +1550,7 @@ function InboxPage() {
                       <TicketBadge status={status} />
                     </div>}
                     {isSentView&&<div style={{display:'flex',alignItems:'center',gap:5}}>
-                      <span style={{fontSize:9,fontWeight:700,padding:'1px 7px',borderRadius:100,background:'rgba(161,117,252,0.1)',color:'rgba(161,117,252,0.6)',border:'1px solid rgba(161,117,252,0.18)',letterSpacing:'.04em'}}>Sent</span>
+                      <span style={{fontSize:9,fontWeight:600,padding:'1px 7px',borderRadius:100,background:'var(--bg-surface-2)',color:'var(--text-3)',border:'1px solid var(--border)',letterSpacing:'.04em'}}>Sent</span>
                     </div>}
                   </div>
                 </div>
@@ -1574,7 +1571,7 @@ function InboxPage() {
         ):(
           <>
             {/* Ticket header */}
-            <div style={{padding:'14px 22px',borderBottom:'1px solid rgba(255,255,255,0.08)',flexShrink:0,background:'rgba(8,3,22,0.58)',backdropFilter:'blur(20px)',WebkitBackdropFilter:'blur(20px)'}}>
+            <div style={{padding:'14px 22px',borderBottom:'1px solid var(--border)',flexShrink:0,background:'var(--bg-surface)'}}>
               <div style={{display:'flex',alignItems:'center',gap:14}}>
                 <div style={{flex:1,minWidth:0}}>
                   <div style={{fontSize:14,fontWeight:700,color:'var(--text-1)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',marginBottom:2,letterSpacing:'-0.01em'}}>{selected.subject}</div>
@@ -1595,7 +1592,7 @@ function InboxPage() {
             </div>
 
             {/* Messages */}
-            <div className="sscroll conv-area" style={{flex:1,overflowY:'auto',padding:'24px 28px 16px',background:'rgba(5,2,18,0.38)'}}>
+            <div className="sscroll conv-area" style={{flex:1,overflowY:'auto',padding:'24px 28px 16px',background:'var(--bg-page)'}}>
               {loadingMsgs&&[0,1].map(i=>(
                 <div key={i} style={{display:'flex',gap:12,flexDirection:i%2===0?'row':'row-reverse',marginBottom:22,animation:`fadeUp .3s ease ${i*.1}s both`}}>
                   <div className="skel" style={{width:34,height:34,borderRadius:'50%',flexShrink:0}} />
@@ -1638,7 +1635,7 @@ function InboxPage() {
             </div>
 
             {/* Composer */}
-            <div style={{borderTop:'1px solid rgba(255,255,255,0.08)',flexShrink:0,background:'rgba(8,3,22,0.55)',backdropFilter:'blur(20px)',WebkitBackdropFilter:'blur(20px)'}}>
+            <div style={{borderTop:'1px solid var(--border)',flexShrink:0,background:'var(--bg-surface)'}}>
               {/* Macro panel */}
               {showMacros&&(
                 <MacroPanel
@@ -1657,7 +1654,7 @@ function InboxPage() {
               {/* Composer tabs */}
               {!showMacros&&(
                 <>
-                  <div style={{display:'flex',borderBottom:'1px solid rgba(255,255,255,0.045)',paddingLeft:16,justifyContent:'space-between',alignItems:'center',paddingRight:14}}>
+                  <div style={{display:'flex',borderBottom:'1px solid var(--border)',paddingLeft:16,justifyContent:'space-between',alignItems:'center',paddingRight:14}}>
                     <div style={{display:'flex'}}>
                       {[{id:'reply',label:'Reply'},{id:'note',label:'Internal note'}].map(t=>(
                         <button key={t.id} className={`ctab${composerTab===t.id?' on':''}`} onClick={()=>setComposerTab(t.id)}>{t.label}</button>
@@ -1667,7 +1664,7 @@ function InboxPage() {
                     <button onClick={()=>setShowMacros(true)} title="Macros (⌘M)" style={{display:'flex',alignItems:'center',gap:5,padding:'5px 10px',background:'transparent',border:'1px solid var(--border)',borderRadius:7,cursor:'pointer',fontSize:11,fontWeight:600,color:'var(--text-3)',transition:'all .15s',fontFamily:'inherit'}} onMouseEnter={e=>{e.currentTarget.style.borderColor='rgba(161,117,252,0.3)';e.currentTarget.style.color='#A175FC';e.currentTarget.style.background='rgba(161,117,252,0.08)'}} onMouseLeave={e=>{e.currentTarget.style.borderColor='var(--border)';e.currentTarget.style.color='var(--text-3)';e.currentTarget.style.background='transparent'}}>
                       <span style={{display:'flex'}}>{I.lightning}</span>
                       Macros
-                      {aiMacros.length>0&&<span style={{background:'rgba(161,117,252,0.2)',color:'#A175FC',fontSize:9,fontWeight:700,padding:'1px 5px',borderRadius:4}}>AI</span>}
+                      {aiMacros.length>0&&<span style={{background:'var(--bg-surface-2)',color:'var(--text-3)',fontSize:9,fontWeight:700,padding:'1px 5px',borderRadius:4}}>AI</span>}
                     </button>
                   </div>
 

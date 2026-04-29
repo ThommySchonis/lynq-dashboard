@@ -161,7 +161,7 @@ const CSS = `
   .isearch::placeholder { color:var(--text-3); }
 
   /* ── Macro ── */
-  .macro-panel { display:flex; border-top:1px solid var(--border); animation:fadeUp .18s ease both; max-height:260px; }
+  .macro-panel { display:flex; border-top:1px solid var(--border); animation:fadeUp .18s ease both; height:min(360px,46vh); min-height:220px; }
   .macro-list { width:230px; border-right:1px solid var(--border); overflow-y:auto; flex-shrink:0; }
   .macro-item { padding:10px 14px; cursor:pointer; transition:background .12s; border-left:2px solid transparent; }
   .macro-item:hover { background:var(--bg-surface-2); }
@@ -170,6 +170,11 @@ const CSS = `
   .macro-var { color:#A175FC; background:rgba(161,117,252,0.12); padding:1px 5px; border-radius:4px; font-weight:600; font-size:11px; }
   .macro-suggest { padding:4px 14px 6px; font-size:9.5px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--text-3); }
   .macro-tag { font-size:10px; font-weight:600; padding:1px 6px; border-radius:4px; background:var(--bg-surface-2); color:var(--text-3); }
+  .macro-gear-menu { position:absolute; top:calc(100% + 4px); right:0; min-width:192px; background:var(--bg-surface); border:1px solid var(--border); border-radius:10px; box-shadow:0 8px 24px rgba(15,23,42,0.12),0 2px 6px rgba(15,23,42,0.06); z-index:40; padding:4px; animation:fadeUp .14s ease both; }
+  .macro-gear-item { display:flex; align-items:center; gap:9px; width:100%; padding:8px 11px; border-radius:7px; background:none; border:none; font-family:inherit; font-size:12.5px; color:var(--text-1); cursor:pointer; text-align:left; transition:background .12s; }
+  .macro-gear-item:hover { background:var(--bg-surface-2); }
+  .macro-gear-item.danger { color:var(--danger); }
+  .macro-gear-divider { height:1px; background:var(--border); margin:3px 0; }
 
   /* ── Compose textarea ── */
   .compose-ta { width:100%; resize:none; outline:none; font-family:inherit; background:transparent; border:none; padding:14px 16px; font-size:13.5px; color:var(--text-1); line-height:1.78; letter-spacing:.005em; }
@@ -1054,11 +1059,22 @@ function NoteModal({ order, token, onClose, onSuccess }) {
 
 // ─── Macro Panel ──────────────────────────────────────────────
 function MacroPanel({ macros, aiMacros, onInsert, onClose, customerName }) {
-  const [search, setSearch]   = useState('')
+  const [search, setSearch]     = useState('')
   const [selected, setSelected] = useState(null)
+  const [gearOpen, setGearOpen] = useState(false)
   const searchRef = useRef(null)
+  const gearRef   = useRef(null)
+
   useEffect(()=>{ searchRef.current?.focus() },[])
-  useEffect(()=>{ function h(e){if(e.key==='Escape')onClose()} document.addEventListener('keydown',h); return ()=>document.removeEventListener('keydown',h) },[onClose])
+  useEffect(()=>{
+    function h(e){if(e.key==='Escape'){ if(gearOpen)setGearOpen(false); else onClose() }}
+    document.addEventListener('keydown',h); return ()=>document.removeEventListener('keydown',h)
+  },[onClose,gearOpen])
+  useEffect(()=>{
+    if(!gearOpen) return
+    function h(e){ if(gearRef.current&&!gearRef.current.contains(e.target)) setGearOpen(false) }
+    document.addEventListener('mousedown',h); return ()=>document.removeEventListener('mousedown',h)
+  },[gearOpen])
 
   const filtered = macros.filter(m=>!search||(m.name+m.body+(m.tags||[]).join('')).toLowerCase().includes(search.toLowerCase()))
   const active = selected || filtered[0] || null
@@ -1077,19 +1093,60 @@ function MacroPanel({ macros, aiMacros, onInsert, onClose, customerName }) {
     )
   }
 
+  const GearIcon = ()=>(
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+    </svg>
+  )
+
   return (
-    <div style={{borderTop:'1px solid var(--border)',animation:'fadeUp .18s ease both'}}>
-      {/* Search row */}
-      <div style={{display:'flex',alignItems:'center',gap:8,padding:'8px 14px',borderBottom:'1px solid var(--border)',background:'var(--bg-surface-2)'}}>
-        <span style={{color:'#A175FC',display:'flex',flexShrink:0}}>{I.lightning}</span>
-        <input ref={searchRef} value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search macros by name, tag or content…" style={{flex:1,background:'transparent',border:'none',outline:'none',fontSize:12.5,color:'var(--text-2)',fontFamily:'inherit'}} />
+    <div style={{borderTop:'1px solid var(--border)',animation:'fadeUp .18s ease both',display:'flex',flexDirection:'column',height:'min(360px,46vh)',minHeight:220,background:'var(--bg-surface)'}}>
+      {/* Search + gear row */}
+      <div style={{display:'flex',alignItems:'center',gap:8,padding:'8px 12px',borderBottom:'1px solid var(--border)',background:'var(--bg-surface-2)',flexShrink:0}}>
+        <span style={{color:'var(--accent-text)',display:'flex',flexShrink:0}}>{I.lightning}</span>
+        <input ref={searchRef} value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search macros by name, tag or content…" style={{flex:1,background:'transparent',border:'none',outline:'none',fontSize:12.5,color:'var(--text-1)',fontFamily:'inherit'}} />
         {aiMacros?.length>0 && <span style={{fontSize:10,fontWeight:700,padding:'2px 7px',borderRadius:5,background:'rgba(161,117,252,0.15)',color:'#A175FC',letterSpacing:'.04em',flexShrink:0}}>AI ✦</span>}
-        <button onClick={onClose} style={{color:'var(--text-3)',cursor:'pointer',display:'flex',padding:3,borderRadius:5,transition:'color .15s'}} onMouseEnter={e=>e.currentTarget.style.color='var(--text-2)'} onMouseLeave={e=>e.currentTarget.style.color='var(--text-3)'}>{I.close}</button>
+        {/* Gear settings */}
+        <div ref={gearRef} style={{position:'relative',flexShrink:0}}>
+          <button
+            onClick={()=>setGearOpen(p=>!p)}
+            style={{color:gearOpen?'var(--text-1)':'var(--text-3)',cursor:'pointer',display:'flex',padding:'4px 5px',borderRadius:6,background:gearOpen?'var(--bg-surface)':'transparent',border:gearOpen?'1px solid var(--border)':'1px solid transparent',transition:'all .15s'}}
+            title="Macro settings"
+          ><GearIcon /></button>
+          {gearOpen&&(
+            <div className="macro-gear-menu">
+              <button className="macro-gear-item" onClick={()=>setGearOpen(false)}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="9" x2="15" y2="9"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="15" x2="12" y2="15"/></svg>
+                Manage macros
+              </button>
+              <button className="macro-gear-item" onClick={()=>setGearOpen(false)}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                Edit macro
+              </button>
+              <button className="macro-gear-item" onClick={()=>setGearOpen(false)}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Create new macro
+              </button>
+              <div className="macro-gear-divider" />
+              <button className="macro-gear-item danger" onClick={()=>setGearOpen(false)}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                Delete macro
+              </button>
+              <div className="macro-gear-divider" />
+              <button className="macro-gear-item" onClick={()=>setGearOpen(false)}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                My macro preferences
+              </button>
+            </div>
+          )}
+        </div>
+        <button onClick={onClose} style={{color:'var(--text-3)',cursor:'pointer',display:'flex',padding:'4px 5px',borderRadius:6,border:'1px solid transparent',transition:'color .15s'}} onMouseEnter={e=>e.currentTarget.style.color='var(--text-1)'} onMouseLeave={e=>e.currentTarget.style.color='var(--text-3)'}>{I.close}</button>
       </div>
-      {/* Two-panel */}
-      <div className="macro-panel">
+
+      {/* Two-panel — fills remaining height */}
+      <div style={{flex:1,display:'flex',overflow:'hidden'}}>
         {/* List */}
-        <div className="macro-list sscroll">
+        <div className="macro-list sscroll" style={{borderRight:'1px solid var(--border)'}}>
           {aiMacros?.length>0 && (
             <>
               <div className="macro-suggest">AI suggestions ✦</div>
@@ -1098,7 +1155,7 @@ function MacroPanel({ macros, aiMacros, onInsert, onClose, customerName }) {
                   <div style={{fontSize:12.5,fontWeight:600,color:active?.id===m.id?'#A175FC':'var(--text-1)',marginBottom:3}}>{m.name}</div>
                 </div>
               ))}
-              <div style={{height:1,background:'var(--bg-surface-2)',margin:'4px 0'}} />
+              <div style={{height:1,background:'var(--border)',margin:'4px 0'}} />
             </>
           )}
           {filtered.length===0 && <div style={{padding:'20px 14px',fontSize:12,color:'var(--text-3)',textAlign:'center'}}>No macros found</div>}
@@ -1111,14 +1168,15 @@ function MacroPanel({ macros, aiMacros, onInsert, onClose, customerName }) {
             </div>
           ))}
         </div>
+
         {/* Preview */}
         <div style={{flex:1,display:'flex',flexDirection:'column',overflow:'hidden'}}>
           {active ? (
             <>
-              <div className="macro-preview sscroll">{renderPreview(active.body)}</div>
-              <div style={{padding:'10px 14px',borderTop:'1px solid rgba(255,255,255,0.055)',display:'flex',justifyContent:'flex-end',gap:8,flexShrink:0}}>
-                <button className="btn-ghost" style={{fontSize:11.5,padding:'6px 12px'}} onClick={()=>setSelected(null)}>Close</button>
-                <button className="btn-send" style={{fontSize:11.5,padding:'6px 14px'}} onClick={()=>applyMacro(active)}>Insert</button>
+              <div className="macro-preview sscroll" style={{flex:1}}>{renderPreview(active.body)}</div>
+              <div style={{padding:'9px 14px',borderTop:'1px solid var(--border)',display:'flex',justifyContent:'flex-end',gap:8,flexShrink:0,background:'var(--bg-surface)'}}>
+                <button className="btn-ghost" style={{fontSize:11.5,padding:'6px 14px'}} onClick={onClose}>Close</button>
+                <button className="btn-send" style={{fontSize:11.5,padding:'6px 16px'}} onClick={()=>applyMacro(active)}>Insert</button>
               </div>
             </>
           ) : (

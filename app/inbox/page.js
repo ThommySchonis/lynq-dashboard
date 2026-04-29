@@ -397,7 +397,7 @@ const CSS = `
   .rp-action.danger:hover { border-color:rgba(220,38,38,0.35); color:#dc2626; background:rgba(220,38,38,0.05); }
   [data-theme="dark"] .rp-action.danger:hover { color:#f87171; background:rgba(239,68,68,0.08); }
   .rp-subsec { width:100%; display:flex; align-items:center; gap:6px; padding:7px 0; background:transparent; cursor:pointer; border:none; font-size:11.5px; font-weight:600; font-family:inherit; color:var(--text-1); text-align:left; transition:opacity .12s; border-top:1px solid var(--border); margin-top:6px; }
-  [data-theme="dark"] .rp-subsec { border-top-color:rgba(255,255,255,0.18); }
+  [data-theme="dark"] .rp-subsec { border-top-color:rgba(255,255,255,0.1); }
   .rp-subsec:hover { opacity:.75; }
   .rp-tag { font-size:10px; font-weight:500; padding:2px 7px; border-radius:4px; background:var(--bg-surface-2); color:var(--text-1); border:1px solid var(--border); }
 `

@@ -1,370 +1,191 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
+import { motion, useMotionValue, useSpring, useMotionTemplate } from 'framer-motion'
 import { supabase } from '../../lib/supabase'
 import Sidebar from '../components/Sidebar'
 
 function getGreeting() {
   const h = new Date().getHours()
-  if (h < 12) return 'Good Morning'
-  if (h < 17) return 'Good Afternoon'
-  return 'Good Evening'
+  if (h < 12) return 'Good morning'
+  if (h < 17) return 'Good afternoon'
+  return 'Good evening'
 }
 
-const SUGGESTIONS = [
-  {
-    text: 'Top refunded products this month',
-    color: '#fb7185',
-    icon: (
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
-        <polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.95"/>
-      </svg>
-    ),
-  },
-  {
-    text: 'What is my revenue this month?',
-    color: '#4ade80',
-    icon: (
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
-        <line x1="12" y1="1" x2="12" y2="23"/>
-        <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
-      </svg>
-    ),
-  },
-  {
-    text: 'Which orders are still unfulfilled?',
-    color: '#FB923C',
-    icon: (
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
-        <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
-        <line x1="12" y1="22.08" x2="12" y2="12"/>
-      </svg>
-    ),
-  },
-  {
-    text: "What's my refund rate trend?",
-    color: 'var(--accent)',
-    icon: (
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
-        <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/>
-        <polyline points="16 7 22 7 22 13"/>
-      </svg>
-    ),
-  },
+const TYPING_STRINGS = [
+  'Ask anything about your store...',
+  'What are my top refunded products?',
+  'How many open tickets do I have?',
+  'What is my refund rate this week?',
 ]
 
-const FLOAT_ITEMS = [
-  { label: 'New order',       value: '€129.00',  icon: 'order',  delay: 0,  duration: 34, left: '7%'  },
-  { label: 'Ticket closed',   value: '#4521',    icon: 'check',  delay: 9,  duration: 29, left: '26%' },
-  { label: 'Revenue today',   value: '€3.2k',    icon: 'chart',  delay: 17, duration: 38, left: '51%' },
-  { label: 'Refund approved', value: '€45.00',   icon: 'refund', delay: 25, duration: 31, left: '72%' },
-  { label: 'New message',     value: 'Sarah K.', icon: 'msg',    delay: 6,  duration: 36, left: '87%' },
+const CHIPS = [
+  { key: 'refunds',  label: '↩  Top refunded products',  query: 'What are my top refunded products?' },
+  { key: 'orders',   label: '◎  Unfulfilled orders',      query: 'Which orders are still unfulfilled?' },
+  { key: 'trend',    label: '↗  Refund rate trend',       query: "What is my refund rate trend?" },
+  { key: 'tickets',  label: '✦  Open tickets today',      query: 'How many open tickets do I have today?' },
 ]
 
-const FLOAT_ICON = {
-  order:  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>,
-  check:  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>,
-  chart:  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/></svg>,
-  refund: <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg>,
-  msg:    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>,
-}
-
+const EASE = [0.16, 1, 0.3, 1]
 
 const CSS = `
-  @keyframes auroraA {
-    0%,100% { transform:translate(0,0) scale(1);           opacity:.9; }
-    33%      { transform:translate(90px,-110px) scale(1.3); opacity:1; }
-    66%      { transform:translate(-65px,55px) scale(.85);  opacity:.7; }
+  @keyframes hueShift {
+    0%,100% { filter: hue-rotate(0deg); }
+    50%      { filter: hue-rotate(20deg); }
   }
-  @keyframes auroraB {
-    0%,100% { transform:translate(0,0) scale(1);            opacity:.85; }
-    40%      { transform:translate(-110px,75px) scale(1.28); opacity:1; }
-    75%      { transform:translate(65px,-45px) scale(.78);   opacity:.6; }
+  @keyframes pulseDot {
+    0%   { box-shadow: 0 0 0 0 rgba(34,197,94,0.4); }
+    70%  { box-shadow: 0 0 0 8px rgba(34,197,94,0); }
+    100% { box-shadow: 0 0 0 0 rgba(34,197,94,0); }
   }
-  @keyframes auroraC {
-    0%,100% { transform:translate(0,0) scale(1);          opacity:.75; }
-    55%      { transform:translate(55px,95px) scale(1.18); opacity:1; }
+  @keyframes shimmerBtn {
+    0%   { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
   }
-  @keyframes auroraD {
-    0%,100% { transform:translate(0,0) scale(1);            opacity:.8; }
-    45%      { transform:translate(-65px,-60px) scale(1.35); opacity:1; }
+  @keyframes borderGlow {
+    0%,100% { opacity: 0.4; }
+    50%      { opacity: 1; }
   }
-  @keyframes auroraE {
-    0%,100% { transform:translate(0,0) scale(1);          opacity:.65; }
-    60%      { transform:translate(85px,40px) scale(1.18); opacity:1; }
-  }
-  @keyframes floatUp {
-    0%   { transform:translateY(0) translateX(0);    opacity:0; }
-    8%   { opacity:1; }
-    88%  { opacity:1; }
-    100% { transform:translateY(-500px) translateX(10px); opacity:0; }
-  }
-  @keyframes revealUp {
-    from { opacity:0; transform:translateY(20px); }
-    to   { opacity:1; transform:translateY(0); }
-  }
-  @keyframes shimmer {
-    0%   { background-position:200% center; }
-    25%  { background-position:-200% center; }
-    100% { background-position:-200% center; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes blink { 0%,100% { opacity:1; } 50% { opacity:0; } }
+  @keyframes dotBounce {
+    0%,60%,100% { transform: translateY(0); opacity: .35; }
+    30%          { transform: translateY(-5px); opacity: 1; }
   }
   @keyframes msgIn {
     from { opacity:0; transform:translateY(10px) scale(.98); }
     to   { opacity:1; transform:translateY(0) scale(1); }
-  }
-  @keyframes dotBounce {
-    0%,60%,100% { transform:translateY(0); opacity:.35; }
-    30%          { transform:translateY(-5px); opacity:1; }
-  }
-  @keyframes blink { 0%,100% { opacity:1; } 50% { opacity:0; } }
-  @keyframes spin { to { transform:rotate(360deg); } }
-  @keyframes liveBlip {
-    0%,100% { transform:scale(1); opacity:.85; }
-    50%      { transform:scale(2); opacity:0; }
-  }
-  @keyframes chipReveal {
-    from { opacity:0; transform:translateY(8px); }
-    to   { opacity:1; transform:translateY(0); }
-  }
-  @keyframes inputReveal {
-    from { opacity:0; transform:translateY(16px) scale(.98); }
-    to   { opacity:1; transform:translateY(0) scale(1); }
-  }
-  @keyframes pulseGlow {
-    0%,100% { box-shadow:0 0 0 0 rgba(161,117,252,0); }
-    50%      { box-shadow:0 0 60px 10px rgba(161,117,252,0.06); }
   }
 
   @media (prefers-reduced-motion:reduce) {
     *, *::before, *::after { animation-duration:.01ms !important; transition-duration:.01ms !important; }
   }
 
-  .h-root { font-family:var(--font-rethink),-apple-system,BlinkMacSystemFont,sans-serif; -webkit-font-smoothing:antialiased; }
-  .h-root * { box-sizing:border-box; margin:0; padding:0; }
+  .hp-root { font-family:var(--font-rethink),-apple-system,BlinkMacSystemFont,sans-serif; -webkit-font-smoothing:antialiased; }
+  .hp-root * { box-sizing:border-box; margin:0; padding:0; }
 
-  /* ── Chip ── */
-  .chip {
-    display:inline-flex; align-items:center; gap:9px;
-    padding:9px 15px;
-    background:var(--glass-bg);
-    border:1px solid var(--glass-border);
-    border-radius:13px;
-    color:var(--text-2);
-    font-size:12.5px; font-family:inherit;
-    cursor:pointer;
-    transition:all .24s cubic-bezier(.16,1,.3,1);
-    white-space:nowrap;
-    box-shadow:var(--glass-shadow);
-    backdrop-filter:blur(10px) saturate(140%);
-    -webkit-backdrop-filter:blur(10px) saturate(140%);
-  }
-  .chip:hover {
-    background:rgba(255,255,255,0.9);
-    border-color:var(--border-hover);
-    color:var(--text-1);
-    transform:translateY(-2px);
-    box-shadow:var(--shadow-card-hover);
-  }
-  .chip .ci { flex-shrink:0; display:flex; transition:transform .2s cubic-bezier(.16,1,.3,1); }
-  .chip:hover .ci { transform:translateY(-1px); }
-
-  /* ── Chat input ── */
-  .chat-box {
-    background:var(--bg-surface);
-    border:1px solid var(--border);
-    border-radius:22px;
-    transition:all .3s cubic-bezier(.16,1,.3,1);
-    box-shadow:var(--shadow-card);
-  }
-  .chat-box:focus-within {
-    border-color:var(--accent-border);
-    background:var(--bg-surface);
-    box-shadow:0 0 0 3px rgba(124,92,252,0.1), var(--shadow-card-hover);
-  }
-  .chat-box textarea {
-    background:transparent; border:none; outline:none;
-    color:var(--text-1); font-size:15px; line-height:1.65; resize:none;
-    font-family:inherit; width:100%; padding:0;
-    max-height:180px; overflow-y:auto;
-  }
-  .chat-box textarea::placeholder { color:var(--text-3); }
-
-  /* ── Hero chat box ── */
-  .chat-box-hero {
-    background:var(--glass-bg);
-    border:1px solid var(--glass-border);
-    border-radius:24px;
-    transition:border-color .3s cubic-bezier(.16,1,.3,1), box-shadow .3s cubic-bezier(.16,1,.3,1), background .3s;
-    box-shadow:var(--glass-shadow);
-    backdrop-filter:blur(20px) saturate(160%);
-    -webkit-backdrop-filter:blur(20px) saturate(160%);
-    animation:inputReveal .62s cubic-bezier(.16,1,.3,1) .22s both;
-  }
-  .chat-box-hero:focus-within {
-    border-color:var(--accent-border);
-    background:rgba(255,255,255,0.88);
-    box-shadow:0 0 0 3px rgba(124,92,252,0.1), var(--shadow-card-hover);
-  }
-  .chat-box-hero textarea {
-    background:transparent; border:none; outline:none;
-    color:var(--text-1); font-size:16px; line-height:1.7; resize:none;
-    font-family:inherit; width:100%; padding:0;
-    max-height:200px; overflow-y:auto;
-  }
-  .chat-box-hero textarea::placeholder { color:var(--text-3); font-size:16px; }
-
-  /* ── Send button ── */
-  .send-btn {
-    width:42px; height:42px; border-radius:13px;
-    background:linear-gradient(135deg,#A175FC 0%,#7C3AED 100%);
-    border:none; display:flex; align-items:center; justify-content:center;
-    cursor:pointer; flex-shrink:0;
-    transition:all .22s cubic-bezier(.16,1,.3,1);
-    box-shadow:0 2px 8px rgba(161,117,252,0.38), 0 4px 20px rgba(124,58,237,0.28), inset 0 1px 0 rgba(255,255,255,0.22);
-  }
-  .send-btn-hero {
-    width:48px; height:48px; border-radius:15px;
-    background:linear-gradient(135deg,#A175FC 0%,#7C3AED 100%);
-    border:none; display:flex; align-items:center; justify-content:center;
-    cursor:pointer; flex-shrink:0;
-    transition:all .22s cubic-bezier(.16,1,.3,1);
-    box-shadow:0 3px 12px rgba(161,117,252,0.45), 0 6px 28px rgba(124,58,237,0.32), inset 0 1px 0 rgba(255,255,255,0.24);
-  }
-  .send-btn:hover:not(:disabled), .send-btn-hero:hover:not(:disabled) {
-    transform:translateY(-1px) scale(1.05);
-    background:linear-gradient(135deg,#B990FF 0%,#A175FC 100%);
-    box-shadow:0 4px 16px rgba(161,117,252,0.55), 0 8px 36px rgba(124,58,237,0.35), inset 0 1px 0 rgba(255,255,255,0.28);
-  }
-  .send-btn:active:not(:disabled), .send-btn-hero:active:not(:disabled) { transform:scale(.95); }
-  .send-btn:disabled, .send-btn-hero:disabled { opacity:.26; cursor:not-allowed; box-shadow:none; }
-
-  /* ── Bubbles ── */
-  .msg-user {
-    background:var(--accent-soft);
-    border:1px solid var(--accent-border);
-    border-radius:20px 20px 5px 20px;
-    box-shadow:var(--shadow-row);
-  }
-  .msg-ai {
-    background:var(--bg-surface-2);
-    border:1px solid var(--border);
-    border-radius:20px 20px 20px 5px;
+  .name-gradient {
+    background: linear-gradient(135deg, #A175FC 0%, #818CF8 45%, #60A5FA 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: hueShift 6s ease-in-out infinite;
   }
 
-  /* ── Float cards ── */
+  .pulse-dot { animation: pulseDot 2s infinite; }
+
+  .send-btn-primary {
+    position: relative; overflow: hidden;
+    width: 34px; height: 34px; border-radius: 8px;
+    background: #111; border: none; color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; flex-shrink: 0;
+    transition: background 0.18s, transform 0.18s;
+  }
+  .send-btn-primary::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.3) 50%, transparent 60%);
+    background-size: 200% 100%;
+    animation: shimmerBtn 2.5s infinite;
+    border-radius: inherit;
+  }
+  .send-btn-primary:hover:not(:disabled) { background: #333; transform: scale(1.06); }
+  .send-btn-primary:disabled { opacity: 0.4; cursor: default; }
+
+  .border-glow { animation: borderGlow 3.5s ease-in-out infinite; }
+
+  .chip-btn {
+    background: rgba(255,255,255,0.82);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(0,0,0,0.08);
+    border-radius: 20px; padding: 6px 14px;
+    font-size: 12px; font-weight: 500; color: #555;
+    cursor: pointer; font-family: inherit;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+    white-space: nowrap;
+    transition: color 0.18s, border-color 0.18s, box-shadow 0.18s, transform 0.18s;
+  }
+  .chip-btn:hover { color: #111; border-color: rgba(161,117,252,0.3); box-shadow: 0 6px 16px rgba(161,117,252,0.12); transform: translateY(-2px); }
+  .chip-btn:disabled { opacity: 0.5; cursor: default; transform: none; }
+
   .float-card {
-    position:absolute;
-    display:flex; align-items:center; gap:9px;
-    padding:8px 13px;
-    background:var(--glass-bg);
-    border:1px solid var(--glass-border);
-    border-radius:12px;
-    white-space:nowrap; pointer-events:none; opacity:0;
-    box-shadow:var(--glass-shadow);
-    backdrop-filter:blur(var(--glass-blur)) saturate(150%);
-    -webkit-backdrop-filter:blur(var(--glass-blur)) saturate(150%);
+    background: rgba(255,255,255,0.88);
+    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(0,0,0,0.07);
+    border-radius: 12px; padding: 12px 16px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+    min-width: 140px;
   }
 
-  /* ── Status pill ── */
-  .status-pill {
-    display:inline-flex; align-items:center; gap:10px;
-    padding:6px 16px 6px 10px; border-radius:100px;
-    background:var(--glass-bg);
-    border:1px solid var(--glass-border);
-    box-shadow:var(--glass-shadow);
-    backdrop-filter:blur(8px) saturate(130%);
-    -webkit-backdrop-filter:blur(8px) saturate(130%);
+  .search-inner {
+    position: relative; z-index: 1;
+    background: rgba(255,255,255,0.92);
+    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    border-radius: 12px; padding: 12px 16px;
+    display: flex; align-items: center; gap: 10px;
+    transition: border-color 0.2s;
   }
+  .search-inner input {
+    flex: 1; background: transparent; border: none; outline: none;
+    font-size: 14px; color: #111; font-family: inherit;
+  }
+  .search-inner input::placeholder { color: #BDBDBD; }
 
-  /* ── Scrollbar ── */
-  .chat-scroll::-webkit-scrollbar { width:3px; }
-  .chat-scroll::-webkit-scrollbar-track { background:transparent; }
-  .chat-scroll::-webkit-scrollbar-thumb { background:var(--bg-surface-2); border-radius:2px; }
+  .msg-user { background: rgba(161,117,252,0.08); border: 1px solid rgba(161,117,252,0.2); border-radius: 20px 20px 5px 20px; }
+  .msg-ai   { background: #F5F5F5; border: 1px solid rgba(0,0,0,0.07); border-radius: 20px 20px 20px 5px; }
 
-  /* ── Aurora layers — subtle in light, full in dark ── */
-  .aurora-l1 {
-    position:absolute; top:-28%; left:10%; width:900px; height:800px; border-radius:50%;
-    background:radial-gradient(ellipse,rgba(124,92,252,0.14) 0%,rgba(124,92,252,0.06) 45%,transparent 70%);
-    animation:auroraA 22s ease-in-out infinite; filter:blur(55px);
+  .bottom-box {
+    background: rgba(255,255,255,0.92);
+    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(0,0,0,0.09); border-radius: 22px;
+    padding: 18px 18px 18px 22px;
+    display: flex; align-items: flex-end; gap: 12px;
+    transition: border-color 0.2s;
   }
-  [data-theme="dark"] .aurora-l1 {
-    background:radial-gradient(ellipse,rgba(161,117,252,0.52) 0%,rgba(124,58,237,0.26) 38%,rgba(109,40,217,0.08) 60%,transparent 72%);
+  .bottom-box:focus-within { border-color: rgba(161,117,252,0.3); }
+  .bottom-box textarea {
+    flex: 1; background: transparent; border: none; outline: none;
+    font-size: 15px; color: #111; font-family: inherit;
+    resize: none; max-height: 180px; overflow-y: auto; line-height: 1.65;
   }
-  .aurora-l4 {
-    position:absolute; top:2%; left:2%; width:380px; height:380px; border-radius:50%;
-    background:radial-gradient(ellipse,rgba(124,92,252,0.10) 0%,transparent 72%);
-    animation:auroraD 19s ease-in-out infinite; filter:blur(42px);
-  }
-  [data-theme="dark"] .aurora-l4 {
-    background:radial-gradient(ellipse,rgba(139,92,246,0.48) 0%,rgba(109,40,217,0.18) 50%,transparent 72%);
-  }
-  .aurora-l5 {
-    position:absolute; bottom:-8%; right:4%; width:580px; height:480px; border-radius:50%;
-    background:radial-gradient(ellipse,rgba(99,102,241,0.09) 0%,rgba(124,92,252,0.04) 50%,transparent 72%);
-    animation:auroraB 28s ease-in-out infinite; filter:blur(60px);
-  }
-  [data-theme="dark"] .aurora-l5 { opacity:0; }
-  .aurora-grid {
-    position:absolute; inset:0;
-    background-image:linear-gradient(rgba(15,23,42,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(15,23,42,0.04) 1px,transparent 1px);
-    background-size:72px 72px;
-    mask-image:radial-gradient(ellipse 90% 85% at 50% 22%,black 25%,transparent 100%);
-    -webkit-mask-image:radial-gradient(ellipse 90% 85% at 50% 22%,black 25%,transparent 100%);
-  }
-  [data-theme="dark"] .aurora-grid {
-    background-image:linear-gradient(rgba(255,255,255,0.016) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.016) 1px,transparent 1px);
-  }
-  .aurora-vignette { position:absolute; inset:0; }
-  [data-theme="dark"] .aurora-vignette {
-    background:radial-gradient(ellipse 115% 105% at 50% 50%,transparent 30%,rgba(28,15,54,0.55) 75%,rgba(28,15,54,0.9) 100%);
-  }
-  .bottom-fade {
-    background:linear-gradient(to top,var(--bg-page) 52%,transparent 100%);
-  }
-  [data-theme="dark"] .bottom-fade {
-    background:linear-gradient(to top,#1C0F36 52%,rgba(28,15,54,0.88) 80%,transparent 100%);
+  .bottom-box textarea::placeholder { color: #BDBDBD; }
+
+  .chat-scroll::-webkit-scrollbar { width: 3px; }
+  .chat-scroll::-webkit-scrollbar-track { background: transparent; }
+  .chat-scroll::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 2px; }
+
+  @media (max-width: 1023px) {
+    .hp-float { display: none !important; }
+    .hp-headline { font-size: 32px !important; }
+    .hp-search { width: 90vw !important; }
   }
 `
 
-
-function FloatCard({ label, value, icon, delay, duration, left }) {
-  return (
-    <div className="float-card" style={{ left, bottom: '2%', animation: `floatUp ${duration}s ease-in-out ${delay}s infinite`, zIndex: 0 }}>
-      <span style={{ color: 'var(--text-3)', display: 'flex' }}>{FLOAT_ICON[icon]}</span>
-      <span style={{ fontSize: 11, color: 'var(--text-2)', fontWeight: 500 }}>{label}</span>
-      <span style={{ fontSize: 11, color: 'var(--text-1)', fontWeight: 700, marginLeft: 2 }}>{value}</span>
-    </div>
-  )
+function AnimatedCount({ to, suffix = '' }) {
+  const [val, setVal] = useState(0)
+  useEffect(() => {
+    const start = performance.now()
+    const dur = 1500
+    let raf
+    function tick(now) {
+      const p = Math.min((now - start) / dur, 1)
+      const ease = 1 - Math.pow(1 - p, 3)
+      setVal(Math.round(to * ease))
+      if (p < 1) raf = requestAnimationFrame(tick)
+    }
+    raf = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(raf)
+  }, [to])
+  return <>{val}{suffix}</>
 }
 
 function TypingDots() {
   return (
-    <div style={{ display: 'flex', gap: 5, alignItems: 'center', padding: '3px 0' }}>
-      {[0, 1, 2].map(i => (
-        <div key={i} style={{
-          width: 6, height: 6, borderRadius: '50%',
-          background: 'rgba(161,117,252,0.7)',
-          animation: `dotBounce 1.2s ease-in-out ${i * 0.18}s infinite`,
-        }} />
+    <div style={{ display:'flex', gap:5, alignItems:'center', padding:'3px 0' }}>
+      {[0,1,2].map(i => (
+        <div key={i} style={{ width:6, height:6, borderRadius:'50%', background:'rgba(161,117,252,0.7)', animation:`dotBounce 1.2s ease-in-out ${i*0.18}s infinite` }} />
       ))}
-    </div>
-  )
-}
-
-function LynqBadge() {
-  return (
-    <div style={{
-      width: 30, height: 30, borderRadius: 9,
-      background: 'linear-gradient(135deg,#A175FC 0%,#7C3AED 100%)',
-      display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-      boxShadow: '0 2px 8px rgba(161,117,252,0.4), inset 0 1px 0 rgba(255,255,255,0.2)',
-    }}>
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M12 2L2 7l10 5 10-5-10-5z"/>
-        <path d="M2 17l10 5 10-5"/>
-        <path d="M2 12l10 5 10-5"/>
-      </svg>
     </div>
   )
 }
@@ -372,31 +193,68 @@ function LynqBadge() {
 function ChatMessage({ role, content, isStreaming }) {
   const isUser = role === 'user'
   return (
-    <div style={{ display: 'flex', justifyContent: isUser ? 'flex-end' : 'flex-start', marginBottom: 14, animation: 'msgIn .3s cubic-bezier(.16,1,.3,1) both' }}>
-      {!isUser && <div style={{ marginRight: 10, marginTop: 2, flexShrink: 0 }}><LynqBadge /></div>}
-      <div className={isUser ? 'msg-user' : 'msg-ai'} style={{ maxWidth: '72%', padding: '13px 17px', fontSize: 14, lineHeight: 1.72, color: isUser ? 'var(--text-1)' : 'var(--text-1)', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+    <div style={{ display:'flex', justifyContent:isUser?'flex-end':'flex-start', marginBottom:14, animation:'msgIn .3s cubic-bezier(.16,1,.3,1) both' }}>
+      {!isUser && (
+        <div style={{ width:30, height:30, borderRadius:9, background:'linear-gradient(135deg,#A175FC,#7C3AED)', display:'flex', alignItems:'center', justifyContent:'center', marginRight:10, marginTop:2, flexShrink:0 }}>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>
+          </svg>
+        </div>
+      )}
+      <div className={isUser ? 'msg-user' : 'msg-ai'} style={{ maxWidth:'72%', padding:'13px 17px', fontSize:14, lineHeight:1.72, color:'#111', whiteSpace:'pre-wrap', wordBreak:'break-word' }}>
         {isStreaming && !content ? <TypingDots /> : content}
-        {isStreaming && content && (
-          <span style={{ display: 'inline-block', width: 2, height: 14, background: '#A175FC', marginLeft: 2, verticalAlign: 'text-bottom', animation: 'blink 1s ease-in-out infinite' }} />
-        )}
+        {isStreaming && content && <span style={{ display:'inline-block', width:2, height:14, background:'#A175FC', marginLeft:2, verticalAlign:'text-bottom', animation:'blink 1s ease-in-out infinite' }} />}
       </div>
     </div>
   )
 }
 
 export default function HomePage() {
-  const [session, setSession]             = useState(null)
-  const [userName, setUserName]           = useState('')
-  const [messages, setMessages]           = useState([])
-  const [input, setInput]                 = useState('')
-  const [isLoading, setIsLoading]         = useState(false)
-  const [storeContext, setStoreContext]    = useState(null)
+  const [session, setSession]           = useState(null)
+  const [userName, setUserName]         = useState('')
+  const [messages, setMessages]         = useState([])
+  const [input, setInput]               = useState('')
+  const [isLoading, setIsLoading]       = useState(false)
+  const [storeContext, setStoreContext]  = useState(null)
   const [contextLoaded, setContextLoaded] = useState(false)
-  const [mounted, setMounted]             = useState(false)
-  const messagesEndRef = useRef(null)
-  const heroInputRef   = useRef(null)
-  const bottomInputRef = useRef(null)
-  const greeting       = getGreeting()
+  const [mounted, setMounted]           = useState(false)
+  const [placeholder, setPlaceholder]   = useState(TYPING_STRINGS[0])
+
+  const messagesEndRef  = useRef(null)
+  const inputRef        = useRef(null)
+  const bottomInputRef  = useRef(null)
+  const containerRef    = useRef(null)
+
+  const mouseX  = useMotionValue(600)
+  const mouseY  = useMotionValue(400)
+  const springX = useSpring(mouseX, { stiffness:150, damping:20 })
+  const springY = useSpring(mouseY, { stiffness:150, damping:20 })
+  const spotlightBg = useMotionTemplate`radial-gradient(400px circle at ${springX}px ${springY}px, rgba(161,117,252,0.06), transparent 60%)`
+
+  const greeting = getGreeting()
+  const hasMsg   = messages.length > 0
+
+  // Typing effect
+  useEffect(() => {
+    if (!mounted) return
+    let si = 0, ci = 0, typing = true, timeout
+    function tick() {
+      const str = TYPING_STRINGS[si]
+      if (typing) {
+        ci++
+        setPlaceholder(str.slice(0, ci))
+        if (ci >= str.length) { typing = false; timeout = setTimeout(tick, 2000); return }
+        timeout = setTimeout(tick, 60)
+      } else {
+        ci--
+        setPlaceholder(str.slice(0, ci))
+        if (ci <= 0) { typing = true; si = (si + 1) % TYPING_STRINGS.length; timeout = setTimeout(tick, 300); return }
+        timeout = setTimeout(tick, 30)
+      }
+    }
+    timeout = setTimeout(tick, 1200)
+    return () => clearTimeout(timeout)
+  }, [mounted])
 
   useEffect(() => {
     setMounted(true)
@@ -410,17 +268,17 @@ export default function HomePage() {
     })
   }, [])
 
-  useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [messages])
+  useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior:'smooth' }) }, [messages])
 
   async function loadContext(token) {
-    const h = { Authorization: `Bearer ${token}` }
+    const h = { Authorization:`Bearer ${token}` }
     try {
       const [a, b, c] = await Promise.all([
-        fetch('/api/shopify/kpis',    { headers: h }),
-        fetch('/api/shopify/orders',  { headers: h }),
-        fetch('/api/shopify/refunds', { headers: h }),
+        fetch('/api/shopify/kpis',    { headers:h }),
+        fetch('/api/shopify/orders',  { headers:h }),
+        fetch('/api/shopify/refunds', { headers:h }),
       ])
-      const kpis             = a.ok ? await a.json() : {}
+      const kpis            = a.ok ? await a.json() : {}
       const { orders  = [] } = b.ok ? await b.json() : {}
       const { refunds = [] } = c.ok ? await c.json() : {}
       setStoreContext({ kpis, orders, refunds })
@@ -433,15 +291,13 @@ export default function HomePage() {
     if (!t || isLoading || !session) return
     setInput('')
     setIsLoading(true)
-    setMessages(prev => [...prev, { role: 'user', content: t }, { role: 'assistant', content: '', isStreaming: true }])
+    setMessages(prev => [...prev, { role:'user', content:t }, { role:'assistant', content:'', isStreaming:true }])
     try {
-      // Snapshot history before adding the new streaming message.
-      // Filter out streaming placeholders; pass only completed turns.
-      const history = messages.filter(m => !m.isStreaming).map(m => ({ role: m.role, content: m.content }))
+      const history = messages.filter(m => !m.isStreaming).map(m => ({ role:m.role, content:m.content }))
       const res = await fetch('/api/ai/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
-        body: JSON.stringify({ message: t, history, context: storeContext }),
+        method:'POST',
+        headers:{ 'Content-Type':'application/json', Authorization:`Bearer ${session.access_token}` },
+        body:JSON.stringify({ message:t, history, context:storeContext }),
       })
       if (!res.ok || !res.body) throw new Error()
       const reader = res.body.getReader()
@@ -450,177 +306,201 @@ export default function HomePage() {
       while (true) {
         const { done, value } = await reader.read()
         if (done) break
-        acc += dec.decode(value, { stream: true })
+        acc += dec.decode(value, { stream:true })
         const snap = acc
-        setMessages(prev => { const u = [...prev]; u[u.length - 1] = { role: 'assistant', content: snap, isStreaming: true }; return u })
+        setMessages(prev => { const u=[...prev]; u[u.length-1]={ role:'assistant', content:snap, isStreaming:true }; return u })
       }
-      setMessages(prev => { const u = [...prev]; u[u.length - 1] = { role: 'assistant', content: acc, isStreaming: false }; return u })
+      setMessages(prev => { const u=[...prev]; u[u.length-1]={ role:'assistant', content:acc, isStreaming:false }; return u })
     } catch {
-      setMessages(prev => { const u = [...prev]; u[u.length - 1] = { role: 'assistant', content: 'Something went wrong. Please try again.', isStreaming: false }; return u })
+      setMessages(prev => { const u=[...prev]; u[u.length-1]={ role:'assistant', content:'Something went wrong. Please try again.', isStreaming:false }; return u })
     } finally {
       setIsLoading(false)
       setTimeout(() => bottomInputRef.current?.focus(), 60)
     }
-  }, [isLoading, session, storeContext])
+  }, [isLoading, session, storeContext, messages])
 
-  function onHeroKey(e) {
-    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(input) }
-  }
-  function onBottomKey(e) {
+  function onKey(e) {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(input) }
   }
 
-  const hasMsg = messages.length > 0
+  function onMouseMove(e) {
+    const rect = containerRef.current?.getBoundingClientRect()
+    if (rect) { mouseX.set(e.clientX - rect.left); mouseY.set(e.clientY - rect.top) }
+  }
 
   if (!mounted) return null
 
   return (
-    <div className="h-root" style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg-page)' }}>
+    <div className="hp-root" style={{ display:'flex', minHeight:'100vh', background:'#fff', overflow:'hidden' }}>
       <style>{CSS}</style>
       <Sidebar />
 
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', position: 'relative', overflow: 'hidden', minWidth: 0 }}>
+      <div ref={containerRef} onMouseMove={onMouseMove} style={{ flex:1, position:'relative', overflow:'hidden', display:'flex', flexDirection:'column' }}>
 
-        {/* ── 5-layer aurora ── */}
-        <div aria-hidden style={{ position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: 'none', zIndex: 0 }}>
+        {/* ── Background layers ── */}
+        <div aria-hidden style={{ position:'absolute', inset:0, pointerEvents:'none', zIndex:0 }}>
 
-          {/* Layer 1 — brand purple bloom (subtle light, full dark) */}
-          <div className="aurora-l1" />
-          {/* Layer 4 — violet accent top-left */}
-          <div className="aurora-l4" />
-          {/* Layer 5 — indigo bottom-right (light only) */}
-          <div className="aurora-l5" />
+          {/* Orb 1 */}
+          <motion.div animate={{ y:[0,25,-15,0], x:[0,-20,15,0] }} transition={{ duration:14, repeat:Infinity, ease:'easeInOut' }}
+            style={{ position:'absolute', top:-180, right:-100, width:500, height:500, borderRadius:'50%', background:'radial-gradient(circle, rgba(161,117,252,0.22), transparent 70%)', filter:'blur(100px)' }} />
+          {/* Orb 2 */}
+          <motion.div animate={{ y:[0,-30,20,0], x:[0,20,-15,0] }} transition={{ duration:18, repeat:Infinity, ease:'easeInOut' }}
+            style={{ position:'absolute', bottom:-150, left:-80, width:450, height:450, borderRadius:'50%', background:'radial-gradient(circle, rgba(96,165,250,0.18), transparent 70%)', filter:'blur(100px)' }} />
+          {/* Orb 3 */}
+          <motion.div animate={{ y:[0,20,-25,0], x:[0,-30,20,0] }} transition={{ duration:11, repeat:Infinity, ease:'easeInOut' }}
+            style={{ position:'absolute', top:'30%', left:'22%', width:350, height:350, borderRadius:'50%', background:'radial-gradient(circle, rgba(244,114,182,0.13), transparent 70%)', filter:'blur(100px)' }} />
+          {/* Orb 4 */}
+          <motion.div animate={{ y:[0,-20,15,0] }} transition={{ duration:16, repeat:Infinity, ease:'easeInOut' }}
+            style={{ position:'absolute', bottom:'8%', right:'12%', width:280, height:280, borderRadius:'50%', background:'radial-gradient(circle, rgba(52,211,153,0.10), transparent 70%)', filter:'blur(100px)' }} />
 
-          {/* Dot grid (dark dots in light, white lines in dark) */}
-          <div className="aurora-grid" />
+          {/* Dot grid */}
+          <div style={{ position:'absolute', inset:0, backgroundImage:'radial-gradient(circle, rgba(0,0,0,0.055) 1px, transparent 1px)', backgroundSize:'28px 28px' }} />
+          {/* Dot fade */}
+          <div style={{ position:'absolute', inset:0, background:'radial-gradient(ellipse 75% 70% at 50% 50%, rgba(255,255,255,0) 20%, rgba(255,255,255,0.75) 65%, rgba(255,255,255,0.97) 100%)' }} />
 
-          {/* Edge vignette (none in light, dark in dark mode) */}
-          <div className="aurora-vignette" />
+          {/* Top beam */}
+          <motion.div animate={{ opacity:[0.5,1,0.5] }} transition={{ duration:8, repeat:Infinity, ease:'easeInOut' }}
+            style={{ position:'absolute', top:-80, left:'50%', transform:'translateX(-50%)', width:800, height:350, background:'conic-gradient(from 180deg at 50% 0%, transparent 55deg, rgba(161,117,252,0.07) 110deg, transparent 165deg)', filter:'blur(35px)' }} />
 
-          {/* Ambient float cards */}
-          {FLOAT_ITEMS.map(item => <FloatCard key={item.label} {...item} />)}
+          {/* Spotlight */}
+          <motion.div style={{ position:'absolute', inset:0, background:spotlightBg }} />
         </div>
 
-        {/* ── HERO STATE (no messages) ── */}
+        {/* ── HERO STATE ── */}
         {!hasMsg && (
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '0 44px 40px', position: 'relative', zIndex: 1, isolation: 'isolate', willChange: 'transform' }}>
-            <div style={{ width: '100%', maxWidth: 760, display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
+          <>
+            <div style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', paddingBottom:60, position:'relative', zIndex:1 }}>
+              <div style={{ display:'flex', flexDirection:'column', alignItems:'center', textAlign:'center' }}>
 
-              {/* Status pill */}
-              <div className="status-pill" style={{ marginBottom: 28, animation: 'revealUp .5s cubic-bezier(.16,1,.3,1) both' }}>
-                <div style={{ position: 'relative', width: 8, height: 8, flexShrink: 0 }}>
-                  <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#4ade80', boxShadow: '0 0 8px #4ade80' }} />
-                  <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: '#4ade80', animation: 'liveBlip 2.4s ease-in-out infinite' }} />
-                </div>
-                <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--text-2)' }}>
-                  {contextLoaded ? greeting : 'Connecting…'}
-                </span>
-              </div>
+                {/* Status badge */}
+                <motion.div initial={{ opacity:0, y:12 }} animate={{ opacity:1, y:0 }} transition={{ duration:0.6, delay:0.2, ease:EASE }}
+                  style={{ display:'inline-flex', alignItems:'center', gap:8, background:'rgba(255,255,255,0.85)', border:'1px solid rgba(0,0,0,0.08)', backdropFilter:'blur(10px)', WebkitBackdropFilter:'blur(10px)', borderRadius:20, padding:'5px 14px', marginBottom:24 }}>
+                  <div className="pulse-dot" style={{ width:7, height:7, borderRadius:'50%', background:'#22C55E', flexShrink:0 }} />
+                  <span style={{ fontSize:12, fontWeight:500, color:'#555' }}>{greeting}</span>
+                </motion.div>
 
-              {/* Heading */}
-              <h1 style={{ fontSize: 'clamp(36px,5.2vw,60px)', fontWeight: 800, letterSpacing: '-0.036em', lineHeight: 1.07, color: 'var(--text-1)', marginBottom: 14, animation: 'revealUp .58s cubic-bezier(.16,1,.3,1) .07s both' }}>
-                Welcome back,{' '}
-                <span style={{
-                  background: 'linear-gradient(120deg,#A175FC 0%,#9B6FFF 40%,#7C3AED 100%)',
-                  backgroundSize: '200% auto',
-                  WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
-                  animation: 'shimmer 10s ease-in-out infinite',
-                  display: 'inline',
-                }}>
-                  {userName || 'there'}
-                </span>
-              </h1>
+                {/* Headline */}
+                <motion.h1 initial={{ opacity:0, y:12 }} animate={{ opacity:1, y:0 }} transition={{ duration:0.65, delay:0.3, ease:EASE }}
+                  className="hp-headline"
+                  style={{ fontSize:'clamp(36px, 5vw, 52px)', fontWeight:800, letterSpacing:'-0.025em', lineHeight:1.05, textAlign:'center', marginBottom:14, color:'#111' }}>
+                  Welcome back,{' '}
+                  <span className="name-gradient">{userName || 'there'}</span>
+                </motion.h1>
 
-              {/* Subtitle */}
-              <p style={{ fontSize: 15, color: 'var(--text-2)', lineHeight: 1.8, maxWidth: 340, marginBottom: 36, fontWeight: 400, animation: 'revealUp .58s cubic-bezier(.16,1,.3,1) .14s both' }}>
-                {contextLoaded
-                  ? 'Ask anything about your store — revenue, refunds, orders, trends.'
-                  : 'Connecting to your store data…'}
-              </p>
+                {/* Subtitle */}
+                <motion.p initial={{ opacity:0, y:12 }} animate={{ opacity:1, y:0 }} transition={{ duration:0.65, delay:0.4, ease:EASE }}
+                  style={{ fontSize:15, color:'#888', textAlign:'center', lineHeight:1.6, maxWidth:380, marginBottom:32 }}>
+                  Your store is running. Ask anything —<br />your AI knows everything.
+                </motion.p>
 
-
-              {/* ── HERO CHAT INPUT ── */}
-              <div style={{ width: '100%' }}>
-                <div className="chat-box-hero" style={{ padding: '20px 20px 20px 24px', display: 'flex', alignItems: 'flex-end', gap: 14 }}>
-                  <textarea
-                    ref={heroInputRef}
-                    value={input}
-                    onChange={e => setInput(e.target.value)}
-                    onKeyDown={onHeroKey}
-                    placeholder={contextLoaded ? 'Ask anything about your store…' : 'Connecting to your store…'}
-                    disabled={!contextLoaded || isLoading}
-                    rows={1}
-                    onInput={e => { e.target.style.height = 'auto'; e.target.style.height = Math.min(e.target.scrollHeight, 200) + 'px' }}
-                  />
-                  <button className="send-btn-hero" onClick={() => sendMessage(input)} disabled={!input.trim() || isLoading || !contextLoaded} aria-label="Send message">
-                    {isLoading
-                      ? <div style={{ width: 16, height: 16, border: '2px solid rgba(255,255,255,0.22)', borderTop: '2px solid #fff', borderRadius: '50%', animation: 'spin .7s linear infinite' }} />
-                      : <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-                    }
-                  </button>
-                </div>
-
-                {/* Suggestion chips — below the input */}
-                {contextLoaded && (
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7, justifyContent: 'center', marginTop: 14, animation: 'revealUp .58s cubic-bezier(.16,1,.3,1) .32s both' }}>
-                    {SUGGESTIONS.map(({ text, icon, color }, i) => (
-                      <button
-                        key={text}
-                        className="chip"
-                        onClick={() => sendMessage(text)}
-                        disabled={isLoading}
-                        style={{ animation: `chipReveal .42s cubic-bezier(.16,1,.3,1) ${.36 + i * .055}s both` }}
-                      >
-                        <span className="ci" style={{ color }}>{icon}</span>
-                        {text}
-                      </button>
-                    ))}
+                {/* Search bar */}
+                <motion.div initial={{ opacity:0, y:12 }} animate={{ opacity:1, y:0 }} transition={{ duration:0.65, delay:0.5, ease:EASE }}
+                  className="hp-search"
+                  style={{ width:'min(500px, 90%)', marginBottom:18, position:'relative' }}>
+                  {/* Animated border glow */}
+                  <div className="border-glow" style={{ position:'absolute', inset:-1, borderRadius:13, background:'linear-gradient(135deg, rgba(161,117,252,0.5), rgba(129,140,248,0.35), rgba(96,165,250,0.5))', zIndex:0 }} />
+                  <div className="search-inner">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#BDBDBD" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink:0 }}>
+                      <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                    </svg>
+                    <input
+                      ref={inputRef}
+                      value={input}
+                      onChange={e => setInput(e.target.value)}
+                      onKeyDown={onKey}
+                      placeholder={placeholder}
+                      disabled={!contextLoaded || isLoading}
+                    />
+                    <button className="send-btn-primary" onClick={() => sendMessage(input)} disabled={!input.trim() || isLoading || !contextLoaded} aria-label="Send">
+                      {isLoading
+                        ? <div style={{ width:14, height:14, border:'2px solid rgba(255,255,255,0.3)', borderTop:'2px solid #fff', borderRadius:'50%', animation:'spin .7s linear infinite' }} />
+                        : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+                      }
+                    </button>
                   </div>
-                )}
+                </motion.div>
 
-                <div style={{ textAlign: 'center', marginTop: 12, fontSize: 11, color: 'var(--text-3)', letterSpacing: '.04em' }}>
-                  Lynq AI · Answers based on live store data · ↵ Enter to send
-                </div>
+                {/* Suggestion chips */}
+                <motion.div initial={{ opacity:0, y:12 }} animate={{ opacity:1, y:0 }} transition={{ duration:0.65, delay:0.6, ease:EASE }}
+                  style={{ display:'flex', flexWrap:'wrap', gap:8, justifyContent:'center' }}>
+                  {CHIPS.map((chip, i) => (
+                    <motion.button key={chip.key} className="chip-btn"
+                      initial={{ opacity:0, y:8 }} animate={{ opacity:1, y:0 }}
+                      transition={{ delay:0.6 + i*0.06, ease:EASE }}
+                      onClick={() => sendMessage(chip.query)}
+                      disabled={isLoading}>
+                      {chip.label}
+                    </motion.button>
+                  ))}
+                </motion.div>
+
               </div>
-
             </div>
-          </div>
+
+            {/* Floating cards */}
+            <div className="hp-float" aria-hidden>
+              <motion.div className="float-card"
+                initial={{ opacity:0, x:20 }} animate={{ opacity:1, x:0, y:[0,-8,0] }}
+                transition={{ opacity:{ delay:0.7, duration:0.5 }, x:{ delay:0.7, duration:0.5 }, y:{ duration:5, repeat:Infinity, ease:'easeInOut', delay:1 } }}
+                style={{ position:'absolute', right:24, top:'22%', zIndex:2 }}>
+                <div style={{ fontSize:10, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.06em', color:'#BDBDBD', marginBottom:6 }}>Open tickets</div>
+                <div style={{ fontSize:20, fontWeight:700, color:'#111', marginBottom:6 }}><AnimatedCount to={12} /></div>
+                <span style={{ fontSize:10, fontWeight:600, background:'#FEF2F2', color:'#DC2626', borderRadius:100, padding:'2px 8px' }}>5 urgent</span>
+              </motion.div>
+
+              <motion.div className="float-card"
+                initial={{ opacity:0, x:20 }} animate={{ opacity:1, x:0, y:[0,-6,0] }}
+                transition={{ opacity:{ delay:0.9, duration:0.5 }, x:{ delay:0.9, duration:0.5 }, y:{ duration:6.5, repeat:Infinity, ease:'easeInOut', delay:1.2 } }}
+                style={{ position:'absolute', right:24, bottom:'22%', zIndex:2 }}>
+                <div style={{ fontSize:10, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.06em', color:'#BDBDBD', marginBottom:6 }}>Refund rate</div>
+                <div style={{ fontSize:20, fontWeight:700, color:'#111', marginBottom:6 }}><AnimatedCount to={3} suffix="%" /></div>
+                <span style={{ fontSize:10, fontWeight:600, background:'#FEF9EE', color:'#92400E', borderRadius:100, padding:'2px 8px' }}>↑ this week</span>
+              </motion.div>
+            </div>
+
+            {/* Bottom notification bar */}
+            <motion.div initial={{ opacity:0, y:36 }} animate={{ opacity:1, y:0 }} transition={{ delay:1, duration:0.5, ease:EASE }}
+              style={{ position:'absolute', bottom:0, left:0, right:0, height:36, background:'rgba(255,255,255,0.85)', backdropFilter:'blur(12px)', WebkitBackdropFilter:'blur(12px)', borderTop:'1px solid rgba(0,0,0,0.06)', display:'flex', alignItems:'center', justifyContent:'space-between', padding:'0 20px', zIndex:3 }}>
+              <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                <div className="pulse-dot" style={{ width:6, height:6, borderRadius:'50%', background:'#22C55E', flexShrink:0 }} />
+                <span style={{ fontSize:12, color:'#555' }}>New order <strong style={{ color:'#111', fontWeight:600 }}>€129.00</strong></span>
+              </div>
+              <span style={{ fontSize:12, color:'#888' }}>New message · <strong style={{ color:'#555', fontWeight:500 }}>Sarah K.</strong></span>
+            </motion.div>
+          </>
         )}
 
-        {/* ── CONVERSATION STATE (has messages) ── */}
+        {/* ── CONVERSATION STATE ── */}
         {hasMsg && (
           <>
-            {/* Scrollable messages */}
-            <div className="chat-scroll" style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '48px 44px 16px', position: 'relative', zIndex: 1 }}>
-              <div style={{ width: '100%', maxWidth: 780 }}>
+            <div className="chat-scroll" style={{ flex:1, overflowY:'auto', display:'flex', flexDirection:'column', alignItems:'center', padding:'48px 44px 16px', position:'relative', zIndex:1 }}>
+              <div style={{ width:'100%', maxWidth:780 }}>
                 {messages.map((msg, i) => <ChatMessage key={i} {...msg} />)}
                 <div ref={messagesEndRef} />
               </div>
             </div>
-
-            {/* Bottom input */}
-            <div className="bottom-fade" style={{ padding: '16px 44px 36px', display: 'flex', justifyContent: 'center', position: 'relative', zIndex: 2 }}>
-              <div style={{ width: '100%', maxWidth: 780 }}>
-                <div className="chat-box" style={{ padding: '18px 18px 18px 22px', display: 'flex', alignItems: 'flex-end', gap: 12 }}>
+            <div style={{ padding:'16px 44px 36px', display:'flex', justifyContent:'center', position:'relative', zIndex:2, background:'linear-gradient(to top, rgba(255,255,255,0.98) 60%, transparent)' }}>
+              <div style={{ width:'100%', maxWidth:780 }}>
+                <div className="bottom-box">
                   <textarea
                     ref={bottomInputRef}
                     value={input}
                     onChange={e => setInput(e.target.value)}
-                    onKeyDown={onBottomKey}
+                    onKeyDown={onKey}
                     placeholder="Ask a follow-up…"
                     disabled={isLoading}
                     rows={1}
-                    onInput={e => { e.target.style.height = 'auto'; e.target.style.height = Math.min(e.target.scrollHeight, 180) + 'px' }}
+                    onInput={e => { e.target.style.height='auto'; e.target.style.height=Math.min(e.target.scrollHeight,180)+'px' }}
                   />
-                  <button className="send-btn" onClick={() => sendMessage(input)} disabled={!input.trim() || isLoading} aria-label="Send message">
+                  <button className="send-btn-primary" style={{ width:38, height:38, borderRadius:10 }} onClick={() => sendMessage(input)} disabled={!input.trim() || isLoading} aria-label="Send">
                     {isLoading
-                      ? <div style={{ width: 15, height: 15, border: '2px solid rgba(255,255,255,0.22)', borderTop: '2px solid #fff', borderRadius: '50%', animation: 'spin .7s linear infinite' }} />
-                      : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                      ? <div style={{ width:14, height:14, border:'2px solid rgba(255,255,255,0.3)', borderTop:'2px solid #fff', borderRadius:'50%', animation:'spin .7s linear infinite' }} />
+                      : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
                     }
                   </button>
                 </div>
-                <div style={{ textAlign: 'center', marginTop: 10, fontSize: 11, color: 'var(--text-3)', letterSpacing: '.04em' }}>
-                  Lynq AI · Answers based on live store data · ↵ Enter to send
+                <div style={{ textAlign:'center', marginTop:10, fontSize:11, color:'#BDBDBD', letterSpacing:'.04em' }}>
+                  Lynq AI · ↵ Enter to send
                 </div>
               </div>
             </div>

@@ -1766,10 +1766,10 @@ function InboxPage() {
 
       {/* ═══════════════ RIGHT: Customer panel ═══════════════ */}
       {selected&&(
-        <div className="sscroll" style={{width:320,borderLeft:'1px solid rgba(255,255,255,0.08)',display:'flex',flexDirection:'column',flexShrink:0,overflowY:'auto',background:'rgba(12,5,32,0.84)',backdropFilter:'blur(24px)',WebkitBackdropFilter:'blur(24px)'}}>
+        <div className="sscroll" style={{width:320,borderLeft:'1px solid var(--border)',display:'flex',flexDirection:'column',flexShrink:0,overflowY:'auto',background:'var(--bg-surface)'}}>
 
           {/* Customer header */}
-          <div style={{padding:'16px 16px 12px',borderBottom:'1px solid rgba(255,255,255,0.055)',flexShrink:0}}>
+          <div style={{padding:'16px 16px 12px',borderBottom:'1px solid var(--border)',flexShrink:0}}>
             <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:12}}>
               <Avatar name={customer?.customer?`${customer.customer.firstName||''} ${customer.customer.lastName||''}`.trim()||extractName(selected.from):extractName(selected.from)} size={38} />
               <div style={{minWidth:0}}>
@@ -1783,9 +1783,9 @@ function InboxPage() {
             {/* Tabs */}
             <div style={{display:'flex',gap:4}}>
               {[{id:'info',label:'Customer'},{id:'shopify',label:'Orders'}].map(t=>(
-                <button key={t.id} onClick={()=>setRightTab(t.id)} style={{flex:1,padding:'6px 8px',borderRadius:8,fontSize:11.5,fontWeight:500,display:'flex',alignItems:'center',justifyContent:'center',gap:5,background:rightTab===t.id?'rgba(161,117,252,0.14)':'var(--bg-input)',color:rightTab===t.id?'#A175FC':'var(--text-3)',border:rightTab===t.id?'1px solid rgba(161,117,252,0.25)':'1px solid transparent',cursor:'pointer',fontFamily:'inherit',transition:'all .15s'}}>
+                <button key={t.id} onClick={()=>setRightTab(t.id)} style={{flex:1,padding:'6px 8px',borderRadius:8,fontSize:11.5,fontWeight:500,display:'flex',alignItems:'center',justifyContent:'center',gap:5,background:rightTab===t.id?'var(--bg-surface-2)':'transparent',color:rightTab===t.id?'var(--text-1)':'var(--text-3)',border:rightTab===t.id?'1px solid var(--border)':'1px solid transparent',cursor:'pointer',fontFamily:'inherit',transition:'all .15s'}}>
                   {t.label}
-                  {t.id==='shopify'&&(customer?.orders||[]).length>0&&<span style={{background:'rgba(161,117,252,0.2)',color:'#A175FC',fontSize:9,fontWeight:700,padding:'1px 5px',borderRadius:4}}>{customer.orders.length}</span>}
+                  {t.id==='shopify'&&(customer?.orders||[]).length>0&&<span style={{background:'var(--bg-surface-2)',color:'var(--text-2)',fontSize:9,fontWeight:700,padding:'1px 5px',borderRadius:4,border:'1px solid var(--border)'}}>{customer.orders.length}</span>}
                 </button>
               ))}
             </div>
@@ -1808,7 +1808,7 @@ function InboxPage() {
                   {customer.customer.tags&&<div>
                     <div className="info-label" style={{marginBottom:5}}>Tags</div>
                     <div style={{display:'flex',flexWrap:'wrap',gap:4}}>
-                      {customer.customer.tags.split(',').filter(Boolean).map(tag=><span key={tag} style={{fontSize:10.5,fontWeight:600,padding:'2px 8px',borderRadius:100,background:'rgba(161,117,252,0.12)',color:'#A175FC',border:'1px solid rgba(161,117,252,0.22)'}}>{tag.trim()}</span>)}
+                      {customer.customer.tags.split(',').filter(Boolean).map(tag=><span key={tag} style={{fontSize:10.5,fontWeight:600,padding:'2px 8px',borderRadius:100,background:'var(--bg-surface-2)',color:'var(--text-2)',border:'1px solid var(--border)'}}>{tag.trim()}</span>)}
                     </div>
                   </div>}
                   {customer.customer.createdAt&&<div><div className="info-label">Customer since</div><div className="info-val">{new Date(customer.customer.createdAt).toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'})}</div></div>}
@@ -1836,7 +1836,7 @@ function InboxPage() {
                   {/* Header */}
                   <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:9,paddingLeft:8}}>
                     <div>
-                      <span style={{fontSize:14,fontWeight:800,color:'#B990FF',letterSpacing:'-0.02em'}}>{order.name}</span>
+                      <span style={{fontSize:14,fontWeight:800,color:'var(--text-1)',letterSpacing:'-0.02em'}}>{order.name}</span>
                       <div style={{fontSize:10,color:'var(--text-3)',marginTop:1}}>{new Date(order.createdAt).toLocaleDateString('en-US',{day:'numeric',month:'short',year:'numeric'})}</div>
                     </div>
                     <div style={{textAlign:'right'}}>
@@ -1864,16 +1864,16 @@ function InboxPage() {
 
                   {/* Tracking */}
                   {(order.fulfillments||[]).length>0&&(
-                    <div style={{marginBottom:9,marginLeft:8,padding:'7px 10px',background:'rgba(74,222,128,0.04)',borderRadius:9,border:'1px solid rgba(74,222,128,0.1)'}}>
+                    <div style={{marginBottom:9,marginLeft:8,padding:'7px 10px',background:'var(--bg-surface-2)',borderRadius:9,border:'1px solid var(--border)'}}>
                       {order.fulfillments.slice(0,1).map((f,i)=>(
                         <div key={i}>
                           <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:f.trackingNumber?3:0}}>
-                            <span style={{display:'flex',color:'rgba(74,222,128,0.6)'}}>{I.truck}</span>
+                            <span style={{display:'flex',color:'var(--text-3)'}}>{I.truck}</span>
                             <span style={{fontSize:11,fontWeight:700,color:'var(--text-2)'}}>{f.trackingCompany||'Carrier'}</span>
-                            <span style={{fontSize:9.5,fontWeight:700,padding:'1px 6px',borderRadius:4,background:'rgba(74,222,128,0.14)',color:'#4ade80',textTransform:'capitalize',marginLeft:'auto'}}>Delivered</span>
+                            <span style={{fontSize:9.5,fontWeight:700,padding:'1px 6px',borderRadius:4,background:'var(--bg-surface)',color:'var(--text-2)',textTransform:'capitalize',marginLeft:'auto',border:'1px solid var(--border)'}}>Delivered</span>
                           </div>
                           {f.trackingNumber&&<div style={{fontSize:10,color:'var(--text-3)',fontFamily:'monospace'}}>{f.trackingNumber}</div>}
-                          {f.trackingUrl&&<a href={f.trackingUrl} target="_blank" rel="noreferrer" style={{fontSize:10.5,color:'#A175FC',textDecoration:'none',display:'inline-flex',alignItems:'center',gap:3,marginTop:2}}>Track package <span style={{display:'flex'}}>{I.externalLink}</span></a>}
+                          {f.trackingUrl&&<a href={f.trackingUrl} target="_blank" rel="noreferrer" style={{fontSize:10.5,color:'var(--accent-text)',textDecoration:'none',display:'inline-flex',alignItems:'center',gap:3,marginTop:2}}>Track package <span style={{display:'flex'}}>{I.externalLink}</span></a>}
                         </div>
                       ))}
                     </div>
@@ -1881,13 +1881,13 @@ function InboxPage() {
 
                   {/* Shipping address */}
                   {order.shippingAddress&&(
-                    <div style={{marginBottom:9,marginLeft:8,padding:'7px 10px',background:'var(--bg-input)',borderRadius:9,border:'1px solid rgba(255,255,255,0.055)'}}>
+                    <div style={{marginBottom:9,marginLeft:8,padding:'7px 10px',background:'var(--bg-surface-2)',borderRadius:9,border:'1px solid var(--border)'}}>
                       <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:3}}>
                         <div style={{display:'flex',alignItems:'center',gap:4,color:'var(--text-3)'}}>
                           <span style={{display:'flex'}}>{I.mappin}</span>
                           <span style={{fontSize:9.5,fontWeight:700,letterSpacing:'.07em',textTransform:'uppercase'}}>Shipping address</span>
                         </div>
-                        <button onClick={()=>setModal({type:'address',order})} style={{display:'flex',alignItems:'center',gap:3,color:'var(--text-3)',cursor:'pointer',fontSize:10,fontWeight:600,padding:'2px 6px',borderRadius:5,border:'1px solid var(--border)',background:'transparent',transition:'all .15s'}} onMouseEnter={e=>{e.currentTarget.style.color='#A175FC';e.currentTarget.style.borderColor='rgba(161,117,252,0.3)'}} onMouseLeave={e=>{e.currentTarget.style.color='var(--text-3)';e.currentTarget.style.borderColor='var(--border)'}}>
+                        <button onClick={()=>setModal({type:'address',order})} style={{display:'flex',alignItems:'center',gap:3,color:'var(--text-3)',cursor:'pointer',fontSize:10,fontWeight:600,padding:'2px 6px',borderRadius:5,border:'1px solid var(--border)',background:'transparent',transition:'all .15s'}} onMouseEnter={e=>{e.currentTarget.style.color='var(--text-1)';e.currentTarget.style.borderColor='var(--border-hover)'}} onMouseLeave={e=>{e.currentTarget.style.color='var(--text-3)';e.currentTarget.style.borderColor='var(--border)'}}>
                           <span style={{display:'flex'}}>{I.edit}</span> Edit
                         </button>
                       </div>

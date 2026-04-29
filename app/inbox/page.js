@@ -42,11 +42,29 @@ const FALLBACK_MACROS = [
   { id:'notfound', name:'Order Not Found', tags:['order'],     language:'English', usageCount:0, updatedAt:NOW, archived:false, body:'Hi {{name}},\n\nI\'m unable to find an order linked to this email address. Could you share your order number?\n\nBest regards,\nCustomer Support' },
   { id:'wrongitem',name:'Wrong Item',      tags:['complaint'], language:'English', usageCount:0, updatedAt:NOW, archived:false, body:'Hi {{name}},\n\nWe\'re sorry about that! Please send us a photo and we\'ll sort it out right away.\n\nBest regards,\nCustomer Support' },
 ]
+const DEFAULT_TICKET_TAGS = [
+  { id:'order-status', name:'ORDER-STATUS', color:'#84cc16', description:'Questions about order status or delivery updates' },
+  { id:'feedback', name:'feedback', color:'#a78bfa', description:'Customer feedback or product experience' },
+  { id:'negative', name:'negative', color:'#f97316', description:'Negative sentiment or complaint' },
+  { id:'return-exchange', name:'RETURN/EXCHANGE', color:'#8b5cf6', description:'Return, exchange, or size change request' },
+  { id:'order-change-cancel', name:'ORDER-CHANGE/CANCEL', color:'#f59e0b', description:'Order edit, address change, or cancellation' },
+  { id:'positive', name:'positive', color:'#22c55e', description:'Positive sentiment or compliment' },
+  { id:'promotion', name:'PROMOTION', color:'#fb923c', description:'Promotion, discount, or coupon question' },
+  { id:'product', name:'PRODUCT', color:'#38bdf8', description:'Product details, stock, sizing, or recommendation' },
+]
 function loadMacros() {
   try { const s=JSON.parse(localStorage.getItem('lynq_macros')||'null'); if(s?.length) return s } catch{}
   return FALLBACK_MACROS
 }
 function saveMacrosToStorage(m) { try{localStorage.setItem('lynq_macros',JSON.stringify(m))}catch{} }
+function loadTicketTags() {
+  try {
+    const saved = JSON.parse(localStorage.getItem('lynq_tags') || 'null')
+    if (Array.isArray(saved) && saved.length) return saved
+  } catch {}
+  return DEFAULT_TICKET_TAGS
+}
+function saveTicketTags(tags) { try{localStorage.setItem('lynq_tags',JSON.stringify(tags))}catch{} }
 
 // ─── Demo data ───────────────────────────────────────────────
 const DEMO_THREADS = [
@@ -1234,7 +1252,21 @@ function NoteModal({ order, token, onClose, onSuccess }) {
 }
 
 // ─── Ticket action bar ────────────────────────────────────────
-function TicketActionBar({ meta, status, onClose, onAddTag, onRemoveTag, onFieldChange }) {
+function TicketActionBar({ meta, status, tagLibrary, onClose, onAddTag, onCreateTag, onRemoveTag, onFieldChange }) {
+  const [tagMenuOpen, setTagMenuOpen] = useState(false)
+  const [newTag, setNewTag] = useState('')
+  const selectedTags = meta.tags || []
+  const availableTags = tagLibrary.filter(tag => !selectedTags.includes(tag.name))
+
+  function handleCreateTag() {
+    const created = onCreateTag(newTag)
+    if (created) {
+      onAddTag(created.name)
+      setNewTag('')
+      setTagMenuOpen(false)
+    }
+  }
+
   const fieldButton = (key, label) => (
     <button
       onClick={() => onFieldChange(key, label)}
@@ -1268,7 +1300,27 @@ function TicketActionBar({ meta, status, onClose, onAddTag, onRemoveTag, onField
             <span style={{color:'var(--text-3)'}}>×</span>
           </button>
         ))}
-        <button onClick={onAddTag} style={{border:'none',background:'transparent',cursor:'pointer',fontSize:10.5,color:'var(--text-3)',fontFamily:'inherit',padding:0}}>+Add tag</button>
+        <div style={{position:'relative'}}>
+          <button onClick={()=>setTagMenuOpen(v=>!v)} style={{border:'none',background:'transparent',cursor:'pointer',fontSize:10.5,color:'var(--accent)',fontFamily:'inherit',padding:0}}>+Add tag</button>
+          {tagMenuOpen&&(
+            <div style={{position:'absolute',top:'calc(100% + 8px)',left:0,width:260,background:'var(--bg-surface)',border:'1px solid var(--border)',borderRadius:12,boxShadow:'var(--shadow-card-hover)',padding:8,zIndex:60}}>
+              <div style={{fontSize:10,fontWeight:800,color:'var(--text-3)',letterSpacing:'.08em',textTransform:'uppercase',padding:'4px 6px 8px'}}>Choose tag</div>
+              <div style={{maxHeight:180,overflowY:'auto',display:'flex',flexDirection:'column',gap:3}}>
+                {availableTags.map(tag=>(
+                  <button key={tag.id} onClick={()=>{onAddTag(tag.name);setTagMenuOpen(false)}} style={{display:'flex',alignItems:'center',gap:8,width:'100%',border:'none',background:'transparent',borderRadius:8,padding:'7px 8px',cursor:'pointer',fontFamily:'inherit',fontSize:12,color:'var(--text-2)',textAlign:'left'}}>
+                    <span style={{width:8,height:8,borderRadius:'50%',background:tag.color,flexShrink:0}} />
+                    <span style={{flex:1}}>{tag.name}</span>
+                  </button>
+                ))}
+                {availableTags.length===0&&<div style={{fontSize:11,color:'var(--text-3)',padding:'8px 6px'}}>No more existing tags</div>}
+              </div>
+              <div style={{display:'flex',gap:6,borderTop:'1px solid var(--border)',marginTop:8,paddingTop:8}}>
+                <input value={newTag} onChange={e=>setNewTag(e.target.value)} onKeyDown={e=>{if(e.key==='Enter')handleCreateTag()}} placeholder="Create new tag" style={{flex:1,minWidth:0,border:'1px solid var(--border)',borderRadius:8,background:'var(--bg-surface-2)',color:'var(--text-1)',fontSize:12,padding:'7px 8px',outline:'none'}} />
+                <button onClick={handleCreateTag} style={{border:'none',background:'var(--accent)',color:'#fff',borderRadius:8,padding:'7px 10px',fontSize:12,fontWeight:700,cursor:'pointer',fontFamily:'inherit'}}>Add</button>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       <div style={{display:'grid',gridTemplateColumns:'minmax(120px,1fr) minmax(120px,1fr) minmax(120px,1fr)',gap:'18px',flex:'1 1 420px',minWidth:320}}>
@@ -1780,6 +1832,7 @@ function InboxPage() {
   const [showMacros, setShowMacros]   = useState(false)
   const [showMacroManager, setShowMacroManager] = useState(false)
   const [macroFavs, setMacroFavs]     = useState(()=>{ try{return JSON.parse(localStorage.getItem('lynq_macro_favs')||'[]')}catch{return[]} })
+  const [tagLibrary, setTagLibrary]   = useState(loadTicketTags)
 
   function saveMacro(m) {
     setMacros(prev=>{
@@ -1796,6 +1849,18 @@ function InboxPage() {
       const next = prev.includes(id)?prev.filter(x=>x!==id):[...prev,id]
       localStorage.setItem('lynq_macro_favs',JSON.stringify(next)); return next
     })
+  }
+  function createTicketTag(name) {
+    const clean = name?.trim()
+    if(!clean) return null
+    const existing = tagLibrary.find(t=>t.name.toLowerCase()===clean.toLowerCase())
+    if(existing) return existing
+    const colors = ['#84cc16','#a78bfa','#f97316','#8b5cf6','#f59e0b','#22c55e','#fb923c','#38bdf8','#ef4444','#64748b']
+    const tag = { id:`tag-${Date.now()}`, name:clean, color:colors[tagLibrary.length%colors.length], description:'' }
+    const next = [...tagLibrary, tag]
+    setTagLibrary(next)
+    saveTicketTags(next)
+    return tag
   }
   // Order modals
   const [modal, setModal]             = useState(null) // { type:'refund'|'cancel'|'duplicate'|'address', order }
@@ -1858,11 +1923,12 @@ function InboxPage() {
     localStorage.setItem('lynq_ticket_meta', JSON.stringify(next))
   }
   function addTicketTag(id) {
-    const tag = prompt('Add tag:')
-    if(!tag?.trim()) return
-    const current = getTicketMeta(id)
-    const tags = [...new Set([...(current.tags||[]), tag.trim()])]
-    updateTicketMeta(id, { tags })
+    const tag = createTicketTag(prompt('Add tag:'))
+    if(tag) {
+      const current = getTicketMeta(id)
+      const tags = [...new Set([...(current.tags||[]), tag.name])]
+      updateTicketMeta(id, { tags })
+    }
   }
   function removeTicketTag(id, tag) {
     const current = getTicketMeta(id)
@@ -2308,8 +2374,10 @@ function InboxPage() {
               <TicketActionBar
                 meta={getTicketMeta(selected.id)}
                 status={getStatus(selected.id)}
+                tagLibrary={tagLibrary}
                 onClose={() => saveStatus(selected.id, 'closed')}
                 onAddTag={() => addTicketTag(selected.id)}
+                onCreateTag={createTicketTag}
                 onRemoveTag={(tag) => removeTicketTag(selected.id, tag)}
                 onFieldChange={(field, labelOrValue) => field === 'assignee' ? updateTicketMeta(selected.id, { assignee: labelOrValue }) : updateTicketField(selected.id, field, labelOrValue)}
               />

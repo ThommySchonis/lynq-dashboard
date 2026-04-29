@@ -505,8 +505,8 @@ export default function HomePage() {
               <h1 style={{ fontSize: 'clamp(36px,5.2vw,60px)', fontWeight: 800, letterSpacing: '-0.036em', lineHeight: 1.07, color: 'var(--text-1)', marginBottom: 14, animation: 'revealUp .58s cubic-bezier(.16,1,.3,1) .07s both' }}>
                 Welcome back,{' '}
                 <span style={{
-                  background: 'linear-gradient(120deg,#9B6FFF 0%,#C4B5FD 35%,#A175FC 65%,#7C3AED 100%)',
-                  backgroundSize: '280% auto',
+                  background: 'linear-gradient(120deg,#A175FC 0%,#9B6FFF 40%,#7C3AED 100%)',
+                  backgroundSize: '200% auto',
                   WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
                   animation: 'shimmer 10s ease-in-out infinite',
                   display: 'inline',

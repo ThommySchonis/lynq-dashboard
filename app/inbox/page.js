@@ -130,12 +130,16 @@ const CSS = `
   input:focus-visible,textarea:focus-visible,[contenteditable]:focus-visible { outline:none; }
 
   /* ── Thread row ── */
-  .trow { padding:12px 14px 11px 18px; cursor:pointer; border-bottom:1px solid var(--border); border-left:3px solid transparent; transition:all .2s cubic-bezier(.16,1,.3,1); position:relative; }
-  .trow:hover:not(.trow-active) { background:var(--bg-surface-2); border-left-color:var(--accent-border); }
+  .trow { padding:11px 14px 11px 12px; cursor:pointer; border-bottom:1px solid var(--border); border-left:3px solid transparent; transition:background .15s; position:relative; display:flex; align-items:flex-start; gap:9px; }
+  .trow:hover:not(.trow-active) { background:var(--bg-surface-2); }
   .trow-active { background:var(--accent-soft); border-left-color:var(--accent); }
-  [data-theme="dark"] .trow:hover:not(.trow-active) { background:linear-gradient(90deg,rgba(161,117,252,0.09) 0%,rgba(161,117,252,0.02) 100%); }
+  [data-theme="dark"] .trow:hover:not(.trow-active) { background:rgba(255,255,255,0.03); }
   [data-theme="dark"] .trow-active { background:linear-gradient(90deg,rgba(161,117,252,0.18) 0%,rgba(161,117,252,0.04) 100%); }
   .trow-active::after { content:''; position:absolute; left:0; top:0; bottom:0; width:3px; background:linear-gradient(180deg,#C3A3FF 0%,#7B45E8 100%); border-radius:0 2px 2px 0; }
+  .trow-cb { width:16px; height:16px; border-radius:4px; border:1.5px solid var(--border); background:var(--bg-surface); cursor:pointer; appearance:none; -webkit-appearance:none; flex-shrink:0; margin-top:2px; transition:all .15s; }
+  .trow-cb:checked { background:var(--accent); border-color:var(--accent); background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 16 16' fill='white' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M13.3 4.3a1 1 0 0 1 0 1.4l-6 6a1 1 0 0 1-1.4 0l-3-3a1 1 0 1 1 1.4-1.4L6.6 9.6l5.3-5.3a1 1 0 0 1 1.4 0z'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:center; }
+  .trow-cb:hover:not(:checked) { border-color:var(--accent-border); }
+  .trow-snippet { overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
 
   /* ── View tabs — pill style ── */
   .vtab { padding:6px 12px; background:transparent; cursor:pointer; font-size:11.5px; font-weight:500; font-family:inherit; border-radius:0; transition:all .18s; color:var(--text-3); white-space:nowrap; letter-spacing:.01em; border:none; border-bottom:2px solid transparent; }
@@ -453,7 +457,15 @@ const I = {
 // ─── Helpers ─────────────────────────────────────────────────
 function extractEmail(s) { if (!s) return ''; const m=s.match(/<(.+?)>/); return m?m[1]:s.trim() }
 function extractName(s)  { if (!s) return 'Unknown'; const m=s.match(/^([^<]+)/); return m?m[1].trim().replace(/"/g,''):s }
-function formatDate(s)   { if (!s) return ''; const d=new Date(s),now=new Date(),diff=now-d; if(diff<86400000) return d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}); if(diff<604800000) return d.toLocaleDateString([],{weekday:'short'}); return d.toLocaleDateString([],{month:'short',day:'numeric'}) }
+function formatDate(s) {
+  if(!s) return ''
+  const diff = Date.now()-new Date(s)
+  if(diff<60000) return 'just now'
+  if(diff<3600000) return `${Math.floor(diff/60000)}m ago`
+  if(diff<86400000) return `${Math.floor(diff/3600000)}h ago`
+  if(diff<604800000) return `${Math.floor(diff/86400000)}d ago`
+  return new Date(s).toLocaleDateString([],{month:'short',day:'numeric'})
+}
 function fmtPrice(v,c='EUR') { return new Intl.NumberFormat('en-US',{style:'currency',currency:c||'EUR'}).format(Number(v)||0) }
 function authFetch(url, opts={}, token) { return fetch(url,{...opts,headers:{'Content-Type':'application/json',Authorization:`Bearer ${token}`,...opts.headers}}) }
 
@@ -1586,6 +1598,7 @@ function InboxPage() {
   const [expandedSubs, setExpandedSubs]     = useState({})
   const [custFieldsOpen, setCustFieldsOpen] = useState(true)
   const [custShowMore, setCustShowMore]     = useState(false)
+  const [checkedThreads, setCheckedThreads] = useState({})
 
   const msgEnd       = useRef(null)
   const replyRef     = useRef(null)
@@ -1910,6 +1923,41 @@ function InboxPage() {
 
         {/* Thread list */}
         <div className="sscroll" style={{flex:1,overflowY:'auto'}}>
+          {/* Select all bar */}
+          {(()=>{
+            const listIds=(view==='sent'?sentThreads:sortedFiltered).map(t=>t.id)
+            const allChecked=listIds.length>0&&listIds.every(id=>checkedThreads[id])
+            const anyChecked=listIds.some(id=>checkedThreads[id])
+            const checkedCount=listIds.filter(id=>checkedThreads[id]).length
+            return (
+              <div style={{display:'flex',alignItems:'center',gap:10,padding:'9px 14px 9px 15px',borderBottom:'1px solid var(--border)',background:'var(--bg-surface)',position:'sticky',top:0,zIndex:2}}>
+                <input type="checkbox" className="trow-cb" checked={allChecked} onChange={e=>{ const next={}; if(e.target.checked) listIds.forEach(id=>next[id]=true); setCheckedThreads(next) }} style={{marginTop:0}} />
+                <span style={{flex:1,fontSize:12,fontWeight:600,color:'var(--text-2)'}}>{anyChecked?`${checkedCount} selected`:'Select all'}</span>
+                {anyChecked&&<>
+                  <button title="Mark as read" style={{background:'none',border:'none',cursor:'pointer',color:'var(--text-2)',display:'flex',padding:4,borderRadius:5,transition:'color .15s'}} onMouseEnter={e=>e.currentTarget.style.color='var(--text-1)'} onMouseLeave={e=>e.currentTarget.style.color='var(--text-2)'}>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                  </button>
+                  <button title="Assign" style={{background:'none',border:'none',cursor:'pointer',color:'var(--text-2)',display:'flex',padding:4,borderRadius:5,transition:'color .15s'}} onMouseEnter={e=>e.currentTarget.style.color='var(--text-1)'} onMouseLeave={e=>e.currentTarget.style.color='var(--text-2)'}>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                  </button>
+                  <button title="More actions" style={{background:'none',border:'none',cursor:'pointer',color:'var(--text-2)',display:'flex',padding:4,borderRadius:5,transition:'color .15s'}} onMouseEnter={e=>e.currentTarget.style.color='var(--text-1)'} onMouseLeave={e=>e.currentTarget.style.color='var(--text-2)'}>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+                  </button>
+                </>}
+                {!anyChecked&&<>
+                  <button title="Mark all read" style={{background:'none',border:'none',cursor:'pointer',color:'var(--text-2)',display:'flex',padding:4,borderRadius:5,transition:'color .15s'}} onMouseEnter={e=>e.currentTarget.style.color='var(--text-1)'} onMouseLeave={e=>e.currentTarget.style.color='var(--text-2)'}>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                  </button>
+                  <button title="Assign" style={{background:'none',border:'none',cursor:'pointer',color:'var(--text-2)',display:'flex',padding:4,borderRadius:5,transition:'color .15s'}} onMouseEnter={e=>e.currentTarget.style.color='var(--text-1)'} onMouseLeave={e=>e.currentTarget.style.color='var(--text-2)'}>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                  </button>
+                  <button title="More" style={{background:'none',border:'none',cursor:'pointer',color:'var(--text-2)',display:'flex',padding:4,borderRadius:5,transition:'color .15s'}} onMouseEnter={e=>e.currentTarget.style.color='var(--text-1)'} onMouseLeave={e=>e.currentTarget.style.color='var(--text-2)'}>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg>
+                  </button>
+                </>}
+              </div>
+            )
+          })()}
           {demoMode&&(
             <div style={{margin:'10px 10px 4px',padding:'8px 12px',background:'rgba(251,191,36,0.07)',border:'1px solid rgba(251,191,36,0.22)',borderRadius:9,display:'flex',alignItems:'center',justifyContent:'space-between',gap:8}}>
               <span style={{fontSize:11,fontWeight:600,color:'rgba(251,191,36,0.85)'}}>Demo mode</span>
@@ -1917,12 +1965,12 @@ function InboxPage() {
             </div>
           )}
           {(view==='sent'?loadingSent:loadingThreads)&&[0,1,2,3,4].map(i=>(
-            <div key={i} style={{padding:'12px 14px',borderBottom:'1px solid var(--border)',display:'flex',gap:10,opacity:1-i*.16}}>
-              <div className="skel" style={{width:34,height:34,borderRadius:'50%',flexShrink:0}} />
-              <div style={{flex:1,display:'flex',flexDirection:'column',gap:7}}>
-                <div className="skel" style={{height:11,width:'65%'}} />
-                <div className="skel" style={{height:10,width:'85%'}} />
-                <div className="skel" style={{height:9,width:'50%'}} />
+            <div key={i} style={{padding:'11px 14px 11px 12px',borderBottom:'1px solid var(--border)',display:'flex',gap:9,opacity:1-i*.16}}>
+              <div className="skel" style={{width:16,height:16,borderRadius:4,flexShrink:0,marginTop:2}} />
+              <div style={{flex:1,display:'flex',flexDirection:'column',gap:6}}>
+                <div className="skel" style={{height:12,width:'55%'}} />
+                <div className="skel" style={{height:11,width:'80%'}} />
+                <div className="skel" style={{height:10,width:'70%'}} />
               </div>
             </div>
           ))}
@@ -1944,50 +1992,29 @@ function InboxPage() {
             const urgUI=URGENCY_UI[urg]
             return (
               <div key={thread.id} className={`trow${active?' trow-active':''}`}
-                style={!active&&urgUI?{borderLeftColor:urgUI.border}:{}}
                 onClick={()=>openThread(thread)}>
-                <div style={{display:'flex',gap:0}}>
-                  {thread.unread&&<span style={{position:'absolute',left:6,top:'50%',transform:'translateY(-50%)',width:6,height:6,borderRadius:'50%',background:'var(--accent)',flexShrink:0}} />}
-                  <div style={{flex:1,minWidth:0}}>
-                    {isSentView ? (
-                      /* Sent view: subject is the primary identifier */
-                      <>
-                        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:3}}>
-                          <span style={{fontSize:12.5,fontWeight:600,color:'var(--text-1)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',maxWidth:160,letterSpacing:'-0.01em'}}>{thread.subject||'(no subject)'}</span>
-                          <span style={{fontSize:10,color:'var(--text-2)',flexShrink:0,marginLeft:4}}>{formatDate(thread.date)}</span>
-                        </div>
-                        <div style={{display:'flex',alignItems:'center',gap:4,marginBottom:3}}>
-                          <span style={{fontSize:9,fontWeight:700,color:'var(--text-2)',letterSpacing:'.06em',textTransform:'uppercase',flexShrink:0}}>To</span>
-                          <span style={{fontSize:11,color:'var(--text-2)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{name||extractEmail(thread.to)}</span>
-                        </div>
-                      </>
-                    ) : (
-                      /* Inbox view: sender name is the primary identifier */
-                      <>
-                        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:2}}>
-                          <span style={{fontSize:12.5,fontWeight:thread.unread?700:600,color:'var(--text-1)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',maxWidth:160}}>{name}</span>
-                          <span style={{fontSize:10,color:'var(--text-2)',flexShrink:0,marginLeft:4}}>{formatDate(thread.date)}</span>
-                        </div>
-                        <div style={{fontSize:11.5,color:'var(--text-1)',fontWeight:thread.unread?600:500,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',marginBottom:3}}>{thread.subject}</div>
-                      </>
-                    )}
-                    {!isSentView&&<div style={{fontSize:11,color:'var(--text-2)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',marginBottom:5}}>{thread.snippet}</div>}
-                    {isSentView&&thread.snippet&&<div style={{fontSize:10.5,color:'var(--text-2)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',marginBottom:4,fontStyle:'italic'}}>{thread.snippet}</div>}
-                    {!isSentView&&<div style={{display:'flex',alignItems:'center',gap:5,flexWrap:'wrap'}}>
-                      {analysis&&urg&&urg!=='low'&&(
-                        <span className={`urg-pill urg-${urg}`} style={{background:urgUI.bg,color:urgUI.color,border:`1px solid ${urgUI.border}`}}>
-                          <span className="urg-dot" style={{background:urgUI.color}} />
-                          {analysis.intent}
-                        </span>
-                      )}
-                      {analysis&&urg==='low'&&(
-                        <span style={{fontSize:9.5,color:'var(--text-3)',fontWeight:600}}>{analysis.intent}</span>
-                      )}
-                      <TicketBadge status={status} />
-                    </div>}
-                    {isSentView&&<div style={{display:'flex',alignItems:'center',gap:5}}>
-                      <span style={{fontSize:9,fontWeight:600,padding:'1px 7px',borderRadius:100,background:'var(--bg-surface-2)',color:'var(--text-3)',border:'1px solid var(--border)',letterSpacing:'.04em'}}>Sent</span>
-                    </div>}
+                {/* Checkbox */}
+                <input type="checkbox" className="trow-cb" checked={!!checkedThreads[thread.id]}
+                  onClick={e=>e.stopPropagation()}
+                  onChange={e=>setCheckedThreads(p=>({...p,[thread.id]:e.target.checked}))} />
+                {/* Content */}
+                <div style={{flex:1,minWidth:0}}>
+                  {/* Row 1: name + email icon + time + unread dot */}
+                  <div style={{display:'flex',alignItems:'center',gap:5,marginBottom:2}}>
+                    <span style={{fontSize:12.5,fontWeight:thread.unread?700:600,color:'var(--text-1)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',flex:1}}>
+                      {isSentView?'To: '+(name||extractEmail(thread.to)):name}
+                    </span>
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{color:'var(--text-3)',flexShrink:0}}><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                    <span style={{fontSize:10.5,color:'var(--text-3)',flexShrink:0,whiteSpace:'nowrap'}}>{formatDate(thread.date)}</span>
+                    {thread.unread&&<span style={{width:7,height:7,borderRadius:'50%',background:'#ef4444',flexShrink:0,boxShadow:'0 0 0 1.5px rgba(239,68,68,0.25)'}} />}
+                  </div>
+                  {/* Row 2: subject */}
+                  <div style={{fontSize:12,fontWeight:thread.unread?600:500,color:thread.unread?'var(--text-1)':'var(--text-2)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',marginBottom:3}}>
+                    {thread.subject||'(no subject)'}
+                  </div>
+                  {/* Row 3: snippet — 2 lines */}
+                  <div className="trow-snippet" style={{fontSize:11.5,color:'var(--text-3)',lineHeight:1.45}}>
+                    {thread.snippet}
                   </div>
                 </div>
               </div>

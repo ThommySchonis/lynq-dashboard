@@ -31,16 +31,22 @@ const CANCEL_REASONS = [
   { value:'declined',  label:'Payment declined'    },
   { value:'other',     label:'Other'               },
 ]
+const NOW = new Date().toISOString()
 const FALLBACK_MACROS = [
-  { id:'greeting', name:'Greeting',        tags:['support'],   body:'Hi {{name}},\n\nThank you for reaching out! I\'m happy to help you.\n\n' },
-  { id:'tracking', name:'Tracking Update', tags:['shipping'],  body:'Hi {{name}},\n\nYour order is on its way! You can track it using the link in your shipping confirmation email.\n\nBest regards,\nCustomer Support' },
-  { id:'refund',   name:'Refund',          tags:['refund'],    body:'Hi {{name}},\n\nYour refund has been processed. The amount is typically back in your account within 5–7 business days.\n\nBest regards,\nCustomer Support' },
-  { id:'delay',    name:'Delay',           tags:['shipping'],  body:'Hi {{name}},\n\nUnfortunately your order is experiencing a delay. We\'ll keep you updated!\n\nBest regards,\nCustomer Support' },
-  { id:'quality',  name:'Quality Issue',   tags:['complaint'], body:'Hi {{name}},\n\nWe\'re sorry to hear that! Could you send us a photo? We\'ll arrange a solution right away.\n\nBest regards,\nCustomer Support' },
-  { id:'closing',  name:'Closing',         tags:['support'],   body:'Hi {{name}},\n\nGreat to hear! Have a wonderful day!\n\nBest regards,\nCustomer Support' },
-  { id:'notfound', name:'Order Not Found', tags:['order'],     body:'Hi {{name}},\n\nI\'m unable to find an order linked to this email address. Could you share your order number?\n\nBest regards,\nCustomer Support' },
-  { id:'wrongitem',name:'Wrong Item',      tags:['complaint'], body:'Hi {{name}},\n\nWe\'re sorry about that! Please send us a photo and we\'ll sort it out right away.\n\nBest regards,\nCustomer Support' },
+  { id:'greeting', name:'Greeting',        tags:['support'],   language:'English', usageCount:0, updatedAt:NOW, archived:false, body:'Hi {{name}},\n\nThank you for reaching out! I\'m happy to help you.\n\n' },
+  { id:'tracking', name:'Tracking Update', tags:['shipping'],  language:'English', usageCount:0, updatedAt:NOW, archived:false, body:'Hi {{name}},\n\nYour order is on its way! You can track it using the link in your shipping confirmation email.\n\nBest regards,\nCustomer Support' },
+  { id:'refund',   name:'Refund',          tags:['refund'],    language:'English', usageCount:0, updatedAt:NOW, archived:false, body:'Hi {{name}},\n\nYour refund has been processed. The amount is typically back in your account within 5–7 business days.\n\nBest regards,\nCustomer Support' },
+  { id:'delay',    name:'Delay',           tags:['shipping'],  language:'English', usageCount:0, updatedAt:NOW, archived:false, body:'Hi {{name}},\n\nUnfortunately your order is experiencing a delay. We\'ll keep you updated!\n\nBest regards,\nCustomer Support' },
+  { id:'quality',  name:'Quality Issue',   tags:['complaint'], language:'English', usageCount:0, updatedAt:NOW, archived:false, body:'Hi {{name}},\n\nWe\'re sorry to hear that! Could you send us a photo? We\'ll arrange a solution right away.\n\nBest regards,\nCustomer Support' },
+  { id:'closing',  name:'Closing',         tags:['support'],   language:'English', usageCount:0, updatedAt:NOW, archived:false, body:'Hi {{name}},\n\nGreat to hear! Have a wonderful day!\n\nBest regards,\nCustomer Support' },
+  { id:'notfound', name:'Order Not Found', tags:['order'],     language:'English', usageCount:0, updatedAt:NOW, archived:false, body:'Hi {{name}},\n\nI\'m unable to find an order linked to this email address. Could you share your order number?\n\nBest regards,\nCustomer Support' },
+  { id:'wrongitem',name:'Wrong Item',      tags:['complaint'], language:'English', usageCount:0, updatedAt:NOW, archived:false, body:'Hi {{name}},\n\nWe\'re sorry about that! Please send us a photo and we\'ll sort it out right away.\n\nBest regards,\nCustomer Support' },
 ]
+function loadMacros() {
+  try { const s=JSON.parse(localStorage.getItem('lynq_macros')||'null'); if(s?.length) return s } catch{}
+  return FALLBACK_MACROS
+}
+function saveMacrosToStorage(m) { try{localStorage.setItem('lynq_macros',JSON.stringify(m))}catch{} }
 
 // ─── Demo data ───────────────────────────────────────────────
 const DEMO_THREADS = [
@@ -1062,11 +1068,10 @@ function NoteModal({ order, token, onClose, onSuccess }) {
 }
 
 // ─── Macro Panel ──────────────────────────────────────────────
-function MacroPanel({ macros, aiMacros, onInsert, onClose, customerName }) {
+function MacroPanel({ macros, aiMacros, onInsert, onClose, customerName, onManage, onCreateNew, favs, onToggleFav }) {
   const [search, setSearch]     = useState('')
   const [selected, setSelected] = useState(null)
   const [gearOpen, setGearOpen] = useState(false)
-  const [favs, setFavs]         = useState(()=>{ try{return JSON.parse(localStorage.getItem('lynq_macro_favs')||'[]')}catch{return[]} })
   const searchRef = useRef(null)
   const gearRef   = useRef(null)
 
@@ -1081,14 +1086,7 @@ function MacroPanel({ macros, aiMacros, onInsert, onClose, customerName }) {
     document.addEventListener('mousedown',h); return ()=>document.removeEventListener('mousedown',h)
   },[gearOpen])
 
-  function toggleFav(id, e) {
-    e.stopPropagation()
-    setFavs(prev=>{
-      const next = prev.includes(id) ? prev.filter(x=>x!==id) : [...prev, id]
-      localStorage.setItem('lynq_macro_favs', JSON.stringify(next))
-      return next
-    })
-  }
+  function toggleFav(id, e) { e.stopPropagation(); onToggleFav(id) }
 
   const filtered = macros.filter(m=>!search||(m.name+m.body+(m.tags||[]).join('')).toLowerCase().includes(search.toLowerCase()))
   const favMacros    = filtered.filter(m=>favs.includes(m.id))
@@ -1139,25 +1137,25 @@ function MacroPanel({ macros, aiMacros, onInsert, onClose, customerName }) {
           ><GearIcon /></button>
           {gearOpen&&(
             <div className="macro-gear-menu">
-              <button className="macro-gear-item" onClick={()=>setGearOpen(false)}>
+              <button className="macro-gear-item" onClick={()=>{setGearOpen(false);onManage()}}>
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="9" x2="15" y2="9"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="15" x2="12" y2="15"/></svg>
                 Manage macros
               </button>
-              <button className="macro-gear-item" onClick={()=>setGearOpen(false)}>
+              <button className="macro-gear-item" onClick={()=>{setGearOpen(false);active&&onManage(active)}}>
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                 Edit macro
               </button>
-              <button className="macro-gear-item" onClick={()=>setGearOpen(false)}>
+              <button className="macro-gear-item" onClick={()=>{setGearOpen(false);onCreateNew()}}>
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                 Create new macro
               </button>
               <div className="macro-gear-divider" />
-              <button className="macro-gear-item danger" onClick={()=>setGearOpen(false)}>
+              <button className="macro-gear-item danger" onClick={()=>{setGearOpen(false);active&&confirm('Delete this macro?')&&onDeleteMacro&&onDeleteMacro(active.id)}}>
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
                 Delete macro
               </button>
               <div className="macro-gear-divider" />
-              <button className="macro-gear-item" onClick={()=>setGearOpen(false)}>
+              <button className="macro-gear-item" onClick={()=>{setGearOpen(false);onManage()}}>
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                 My macro preferences
               </button>
@@ -1241,6 +1239,288 @@ function MacroPanel({ macros, aiMacros, onInsert, onClose, customerName }) {
   )
 }
 
+// ─── Macro Editor ─────────────────────────────────────────────
+function MacroEditor({ macro, onSave, onDuplicate, onDelete, onBack }) {
+  const isNew = !macro?.id
+  const [name, setName]       = useState(macro?.name || '')
+  const [body, setBody]       = useState(macro?.body || '')
+  const [tags, setTags]       = useState((macro?.tags||[]).join(', '))
+  const [language, setLang]   = useState(macro?.language || 'English')
+  const [tagInput, setTagInput] = useState((macro?.tags||[]).join(', '))
+  const bodyRef = useRef(null)
+
+  useEffect(()=>{
+    if(bodyRef.current) bodyRef.current.value = macro?.body || ''
+  },[])
+
+  function insertVar(v) {
+    const ta = bodyRef.current; if(!ta) return
+    const s=ta.selectionStart, e=ta.selectionEnd
+    const newVal = ta.value.slice(0,s)+v+ta.value.slice(e)
+    ta.value = newVal; setBody(newVal)
+    ta.focus(); ta.setSelectionRange(s+v.length, s+v.length)
+  }
+
+  function handleSave() {
+    if(!name.trim()) return
+    const t = tagInput.split(',').map(s=>s.trim()).filter(Boolean)
+    onSave({
+      id: macro?.id || `m_${Date.now()}`,
+      name: name.trim(),
+      body: bodyRef.current?.value || body,
+      tags: t,
+      language,
+      usageCount: macro?.usageCount || 0,
+      updatedAt: new Date().toISOString(),
+      archived: macro?.archived || false,
+    })
+  }
+
+  const VARS = [
+    { label:'Customer first name', value:'{{name}}' },
+    { label:'Order number',        value:'{{order_number}}' },
+    { label:'Tracking link',       value:'{{tracking_link}}' },
+    { label:'Agent name',          value:'{{agent_name}}' },
+  ]
+
+  return (
+    <div style={{flex:1,display:'flex',flexDirection:'column',overflow:'auto',background:'var(--bg-page)'}}>
+      {/* Top bar */}
+      <div style={{display:'flex',alignItems:'center',gap:10,padding:'14px 24px',borderBottom:'1px solid var(--border)',background:'var(--bg-surface)',flexShrink:0}}>
+        <button onClick={onBack} style={{display:'flex',alignItems:'center',gap:5,background:'none',border:'none',cursor:'pointer',color:'var(--text-2)',fontSize:13,padding:'4px 0',fontFamily:'inherit'}}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+          Back
+        </button>
+        <span style={{color:'var(--border)',fontSize:16}}>|</span>
+        <span style={{fontSize:14,fontWeight:600,color:'var(--text-1)'}}>{isNew ? 'Create macro' : `Edit: ${macro.name}`}</span>
+      </div>
+
+      {/* Form */}
+      <div style={{maxWidth:860,width:'100%',margin:'0 auto',padding:'32px 24px',display:'flex',gap:32}}>
+        {/* Left col — main */}
+        <div style={{flex:1,display:'flex',flexDirection:'column',gap:20}}>
+          {/* Name */}
+          <div>
+            <label style={{display:'block',fontSize:12,fontWeight:600,color:'var(--text-2)',marginBottom:6}}>Macro name <span style={{color:'var(--danger)'}}>*</span></label>
+            <input value={name} onChange={e=>setName(e.target.value)} placeholder="e.g. Delivery - Delay" style={{width:'100%',padding:'9px 12px',border:'1px solid var(--border)',borderRadius:8,fontSize:13,color:'var(--text-1)',background:'var(--bg-surface)',fontFamily:'inherit',outline:'none'}} />
+            <div style={{fontSize:11,color:'var(--text-3)',marginTop:5}}>Name that all agents will see while searching for it</div>
+          </div>
+
+          {/* Response text */}
+          <div>
+            <label style={{display:'block',fontSize:12,fontWeight:600,color:'var(--text-2)',marginBottom:6}}>Response text</label>
+            {/* Recipient row */}
+            <div style={{display:'flex',alignItems:'center',gap:8,padding:'7px 12px',borderRadius:'8px 8px 0 0',border:'1px solid var(--border)',borderBottom:'none',background:'var(--bg-surface-2)',fontSize:12,color:'var(--text-2)'}}>
+              <span style={{fontWeight:600}}>To:</span>
+              <span style={{padding:'2px 8px',borderRadius:5,background:'var(--accent-soft)',color:'var(--accent-text)',fontWeight:600,fontSize:11}}>Current client</span>
+            </div>
+            {/* Toolbar */}
+            <div style={{display:'flex',alignItems:'center',gap:2,padding:'5px 10px',border:'1px solid var(--border)',borderBottom:'none',background:'var(--bg-surface)',flexWrap:'wrap'}}>
+              {['B','I','U'].map(f=>(
+                <button key={f} style={{fontWeight:f==='B'?700:400,fontStyle:f==='I'?'italic':'normal',textDecoration:f==='U'?'underline':'none',padding:'3px 7px',borderRadius:5,border:'1px solid transparent',background:'none',cursor:'pointer',color:'var(--text-2)',fontSize:13,fontFamily:'inherit'}}>{f}</button>
+              ))}
+              <span style={{width:1,height:16,background:'var(--border)',margin:'0 4px'}} />
+              {VARS.map(v=>(
+                <button key={v.value} onClick={()=>insertVar(v.value)} style={{padding:'2px 8px',borderRadius:5,border:'1px solid var(--border)',background:'var(--bg-surface-2)',color:'var(--text-2)',fontSize:11,fontWeight:500,cursor:'pointer',fontFamily:'inherit',whiteSpace:'nowrap'}}>{v.label}</button>
+              ))}
+            </div>
+            {/* Body */}
+            <textarea
+              ref={bodyRef}
+              defaultValue={macro?.body || ''}
+              onChange={e=>setBody(e.target.value)}
+              placeholder="Write your macro response here. Use the variable buttons above to insert dynamic values."
+              style={{width:'100%',minHeight:200,padding:'12px 14px',border:'1px solid var(--border)',borderRadius:'0 0 8px 8px',resize:'vertical',fontSize:13,lineHeight:1.75,color:'var(--text-1)',background:'var(--bg-surface)',fontFamily:'inherit',outline:'none'}}
+            />
+          </div>
+
+          {/* Tags */}
+          <div>
+            <label style={{display:'block',fontSize:12,fontWeight:600,color:'var(--text-2)',marginBottom:6}}>Tags <span style={{fontSize:11,fontWeight:400,color:'var(--text-3)'}}>(comma separated)</span></label>
+            <input value={tagInput} onChange={e=>setTagInput(e.target.value)} placeholder="e.g. shipping, support" style={{width:'100%',padding:'9px 12px',border:'1px solid var(--border)',borderRadius:8,fontSize:13,color:'var(--text-1)',background:'var(--bg-surface)',fontFamily:'inherit',outline:'none'}} />
+          </div>
+
+          {/* Actions row */}
+          <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',paddingTop:8,borderTop:'1px solid var(--border)'}}>
+            <div style={{display:'flex',gap:8}}>
+              <button onClick={handleSave} style={{padding:'9px 18px',borderRadius:8,border:'none',background:'var(--text-1)',color:'var(--bg-surface)',fontWeight:600,fontSize:13,cursor:'pointer',fontFamily:'inherit'}}>
+                {isNew ? 'Create macro' : 'Update macro'}
+              </button>
+              {!isNew&&<button onClick={()=>onDuplicate(macro)} style={{padding:'9px 16px',borderRadius:8,border:'1px solid var(--border)',background:'var(--bg-surface)',color:'var(--text-1)',fontWeight:500,fontSize:13,cursor:'pointer',fontFamily:'inherit'}}>Duplicate macro</button>}
+            </div>
+            <div style={{display:'flex',gap:8}}>
+              {!isNew&&<button onClick={()=>onDelete(macro.id)} style={{padding:'9px 16px',borderRadius:8,border:'1px solid rgba(220,38,38,0.3)',background:'rgba(220,38,38,0.06)',color:'var(--danger)',fontWeight:500,fontSize:13,cursor:'pointer',fontFamily:'inherit'}}>Delete macro</button>}
+            </div>
+          </div>
+        </div>
+
+        {/* Right col — language */}
+        <div style={{width:220,flexShrink:0,display:'flex',flexDirection:'column',gap:16}}>
+          <div>
+            <label style={{display:'block',fontSize:12,fontWeight:600,color:'var(--text-2)',marginBottom:6}}>Language</label>
+            <select value={language} onChange={e=>setLang(e.target.value)} style={{width:'100%',padding:'9px 12px',border:'1px solid var(--border)',borderRadius:8,fontSize:13,color:'var(--text-1)',background:'var(--bg-surface)',fontFamily:'inherit',outline:'none',cursor:'pointer'}}>
+              {['English','Dutch','German','French','Spanish','Italian','Portuguese'].map(l=>(
+                <option key={l} value={l}>{l}</option>
+              ))}
+            </select>
+            <div style={{fontSize:11,color:'var(--text-3)',marginTop:5}}>Language in which this macro is written</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── Macro Manager ─────────────────────────────────────────────
+function MacroManager({ macros, favs, onClose, onSaveMacro, onDeleteMacro, onToggleFav }) {
+  const [tab, setTab]         = useState('active')
+  const [search, setSearch]   = useState('')
+  const [langFilter, setLangF]= useState('all')
+  const [tagFilter, setTagF]  = useState('all')
+  const [editing, setEditing] = useState(null) // null=list, 'new'=create, macro=edit
+
+  const allTags = [...new Set(macros.flatMap(m=>m.tags||[]))].sort()
+  const allLangs = [...new Set(macros.map(m=>m.language||'English'))].sort()
+
+  const visible = macros.filter(m=>{
+    if(tab==='active' && m.archived) return false
+    if(tab==='archived' && !m.archived) return false
+    if(search && !(m.name+m.body+(m.tags||[]).join('')).toLowerCase().includes(search.toLowerCase())) return false
+    if(langFilter!=='all' && m.language!==langFilter) return false
+    if(tagFilter!=='all' && !(m.tags||[]).includes(tagFilter)) return false
+    return true
+  })
+
+  function handleSave(m) {
+    onSaveMacro(m)
+    setEditing(null)
+  }
+  function handleDuplicate(m) {
+    onSaveMacro({...m, id:`m_${Date.now()}`, name:`${m.name} (copy)`, usageCount:0, updatedAt:new Date().toISOString()})
+    setEditing(null)
+  }
+  function handleDelete(id) {
+    if(!confirm('Delete this macro? This cannot be undone.')) return
+    onDeleteMacro(id); setEditing(null)
+  }
+  function handleArchive(m) {
+    onSaveMacro({...m, archived:!m.archived, updatedAt:new Date().toISOString()})
+  }
+
+  function fmtDate(iso) {
+    if(!iso) return '—'
+    try { return new Date(iso).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}) } catch{ return '—' }
+  }
+
+  if(editing) {
+    return (
+      <div style={{position:'fixed',inset:0,background:'var(--bg-page)',zIndex:200,display:'flex',flexDirection:'column'}}>
+        <MacroEditor
+          macro={editing==='new'?null:editing}
+          onSave={handleSave}
+          onDuplicate={handleDuplicate}
+          onDelete={handleDelete}
+          onBack={()=>setEditing(null)}
+        />
+      </div>
+    )
+  }
+
+  return (
+    <div style={{position:'fixed',inset:0,background:'var(--bg-page)',zIndex:200,display:'flex',flexDirection:'column'}}>
+      {/* Header */}
+      <div style={{display:'flex',alignItems:'center',gap:16,padding:'14px 28px',borderBottom:'1px solid var(--border)',background:'var(--bg-surface)',flexShrink:0}}>
+        <button onClick={onClose} style={{display:'flex',alignItems:'center',gap:5,background:'none',border:'none',cursor:'pointer',color:'var(--text-2)',fontSize:13,padding:'4px 0',fontFamily:'inherit'}}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+          Back to inbox
+        </button>
+        <span style={{flex:1,fontSize:16,fontWeight:700,color:'var(--text-1)'}}>Macros</span>
+        {/* Filters */}
+        <div style={{position:'relative',display:'flex',alignItems:'center'}}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{position:'absolute',left:9,color:'var(--text-3)',pointerEvents:'none'}}><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search macros..." style={{paddingLeft:30,paddingRight:12,paddingTop:7,paddingBottom:7,border:'1px solid var(--border)',borderRadius:8,fontSize:12.5,color:'var(--text-1)',background:'var(--bg-surface-2)',width:200,outline:'none',fontFamily:'inherit'}} />
+        </div>
+        <select value={langFilter} onChange={e=>setLangF(e.target.value)} style={{padding:'7px 10px',border:'1px solid var(--border)',borderRadius:8,fontSize:12.5,color:'var(--text-2)',background:'var(--bg-surface-2)',cursor:'pointer',fontFamily:'inherit',outline:'none'}}>
+          <option value="all">Language</option>
+          {allLangs.map(l=><option key={l} value={l}>{l}</option>)}
+        </select>
+        <select value={tagFilter} onChange={e=>setTagF(e.target.value)} style={{padding:'7px 10px',border:'1px solid var(--border)',borderRadius:8,fontSize:12.5,color:'var(--text-2)',background:'var(--bg-surface-2)',cursor:'pointer',fontFamily:'inherit',outline:'none'}}>
+          <option value="all">All tags</option>
+          {allTags.map(t=><option key={t} value={t}>{t}</option>)}
+        </select>
+        <button onClick={()=>setEditing('new')} style={{padding:'8px 16px',borderRadius:8,border:'none',background:'var(--accent)',color:'#fff',fontWeight:600,fontSize:13,cursor:'pointer',fontFamily:'inherit',whiteSpace:'nowrap'}}>Create macro</button>
+      </div>
+
+      {/* Tabs */}
+      <div style={{display:'flex',gap:0,padding:'0 28px',borderBottom:'1px solid var(--border)',background:'var(--bg-surface)',flexShrink:0}}>
+        {['active','archived'].map(t=>(
+          <button key={t} onClick={()=>setTab(t)} style={{padding:'10px 16px',background:'none',border:'none',borderBottom:`2px solid ${tab===t?'var(--accent)':'transparent'}`,color:tab===t?'var(--text-1)':'var(--text-2)',fontWeight:tab===t?600:500,fontSize:13,cursor:'pointer',fontFamily:'inherit',textTransform:'capitalize',transition:'all .15s'}}>
+            {t.charAt(0).toUpperCase()+t.slice(1)}
+          </button>
+        ))}
+      </div>
+
+      {/* Table */}
+      <div style={{flex:1,overflow:'auto',padding:'0 28px'}}>
+        <table style={{width:'100%',borderCollapse:'collapse'}}>
+          <thead>
+            <tr style={{borderBottom:'1px solid var(--border)'}}>
+              {[['MACRO',''],['TAGS','160px'],['LANGUAGE','110px'],['USAGE','90px'],['LAST UPDATED','140px'],['','56px']].map(([h,w])=>(
+                <th key={h} style={{padding:'10px 12px 10px 0',fontSize:10.5,fontWeight:700,color:'var(--text-3)',letterSpacing:'.05em',textAlign:'left',whiteSpace:'nowrap',width:w||'auto'}}>{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {visible.length===0&&(
+              <tr><td colSpan={6} style={{padding:'40px 0',textAlign:'center',color:'var(--text-3)',fontSize:13}}>No macros found</td></tr>
+            )}
+            {visible.map(m=>(
+              <tr key={m.id} style={{borderBottom:'1px solid var(--border)'}} onMouseEnter={e=>e.currentTarget.style.background='var(--bg-surface-2)'} onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
+                {/* Name */}
+                <td style={{padding:'12px 12px 12px 0'}}>
+                  <div style={{display:'flex',alignItems:'center',gap:8}}>
+                    <button onClick={e=>{e.stopPropagation();onToggleFav(m.id)}} style={{background:'none',border:'none',cursor:'pointer',display:'flex',padding:2,color:favs.includes(m.id)?'#f59e0b':'var(--text-3)',flexShrink:0,opacity:favs.includes(m.id)?1:0.4,transition:'opacity .15s'}}
+                      onMouseEnter={e=>e.currentTarget.style.opacity=1} onMouseLeave={e=>e.currentTarget.style.opacity=favs.includes(m.id)?1:0.4}>
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill={favs.includes(m.id)?'#f59e0b':'none'} stroke={favs.includes(m.id)?'#f59e0b':'currentColor'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                    </button>
+                    <button onClick={()=>setEditing(m)} style={{background:'none',border:'none',cursor:'pointer',fontFamily:'inherit',textAlign:'left',padding:0,color:'var(--text-1)',fontSize:13,fontWeight:500}}>{m.name}</button>
+                  </div>
+                </td>
+                {/* Tags */}
+                <td style={{padding:'12px 12px 12px 0'}}>
+                  <div style={{display:'flex',gap:4,flexWrap:'wrap'}}>
+                    {(m.tags||[]).map(t=><span key={t} style={{fontSize:10,fontWeight:600,padding:'2px 7px',borderRadius:4,background:'var(--accent-soft)',color:'var(--accent-text)'}}>{t}</span>)}
+                  </div>
+                </td>
+                {/* Language */}
+                <td style={{padding:'12px 12px 12px 0',fontSize:12.5,color:'var(--text-2)'}}>{m.language||'English'}</td>
+                {/* Usage */}
+                <td style={{padding:'12px 12px 12px 0',fontSize:12.5,color:'var(--text-2)'}}>{m.usageCount||0}</td>
+                {/* Updated */}
+                <td style={{padding:'12px 12px 12px 0',fontSize:12,color:'var(--text-3)'}}>{fmtDate(m.updatedAt)}</td>
+                {/* Actions */}
+                <td style={{padding:'12px 0',textAlign:'right'}}>
+                  <div style={{display:'flex',alignItems:'center',gap:4,justifyContent:'flex-end'}}>
+                    <button onClick={()=>setEditing(m)} title="Edit" style={{background:'none',border:'none',cursor:'pointer',color:'var(--text-3)',display:'flex',padding:4,borderRadius:5,transition:'color .15s'}} onMouseEnter={e=>e.currentTarget.style.color='var(--text-1)'} onMouseLeave={e=>e.currentTarget.style.color='var(--text-3)'}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    </button>
+                    <button onClick={()=>handleArchive(m)} title={m.archived?'Unarchive':'Archive'} style={{background:'none',border:'none',cursor:'pointer',color:'var(--text-3)',display:'flex',padding:4,borderRadius:5,transition:'color .15s'}} onMouseEnter={e=>e.currentTarget.style.color='var(--text-1)'} onMouseLeave={e=>e.currentTarget.style.color='var(--text-3)'}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>
+                    </button>
+                    <button onClick={()=>handleDelete(m.id)} title="Delete" style={{background:'none',border:'none',cursor:'pointer',color:'var(--text-3)',display:'flex',padding:4,borderRadius:5,transition:'color .15s'}} onMouseEnter={e=>e.currentTarget.style.color='var(--danger)'} onMouseLeave={e=>e.currentTarget.style.color='var(--text-3)'}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  )
+}
+
 // ─── Main page ────────────────────────────────────────────────
 function InboxPage() {
   const [session, setSession]         = useState(null)
@@ -1269,9 +1549,28 @@ function InboxPage() {
   const [statusMenu, setStatusMenu]   = useState(false)
   const [statuses, setStatuses]       = useState(()=>{ try{return JSON.parse(localStorage.getItem('lynq_statuses')||'{}')}catch{return{}} })
   // Macros
-  const [macros, setMacros]           = useState(FALLBACK_MACROS)
+  const [macros, setMacros]           = useState(loadMacros)
   const [aiMacros, setAiMacros]       = useState([])
   const [showMacros, setShowMacros]   = useState(false)
+  const [showMacroManager, setShowMacroManager] = useState(false)
+  const [macroFavs, setMacroFavs]     = useState(()=>{ try{return JSON.parse(localStorage.getItem('lynq_macro_favs')||'[]')}catch{return[]} })
+
+  function saveMacro(m) {
+    setMacros(prev=>{
+      const idx = prev.findIndex(x=>x.id===m.id)
+      const next = idx>=0 ? prev.map(x=>x.id===m.id?m:x) : [...prev, m]
+      saveMacrosToStorage(next); return next
+    })
+  }
+  function deleteMacro(id) {
+    setMacros(prev=>{ const next=prev.filter(x=>x.id!==id); saveMacrosToStorage(next); return next })
+  }
+  function toggleMacroFav(id) {
+    setMacroFavs(prev=>{
+      const next = prev.includes(id)?prev.filter(x=>x!==id):[...prev,id]
+      localStorage.setItem('lynq_macro_favs',JSON.stringify(next)); return next
+    })
+  }
   // Order modals
   const [modal, setModal]             = useState(null) // { type:'refund'|'cancel'|'duplicate'|'address', order }
   // AI triage
@@ -1776,15 +2075,20 @@ function InboxPage() {
               {/* Macro panel */}
               {showMacros&&(
                 <MacroPanel
-                  macros={macros}
+                  macros={macros.filter(m=>!m.archived)}
                   aiMacros={aiMacros}
                   customerName={extractName(selected?.from||'')}
+                  favs={macroFavs}
+                  onToggleFav={toggleMacroFav}
                   onInsert={body=>{
                     if(replyRef.current){replyRef.current.innerHTML=body.replace(/\n/g,'<br>');setReply(replyRef.current.textContent)}
                     else setReply(body)
                     setShowMacros(false);setTimeout(()=>replyRef.current?.focus(),10)
                   }}
                   onClose={()=>setShowMacros(false)}
+                  onManage={()=>{ setShowMacros(false); setShowMacroManager(true) }}
+                  onCreateNew={()=>{ setShowMacros(false); setShowMacroManager(true) }}
+                  onDeleteMacro={deleteMacro}
                 />
               )}
 
@@ -2207,6 +2511,18 @@ function InboxPage() {
       {modal?.type==='note'      && <NoteModal        order={modal.order} token={session.access_token} onClose={()=>setModal(null)} onSuccess={handleModalSuccess} />}
 
       {toast&&<Toast msg={toast.msg} type={toast.type} onDone={()=>setToast(null)} />}
+
+      {/* Macro Manager overlay */}
+      {showMacroManager&&(
+        <MacroManager
+          macros={macros}
+          favs={macroFavs}
+          onClose={()=>setShowMacroManager(false)}
+          onSaveMacro={m=>{ saveMacro(m); setToast({msg:'Macro saved',type:'success'}) }}
+          onDeleteMacro={id=>{ deleteMacro(id); setToast({msg:'Macro deleted',type:'info'}) }}
+          onToggleFav={toggleMacroFav}
+        />
+      )}
     </div>
   )
 }

@@ -273,6 +273,44 @@ const CSS = `
   .chat-scroll::-webkit-scrollbar { width:3px; }
   .chat-scroll::-webkit-scrollbar-track { background:transparent; }
   .chat-scroll::-webkit-scrollbar-thumb { background:var(--bg-surface-2); border-radius:2px; }
+
+  /* ── Aurora layers — subtle in light, full in dark ── */
+  .aurora-l1 {
+    position:absolute; top:-28%; left:10%; width:900px; height:800px; border-radius:50%;
+    background:radial-gradient(ellipse,rgba(124,92,252,0.07) 0%,transparent 70%);
+    animation:auroraA 22s ease-in-out infinite; filter:blur(55px);
+  }
+  [data-theme="dark"] .aurora-l1 {
+    background:radial-gradient(ellipse,rgba(161,117,252,0.52) 0%,rgba(124,58,237,0.26) 38%,rgba(109,40,217,0.08) 60%,transparent 72%);
+  }
+  .aurora-l4 {
+    position:absolute; top:2%; left:2%; width:380px; height:380px; border-radius:50%;
+    background:radial-gradient(ellipse,rgba(124,92,252,0.04) 0%,transparent 72%);
+    animation:auroraD 19s ease-in-out infinite; filter:blur(42px);
+  }
+  [data-theme="dark"] .aurora-l4 {
+    background:radial-gradient(ellipse,rgba(139,92,246,0.48) 0%,rgba(109,40,217,0.18) 50%,transparent 72%);
+  }
+  .aurora-grid {
+    position:absolute; inset:0;
+    background-image:linear-gradient(rgba(15,23,42,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(15,23,42,0.04) 1px,transparent 1px);
+    background-size:72px 72px;
+    mask-image:radial-gradient(ellipse 90% 85% at 50% 22%,black 25%,transparent 100%);
+    -webkit-mask-image:radial-gradient(ellipse 90% 85% at 50% 22%,black 25%,transparent 100%);
+  }
+  [data-theme="dark"] .aurora-grid {
+    background-image:linear-gradient(rgba(255,255,255,0.016) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.016) 1px,transparent 1px);
+  }
+  .aurora-vignette { position:absolute; inset:0; }
+  [data-theme="dark"] .aurora-vignette {
+    background:radial-gradient(ellipse 115% 105% at 50% 50%,transparent 30%,rgba(28,15,54,0.55) 75%,rgba(28,15,54,0.9) 100%);
+  }
+  .bottom-fade {
+    background:linear-gradient(to top,var(--bg-page) 52%,transparent 100%);
+  }
+  [data-theme="dark"] .bottom-fade {
+    background:linear-gradient(to top,#1C0F36 52%,rgba(28,15,54,0.88) 80%,transparent 100%);
+  }
 `
 
 
@@ -280,8 +318,8 @@ function FloatCard({ label, value, icon, delay, duration, left }) {
   return (
     <div className="float-card" style={{ left, bottom: '2%', animation: `floatUp ${duration}s ease-in-out ${delay}s infinite`, zIndex: 0 }}>
       <span style={{ color: 'var(--text-3)', display: 'flex' }}>{FLOAT_ICON[icon]}</span>
-      <span style={{ fontSize: 11, color: 'var(--text-3)', fontWeight: 500 }}>{label}</span>
-      <span style={{ fontSize: 11, color: 'var(--text-3)', fontWeight: 700, marginLeft: 2 }}>{value}</span>
+      <span style={{ fontSize: 11, color: 'var(--text-2)', fontWeight: 500 }}>{label}</span>
+      <span style={{ fontSize: 11, color: 'var(--text-1)', fontWeight: 700, marginLeft: 2 }}>{value}</span>
     </div>
   )
 }
@@ -432,22 +470,16 @@ export default function HomePage() {
         {/* ── 5-layer aurora ── */}
         <div aria-hidden style={{ position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: 'none', zIndex: 0 }}>
 
-          {/* Layer 1 — brand purple, massive center bloom */}
-          <div style={{ position: 'absolute', top: '-28%', left: '10%', width: 900, height: 800, borderRadius: '50%', background: 'radial-gradient(ellipse,rgba(161,117,252,0.52) 0%,rgba(124,58,237,0.26) 38%,rgba(109,40,217,0.08) 60%,transparent 72%)', animation: 'auroraA 22s ease-in-out infinite', filter: 'blur(55px)' }} />
-          {/* Layer 2 — warm amber/orange, bottom right */}
-          <div style={{ position: 'absolute', bottom: '-15%', right: '-5%', width: 680, height: 680, borderRadius: '50%', background: 'radial-gradient(ellipse,rgba(251,146,60,0.38) 0%,rgba(251,191,36,0.16) 45%,transparent 68%)', animation: 'auroraB 30s ease-in-out infinite', filter: 'blur(52px)' }} />
-          {/* Layer 3 — rose/pink, left mid */}
-          <div style={{ position: 'absolute', top: '28%', left: '-14%', width: 580, height: 580, borderRadius: '50%', background: 'radial-gradient(ellipse,rgba(251,113,133,0.28) 0%,rgba(244,63,94,0.08) 50%,transparent 70%)', animation: 'auroraC 34s ease-in-out infinite', filter: 'blur(50px)' }} />
-          {/* Layer 4 — deep violet, top left spark */}
-          <div style={{ position: 'absolute', top: '2%', left: '2%', width: 380, height: 380, borderRadius: '50%', background: 'radial-gradient(ellipse,rgba(139,92,246,0.48) 0%,rgba(109,40,217,0.18) 50%,transparent 72%)', animation: 'auroraD 19s ease-in-out infinite', filter: 'blur(42px)' }} />
-          {/* Layer 5 — amber spark, top right */}
-          <div style={{ position: 'absolute', top: '5%', right: '5%', width: 300, height: 300, borderRadius: '50%', background: 'radial-gradient(ellipse,rgba(251,191,36,0.28) 0%,rgba(245,158,11,0.1) 50%,transparent 70%)', animation: 'auroraE 25s ease-in-out infinite', filter: 'blur(42px)' }} />
+          {/* Layer 1 — brand purple bloom (subtle light, full dark) */}
+          <div className="aurora-l1" />
+          {/* Layer 4 — violet accent (subtle light, full dark) */}
+          <div className="aurora-l4" />
 
-          {/* Subtle grid */}
-          <div style={{ position: 'absolute', inset: 0, backgroundImage: 'linear-gradient(rgba(255,255,255,0.016) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.016) 1px,transparent 1px)', backgroundSize: '72px 72px', maskImage: 'radial-gradient(ellipse 90% 85% at 50% 22%, black 25%, transparent 100%)' }} />
+          {/* Dot grid (dark dots in light, white lines in dark) */}
+          <div className="aurora-grid" />
 
-          {/* Edge vignette */}
-          <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse 115% 105% at 50% 50%, transparent 30%, rgba(28,15,54,0.55) 75%, rgba(28,15,54,0.9) 100%)' }} />
+          {/* Edge vignette (none in light, dark in dark mode) */}
+          <div className="aurora-vignette" />
 
           {/* Ambient float cards */}
           {FLOAT_ITEMS.map(item => <FloatCard key={item.label} {...item} />)}
@@ -464,7 +496,7 @@ export default function HomePage() {
                   <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#4ade80', boxShadow: '0 0 8px #4ade80' }} />
                   <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: '#4ade80', animation: 'liveBlip 2.4s ease-in-out infinite' }} />
                 </div>
-                <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--text-3)' }}>
+                <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--text-2)' }}>
                   {contextLoaded ? greeting : 'Connecting…'}
                 </span>
               </div>
@@ -473,7 +505,7 @@ export default function HomePage() {
               <h1 style={{ fontSize: 'clamp(36px,5.2vw,60px)', fontWeight: 800, letterSpacing: '-0.036em', lineHeight: 1.07, color: 'var(--text-1)', marginBottom: 14, animation: 'revealUp .58s cubic-bezier(.16,1,.3,1) .07s both' }}>
                 Welcome back,{' '}
                 <span style={{
-                  background: 'linear-gradient(120deg,#FFFFFF 0%,#C4B5FD 28%,#A175FC 58%,#7C3AED 100%)',
+                  background: 'linear-gradient(120deg,#9B6FFF 0%,#C4B5FD 35%,#A175FC 65%,#7C3AED 100%)',
                   backgroundSize: '280% auto',
                   WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
                   animation: 'shimmer 10s ease-in-out infinite',
@@ -484,7 +516,7 @@ export default function HomePage() {
               </h1>
 
               {/* Subtitle */}
-              <p style={{ fontSize: 15, color: 'var(--text-3)', lineHeight: 1.8, maxWidth: 340, marginBottom: 36, fontWeight: 400, animation: 'revealUp .58s cubic-bezier(.16,1,.3,1) .14s both' }}>
+              <p style={{ fontSize: 15, color: 'var(--text-2)', lineHeight: 1.8, maxWidth: 340, marginBottom: 36, fontWeight: 400, animation: 'revealUp .58s cubic-bezier(.16,1,.3,1) .14s both' }}>
                 {contextLoaded
                   ? 'Ask anything about your store — revenue, refunds, orders, trends.'
                   : 'Connecting to your store data…'}
@@ -551,7 +583,7 @@ export default function HomePage() {
             </div>
 
             {/* Bottom input */}
-            <div style={{ padding: '16px 44px 36px', display: 'flex', justifyContent: 'center', background: 'linear-gradient(to top,#1C0F36 52%,rgba(28,15,54,0.88) 80%,transparent)', position: 'relative', zIndex: 2 }}>
+            <div className="bottom-fade" style={{ padding: '16px 44px 36px', display: 'flex', justifyContent: 'center', position: 'relative', zIndex: 2 }}>
               <div style={{ width: '100%', maxWidth: 780 }}>
                 <div className="chat-box" style={{ padding: '18px 18px 18px 22px', display: 'flex', alignItems: 'flex-end', gap: 12 }}>
                   <textarea

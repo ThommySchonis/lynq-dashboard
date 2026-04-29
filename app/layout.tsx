@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
-import { Rethink_Sans } from "next/font/google";
+import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import ThemeProvider from "./components/ThemeProvider";
 
-const rethinkSans = Rethink_Sans({
+const plusJakartaSans = Plus_Jakarta_Sans({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700", "800"],
   variable: "--font-rethink",
@@ -18,7 +18,7 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={rethinkSans.variable}>
+    <html lang="en" className={plusJakartaSans.variable}>
       <head>
         {/* Anti-flash: set theme before first paint */}
         <script

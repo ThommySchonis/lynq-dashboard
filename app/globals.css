@@ -15,9 +15,9 @@
   --text-3: #94A3B8;
 
   /* Borders */
-  --border:        #CBD5E1;
+  --border:        #B8C4D0;
   --border-hover:  #94A3B8;
-  --divider:       rgba(0,0,0,0.10);
+  --divider:       rgba(0,0,0,0.12);
 
   /* Accent (purple — slightly deeper on light for contrast) */
   --accent:        #7C5CFC;

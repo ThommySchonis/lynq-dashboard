@@ -124,7 +124,7 @@ const CSS = `
   input:focus-visible,textarea:focus-visible,[contenteditable]:focus-visible { outline:none; }
 
   /* ── Thread row ── */
-  .trow { padding:14px 16px 12px; cursor:pointer; border-bottom:1px solid var(--border); border-left:3px solid transparent; transition:all .2s cubic-bezier(.16,1,.3,1); position:relative; }
+  .trow { padding:12px 14px 11px 18px; cursor:pointer; border-bottom:1px solid var(--border); border-left:3px solid transparent; transition:all .2s cubic-bezier(.16,1,.3,1); position:relative; }
   .trow:hover:not(.trow-active) { background:var(--bg-surface-2); border-left-color:var(--accent-border); }
   .trow-active { background:var(--accent-soft); border-left-color:var(--accent); }
   [data-theme="dark"] .trow:hover:not(.trow-active) { background:linear-gradient(90deg,rgba(161,117,252,0.09) 0%,rgba(161,117,252,0.02) 100%); }
@@ -394,7 +394,8 @@ const CSS = `
   .rp-action:hover { border-color:var(--border-hover); background:var(--bg-surface-2); }
   .rp-action.danger:hover { border-color:rgba(220,38,38,0.35); color:#dc2626; background:rgba(220,38,38,0.05); }
   [data-theme="dark"] .rp-action.danger:hover { color:#f87171; background:rgba(239,68,68,0.08); }
-  .rp-subsec { width:100%; display:flex; align-items:center; gap:6px; padding:7px 0; background:transparent; cursor:pointer; border:none; font-size:11.5px; font-weight:600; font-family:inherit; color:var(--text-1); text-align:left; transition:opacity .12s; border-top:1px solid var(--border); margin-top:6px; }
+  .rp-subsec { width:100%; display:flex; align-items:center; gap:6px; padding:7px 0; background:transparent; cursor:pointer; border:none; font-size:11.5px; font-weight:600; font-family:inherit; color:var(--text-1); text-align:left; transition:opacity .12s; border-top:1px solid #94A3B8; margin-top:6px; }
+  [data-theme="dark"] .rp-subsec { border-top-color:rgba(255,255,255,0.14); }
   .rp-subsec:hover { opacity:.75; }
   .rp-tag { font-size:10px; font-weight:500; padding:2px 7px; border-radius:4px; background:var(--bg-surface-2); color:var(--text-1); border:1px solid var(--border); }
 `
@@ -1533,36 +1534,33 @@ function InboxPage() {
               <div key={thread.id} className={`trow${active?' trow-active':''}`}
                 style={!active&&urgUI?{borderLeftColor:urgUI.border}:{}}
                 onClick={()=>openThread(thread)}>
-                <div style={{display:'flex',gap:10}}>
-                  <div style={{position:'relative',flexShrink:0}}>
-                    <Avatar name={name} size={33} />
-                    {thread.unread&&<span style={{position:'absolute',top:0,right:0,width:8,height:8,borderRadius:'50%',background:'var(--accent)',border:'1.5px solid var(--bg-surface)'}} />}
-                  </div>
+                <div style={{display:'flex',gap:0}}>
+                  {thread.unread&&<span style={{position:'absolute',left:6,top:'50%',transform:'translateY(-50%)',width:6,height:6,borderRadius:'50%',background:'var(--accent)',flexShrink:0}} />}
                   <div style={{flex:1,minWidth:0}}>
                     {isSentView ? (
                       /* Sent view: subject is the primary identifier */
                       <>
                         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:3}}>
                           <span style={{fontSize:12.5,fontWeight:600,color:'var(--text-1)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',maxWidth:160,letterSpacing:'-0.01em'}}>{thread.subject||'(no subject)'}</span>
-                          <span style={{fontSize:10,color:'var(--text-3)',flexShrink:0,marginLeft:4}}>{formatDate(thread.date)}</span>
+                          <span style={{fontSize:10,color:'var(--text-2)',flexShrink:0,marginLeft:4}}>{formatDate(thread.date)}</span>
                         </div>
                         <div style={{display:'flex',alignItems:'center',gap:4,marginBottom:3}}>
-                          <span style={{fontSize:9,fontWeight:700,color:'var(--text-3)',letterSpacing:'.06em',textTransform:'uppercase',flexShrink:0}}>To</span>
-                          <span style={{fontSize:11,color:'var(--text-3)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{name||extractEmail(thread.to)}</span>
+                          <span style={{fontSize:9,fontWeight:700,color:'var(--text-2)',letterSpacing:'.06em',textTransform:'uppercase',flexShrink:0}}>To</span>
+                          <span style={{fontSize:11,color:'var(--text-2)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{name||extractEmail(thread.to)}</span>
                         </div>
                       </>
                     ) : (
                       /* Inbox view: sender name is the primary identifier */
                       <>
                         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:2}}>
-                          <span style={{fontSize:12.5,fontWeight:thread.unread?700:500,color:thread.unread?'var(--text-1)':'var(--text-2)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',maxWidth:145}}>{name}</span>
-                          <span style={{fontSize:10,color:'var(--text-3)',flexShrink:0,marginLeft:4}}>{formatDate(thread.date)}</span>
+                          <span style={{fontSize:12.5,fontWeight:thread.unread?700:600,color:'var(--text-1)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',maxWidth:160}}>{name}</span>
+                          <span style={{fontSize:10,color:'var(--text-2)',flexShrink:0,marginLeft:4}}>{formatDate(thread.date)}</span>
                         </div>
-                        <div style={{fontSize:11.5,color:thread.unread?'var(--text-2)':'var(--text-3)',fontWeight:thread.unread?600:400,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',marginBottom:3}}>{thread.subject}</div>
+                        <div style={{fontSize:11.5,color:'var(--text-1)',fontWeight:thread.unread?600:500,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',marginBottom:3}}>{thread.subject}</div>
                       </>
                     )}
-                    {!isSentView&&<div style={{fontSize:10.5,color:'var(--text-3)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',marginBottom:5}}>{thread.snippet}</div>}
-                    {isSentView&&thread.snippet&&<div style={{fontSize:10.5,color:'var(--text-3)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',marginBottom:4,fontStyle:'italic'}}>{thread.snippet}</div>}
+                    {!isSentView&&<div style={{fontSize:11,color:'var(--text-2)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',marginBottom:5}}>{thread.snippet}</div>}
+                    {isSentView&&thread.snippet&&<div style={{fontSize:10.5,color:'var(--text-2)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',marginBottom:4,fontStyle:'italic'}}>{thread.snippet}</div>}
                     {!isSentView&&<div style={{display:'flex',alignItems:'center',gap:5,flexWrap:'wrap'}}>
                       {analysis&&urg&&urg!=='low'&&(
                         <span className={`urg-pill urg-${urg}`} style={{background:urgUI.bg,color:urgUI.color,border:`1px solid ${urgUI.border}`}}>

@@ -175,6 +175,8 @@ const CSS = `
   .macro-gear-item:hover { background:var(--bg-surface-2); }
   .macro-gear-item.danger { color:var(--danger); }
   .macro-gear-divider { height:1px; background:var(--border); margin:3px 0; }
+  .macro-star { background:none; border:none; cursor:pointer; display:flex; align-items:center; padding:2px; border-radius:4px; transition:opacity .15s; flex-shrink:0; }
+  .macro-star:hover { opacity:1 !important; }
 
   /* ── Compose textarea ── */
   .compose-ta { width:100%; resize:none; outline:none; font-family:inherit; background:transparent; border:none; padding:14px 16px; font-size:13.5px; color:var(--text-1); line-height:1.78; letter-spacing:.005em; }
@@ -1062,6 +1064,7 @@ function MacroPanel({ macros, aiMacros, onInsert, onClose, customerName }) {
   const [search, setSearch]     = useState('')
   const [selected, setSelected] = useState(null)
   const [gearOpen, setGearOpen] = useState(false)
+  const [favs, setFavs]         = useState(()=>{ try{return JSON.parse(localStorage.getItem('lynq_macro_favs')||'[]')}catch{return[]} })
   const searchRef = useRef(null)
   const gearRef   = useRef(null)
 
@@ -1076,8 +1079,25 @@ function MacroPanel({ macros, aiMacros, onInsert, onClose, customerName }) {
     document.addEventListener('mousedown',h); return ()=>document.removeEventListener('mousedown',h)
   },[gearOpen])
 
+  function toggleFav(id, e) {
+    e.stopPropagation()
+    setFavs(prev=>{
+      const next = prev.includes(id) ? prev.filter(x=>x!==id) : [...prev, id]
+      localStorage.setItem('lynq_macro_favs', JSON.stringify(next))
+      return next
+    })
+  }
+
   const filtered = macros.filter(m=>!search||(m.name+m.body+(m.tags||[]).join('')).toLowerCase().includes(search.toLowerCase()))
+  const favMacros    = filtered.filter(m=>favs.includes(m.id))
+  const nonFavMacros = filtered.filter(m=>!favs.includes(m.id))
   const active = selected || filtered[0] || null
+
+  const StarIcon = ({filled})=>(
+    <svg width="13" height="13" viewBox="0 0 24 24" fill={filled?'#f59e0b':'none'} stroke={filled?'#f59e0b':'currentColor'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+    </svg>
+  )
 
   function applyMacro(m) {
     const firstName = (customerName||'').split(' ')[0] || 'there'
@@ -1151,22 +1171,54 @@ function MacroPanel({ macros, aiMacros, onInsert, onClose, customerName }) {
             <>
               <div className="macro-suggest">AI suggestions ✦</div>
               {aiMacros.map(m=>(
-                <div key={m.id} className={`macro-item${active?.id===m.id?' mi-active':''}`} onClick={()=>setSelected(m)} onDoubleClick={()=>applyMacro(m)}>
-                  <div style={{fontSize:12.5,fontWeight:600,color:active?.id===m.id?'#A175FC':'var(--text-1)',marginBottom:3}}>{m.name}</div>
+                <div key={m.id} className={`macro-item${active?.id===m.id?' mi-active':''}`} onClick={()=>setSelected(m)} onDoubleClick={()=>applyMacro(m)} style={{display:'flex',alignItems:'flex-start',gap:6}}>
+                  <div style={{flex:1,minWidth:0}}>
+                    <div style={{fontSize:12.5,fontWeight:600,color:active?.id===m.id?'#A175FC':'var(--text-1)',marginBottom:3}}>{m.name}</div>
+                  </div>
                 </div>
               ))}
               <div style={{height:1,background:'var(--border)',margin:'4px 0'}} />
             </>
           )}
           {filtered.length===0 && <div style={{padding:'20px 14px',fontSize:12,color:'var(--text-3)',textAlign:'center'}}>No macros found</div>}
-          {filtered.map(m=>(
-            <div key={m.id} className={`macro-item${active?.id===m.id?' mi-active':''}`} onClick={()=>setSelected(m)} onDoubleClick={()=>applyMacro(m)}>
-              <div style={{fontSize:12.5,fontWeight:600,color:active?.id===m.id?'#A175FC':'var(--text-1)',marginBottom:3}}>{m.name}</div>
-              <div style={{display:'flex',gap:4,flexWrap:'wrap'}}>
-                {(m.tags||[]).map(t=><span key={t} className="macro-tag">{t}</span>)}
+          {/* Favorites section */}
+          {favMacros.length>0&&(
+            <>
+              <div className="macro-suggest" style={{display:'flex',alignItems:'center',gap:4}}>
+                <svg width="9" height="9" viewBox="0 0 24 24" fill="#f59e0b" stroke="#f59e0b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                Favorites
               </div>
-            </div>
-          ))}
+              {favMacros.map(m=>(
+                <div key={m.id} className={`macro-item${active?.id===m.id?' mi-active':''}`} onClick={()=>setSelected(m)} onDoubleClick={()=>applyMacro(m)} style={{display:'flex',alignItems:'flex-start',gap:6}}>
+                  <div style={{flex:1,minWidth:0}}>
+                    <div style={{fontSize:12.5,fontWeight:600,color:active?.id===m.id?'#A175FC':'var(--text-1)',marginBottom:3}}>{m.name}</div>
+                    <div style={{display:'flex',gap:4,flexWrap:'wrap'}}>
+                      {(m.tags||[]).map(t=><span key={t} className="macro-tag">{t}</span>)}
+                    </div>
+                  </div>
+                  <button className="macro-star" style={{opacity:1,marginTop:1}} onClick={e=>toggleFav(m.id,e)} title="Remove from favorites"><StarIcon filled /></button>
+                </div>
+              ))}
+              {nonFavMacros.length>0&&<div style={{height:1,background:'var(--border)',margin:'4px 0'}} />}
+            </>
+          )}
+          {/* All / remaining macros */}
+          {nonFavMacros.length>0&&(
+            <>
+              {favMacros.length>0&&<div className="macro-suggest">All macros</div>}
+              {nonFavMacros.map(m=>(
+                <div key={m.id} className={`macro-item${active?.id===m.id?' mi-active':''}`} onClick={()=>setSelected(m)} onDoubleClick={()=>applyMacro(m)} style={{display:'flex',alignItems:'flex-start',gap:6}}>
+                  <div style={{flex:1,minWidth:0}}>
+                    <div style={{fontSize:12.5,fontWeight:600,color:active?.id===m.id?'#A175FC':'var(--text-1)',marginBottom:3}}>{m.name}</div>
+                    <div style={{display:'flex',gap:4,flexWrap:'wrap'}}>
+                      {(m.tags||[]).map(t=><span key={t} className="macro-tag">{t}</span>)}
+                    </div>
+                  </div>
+                  <button className="macro-star" style={{opacity:0.25,marginTop:1}} onClick={e=>toggleFav(m.id,e)} title="Add to favorites"><StarIcon filled={false} /></button>
+                </div>
+              ))}
+            </>
+          )}
         </div>
 
         {/* Preview — no buttons here */}

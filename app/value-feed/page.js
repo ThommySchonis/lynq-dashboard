@@ -330,8 +330,8 @@ function Reactions({ item, reactions, userId, onReact }) {
         return (
           <button key={id} className="react-btn" onClick={() => onReact(item.id, id)} style={{
             color:       active ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.28)',
-            background:  active ? 'rgba(255,255,255,0.07)'  : 'transparent',
-            borderColor: active ? 'rgba(255,255,255,0.1)'   : 'transparent',
+            background:  active ? 'var(--bg-input)'  : 'transparent',
+            borderColor: active ? 'var(--bg-surface-2)'   : 'transparent',
           }}>
             {svg}
             {count > 0 && count}
@@ -438,14 +438,14 @@ export default function ValueFeedPage() {
                 const count = f.id === 'all' ? posts.length : posts.filter(p => p.type === f.id).length
                 return (
                   <button key={f.id} className="f-pill" onClick={() => setTypeFilter(f.id)} style={{
-                    background: typeFilter === f.id ? '#A175FC' : 'rgba(255,255,255,0.05)',
+                    background: typeFilter === f.id ? '#A175FC' : 'var(--bg-input)',
                     color:      typeFilter === f.id ? '#fff' : 'rgba(255,255,255,0.42)',
-                    border:    `1px solid ${typeFilter === f.id ? 'transparent' : 'rgba(255,255,255,0.08)'}`,
+                    border:    `1px solid ${typeFilter === f.id ? 'transparent' : 'var(--bg-input)'}`,
                     boxShadow:  typeFilter === f.id ? '0 2px 12px rgba(161,117,252,0.35)' : 'none',
                     display: 'flex', alignItems: 'center', gap: 6,
                   }}>
                     {f.label}
-                    <span style={{ fontSize:10, opacity: typeFilter === f.id ? 0.7 : 0.45, background: typeFilter === f.id ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.1)', borderRadius:100, padding:'1px 6px', fontWeight:700 }}>{count}</span>
+                    <span style={{ fontSize:10, opacity: typeFilter === f.id ? 0.7 : 0.45, background: typeFilter === f.id ? 'rgba(255,255,255,0.2)' : 'var(--bg-surface-2)', borderRadius:100, padding:'1px 6px', fontWeight:700 }}>{count}</span>
                   </button>
                 )
               })}
@@ -456,14 +456,14 @@ export default function ValueFeedPage() {
               <div style={{ display:'flex', gap:6, flexWrap:'wrap', alignItems:'center' }}>
                 <span style={{ fontSize:10, fontWeight:700, color:'rgba(255,255,255,0.2)', letterSpacing:'.07em', textTransform:'uppercase', marginRight:2 }}>Topic</span>
                 <button className="t-pill" onClick={() => setTopicFilter('all')} style={{
-                  borderColor: topicFilter === 'all' ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.08)',
-                  background:  topicFilter === 'all' ? 'rgba(255,255,255,0.08)' : 'transparent',
+                  borderColor: topicFilter === 'all' ? 'rgba(255,255,255,0.3)' : 'var(--bg-input)',
+                  background:  topicFilter === 'all' ? 'var(--bg-input)' : 'transparent',
                   color:       topicFilter === 'all' ? '#fff' : 'rgba(255,255,255,0.38)',
                 }}>All</button>
                 {activeTopics.map(t => (
                   <button key={t} className="t-pill" onClick={() => setTopicFilter(t)} style={{
-                    borderColor: topicFilter === t ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.08)',
-                    background:  topicFilter === t ? 'rgba(255,255,255,0.08)' : 'transparent',
+                    borderColor: topicFilter === t ? 'rgba(255,255,255,0.3)' : 'var(--bg-input)',
+                    background:  topicFilter === t ? 'var(--bg-input)' : 'transparent',
                     color:       topicFilter === t ? '#fff' : 'rgba(255,255,255,0.38)',
                   }}>{t}</button>
                 ))}

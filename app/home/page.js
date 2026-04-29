@@ -279,9 +279,9 @@ const CSS = `
 function FloatCard({ label, value, icon, delay, duration, left }) {
   return (
     <div className="float-card" style={{ left, bottom: '2%', animation: `floatUp ${duration}s ease-in-out ${delay}s infinite`, zIndex: 0 }}>
-      <span style={{ color: 'rgba(248,250,252,0.22)', display: 'flex' }}>{FLOAT_ICON[icon]}</span>
-      <span style={{ fontSize: 11, color: 'rgba(248,250,252,0.22)', fontWeight: 500 }}>{label}</span>
-      <span style={{ fontSize: 11, color: 'rgba(248,250,252,0.44)', fontWeight: 700, marginLeft: 2 }}>{value}</span>
+      <span style={{ color: 'var(--text-3)', display: 'flex' }}>{FLOAT_ICON[icon]}</span>
+      <span style={{ fontSize: 11, color: 'var(--text-3)', fontWeight: 500 }}>{label}</span>
+      <span style={{ fontSize: 11, color: 'var(--text-3)', fontWeight: 700, marginLeft: 2 }}>{value}</span>
     </div>
   )
 }
@@ -322,7 +322,7 @@ function ChatMessage({ role, content, isStreaming }) {
   return (
     <div style={{ display: 'flex', justifyContent: isUser ? 'flex-end' : 'flex-start', marginBottom: 14, animation: 'msgIn .3s cubic-bezier(.16,1,.3,1) both' }}>
       {!isUser && <div style={{ marginRight: 10, marginTop: 2, flexShrink: 0 }}><LynqBadge /></div>}
-      <div className={isUser ? 'msg-user' : 'msg-ai'} style={{ maxWidth: '72%', padding: '13px 17px', fontSize: 14, lineHeight: 1.72, color: isUser ? 'rgba(248,250,252,0.95)' : 'rgba(248,250,252,0.82)', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+      <div className={isUser ? 'msg-user' : 'msg-ai'} style={{ maxWidth: '72%', padding: '13px 17px', fontSize: 14, lineHeight: 1.72, color: isUser ? 'var(--text-1)' : 'var(--text-1)', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
         {isStreaming && !content ? <TypingDots /> : content}
         {isStreaming && content && (
           <span style={{ display: 'inline-block', width: 2, height: 14, background: '#A175FC', marginLeft: 2, verticalAlign: 'text-bottom', animation: 'blink 1s ease-in-out infinite' }} />
@@ -464,7 +464,7 @@ export default function HomePage() {
                   <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#4ade80', boxShadow: '0 0 8px #4ade80' }} />
                   <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: '#4ade80', animation: 'liveBlip 2.4s ease-in-out infinite' }} />
                 </div>
-                <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: 'rgba(248,250,252,0.36)' }}>
+                <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--text-3)' }}>
                   {contextLoaded ? greeting : 'Connecting…'}
                 </span>
               </div>
@@ -530,7 +530,7 @@ export default function HomePage() {
                   </div>
                 )}
 
-                <div style={{ textAlign: 'center', marginTop: 12, fontSize: 11, color: 'rgba(248,250,252,0.12)', letterSpacing: '.04em' }}>
+                <div style={{ textAlign: 'center', marginTop: 12, fontSize: 11, color: 'var(--text-3)', letterSpacing: '.04em' }}>
                   Lynq AI · Answers based on live store data · ↵ Enter to send
                 </div>
               </div>
@@ -571,7 +571,7 @@ export default function HomePage() {
                     }
                   </button>
                 </div>
-                <div style={{ textAlign: 'center', marginTop: 10, fontSize: 11, color: 'rgba(248,250,252,0.12)', letterSpacing: '.04em' }}>
+                <div style={{ textAlign: 'center', marginTop: 10, fontSize: 11, color: 'var(--text-3)', letterSpacing: '.04em' }}>
                   Lynq AI · Answers based on live store data · ↵ Enter to send
                 </div>
               </div>

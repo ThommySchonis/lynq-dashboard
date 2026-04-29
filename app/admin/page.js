@@ -429,7 +429,7 @@ export default function AdminPage() {
                   {Object.entries(TYPE_CFG).map(([id, t]) => (
                     <button key={id} type="button"
                       onClick={() => setBroadcastForm({...broadcastForm, type: id})}
-                      style={{ padding: '11px 14px', borderRadius: 10, border: `1px solid ${broadcastForm.type === id ? t.border : 'rgba(255,255,255,0.07)'}`, background: broadcastForm.type === id ? t.bg : 'transparent', cursor: 'pointer', textAlign: 'left', transition: 'all .15s', fontFamily: "'Inter Tight', sans-serif" }}>
+                      style={{ padding: '11px 14px', borderRadius: 10, border: `1px solid ${broadcastForm.type === id ? t.border : 'var(--bg-input)'}`, background: broadcastForm.type === id ? t.bg : 'transparent', cursor: 'pointer', textAlign: 'left', transition: 'all .15s', fontFamily: "'Inter Tight', sans-serif" }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                         <span style={{ color: broadcastForm.type === id ? t.accent : 'rgba(255,255,255,0.25)', display: 'flex', transition: 'color .15s' }}>{t.icon}</span>
                         <div>
@@ -447,7 +447,7 @@ export default function AdminPage() {
                   {['Media Buying','Creative Strategy','Supply Chain','Customer Service','Creatives','Email Marketing','Analytics'].map(t => (
                     <button key={t} type="button"
                       onClick={() => setBroadcastForm({...broadcastForm, topic: broadcastForm.topic === t ? '' : t})}
-                      style={{ padding:'5px 13px', borderRadius:100, border:`1px solid ${broadcastForm.topic === t ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.08)'}`, background: broadcastForm.topic === t ? 'rgba(255,255,255,0.1)' : 'transparent', color: broadcastForm.topic === t ? '#fff' : 'rgba(255,255,255,0.38)', fontSize:12, fontWeight:600, cursor:'pointer', fontFamily:"'Inter Tight', sans-serif", transition:'all .15s' }}>
+                      style={{ padding:'5px 13px', borderRadius:100, border:`1px solid ${broadcastForm.topic === t ? 'rgba(255,255,255,0.35)' : 'var(--bg-input)'}`, background: broadcastForm.topic === t ? 'var(--bg-surface-2)' : 'transparent', color: broadcastForm.topic === t ? '#fff' : 'rgba(255,255,255,0.38)', fontSize:12, fontWeight:600, cursor:'pointer', fontFamily:"'Inter Tight', sans-serif", transition:'all .15s' }}>
                       {t}
                     </button>
                   ))}
@@ -464,7 +464,7 @@ export default function AdminPage() {
                         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, transparent 50%, rgba(13,6,32,0.85) 100%)' }} />
                         <div style={{ position: 'absolute', bottom: 8, left: 10, fontSize: 10, fontWeight: 600, color: 'var(--text-2)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Thumbnail preview</div>
                         <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
-                          <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'rgba(255,255,255,0.15)', border: '1.5px solid rgba(255,255,255,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'var(--bg-surface-2)', border: '1.5px solid rgba(255,255,255,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                             <svg width="13" height="13" viewBox="0 0 24 24" fill="#fff" style={{ marginLeft: 2 }}><polygon points="5 3 19 12 5 21 5 3"/></svg>
                           </div>
                         </div>
@@ -860,7 +860,7 @@ export default function AdminPage() {
                 {[['today','Today'],['week','This week'],['month','This month']].map(([id, label]) => (
                   <button key={id} onClick={() => { setTimeFilter(id); fetchTimeData(id) }}
                     style={{ padding: '7px 16px', borderRadius: 8, border: '1px solid', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: "'Inter Tight', sans-serif", transition: 'all .15s',
-                      borderColor: timeFilter === id ? '#A175FC' : 'rgba(255,255,255,0.08)',
+                      borderColor: timeFilter === id ? '#A175FC' : 'var(--bg-input)',
                       background: timeFilter === id ? 'rgba(161,117,252,0.15)' : 'transparent',
                       color: timeFilter === id ? '#A175FC' : '#4a7fb5' }}>
                     {label}
@@ -900,9 +900,9 @@ export default function AdminPage() {
                     <div style={{ fontSize: 11, fontWeight: 700, color: '#4a7fb5', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 12 }}>Per employee</div>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(210px, 1fr))', gap: 12 }}>
                       {members.map(m => (
-                        <div key={m.id} style={{ background: 'var(--bg-surface-2)', border: `1px solid ${m.is_paused ? 'rgba(251,191,36,0.2)' : m.is_active ? 'rgba(74,222,128,0.15)' : 'rgba(255,255,255,0.06)'}`, borderRadius: 10, padding: '14px 16px' }}>
+                        <div key={m.id} style={{ background: 'var(--bg-surface-2)', border: `1px solid ${m.is_paused ? 'rgba(251,191,36,0.2)' : m.is_active ? 'rgba(74,222,128,0.15)' : 'var(--bg-input)'}`, borderRadius: 10, padding: '14px 16px' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
-                            <div style={{ width: 7, height: 7, borderRadius: '50%', flexShrink: 0, background: m.is_paused ? '#fbbf24' : m.is_active ? '#4ade80' : 'rgba(255,255,255,0.15)', boxShadow: m.is_paused ? '0 0 6px rgba(251,191,36,0.6)' : m.is_active ? '0 0 6px rgba(74,222,128,0.6)' : 'none' }} />
+                            <div style={{ width: 7, height: 7, borderRadius: '50%', flexShrink: 0, background: m.is_paused ? '#fbbf24' : m.is_active ? '#4ade80' : 'var(--bg-surface-2)', boxShadow: m.is_paused ? '0 0 6px rgba(251,191,36,0.6)' : m.is_active ? '0 0 6px rgba(74,222,128,0.6)' : 'none' }} />
                             <div style={{ fontSize: 12.5, fontWeight: 700, color: '#fff' }}>{m.name}</div>
                             {m.is_paused && <span style={{ marginLeft: 'auto', fontSize: 10, fontWeight: 600, color: '#fbbf24', background: 'rgba(251,191,36,0.1)', border: '1px solid rgba(251,191,36,0.2)', borderRadius: 4, padding: '2px 7px' }}>Break</span>}
                             {m.is_active && !m.is_paused && <span style={{ marginLeft: 'auto', fontSize: 10, fontWeight: 600, color: '#4ade80', background: 'rgba(74,222,128,0.1)', border: '1px solid rgba(74,222,128,0.2)', borderRadius: 4, padding: '2px 7px' }}>Active</span>}
@@ -999,7 +999,7 @@ export default function AdminPage() {
                 return (
                   <div key={mc.id} style={{ padding:'14px 0', borderBottom:'1px solid rgba(255,255,255,0.05)', display:'flex', gap:14, alignItems:'flex-start' }}>
                     {/* Date badge */}
-                    <div style={{ flexShrink:0, width:44, textAlign:'center', background: past ? 'rgba(255,255,255,0.03)' : 'rgba(161,117,252,0.1)', border:`1px solid ${past ? 'rgba(255,255,255,0.06)' : 'rgba(161,117,252,0.2)'}`, borderRadius:10, padding:'8px 4px' }}>
+                    <div style={{ flexShrink:0, width:44, textAlign:'center', background: past ? 'var(--bg-input)' : 'rgba(161,117,252,0.1)', border:`1px solid ${past ? 'var(--bg-input)' : 'rgba(161,117,252,0.2)'}`, borderRadius:10, padding:'8px 4px' }}>
                       <div style={{ fontSize:18, fontWeight:800, color: past ? 'rgba(255,255,255,0.25)' : '#A175FC', lineHeight:1 }}>{new Date(mc.scheduled_at).getDate()}</div>
                       <div style={{ fontSize:9, fontWeight:700, color: past ? 'rgba(255,255,255,0.2)' : 'rgba(161,117,252,0.7)', textTransform:'uppercase', letterSpacing:'.05em', marginTop:2 }}>{new Date(mc.scheduled_at).toLocaleDateString('en-US',{month:'short'})}</div>
                     </div>
@@ -1092,7 +1092,7 @@ export default function AdminPage() {
                   const color = SERVICE_COLORS[inq.service] || '#A175FC'
                   const isNew = inq.status === 'new'
                   return (
-                    <div key={inq.id} style={{ background: isNew ? 'rgba(248,113,113,0.04)' : 'var(--bg-surface)', border: `1px solid ${isNew ? 'rgba(248,113,113,0.18)' : 'rgba(255,255,255,0.07)'}`, borderRadius:12, padding:'18px 20px', display:'flex', gap:16, alignItems:'flex-start' }}>
+                    <div key={inq.id} style={{ background: isNew ? 'rgba(248,113,113,0.04)' : 'var(--bg-surface)', border: `1px solid ${isNew ? 'rgba(248,113,113,0.18)' : 'var(--bg-input)'}`, borderRadius:12, padding:'18px 20px', display:'flex', gap:16, alignItems:'flex-start' }}>
                       {/* Color dot */}
                       <div style={{ width:8, height:8, borderRadius:'50%', background:color, flexShrink:0, marginTop:5, boxShadow:`0 0 8px ${color}80` }} />
 

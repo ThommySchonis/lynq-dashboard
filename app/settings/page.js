@@ -48,7 +48,7 @@ const CSS = `
     cursor:not-allowed;
   }
   .settings-input::placeholder {
-    color:rgba(248,250,252,0.25);
+    color:var(--text-3);
   }
 
   .tab-item {
@@ -59,7 +59,7 @@ const CSS = `
     border-radius:10px;
     cursor:pointer;
     transition:all 0.15s ease;
-    color:rgba(248,250,252,0.5);
+    color:var(--text-2);
     font-size:13px;
     font-weight:400;
     border:none;
@@ -70,7 +70,7 @@ const CSS = `
   }
   .tab-item:hover {
     background:var(--bg-surface-2);
-    color:rgba(248,250,252,0.85);
+    color:var(--text-1);
   }
   .tab-item.active {
     background:rgba(161,117,252,0.15);
@@ -200,7 +200,7 @@ const CSS = `
     padding:0;
     transition:color 0.15s ease;
   }
-  .pw-toggle-btn:hover { color:rgba(248,250,252,0.7); }
+  .pw-toggle-btn:hover { color:var(--text-2); }
 
   .label-text {
     font-size:12px;
@@ -215,7 +215,7 @@ const CSS = `
     position:fixed;
     bottom:32px;
     right:32px;
-    background:#1a2744;
+    background:var(--bg-surface);
     border:1px solid rgba(161,117,252,0.3);
     border-radius:10px;
     padding:14px 20px;
@@ -231,7 +231,7 @@ const CSS = `
   }
   .toast.error {
     border-color:rgba(248,113,113,0.3);
-    background:#2a1a1a;
+    background:var(--bg-surface);
   }
 
   .color-input-wrapper {
@@ -275,7 +275,7 @@ const CSS = `
   }
   .section-header p {
     font-size:13px;
-    color:rgba(248,250,252,0.4);
+    color:var(--text-3);
   }
 
   .field-group {
@@ -452,7 +452,7 @@ function Toggle({ on, onChange }) {
     <button
       className="toggle-track"
       onClick={() => onChange(!on)}
-      style={{ background: on ? '#A175FC' : 'rgba(255,255,255,0.1)' }}
+      style={{ background: on ? '#A175FC' : 'var(--bg-surface-2)' }}
       aria-checked={on}
       role="switch"
     >
@@ -538,7 +538,7 @@ function ProfileTab({ session }) {
           <div style={{ color:'var(--text-1)', fontWeight:600, fontSize:15, marginBottom:4 }}>
             {displayName || email.split('@')[0]}
           </div>
-          <div style={{ color:'rgba(248,250,252,0.4)', fontSize:13 }}>{email}</div>
+          <div style={{ color:'var(--text-3)', fontSize:13 }}>{email}</div>
         </div>
       </div>
 
@@ -630,8 +630,8 @@ function IntegrationsTab({ session }) {
       label: 'Gorgias',
       desc: 'Helpdesk ticketing integration',
       icon: <IconHeadset/>,
-      color: 'rgba(248,250,252,0.4)',
-      bg: 'rgba(255,255,255,0.06)',
+      color: 'var(--text-3)',
+      bg: 'var(--bg-input)',
       comingSoon: true,
     },
     {
@@ -676,7 +676,7 @@ function IntegrationsTab({ session }) {
               <div style={{ color:'var(--text-1)', fontWeight:600, fontSize:14, marginBottom:3 }}>
                 {item.label}
               </div>
-              <div style={{ color:'rgba(248,250,252,0.4)', fontSize:13 }}>
+              <div style={{ color:'var(--text-3)', fontSize:13 }}>
                 {item.desc}
               </div>
             </div>
@@ -893,7 +893,7 @@ function NotificationsTab() {
               <div style={{ color:'var(--text-1)', fontWeight:500, fontSize:14, marginBottom:4 }}>
                 {row.title}
               </div>
-              <div style={{ color:'rgba(248,250,252,0.4)', fontSize:13 }}>
+              <div style={{ color:'var(--text-3)', fontSize:13 }}>
                 {row.desc}
               </div>
             </div>
@@ -1024,7 +1024,7 @@ function SecurityTab({ session }) {
         <div style={{ color:'#f87171', fontWeight:600, fontSize:15, marginBottom:8 }}>
           Danger Zone
         </div>
-        <div style={{ color:'rgba(248,250,252,0.4)', fontSize:13, marginBottom:16 }}>
+        <div style={{ color:'var(--text-3)', fontSize:13, marginBottom:16 }}>
           Signing out of all sessions will immediately invalidate all active tokens across all devices.
         </div>
         <button className="danger-btn" onClick={handleSignOutAll}>
@@ -1090,7 +1090,7 @@ export default function SettingsPage() {
             }}>
               Settings
             </h1>
-            <p style={{ fontSize:14, color:'rgba(248,250,252,0.4)', marginTop:6 }}>
+            <p style={{ fontSize:14, color:'var(--text-3)', marginTop:6 }}>
               Manage your account, integrations and preferences
             </p>
           </div>

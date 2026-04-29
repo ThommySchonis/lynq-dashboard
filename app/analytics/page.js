@@ -269,7 +269,7 @@ function PageBackground() {
 }
 
 function Spinner({ size=18 }) {
-  return <div style={{ width:size, height:size, border:`2px solid rgba(255,255,255,0.1)`, borderTop:`2px solid #A175FC`, borderRadius:'50%', animation:'spin .7s linear infinite', flexShrink:0 }}/>
+  return <div style={{ width:size, height:size, border:`2px solid var(--border)`, borderTop:`2px solid #A175FC`, borderRadius:'50%', animation:'spin .7s linear infinite', flexShrink:0 }}/>
 }
 
 // ─── Alert Banner ─────────────────────────────────────────────────────────────
@@ -362,7 +362,7 @@ function KpiRow({ kpis, prevKpis, refunds, loaded }) {
           </div>
           <div className="kpi-glow" style={{ fontSize:27, fontWeight:800, letterSpacing:'-0.04em', color:c.accent, lineHeight:1, marginBottom:5, fontVariantNumeric:'tabular-nums' }}>{c.value}</div>
           <div style={{ fontSize:9.5, fontWeight:700, letterSpacing:'.11em', color:'var(--text-3)', textTransform:'uppercase', marginBottom:4 }}>{c.label}</div>
-          <div style={{ fontSize:11, color:'rgba(248,250,252,0.28)', lineHeight:1.5 }}>{c.sub}</div>
+          <div style={{ fontSize:11, color:'var(--text-3)', lineHeight:1.5 }}>{c.sub}</div>
         </div>
       ))}
     </div>
@@ -411,7 +411,7 @@ function DonutReasonChart({ refunds, loaded }) {
   const total=Object.values(map).reduce((s,v)=>s+v,0)
   if(total===0) return (
     <div className="panel" style={{ flex:'1 1 0', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', minHeight:200 }}>
-      <div style={{ fontSize:13, color:'rgba(248,250,252,0.25)' }}>No refund reasons this period</div>
+      <div style={{ fontSize:13, color:'var(--text-3)' }}>No refund reasons this period</div>
     </div>
   )
   const segments=Object.entries(map).sort((a,b)=>b[1]-a[1]).map(([cat,val])=>({ cat, val, color:(CAT_COLORS[cat]||CAT_COLORS.Other).color, pct:((val/total)*100).toFixed(0) }))
@@ -484,15 +484,15 @@ function MonthlyTrendChart({ allRefunds, loaded }) {
           const isMax = m.count===maxCount&&m.count>0
           return (
             <div key={i} style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'flex-end', height:'100%', gap:5 }}>
-              <div style={{ fontSize:10, fontWeight:700, color:m.count>0?'#EF4444':'rgba(248,250,252,0.2)', fontVariantNumeric:'tabular-nums' }}>{m.count>0?m.count:''}</div>
+              <div style={{ fontSize:10, fontWeight:700, color:m.count>0?'#EF4444':'var(--text-3)', fontVariantNumeric:'tabular-nums' }}>{m.count>0?m.count:''}</div>
               <div style={{ width:'100%', borderRadius:'5px 5px 0 0', position:'relative', overflow:'hidden',
-                background:m.isCurrentMonth?'rgba(161,117,252,0.15)':isMax?'rgba(239,68,68,0.15)':'rgba(255,255,255,0.05)',
-                border:`1px solid ${m.isCurrentMonth?'rgba(161,117,252,0.3)':isMax?'rgba(239,68,68,0.25)':'rgba(255,255,255,0.06)'}`,
+                background:m.isCurrentMonth?'rgba(161,117,252,0.15)':isMax?'rgba(239,68,68,0.15)':'var(--bg-input)',
+                border:`1px solid ${m.isCurrentMonth?'rgba(161,117,252,0.3)':isMax?'rgba(239,68,68,0.25)':'var(--bg-input)'}`,
                 height:`${Math.max(barH,4)}%`, minHeight:4, transition:'height .3s ease',
               }}>
                 {m.count>0&&<div className="bar-col" style={{ position:'absolute', inset:0, background:m.isCurrentMonth?'linear-gradient(180deg,rgba(161,117,252,0.6),rgba(161,117,252,0.2))':isMax?'linear-gradient(180deg,rgba(239,68,68,0.7),rgba(239,68,68,0.25))':'linear-gradient(180deg,rgba(255,107,53,0.5),rgba(255,107,53,0.15))', animationDelay:`${i*.06}s` }}/>}
               </div>
-              <div style={{ fontSize:10, color:m.isCurrentMonth?'#C3A3FF':'rgba(248,250,252,0.3)', fontWeight:m.isCurrentMonth?700:400 }}>{m.label}</div>
+              <div style={{ fontSize:10, color:m.isCurrentMonth?'#C3A3FF':'var(--text-3)', fontWeight:m.isCurrentMonth?700:400 }}>{m.label}</div>
             </div>
           )
         })}
@@ -524,7 +524,7 @@ function ActionBoard({ patternActions, aiInsights, noRefunds, loaded, onStatusCh
 
   if(!loaded) return (
     <div className="panel" style={{ marginBottom:24 }}>
-      <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:20 }}><Spinner size={16}/><div style={{ fontSize:14, fontWeight:700, color:'rgba(248,250,252,0.6)' }}>Analysing refund patterns…</div></div>
+      <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:20 }}><Spinner size={16}/><div style={{ fontSize:14, fontWeight:700, color:'var(--text-2)' }}>Analysing refund patterns…</div></div>
       <div style={{ display:'flex', flexDirection:'column', gap:10 }}>{[0,1,2,3].map(i=><div key={i} className="sk" style={{ height:80, borderRadius:12 }}/>)}</div>
     </div>
   )
@@ -546,11 +546,11 @@ function ActionBoard({ patternActions, aiInsights, noRefunds, loaded, onStatusCh
           <div style={{ fontSize:11, color:'var(--text-3)' }}>{noRefunds?'No refunds in this period — all clear':'Real-time tasks based on your refund data — assign to your team'}</div>
         </div>
         <div style={{ display:'flex', alignItems:'center', gap:6 }}>
-          {usingFallback&&<div style={{ fontSize:10, color:'rgba(248,250,252,0.22)', padding:'3px 9px', borderRadius:100, border:'1px solid var(--border)' }}>Local only</div>}
+          {usingFallback&&<div style={{ fontSize:10, color:'var(--text-3)', padding:'3px 9px', borderRadius:100, border:'1px solid var(--border)' }}>Local only</div>}
           {!noRefunds&&(['open','picked_up','done']).map(tab=>{
             const cnt=tab==='open'?openItems.length:tab==='picked_up'?pickupItems.length:doneItems.length
             const isAct=activeTab===tab
-            return <button key={tab} onClick={()=>setActiveTab(tab)} className="tab-btn" style={{ background:isAct?'rgba(161,117,252,0.18)':'rgba(255,255,255,0.05)', color:isAct?'#C3A3FF':'rgba(248,250,252,0.38)', boxShadow:isAct?'inset 0 0 0 1px rgba(161,117,252,0.38)':'inset 0 0 0 1px rgba(255,255,255,0.08)' }}>{tab==='open'?'Open':tab==='picked_up'?'Picked Up':'Done'}{cnt>0&&<span style={{ marginLeft:4, fontSize:10, opacity:.7 }}>{cnt}</span>}</button>
+            return <button key={tab} onClick={()=>setActiveTab(tab)} className="tab-btn" style={{ background:isAct?'rgba(161,117,252,0.18)':'var(--bg-input)', color:isAct?'#C3A3FF':'var(--text-3)', boxShadow:isAct?'inset 0 0 0 1px rgba(161,117,252,0.38)':'inset 0 0 0 1px rgba(255,255,255,0.08)' }}>{tab==='open'?'Open':tab==='picked_up'?'Picked Up':'Done'}{cnt>0&&<span style={{ marginLeft:4, fontSize:10, opacity:.7 }}>{cnt}</span>}</button>
           })}
           {noRefunds&&<div style={{ padding:'4px 12px', borderRadius:100, background:'rgba(34,197,94,0.1)', border:'1px solid rgba(34,197,94,0.25)', fontSize:11, fontWeight:700, color:'#22C55E', letterSpacing:'.05em' }}>STORE HEALTHY</div>}
         </div>
@@ -564,7 +564,7 @@ function ActionBoard({ patternActions, aiInsights, noRefunds, loaded, onStatusCh
 
       {tabItems.length===0&&!noRefunds&&(
         <div style={{ textAlign:'center', padding:'36px 0' }}>
-          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke={activeTab==='done'?'rgba(74,222,128,0.4)':'rgba(255,255,255,0.12)'} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ display:'block', margin:'0 auto 10px' }}>
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke={activeTab==='done'?'rgba(74,222,128,0.4)':'var(--bg-surface-2)'} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ display:'block', margin:'0 auto 10px' }}>
             {activeTab==='done'?<><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></>:<><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></>}
           </svg>
           <div style={{ fontSize:13, color:'var(--text-3)' }}>{activeTab==='open'?'All actions picked up or done':activeTab==='picked_up'?'No actions currently in progress':'No completed actions yet'}</div>
@@ -584,8 +584,8 @@ function ActionBoard({ patternActions, aiInsights, noRefunds, loaded, onStatusCh
                     <CatBadge cat={item.category} small/>
                     {item.type==='pattern'&&item.refundCount&&<span style={{ fontSize:10.5, color:'var(--text-3)', fontVariantNumeric:'tabular-nums' }}>{item.refundCount}× · {fmtEur(item.totalAmount)} lost</span>}
                   </div>
-                  <div style={{ fontSize:13.5, fontWeight:700, color:isDone?'rgba(248,250,252,0.4)':'#F8FAFC', marginBottom:6, lineHeight:1.35, textDecoration:isDone?'line-through':'none' }}>{item.title}</div>
-                  <div style={{ fontSize:12, color:'rgba(248,250,252,0.5)', lineHeight:1.65, marginBottom:status!=='open'?10:0 }}>{item.action}</div>
+                  <div style={{ fontSize:13.5, fontWeight:700, color:isDone?'var(--text-3)':'var(--text-1)', marginBottom:6, lineHeight:1.35, textDecoration:isDone?'line-through':'none' }}>{item.title}</div>
+                  <div style={{ fontSize:12, color:'var(--text-2)', lineHeight:1.65, marginBottom:status!=='open'?10:0 }}>{item.action}</div>
                   {status==='picked_up'&&st.pickedUpBy&&<div style={{ fontSize:11, color:'rgba(161,117,252,0.7)', marginBottom:8 }}>Picked up by <strong style={{ color:'#C3A3FF' }}>{st.pickedUpBy}</strong></div>}
                   {isDone&&<div style={{ fontSize:11, color:'rgba(74,222,128,0.7)', marginBottom:8 }}>{st.pickedUpBy&&<>Completed by <strong style={{ color:'#4ade80' }}>{st.pickedUpBy}</strong>{st.resultNote?' — ':''}</>}{st.resultNote&&<span style={{ color:'var(--text-2)' }}>{st.resultNote}</span>}</div>}
                 </div>
@@ -623,7 +623,7 @@ function RefundTable({ refunds, loaded }) {
 
       {loaded&&enriched.length>0&&(
         <div style={{ display:'flex', gap:5, flexWrap:'wrap', marginBottom:16 }}>
-          {CATEGORIES.map(cat=>{ const cc=cat==='All'?null:CAT_COLORS[cat]; const cnt=cat==='All'?enriched.length:enriched.filter(r=>r.category===cat).length; if(cnt===0&&cat!=='All')return null; const isAct=catFilter===cat; return <button key={cat} onClick={()=>{setCatFilter(cat);setShowAll(false)}} className="filter-pill" style={{ background:isAct?(cc?cc.bg:'rgba(255,255,255,0.08)'):'transparent', color:isAct?(cc?cc.color:'var(--text-1)'):'rgba(248,250,252,0.38)', borderColor:isAct?(cc?cc.border:'rgba(255,255,255,0.2)'):'rgba(255,255,255,0.08)' }}>{cat} <span style={{ opacity:.6, fontSize:10 }}>{cnt}</span></button> })}
+          {CATEGORIES.map(cat=>{ const cc=cat==='All'?null:CAT_COLORS[cat]; const cnt=cat==='All'?enriched.length:enriched.filter(r=>r.category===cat).length; if(cnt===0&&cat!=='All')return null; const isAct=catFilter===cat; return <button key={cat} onClick={()=>{setCatFilter(cat);setShowAll(false)}} className="filter-pill" style={{ background:isAct?(cc?cc.bg:'var(--bg-input)'):'transparent', color:isAct?(cc?cc.color:'var(--text-1)'):'var(--text-3)', borderColor:isAct?(cc?cc.border:'rgba(255,255,255,0.2)'):'var(--bg-input)' }}>{cat} <span style={{ opacity:.6, fontSize:10 }}>{cnt}</span></button> })}
         </div>
       )}
 
@@ -634,7 +634,7 @@ function RefundTable({ refunds, loaded }) {
           <div style={{ width:48, height:48, borderRadius:8, background:'rgba(74,222,128,0.08)', display:'flex', alignItems:'center', justifyContent:'center' }}>
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4ade80" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
           </div>
-          <div style={{ textAlign:'center' }}><div style={{ fontSize:14, fontWeight:600, color:'rgba(248,250,252,0.7)', marginBottom:4 }}>No refunds this period</div><div style={{ fontSize:12, color:'rgba(248,250,252,0.28)' }}>Keep it up — no refunded orders found</div></div>
+          <div style={{ textAlign:'center' }}><div style={{ fontSize:14, fontWeight:600, color:'var(--text-2)', marginBottom:4 }}>No refunds this period</div><div style={{ fontSize:12, color:'var(--text-3)' }}>Keep it up — no refunded orders found</div></div>
         </div>
       )}
 
@@ -647,19 +647,19 @@ function RefundTable({ refunds, loaded }) {
               <thead>
                 <tr style={{ borderBottom:'1px solid rgba(255,255,255,0.06)' }}>
                   {[{label:'Date',col:'refundedAt',align:'left'},{label:'Order',col:'orderId',align:'left'},{label:'Customer',col:'customer',align:'left'},{label:'Product(s)',col:null,align:'left'},{label:'Category',col:'category',align:'left'},{label:'% of Order',col:'refundPct',align:'right'},{label:'Amount',col:'refundAmount',align:'right'}].map(h=>(
-                    <th key={h.label} onClick={()=>h.col&&toggleSort(h.col)} style={{ textAlign:h.align, fontSize:9.5, fontWeight:700, letterSpacing:'.08em', color:'rgba(248,250,252,0.25)', textTransform:'uppercase', padding:'0 0 12px', paddingLeft:h.align==='right'?14:0, whiteSpace:'nowrap', cursor:h.col?'pointer':'default', userSelect:'none' }}>
+                    <th key={h.label} onClick={()=>h.col&&toggleSort(h.col)} style={{ textAlign:h.align, fontSize:9.5, fontWeight:700, letterSpacing:'.08em', color:'var(--text-3)', textTransform:'uppercase', padding:'0 0 12px', paddingLeft:h.align==='right'?14:0, whiteSpace:'nowrap', cursor:h.col?'pointer':'default', userSelect:'none' }}>
                       <span style={{ display:'inline-flex', alignItems:'center', gap:4 }}>{h.label}{h.col&&<SortIco col={h.col}/>}</span>
                     </th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {display.map((r,ri)=>{ const pct=parseFloat(r.refundPct||0); const pc=pct>=80?'#F87171':pct>=40?'#FB923C':'rgba(248,250,252,0.45)'; const pb=pct>=80?'rgba(248,113,113,0.1)':pct>=40?'rgba(251,146,60,0.1)':'rgba(255,255,255,0.05)'; return (
+                {display.map((r,ri)=>{ const pct=parseFloat(r.refundPct||0); const pc=pct>=80?'#F87171':pct>=40?'#FB923C':'var(--text-2)'; const pb=pct>=80?'rgba(248,113,113,0.1)':pct>=40?'rgba(251,146,60,0.1)':'var(--bg-input)'; return (
                   <tr key={`${r.orderId}-${ri}`} className="tbl-row" style={{ borderBottom:ri<display.length-1?'1px solid rgba(255,255,255,0.04)':'none' }}>
                     <td style={{ padding:'11px 14px 11px 0', fontSize:11.5, color:'var(--text-3)', whiteSpace:'nowrap' }}>{fmtDate(r.refundedAt)}</td>
-                    <td style={{ padding:'11px 14px', fontSize:12, fontWeight:700, color:'rgba(248,250,252,0.52)', whiteSpace:'nowrap' }}>{r.orderId}</td>
-                    <td style={{ padding:'11px 14px', maxWidth:130 }}><div style={{ fontSize:12.5, color:'var(--text-1)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }} title={r.customer}>{r.customer}</div>{r.customerEmail&&<div style={{ fontSize:10, color:'rgba(248,250,252,0.26)', marginTop:1, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{r.customerEmail}</div>}</td>
-                    <td style={{ padding:'11px 14px', fontSize:12, color:'rgba(248,250,252,0.48)', maxWidth:160 }}><div style={{ overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }} title={(r.products||[]).join(', ')}>{(r.products||[]).join(', ')||'—'}</div></td>
+                    <td style={{ padding:'11px 14px', fontSize:12, fontWeight:700, color:'var(--text-2)', whiteSpace:'nowrap' }}>{r.orderId}</td>
+                    <td style={{ padding:'11px 14px', maxWidth:130 }}><div style={{ fontSize:12.5, color:'var(--text-1)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }} title={r.customer}>{r.customer}</div>{r.customerEmail&&<div style={{ fontSize:10, color:'var(--text-3)', marginTop:1, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{r.customerEmail}</div>}</td>
+                    <td style={{ padding:'11px 14px', fontSize:12, color:'var(--text-2)', maxWidth:160 }}><div style={{ overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }} title={(r.products||[]).join(', ')}>{(r.products||[]).join(', ')||'—'}</div></td>
                     <td style={{ padding:'11px 14px' }}><CatBadge cat={r.category} small/></td>
                     <td style={{ padding:'11px 14px', textAlign:'right', whiteSpace:'nowrap' }}><span style={{ fontSize:11, fontWeight:700, color:pc, background:pb, borderRadius:5, padding:'2px 8px', display:'inline-block' }}>{r.refundPct}%</span></td>
                     <td style={{ padding:'11px 0 11px 14px', textAlign:'right', fontSize:13, fontWeight:800, color:'#F87171', fontVariantNumeric:'tabular-nums', whiteSpace:'nowrap', textShadow:'none' }}>{fmtEur(r.refundAmount)}</td>
@@ -670,7 +670,7 @@ function RefundTable({ refunds, loaded }) {
           </div>
           {sorted.length>20&&!showAll&&(
             <div style={{ marginTop:16, textAlign:'center' }}>
-              <button onClick={()=>setShowAll(true)} style={{ padding:'7px 20px', borderRadius:100, background:'var(--bg-surface-2)', border:'1px solid var(--border)', color:'rgba(248,250,252,0.5)', fontSize:12, fontWeight:600, cursor:'pointer', fontFamily:'inherit', transition:'all .15s' }} onMouseEnter={e=>{e.currentTarget.style.background='rgba(255,255,255,0.08)';e.currentTarget.style.color='#F8FAFC'}} onMouseLeave={e=>{e.currentTarget.style.background='rgba(255,255,255,0.05)';e.currentTarget.style.color='rgba(248,250,252,0.5)'}}>Show all {sorted.length} refunds</button>
+              <button onClick={()=>setShowAll(true)} style={{ padding:'7px 20px', borderRadius:100, background:'var(--bg-surface-2)', border:'1px solid var(--border)', color:'var(--text-2)', fontSize:12, fontWeight:600, cursor:'pointer', fontFamily:'inherit', transition:'all .15s' }} onMouseEnter={e=>{e.currentTarget.style.background='var(--bg-input)';e.currentTarget.style.color='var(--text-1)'}} onMouseLeave={e=>{e.currentTarget.style.background='var(--bg-input)';e.currentTarget.style.color='var(--text-2)'}}>Show all {sorted.length} refunds</button>
             </div>
           )}
         </>
@@ -702,7 +702,7 @@ function ProductMatrix({ allRefunds, loaded }) {
         <thead>
           <tr style={{ borderBottom:'1px solid rgba(255,255,255,0.06)' }}>
             {['#','Product','Category','Refunds','Avg %','Amount Lost','Risk'].map((h,i)=>(
-              <th key={h} style={{ textAlign:i>=3?'right':'left', fontSize:9.5, fontWeight:700, letterSpacing:'.08em', color:'rgba(248,250,252,0.25)', textTransform:'uppercase', padding:'0 0 12px', paddingLeft:i>0&&i<3?14:i>=3?14:0, whiteSpace:'nowrap' }}>{h}</th>
+              <th key={h} style={{ textAlign:i>=3?'right':'left', fontSize:9.5, fontWeight:700, letterSpacing:'.08em', color:'var(--text-3)', textTransform:'uppercase', padding:'0 0 12px', paddingLeft:i>0&&i<3?14:i>=3?14:0, whiteSpace:'nowrap' }}>{h}</th>
             ))}
           </tr>
         </thead>
@@ -721,7 +721,7 @@ function ProductMatrix({ allRefunds, loaded }) {
                 </td>
                 <td style={{ padding:'11px 14px' }}><CatBadge cat={p.topCat} small/></td>
                 <td style={{ padding:'11px 14px', textAlign:'right', fontSize:13, fontWeight:800, color:'#F87171', fontVariantNumeric:'tabular-nums' }}>{p.count}</td>
-                <td style={{ padding:'11px 14px', textAlign:'right', fontSize:12, fontWeight:600, color:'rgba(248,250,252,0.5)', fontVariantNumeric:'tabular-nums' }}>{p.avgPct}%</td>
+                <td style={{ padding:'11px 14px', textAlign:'right', fontSize:12, fontWeight:600, color:'var(--text-2)', fontVariantNumeric:'tabular-nums' }}>{p.avgPct}%</td>
                 <td style={{ padding:'11px 14px', textAlign:'right', fontSize:12.5, fontWeight:700, color:'var(--text-2)', fontVariantNumeric:'tabular-nums' }}>{fmtEur(p.amount)}</td>
                 <td style={{ padding:'11px 0 11px 14px', textAlign:'right' }}>
                   <span style={{ fontSize:10, fontWeight:700, color:risk.color, background:risk.bg, border:`1px solid ${risk.border}`, borderRadius:100, padding:'2px 9px' }}>{risk.label}</span>
@@ -747,12 +747,12 @@ function RefundReasons({ refunds, loaded }) {
     <div className="panel" style={{ flex:'1 1 0' }}>
       <div style={{ marginBottom:18 }}><div style={{ fontSize:13, fontWeight:600, color:'var(--text-1)', marginBottom:3 }}>Why refunds happen</div><div style={{ fontSize:11, color:'var(--text-3)' }}>By total amount lost</div></div>
       {!loaded?<div style={{ display:'flex', flexDirection:'column', gap:14 }}>{[0,1,2,3,4].map(i=><div key={i} style={{ display:'flex', flexDirection:'column', gap:6 }}><div className="sk" style={{ height:11, width:`${50+i*9}%` }}/><div className="sk" style={{ height:5, borderRadius:100 }}/></div>)}</div>
-      :reasons.length===0?<div style={{ textAlign:'center', padding:'32px 0', fontSize:12, color:'rgba(248,250,252,0.2)' }}>No data this period</div>
+      :reasons.length===0?<div style={{ textAlign:'center', padding:'32px 0', fontSize:12, color:'var(--text-3)' }}>No data this period</div>
       :<div style={{ display:'flex', flexDirection:'column', gap:14 }}>
         {reasons.map((r,i)=>{ const cc=CAT_COLORS[r.cat]||CAT_COLORS.Other; return (
           <div key={r.cat}>
             <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:7 }}>
-              <div style={{ display:'flex', alignItems:'center', gap:8 }}><div style={{ width:7, height:7, borderRadius:'50%', background:cc.color, flexShrink:0 }}/><span style={{ fontSize:12, color:'rgba(248,250,252,0.7)', fontWeight:500 }}>{r.cat}</span></div>
+              <div style={{ display:'flex', alignItems:'center', gap:8 }}><div style={{ width:7, height:7, borderRadius:'50%', background:cc.color, flexShrink:0 }}/><span style={{ fontSize:12, color:'var(--text-2)', fontWeight:500 }}>{r.cat}</span></div>
               <div style={{ display:'flex', alignItems:'center', gap:7, flexShrink:0 }}><span style={{ fontSize:11, color:'var(--text-3)', fontVariantNumeric:'tabular-nums' }}>{fmtEur(r.amount)}</span><span style={{ fontSize:10, fontWeight:700, color:cc.color, background:cc.bg, borderRadius:5, padding:'1px 7px', border:`1px solid ${cc.border}` }}>{r.count}×</span></div>
             </div>
             <div style={{ height:5, background:'var(--bg-surface-2)', borderRadius:100, overflow:'hidden' }}>
@@ -777,11 +777,11 @@ function WeeklyReport({ allRefunds, loaded }) {
       <div style={{ marginBottom:18 }}><div style={{ fontSize:13, fontWeight:600, color:'var(--text-1)', marginBottom:3 }}>Weekly Overview</div><div style={{ fontSize:11, color:'var(--text-3)' }}>Last 4 weeks (Sun–Sat) · all refunds</div></div>
       <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:12 }}>
         {weeks.map((w,i)=>{ const cc=w.topReason?(CAT_COLORS[w.topReason]||CAT_COLORS.Other):null; return (
-          <div key={i} style={{ borderRadius:10, padding:'14px 16px', background:w.isCurrentWeek?'rgba(161,117,252,0.07)':'rgba(255,255,255,0.025)', border:`1px solid ${w.isCurrentWeek?'rgba(161,117,252,0.22)':'rgba(255,255,255,0.06)'}` }}>
-            <div style={{ fontSize:10.5, fontWeight:700, color:w.isCurrentWeek?'#C3A3FF':'rgba(248,250,252,0.38)', letterSpacing:'.04em', marginBottom:10, textTransform:'uppercase' }}>{w.label}</div>
+          <div key={i} style={{ borderRadius:10, padding:'14px 16px', background:w.isCurrentWeek?'rgba(161,117,252,0.07)':'var(--bg-input)', border:`1px solid ${w.isCurrentWeek?'rgba(161,117,252,0.22)':'var(--bg-input)'}` }}>
+            <div style={{ fontSize:10.5, fontWeight:700, color:w.isCurrentWeek?'#C3A3FF':'var(--text-3)', letterSpacing:'.04em', marginBottom:10, textTransform:'uppercase' }}>{w.label}</div>
             <div style={{ fontSize:24, fontWeight:800, color:w.refundCount===0?'#4ade80':'#F87171', letterSpacing:'-0.04em', marginBottom:2, fontVariantNumeric:'tabular-nums', textShadow:'none' }}>{w.refundCount}</div>
-            <div style={{ fontSize:10, color:'rgba(248,250,252,0.28)', marginBottom:10 }}>refund{w.refundCount!==1?'s':''}</div>
-            {w.refundCount>0&&<><div style={{ fontSize:12.5, fontWeight:700, color:'var(--text-2)', fontVariantNumeric:'tabular-nums', marginBottom:8 }}>{fmtEur(w.totalAmount)} lost</div>{w.topReason&&<div style={{ marginBottom:4 }}><CatBadge cat={w.topReason} small/></div>}{w.topProduct&&<div style={{ fontSize:10, color:'rgba(248,250,252,0.28)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', marginTop:4 }} title={w.topProduct}>{w.topProduct}</div>}</>}
+            <div style={{ fontSize:10, color:'var(--text-3)', marginBottom:10 }}>refund{w.refundCount!==1?'s':''}</div>
+            {w.refundCount>0&&<><div style={{ fontSize:12.5, fontWeight:700, color:'var(--text-2)', fontVariantNumeric:'tabular-nums', marginBottom:8 }}>{fmtEur(w.totalAmount)} lost</div>{w.topReason&&<div style={{ marginBottom:4 }}><CatBadge cat={w.topReason} small/></div>}{w.topProduct&&<div style={{ fontSize:10, color:'var(--text-3)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', marginTop:4 }} title={w.topProduct}>{w.topProduct}</div>}</>}
             {w.refundCount===0&&<div style={{ fontSize:10.5, color:'rgba(74,222,128,0.55)' }}>No refunds</div>}
           </div>
         )})}
@@ -914,19 +914,19 @@ export default function AnalyticsPage() {
                 }
                 <div style={{ display:'flex', alignItems:'center', gap:8, padding:'7px 16px', borderRadius:100, background:'var(--bg-input)', border:'1px solid var(--border)', backdropFilter:'blur(10px)' }}>
                   {!allLoaded?<Spinner size={14}/>:<div style={{ width:6, height:6, borderRadius:'50%', background:demoMode?'#FB923C':'#4ade80', boxShadow:`0 0 6px ${demoMode?'rgba(251,146,60,0.5)':'rgba(74,222,128,0.5)'}`, animation:'glowPulse 2s ease-in-out infinite' }}/>}
-                  <span style={{ fontSize:10.5, fontWeight:700, letterSpacing:'.09em', color:'rgba(248,250,252,0.4)', textTransform:'uppercase' }}>{!allLoaded?'Loading…':demoMode?'Demo':'Live'}</span>
+                  <span style={{ fontSize:10.5, fontWeight:700, letterSpacing:'.09em', color:'var(--text-3)', textTransform:'uppercase' }}>{!allLoaded?'Loading…':demoMode?'Demo':'Live'}</span>
                 </div>
               </div>
             </div>
             <div style={{ height:'1px', background:'var(--bg-surface-2)', margin:'20px 0 16px' }}/>
             <div style={{ display:'flex', alignItems:'center', gap:6, flexWrap:'wrap' }}>
               {RANGES.map(r=>(
-                <button key={r.id} onClick={()=>selectRange(r.id)} className="range-pill" style={{ background:dateRange===r.id?'rgba(161,117,252,0.18)':'rgba(255,255,255,0.05)', color:dateRange===r.id?'#C3A3FF':'rgba(248,250,252,0.42)', boxShadow:dateRange===r.id?'inset 0 0 0 1px rgba(161,117,252,0.4),0 0 12px rgba(161,117,252,0.08)':'inset 0 0 0 1px rgba(255,255,255,0.08)' }}>{r.label}</button>
+                <button key={r.id} onClick={()=>selectRange(r.id)} className="range-pill" style={{ background:dateRange===r.id?'rgba(161,117,252,0.18)':'var(--bg-input)', color:dateRange===r.id?'#C3A3FF':'var(--text-3)', boxShadow:dateRange===r.id?'inset 0 0 0 1px rgba(161,117,252,0.4),0 0 12px rgba(161,117,252,0.08)':'inset 0 0 0 1px rgba(255,255,255,0.08)' }}>{r.label}</button>
               ))}
               {dateRange==='custom'&&(
                 <div style={{ display:'flex', alignItems:'center', gap:6, marginLeft:4 }}>
                   <input type="date" className="date-inp" value={customFrom} max={customTo||undefined} onChange={e=>{ const v=e.target.value; setCustomFrom(v); applyCustomRange(v,customTo) }}/>
-                  <span style={{ fontSize:11, color:'rgba(248,250,252,0.28)' }}>→</span>
+                  <span style={{ fontSize:11, color:'var(--text-3)' }}>→</span>
                   <input type="date" className="date-inp" value={customTo} min={customFrom||undefined} max={new Date().toISOString().slice(0,10)} onChange={e=>{ const v=e.target.value; setCustomTo(v); applyCustomRange(customFrom,v) }}/>
                 </div>
               )}
@@ -971,7 +971,7 @@ export default function AnalyticsPage() {
 
           <WeeklyReport allRefunds={allRefunds} loaded={loaded.allRefunds}/>
 
-          <div style={{ marginTop:16, textAlign:'center', fontSize:10.5, color:'rgba(248,250,252,0.12)', letterSpacing:'.04em' }}>
+          <div style={{ marginTop:16, textAlign:'center', fontSize:10.5, color:'var(--text-3)', letterSpacing:'.04em' }}>
             Lynq Analytics · Shopify data · AI by Claude · Refreshed on load
           </div>
         </div>

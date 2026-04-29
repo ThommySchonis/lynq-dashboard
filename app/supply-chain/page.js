@@ -247,11 +247,11 @@ function CheckpointTimeline({ checkpoints }) {
         return (
           <div key={i} style={{ display: 'flex', gap: 12 }}>
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: 10 }}>
-              <div className="cp-dot" style={{ background: i === 0 ? s.color : 'rgba(255,255,255,0.15)', boxShadow: i === 0 ? `0 0 8px ${s.color}80` : 'none' }} />
+              <div className="cp-dot" style={{ background: i === 0 ? s.color : 'var(--bg-surface-2)', boxShadow: i === 0 ? `0 0 8px ${s.color}80` : 'none' }} />
               {i < checkpoints.length - 1 && <div className="cp-line" />}
             </div>
             <div style={{ paddingBottom: 16, flex: 1, minWidth: 0 }}>
-              <p style={{ fontSize: 13, color: i === 0 ? '#F8FAFC' : 'rgba(255,255,255,0.6)', lineHeight: 1.45, marginBottom: 3 }}>{cp.detail}</p>
+              <p style={{ fontSize: 13, color: i === 0 ? 'var(--text-1)' : 'var(--text-2)', lineHeight: 1.45, marginBottom: 3 }}>{cp.detail}</p>
               {cp.location && <p style={{ fontSize: 11, color: 'var(--text-3)', marginBottom: 2 }}>{cp.location}</p>}
               <p style={{ fontSize: 11.5, color: 'var(--text-3)' }}>{fmtTime(cp.checkpoint_time)}</p>
             </div>

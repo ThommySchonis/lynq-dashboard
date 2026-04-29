@@ -56,14 +56,14 @@ const CSS = `
 
   .modal-overlay {
     position:fixed;inset:0;z-index:100;
-    background:rgba(13,6,32,0.82);
+    background:rgba(0,0,0,0.5);
     backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
     display:flex;align-items:center;justify-content:center;
     padding:20px;
     animation:fadeIn .18s ease both;
   }
   .modal-card {
-    background:linear-gradient(160deg,#1e1042 0%,#170d38 100%);
+    background:var(--bg-surface);
     border:1px solid var(--border);
     border-radius:22px;padding:36px;
     max-width:480px;width:100%;
@@ -266,7 +266,7 @@ function ServiceCard({ svc, i, onRequest }) {
       className="svc-card"
       style={{
         animation:`fadeUp .45s ease ${i * 75}ms both`,
-        borderColor: hovered ? svc.cardBorderHover : 'rgba(255,255,255,0.1)',
+        borderColor: hovered ? svc.cardBorderHover : 'var(--bg-surface-2)',
         boxShadow: hovered
           ? `0 20px 56px rgba(0,0,0,0.45), 0 0 0 1px ${svc.accent}22, 0 0 40px ${svc.accent}12`
           : '0 4px 20px rgba(0,0,0,0.35)',
@@ -322,7 +322,7 @@ function TrainCard({ svc, onRequest }) {
     <div
       className="svc-card"
       style={{
-        borderColor: hovered ? svc.cardBorderHover : 'rgba(255,255,255,0.1)',
+        borderColor: hovered ? svc.cardBorderHover : 'var(--bg-surface-2)',
         boxShadow: hovered
           ? `0 20px 56px rgba(0,0,0,0.45), 0 0 0 1px ${svc.accent}22, 0 0 40px ${svc.accent}12`
           : '0 4px 20px rgba(0,0,0,0.35)',
@@ -466,8 +466,8 @@ function SuccessState({ onClose, serviceName }) {
         Your inquiry is with the Lynq & Flow team. We'll reach out within <strong style={{ color:'var(--text-2)' }}>24 hours</strong>.
       </p>
       <button onClick={onClose} style={{ padding:'11px 30px', borderRadius:10, border:'1px solid var(--border)', background:'var(--bg-surface-2)', color:'var(--text-2)', fontSize:13, fontWeight:600, cursor:'pointer', fontFamily:'inherit', transition:'all .15s' }}
-        onMouseEnter={e => e.currentTarget.style.background='rgba(255,255,255,0.09)'}
-        onMouseLeave={e => e.currentTarget.style.background='rgba(255,255,255,0.05)'}>
+        onMouseEnter={e => e.currentTarget.style.background='var(--bg-input)'}
+        onMouseLeave={e => e.currentTarget.style.background='var(--bg-input)'}>
         Close
       </button>
     </div>

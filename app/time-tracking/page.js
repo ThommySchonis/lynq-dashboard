@@ -471,9 +471,9 @@ export default function TimeTrackingPage() {
             <div style={{ display: 'flex', gap: 6 }}>
               {FILTERS.map(f => (
                 <button key={f.id} className="range-pill" onClick={() => setFilter(f.id)} style={{
-                  background: filter === f.id ? '#A175FC' : 'rgba(255,255,255,0.05)',
+                  background: filter === f.id ? '#A175FC' : 'var(--bg-input)',
                   color: filter === f.id ? '#fff' : 'rgba(255,255,255,0.42)',
-                  border: `1px solid ${filter === f.id ? 'transparent' : 'rgba(255,255,255,0.08)'}`,
+                  border: `1px solid ${filter === f.id ? 'transparent' : 'var(--bg-input)'}`,
                   boxShadow: filter === f.id ? '0 2px 10px rgba(161,117,252,0.3)' : 'none',
                 }}>
                   {f.label}

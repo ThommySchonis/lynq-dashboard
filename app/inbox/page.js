@@ -10,7 +10,7 @@ const STATUS = {
   open:     { label:'Open',     bg:'rgba(161,117,252,0.15)', color:'#A175FC',  border:'rgba(161,117,252,0.3)'  },
   pending:  { label:'Pending',  bg:'rgba(251,191,36,0.14)',  color:'#fbbf24',  border:'rgba(251,191,36,0.3)'   },
   resolved: { label:'Resolved', bg:'rgba(74,222,128,0.14)',  color:'#4ade80',  border:'rgba(74,222,128,0.3)'   },
-  closed:   { label:'Closed',   bg:'rgba(255,255,255,0.07)', color:'rgba(240,236,249,0.35)', border:'rgba(255,255,255,0.1)' },
+  closed:   { label:'Closed',   bg:'var(--bg-input)', color:'var(--text-3)', border:'var(--bg-surface-2)' },
 }
 const ORDER_STATUS = {
   paid:        { bg:'rgba(74,222,128,0.14)',  color:'#4ade80',  label:'Paid'         },
@@ -130,14 +130,14 @@ const CSS = `
   .trow-active::after { content:''; position:absolute; left:0; top:0; bottom:0; width:3px; background:linear-gradient(180deg,#C3A3FF 0%,#7B45E8 100%); border-radius:0 2px 2px 0; }
 
   /* ── View tabs — pill style ── */
-  .vtab { padding:5px 12px; background:transparent; cursor:pointer; font-size:11.5px; font-weight:500; font-family:inherit; border-radius:8px; transition:all .18s; color:rgba(240,236,249,0.32); white-space:nowrap; letter-spacing:.01em; border:1px solid transparent; }
+  .vtab { padding:5px 12px; background:transparent; cursor:pointer; font-size:11.5px; font-weight:500; font-family:inherit; border-radius:8px; transition:all .18s; color:var(--text-3); white-space:nowrap; letter-spacing:.01em; border:1px solid transparent; }
   .vtab.on { color:#B48CFF; background:rgba(161,117,252,0.13); border-color:rgba(161,117,252,0.2); font-weight:700; }
   .vtab:hover:not(.on) { color:var(--text-2); background:var(--bg-input); }
 
   /* ── Composer tab ── */
-  .ctab { padding:9px 15px; background:transparent; cursor:pointer; font-size:12.5px; font-weight:500; font-family:inherit; border-bottom:2px solid transparent; transition:color .15s,border-color .15s; color:rgba(240,236,249,0.3); }
-  .ctab.on { color:#F0ECF9; border-bottom-color:#A175FC; font-weight:600; }
-  .ctab:hover:not(.on) { color:rgba(240,236,249,0.65); }
+  .ctab { padding:9px 15px; background:transparent; cursor:pointer; font-size:12.5px; font-weight:500; font-family:inherit; border-bottom:2px solid transparent; transition:color .15s,border-color .15s; color:var(--text-3); }
+  .ctab.on { color:var(--text-1); border-bottom-color:#A175FC; font-weight:600; }
+  .ctab:hover:not(.on) { color:var(--text-2); }
 
   /* ── Scrollbar ── */
   .sscroll::-webkit-scrollbar { width:3px; }
@@ -148,31 +148,31 @@ const CSS = `
   .skel { background:linear-gradient(90deg,var(--skeleton-from) 25%,var(--skeleton-to) 50%,var(--skeleton-from) 75%); background-size:400% 100%; animation:shimmer 1.8s linear infinite; border-radius:6px; }
 
   /* ── Status dropdown ── */
-  .sdrop { position:absolute; top:calc(100% + 6px); right:0; background:rgba(14,7,34,0.96); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px); border:1px solid var(--border); border-radius:13px; padding:5px; z-index:100; min-width:155px; box-shadow:0 24px 64px rgba(0,0,0,0.65),0 0 0 1px rgba(255,255,255,0.04); animation:fadeUp .14s ease both; }
+  .sdrop { position:absolute; top:calc(100% + 6px); right:0; background:var(--bg-surface); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px); border:1px solid var(--border); border-radius:13px; padding:5px; z-index:100; min-width:155px; box-shadow:0 24px 64px rgba(0,0,0,0.65),0 0 0 1px rgba(255,255,255,0.04); animation:fadeUp .14s ease both; }
   .sopt  { padding:9px 12px; border-radius:8px; cursor:pointer; font-size:12.5px; font-weight:600; display:flex; align-items:center; gap:8px; transition:background .12s; font-family:inherit; width:100%; text-align:left; }
   .sopt:hover { background:var(--bg-surface-2); }
 
   /* ── Inbox search ── */
-  .isearch { width:100%; padding:9px 12px 9px 34px; background:var(--bg-input); border:1px solid rgba(255,255,255,0.065); border-radius:10px; color:#F0ECF9; font-size:12.5px; outline:none; transition:all .2s; }
+  .isearch { width:100%; padding:9px 12px 9px 34px; background:var(--bg-input); border:1px solid var(--border); border-radius:10px; color:var(--text-1); font-size:12.5px; outline:none; transition:all .2s; }
   .isearch:focus { border-color:var(--accent-border); background:rgba(161,117,252,0.05); box-shadow:0 0 0 3px rgba(161,117,252,0.08); }
-  .isearch::placeholder { color:rgba(240,236,249,0.18); }
+  .isearch::placeholder { color:var(--text-3); }
 
   /* ── Macro ── */
-  .macro-panel { display:flex; border-top:1px solid rgba(255,255,255,0.05); animation:fadeUp .18s ease both; max-height:260px; }
-  .macro-list { width:230px; border-right:1px solid rgba(255,255,255,0.05); overflow-y:auto; flex-shrink:0; }
+  .macro-panel { display:flex; border-top:1px solid var(--border); animation:fadeUp .18s ease both; max-height:260px; }
+  .macro-list { width:230px; border-right:1px solid var(--border); overflow-y:auto; flex-shrink:0; }
   .macro-item { padding:10px 14px; cursor:pointer; transition:background .12s; border-left:2px solid transparent; }
   .macro-item:hover { background:var(--bg-surface-2); }
   .macro-item.mi-active { background:rgba(161,117,252,0.09); border-left-color:#A175FC; }
-  .macro-preview { flex:1; padding:14px 16px; overflow-y:auto; font-size:13px; line-height:1.75; color:rgba(240,236,249,0.6); white-space:pre-wrap; }
+  .macro-preview { flex:1; padding:14px 16px; overflow-y:auto; font-size:13px; line-height:1.75; color:var(--text-2); white-space:pre-wrap; }
   .macro-var { color:#A175FC; background:rgba(161,117,252,0.12); padding:1px 5px; border-radius:4px; font-weight:600; font-size:11px; }
-  .macro-suggest { padding:4px 14px 6px; font-size:9.5px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:rgba(240,236,249,0.22); }
-  .macro-tag { font-size:10px; font-weight:600; padding:1px 6px; border-radius:4px; background:var(--bg-surface-2); color:rgba(240,236,249,0.32); }
+  .macro-suggest { padding:4px 14px 6px; font-size:9.5px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--text-3); }
+  .macro-tag { font-size:10px; font-weight:600; padding:1px 6px; border-radius:4px; background:var(--bg-surface-2); color:var(--text-3); }
 
   /* ── Compose textarea ── */
-  .compose-ta { width:100%; resize:none; outline:none; font-family:inherit; background:transparent; border:none; padding:14px 16px; font-size:13.5px; color:#F0ECF9; line-height:1.78; letter-spacing:.005em; }
+  .compose-ta { width:100%; resize:none; outline:none; font-family:inherit; background:transparent; border:none; padding:14px 16px; font-size:13.5px; color:var(--text-1); line-height:1.78; letter-spacing:.005em; }
 
   /* ── Compose box ── */
-  .compose-box { margin:0 16px 16px; border:1px solid var(--border); border-top:1px solid rgba(255,255,255,0.13); border-radius:18px; overflow:hidden; background:linear-gradient(145deg,rgba(255,255,255,0.04) 0%,rgba(255,255,255,0.02) 100%); transition:border-color .25s,box-shadow .25s; backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); box-shadow:0 4px 24px rgba(0,0,0,0.2); }
+  .compose-box { margin:0 16px 16px; border:1px solid var(--border); border-top:1px solid var(--border); border-radius:18px; overflow:hidden; background:linear-gradient(145deg,rgba(255,255,255,0.04) 0%,rgba(255,255,255,0.02) 100%); transition:border-color .25s,box-shadow .25s; backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); box-shadow:0 4px 24px rgba(0,0,0,0.2); }
   .compose-box:focus-within { border-color:var(--accent-border); border-top-color:rgba(161,117,252,0.6); box-shadow:0 0 0 3px rgba(161,117,252,0.09),0 8px 40px rgba(161,117,252,0.1); }
 
   /* ── Buttons ── */
@@ -180,8 +180,8 @@ const CSS = `
   .btn-send:hover:not(:disabled) { background:linear-gradient(135deg,#BA96FF 0%,#9B6FFF 100%); box-shadow:0 6px 24px rgba(161,117,252,0.6); transform:translateY(-1px); }
   .btn-send:active:not(:disabled) { transform:translateY(0); box-shadow:0 2px 8px rgba(161,117,252,0.4); }
   .btn-send:disabled { opacity:.28; cursor:not-allowed; transform:none; box-shadow:none; }
-  .btn-ghost { padding:9px 16px; font-size:12.5px; font-weight:500; font-family:inherit; background:var(--bg-input); border:1px solid var(--border); color:rgba(240,236,249,0.45); border-radius:10px; cursor:pointer; transition:all .15s; }
-  .btn-ghost:hover:not(:disabled) { border-color:var(--text-3); color:rgba(240,236,249,0.85); background:var(--bg-surface-2); }
+  .btn-ghost { padding:9px 16px; font-size:12.5px; font-weight:500; font-family:inherit; background:var(--bg-input); border:1px solid var(--border); color:var(--text-2); border-radius:10px; cursor:pointer; transition:all .15s; }
+  .btn-ghost:hover:not(:disabled) { border-color:var(--text-3); color:var(--text-1); background:var(--bg-surface-2); }
   .btn-ghost:disabled { opacity:.28; cursor:not-allowed; }
   .btn-close { padding:9px 16px; font-size:12.5px; font-weight:600; font-family:inherit; background:rgba(74,222,128,0.07); border:1px solid rgba(74,222,128,0.2); color:rgba(74,222,128,0.75); border-radius:10px; cursor:pointer; transition:all .18s; display:flex; align-items:center; gap:5px; }
   .btn-close:hover:not(:disabled) { background:rgba(74,222,128,0.13); border-color:rgba(74,222,128,0.38); color:#4ade80; box-shadow:0 2px 12px rgba(74,222,128,0.15); }
@@ -201,8 +201,8 @@ const CSS = `
   .order-card:hover { border-color:var(--accent-border); box-shadow:var(--shadow-card-hover); transform:translateY(-1px); }
 
   /* ── Order actions grid ── */
-  .order-actions { display:grid; grid-template-columns:1fr 1fr; gap:5px; padding-top:11px; border-top:1px solid rgba(255,255,255,0.05); margin-top:4px; }
-  .oa-btn { padding:8px 10px; display:flex; align-items:center; justify-content:center; gap:6px; font-size:11.5px; font-weight:600; font-family:inherit; background:rgba(255,255,255,0.035); border:1px solid rgba(255,255,255,0.075); color:rgba(240,236,249,0.4); border-radius:10px; cursor:pointer; transition:all .18s cubic-bezier(.16,1,.3,1); white-space:nowrap; }
+  .order-actions { display:grid; grid-template-columns:1fr 1fr; gap:5px; padding-top:11px; border-top:1px solid var(--border); margin-top:4px; }
+  .oa-btn { padding:8px 10px; display:flex; align-items:center; justify-content:center; gap:6px; font-size:11.5px; font-weight:600; font-family:inherit; background:var(--bg-input); border:1px solid var(--border); color:var(--text-3); border-radius:10px; cursor:pointer; transition:all .18s cubic-bezier(.16,1,.3,1); white-space:nowrap; }
   .oa-btn:hover { background:rgba(161,117,252,0.12); border-color:rgba(161,117,252,0.28); color:#C3A3FF; transform:translateY(-1px); box-shadow:0 4px 14px rgba(161,117,252,0.18); }
   .oa-btn:active { transform:translateY(0); }
   .oa-btn.oa-danger:hover { background:rgba(239,68,68,0.09); border-color:rgba(239,68,68,0.28); color:#fca5a5; box-shadow:0 4px 14px rgba(239,68,68,0.14); }
@@ -212,30 +212,30 @@ const CSS = `
 
   /* ── Modal ── */
   .modal-backdrop { position:fixed; inset:0; background:rgba(0,0,0,0.75); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); z-index:500; display:flex; align-items:center; justify-content:center; padding:20px; animation:fadeIn .2s ease; }
-  .modal-box { background:linear-gradient(145deg,rgba(20,10,50,0.98) 0%,rgba(10,5,28,0.98) 100%); border:1px solid rgba(161,117,252,0.2); border-radius:22px; padding:28px 30px; box-shadow:0 48px 120px rgba(0,0,0,0.8),0 0 0 1px rgba(161,117,252,0.08),0 0 120px rgba(161,117,252,0.04); width:100%; max-width:560px; animation:modalIn .24s cubic-bezier(.16,1,.3,1); max-height:88vh; display:flex; flex-direction:column; overflow:hidden; }
+  .modal-box { background:var(--bg-surface); border:1px solid rgba(161,117,252,0.2); border-radius:22px; padding:28px 30px; box-shadow:0 48px 120px rgba(0,0,0,0.8),0 0 0 1px rgba(161,117,252,0.08),0 0 120px rgba(161,117,252,0.04); width:100%; max-width:560px; animation:modalIn .24s cubic-bezier(.16,1,.3,1); max-height:88vh; display:flex; flex-direction:column; overflow:hidden; }
   .modal-body { overflow-y:auto; flex:1; }
   .modal-body::-webkit-scrollbar { width:3px; }
   .modal-body::-webkit-scrollbar-thumb { background:var(--bg-surface-2); border-radius:2px; }
-  .modal-input { width:100%; background:var(--bg-surface-2); border:1px solid var(--border); border-radius:10px; padding:11px 14px; font-size:13.5px; color:#F0ECF9; outline:none; transition:border-color .2s,box-shadow .2s; font-family:inherit; }
+  .modal-input { width:100%; background:var(--bg-surface-2); border:1px solid var(--border); border-radius:10px; padding:11px 14px; font-size:13.5px; color:var(--text-1); outline:none; transition:border-color .2s,box-shadow .2s; font-family:inherit; }
   .modal-input:focus { border-color:var(--accent-border); box-shadow:0 0 0 3px rgba(161,117,252,0.1); }
-  .modal-input::placeholder { color:rgba(240,236,249,0.2); }
-  .modal-select { width:100%; background:var(--bg-surface-2); border:1px solid var(--border); border-radius:10px; padding:11px 14px; font-size:13.5px; color:#F0ECF9; outline:none; font-family:inherit; cursor:pointer; }
+  .modal-input::placeholder { color:var(--text-3); }
+  .modal-select { width:100%; background:var(--bg-surface-2); border:1px solid var(--border); border-radius:10px; padding:11px 14px; font-size:13.5px; color:var(--text-1); outline:none; font-family:inherit; cursor:pointer; }
   .modal-select option { background:#130a2e; }
-  .modal-label { font-size:10.5px; font-weight:700; letter-spacing:.07em; text-transform:uppercase; color:rgba(240,236,249,0.3); margin-bottom:7px; display:block; }
+  .modal-label { font-size:10.5px; font-weight:700; letter-spacing:.07em; text-transform:uppercase; color:var(--text-3); margin-bottom:7px; display:block; }
   .modal-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
   .chk-row { display:flex; align-items:center; gap:9px; cursor:pointer; user-select:none; }
   .chk-box { width:18px; height:18px; border-radius:5px; border:1.5px solid rgba(255,255,255,0.13); background:var(--bg-input); display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:all .15s; }
   .chk-box.chk-on { background:#A175FC; border-color:#A175FC; box-shadow:0 0 14px rgba(161,117,252,0.5); }
-  .li-row { display:flex; align-items:center; gap:12px; padding:11px 0; border-bottom:1px solid rgba(255,255,255,0.05); }
+  .li-row { display:flex; align-items:center; gap:12px; padding:11px 0; border-bottom:1px solid var(--border); }
   .li-row:last-child { border-bottom:none; }
-  .qty-btn { width:28px; height:28px; border-radius:7px; background:var(--bg-surface-2); border:1px solid var(--border); color:rgba(240,236,249,0.65); font-size:15px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all .15s; flex-shrink:0; }
+  .qty-btn { width:28px; height:28px; border-radius:7px; background:var(--bg-surface-2); border:1px solid var(--border); color:var(--text-2); font-size:15px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all .15s; flex-shrink:0; }
   .qty-btn:hover:not(:disabled) { background:rgba(161,117,252,0.18); border-color:rgba(161,117,252,0.35); color:#B48CFF; }
   .qty-btn:disabled { opacity:.28; cursor:not-allowed; }
 
   /* ── Info grid ── */
-  .info-label { font-size:10px; font-weight:700; color:rgba(240,236,249,0.25); letter-spacing:.07em; text-transform:uppercase; }
-  .info-val   { font-size:12.5px; color:rgba(240,236,249,0.75); margin-top:2px; line-height:1.5; }
-  .stat-card  { background:linear-gradient(145deg,rgba(255,255,255,0.055) 0%,rgba(161,117,252,0.018) 100%); border:1px solid var(--border); border-top:1px solid rgba(255,255,255,0.13); border-radius:14px; padding:13px 15px; transition:all .22s cubic-bezier(.16,1,.3,1); box-shadow:0 4px 16px rgba(0,0,0,0.18); }
+  .info-label { font-size:10px; font-weight:700; color:var(--text-3); letter-spacing:.07em; text-transform:uppercase; }
+  .info-val   { font-size:12.5px; color:var(--text-1); margin-top:2px; line-height:1.5; }
+  .stat-card  { background:linear-gradient(145deg,rgba(255,255,255,0.055) 0%,rgba(161,117,252,0.018) 100%); border:1px solid var(--border); border-top:1px solid var(--border); border-radius:14px; padding:13px 15px; transition:all .22s cubic-bezier(.16,1,.3,1); box-shadow:0 4px 16px rgba(0,0,0,0.18); }
   .stat-card:hover { border-color:rgba(161,117,252,0.3); background:linear-gradient(145deg,rgba(255,255,255,0.07) 0%,rgba(161,117,252,0.03) 100%); box-shadow:0 8px 28px rgba(0,0,0,0.28),0 0 0 1px rgba(161,117,252,0.1); transform:translateY(-1px); }
 
   /* ── Tracking ── */
@@ -252,20 +252,20 @@ const CSS = `
   /* ── Rich text toolbar ── */
   .rtbar { display:flex; align-items:center; gap:1px; padding:7px 12px; border-bottom:1px solid rgba(255,255,255,0.048); flex-wrap:nowrap; overflow-x:auto; }
   .rtbar::-webkit-scrollbar { display:none; }
-  .rtbar-btn { min-width:30px; height:30px; display:flex; align-items:center; justify-content:center; border-radius:7px; cursor:pointer; font-size:12px; font-weight:700; font-family:inherit; color:rgba(240,236,249,0.38); transition:all .16s; border:none; background:transparent; padding:0 6px; white-space:nowrap; gap:4px; }
-  .rtbar-btn:hover { background:var(--bg-surface-2); color:rgba(240,236,249,0.9); }
+  .rtbar-btn { min-width:30px; height:30px; display:flex; align-items:center; justify-content:center; border-radius:7px; cursor:pointer; font-size:12px; font-weight:700; font-family:inherit; color:var(--text-3); transition:all .16s; border:none; background:transparent; padding:0 6px; white-space:nowrap; gap:4px; }
+  .rtbar-btn:hover { background:var(--bg-surface-2); color:var(--text-1); }
   .rtbar-btn.rton { background:rgba(161,117,252,0.16); color:#B48CFF; }
   .rtbar-sep { width:1px; height:18px; background:var(--bg-surface-2); margin:0 6px; flex-shrink:0; }
-  .compose-ta[contenteditable=true]:empty:before { content:attr(data-placeholder); color:rgba(240,236,249,0.3); pointer-events:none; display:block; }
-  .cm-input { color:#F0ECF9 !important; -webkit-text-fill-color:#F0ECF9 !important; background:transparent !important; }
-  .cm-input::placeholder { color:rgba(240,236,249,0.28); -webkit-text-fill-color:rgba(240,236,249,0.28); }
+  .compose-ta[contenteditable=true]:empty:before { content:attr(data-placeholder); color:var(--text-3); pointer-events:none; display:block; }
+  .cm-input { color:var(--text-1) !important; -webkit-text-fill-color:var(--text-1) !important; background:transparent !important; }
+  .cm-input::placeholder { color:var(--text-3); -webkit-text-fill-color:var(--text-3); }
   .cm-input:focus { caret-color:#A175FC; outline:none; }
   .cm-input:-webkit-autofill,
   .cm-input:-webkit-autofill:hover,
   .cm-input:-webkit-autofill:focus,
   .cm-input:-webkit-autofill:active {
     -webkit-box-shadow: 0 0 0 1000px rgba(14,6,38,0.98) inset !important;
-    -webkit-text-fill-color: #F0ECF9 !important;
+    -webkit-text-fill-color: var(--text-1) !important;
     caret-color: #A175FC;
     transition: background-color 9999s ease-in-out 0s;
   }
@@ -283,7 +283,7 @@ const CSS = `
   .xlate-bar { display:flex; align-items:center; gap:8px; padding:6px 14px; background:linear-gradient(90deg,rgba(161,117,252,0.1) 0%,rgba(161,117,252,0.04) 100%); border-bottom:1px solid rgba(161,117,252,0.14); font-size:11.5px; color:#B48CFF; }
 
   /* ── Msg translate btn ── */
-  .msg-xlate-btn { font-size:10px; font-weight:600; color:rgba(240,236,249,0.28); background:none; border:none; cursor:pointer; padding:2px 7px; font-family:inherit; transition:all .15s; border-radius:5px; }
+  .msg-xlate-btn { font-size:10px; font-weight:600; color:var(--text-3); background:none; border:none; cursor:pointer; padding:2px 7px; font-family:inherit; transition:all .15s; border-radius:5px; }
   .msg-xlate-btn:hover { color:#A175FC; background:rgba(161,117,252,0.1); }
 
   /* ── Message bubbles — Premium glass design ── */
@@ -296,7 +296,7 @@ const CSS = `
     padding: 15px 18px;
     font-size: 13.5px;
     line-height: 1.82;
-    color: rgba(240,236,249,0.96);
+    color: var(--text-1);
     white-space: pre-wrap;
     word-break: break-word;
     box-shadow: 0 8px 40px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.12), inset 0 -1px 0 rgba(0,0,0,0.15);
@@ -311,7 +311,7 @@ const CSS = `
     padding: 15px 18px;
     font-size: 13.5px;
     line-height: 1.82;
-    color: rgba(240,236,249,0.95);
+    color: var(--text-1);
     white-space: pre-wrap;
     word-break: break-word;
     backdrop-filter: blur(12px);
@@ -327,13 +327,13 @@ const CSS = `
     padding: 15px 18px;
     font-size: 13.5px;
     line-height: 1.82;
-    color: rgba(240,236,249,0.9);
+    color: var(--text-1);
     white-space: pre-wrap;
     word-break: break-word;
     box-shadow: 0 8px 32px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.06);
   }
-  .msg-sender { font-size:10.5px; color:rgba(240,236,249,0.72); font-weight:700; letter-spacing:.01em; }
-  .msg-time   { font-size:10px; color:rgba(240,236,249,0.3); margin-left:7px; font-weight:400; }
+  .msg-sender { font-size:10.5px; color:var(--text-2); font-weight:700; letter-spacing:.01em; }
+  .msg-time   { font-size:10px; color:var(--text-3); margin-left:7px; font-weight:400; }
 
   /* ── Conversation area — aurora shows through ── */
   .conv-area { }
@@ -391,7 +391,7 @@ function Avatar({ name='?', size=32 }) {
 
 function OrderBadge({ status }) {
   if (!status) return null
-  const s=ORDER_STATUS[status?.toLowerCase()]||{bg:'rgba(255,255,255,0.07)',color:'rgba(240,236,249,0.4)',label:status}
+  const s=ORDER_STATUS[status?.toLowerCase()]||{bg:'var(--bg-input)',color:'var(--text-3)',label:status}
   return <span style={{fontSize:10,fontWeight:700,padding:'2px 9px',borderRadius:100,background:s.bg,color:s.color,border:`1px solid ${s.color}22`,letterSpacing:'.01em'}}>{s.label||status}</span>
 }
 
@@ -438,7 +438,7 @@ function Chk({ checked, onChange, label }) {
       <div className={`chk-box${checked?' chk-on':''}`} onClick={onChange}>
         {checked && <span style={{color:'#fff',display:'flex'}}>{I.check}</span>}
       </div>
-      <span style={{fontSize:13,color:'rgba(240,236,249,0.7)'}}>{label}</span>
+      <span style={{fontSize:13,color:'var(--text-2)'}}>{label}</span>
     </label>
   )
 }
@@ -450,8 +450,8 @@ function ModalBase({ title, onClose, children, footer }) {
     <div className="modal-backdrop" onClick={e=>{if(e.target===e.currentTarget)onClose()}}>
       <div className="modal-box">
         <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:20,flexShrink:0}}>
-          <span style={{fontSize:17,fontWeight:700,color:'#F0ECF9',letterSpacing:'-0.01em'}}>{title}</span>
-          <button onClick={onClose} style={{color:'rgba(240,236,249,0.35)',cursor:'pointer',display:'flex',padding:4,borderRadius:6,transition:'color .15s'}} onMouseEnter={e=>e.currentTarget.style.color='rgba(240,236,249,0.7)'} onMouseLeave={e=>e.currentTarget.style.color='rgba(240,236,249,0.35)'}>{I.close}</button>
+          <span style={{fontSize:17,fontWeight:700,color:'var(--text-1)',letterSpacing:'-0.01em'}}>{title}</span>
+          <button onClick={onClose} style={{color:'var(--text-3)',cursor:'pointer',display:'flex',padding:4,borderRadius:6,transition:'color .15s'}} onMouseEnter={e=>e.currentTarget.style.color='var(--text-2)'} onMouseLeave={e=>e.currentTarget.style.color='var(--text-3)'}>{I.close}</button>
         </div>
         <div className="modal-body">{children}</div>
         {footer && <div style={{paddingTop:20,borderTop:'1px solid rgba(255,255,255,0.07)',display:'flex',gap:10,justifyContent:'flex-end',flexShrink:0,marginTop:20}}>{footer}</div>}
@@ -512,9 +512,9 @@ function ComposeModal({ token, emailProvider, connectedEmail, onClose, onSuccess
               </svg>
             </div>
             <div>
-              <div style={{fontSize:16,fontWeight:800,color:'#F0ECF9',letterSpacing:'-0.02em',lineHeight:1.2}}>New message</div>
+              <div style={{fontSize:16,fontWeight:800,color:'var(--text-1)',letterSpacing:'-0.02em',lineHeight:1.2}}>New message</div>
               <div style={{display:'flex',alignItems:'center',gap:6,marginTop:3}}>
-                <span style={{fontSize:10.5,color:'rgba(240,236,249,0.32)'}}>Sending via</span>
+                <span style={{fontSize:10.5,color:'var(--text-3)'}}>Sending via</span>
                 <span style={{display:'inline-flex',alignItems:'center',gap:4,fontSize:10.5,fontWeight:700,padding:'1px 8px',borderRadius:100,background:`${providerColor}18`,color:providerColor,border:`1px solid ${providerColor}35`,letterSpacing:'.01em'}}>
                   <span style={{width:5,height:5,borderRadius:'50%',background:providerColor,flexShrink:0}} />
                   {providerLabel}
@@ -522,7 +522,7 @@ function ComposeModal({ token, emailProvider, connectedEmail, onClose, onSuccess
               </div>
             </div>
           </div>
-          <button onClick={onClose} style={{color:'rgba(240,236,249,0.28)',cursor:'pointer',display:'flex',padding:8,borderRadius:10,transition:'all .18s',border:'1px solid transparent',background:'transparent'}} onMouseEnter={e=>{e.currentTarget.style.color='rgba(240,236,249,0.85)';e.currentTarget.style.background='rgba(255,255,255,0.07)';e.currentTarget.style.borderColor='rgba(255,255,255,0.1)'}} onMouseLeave={e=>{e.currentTarget.style.color='rgba(240,236,249,0.28)';e.currentTarget.style.background='transparent';e.currentTarget.style.borderColor='transparent'}}>
+          <button onClick={onClose} style={{color:'var(--text-3)',cursor:'pointer',display:'flex',padding:8,borderRadius:10,transition:'all .18s',border:'1px solid transparent',background:'transparent'}} onMouseEnter={e=>{e.currentTarget.style.color='var(--text-1)';e.currentTarget.style.background='var(--bg-input)';e.currentTarget.style.borderColor='var(--border)'}} onMouseLeave={e=>{e.currentTarget.style.color='var(--text-3)';e.currentTarget.style.background='transparent';e.currentTarget.style.borderColor='transparent'}}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
           </button>
         </div>
@@ -533,9 +533,9 @@ function ComposeModal({ token, emailProvider, connectedEmail, onClose, onSuccess
           {/* From row */}
           {connectedEmail&&(
             <div style={{display:'flex',alignItems:'center',padding:'13px 20px',borderBottom:'1px solid rgba(255,255,255,0.09)'}}>
-              <span style={{fontSize:10,fontWeight:900,color:'rgba(240,236,249,0.38)',letterSpacing:'.14em',textTransform:'uppercase',width:64,flexShrink:0}}>From</span>
+              <span style={{fontSize:10,fontWeight:900,color:'var(--text-3)',letterSpacing:'.14em',textTransform:'uppercase',width:64,flexShrink:0}}>From</span>
               <div style={{display:'flex',alignItems:'center',gap:8,flex:1,minWidth:0}}>
-                <span style={{fontSize:13.5,color:'rgba(240,236,249,0.55)',fontFamily:'inherit',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{connectedEmail}</span>
+                <span style={{fontSize:13.5,color:'var(--text-2)',fontFamily:'inherit',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{connectedEmail}</span>
                 <span style={{fontSize:8.5,fontWeight:800,padding:'2px 7px',borderRadius:5,background:'rgba(74,222,128,0.12)',color:'#4ade80',border:'1px solid rgba(74,222,128,0.22)',flexShrink:0,letterSpacing:'.06em'}}>VERIFIED</span>
               </div>
             </div>
@@ -543,22 +543,22 @@ function ComposeModal({ token, emailProvider, connectedEmail, onClose, onSuccess
 
           {/* To row */}
           <div style={{display:'flex',alignItems:'center',padding:'14px 20px',borderBottom:'1px solid rgba(255,255,255,0.09)',transition:'background .18s',position:'relative'}} onMouseEnter={e=>e.currentTarget.style.background='rgba(161,117,252,0.04)'} onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
-            <span style={{fontSize:10,fontWeight:900,color:'rgba(240,236,249,0.45)',letterSpacing:'.14em',textTransform:'uppercase',width:64,flexShrink:0}}>To</span>
+            <span style={{fontSize:10,fontWeight:900,color:'var(--text-2)',letterSpacing:'.14em',textTransform:'uppercase',width:64,flexShrink:0}}>To</span>
             <input value={to} onChange={e=>setTo(e.target.value)} placeholder="recipient@email.com" className="cm-input" style={{flex:1,background:'transparent',border:'none',outline:'none',fontSize:14,fontFamily:'inherit',letterSpacing:'.005em'}} />
-            <button onClick={()=>setShowCC(v=>!v)} style={{fontSize:10,fontWeight:800,color:showCC?'#C3A3FF':'rgba(240,236,249,0.35)',background:showCC?'rgba(161,117,252,0.18)':'rgba(255,255,255,0.06)',border:`1px solid ${showCC?'rgba(161,117,252,0.4)':'rgba(255,255,255,0.14)'}`,borderRadius:7,padding:'4px 11px',cursor:'pointer',transition:'all .18s',fontFamily:'inherit',flexShrink:0,letterSpacing:'.06em',textTransform:'uppercase'}} onMouseEnter={e=>{if(!showCC){e.currentTarget.style.color='rgba(240,236,249,0.7)';e.currentTarget.style.borderColor='rgba(255,255,255,0.24)';e.currentTarget.style.background='rgba(255,255,255,0.09)'}}} onMouseLeave={e=>{if(!showCC){e.currentTarget.style.color='rgba(240,236,249,0.35)';e.currentTarget.style.borderColor='rgba(255,255,255,0.14)';e.currentTarget.style.background='rgba(255,255,255,0.06)'}}}>CC</button>
+            <button onClick={()=>setShowCC(v=>!v)} style={{fontSize:10,fontWeight:800,color:showCC?'#C3A3FF':'var(--text-3)',background:showCC?'rgba(161,117,252,0.18)':'var(--bg-input)',border:`1px solid ${showCC?'rgba(161,117,252,0.4)':'var(--bg-surface-2)'}`,borderRadius:7,padding:'4px 11px',cursor:'pointer',transition:'all .18s',fontFamily:'inherit',flexShrink:0,letterSpacing:'.06em',textTransform:'uppercase'}} onMouseEnter={e=>{if(!showCC){e.currentTarget.style.color='var(--text-2)';e.currentTarget.style.borderColor='var(--border)';e.currentTarget.style.background='var(--bg-input)'}}} onMouseLeave={e=>{if(!showCC){e.currentTarget.style.color='var(--text-3)';e.currentTarget.style.borderColor='var(--border)';e.currentTarget.style.background='var(--bg-input)'}}}>CC</button>
           </div>
 
           {/* CC row */}
           {showCC&&(
             <div style={{display:'flex',alignItems:'center',padding:'14px 20px',borderBottom:'1px solid rgba(255,255,255,0.09)',background:'rgba(161,117,252,0.03)'}}>
-              <span style={{fontSize:10,fontWeight:900,color:'rgba(240,236,249,0.45)',letterSpacing:'.14em',textTransform:'uppercase',width:64,flexShrink:0}}>CC</span>
+              <span style={{fontSize:10,fontWeight:900,color:'var(--text-2)',letterSpacing:'.14em',textTransform:'uppercase',width:64,flexShrink:0}}>CC</span>
               <input value={cc} onChange={e=>setCC(e.target.value)} placeholder="cc@email.com" className="cm-input" style={{flex:1,background:'transparent',border:'none',outline:'none',fontSize:14,fontFamily:'inherit'}} />
             </div>
           )}
 
           {/* Subject row */}
           <div style={{display:'flex',alignItems:'center',padding:'14px 20px',transition:'background .18s'}} onMouseEnter={e=>e.currentTarget.style.background='rgba(161,117,252,0.04)'} onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
-            <span style={{fontSize:10,fontWeight:900,color:'rgba(240,236,249,0.45)',letterSpacing:'.14em',textTransform:'uppercase',width:64,flexShrink:0}}>Subject</span>
+            <span style={{fontSize:10,fontWeight:900,color:'var(--text-2)',letterSpacing:'.14em',textTransform:'uppercase',width:64,flexShrink:0}}>Subject</span>
             <input value={subject} onChange={e=>setSubject(e.target.value)} placeholder="What's this about?" onKeyDown={e=>{if(e.key==='Enter'){e.preventDefault();bodyRef.current?.focus()}}} className="cm-input" style={{flex:1,background:'transparent',border:'none',outline:'none',fontSize:14,fontFamily:'inherit',fontWeight:600,letterSpacing:'.005em'}} />
           </div>
         </div>
@@ -577,7 +577,7 @@ function ComposeModal({ token, emailProvider, connectedEmail, onClose, onSuccess
               <button className="rtbar-btn" onMouseDown={e=>e.preventDefault()} onClick={()=>formatDoc('italic')} style={{fontStyle:'italic',borderRadius:7,minWidth:30,fontSize:13}}>I</button>
               <button className="rtbar-btn" onMouseDown={e=>e.preventDefault()} onClick={()=>formatDoc('underline')} style={{textDecoration:'underline',borderRadius:7,minWidth:30,fontSize:13}}>U</button>
             </div>
-            <div style={{width:1,height:16,background:'rgba(255,255,255,0.1)',flexShrink:0}} />
+            <div style={{width:1,height:16,background:'var(--bg-surface-2)',flexShrink:0}} />
             <div style={{display:'inline-flex',alignItems:'center',background:'var(--bg-surface-2)',borderRadius:9,padding:'2px 3px',border:'1px solid var(--border)',gap:1}}>
               <button className="rtbar-btn" onMouseDown={e=>e.preventDefault()} onClick={()=>{const u=prompt('URL:');if(u)formatDoc('createLink',u)}} title="Link" style={{borderRadius:7}}>
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
@@ -597,15 +597,15 @@ function ComposeModal({ token, emailProvider, connectedEmail, onClose, onSuccess
             onInput={e=>setBody(e.currentTarget.textContent)}
             onKeyDown={e=>{if(e.key==='Enter'&&(e.metaKey||e.ctrlKey))handleSend()}}
             className="compose-ta"
-            style={{flex:1,overflowY:'auto',minHeight:160,padding:'18px 22px',fontSize:14,lineHeight:1.9,color:'rgba(240,236,249,0.94)',letterSpacing:'.006em',background:'linear-gradient(180deg,rgba(161,117,252,0.025) 0%,rgba(0,0,0,0) 32%)',position:'relative',zIndex:1}}
+            style={{flex:1,overflowY:'auto',minHeight:160,padding:'18px 22px',fontSize:14,lineHeight:1.9,color:'var(--text-1)',letterSpacing:'.006em',background:'linear-gradient(180deg,rgba(161,117,252,0.025) 0%,rgba(0,0,0,0) 32%)',position:'relative',zIndex:1}}
           />
         </div>
 
         {/* Footer */}
         <div style={{padding:'12px 20px 18px',display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0}}>
           <div style={{display:'flex',alignItems:'center',gap:6}}>
-            <kbd style={{fontSize:10,color:'rgba(240,236,249,0.28)',background:'var(--bg-surface-2)',border:'1px solid rgba(255,255,255,0.13)',borderRadius:6,padding:'2px 8px',fontFamily:'inherit'}}>⌘ Enter</kbd>
-            <span style={{fontSize:10.5,color:'rgba(240,236,249,0.22)'}}>to send</span>
+            <kbd style={{fontSize:10,color:'var(--text-3)',background:'var(--bg-surface-2)',border:'1px solid rgba(255,255,255,0.13)',borderRadius:6,padding:'2px 8px',fontFamily:'inherit'}}>⌘ Enter</kbd>
+            <span style={{fontSize:10.5,color:'var(--text-3)'}}>to send</span>
           </div>
           <div style={{display:'flex',gap:8,alignItems:'center'}}>
             <button className="btn-ghost" onClick={onClose} style={{padding:'9px 18px',fontSize:12.5}}>Discard</button>
@@ -672,7 +672,7 @@ function RefundModal({ order, token, onClose, onSuccess }) {
       {/* 3-way mode toggle */}
       <div style={{display:'flex',gap:5,marginBottom:18,padding:'4px',background:'var(--bg-input)',borderRadius:11,border:'1px solid var(--border)'}}>
         {MODES.map(o=>(
-          <button key={o.v} onClick={()=>setMode(o.v)} style={{flex:1,padding:'8px 10px',borderRadius:8,fontSize:12,fontWeight:600,fontFamily:'inherit',cursor:'pointer',transition:'all .15s',background:mode===o.v?'rgba(161,117,252,0.2)':'transparent',color:mode===o.v?'#C3A3FF':'rgba(240,236,249,0.35)',border:mode===o.v?'1px solid rgba(161,117,252,0.35)':'1px solid transparent',boxShadow:mode===o.v?'0 2px 8px rgba(161,117,252,0.15)':'none'}}>{o.l}</button>
+          <button key={o.v} onClick={()=>setMode(o.v)} style={{flex:1,padding:'8px 10px',borderRadius:8,fontSize:12,fontWeight:600,fontFamily:'inherit',cursor:'pointer',transition:'all .15s',background:mode===o.v?'rgba(161,117,252,0.2)':'transparent',color:mode===o.v?'#C3A3FF':'var(--text-3)',border:mode===o.v?'1px solid rgba(161,117,252,0.35)':'1px solid transparent',boxShadow:mode===o.v?'0 2px 8px rgba(161,117,252,0.15)':'none'}}>{o.l}</button>
         ))}
       </div>
 
@@ -681,12 +681,12 @@ function RefundModal({ order, token, onClose, onSuccess }) {
         <div style={{marginBottom:18}}>
           <label className="modal-label">Refund amount</label>
           <div style={{position:'relative'}}>
-            <span style={{position:'absolute',left:14,top:'50%',transform:'translateY(-50%)',fontSize:14,fontWeight:700,color:'rgba(240,236,249,0.4)',pointerEvents:'none'}}>€</span>
+            <span style={{position:'absolute',left:14,top:'50%',transform:'translateY(-50%)',fontSize:14,fontWeight:700,color:'var(--text-3)',pointerEvents:'none'}}>€</span>
             <input type="number" className="modal-input" style={{paddingLeft:28}} value={customAmount} onChange={e=>setCustomAmount(e.target.value)} placeholder="0.00" min="0" step="0.01" max={order.totalPrice} autoFocus />
           </div>
           {Number(customAmount)>0&&(
-            <div style={{marginTop:8,fontSize:12,color:'rgba(240,236,249,0.4)'}}>
-              Max: <span style={{color:'rgba(240,236,249,0.65)',fontWeight:600}}>{fmtPrice(order.totalPrice,order.currency)}</span>
+            <div style={{marginTop:8,fontSize:12,color:'var(--text-3)'}}>
+              Max: <span style={{color:'var(--text-2)',fontWeight:600}}>{fmtPrice(order.totalPrice,order.currency)}</span>
             </div>
           )}
         </div>
@@ -704,17 +704,17 @@ function RefundModal({ order, token, onClose, onSuccess }) {
           {(order.lineItems||[]).map(li=>(
             <div key={li.id} className="li-row">
               <div style={{flex:1}}>
-                <div style={{fontSize:13,fontWeight:600,color:'#F0ECF9'}}>{li.title}</div>
-                {li.variantTitle&&<div style={{fontSize:11.5,color:'rgba(240,236,249,0.4)'}}>{li.variantTitle}</div>}
+                <div style={{fontSize:13,fontWeight:600,color:'var(--text-1)'}}>{li.title}</div>
+                {li.variantTitle&&<div style={{fontSize:11.5,color:'var(--text-3)'}}>{li.variantTitle}</div>}
               </div>
-              <span style={{fontSize:12.5,color:'rgba(240,236,249,0.6)',minWidth:60,textAlign:'right'}}>{fmtPrice(li.price,order.currency)}</span>
+              <span style={{fontSize:12.5,color:'var(--text-2)',minWidth:60,textAlign:'right'}}>{fmtPrice(li.price,order.currency)}</span>
               <div style={{display:'flex',alignItems:'center',gap:6,minWidth:80,justifyContent:'center'}}>
                 <button className="qty-btn" onClick={()=>setQtys(q=>({...q,[li.id]:Math.max(0,q[li.id]-1)}))} disabled={!qtys[li.id]||mode==='full'}>−</button>
-                <span style={{fontSize:13,fontWeight:600,color:'#F0ECF9',minWidth:20,textAlign:'center'}}>{qtys[li.id]}</span>
+                <span style={{fontSize:13,fontWeight:600,color:'var(--text-1)',minWidth:20,textAlign:'center'}}>{qtys[li.id]}</span>
                 <button className="qty-btn" onClick={()=>setQtys(q=>({...q,[li.id]:Math.min(li.quantity,q[li.id]+1)}))} disabled={qtys[li.id]>=li.quantity||mode==='full'}>+</button>
-                <span style={{fontSize:11,color:'rgba(240,236,249,0.3)'}}>/{li.quantity}</span>
+                <span style={{fontSize:11,color:'var(--text-3)'}}>/{li.quantity}</span>
               </div>
-              <span style={{fontSize:13,fontWeight:700,color:'#F0ECF9',minWidth:60,textAlign:'right'}}>{fmtPrice((qtys[li.id]||0)*Number(li.price),order.currency)}</span>
+              <span style={{fontSize:13,fontWeight:700,color:'var(--text-1)',minWidth:60,textAlign:'right'}}>{fmtPrice((qtys[li.id]||0)*Number(li.price),order.currency)}</span>
             </div>
           ))}
         </div>
@@ -733,8 +733,8 @@ function RefundModal({ order, token, onClose, onSuccess }) {
 
       <div style={{background:'var(--bg-surface-2)',border:'1px solid var(--border)',borderRadius:12,padding:'13px 15px'}}>
         <div style={{display:'flex',justifyContent:'space-between',paddingTop:0}}>
-          <span style={{fontSize:14,fontWeight:700,color:'#F0ECF9'}}>Refund total</span>
-          <span style={{fontSize:15,fontWeight:800,color: totalRefund>0?'#4ade80':'rgba(240,236,249,0.3)'}}>{fmtPrice(totalRefund,order.currency)}</span>
+          <span style={{fontSize:14,fontWeight:700,color:'var(--text-1)'}}>Refund total</span>
+          <span style={{fontSize:15,fontWeight:800,color: totalRefund>0?'#4ade80':'var(--text-3)'}}>{fmtPrice(totalRefund,order.currency)}</span>
         </div>
       </div>
     </ModalBase>
@@ -822,13 +822,13 @@ function DuplicateModal({ order, token, onClose, onSuccess }) {
       <div style={{background:'var(--bg-surface-2)',border:'1px solid var(--border)',borderRadius:10,padding:'10px 14px',marginBottom:14}}>
         {(order.lineItems||[]).map(li=>(
           <div key={li.id} style={{display:'flex',justifyContent:'space-between',padding:'5px 0',borderBottom:'1px solid rgba(255,255,255,0.05)'}}>
-            <span style={{fontSize:12.5,color:'rgba(240,236,249,0.7)'}}>{li.quantity}× {li.title}{li.variantTitle?` · ${li.variantTitle}`:''}</span>
-            <span style={{fontSize:12.5,color:'rgba(240,236,249,0.5)'}}>{fmtPrice(Number(li.price)*li.quantity,order.currency)}</span>
+            <span style={{fontSize:12.5,color:'var(--text-2)'}}>{li.quantity}× {li.title}{li.variantTitle?` · ${li.variantTitle}`:''}</span>
+            <span style={{fontSize:12.5,color:'var(--text-2)'}}>{fmtPrice(Number(li.price)*li.quantity,order.currency)}</span>
           </div>
         ))}
         <div style={{display:'flex',justifyContent:'space-between',paddingTop:8,marginTop:4}}>
-          <span style={{fontSize:12.5,color:'rgba(240,236,249,0.45)'}}>Original</span>
-          <span style={{fontSize:13,fontWeight:700,color:'#F0ECF9'}}>{fmtPrice(originalTotal,order.currency)}</span>
+          <span style={{fontSize:12.5,color:'var(--text-2)'}}>Original</span>
+          <span style={{fontSize:13,fontWeight:700,color:'var(--text-1)'}}>{fmtPrice(originalTotal,order.currency)}</span>
         </div>
       </div>
 
@@ -837,13 +837,13 @@ function DuplicateModal({ order, token, onClose, onSuccess }) {
         <label className="modal-label">Discount</label>
         <div style={{display:'flex',gap:6,marginBottom:discountType!=='none'?10:0}}>
           {[{v:'none',l:'None'},{v:'percentage',l:'Percentage %'},{v:'fixed',l:'Fixed amount'}].map(o=>(
-            <button key={o.v} onClick={()=>{setDiscountType(o.v);setDiscountValue('')}} style={{flex:1,padding:'7px 8px',borderRadius:8,fontSize:11.5,fontWeight:600,fontFamily:'inherit',cursor:'pointer',transition:'all .15s',background:discountType===o.v?'rgba(161,117,252,0.18)':'rgba(255,255,255,0.04)',color:discountType===o.v?'#A175FC':'rgba(240,236,249,0.4)',border:discountType===o.v?'1px solid rgba(161,117,252,0.3)':'1px solid rgba(255,255,255,0.07)'}}>{o.l}</button>
+            <button key={o.v} onClick={()=>{setDiscountType(o.v);setDiscountValue('')}} style={{flex:1,padding:'7px 8px',borderRadius:8,fontSize:11.5,fontWeight:600,fontFamily:'inherit',cursor:'pointer',transition:'all .15s',background:discountType===o.v?'rgba(161,117,252,0.18)':'var(--bg-input)',color:discountType===o.v?'#A175FC':'var(--text-3)',border:discountType===o.v?'1px solid rgba(161,117,252,0.3)':'1px solid rgba(255,255,255,0.07)'}}>{o.l}</button>
           ))}
         </div>
         {discountType!=='none'&&(
           <div style={{display:'flex',alignItems:'center',gap:10}}>
             <input type="number" className="modal-input" style={{flex:1}} value={discountValue} onChange={e=>setDiscountValue(e.target.value)} placeholder={discountType==='percentage'?'e.g. 10':'e.g. 5.00'} min="0" max={discountType==='percentage'?100:undefined} />
-            <span style={{fontSize:12.5,fontWeight:700,color:'rgba(240,236,249,0.5)',flexShrink:0}}>{discountType==='percentage'?'%':'€'}</span>
+            <span style={{fontSize:12.5,fontWeight:700,color:'var(--text-2)',flexShrink:0}}>{discountType==='percentage'?'%':'€'}</span>
           </div>
         )}
       </div>
@@ -852,11 +852,11 @@ function DuplicateModal({ order, token, onClose, onSuccess }) {
       {discountType!=='none'&&Number(discountValue)>0&&(
         <div style={{background:'rgba(161,117,252,0.06)',border:'1px solid rgba(161,117,252,0.15)',borderRadius:10,padding:'10px 14px',marginBottom:14,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
           <div>
-            <div style={{fontSize:11,color:'rgba(240,236,249,0.35)',marginBottom:2}}>Discount</div>
+            <div style={{fontSize:11,color:'var(--text-3)',marginBottom:2}}>Discount</div>
             <div style={{fontSize:12.5,fontWeight:700,color:'#fb7185'}}>− {fmtPrice(discountAmount,order.currency)}</div>
           </div>
           <div style={{textAlign:'right'}}>
-            <div style={{fontSize:11,color:'rgba(240,236,249,0.35)',marginBottom:2}}>New total</div>
+            <div style={{fontSize:11,color:'var(--text-3)',marginBottom:2}}>New total</div>
             <div style={{fontSize:15,fontWeight:800,color:'#4ade80'}}>{fmtPrice(newTotal,order.currency)}</div>
           </div>
         </div>
@@ -1019,11 +1019,11 @@ function MacroPanel({ macros, aiMacros, onInsert, onClose, customerName }) {
   return (
     <div style={{borderTop:'1px solid rgba(255,255,255,0.055)',animation:'fadeUp .18s ease both'}}>
       {/* Search row */}
-      <div style={{display:'flex',alignItems:'center',gap:8,padding:'8px 14px',borderBottom:'1px solid rgba(255,255,255,0.055)',background:'rgba(255,255,255,0.02)'}}>
+      <div style={{display:'flex',alignItems:'center',gap:8,padding:'8px 14px',borderBottom:'1px solid rgba(255,255,255,0.055)',background:'var(--bg-input)'}}>
         <span style={{color:'#A175FC',display:'flex',flexShrink:0}}>{I.lightning}</span>
-        <input ref={searchRef} value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search macros by name, tag or content…" style={{flex:1,background:'transparent',border:'none',outline:'none',fontSize:12.5,color:'rgba(240,236,249,0.7)',fontFamily:'inherit'}} />
+        <input ref={searchRef} value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search macros by name, tag or content…" style={{flex:1,background:'transparent',border:'none',outline:'none',fontSize:12.5,color:'var(--text-2)',fontFamily:'inherit'}} />
         {aiMacros?.length>0 && <span style={{fontSize:10,fontWeight:700,padding:'2px 7px',borderRadius:5,background:'rgba(161,117,252,0.15)',color:'#A175FC',letterSpacing:'.04em',flexShrink:0}}>AI ✦</span>}
-        <button onClick={onClose} style={{color:'rgba(240,236,249,0.3)',cursor:'pointer',display:'flex',padding:3,borderRadius:5,transition:'color .15s'}} onMouseEnter={e=>e.currentTarget.style.color='rgba(240,236,249,0.7)'} onMouseLeave={e=>e.currentTarget.style.color='rgba(240,236,249,0.3)'}>{I.close}</button>
+        <button onClick={onClose} style={{color:'var(--text-3)',cursor:'pointer',display:'flex',padding:3,borderRadius:5,transition:'color .15s'}} onMouseEnter={e=>e.currentTarget.style.color='var(--text-2)'} onMouseLeave={e=>e.currentTarget.style.color='var(--text-3)'}>{I.close}</button>
       </div>
       {/* Two-panel */}
       <div className="macro-panel">
@@ -1034,16 +1034,16 @@ function MacroPanel({ macros, aiMacros, onInsert, onClose, customerName }) {
               <div className="macro-suggest">AI suggestions ✦</div>
               {aiMacros.map(m=>(
                 <div key={m.id} className={`macro-item${active?.id===m.id?' mi-active':''}`} onClick={()=>setSelected(m)} onDoubleClick={()=>applyMacro(m)}>
-                  <div style={{fontSize:12.5,fontWeight:600,color:active?.id===m.id?'#A175FC':'rgba(240,236,249,0.8)',marginBottom:3}}>{m.name}</div>
+                  <div style={{fontSize:12.5,fontWeight:600,color:active?.id===m.id?'#A175FC':'var(--text-1)',marginBottom:3}}>{m.name}</div>
                 </div>
               ))}
               <div style={{height:1,background:'var(--bg-surface-2)',margin:'4px 0'}} />
             </>
           )}
-          {filtered.length===0 && <div style={{padding:'20px 14px',fontSize:12,color:'rgba(240,236,249,0.25)',textAlign:'center'}}>No macros found</div>}
+          {filtered.length===0 && <div style={{padding:'20px 14px',fontSize:12,color:'var(--text-3)',textAlign:'center'}}>No macros found</div>}
           {filtered.map(m=>(
             <div key={m.id} className={`macro-item${active?.id===m.id?' mi-active':''}`} onClick={()=>setSelected(m)} onDoubleClick={()=>applyMacro(m)}>
-              <div style={{fontSize:12.5,fontWeight:600,color:active?.id===m.id?'#A175FC':'rgba(240,236,249,0.8)',marginBottom:3}}>{m.name}</div>
+              <div style={{fontSize:12.5,fontWeight:600,color:active?.id===m.id?'#A175FC':'var(--text-1)',marginBottom:3}}>{m.name}</div>
               <div style={{display:'flex',gap:4,flexWrap:'wrap'}}>
                 {(m.tags||[]).map(t=><span key={t} className="macro-tag">{t}</span>)}
               </div>
@@ -1061,7 +1061,7 @@ function MacroPanel({ macros, aiMacros, onInsert, onClose, customerName }) {
               </div>
             </>
           ) : (
-            <div style={{flex:1,display:'flex',alignItems:'center',justifyContent:'center',color:'rgba(240,236,249,0.2)',fontSize:12.5}}>Select a macro to preview</div>
+            <div style={{flex:1,display:'flex',alignItems:'center',justifyContent:'center',color:'var(--text-3)',fontSize:12.5}}>Select a macro to preview</div>
           )}
         </div>
       </div>
@@ -1414,11 +1414,11 @@ function InboxPage() {
         <div style={{padding:'14px 14px 0',flexShrink:0}}>
           <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:10}}>
             <div style={{display:'flex',alignItems:'center',gap:8}}>
-              <span style={{fontSize:15,fontWeight:700,color:'#F0ECF9',letterSpacing:'-0.01em'}}>Inbox</span>
-              <span title="Shortcuts: j/k navigate · r reply" style={{fontSize:9.5,color:'rgba(240,236,249,0.2)',background:'var(--bg-surface-2)',padding:'2px 6px',borderRadius:4,cursor:'default'}}>j/k/r</span>
+              <span style={{fontSize:15,fontWeight:700,color:'var(--text-1)',letterSpacing:'-0.01em'}}>Inbox</span>
+              <span title="Shortcuts: j/k navigate · r reply" style={{fontSize:9.5,color:'var(--text-3)',background:'var(--bg-surface-2)',padding:'2px 6px',borderRadius:4,cursor:'default'}}>j/k/r</span>
             </div>
             <div style={{display:'flex',alignItems:'center',gap:4}}>
-              <button onClick={()=>loadThreads(session.access_token)} style={{background:'transparent',color:'rgba(240,236,249,0.32)',cursor:'pointer',display:'flex',padding:5,borderRadius:7,transition:'all .15s'}} onMouseEnter={e=>{e.currentTarget.style.color='rgba(240,236,249,0.7)';e.currentTarget.style.background='rgba(255,255,255,0.06)'}} onMouseLeave={e=>{e.currentTarget.style.color='rgba(240,236,249,0.32)';e.currentTarget.style.background='transparent'}} title="Refresh">{I.refresh}</button>
+              <button onClick={()=>loadThreads(session.access_token)} style={{background:'transparent',color:'var(--text-3)',cursor:'pointer',display:'flex',padding:5,borderRadius:7,transition:'all .15s'}} onMouseEnter={e=>{e.currentTarget.style.color='var(--text-2)';e.currentTarget.style.background='var(--bg-input)'}} onMouseLeave={e=>{e.currentTarget.style.color='var(--text-3)';e.currentTarget.style.background='transparent'}} title="Refresh">{I.refresh}</button>
               <button onClick={()=>setModal({type:'compose'})} style={{display:'flex',alignItems:'center',gap:5,padding:'5px 10px',borderRadius:8,background:'linear-gradient(135deg,rgba(161,117,252,0.18) 0%,rgba(123,69,232,0.12) 100%)',border:'1px solid rgba(161,117,252,0.28)',color:'#C3A3FF',cursor:'pointer',fontSize:11.5,fontWeight:700,fontFamily:'inherit',transition:'all .2s',letterSpacing:'.01em'}} onMouseEnter={e=>{e.currentTarget.style.background='linear-gradient(135deg,rgba(161,117,252,0.28) 0%,rgba(123,69,232,0.2) 100%)';e.currentTarget.style.boxShadow='0 4px 16px rgba(161,117,252,0.2)'}} onMouseLeave={e=>{e.currentTarget.style.background='linear-gradient(135deg,rgba(161,117,252,0.18) 0%,rgba(123,69,232,0.12) 100%)';e.currentTarget.style.boxShadow='none'}} title="New ticket">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                 New
@@ -1428,7 +1428,7 @@ function InboxPage() {
 
           {/* Search */}
           <div style={{position:'relative',marginBottom:10}}>
-            <span style={{position:'absolute',left:10,top:'50%',transform:'translateY(-50%)',color:'rgba(240,236,249,0.25)',pointerEvents:'none',display:'flex'}}>{I.search}</span>
+            <span style={{position:'absolute',left:10,top:'50%',transform:'translateY(-50%)',color:'var(--text-3)',pointerEvents:'none',display:'flex'}}>{I.search}</span>
             <input className="isearch" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search threads…" />
           </div>
 
@@ -1437,8 +1437,8 @@ function InboxPage() {
             {VIEWS.map(v=>(
               <button key={v.id} className={`vtab${view===v.id?' on':''}`} onClick={()=>{ setView(v.id); if(v.id==='sent'&&session) loadSentThreads(session.access_token, emailProvider) }}>
                 {v.label}
-                {v.id!=='sent'&&counts[v.id]>0&&<span style={{marginLeft:4,background:view===v.id?'rgba(161,117,252,0.2)':'rgba(255,255,255,0.08)',color:view===v.id?'#A175FC':'rgba(240,236,249,0.3)',fontSize:9,fontWeight:700,padding:'1px 5px',borderRadius:100}}>{counts[v.id]}</span>}
-                {v.id==='sent'&&sentThreads.length>0&&<span style={{marginLeft:4,background:view===v.id?'rgba(161,117,252,0.2)':'rgba(255,255,255,0.08)',color:view===v.id?'#A175FC':'rgba(240,236,249,0.3)',fontSize:9,fontWeight:700,padding:'1px 5px',borderRadius:100}}>{sentThreads.length}</span>}
+                {v.id!=='sent'&&counts[v.id]>0&&<span style={{marginLeft:4,background:view===v.id?'rgba(161,117,252,0.2)':'var(--bg-input)',color:view===v.id?'#A175FC':'var(--text-3)',fontSize:9,fontWeight:700,padding:'1px 5px',borderRadius:100}}>{counts[v.id]}</span>}
+                {v.id==='sent'&&sentThreads.length>0&&<span style={{marginLeft:4,background:view===v.id?'rgba(161,117,252,0.2)':'var(--bg-input)',color:view===v.id?'#A175FC':'var(--text-3)',fontSize:9,fontWeight:700,padding:'1px 5px',borderRadius:100}}>{sentThreads.length}</span>}
               </button>
             ))}
           </div>
@@ -1462,8 +1462,8 @@ function InboxPage() {
               </div>
             </div>
           ))}
-          {view==='sent'&&!loadingSent&&sentThreads.length===0&&<div style={{padding:'40px 20px',textAlign:'center',color:'rgba(240,236,249,0.25)',fontSize:12.5}}>No sent messages</div>}
-          {view!=='sent'&&!loadingThreads&&sortedFiltered.length===0&&gmailOk&&<div style={{padding:'40px 20px',textAlign:'center',color:'rgba(240,236,249,0.25)',fontSize:12.5}}>No threads in this view</div>}
+          {view==='sent'&&!loadingSent&&sentThreads.length===0&&<div style={{padding:'40px 20px',textAlign:'center',color:'var(--text-3)',fontSize:12.5}}>No sent messages</div>}
+          {view!=='sent'&&!loadingThreads&&sortedFiltered.length===0&&gmailOk&&<div style={{padding:'40px 20px',textAlign:'center',color:'var(--text-3)',fontSize:12.5}}>No threads in this view</div>}
           {(view==='sent' ? sentThreads : sortedFiltered).map(thread=>{
             const active=selected?.id===thread.id
             const isSentView = view==='sent'
@@ -1492,26 +1492,26 @@ function InboxPage() {
                       /* Sent view: subject is the primary identifier */
                       <>
                         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:3}}>
-                          <span style={{fontSize:12.5,fontWeight:600,color:'rgba(240,236,249,0.88)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',maxWidth:160,letterSpacing:'-0.01em'}}>{thread.subject||'(no subject)'}</span>
-                          <span style={{fontSize:10,color:'rgba(240,236,249,0.28)',flexShrink:0,marginLeft:4}}>{formatDate(thread.date)}</span>
+                          <span style={{fontSize:12.5,fontWeight:600,color:'var(--text-1)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',maxWidth:160,letterSpacing:'-0.01em'}}>{thread.subject||'(no subject)'}</span>
+                          <span style={{fontSize:10,color:'var(--text-3)',flexShrink:0,marginLeft:4}}>{formatDate(thread.date)}</span>
                         </div>
                         <div style={{display:'flex',alignItems:'center',gap:4,marginBottom:3}}>
                           <span style={{fontSize:9,fontWeight:800,color:'rgba(161,117,252,0.5)',letterSpacing:'.06em',textTransform:'uppercase',flexShrink:0}}>To</span>
-                          <span style={{fontSize:11,color:'rgba(240,236,249,0.38)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{name||extractEmail(thread.to)}</span>
+                          <span style={{fontSize:11,color:'var(--text-3)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{name||extractEmail(thread.to)}</span>
                         </div>
                       </>
                     ) : (
                       /* Inbox view: sender name is the primary identifier */
                       <>
                         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:2}}>
-                          <span style={{fontSize:12.5,fontWeight:thread.unread?700:500,color:thread.unread?'#F0ECF9':'rgba(240,236,249,0.7)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',maxWidth:145}}>{name}</span>
-                          <span style={{fontSize:10,color:'rgba(240,236,249,0.28)',flexShrink:0,marginLeft:4}}>{formatDate(thread.date)}</span>
+                          <span style={{fontSize:12.5,fontWeight:thread.unread?700:500,color:thread.unread?'var(--text-1)':'var(--text-2)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',maxWidth:145}}>{name}</span>
+                          <span style={{fontSize:10,color:'var(--text-3)',flexShrink:0,marginLeft:4}}>{formatDate(thread.date)}</span>
                         </div>
-                        <div style={{fontSize:11.5,color:thread.unread?'rgba(240,236,249,0.7)':'rgba(240,236,249,0.4)',fontWeight:thread.unread?600:400,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',marginBottom:3}}>{thread.subject}</div>
+                        <div style={{fontSize:11.5,color:thread.unread?'var(--text-2)':'var(--text-3)',fontWeight:thread.unread?600:400,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',marginBottom:3}}>{thread.subject}</div>
                       </>
                     )}
-                    {!isSentView&&<div style={{fontSize:10.5,color:'rgba(240,236,249,0.25)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',marginBottom:5}}>{thread.snippet}</div>}
-                    {isSentView&&thread.snippet&&<div style={{fontSize:10.5,color:'rgba(240,236,249,0.22)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',marginBottom:4,fontStyle:'italic'}}>{thread.snippet}</div>}
+                    {!isSentView&&<div style={{fontSize:10.5,color:'var(--text-3)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',marginBottom:5}}>{thread.snippet}</div>}
+                    {isSentView&&thread.snippet&&<div style={{fontSize:10.5,color:'var(--text-3)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',marginBottom:4,fontStyle:'italic'}}>{thread.snippet}</div>}
                     {!isSentView&&<div style={{display:'flex',alignItems:'center',gap:5,flexWrap:'wrap'}}>
                       {analysis&&urg&&urg!=='low'&&(
                         <span className={`urg-pill urg-${urg}`} style={{background:urgUI.bg,color:urgUI.color,border:`1px solid ${urgUI.border}`}}>
@@ -1520,7 +1520,7 @@ function InboxPage() {
                         </span>
                       )}
                       {analysis&&urg==='low'&&(
-                        <span style={{fontSize:9.5,color:'rgba(240,236,249,0.28)',fontWeight:600}}>{analysis.intent}</span>
+                        <span style={{fontSize:9.5,color:'var(--text-3)',fontWeight:600}}>{analysis.intent}</span>
                       )}
                       <TicketBadge status={status} />
                     </div>}
@@ -1538,10 +1538,10 @@ function InboxPage() {
       {/* ═══════════════ CENTER: Conversation ═══════════════ */}
       <div style={{flex:1,display:'flex',flexDirection:'column',overflow:'hidden',minWidth:0,position:'relative',zIndex:1}}>
         {!selected?(
-          <div style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:12,color:'rgba(240,236,249,0.15)'}}>
+          <div style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:12,color:'var(--text-3)'}}>
             <div style={{opacity:.4}}>{I.mail}</div>
             <div style={{fontSize:13}}>Select a thread to read</div>
-            <div style={{fontSize:11,color:'rgba(240,236,249,0.1)'}}>j / k navigate · r reply</div>
+            <div style={{fontSize:11,color:'var(--text-3)'}}>j / k navigate · r reply</div>
           </div>
         ):(
           <>
@@ -1549,13 +1549,13 @@ function InboxPage() {
             <div style={{padding:'14px 22px',borderBottom:'1px solid rgba(255,255,255,0.08)',flexShrink:0,background:'rgba(8,3,22,0.58)',backdropFilter:'blur(20px)',WebkitBackdropFilter:'blur(20px)'}}>
               <div style={{display:'flex',alignItems:'center',gap:14}}>
                 <div style={{flex:1,minWidth:0}}>
-                  <div style={{fontSize:14,fontWeight:700,color:'#F0ECF9',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',marginBottom:2,letterSpacing:'-0.01em'}}>{selected.subject}</div>
-                  <div style={{fontSize:11.5,color:'rgba(240,236,249,0.38)'}}>{extractName(selected.from)} · {messages.length} message{messages.length!==1?'s':''}</div>
+                  <div style={{fontSize:14,fontWeight:700,color:'var(--text-1)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',marginBottom:2,letterSpacing:'-0.01em'}}>{selected.subject}</div>
+                  <div style={{fontSize:11.5,color:'var(--text-3)'}}>{extractName(selected.from)} · {messages.length} message{messages.length!==1?'s':''}</div>
                 </div>
                 <div style={{display:'flex',gap:6,alignItems:'center',flexShrink:0}}>
                   {/* Status dropdown */}
                   <div style={{position:'relative'}}>
-                    <button onClick={()=>setStatusMenu(s=>!s)} style={{display:'flex',alignItems:'center',gap:6,padding:'6px 12px',background:'rgba(255,255,255,0.055)',border:'1px solid var(--border)',borderRadius:8,cursor:'pointer',fontSize:12,fontWeight:600,color:'rgba(240,236,249,0.75)',fontFamily:'inherit',transition:'all .15s'}} onMouseEnter={e=>e.currentTarget.style.borderColor='rgba(255,255,255,0.2)'} onMouseLeave={e=>e.currentTarget.style.borderColor='rgba(255,255,255,0.1)'}>
+                    <button onClick={()=>setStatusMenu(s=>!s)} style={{display:'flex',alignItems:'center',gap:6,padding:'6px 12px',background:'var(--bg-input)',border:'1px solid var(--border)',borderRadius:8,cursor:'pointer',fontSize:12,fontWeight:600,color:'var(--text-1)',fontFamily:'inherit',transition:'all .15s'}} onMouseEnter={e=>e.currentTarget.style.borderColor='var(--border)'} onMouseLeave={e=>e.currentTarget.style.borderColor='var(--border)'}>
                       <span style={{width:7,height:7,borderRadius:'50%',background:STATUS[getStatus(selected.id)]?.color,flexShrink:0}} />
                       {STATUS[getStatus(selected.id)]?.label}
                       {I.chevron}
@@ -1595,7 +1595,7 @@ function InboxPage() {
                       {!isAgent&&!isNote&&(
                         <div style={{textAlign:'left',marginTop:4}}>
                           {msgTranslations[msg.id]==='__loading__'
-                            ? <span style={{fontSize:10,color:'rgba(240,236,249,0.25)'}}>Translating…</span>
+                            ? <span style={{fontSize:10,color:'var(--text-3)'}}>Translating…</span>
                             : msgTranslations[msg.id]
                               ? <button className="msg-xlate-btn" onClick={()=>setMsgTranslations(p=>({...p,[msg.id]:undefined}))}>Show original</button>
                               : <button className="msg-xlate-btn" onClick={()=>translateMessage(msg.id, msg.body||msg.snippet||'')}>Translate</button>
@@ -1636,7 +1636,7 @@ function InboxPage() {
                       ))}
                     </div>
                     {/* Macro trigger button */}
-                    <button onClick={()=>setShowMacros(true)} title="Macros (⌘M)" style={{display:'flex',alignItems:'center',gap:5,padding:'5px 10px',background:'transparent',border:'1px solid var(--border)',borderRadius:7,cursor:'pointer',fontSize:11,fontWeight:600,color:'rgba(240,236,249,0.4)',transition:'all .15s',fontFamily:'inherit'}} onMouseEnter={e=>{e.currentTarget.style.borderColor='rgba(161,117,252,0.3)';e.currentTarget.style.color='#A175FC';e.currentTarget.style.background='rgba(161,117,252,0.08)'}} onMouseLeave={e=>{e.currentTarget.style.borderColor='rgba(255,255,255,0.08)';e.currentTarget.style.color='rgba(240,236,249,0.4)';e.currentTarget.style.background='transparent'}}>
+                    <button onClick={()=>setShowMacros(true)} title="Macros (⌘M)" style={{display:'flex',alignItems:'center',gap:5,padding:'5px 10px',background:'transparent',border:'1px solid var(--border)',borderRadius:7,cursor:'pointer',fontSize:11,fontWeight:600,color:'var(--text-3)',transition:'all .15s',fontFamily:'inherit'}} onMouseEnter={e=>{e.currentTarget.style.borderColor='rgba(161,117,252,0.3)';e.currentTarget.style.color='#A175FC';e.currentTarget.style.background='rgba(161,117,252,0.08)'}} onMouseLeave={e=>{e.currentTarget.style.borderColor='var(--border)';e.currentTarget.style.color='var(--text-3)';e.currentTarget.style.background='transparent'}}>
                       <span style={{display:'flex'}}>{I.lightning}</span>
                       Macros
                       {aiMacros.length>0&&<span style={{background:'rgba(161,117,252,0.2)',color:'#A175FC',fontSize:9,fontWeight:700,padding:'1px 5px',borderRadius:4}}>AI</span>}
@@ -1697,7 +1697,7 @@ function InboxPage() {
                         {attachments.map((a,i)=>(
                           <span key={i} className="attach-chip">
                             {I.paperclip} {a.name}
-                            <button onClick={()=>setAttachments(p=>p.filter((_,j)=>j!==i))} style={{background:'none',border:'none',cursor:'pointer',color:'rgba(240,236,249,0.4)',display:'flex',padding:0,marginLeft:2}}>{I.xsmall}</button>
+                            <button onClick={()=>setAttachments(p=>p.filter((_,j)=>j!==i))} style={{background:'none',border:'none',cursor:'pointer',color:'var(--text-3)',display:'flex',padding:0,marginLeft:2}}>{I.xsmall}</button>
                           </span>
                         ))}
                       </div>
@@ -1712,7 +1712,7 @@ function InboxPage() {
                       onInput={e=>setReply(e.currentTarget.textContent)}
                       onKeyDown={e=>{if(e.key==='Enter'&&(e.metaKey||e.ctrlKey))handleSend()}}
                       className="compose-ta"
-                      style={{minHeight:96,background:composerTab==='note'?'rgba(251,191,36,0.035)':'transparent',borderBottom:`1px solid ${composerTab==='note'?'rgba(251,191,36,0.15)':'rgba(255,255,255,0.05)'}`}}
+                      style={{minHeight:96,background:composerTab==='note'?'rgba(251,191,36,0.035)':'transparent',borderBottom:`1px solid ${composerTab==='note'?'rgba(251,191,36,0.15)':'var(--bg-input)'}`}}
                     />
 
                     <div style={{padding:'10px 14px 12px',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
@@ -1748,17 +1748,17 @@ function InboxPage() {
             <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:12}}>
               <Avatar name={customer?.customer?`${customer.customer.firstName||''} ${customer.customer.lastName||''}`.trim()||extractName(selected.from):extractName(selected.from)} size={38} />
               <div style={{minWidth:0}}>
-                <div style={{fontSize:13.5,fontWeight:700,color:'#F0ECF9',marginBottom:2,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
+                <div style={{fontSize:13.5,fontWeight:700,color:'var(--text-1)',marginBottom:2,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
                   {customer?.customer?`${customer.customer.firstName||''} ${customer.customer.lastName||''}`.trim()||extractName(selected.from):extractName(selected.from)}
                 </div>
-                <div style={{fontSize:11,color:'rgba(240,236,249,0.35)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{extractEmail(selected.from)}</div>
+                <div style={{fontSize:11,color:'var(--text-3)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{extractEmail(selected.from)}</div>
               </div>
             </div>
 
             {/* Tabs */}
             <div style={{display:'flex',gap:4}}>
               {[{id:'info',label:'Customer'},{id:'shopify',label:'Orders'}].map(t=>(
-                <button key={t.id} onClick={()=>setRightTab(t.id)} style={{flex:1,padding:'6px 8px',borderRadius:8,fontSize:11.5,fontWeight:500,display:'flex',alignItems:'center',justifyContent:'center',gap:5,background:rightTab===t.id?'rgba(161,117,252,0.14)':'rgba(255,255,255,0.04)',color:rightTab===t.id?'#A175FC':'rgba(240,236,249,0.38)',border:rightTab===t.id?'1px solid rgba(161,117,252,0.25)':'1px solid transparent',cursor:'pointer',fontFamily:'inherit',transition:'all .15s'}}>
+                <button key={t.id} onClick={()=>setRightTab(t.id)} style={{flex:1,padding:'6px 8px',borderRadius:8,fontSize:11.5,fontWeight:500,display:'flex',alignItems:'center',justifyContent:'center',gap:5,background:rightTab===t.id?'rgba(161,117,252,0.14)':'var(--bg-input)',color:rightTab===t.id?'#A175FC':'var(--text-3)',border:rightTab===t.id?'1px solid rgba(161,117,252,0.25)':'1px solid transparent',cursor:'pointer',fontFamily:'inherit',transition:'all .15s'}}>
                   {t.label}
                   {t.id==='shopify'&&(customer?.orders||[]).length>0&&<span style={{background:'rgba(161,117,252,0.2)',color:'#A175FC',fontSize:9,fontWeight:700,padding:'1px 5px',borderRadius:4}}>{customer.orders.length}</span>}
                 </button>
@@ -1776,7 +1776,7 @@ function InboxPage() {
                   {customer.customer.phone&&<div><div className="info-label">Phone</div><div className="info-val">{customer.customer.phone}</div></div>}
                   {(customer.customer.city||customer.customer.country)&&<div><div className="info-label">Location</div><div className="info-val">{[customer.customer.city,customer.customer.country].filter(Boolean).join(', ')}</div></div>}
                   <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginTop:4}}>
-                    <div className="stat-card"><div style={{fontSize:20,fontWeight:800,color:'#F0ECF9',marginBottom:2}}>{customer.customer.ordersCount??'—'}</div><div className="info-label">Orders</div></div>
+                    <div className="stat-card"><div style={{fontSize:20,fontWeight:800,color:'var(--text-1)',marginBottom:2}}>{customer.customer.ordersCount??'—'}</div><div className="info-label">Orders</div></div>
                     <div className="stat-card"><div style={{fontSize:16,fontWeight:800,color:'#4ade80',marginBottom:2}}>{fmtPrice(customer.customer.totalSpent,customer.customer.currency)}</div><div className="info-label">Spent</div></div>
                   </div>
                   {customer.customer.note&&<div><div className="info-label">Note</div><div className="info-val" style={{fontSize:12,fontStyle:'italic'}}>{customer.customer.note}</div></div>}
@@ -1789,7 +1789,7 @@ function InboxPage() {
                   {customer.customer.createdAt&&<div><div className="info-label">Customer since</div><div className="info-val">{new Date(customer.customer.createdAt).toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'})}</div></div>}
                 </>
               )}
-              {!customer?.customer&&!loadingCust&&<div style={{padding:'16px 0',textAlign:'center',fontSize:12,color:'rgba(240,236,249,0.25)'}}>No Shopify customer found</div>}
+              {!customer?.customer&&!loadingCust&&<div style={{padding:'16px 0',textAlign:'center',fontSize:12,color:'var(--text-3)'}}>No Shopify customer found</div>}
             </div>
           )}
 
@@ -1797,8 +1797,8 @@ function InboxPage() {
           {rightTab==='shopify'&&(
             <div style={{padding:'12px'}}>
               {loadingCust&&[0,1].map(i=><div key={i} className="skel" style={{height:120,borderRadius:14,marginBottom:10}} />)}
-              {!loadingCust&&!customer?.customer&&<div style={{padding:'24px 0',textAlign:'center',fontSize:12,color:'rgba(240,236,249,0.25)'}}>No Shopify data found</div>}
-              {!loadingCust&&customer?.customer&&(customer.orders||[]).length===0&&<div style={{padding:'24px 0',textAlign:'center',fontSize:12,color:'rgba(240,236,249,0.25)'}}>No orders</div>}
+              {!loadingCust&&!customer?.customer&&<div style={{padding:'24px 0',textAlign:'center',fontSize:12,color:'var(--text-3)'}}>No Shopify data found</div>}
+              {!loadingCust&&customer?.customer&&(customer.orders||[]).length===0&&<div style={{padding:'24px 0',textAlign:'center',fontSize:12,color:'var(--text-3)'}}>No orders</div>}
               {(customer?.orders||[]).map((order,oi)=>{
                 const isCancelled = order.financialStatus==='cancelled'||order.financialStatus==='voided'
                 const isRefunded  = order.financialStatus==='refunded'
@@ -1812,10 +1812,10 @@ function InboxPage() {
                   <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:9,paddingLeft:8}}>
                     <div>
                       <span style={{fontSize:14,fontWeight:800,color:'#B990FF',letterSpacing:'-0.02em'}}>{order.name}</span>
-                      <div style={{fontSize:10,color:'rgba(240,236,249,0.28)',marginTop:1}}>{new Date(order.createdAt).toLocaleDateString('en-US',{day:'numeric',month:'short',year:'numeric'})}</div>
+                      <div style={{fontSize:10,color:'var(--text-3)',marginTop:1}}>{new Date(order.createdAt).toLocaleDateString('en-US',{day:'numeric',month:'short',year:'numeric'})}</div>
                     </div>
                     <div style={{textAlign:'right'}}>
-                      <div style={{fontSize:15,fontWeight:800,color:'#F0ECF9',letterSpacing:'-0.02em'}}>{fmtPrice(order.totalPrice,order.currency)}</div>
+                      <div style={{fontSize:15,fontWeight:800,color:'var(--text-1)',letterSpacing:'-0.02em'}}>{fmtPrice(order.totalPrice,order.currency)}</div>
                     </div>
                   </div>
 
@@ -1829,12 +1829,12 @@ function InboxPage() {
                   {/* Line items */}
                   <div style={{marginBottom:10,paddingLeft:8}}>
                     {(order.lineItems||[]).slice(0,2).map(item=>(
-                      <div key={item.id} style={{display:'flex',justifyContent:'space-between',fontSize:11.5,color:'rgba(240,236,249,0.48)',marginBottom:3}}>
+                      <div key={item.id} style={{display:'flex',justifyContent:'space-between',fontSize:11.5,color:'var(--text-2)',marginBottom:3}}>
                         <span style={{overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',maxWidth:155}}>{item.quantity}× {item.title}{item.variantTitle?` · ${item.variantTitle}`:''}</span>
-                        <span style={{flexShrink:0,marginLeft:8,color:'rgba(240,236,249,0.35)'}}>{fmtPrice(Number(item.price)*item.quantity,order.currency)}</span>
+                        <span style={{flexShrink:0,marginLeft:8,color:'var(--text-3)'}}>{fmtPrice(Number(item.price)*item.quantity,order.currency)}</span>
                       </div>
                     ))}
-                    {(order.lineItems||[]).length>2&&<div style={{fontSize:10.5,color:'rgba(240,236,249,0.25)',marginTop:2}}>+{order.lineItems.length-2} more item{order.lineItems.length-2!==1?'s':''}</div>}
+                    {(order.lineItems||[]).length>2&&<div style={{fontSize:10.5,color:'var(--text-3)',marginTop:2}}>+{order.lineItems.length-2} more item{order.lineItems.length-2!==1?'s':''}</div>}
                   </div>
 
                   {/* Tracking */}
@@ -1844,10 +1844,10 @@ function InboxPage() {
                         <div key={i}>
                           <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:f.trackingNumber?3:0}}>
                             <span style={{display:'flex',color:'rgba(74,222,128,0.6)'}}>{I.truck}</span>
-                            <span style={{fontSize:11,fontWeight:700,color:'rgba(240,236,249,0.6)'}}>{f.trackingCompany||'Carrier'}</span>
+                            <span style={{fontSize:11,fontWeight:700,color:'var(--text-2)'}}>{f.trackingCompany||'Carrier'}</span>
                             <span style={{fontSize:9.5,fontWeight:700,padding:'1px 6px',borderRadius:4,background:'rgba(74,222,128,0.14)',color:'#4ade80',textTransform:'capitalize',marginLeft:'auto'}}>Delivered</span>
                           </div>
-                          {f.trackingNumber&&<div style={{fontSize:10,color:'rgba(240,236,249,0.3)',fontFamily:'monospace'}}>{f.trackingNumber}</div>}
+                          {f.trackingNumber&&<div style={{fontSize:10,color:'var(--text-3)',fontFamily:'monospace'}}>{f.trackingNumber}</div>}
                           {f.trackingUrl&&<a href={f.trackingUrl} target="_blank" rel="noreferrer" style={{fontSize:10.5,color:'#A175FC',textDecoration:'none',display:'inline-flex',alignItems:'center',gap:3,marginTop:2}}>Track package <span style={{display:'flex'}}>{I.externalLink}</span></a>}
                         </div>
                       ))}
@@ -1856,17 +1856,17 @@ function InboxPage() {
 
                   {/* Shipping address */}
                   {order.shippingAddress&&(
-                    <div style={{marginBottom:9,marginLeft:8,padding:'7px 10px',background:'rgba(255,255,255,0.025)',borderRadius:9,border:'1px solid rgba(255,255,255,0.055)'}}>
+                    <div style={{marginBottom:9,marginLeft:8,padding:'7px 10px',background:'var(--bg-input)',borderRadius:9,border:'1px solid rgba(255,255,255,0.055)'}}>
                       <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:3}}>
-                        <div style={{display:'flex',alignItems:'center',gap:4,color:'rgba(240,236,249,0.3)'}}>
+                        <div style={{display:'flex',alignItems:'center',gap:4,color:'var(--text-3)'}}>
                           <span style={{display:'flex'}}>{I.mappin}</span>
                           <span style={{fontSize:9.5,fontWeight:700,letterSpacing:'.07em',textTransform:'uppercase'}}>Shipping address</span>
                         </div>
-                        <button onClick={()=>setModal({type:'address',order})} style={{display:'flex',alignItems:'center',gap:3,color:'rgba(240,236,249,0.3)',cursor:'pointer',fontSize:10,fontWeight:600,padding:'2px 6px',borderRadius:5,border:'1px solid var(--border)',background:'transparent',transition:'all .15s'}} onMouseEnter={e=>{e.currentTarget.style.color='#A175FC';e.currentTarget.style.borderColor='rgba(161,117,252,0.3)'}} onMouseLeave={e=>{e.currentTarget.style.color='rgba(240,236,249,0.3)';e.currentTarget.style.borderColor='rgba(255,255,255,0.07)'}}>
+                        <button onClick={()=>setModal({type:'address',order})} style={{display:'flex',alignItems:'center',gap:3,color:'var(--text-3)',cursor:'pointer',fontSize:10,fontWeight:600,padding:'2px 6px',borderRadius:5,border:'1px solid var(--border)',background:'transparent',transition:'all .15s'}} onMouseEnter={e=>{e.currentTarget.style.color='#A175FC';e.currentTarget.style.borderColor='rgba(161,117,252,0.3)'}} onMouseLeave={e=>{e.currentTarget.style.color='var(--text-3)';e.currentTarget.style.borderColor='var(--border)'}}>
                           <span style={{display:'flex'}}>{I.edit}</span> Edit
                         </button>
                       </div>
-                      <div style={{fontSize:11,color:'rgba(240,236,249,0.45)',lineHeight:1.55}}>
+                      <div style={{fontSize:11,color:'var(--text-2)',lineHeight:1.55}}>
                         {[order.shippingAddress.firstName,order.shippingAddress.lastName].filter(Boolean).join(' ')}<br/>
                         {order.shippingAddress.address1}{order.shippingAddress.address2?`, ${order.shippingAddress.address2}`:''}<br/>
                         {[order.shippingAddress.city,order.shippingAddress.zip].filter(Boolean).join(' ')}{order.shippingAddress.country?`, ${order.shippingAddress.country}`:''}

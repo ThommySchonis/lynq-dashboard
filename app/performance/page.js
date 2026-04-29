@@ -103,7 +103,7 @@ function useCountUp(target, active) {
 }
 
 function Spinner({ size=18 }) {
-  return <div style={{ width:size, height:size, border:`2px solid rgba(255,255,255,0.1)`, borderTop:`2px solid #A175FC`, borderRadius:'50%', animation:'spin .7s linear infinite', flexShrink:0 }}/>
+  return <div style={{ width:size, height:size, border:`2px solid var(--border)`, borderTop:`2px solid #A175FC`, borderRadius:'50%', animation:'spin .7s linear infinite', flexShrink:0 }}/>
 }
 
 // ─── Date ranges ──────────────────────────────────────────────────────────────
@@ -139,7 +139,7 @@ function SectionDivider({ title, marginTop=8 }) {
   return (
     <div style={{ display:'flex', alignItems:'center', gap:14, marginBottom:18, marginTop, animation:'fadeIn .3s ease-out both' }}>
       <div style={{ height:1, flex:1, background:'var(--bg-surface-2)' }}/>
-      <span style={{ fontSize:10.5, fontWeight:700, letterSpacing:'.13em', color:'rgba(248,250,252,0.28)', textTransform:'uppercase', flexShrink:0 }}>{title}</span>
+      <span style={{ fontSize:10.5, fontWeight:700, letterSpacing:'.13em', color:'var(--text-3)', textTransform:'uppercase', flexShrink:0 }}>{title}</span>
       <div style={{ height:1, flex:1, background:'var(--bg-surface-2)' }}/>
     </div>
   )
@@ -186,8 +186,8 @@ function WorkloadKPIs({ data, loaded }) {
             {c.badge&&<span style={{ fontSize:10, fontWeight:800, color:c.badge.color, background:`${c.badge.color}14`, border:`1px solid ${c.badge.color}28`, borderRadius:6, padding:'2px 8px', letterSpacing:'.03em', fontVariantNumeric:'tabular-nums' }}>{c.badge.value}</span>}
           </div>
           <div style={{ fontSize:27, fontWeight:800, letterSpacing:'-0.04em', color:c.accent, lineHeight:1, marginBottom:5, fontVariantNumeric:'tabular-nums', position:'relative', zIndex:1 }}>{c.value}</div>
-          <div style={{ fontSize:9.5, fontWeight:700, letterSpacing:'.1em', color:'rgba(248,250,252,0.32)', textTransform:'uppercase', marginBottom:4, position:'relative', zIndex:1 }}>{c.label}</div>
-          <div style={{ fontSize:11, color:'rgba(248,250,252,0.25)', lineHeight:1.4, position:'relative', zIndex:1 }}>{c.sub}</div>
+          <div style={{ fontSize:9.5, fontWeight:700, letterSpacing:'.1em', color:'var(--text-3)', textTransform:'uppercase', marginBottom:4, position:'relative', zIndex:1 }}>{c.label}</div>
+          <div style={{ fontSize:11, color:'var(--text-3)', lineHeight:1.4, position:'relative', zIndex:1 }}>{c.sub}</div>
         </div>
       ))}
     </div>
@@ -216,11 +216,11 @@ function WeeklyChart({ weekly, loaded }) {
       <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:18 }}>
         <div>
           <div style={{ fontSize:13, fontWeight:600, color:'var(--text-1)', marginBottom:3 }}>Weekly ticket volume</div>
-          <div style={{ fontSize:11, color:'rgba(248,250,252,0.32)' }}>Created vs closed per week</div>
+          <div style={{ fontSize:11, color:'var(--text-3)' }}>Created vs closed per week</div>
         </div>
         <div style={{ display:'flex', gap:18 }}>
           {[['#A175FC','Created'],['#4ade80','Closed']].map(([color,label])=>(
-            <span key={label} style={{ display:'flex', alignItems:'center', gap:6, fontSize:11, color:'rgba(248,250,252,0.4)' }}>
+            <span key={label} style={{ display:'flex', alignItems:'center', gap:6, fontSize:11, color:'var(--text-3)' }}>
               <span style={{ width:10, height:10, borderRadius:3, background:color, display:'inline-block', opacity:.75 }}/>{label}
             </span>
           ))}
@@ -228,7 +228,7 @@ function WeeklyChart({ weekly, loaded }) {
       </div>
       <div style={{ overflowX:'auto' }}>
         <svg width={totalW} height={PAD_TOP+BAR_H+PAD_BOT} style={{ display:'block', minWidth:'100%', overflow:'visible' }}>
-          {[.25,.5,.75,1].map(p=>{const y=PAD_TOP+BAR_H-p*BAR_H; return <line key={p} x1={0} y1={y} x2={totalW} y2={y} stroke={p===1?'rgba(255,255,255,0.1)':'rgba(255,255,255,0.05)'} strokeWidth={1} strokeDasharray={p===1?'0':'3 4'}/>})}
+          {[.25,.5,.75,1].map(p=>{const y=PAD_TOP+BAR_H-p*BAR_H; return <line key={p} x1={0} y1={y} x2={totalW} y2={y} stroke={p===1?'var(--bg-surface-2)':'var(--bg-input)'} strokeWidth={1} strokeDasharray={p===1?'0':'3 4'}/>})}
           {weekly.map((w,i)=>{
             const x=i*colW+9, isHov=hovIdx===i
             return (
@@ -274,7 +274,7 @@ function ResponseTimesSection({ data, loaded }) {
         return (
           <div key={c.label} className="kpi-card" style={{ padding:'22px 24px' }}>
             <div className="top-bar" style={{ background:c.status.grad }}/>
-            <div style={{ position:'absolute', inset:0, background:`radial-gradient(circle at 100% 0%,${noData?'rgba(255,255,255,0.02)':c.status.color+'08'} 0%,transparent 55%)`, borderRadius:12, pointerEvents:'none' }}/>
+            <div style={{ position:'absolute', inset:0, background:`radial-gradient(circle at 100% 0%,${noData?'var(--bg-input)':c.status.color+'08'} 0%,transparent 55%)`, borderRadius:12, pointerEvents:'none' }}/>
             {noData ? (
               <div style={{ display:'flex', alignItems:'center', gap:20, position:'relative', zIndex:1 }}>
                 <div style={{ flexShrink:0, position:'relative' }}>
@@ -282,13 +282,13 @@ function ResponseTimesSection({ data, loaded }) {
                     <circle cx="32" cy="32" r="27" fill="none" stroke="rgba(255,255,255,0.07)" strokeWidth="1.5" strokeDasharray="5 4"/>
                     <circle cx="32" cy="32" r="18" fill="rgba(255,255,255,0.04)"/>
                   </svg>
-                  <div style={{ position:'absolute', inset:0, display:'flex', alignItems:'center', justifyContent:'center', color:'rgba(248,250,252,0.22)' }}>{c.icon}</div>
+                  <div style={{ position:'absolute', inset:0, display:'flex', alignItems:'center', justifyContent:'center', color:'var(--text-3)' }}>{c.icon}</div>
                 </div>
                 <div>
-                  <div style={{ fontSize:9.5, fontWeight:700, letterSpacing:'.1em', color:'rgba(248,250,252,0.28)', textTransform:'uppercase', marginBottom:7 }}>{c.label}</div>
-                  <div style={{ fontSize:14, fontWeight:700, color:'rgba(248,250,252,0.25)', marginBottom:5 }}>No data yet</div>
-                  <div style={{ fontSize:11, color:'rgba(248,250,252,0.18)', lineHeight:1.5, marginBottom:10 }}>{c.sub}</div>
-                  <span style={{ display:'inline-flex', alignItems:'center', gap:5, fontSize:10.5, color:'rgba(248,250,252,0.22)', background:'var(--bg-surface-2)', border:'1px solid var(--border)', borderRadius:6, padding:'2px 9px' }}>
+                  <div style={{ fontSize:9.5, fontWeight:700, letterSpacing:'.1em', color:'var(--text-3)', textTransform:'uppercase', marginBottom:7 }}>{c.label}</div>
+                  <div style={{ fontSize:14, fontWeight:700, color:'var(--text-3)', marginBottom:5 }}>No data yet</div>
+                  <div style={{ fontSize:11, color:'var(--text-3)', lineHeight:1.5, marginBottom:10 }}>{c.sub}</div>
+                  <span style={{ display:'inline-flex', alignItems:'center', gap:5, fontSize:10.5, color:'var(--text-3)', background:'var(--bg-surface-2)', border:'1px solid var(--border)', borderRadius:6, padding:'2px 9px' }}>
                     <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                     {c.benchmark}
                   </span>
@@ -301,10 +301,10 @@ function ResponseTimesSection({ data, loaded }) {
                   <span style={{ fontSize:10, fontWeight:800, color:c.status.color, background:`${c.status.color}14`, border:`1px solid ${c.status.color}28`, borderRadius:6, padding:'2px 9px', letterSpacing:'.04em' }}>{c.status.label}</span>
                 </div>
                 <div style={{ fontSize:38, fontWeight:800, letterSpacing:'-0.04em', color:c.status.color, lineHeight:1, marginBottom:7, fontVariantNumeric:'tabular-nums' }}>{c.value}</div>
-                <div style={{ fontSize:9.5, fontWeight:700, letterSpacing:'.1em', color:'rgba(248,250,252,0.32)', textTransform:'uppercase', marginBottom:14 }}>{c.label}</div>
+                <div style={{ fontSize:9.5, fontWeight:700, letterSpacing:'.1em', color:'var(--text-3)', textTransform:'uppercase', marginBottom:14 }}>{c.label}</div>
                 <div style={{ height:1, background:'var(--bg-surface-2)', marginBottom:12 }}/>
                 <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-                  <div style={{ fontSize:11, color:'rgba(248,250,252,0.25)', lineHeight:1.4 }}>{c.sub}</div>
+                  <div style={{ fontSize:11, color:'var(--text-3)', lineHeight:1.4 }}>{c.sub}</div>
                   <span style={{ fontSize:10.5, color:c.status.color, background:`${c.status.color}12`, border:`1px solid ${c.status.color}22`, borderRadius:6, padding:'2px 9px', flexShrink:0, marginLeft:12, whiteSpace:'nowrap' }}>{c.benchmark}</span>
                 </div>
               </div>
@@ -354,8 +354,8 @@ function ProductivityKPIs({ data, loaded }) {
             <div style={{ width:36, height:36, borderRadius:10, background:`${c.accent}1a`, border:`1px solid ${c.accent}20`, display:'flex', alignItems:'center', justifyContent:'center', color:c.accent }}>{c.icon}</div>
           </div>
           <div style={{ fontSize:27, fontWeight:800, letterSpacing:'-0.04em', color:c.accent, lineHeight:1, marginBottom:5, fontVariantNumeric:'tabular-nums', position:'relative', zIndex:1 }}>{c.value}</div>
-          <div style={{ fontSize:9.5, fontWeight:700, letterSpacing:'.1em', color:'rgba(248,250,252,0.32)', textTransform:'uppercase', marginBottom:4, position:'relative', zIndex:1 }}>{c.label}</div>
-          <div style={{ fontSize:11, color:'rgba(248,250,252,0.25)', lineHeight:1.4, position:'relative', zIndex:1 }}>{c.sub}</div>
+          <div style={{ fontSize:9.5, fontWeight:700, letterSpacing:'.1em', color:'var(--text-3)', textTransform:'uppercase', marginBottom:4, position:'relative', zIndex:1 }}>{c.label}</div>
+          <div style={{ fontSize:11, color:'var(--text-3)', lineHeight:1.4, position:'relative', zIndex:1 }}>{c.sub}</div>
         </div>
       ))}
     </div>
@@ -380,24 +380,24 @@ function ChannelBreakdown({ channels, loaded }) {
       <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:16 }}>
         <div>
           <div style={{ fontSize:13, fontWeight:600, color:'var(--text-1)', marginBottom:3 }}>Tickets by channel</div>
-          <div style={{ fontSize:11, color:'rgba(248,250,252,0.32)' }}>{total.toLocaleString()} tickets · this period</div>
+          <div style={{ fontSize:11, color:'var(--text-3)' }}>{total.toLocaleString()} tickets · this period</div>
         </div>
       </div>
       <div style={{ display:'flex', height:7, borderRadius:5, overflow:'hidden', marginBottom:22, gap:1.5 }}>
-        {channels.map(ch=>{ const color=CH_COLORS[ch.name.toLowerCase()]||'rgba(248,250,252,0.2)'; return <div key={ch.name} style={{ flex:ch.pct, background:color, opacity:.7, minWidth:2 }}/> })}
+        {channels.map(ch=>{ const color=CH_COLORS[ch.name.toLowerCase()]||'var(--text-3)'; return <div key={ch.name} style={{ flex:ch.pct, background:color, opacity:.7, minWidth:2 }}/> })}
       </div>
       <div style={{ display:'flex', flexDirection:'column', gap:2 }}>
         {channels.map((ch,i)=>{
-          const color=CH_COLORS[ch.name.toLowerCase()]||'rgba(248,250,252,0.2)'
+          const color=CH_COLORS[ch.name.toLowerCase()]||'var(--text-3)'
           return (
             <div key={ch.name} className="ch-row" style={{ animation:`fadeIn .3s ease-out ${i*60}ms both` }}>
               <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:7, paddingLeft:4, paddingRight:4 }}>
                 <div style={{ display:'flex', alignItems:'center', gap:9 }}>
                   <div style={{ width:8, height:8, borderRadius:2, background:color, flexShrink:0, opacity:.85 }}/>
-                  <span style={{ fontSize:12.5, fontWeight:600, color:'rgba(248,250,252,0.72)' }}>{ch.name}</span>
+                  <span style={{ fontSize:12.5, fontWeight:600, color:'var(--text-2)' }}>{ch.name}</span>
                 </div>
                 <div style={{ display:'flex', alignItems:'center', gap:12 }}>
-                  <span style={{ fontSize:11, color:'rgba(248,250,252,0.28)', fontVariantNumeric:'tabular-nums' }}>{ch.count.toLocaleString()}</span>
+                  <span style={{ fontSize:11, color:'var(--text-3)', fontVariantNumeric:'tabular-nums' }}>{ch.count.toLocaleString()}</span>
                   <span style={{ fontSize:12, fontWeight:800, color, minWidth:36, textAlign:'right', fontVariantNumeric:'tabular-nums' }}>{ch.pct}%</span>
                 </div>
               </div>
@@ -493,7 +493,7 @@ export default function PerformancePage() {
                     ? <Spinner size={14}/>
                     : <div style={{ width:6, height:6, borderRadius:'50%', background:demoMode?'#FB923C':gorgiasOk?'#4ade80':'#f87171', boxShadow:`0 0 6px ${demoMode?'rgba(251,146,60,0.5)':gorgiasOk?'rgba(74,222,128,0.5)':'rgba(248,113,113,0.5)'}`, animation:'glowPulse 2s ease-in-out infinite' }}/>
                   }
-                  <span style={{ fontSize:10.5, fontWeight:700, letterSpacing:'.09em', color:'rgba(248,250,252,0.4)', textTransform:'uppercase' }}>
+                  <span style={{ fontSize:10.5, fontWeight:700, letterSpacing:'.09em', color:'var(--text-3)', textTransform:'uppercase' }}>
                     {!allLoaded?'Loading…':demoMode?'Demo':gorgiasOk?'Live':'Disconnected'}
                   </span>
                 </div>
@@ -502,12 +502,12 @@ export default function PerformancePage() {
             <div style={{ height:'1px', background:'var(--bg-surface-2)', margin:'20px 0 16px' }}/>
             <div style={{ display:'flex', alignItems:'center', gap:6, flexWrap:'wrap' }}>
               {RANGES.map(r=>(
-                <button key={r.id} onClick={()=>selectRange(r.id)} className="range-pill" style={{ background:dateRange===r.id?'rgba(161,117,252,0.18)':'rgba(255,255,255,0.05)', color:dateRange===r.id?'#C3A3FF':'rgba(248,250,252,0.42)', boxShadow:dateRange===r.id?'inset 0 0 0 1px rgba(161,117,252,0.4),0 0 12px rgba(161,117,252,0.08)':'inset 0 0 0 1px rgba(255,255,255,0.08)' }}>{r.label}</button>
+                <button key={r.id} onClick={()=>selectRange(r.id)} className="range-pill" style={{ background:dateRange===r.id?'rgba(161,117,252,0.18)':'var(--bg-input)', color:dateRange===r.id?'#C3A3FF':'var(--text-3)', boxShadow:dateRange===r.id?'inset 0 0 0 1px rgba(161,117,252,0.4),0 0 12px rgba(161,117,252,0.08)':'inset 0 0 0 1px rgba(255,255,255,0.08)' }}>{r.label}</button>
               ))}
               {dateRange==='custom'&&(
                 <div style={{ display:'flex', alignItems:'center', gap:6, marginLeft:4 }}>
                   <input type="date" className="date-inp" value={customFrom} max={customTo||undefined} onChange={e=>{ setCustomFrom(e.target.value); applyCustomRange(e.target.value,customTo) }}/>
-                  <span style={{ fontSize:11, color:'rgba(248,250,252,0.28)' }}>→</span>
+                  <span style={{ fontSize:11, color:'var(--text-3)' }}>→</span>
                   <input type="date" className="date-inp" value={customTo} min={customFrom||undefined} max={new Date().toISOString().slice(0,10)} onChange={e=>{ setCustomTo(e.target.value); applyCustomRange(customFrom,e.target.value) }}/>
                 </div>
               )}
@@ -527,7 +527,7 @@ export default function PerformancePage() {
           {!demoMode&&allLoaded&&!gorgiasOk&&(
             <div style={{ display:'flex', alignItems:'center', gap:12, background:'rgba(161,117,252,0.07)', border:'1px solid rgba(161,117,252,0.18)', borderRadius:10, padding:'12px 18px', marginBottom:24, animation:'fadeIn .4s ease-out both' }}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#A175FC" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-              <div style={{ flex:1 }}><span style={{ fontSize:12, fontWeight:700, color:'#A175FC', marginRight:8 }}>Gorgias not connected</span><span style={{ fontSize:12, color:'rgba(248,250,252,0.5)' }}>Go to Settings → Integrations to connect your Gorgias account.</span></div>
+              <div style={{ flex:1 }}><span style={{ fontSize:12, fontWeight:700, color:'#A175FC', marginRight:8 }}>Gorgias not connected</span><span style={{ fontSize:12, color:'var(--text-2)' }}>Go to Settings → Integrations to connect your Gorgias account.</span></div>
               <button onClick={loadDemo} style={{ fontSize:11, fontWeight:700, color:'#C3A3FF', background:'rgba(161,117,252,0.12)', border:'1px solid rgba(161,117,252,0.25)', borderRadius:100, padding:'4px 12px', cursor:'pointer', fontFamily:'inherit', whiteSpace:'nowrap' }}>Preview demo</button>
             </div>
           )}
@@ -543,7 +543,7 @@ export default function PerformancePage() {
           <ProductivityKPIs data={productivity} loaded={loaded.productivity}/>
           <ChannelBreakdown channels={productivity.channels} loaded={loaded.productivity}/>
 
-          <div style={{ marginTop:16, textAlign:'center', fontSize:10.5, color:'rgba(248,250,252,0.12)', letterSpacing:'.04em' }}>
+          <div style={{ marginTop:16, textAlign:'center', fontSize:10.5, color:'var(--text-3)', letterSpacing:'.04em' }}>
             Lynq Analytics · Gorgias data · Refreshed on load
           </div>
         </div>

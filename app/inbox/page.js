@@ -175,10 +175,12 @@ const CSS = `
   .compose-ta { width:100%; resize:none; outline:none; font-family:inherit; background:transparent; border:none; padding:14px 16px; font-size:13.5px; color:var(--text-1); line-height:1.78; letter-spacing:.005em; }
 
   /* ── Compose box ── */
-  .compose-box { margin:0 16px 16px; border:1px solid var(--border); border-radius:18px; overflow:hidden; background:var(--bg-surface); transition:border-color .25s,box-shadow .25s; box-shadow:var(--shadow-card); }
-  .compose-box:focus-within { border-color:var(--accent-border); box-shadow:0 0 0 3px rgba(124,92,252,0.09),var(--shadow-card-hover); }
-  [data-theme="dark"] .compose-box { background:linear-gradient(145deg,rgba(255,255,255,0.04) 0%,rgba(255,255,255,0.02) 100%); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); box-shadow:0 4px 24px rgba(0,0,0,0.2); }
-  [data-theme="dark"] .compose-box:focus-within { border-top-color:rgba(161,117,252,0.6); box-shadow:0 0 0 3px rgba(161,117,252,0.09),0 8px 40px rgba(161,117,252,0.1); }
+  .compose-box { background:var(--bg-surface); }
+  [data-theme="dark"] .compose-box { background:rgba(255,255,255,0.025); }
+
+  /* ── Suggested macro chips ── */
+  .macro-chip-suggest { display:inline-flex; align-items:center; font-size:11px; font-weight:500; font-family:inherit; padding:3px 10px; border-radius:6px; border:1px solid var(--border); background:var(--bg-surface); color:var(--text-1); cursor:pointer; transition:all .15s; white-space:nowrap; }
+  .macro-chip-suggest:hover { border-color:var(--accent-border); color:var(--accent-text); background:var(--accent-soft); }
 
   /* ── Buttons ── */
   .btn-send { padding:9px 20px; font-size:13px; font-weight:600; font-family:inherit; background:linear-gradient(135deg,#A175FC 0%,#7B45E8 100%); color:#fff; border-radius:10px; cursor:pointer; transition:all .2s cubic-bezier(.16,1,.3,1); box-shadow:0 2px 14px rgba(161,117,252,0.45); letter-spacing:.01em; }
@@ -1076,9 +1078,9 @@ function MacroPanel({ macros, aiMacros, onInsert, onClose, customerName }) {
   }
 
   return (
-    <div style={{borderTop:'1px solid rgba(255,255,255,0.055)',animation:'fadeUp .18s ease both'}}>
+    <div style={{borderTop:'1px solid var(--border)',animation:'fadeUp .18s ease both'}}>
       {/* Search row */}
-      <div style={{display:'flex',alignItems:'center',gap:8,padding:'8px 14px',borderBottom:'1px solid rgba(255,255,255,0.055)',background:'var(--bg-input)'}}>
+      <div style={{display:'flex',alignItems:'center',gap:8,padding:'8px 14px',borderBottom:'1px solid var(--border)',background:'var(--bg-surface-2)'}}>
         <span style={{color:'#A175FC',display:'flex',flexShrink:0}}>{I.lightning}</span>
         <input ref={searchRef} value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search macros by name, tag or content…" style={{flex:1,background:'transparent',border:'none',outline:'none',fontSize:12.5,color:'var(--text-2)',fontFamily:'inherit'}} />
         {aiMacros?.length>0 && <span style={{fontSize:10,fontWeight:700,padding:'2px 7px',borderRadius:5,background:'rgba(161,117,252,0.15)',color:'#A175FC',letterSpacing:'.04em',flexShrink:0}}>AI ✦</span>}
@@ -1675,27 +1677,38 @@ function InboxPage() {
                 />
               )}
 
-              {/* Composer tabs */}
+              {/* Composer — Gorgias style */}
               {!showMacros&&(
                 <>
-                  <div style={{display:'flex',borderBottom:'1px solid var(--border)',paddingLeft:16,justifyContent:'space-between',alignItems:'center',paddingRight:14}}>
-                    <div style={{display:'flex'}}>
-                      {[{id:'reply',label:'Reply'},{id:'note',label:'Internal note'}].map(t=>(
-                        <button key={t.id} className={`ctab${composerTab===t.id?' on':''}`} onClick={()=>setComposerTab(t.id)}>{t.label}</button>
-                      ))}
-                    </div>
-                    {/* Macro trigger button */}
-                    <button onClick={()=>setShowMacros(true)} title="Macros (⌘M)" style={{display:'flex',alignItems:'center',gap:5,padding:'5px 10px',background:'transparent',border:'1px solid var(--border)',borderRadius:7,cursor:'pointer',fontSize:11,fontWeight:600,color:'var(--text-3)',transition:'all .15s',fontFamily:'inherit'}} onMouseEnter={e=>{e.currentTarget.style.borderColor='rgba(161,117,252,0.3)';e.currentTarget.style.color='#A175FC';e.currentTarget.style.background='rgba(161,117,252,0.08)'}} onMouseLeave={e=>{e.currentTarget.style.borderColor='var(--border)';e.currentTarget.style.color='var(--text-3)';e.currentTarget.style.background='transparent'}}>
-                      <span style={{display:'flex'}}>{I.lightning}</span>
-                      Macros
-                      {aiMacros.length>0&&<span style={{background:'var(--bg-surface-2)',color:'var(--text-3)',fontSize:9,fontWeight:700,padding:'1px 5px',borderRadius:4}}>AI</span>}
-                    </button>
+                  {/* Tab strip */}
+                  <div style={{display:'flex',borderBottom:'1px solid var(--border)',paddingLeft:16}}>
+                    {[{id:'reply',label:'Reply'},{id:'note',label:'Internal note'}].map(t=>(
+                      <button key={t.id} className={`ctab${composerTab===t.id?' on':''}`} onClick={()=>setComposerTab(t.id)}>{t.label}</button>
+                    ))}
+                  </div>
+
+                  {/* To: row */}
+                  <div style={{display:'flex',alignItems:'center',gap:8,padding:'8px 14px',borderBottom:'1px solid var(--border)'}}>
+                    <span style={{display:'flex',color:'var(--text-3)',flexShrink:0}}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></span>
+                    <span style={{fontSize:11.5,color:'var(--text-2)',fontWeight:600,flexShrink:0}}>To:</span>
+                    <span style={{flex:1,fontSize:12,color:'var(--text-1)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
+                      {extractName(selected.from)}{extractEmail(selected.from)?` (${extractEmail(selected.from)})`:''}</span>
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{color:'var(--text-3)',flexShrink:0}}><polyline points="6 9 12 15 18 9"/></svg>
+                  </div>
+
+                  {/* Macro search row */}
+                  <div style={{display:'flex',alignItems:'center',gap:8,padding:'7px 14px',borderBottom:'1px solid var(--border)',cursor:'pointer',transition:'background .12s'}} onClick={()=>setShowMacros(true)} onMouseEnter={e=>e.currentTarget.style.background='var(--bg-surface-2)'} onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
+                    <span style={{color:'var(--accent-text)',display:'flex',flexShrink:0}}>{I.lightning}</span>
+                    <span style={{flex:1,fontSize:12,color:'var(--text-3)'}}>Search macros by name, tags or body...</span>
+                    {aiMacros.length>0&&<span style={{fontSize:9,fontWeight:700,padding:'1px 6px',borderRadius:4,background:'var(--accent-soft)',color:'var(--accent-text)',letterSpacing:'.04em',flexShrink:0}}>AI</span>}
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{color:'var(--text-3)',flexShrink:0}}><polyline points="6 9 12 15 18 9"/></svg>
                   </div>
 
                   {/* Hidden file inputs */}
                   <input ref={imgUploadRef} type="file" accept="image/*" style={{display:'none'}} onChange={handleImageUpload} />
                   <input ref={fileUploadRef} type="file" multiple style={{display:'none'}} onChange={handleFileAttach} />
 
+                  {/* Flat compose area */}
                   <div className="compose-box" onClick={()=>showEmoji&&setShowEmoji(false)}>
                     {/* Auto-translate banner */}
                     {autoTranslate&&customerLang&&customerLang.code!=='en'&&(
@@ -1706,8 +1719,58 @@ function InboxPage() {
                       </div>
                     )}
 
-                    {/* Formatting toolbar */}
-                    <div className="rtbar">
+                    {/* Attachments */}
+                    {attachments.length>0&&(
+                      <div style={{display:'flex',flexWrap:'wrap',gap:5,padding:'8px 14px 0'}}>
+                        {attachments.map((a,i)=>(
+                          <span key={i} className="attach-chip">
+                            {I.paperclip} {a.name}
+                            <button onClick={()=>setAttachments(p=>p.filter((_,j)=>j!==i))} style={{background:'none',border:'none',cursor:'pointer',color:'var(--text-3)',display:'flex',padding:0,marginLeft:2}}>{I.xsmall}</button>
+                          </span>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Contenteditable composer */}
+                    <div
+                      ref={replyRef}
+                      contentEditable
+                      suppressContentEditableWarning
+                      data-placeholder={composerTab==='reply'?'Click here to reply, or press r.':'Internal note — not visible to customer…'}
+                      onInput={e=>setReply(e.currentTarget.textContent)}
+                      onKeyDown={e=>{if(e.key==='Enter'&&(e.metaKey||e.ctrlKey))handleSend()}}
+                      className="compose-ta"
+                      style={{minHeight:110,background:composerTab==='note'?'rgba(251,191,36,0.03)':'transparent'}}
+                    />
+
+                    {/* AI generating dots */}
+                    {aiLoading&&(
+                      <div style={{padding:'4px 16px 0',display:'flex',alignItems:'center',gap:4}}>
+                        {[0,.18,.36].map(d=><span key={d} style={{width:5,height:5,borderRadius:'50%',background:'var(--accent)',display:'block',animation:`glowPulse .9s ease-in-out ${d}s infinite`}} />)}
+                      </div>
+                    )}
+
+                    {/* Suggested macros */}
+                    {(aiMacros.length>0||macros.length>0)&&(
+                      <div style={{display:'flex',alignItems:'center',gap:6,padding:'6px 14px',borderTop:'1px solid var(--border)',flexWrap:'wrap'}}>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{color:'var(--text-3)',flexShrink:0}}><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+                        <span style={{fontSize:10.5,color:'var(--text-2)',fontWeight:600,flexShrink:0}}>Suggested macros</span>
+                        {(aiMacros.length>0?aiMacros:macros).slice(0,3).map(m=>{
+                          const firstName=extractName(selected?.from||'').split(' ')[0]||'there'
+                          const body=m.body.replace(/{{name}}/gi,firstName).replace(/{{firstname}}/gi,firstName)
+                          return (
+                            <button key={m.id} className="macro-chip-suggest" onClick={()=>{
+                              if(replyRef.current){replyRef.current.innerHTML=body.replace(/\n/g,'<br>');setReply(replyRef.current.textContent)}
+                              else setReply(body)
+                              setTimeout(()=>replyRef.current?.focus(),10)
+                            }}>{m.name}</button>
+                          )
+                        })}
+                      </div>
+                    )}
+
+                    {/* Toolbar + Send buttons — single bottom row */}
+                    <div style={{display:'flex',alignItems:'center',gap:1,padding:'7px 10px',borderTop:'1px solid var(--border)'}}>
                       <button className="rtbar-btn" title="Bold (⌘B)" onClick={()=>formatDoc('bold')} onMouseDown={e=>e.preventDefault()}><span style={{fontWeight:800,fontSize:13}}>B</span></button>
                       <button className="rtbar-btn" title="Italic (⌘I)" onClick={()=>formatDoc('italic')} onMouseDown={e=>e.preventDefault()}><span style={{fontStyle:'italic',fontSize:13}}>I</span></button>
                       <button className="rtbar-btn" title="Underline (⌘U)" onClick={()=>formatDoc('underline')} onMouseDown={e=>e.preventDefault()}><span style={{textDecoration:'underline',fontSize:13}}>U</span></button>
@@ -1728,57 +1791,20 @@ function InboxPage() {
                       </div>
                       <button className="rtbar-btn" title="Attach file" onClick={()=>fileUploadRef.current?.click()} onMouseDown={e=>e.preventDefault()}>{I.paperclip}</button>
                       <div className="rtbar-sep" />
-                      {/* Translate toggle */}
-                      <button
-                        className={`rtbar-btn${autoTranslate?' rton':''}`}
-                        title={customerLang?`Auto-translate to ${customerLang.name}`:'Detect customer language'}
-                        onClick={()=>customerLang?setAutoTranslate(v=>!v):null}
-                        style={{gap:4,paddingLeft:6,paddingRight:8,fontSize:11,fontWeight:600,minWidth:'auto'}}
-                      >
-                        {I.globe}
-                        <span>{customerLang?customerLang.name:'Translate'}</span>
+                      <button className={`rtbar-btn${autoTranslate?' rton':''}`} title={customerLang?`Auto-translate to ${customerLang.name}`:'Detect language'} onClick={()=>customerLang?setAutoTranslate(v=>!v):null} style={{gap:4,paddingLeft:6,paddingRight:8,fontSize:11,fontWeight:600,minWidth:'auto'}}>
+                        {I.globe}<span>{customerLang?customerLang.name:'Translate'}</span>
                       </button>
-                    </div>
-
-                    {/* Attachments */}
-                    {attachments.length>0&&(
-                      <div style={{display:'flex',flexWrap:'wrap',gap:5,padding:'6px 12px 0'}}>
-                        {attachments.map((a,i)=>(
-                          <span key={i} className="attach-chip">
-                            {I.paperclip} {a.name}
-                            <button onClick={()=>setAttachments(p=>p.filter((_,j)=>j!==i))} style={{background:'none',border:'none',cursor:'pointer',color:'var(--text-3)',display:'flex',padding:0,marginLeft:2}}>{I.xsmall}</button>
-                          </span>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* Contenteditable composer */}
-                    <div
-                      ref={replyRef}
-                      contentEditable
-                      suppressContentEditableWarning
-                      data-placeholder={composerTab==='reply'?'Write a reply… (⌘+Enter to send)':'Internal note — not visible to customer…'}
-                      onInput={e=>setReply(e.currentTarget.textContent)}
-                      onKeyDown={e=>{if(e.key==='Enter'&&(e.metaKey||e.ctrlKey))handleSend()}}
-                      className="compose-ta"
-                      style={{minHeight:96,background:composerTab==='note'?'rgba(251,191,36,0.035)':'transparent',borderBottom:`1px solid ${composerTab==='note'?'rgba(251,191,36,0.15)':'var(--bg-input)'}`}}
-                    />
-
-                    <div style={{padding:'10px 14px 12px',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
-                      <button className="btn-iris" onClick={handleAiReply} disabled={aiLoading||!messages.length} style={{display:'flex',alignItems:'center',gap:6}}>
-                        {aiLoading?<Spinner />:I.ai}
-                        {aiLoading?'Generating…':'AI Reply'}
+                      <div style={{flex:1}} />
+                      <button className="btn-iris" onClick={handleAiReply} disabled={aiLoading||!messages.length} style={{display:'flex',alignItems:'center',gap:6,padding:'7px 13px'}}>
+                        {aiLoading?<Spinner />:I.ai}{aiLoading?'Generating…':'AI Reply'}
                       </button>
-                      <div style={{display:'flex',gap:7}}>
-                        <button className="btn-close" onClick={handleSendResolve} disabled={!reply.trim()||sending}>
-                          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                          Send & Close
-                        </button>
-                        <button className="btn-send" onClick={handleSend} disabled={!reply.trim()||sending} style={{display:'flex',alignItems:'center',gap:6}}>
-                          {sending?<Spinner white />:I.send}
-                          {sending?'Sending…':'Send'}
-                        </button>
-                      </div>
+                      <button className="btn-close" onClick={handleSendResolve} disabled={!reply.trim()||sending} style={{marginLeft:6}}>
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                        Send & Close
+                      </button>
+                      <button className="btn-send" onClick={handleSend} disabled={!reply.trim()||sending} style={{display:'flex',alignItems:'center',gap:6,marginLeft:6}}>
+                        {sending?<Spinner white />:I.send}{sending?'Sending…':'Send'}
+                      </button>
                     </div>
                   </div>
                 </>

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef, Suspense } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useSearchParams, useRouter } from 'next/navigation'
 import { supabase } from '../../lib/supabase'
 import Sidebar from '../components/Sidebar'
 
@@ -1748,6 +1748,7 @@ function MacroManager({ macros, favs, onClose, onSaveMacro, onDeleteMacro, onTog
 
 // ─── Main page ────────────────────────────────────────────────
 function InboxPage() {
+  const router                        = useRouter()
   const [session, setSession]         = useState(null)
   const [threads, setThreads]         = useState([])
   const searchParams                  = useSearchParams()
@@ -1778,7 +1779,6 @@ function InboxPage() {
   const [aiMacros, setAiMacros]       = useState([])
   const [showMacros, setShowMacros]   = useState(false)
   const [showMacroManager, setShowMacroManager] = useState(false)
-  const [composeOpen, setComposeOpen] = useState(false)
   const [macroFavs, setMacroFavs]     = useState(()=>{ try{return JSON.parse(localStorage.getItem('lynq_macro_favs')||'[]')}catch{return[]} })
 
   function saveMacro(m) {
@@ -2146,7 +2146,7 @@ function InboxPage() {
             </div>
             <div style={{display:'flex',alignItems:'center',gap:4}}>
               <button onClick={()=>loadThreads(session.access_token)} style={{background:'transparent',color:'var(--text-3)',cursor:'pointer',display:'flex',padding:5,borderRadius:7,transition:'all .15s'}} onMouseEnter={e=>{e.currentTarget.style.color='var(--text-2)';e.currentTarget.style.background='var(--bg-input)'}} onMouseLeave={e=>{e.currentTarget.style.color='var(--text-3)';e.currentTarget.style.background='transparent'}} title="Refresh">{I.refresh}</button>
-              <button onClick={()=>setComposeOpen(true)} style={{display:'flex',alignItems:'center',gap:5,padding:'5px 11px',borderRadius:8,background:'var(--accent)',border:'none',color:'#fff',cursor:'pointer',fontSize:11.5,fontWeight:600,fontFamily:'inherit',transition:'all .18s',letterSpacing:'.01em'}} onMouseEnter={e=>{e.currentTarget.style.background='var(--accent-hover)'}} onMouseLeave={e=>{e.currentTarget.style.background='var(--accent)'}} title="Create Ticket">
+              <button onClick={()=>router.push('/inbox/create')} style={{display:'flex',alignItems:'center',gap:5,padding:'5px 11px',borderRadius:8,background:'var(--accent)',border:'none',color:'#fff',cursor:'pointer',fontSize:11.5,fontWeight:600,fontFamily:'inherit',transition:'all .18s',letterSpacing:'.01em'}} onMouseEnter={e=>{e.currentTarget.style.background='var(--accent-hover)'}} onMouseLeave={e=>{e.currentTarget.style.background='var(--accent)'}} title="Create Ticket">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                 Create Ticket
               </button>
@@ -2162,7 +2162,7 @@ function InboxPage() {
           {/* View tabs */}
           <div style={{display:'flex',borderBottom:'1px solid var(--border)',overflowX:'auto'}} className="sscroll">
             {VIEWS.map(v=>(
-              <button key={v.id} className={`vtab${view===v.id?' on':''}`} onClick={()=>{ setView(v.id); setComposeOpen(false) }}>
+              <button key={v.id} className={`vtab${view===v.id?' on':''}`} onClick={()=>setView(v.id)}>
                 {v.label}
                 {counts[v.id]>0&&<span style={{marginLeft:4,background:view===v.id?'rgba(161,117,252,0.2)':'var(--bg-input)',color:view===v.id?'#A175FC':'var(--text-3)',fontSize:9,fontWeight:700,padding:'1px 5px',borderRadius:100}}>{counts[v.id]}</span>}
               </button>
@@ -2270,17 +2270,8 @@ function InboxPage() {
         </div>
       </div>
 
-      {/* ═══════════════ CENTER + RIGHT (or Compose view) ═══════════════ */}
-      {composeOpen ? (
-        <CreateTicketView
-          emailProvider={emailProvider}
-          connectedEmail={connectedEmail}
-          token={session?.access_token}
-          macros={macros}
-          onClose={()=>setComposeOpen(false)}
-          onSuccess={(msg,type)=>{ showT(msg,type); if(!type||type==='success') { setComposeOpen(false); loadThreads(session.access_token) } }}
-        />
-      ) : (<>
+      {/* ═══════════════ CENTER + RIGHT ═══════════════ */}
+      <>
 
       {/* ═══════════════ CENTER: Conversation ═══════════════ */}
       <div style={{flex:1,display:'flex',flexDirection:'column',overflow:'hidden',minWidth:0,position:'relative',zIndex:1}}>
@@ -2796,10 +2787,9 @@ function InboxPage() {
         </div>
       )}
 
-      </>)}
+      </>
 
       {/* ═══════════════ Modals ═══════════════ */}
-      {modal?.type==='compose'   && <CreateTicketView emailProvider={emailProvider} connectedEmail={connectedEmail} token={session.access_token} macros={macros} onClose={()=>setModal(null)} onSuccess={(msg,type)=>{handleModalSuccess(msg,type);loadThreads(session.access_token)}} />}
       {modal?.type==='refund'    && <RefundModal      order={modal.order} token={session.access_token} onClose={()=>setModal(null)} onSuccess={handleModalSuccess} />}
       {modal?.type==='cancel'    && <CancelModal      order={modal.order} token={session.access_token} onClose={()=>setModal(null)} onSuccess={handleModalSuccess} />}
       {modal?.type==='duplicate' && <DuplicateModal   order={modal.order} token={session.access_token} onClose={()=>setModal(null)} onSuccess={handleModalSuccess} />}

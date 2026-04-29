@@ -22,13 +22,17 @@ export async function GET(request) {
   }
 
   const { searchParams } = new URL(request.url)
+  const allowedStatuses = new Set(['', 'pending', 'info_received', 'in_transit', 'out_for_delivery', 'failed_attempt', 'delivered', 'exception', 'expired', 'pickup_point'])
   const status = searchParams.get('status') || ''
-  const page = searchParams.get('page') || 1
-  const limit = searchParams.get('limit') || 20
+  if (!allowedStatuses.has(status)) {
+    return NextResponse.json({ error: 'Invalid status' }, { status: 400 })
+  }
+  const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10) || 1)
+  const limit = Math.min(Math.max(parseInt(searchParams.get('limit') || '20', 10) || 20, 1), 100)
 
   const params = new URLSearchParams({
-    page,
-    limit,
+    page: String(page),
+    limit: String(limit),
     ...(status && { transit_status: status }),
   })
 

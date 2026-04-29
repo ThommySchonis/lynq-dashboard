@@ -1,9 +1,12 @@
 import { supabaseAdmin, getUserFromToken } from '../../../../lib/supabaseAdmin'
 import { NextResponse } from 'next/server'
-import { Resend } from 'resend'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
 const INBOUND_DOMAIN = process.env.INBOUND_EMAIL_DOMAIN || 'mail.lynqagency.com'
+
+function normalizeEmail(value) {
+  const email = String(value || '').trim().toLowerCase()
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? email : ''
+}
 
 export async function POST(request) {
   const authHeader = request.headers.get('authorization')
@@ -14,7 +17,9 @@ export async function POST(request) {
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { realEmail, displayName } = await request.json()
-  if (!realEmail) return NextResponse.json({ error: 'Email address is required' }, { status: 400 })
+  const normalizedEmail = normalizeEmail(realEmail)
+  const normalizedName = String(displayName || '').trim().slice(0, 120)
+  if (!normalizedEmail) return NextResponse.json({ error: 'Valid email address is required' }, { status: 400 })
 
   // Check if already connected
   const { data: existing } = await supabaseAdmin
@@ -29,8 +34,8 @@ export async function POST(request) {
 
   await supabaseAdmin.from('email_accounts').upsert({
     client_id: user.id,
-    real_email: realEmail,
-    display_name: displayName || realEmail,
+    real_email: normalizedEmail,
+    display_name: normalizedName || normalizedEmail,
     forwarding_address: forwardingAddress,
     connected_at: new Date().toISOString(),
   }, { onConflict: 'client_id' })
@@ -39,9 +44,9 @@ export async function POST(request) {
     success: true,
     forwardingAddress,
     instructions: {
-      step1: `In privateemail.com: set up forwarding from ${realEmail} to ${forwardingAddress}`,
+      step1: `In privateemail.com: set up forwarding from ${normalizedEmail} to ${forwardingAddress}`,
       step2: `Add this SPF record to your DNS: include:resend.com`,
-      step3: `Resend will provide DKIM records — add them to your DNS for ${realEmail.split('@')[1]}`,
+      step3: `Resend will provide DKIM records — add them to your DNS for ${normalizedEmail.split('@')[1]}`,
     },
   })
 }

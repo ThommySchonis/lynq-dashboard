@@ -2,6 +2,12 @@ import { supabaseAdmin } from '../../../../../lib/supabaseAdmin'
 import { NextResponse } from 'next/server'
 import crypto from 'crypto'
 
+function timingSafeCompare(a, b) {
+  const left = Buffer.from(a || '')
+  const right = Buffer.from(b || '')
+  return left.length === right.length && crypto.timingSafeEqual(left, right)
+}
+
 async function syncOrders(userId, shop, accessToken) {
   const since = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString()
   let orders = []
@@ -78,7 +84,7 @@ export async function GET(request) {
   const message = Object.keys(params).sort().map(k => `${k}=${params[k]}`).join('&')
   const digest = crypto.createHmac('sha256', clientSecret).update(message).digest('hex')
 
-  if (digest !== hmac) {
+  if (!timingSafeCompare(digest, hmac)) {
     return NextResponse.redirect(`${appUrl}/settings?error=invalid_hmac`)
   }
 

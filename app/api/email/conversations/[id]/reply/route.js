@@ -1,4 +1,5 @@
 import { supabaseAdmin, getUserFromToken } from '../../../../../../lib/supabaseAdmin'
+import { checkEmailLimit, incrementEmailCount } from '../../../../../../lib/emailUsage'
 import { NextResponse } from 'next/server'
 import { Resend } from 'resend'
 
@@ -11,6 +12,17 @@ export async function POST(request, { params }) {
   const token = authHeader.replace('Bearer ', '')
   const user = await getUserFromToken(token)
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const limitCheck = await checkEmailLimit(user.email)
+  if (!limitCheck.allowed) {
+    return NextResponse.json({
+      error: 'Email limit reached',
+      code: 'EMAIL_LIMIT_REACHED',
+      used: limitCheck.used,
+      limit: limitCheck.limit,
+      plan: limitCheck.plan,
+    }, { status: 429 })
+  }
 
   const { id } = await params
   const { body } = await request.json()
@@ -49,6 +61,8 @@ export async function POST(request, { params }) {
   if (sendError) {
     return NextResponse.json({ error: sendError.message }, { status: 502 })
   }
+
+  await incrementEmailCount(user.email)
 
   // Save to DB
   await supabaseAdmin.from('email_messages').insert({

@@ -1,6 +1,6 @@
 'use client'
 
-import { usePathname, useSearchParams } from 'next/navigation'
+import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { useState, useEffect, Suspense } from 'react'
 import { supabase } from '../../lib/supabase'
@@ -222,11 +222,6 @@ const TOP_ITEMS = [
   },
   {
     section: null,
-    href: '/inbox?view=sent', label: 'Sent', sentView: true,
-    icon: <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.85" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>,
-  },
-  {
-    section: null,
     href: '/analytics', label: 'Analytics',
     icon: <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.85" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/><line x1="2" y1="20" x2="22" y2="20"/></svg>,
   },
@@ -281,8 +276,6 @@ const LOCK_SVG = (
 
 function SidebarContent() {
   const pathname     = usePathname()
-  const searchParams = useSearchParams()
-  const isSentView   = pathname === '/inbox' && searchParams.get('view') === 'sent'
   const { theme, toggle } = useTheme()
   const [email, setEmail]   = useState('')
   const [isAdmin, setIsAdmin] = useState(false)
@@ -308,11 +301,9 @@ function SidebarContent() {
 
   function renderItem(item) {
     const active = item.href && (
-      item.sentView
-        ? isSentView
-        : item.href === '/inbox'
-          ? pathname === '/inbox' && !isSentView
-          : pathname.startsWith(item.href)
+      item.href === '/inbox'
+        ? pathname === '/inbox'
+        : pathname.startsWith(item.href)
     )
     const iconColor  = active ? 'var(--sidebar-icon-active)'    : item.locked ? 'var(--text-3)' : 'var(--sidebar-icon-inactive)'
     const labelColor = active ? 'var(--sidebar-label-active)'   : item.locked ? 'var(--text-3)' : 'var(--sidebar-label-inactive)'

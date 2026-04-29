@@ -2103,7 +2103,7 @@ function InboxPage() {
                     {thread.subject||'(no subject)'}
                   </div>
                   {/* Row 3: snippet — 2 lines */}
-                  <div className="trow-snippet" style={{fontSize:11.5,color:'var(--text-2)',lineHeight:1.45}}>
+                  <div className="trow-snippet" style={{fontSize:11.5,color:'var(--text-1)',lineHeight:1.45}}>
                     {thread.snippet}
                   </div>
                 </div>

@@ -1,6 +1,8 @@
 import { supabaseAdmin, getUserFromToken } from '../../../../../lib/supabaseAdmin'
 import { NextResponse } from 'next/server'
 
+const VALID_STATUSES = ['open', 'pending', 'resolved', 'closed']
+
 export async function GET(request, { params }) {
   const authHeader = request.headers.get('authorization')
   if (!authHeader) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -39,6 +41,9 @@ export async function PATCH(request, { params }) {
 
   const { id } = await params
   const { status } = await request.json()
+  if (!VALID_STATUSES.includes(status)) {
+    return NextResponse.json({ error: 'Invalid status' }, { status: 400 })
+  }
 
   await supabaseAdmin
     .from('email_conversations')

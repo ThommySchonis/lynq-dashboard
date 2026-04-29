@@ -23,6 +23,17 @@ export async function PATCH(request, { params }) {
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 })
   }
 
+  const { data: candidate } = await supabaseAdmin
+    .from('profiles')
+    .select('id')
+    .eq('id', id)
+    .eq('user_role', 'agent_candidate')
+    .maybeSingle()
+
+  if (!candidate) {
+    return NextResponse.json({ error: 'Candidate not found' }, { status: 404 })
+  }
+
   if (action === 'call_validated') {
     // Unlock Academy training access
     await supabaseAdmin

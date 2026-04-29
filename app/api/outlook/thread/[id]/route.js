@@ -45,11 +45,11 @@ export async function GET(request, { params }) {
   }
 
   const { id } = await params
-  const encodedId = encodeURIComponent(id)
+  const safeConversationId = String(id || '').replace(/'/g, "''")
 
   // Fetch all messages in this conversation, oldest first
   const res = await fetch(
-    `https://graph.microsoft.com/v1.0/me/messages?$filter=conversationId eq '${encodedId}'&$orderby=receivedDateTime asc&$top=50&$select=id,subject,from,toRecipients,receivedDateTime,body,bodyPreview,isRead,conversationId`,
+    `https://graph.microsoft.com/v1.0/me/messages?$filter=conversationId eq '${safeConversationId}'&$orderby=receivedDateTime asc&$top=50&$select=id,subject,from,toRecipients,receivedDateTime,body,bodyPreview,isRead,conversationId`,
     { headers: { Authorization: `Bearer ${accessToken}` } }
   )
 
@@ -95,11 +95,11 @@ export async function PATCH(request, { params }) {
   }
 
   const { id } = await params
-  const encodedId = encodeURIComponent(id)
+  const safeConversationId = String(id || '').replace(/'/g, "''")
 
   // Get unread message IDs in this conversation, then mark each as read
   const res = await fetch(
-    `https://graph.microsoft.com/v1.0/me/messages?$filter=conversationId eq '${encodedId}' and isRead eq false&$select=id`,
+    `https://graph.microsoft.com/v1.0/me/messages?$filter=conversationId eq '${safeConversationId}' and isRead eq false&$select=id`,
     { headers: { Authorization: `Bearer ${accessToken}` } }
   )
   const data = await res.json()

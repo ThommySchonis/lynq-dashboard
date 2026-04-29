@@ -2,6 +2,12 @@ import { supabaseAdmin } from '../../../../lib/supabaseAdmin'
 import { NextResponse } from 'next/server'
 import crypto from 'crypto'
 
+function timingSafeCompare(a, b) {
+  const left = Buffer.from(a || '')
+  const right = Buffer.from(b || '')
+  return left.length === right.length && crypto.timingSafeEqual(left, right)
+}
+
 function upsertOrder(order, clientId) {
   const subtotal = parseFloat(
     order.subtotal_price_set?.presentment_money?.amount ||
@@ -55,21 +61,33 @@ export async function POST(request) {
   // Verify HMAC using stored client secret
   const { data: integration } = await supabaseAdmin
     .from('integrations')
-    .select('shopify_client_secret')
+    .select('shopify_client_secret, shopify_domain')
     .eq('client_id', clientId)
     .maybeSingle()
 
-  if (integration?.shopify_client_secret) {
-    const digest = crypto
-      .createHmac('sha256', integration.shopify_client_secret)
-      .update(rawBody, 'utf8')
-      .digest('base64')
-    if (digest !== hmac) {
-      return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
-    }
+  if (!integration?.shopify_client_secret || !hmac) {
+    return NextResponse.json({ error: 'Webhook verification unavailable' }, { status: 401 })
   }
 
-  const payload = JSON.parse(rawBody)
+  const shopDomain = request.headers.get('x-shopify-shop-domain')
+  if (shopDomain && integration.shopify_domain && shopDomain !== integration.shopify_domain) {
+    return NextResponse.json({ error: 'Shop mismatch' }, { status: 401 })
+  }
+
+  const digest = crypto
+    .createHmac('sha256', integration.shopify_client_secret)
+    .update(rawBody, 'utf8')
+    .digest('base64')
+  if (!timingSafeCompare(digest, hmac)) {
+    return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
+  }
+
+  let payload
+  try {
+    payload = JSON.parse(rawBody)
+  } catch {
+    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
+  }
 
   if (topic === 'orders/create' || topic === 'orders/updated') {
     await upsertOrder(payload, clientId)

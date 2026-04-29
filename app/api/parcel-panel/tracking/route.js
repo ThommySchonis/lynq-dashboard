@@ -33,7 +33,7 @@ export async function GET(request) {
         try {
           const res = await fetch(
             `${PP_BASE}/api/v2/tracking/order?order_number=${encodeURIComponent(orderNum)}`,
-            { headers: { 'x-parcelpanel-api-key': apiKey }, next: { revalidate: 60 } }
+            { headers: { 'x-parcelpanel-api-key': apiKey }, cache: 'no-store' }
           )
           if (!res.ok) return null
           const data = await res.json()
@@ -46,13 +46,13 @@ export async function GET(request) {
   }
 
   // ── Mode B: list all tracked orders ──────────────────────────────────────
-  const page  = parseInt(request.nextUrl.searchParams.get('page')  || '1', 10)
-  const limit = parseInt(request.nextUrl.searchParams.get('limit') || '50', 10)
+  const page  = Math.max(1, parseInt(request.nextUrl.searchParams.get('page')  || '1', 10) || 1)
+  const limit = Math.min(Math.max(parseInt(request.nextUrl.searchParams.get('limit') || '50', 10) || 50, 1), 100)
 
   try {
     const res = await fetch(
       `${PP_BASE}/api/v2/tracking?page=${page}&limit=${limit}`,
-      { headers: { 'x-parcelpanel-api-key': apiKey }, next: { revalidate: 60 } }
+      { headers: { 'x-parcelpanel-api-key': apiKey }, cache: 'no-store' }
     )
 
     if (!res.ok) {

@@ -54,6 +54,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_...
 SUPABASE_SECRET_KEY=sb_secret_...   ← server-only, nooit in client code
 OAUTH_STATE_SECRET=...              ← optioneel; valt terug op SUPABASE_SECRET_KEY
 EMAIL_WEBHOOK_SECRET=...            ← verplicht voor inbound email webhook verificatie
+WHOP_WEBHOOK_SECRET=...             ← verplicht voor Whop webhook verificatie
 ```
 Staan lokaal in .env.local en in Vercel onder Settings → Environment Variables.
 

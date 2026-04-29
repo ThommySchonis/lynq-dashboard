@@ -28,10 +28,20 @@ export async function GET(request) {
 
   // Enrich with talent_profiles and purchase data
   const enriched = await Promise.all((candidates || []).map(async (c) => {
-    const [talentRes, purchaseRes] = await Promise.all([
-      supabaseAdmin.from('talent_profiles').select('id, display_code, hourly_rate, visible, role').eq('user_id', c.id).maybeSingle(),
-      supabaseAdmin.from('talent_purchases').select('id, payment_status, created_at').eq('talent_profile_id', c.id).limit(5),
-    ])
+    const talentRes = await supabaseAdmin
+      .from('talent_profiles')
+      .select('id, display_code, hourly_rate, visible, role')
+      .eq('user_id', c.id)
+      .maybeSingle()
+
+    const purchaseRes = talentRes.data?.id
+      ? await supabaseAdmin
+        .from('talent_purchases')
+        .select('id, payment_status, created_at')
+        .eq('talent_profile_id', talentRes.data.id)
+        .limit(5)
+      : { data: [] }
+
     return {
       ...c,
       talent_profile: talentRes.data || null,

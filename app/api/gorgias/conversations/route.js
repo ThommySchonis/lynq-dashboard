@@ -14,8 +14,12 @@ export async function GET(request) {
   if (!creds) return NextResponse.json({ error: 'Gorgias not connected' }, { status: 400 })
 
   const { searchParams } = new URL(request.url)
+  const allowedStatuses = ['open', 'closed', 'deleted']
   const status = searchParams.get('status') || 'open'
-  const page = searchParams.get('page') || 1
+  if (!allowedStatuses.includes(status)) {
+    return NextResponse.json({ error: 'Invalid status' }, { status: 400 })
+  }
+  const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10) || 1)
 
   const res = await fetch(
     `${creds.baseUrl}/tickets?order_by=updated_datetime:desc&limit=20&page=${page}&status=${status}`,

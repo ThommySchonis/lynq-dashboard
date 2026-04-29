@@ -48,11 +48,11 @@ export async function GET(request) {
   }
 
   const { searchParams } = new URL(request.url)
-  const maxResults = searchParams.get('limit') || 20
+  const maxResults = Math.min(Math.max(parseInt(searchParams.get('limit') || '20', 10) || 20, 1), 50)
   const pageToken = searchParams.get('pageToken') || ''
 
   const listUrl = new URL('https://gmail.googleapis.com/gmail/v1/users/me/threads')
-  listUrl.searchParams.set('maxResults', maxResults)
+  listUrl.searchParams.set('maxResults', String(maxResults))
   listUrl.searchParams.set('q', 'in:inbox')
   if (pageToken) listUrl.searchParams.set('pageToken', pageToken)
 
@@ -64,7 +64,7 @@ export async function GET(request) {
   if (!listData.threads) return NextResponse.json({ threads: [], connected: true })
 
   const threads = await Promise.all(
-    listData.threads.slice(0, 20).map(async (t) => {
+    listData.threads.slice(0, maxResults).map(async (t) => {
       const res = await fetch(
         `https://gmail.googleapis.com/gmail/v1/users/me/threads/${t.id}?format=metadata&metadataHeaders=Subject&metadataHeaders=From&metadataHeaders=To&metadataHeaders=Date`,
         { headers: { Authorization: `Bearer ${accessToken}` } }

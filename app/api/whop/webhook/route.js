@@ -16,9 +16,11 @@ function getPlanFromMembership(membership) {
 }
 
 function verifyWhopSignature(body, signature, secret) {
-  if (!secret) return true // Skip verification in dev if no secret set
+  if (!secret || !signature) return false
   const hmac = crypto.createHmac('sha256', secret).update(body).digest('hex')
-  return hmac === signature
+  const left = Buffer.from(hmac)
+  const right = Buffer.from(signature.replace(/^sha256=/, ''))
+  return left.length === right.length && crypto.timingSafeEqual(left, right)
 }
 
 export async function POST(request) {
@@ -26,7 +28,7 @@ export async function POST(request) {
   const signature = request.headers.get('whop-signature') || ''
   const webhookSecret = process.env.WHOP_WEBHOOK_SECRET
 
-  if (webhookSecret && !verifyWhopSignature(rawBody, signature, webhookSecret)) {
+  if (!verifyWhopSignature(rawBody, signature, webhookSecret)) {
     return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
   }
 

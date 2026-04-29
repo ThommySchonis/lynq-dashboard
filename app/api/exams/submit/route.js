@@ -53,6 +53,9 @@ export async function POST(request) {
   if (!answers || typeof answers !== 'object') {
     return NextResponse.json({ error: 'answers object required' }, { status: 400 })
   }
+  if (Object.keys(answers).length > 100) {
+    return NextResponse.json({ error: 'Too many answers submitted' }, { status: 400 })
+  }
 
   // Check if already passed
   const { data: existing } = await supabaseAdmin
@@ -104,9 +107,8 @@ export async function POST(request) {
         score,
         max: q.max_points,
         correct: isCorrect,
-        correct_answer: q.correct_answer,
         submitted_answer: answer,
-        feedback: isCorrect ? 'Correct.' : `Incorrect. The correct answer was option ${q.correct_answer}.`,
+        feedback: isCorrect ? 'Correct.' : 'Incorrect.',
       }
       totalEarned += score
     } else {

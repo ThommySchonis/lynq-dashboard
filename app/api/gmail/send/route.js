@@ -2,6 +2,10 @@ import { supabaseAdmin, getUserFromToken } from '../../../../lib/supabaseAdmin'
 import { checkEmailLimit, incrementEmailCount } from '../../../../lib/emailUsage'
 import { NextResponse } from 'next/server'
 
+function hasHeaderInjection(value) {
+  return /[\r\n]/.test(String(value || ''))
+}
+
 export async function POST(request) {
   const authHeader = request.headers.get('authorization')
   if (!authHeader) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -22,6 +26,10 @@ export async function POST(request) {
   }
 
   const { to, subject, body, threadId, replyToMessageId, tags } = await request.json()
+  if (!to || !subject || !body) return NextResponse.json({ error: 'to, subject and body are required' }, { status: 400 })
+  if ([to, subject, replyToMessageId].some(hasHeaderInjection)) {
+    return NextResponse.json({ error: 'Invalid email header value' }, { status: 400 })
+  }
 
   const { data: gmailToken } = await supabaseAdmin
     .from('gmail_tokens')

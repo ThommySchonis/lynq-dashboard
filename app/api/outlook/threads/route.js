@@ -46,7 +46,7 @@ export async function GET(request) {
   }
 
   const { searchParams } = new URL(request.url)
-  const limit = searchParams.get('limit') || 20
+  const limit = Math.min(Math.max(parseInt(searchParams.get('limit') || '20', 10) || 20, 1), 50)
 
   const res = await fetch(
     `https://graph.microsoft.com/v1.0/me/mailFolders/inbox/messages?$top=${limit}&$orderby=receivedDateTime desc&$select=id,subject,from,toRecipients,receivedDateTime,bodyPreview,isRead,conversationId`,

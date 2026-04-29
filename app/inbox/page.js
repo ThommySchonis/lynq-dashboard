@@ -1846,9 +1846,6 @@ function InboxPage() {
       setSession(session)
       const detectedProvider = await loadThreads(session.access_token)
       loadMacros(session.access_token)
-      if(searchParams.get('view')==='sent'){
-        loadSentThreads(session.access_token, detectedProvider)
-      }
     })
   },[])
 
@@ -2138,7 +2135,7 @@ function InboxPage() {
 
   if(!session) return null
 
-  const VIEWS = [{id:'all',label:'All'},{id:'open',label:'Open'},{id:'pending',label:'Pending'},{id:'resolved',label:'Resolved'},{id:'sent',label:'Sent'}]
+  const VIEWS = [{id:'all',label:'All'},{id:'open',label:'Open'},{id:'pending',label:'Pending'},{id:'resolved',label:'Resolved'}]
 
   // ── Render ──
   return (
@@ -2168,10 +2165,10 @@ function InboxPage() {
             </div>
             <div style={{display:'flex',alignItems:'center',gap:4}}>
               <button onClick={()=>loadThreads(session.access_token)} style={{background:'transparent',color:'var(--text-3)',cursor:'pointer',display:'flex',padding:5,borderRadius:7,transition:'all .15s'}} onMouseEnter={e=>{e.currentTarget.style.color='var(--text-2)';e.currentTarget.style.background='var(--bg-input)'}} onMouseLeave={e=>{e.currentTarget.style.color='var(--text-3)';e.currentTarget.style.background='transparent'}} title="Refresh">{I.refresh}</button>
-              {view!=='sent'&&<button onClick={()=>setComposeOpen(true)} style={{display:'flex',alignItems:'center',gap:5,padding:'5px 11px',borderRadius:8,background:'var(--accent)',border:'none',color:'#fff',cursor:'pointer',fontSize:11.5,fontWeight:600,fontFamily:'inherit',transition:'all .18s',letterSpacing:'.01em'}} onMouseEnter={e=>{e.currentTarget.style.background='var(--accent-hover)'}} onMouseLeave={e=>{e.currentTarget.style.background='var(--accent)'}} title="New ticket">
+              <button onClick={()=>setComposeOpen(true)} style={{display:'flex',alignItems:'center',gap:5,padding:'5px 11px',borderRadius:8,background:'var(--accent)',border:'none',color:'#fff',cursor:'pointer',fontSize:11.5,fontWeight:600,fontFamily:'inherit',transition:'all .18s',letterSpacing:'.01em'}} onMouseEnter={e=>{e.currentTarget.style.background='var(--accent-hover)'}} onMouseLeave={e=>{e.currentTarget.style.background='var(--accent)'}} title="Create Ticket">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                New
-              </button>}
+                Create Ticket
+              </button>
             </div>
           </div>
 
@@ -2184,10 +2181,9 @@ function InboxPage() {
           {/* View tabs */}
           <div style={{display:'flex',borderBottom:'1px solid var(--border)',overflowX:'auto'}} className="sscroll">
             {VIEWS.map(v=>(
-              <button key={v.id} className={`vtab${view===v.id?' on':''}`} onClick={()=>{ setView(v.id); if(v.id==='sent'){ setComposeOpen(true); if(session) loadSentThreads(session.access_token, emailProvider) } else { setComposeOpen(false) } }}>
+              <button key={v.id} className={`vtab${view===v.id?' on':''}`} onClick={()=>{ setView(v.id); setComposeOpen(false) }}>
                 {v.label}
-                {v.id!=='sent'&&counts[v.id]>0&&<span style={{marginLeft:4,background:view===v.id?'rgba(161,117,252,0.2)':'var(--bg-input)',color:view===v.id?'#A175FC':'var(--text-3)',fontSize:9,fontWeight:700,padding:'1px 5px',borderRadius:100}}>{counts[v.id]}</span>}
-                {v.id==='sent'&&sentThreads.length>0&&<span style={{marginLeft:4,background:view===v.id?'rgba(161,117,252,0.2)':'var(--bg-input)',color:view===v.id?'#A175FC':'var(--text-3)',fontSize:9,fontWeight:700,padding:'1px 5px',borderRadius:100}}>{sentThreads.length}</span>}
+                {counts[v.id]>0&&<span style={{marginLeft:4,background:view===v.id?'rgba(161,117,252,0.2)':'var(--bg-input)',color:view===v.id?'#A175FC':'var(--text-3)',fontSize:9,fontWeight:700,padding:'1px 5px',borderRadius:100}}>{counts[v.id]}</span>}
               </button>
             ))}
           </div>
@@ -2236,7 +2232,7 @@ function InboxPage() {
               <a href="/settings" style={{fontSize:10.5,fontWeight:700,color:'#A175FC',textDecoration:'none',flexShrink:0}}>Connect →</a>
             </div>
           )}
-          {(view==='sent'?loadingSent:loadingThreads)&&[0,1,2,3,4].map(i=>(
+          {loadingThreads&&[0,1,2,3,4].map(i=>(
             <div key={i} style={{padding:'11px 14px 11px 12px',borderBottom:'1px solid var(--border)',display:'flex',gap:9,opacity:1-i*.16}}>
               <div className="skel" style={{width:16,height:16,borderRadius:4,flexShrink:0,marginTop:2}} />
               <div style={{flex:1,display:'flex',flexDirection:'column',gap:6}}>
@@ -2246,12 +2242,10 @@ function InboxPage() {
               </div>
             </div>
           ))}
-          {view==='sent'&&!loadingSent&&sentThreads.length===0&&<div style={{padding:'40px 20px',textAlign:'center',color:'var(--text-3)',fontSize:12.5}}>No sent messages</div>}
-          {view!=='sent'&&!loadingThreads&&sortedFiltered.length===0&&gmailOk&&<div style={{padding:'40px 20px',textAlign:'center',color:'var(--text-3)',fontSize:12.5}}>No threads in this view</div>}
-          {(view==='sent' ? sentThreads : sortedFiltered).map(thread=>{
+          {!loadingThreads&&sortedFiltered.length===0&&gmailOk&&<div style={{padding:'40px 20px',textAlign:'center',color:'var(--text-3)',fontSize:12.5}}>No threads in this view</div>}
+          {sortedFiltered.map(thread=>{
             const active=selected?.id===thread.id
-            const isSentView = view==='sent'
-            const name = isSentView ? extractName(thread.to) : extractName(thread.from)
+            const name = extractName(thread.from)
             const status=getStatus(thread.id)
             const analysis=analyses[thread.id]
             const URGENCY_UI={
@@ -2274,7 +2268,7 @@ function InboxPage() {
                   {/* Row 1: name + email icon + time + unread dot */}
                   <div style={{display:'flex',alignItems:'center',gap:5,marginBottom:2}}>
                     <span style={{fontSize:12.5,fontWeight:thread.unread?700:600,color:'var(--text-1)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',flex:1}}>
-                      {isSentView?'To: '+(name||extractEmail(thread.to)):name}
+                      {name}
                     </span>
                     <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{color:'var(--text-1)',flexShrink:0}}><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
                     <span style={{fontSize:10.5,color:'var(--text-1)',flexShrink:0,whiteSpace:'nowrap'}}>{formatDate(thread.date)}</span>
@@ -2302,8 +2296,8 @@ function InboxPage() {
           connectedEmail={connectedEmail}
           token={session?.access_token}
           macros={macros}
-          onClose={()=>{ setComposeOpen(false); if(view==='sent') setView('all') }}
-          onSuccess={(msg,type)=>{ showT(msg,type); if(!type||type==='success') { setComposeOpen(false); if(view==='sent') setView('all'); loadThreads(session.access_token) } }}
+          onClose={()=>setComposeOpen(false)}
+          onSuccess={(msg,type)=>{ showT(msg,type); if(!type||type==='success') { setComposeOpen(false); loadThreads(session.access_token) } }}
         />
       ) : (<>
 

@@ -666,7 +666,7 @@ function CreateTicketView({ token, emailProvider, connectedEmail, onClose, onSuc
     else onSuccess(data.error||'Failed to send','error')
   }
 
-  const liveMacros  = macros.filter(m=>!m.archived)
+  const liveMacros  = Array.isArray(macros) ? macros.filter(m=>!m.archived) : []
   const macroHits   = macroSearch ? liveMacros.filter(m=>(m.name+m.body+(m.tags||[]).join(' ')).toLowerCase().includes(macroSearch.toLowerCase())).slice(0,8) : []
   const suggested   = liveMacros.slice(0,5)
 
@@ -1826,7 +1826,7 @@ function InboxPage() {
       if(!session){window.location.href='/login';return}
       setSession(session)
       const detectedProvider = await loadThreads(session.access_token)
-      loadMacros(session.access_token)
+      fetchMacros(session.access_token)
     })
   },[])
 
@@ -1891,7 +1891,7 @@ function InboxPage() {
   const counts = { all:threads.length, open:threads.filter(t=>getStatus(t.id)==='open').length, pending:threads.filter(t=>getStatus(t.id)==='pending').length, resolved:threads.filter(t=>getStatus(t.id)==='resolved').length }
 
   // ── API calls ──
-  async function loadMacros(token) {
+  async function fetchMacros(token) {
     const res = await authFetch('/api/macros',{},token)
     const data = await res.json()
     if(data.macros?.length) setMacros(data.macros)

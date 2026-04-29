@@ -5,6 +5,10 @@ import { NextResponse } from 'next/server'
 const ACADEMY_PRICE = 100
 
 export async function POST(request) {
+  if (process.env.PAYMENTS_ENABLED !== 'true') {
+    return NextResponse.json({ error: 'Payments are not configured yet' }, { status: 503 })
+  }
+
   const authHeader = request.headers.get('authorization')
   if (!authHeader) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 

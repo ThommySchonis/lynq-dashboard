@@ -31,16 +31,22 @@ const CANCEL_REASONS = [
   { value:'declined',  label:'Payment declined'    },
   { value:'other',     label:'Other'               },
 ]
+const NOW = new Date().toISOString()
 const FALLBACK_MACROS = [
-  { id:'greeting', name:'Greeting',        tags:['support'],   body:'Hi {{name}},\n\nThank you for reaching out! I\'m happy to help you.\n\n' },
-  { id:'tracking', name:'Tracking Update', tags:['shipping'],  body:'Hi {{name}},\n\nYour order is on its way! You can track it using the link in your shipping confirmation email.\n\nBest regards,\nCustomer Support' },
-  { id:'refund',   name:'Refund',          tags:['refund'],    body:'Hi {{name}},\n\nYour refund has been processed. The amount is typically back in your account within 5–7 business days.\n\nBest regards,\nCustomer Support' },
-  { id:'delay',    name:'Delay',           tags:['shipping'],  body:'Hi {{name}},\n\nUnfortunately your order is experiencing a delay. We\'ll keep you updated!\n\nBest regards,\nCustomer Support' },
-  { id:'quality',  name:'Quality Issue',   tags:['complaint'], body:'Hi {{name}},\n\nWe\'re sorry to hear that! Could you send us a photo? We\'ll arrange a solution right away.\n\nBest regards,\nCustomer Support' },
-  { id:'closing',  name:'Closing',         tags:['support'],   body:'Hi {{name}},\n\nGreat to hear! Have a wonderful day!\n\nBest regards,\nCustomer Support' },
-  { id:'notfound', name:'Order Not Found', tags:['order'],     body:'Hi {{name}},\n\nI\'m unable to find an order linked to this email address. Could you share your order number?\n\nBest regards,\nCustomer Support' },
-  { id:'wrongitem',name:'Wrong Item',      tags:['complaint'], body:'Hi {{name}},\n\nWe\'re sorry about that! Please send us a photo and we\'ll sort it out right away.\n\nBest regards,\nCustomer Support' },
+  { id:'greeting', name:'Greeting',        tags:['support'],   language:'English', usageCount:0, updatedAt:NOW, archived:false, body:'Hi {{name}},\n\nThank you for reaching out! I\'m happy to help you.\n\n' },
+  { id:'tracking', name:'Tracking Update', tags:['shipping'],  language:'English', usageCount:0, updatedAt:NOW, archived:false, body:'Hi {{name}},\n\nYour order is on its way! You can track it using the link in your shipping confirmation email.\n\nBest regards,\nCustomer Support' },
+  { id:'refund',   name:'Refund',          tags:['refund'],    language:'English', usageCount:0, updatedAt:NOW, archived:false, body:'Hi {{name}},\n\nYour refund has been processed. The amount is typically back in your account within 5–7 business days.\n\nBest regards,\nCustomer Support' },
+  { id:'delay',    name:'Delay',           tags:['shipping'],  language:'English', usageCount:0, updatedAt:NOW, archived:false, body:'Hi {{name}},\n\nUnfortunately your order is experiencing a delay. We\'ll keep you updated!\n\nBest regards,\nCustomer Support' },
+  { id:'quality',  name:'Quality Issue',   tags:['complaint'], language:'English', usageCount:0, updatedAt:NOW, archived:false, body:'Hi {{name}},\n\nWe\'re sorry to hear that! Could you send us a photo? We\'ll arrange a solution right away.\n\nBest regards,\nCustomer Support' },
+  { id:'closing',  name:'Closing',         tags:['support'],   language:'English', usageCount:0, updatedAt:NOW, archived:false, body:'Hi {{name}},\n\nGreat to hear! Have a wonderful day!\n\nBest regards,\nCustomer Support' },
+  { id:'notfound', name:'Order Not Found', tags:['order'],     language:'English', usageCount:0, updatedAt:NOW, archived:false, body:'Hi {{name}},\n\nI\'m unable to find an order linked to this email address. Could you share your order number?\n\nBest regards,\nCustomer Support' },
+  { id:'wrongitem',name:'Wrong Item',      tags:['complaint'], language:'English', usageCount:0, updatedAt:NOW, archived:false, body:'Hi {{name}},\n\nWe\'re sorry about that! Please send us a photo and we\'ll sort it out right away.\n\nBest regards,\nCustomer Support' },
 ]
+function loadMacros() {
+  try { const s=JSON.parse(localStorage.getItem('lynq_macros')||'null'); if(s?.length) return s } catch{}
+  return FALLBACK_MACROS
+}
+function saveMacrosToStorage(m) { try{localStorage.setItem('lynq_macros',JSON.stringify(m))}catch{} }
 
 // ─── Demo data ───────────────────────────────────────────────
 const DEMO_THREADS = [
@@ -124,7 +130,7 @@ const CSS = `
   input:focus-visible,textarea:focus-visible,[contenteditable]:focus-visible { outline:none; }
 
   /* ── Thread row ── */
-  .trow { padding:14px 16px 12px; cursor:pointer; border-bottom:1px solid var(--border); border-left:3px solid transparent; transition:all .2s cubic-bezier(.16,1,.3,1); position:relative; }
+  .trow { padding:12px 14px 11px 18px; cursor:pointer; border-bottom:1px solid var(--border); border-left:3px solid transparent; transition:all .2s cubic-bezier(.16,1,.3,1); position:relative; }
   .trow:hover:not(.trow-active) { background:var(--bg-surface-2); border-left-color:var(--accent-border); }
   .trow-active { background:var(--accent-soft); border-left-color:var(--accent); }
   [data-theme="dark"] .trow:hover:not(.trow-active) { background:linear-gradient(90deg,rgba(161,117,252,0.09) 0%,rgba(161,117,252,0.02) 100%); }
@@ -161,7 +167,7 @@ const CSS = `
   .isearch::placeholder { color:var(--text-3); }
 
   /* ── Macro ── */
-  .macro-panel { display:flex; border-top:1px solid var(--border); animation:fadeUp .18s ease both; max-height:260px; }
+  .macro-panel { display:flex; border-top:1px solid var(--border); animation:fadeUp .18s ease both; height:min(360px,46vh); min-height:220px; }
   .macro-list { width:230px; border-right:1px solid var(--border); overflow-y:auto; flex-shrink:0; }
   .macro-item { padding:10px 14px; cursor:pointer; transition:background .12s; border-left:2px solid transparent; }
   .macro-item:hover { background:var(--bg-surface-2); }
@@ -170,15 +176,26 @@ const CSS = `
   .macro-var { color:#A175FC; background:rgba(161,117,252,0.12); padding:1px 5px; border-radius:4px; font-weight:600; font-size:11px; }
   .macro-suggest { padding:4px 14px 6px; font-size:9.5px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--text-3); }
   .macro-tag { font-size:10px; font-weight:600; padding:1px 6px; border-radius:4px; background:var(--bg-surface-2); color:var(--text-3); }
+  .macro-gear-menu { position:absolute; top:calc(100% + 4px); right:0; min-width:192px; background:var(--bg-surface); border:1px solid var(--border); border-radius:10px; box-shadow:0 8px 24px rgba(15,23,42,0.12),0 2px 6px rgba(15,23,42,0.06); z-index:40; padding:4px; animation:fadeUp .14s ease both; }
+  .macro-gear-item { display:flex; align-items:center; gap:9px; width:100%; padding:8px 11px; border-radius:7px; background:none; border:none; font-family:inherit; font-size:12.5px; color:var(--text-1); cursor:pointer; text-align:left; transition:background .12s; }
+  .macro-gear-item:hover { background:var(--bg-surface-2); }
+  .macro-gear-item.danger { color:var(--danger); }
+  .macro-gear-divider { height:1px; background:var(--border); margin:3px 0; }
+  .macro-star { background:none; border:none; cursor:pointer; display:flex; align-items:center; padding:2px 3px; border-radius:4px; transition:opacity .15s; flex-shrink:0; opacity:0; }
+  .macro-item:hover .macro-star { opacity:0.45; }
+  .macro-star:hover { opacity:1 !important; }
+  .macro-star.fav { opacity:1; }
 
   /* ── Compose textarea ── */
   .compose-ta { width:100%; resize:none; outline:none; font-family:inherit; background:transparent; border:none; padding:14px 16px; font-size:13.5px; color:var(--text-1); line-height:1.78; letter-spacing:.005em; }
 
   /* ── Compose box ── */
-  .compose-box { margin:0 16px 16px; border:1px solid var(--border); border-radius:18px; overflow:hidden; background:var(--bg-surface); transition:border-color .25s,box-shadow .25s; box-shadow:var(--shadow-card); }
-  .compose-box:focus-within { border-color:var(--accent-border); box-shadow:0 0 0 3px rgba(124,92,252,0.09),var(--shadow-card-hover); }
-  [data-theme="dark"] .compose-box { background:linear-gradient(145deg,rgba(255,255,255,0.04) 0%,rgba(255,255,255,0.02) 100%); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); box-shadow:0 4px 24px rgba(0,0,0,0.2); }
-  [data-theme="dark"] .compose-box:focus-within { border-top-color:rgba(161,117,252,0.6); box-shadow:0 0 0 3px rgba(161,117,252,0.09),0 8px 40px rgba(161,117,252,0.1); }
+  .compose-box { background:var(--bg-surface); }
+  [data-theme="dark"] .compose-box { background:rgba(255,255,255,0.025); }
+
+  /* ── Suggested macro chips ── */
+  .macro-chip-suggest { display:inline-flex; align-items:center; font-size:11px; font-weight:500; font-family:inherit; padding:3px 10px; border-radius:6px; border:1px solid var(--border); background:var(--bg-surface); color:var(--text-1); cursor:pointer; transition:all .15s; white-space:nowrap; }
+  .macro-chip-suggest:hover { border-color:var(--accent-border); color:var(--accent-text); background:var(--accent-soft); }
 
   /* ── Buttons ── */
   .btn-send { padding:9px 20px; font-size:13px; font-weight:600; font-family:inherit; background:linear-gradient(135deg,#A175FC 0%,#7B45E8 100%); color:#fff; border-radius:10px; cursor:pointer; transition:all .2s cubic-bezier(.16,1,.3,1); box-shadow:0 2px 14px rgba(161,117,252,0.45); letter-spacing:.01em; }
@@ -375,6 +392,29 @@ const CSS = `
   [data-theme="dark"] .in-vig { background:radial-gradient(ellipse 115% 105% at 50% 50%,transparent 32%,rgba(10,5,32,0.42) 70%,rgba(10,5,32,0.82) 100%); }
 
   @media (prefers-reduced-motion:reduce) { *,*::before,*::after { animation-duration:.01ms !important; transition-duration:.01ms !important; } }
+
+  /* ── Right Panel — Gorgias style ── */
+  .rp-search { width:100%; padding:7px 12px 7px 32px; background:var(--bg-surface-2); border:1px solid var(--border); border-radius:8px; color:var(--text-1); font-size:12px; outline:none; transition:border-color .2s; font-family:inherit; }
+  .rp-search:focus { border-color:var(--accent-border); }
+  .rp-search::placeholder { color:var(--text-3); }
+  .rp-tab { flex:1; padding:8px 6px; background:transparent; cursor:pointer; font-size:11.5px; font-weight:500; font-family:inherit; color:var(--text-2); border:none; border-bottom:2px solid transparent; transition:all .15s; white-space:nowrap; text-align:center; }
+  .rp-tab.on { color:var(--text-1); border-bottom-color:var(--accent); font-weight:600; }
+  .rp-tab:hover:not(.on) { color:var(--text-1); }
+  .rp-section { width:100%; display:flex; align-items:center; gap:6px; padding:9px 14px; background:transparent; cursor:pointer; border:none; font-family:inherit; text-align:left; transition:background .12s; }
+  .rp-section:hover { background:var(--bg-surface-2); }
+  .rp-kv { display:flex; align-items:baseline; justify-content:space-between; gap:16px; padding:3px 0; }
+  .rp-kv-l { font-size:11px; color:var(--text-2); flex-shrink:0; min-width:72px; }
+  .rp-kv-v { font-size:11.5px; color:var(--text-1); text-align:right; word-break:break-word; }
+  .rp-order-hdr { width:100%; display:flex; align-items:center; gap:6px; padding:10px 14px 9px; background:transparent; cursor:pointer; border:none; font-family:inherit; text-align:left; transition:background .12s; }
+  .rp-order-hdr:hover { background:var(--bg-surface-2); }
+  .rp-action { display:inline-flex; align-items:center; gap:4px; font-size:11px; font-weight:500; font-family:inherit; padding:4px 9px; border-radius:6px; border:1px solid var(--border); background:var(--bg-surface); color:var(--text-1); cursor:pointer; transition:all .15s; white-space:nowrap; }
+  .rp-action:hover { border-color:var(--border-hover); background:var(--bg-surface-2); }
+  .rp-action.danger:hover { border-color:rgba(220,38,38,0.35); color:#dc2626; background:rgba(220,38,38,0.05); }
+  [data-theme="dark"] .rp-action.danger:hover { color:#f87171; background:rgba(239,68,68,0.08); }
+  .rp-subsec { width:100%; display:flex; align-items:center; gap:6px; padding:7px 0; background:transparent; cursor:pointer; border:none; font-size:11.5px; font-weight:600; font-family:inherit; color:var(--text-1); text-align:left; transition:opacity .12s; border-top:1px solid var(--border); margin-top:6px; }
+  [data-theme="dark"] .rp-subsec { border-top-color:rgba(255,255,255,0.1); }
+  .rp-subsec:hover { opacity:.75; }
+  .rp-tag { font-size:10px; font-weight:500; padding:2px 7px; border-radius:4px; background:var(--bg-surface-2); color:var(--text-1); border:1px solid var(--border); }
 `
 
 // ─── Icons ────────────────────────────────────────────────────
@@ -1101,15 +1141,36 @@ function NoteModal({ order, token, onClose, onSuccess }) {
 }
 
 // ─── Macro Panel ──────────────────────────────────────────────
-function MacroPanel({ macros, aiMacros, onInsert, onClose, customerName }) {
-  const [search, setSearch]   = useState('')
+function MacroPanel({ macros, aiMacros, onInsert, onClose, customerName, onManage, onCreateNew, favs, onToggleFav }) {
+  const [search, setSearch]     = useState('')
   const [selected, setSelected] = useState(null)
+  const [gearOpen, setGearOpen] = useState(false)
   const searchRef = useRef(null)
+  const gearRef   = useRef(null)
+
   useEffect(()=>{ searchRef.current?.focus() },[])
-  useEffect(()=>{ function h(e){if(e.key==='Escape')onClose()} document.addEventListener('keydown',h); return ()=>document.removeEventListener('keydown',h) },[onClose])
+  useEffect(()=>{
+    function h(e){if(e.key==='Escape'){ if(gearOpen)setGearOpen(false); else onClose() }}
+    document.addEventListener('keydown',h); return ()=>document.removeEventListener('keydown',h)
+  },[onClose,gearOpen])
+  useEffect(()=>{
+    if(!gearOpen) return
+    function h(e){ if(gearRef.current&&!gearRef.current.contains(e.target)) setGearOpen(false) }
+    document.addEventListener('mousedown',h); return ()=>document.removeEventListener('mousedown',h)
+  },[gearOpen])
+
+  function toggleFav(id, e) { e.stopPropagation(); onToggleFav(id) }
 
   const filtered = macros.filter(m=>!search||(m.name+m.body+(m.tags||[]).join('')).toLowerCase().includes(search.toLowerCase()))
+  const favMacros    = filtered.filter(m=>favs.includes(m.id))
+  const nonFavMacros = filtered.filter(m=>!favs.includes(m.id))
   const active = selected || filtered[0] || null
+
+  const StarIcon = ({filled})=>(
+    <svg width="13" height="13" viewBox="0 0 24 24" fill={filled?'#f59e0b':'none'} stroke={filled?'#f59e0b':'currentColor'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+    </svg>
+  )
 
   function applyMacro(m) {
     const firstName = (customerName||'').split(' ')[0] || 'there'
@@ -1125,54 +1186,409 @@ function MacroPanel({ macros, aiMacros, onInsert, onClose, customerName }) {
     )
   }
 
+  const GearIcon = ()=>(
+    <svg width="15" height="15" viewBox="0 0 20 20" fill="currentColor">
+      <path fillRule="evenodd" clipRule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z"/>
+    </svg>
+  )
+
   return (
-    <div style={{borderTop:'1px solid rgba(255,255,255,0.055)',animation:'fadeUp .18s ease both'}}>
-      {/* Search row */}
-      <div style={{display:'flex',alignItems:'center',gap:8,padding:'8px 14px',borderBottom:'1px solid rgba(255,255,255,0.055)',background:'var(--bg-input)'}}>
-        <span style={{color:'#A175FC',display:'flex',flexShrink:0}}>{I.lightning}</span>
-        <input ref={searchRef} value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search macros by name, tag or content…" style={{flex:1,background:'transparent',border:'none',outline:'none',fontSize:12.5,color:'var(--text-2)',fontFamily:'inherit'}} />
+    <div style={{borderTop:'1px solid var(--border)',animation:'fadeUp .18s ease both',display:'flex',flexDirection:'column',height:'min(360px,46vh)',minHeight:220,background:'var(--bg-surface)'}}>
+      {/* Search + gear row */}
+      <div style={{display:'flex',alignItems:'center',gap:8,padding:'8px 12px',borderBottom:'1px solid var(--border)',background:'var(--bg-surface-2)',flexShrink:0}}>
+        <span style={{color:'var(--accent-text)',display:'flex',flexShrink:0}}>{I.lightning}</span>
+        <input ref={searchRef} value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search macros by name, tag or content…" style={{flex:1,background:'transparent',border:'none',outline:'none',fontSize:12.5,color:'var(--text-1)',fontFamily:'inherit'}} />
         {aiMacros?.length>0 && <span style={{fontSize:10,fontWeight:700,padding:'2px 7px',borderRadius:5,background:'rgba(161,117,252,0.15)',color:'#A175FC',letterSpacing:'.04em',flexShrink:0}}>AI ✦</span>}
-        <button onClick={onClose} style={{color:'var(--text-3)',cursor:'pointer',display:'flex',padding:3,borderRadius:5,transition:'color .15s'}} onMouseEnter={e=>e.currentTarget.style.color='var(--text-2)'} onMouseLeave={e=>e.currentTarget.style.color='var(--text-3)'}>{I.close}</button>
+        {/* Gear settings */}
+        <div ref={gearRef} style={{position:'relative',flexShrink:0}}>
+          <button
+            onClick={()=>setGearOpen(p=>!p)}
+            style={{color:gearOpen?'var(--accent-text)':'var(--text-2)',cursor:'pointer',display:'flex',padding:'5px 6px',borderRadius:6,background:gearOpen?'var(--accent-soft)':'transparent',border:gearOpen?'1px solid var(--accent-border)':'1px solid transparent',transition:'all .15s'}}
+            onMouseEnter={e=>{if(!gearOpen){e.currentTarget.style.background='var(--bg-surface)';e.currentTarget.style.border='1px solid var(--border)'}}}
+            onMouseLeave={e=>{if(!gearOpen){e.currentTarget.style.background='transparent';e.currentTarget.style.border='1px solid transparent'}}}
+            title="Macro settings"
+          ><GearIcon /></button>
+          {gearOpen&&(
+            <div className="macro-gear-menu">
+              <button className="macro-gear-item" onClick={()=>{setGearOpen(false);onManage()}}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="9" x2="15" y2="9"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="15" x2="12" y2="15"/></svg>
+                Manage macros
+              </button>
+              <button className="macro-gear-item" onClick={()=>{setGearOpen(false);active&&onManage(active)}}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                Edit macro
+              </button>
+              <button className="macro-gear-item" onClick={()=>{setGearOpen(false);onCreateNew()}}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Create new macro
+              </button>
+              <div className="macro-gear-divider" />
+              <button className="macro-gear-item danger" onClick={()=>{setGearOpen(false);active&&confirm('Delete this macro?')&&onDeleteMacro&&onDeleteMacro(active.id)}}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                Delete macro
+              </button>
+              <div className="macro-gear-divider" />
+              <button className="macro-gear-item" onClick={()=>{setGearOpen(false);onManage()}}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                My macro preferences
+              </button>
+            </div>
+          )}
+        </div>
+        <button onClick={onClose} style={{color:'var(--text-2)',cursor:'pointer',display:'flex',padding:'5px 6px',borderRadius:6,border:'1px solid transparent',transition:'all .15s'}} onMouseEnter={e=>{e.currentTarget.style.color='var(--text-1)';e.currentTarget.style.background='var(--bg-surface)';e.currentTarget.style.border='1px solid var(--border)'}} onMouseLeave={e=>{e.currentTarget.style.color='var(--text-2)';e.currentTarget.style.background='transparent';e.currentTarget.style.border='1px solid transparent'}}>{I.close}</button>
       </div>
-      {/* Two-panel */}
-      <div className="macro-panel">
+
+      {/* Two-panel — fills remaining height */}
+      <div style={{flex:1,display:'flex',overflow:'hidden'}}>
         {/* List */}
-        <div className="macro-list sscroll">
+        <div className="macro-list sscroll" style={{borderRight:'1px solid var(--border)'}}>
           {aiMacros?.length>0 && (
             <>
               <div className="macro-suggest">AI suggestions ✦</div>
               {aiMacros.map(m=>(
-                <div key={m.id} className={`macro-item${active?.id===m.id?' mi-active':''}`} onClick={()=>setSelected(m)} onDoubleClick={()=>applyMacro(m)}>
-                  <div style={{fontSize:12.5,fontWeight:600,color:active?.id===m.id?'#A175FC':'var(--text-1)',marginBottom:3}}>{m.name}</div>
+                <div key={m.id} className={`macro-item${active?.id===m.id?' mi-active':''}`} onClick={()=>setSelected(m)} onDoubleClick={()=>applyMacro(m)} style={{display:'flex',alignItems:'flex-start',gap:6}}>
+                  <div style={{flex:1,minWidth:0}}>
+                    <div style={{fontSize:12.5,fontWeight:600,color:active?.id===m.id?'#A175FC':'var(--text-1)',marginBottom:3}}>{m.name}</div>
+                  </div>
                 </div>
               ))}
-              <div style={{height:1,background:'var(--bg-surface-2)',margin:'4px 0'}} />
+              <div style={{height:1,background:'var(--border)',margin:'4px 0'}} />
             </>
           )}
           {filtered.length===0 && <div style={{padding:'20px 14px',fontSize:12,color:'var(--text-3)',textAlign:'center'}}>No macros found</div>}
-          {filtered.map(m=>(
-            <div key={m.id} className={`macro-item${active?.id===m.id?' mi-active':''}`} onClick={()=>setSelected(m)} onDoubleClick={()=>applyMacro(m)}>
-              <div style={{fontSize:12.5,fontWeight:600,color:active?.id===m.id?'#A175FC':'var(--text-1)',marginBottom:3}}>{m.name}</div>
-              <div style={{display:'flex',gap:4,flexWrap:'wrap'}}>
-                {(m.tags||[]).map(t=><span key={t} className="macro-tag">{t}</span>)}
-              </div>
-            </div>
-          ))}
-        </div>
-        {/* Preview */}
-        <div style={{flex:1,display:'flex',flexDirection:'column',overflow:'hidden'}}>
-          {active ? (
+          {/* Favorites section */}
+          {favMacros.length>0&&(
             <>
-              <div className="macro-preview sscroll">{renderPreview(active.body)}</div>
-              <div style={{padding:'10px 14px',borderTop:'1px solid rgba(255,255,255,0.055)',display:'flex',justifyContent:'flex-end',gap:8,flexShrink:0}}>
-                <button className="btn-ghost" style={{fontSize:11.5,padding:'6px 12px'}} onClick={()=>setSelected(null)}>Close</button>
-                <button className="btn-send" style={{fontSize:11.5,padding:'6px 14px'}} onClick={()=>applyMacro(active)}>Insert</button>
+              <div className="macro-suggest" style={{display:'flex',alignItems:'center',gap:4}}>
+                <svg width="9" height="9" viewBox="0 0 24 24" fill="#f59e0b" stroke="#f59e0b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                Favorites
               </div>
+              {favMacros.map(m=>(
+                <div key={m.id} className={`macro-item${active?.id===m.id?' mi-active':''}`} onClick={()=>setSelected(m)} onDoubleClick={()=>applyMacro(m)} style={{display:'flex',alignItems:'flex-start',gap:6}}>
+                  <div style={{flex:1,minWidth:0}}>
+                    <div style={{fontSize:12.5,fontWeight:600,color:active?.id===m.id?'#A175FC':'var(--text-1)',marginBottom:3}}>{m.name}</div>
+                    <div style={{display:'flex',gap:4,flexWrap:'wrap'}}>
+                      {(m.tags||[]).map(t=><span key={t} className="macro-tag">{t}</span>)}
+                    </div>
+                  </div>
+                  <button className="macro-star fav" style={{marginTop:1}} onClick={e=>toggleFav(m.id,e)} title="Remove from favorites"><StarIcon filled /></button>
+                </div>
+              ))}
+              {nonFavMacros.length>0&&<div style={{height:1,background:'var(--border)',margin:'4px 0'}} />}
             </>
-          ) : (
-            <div style={{flex:1,display:'flex',alignItems:'center',justifyContent:'center',color:'var(--text-3)',fontSize:12.5}}>Select a macro to preview</div>
+          )}
+          {/* All / remaining macros */}
+          {nonFavMacros.length>0&&(
+            <>
+              {favMacros.length>0&&<div className="macro-suggest">All macros</div>}
+              {nonFavMacros.map(m=>(
+                <div key={m.id} className={`macro-item${active?.id===m.id?' mi-active':''}`} onClick={()=>setSelected(m)} onDoubleClick={()=>applyMacro(m)} style={{display:'flex',alignItems:'flex-start',gap:6}}>
+                  <div style={{flex:1,minWidth:0}}>
+                    <div style={{fontSize:12.5,fontWeight:600,color:active?.id===m.id?'#A175FC':'var(--text-1)',marginBottom:3}}>{m.name}</div>
+                    <div style={{display:'flex',gap:4,flexWrap:'wrap'}}>
+                      {(m.tags||[]).map(t=><span key={t} className="macro-tag">{t}</span>)}
+                    </div>
+                  </div>
+                  <button className="macro-star" style={{marginTop:1}} onClick={e=>toggleFav(m.id,e)} title="Add to favorites"><StarIcon filled={false} /></button>
+                </div>
+              ))}
+            </>
           )}
         </div>
+
+        {/* Preview — no buttons here */}
+        {active
+          ? <div className="macro-preview sscroll" style={{flex:1}}>{renderPreview(active.body)}</div>
+          : <div style={{flex:1,display:'flex',alignItems:'center',justifyContent:'center',color:'var(--text-3)',fontSize:12.5}}>Select a macro to preview</div>
+        }
+      </div>
+
+      {/* Full-width footer — always visible, connected to bottom of panel */}
+      <div style={{borderTop:'1px solid var(--border)',padding:'8px 14px',display:'flex',alignItems:'center',justifyContent:'flex-end',gap:8,flexShrink:0,background:'var(--bg-surface)'}}>
+        <button className="btn-ghost" style={{fontSize:11.5,padding:'6px 14px'}} onClick={onClose}>Close</button>
+        <button className="btn-send" style={{fontSize:11.5,padding:'6px 16px',opacity:active?1:0.45,cursor:active?'pointer':'default'}} onClick={()=>active&&applyMacro(active)}>Insert</button>
+      </div>
+    </div>
+  )
+}
+
+// ─── Macro Editor ─────────────────────────────────────────────
+function MacroEditor({ macro, onSave, onDuplicate, onDelete, onBack }) {
+  const isNew = !macro?.id
+  const [name, setName]       = useState(macro?.name || '')
+  const [body, setBody]       = useState(macro?.body || '')
+  const [tags, setTags]       = useState((macro?.tags||[]).join(', '))
+  const [language, setLang]   = useState(macro?.language || 'English')
+  const [tagInput, setTagInput] = useState((macro?.tags||[]).join(', '))
+  const bodyRef = useRef(null)
+
+  useEffect(()=>{
+    if(bodyRef.current) bodyRef.current.value = macro?.body || ''
+  },[])
+
+  function insertVar(v) {
+    const ta = bodyRef.current; if(!ta) return
+    const s=ta.selectionStart, e=ta.selectionEnd
+    const newVal = ta.value.slice(0,s)+v+ta.value.slice(e)
+    ta.value = newVal; setBody(newVal)
+    ta.focus(); ta.setSelectionRange(s+v.length, s+v.length)
+  }
+
+  function handleSave() {
+    if(!name.trim()) return
+    const t = tagInput.split(',').map(s=>s.trim()).filter(Boolean)
+    onSave({
+      id: macro?.id || `m_${Date.now()}`,
+      name: name.trim(),
+      body: bodyRef.current?.value || body,
+      tags: t,
+      language,
+      usageCount: macro?.usageCount || 0,
+      updatedAt: new Date().toISOString(),
+      archived: macro?.archived || false,
+    })
+  }
+
+  const VARS = [
+    { label:'Customer first name', value:'{{name}}' },
+    { label:'Order number',        value:'{{order_number}}' },
+    { label:'Tracking link',       value:'{{tracking_link}}' },
+    { label:'Agent name',          value:'{{agent_name}}' },
+  ]
+
+  return (
+    <div style={{flex:1,display:'flex',flexDirection:'column',overflow:'auto',background:'var(--bg-page)'}}>
+      {/* Top bar */}
+      <div style={{display:'flex',alignItems:'center',gap:10,padding:'14px 24px',borderBottom:'1px solid var(--border)',background:'var(--bg-surface)',flexShrink:0}}>
+        <button onClick={onBack} style={{display:'flex',alignItems:'center',gap:5,background:'none',border:'none',cursor:'pointer',color:'var(--text-2)',fontSize:13,padding:'4px 0',fontFamily:'inherit'}}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+          Back
+        </button>
+        <span style={{color:'var(--border)',fontSize:16}}>|</span>
+        <span style={{fontSize:14,fontWeight:600,color:'var(--text-1)'}}>{isNew ? 'Create macro' : `Edit: ${macro.name}`}</span>
+      </div>
+
+      {/* Form */}
+      <div style={{maxWidth:860,width:'100%',margin:'0 auto',padding:'32px 24px',display:'flex',gap:32}}>
+        {/* Left col — main */}
+        <div style={{flex:1,display:'flex',flexDirection:'column',gap:20}}>
+          {/* Name */}
+          <div>
+            <label style={{display:'block',fontSize:12,fontWeight:600,color:'var(--text-2)',marginBottom:6}}>Macro name <span style={{color:'var(--danger)'}}>*</span></label>
+            <input value={name} onChange={e=>setName(e.target.value)} placeholder="e.g. Delivery - Delay" style={{width:'100%',padding:'9px 12px',border:'1px solid var(--border)',borderRadius:8,fontSize:13,color:'var(--text-1)',background:'var(--bg-surface)',fontFamily:'inherit',outline:'none'}} />
+            <div style={{fontSize:11,color:'var(--text-3)',marginTop:5}}>Name that all agents will see while searching for it</div>
+          </div>
+
+          {/* Response text */}
+          <div>
+            <label style={{display:'block',fontSize:12,fontWeight:600,color:'var(--text-2)',marginBottom:6}}>Response text</label>
+            {/* Recipient row */}
+            <div style={{display:'flex',alignItems:'center',gap:8,padding:'7px 12px',borderRadius:'8px 8px 0 0',border:'1px solid var(--border)',borderBottom:'none',background:'var(--bg-surface-2)',fontSize:12,color:'var(--text-2)'}}>
+              <span style={{fontWeight:600}}>To:</span>
+              <span style={{padding:'2px 8px',borderRadius:5,background:'var(--accent-soft)',color:'var(--accent-text)',fontWeight:600,fontSize:11}}>Current client</span>
+            </div>
+            {/* Toolbar */}
+            <div style={{display:'flex',alignItems:'center',gap:2,padding:'5px 10px',border:'1px solid var(--border)',borderBottom:'none',background:'var(--bg-surface)',flexWrap:'wrap'}}>
+              {['B','I','U'].map(f=>(
+                <button key={f} style={{fontWeight:f==='B'?700:400,fontStyle:f==='I'?'italic':'normal',textDecoration:f==='U'?'underline':'none',padding:'3px 7px',borderRadius:5,border:'1px solid transparent',background:'none',cursor:'pointer',color:'var(--text-2)',fontSize:13,fontFamily:'inherit'}}>{f}</button>
+              ))}
+              <span style={{width:1,height:16,background:'var(--border)',margin:'0 4px'}} />
+              {VARS.map(v=>(
+                <button key={v.value} onClick={()=>insertVar(v.value)} style={{padding:'2px 8px',borderRadius:5,border:'1px solid var(--border)',background:'var(--bg-surface-2)',color:'var(--text-2)',fontSize:11,fontWeight:500,cursor:'pointer',fontFamily:'inherit',whiteSpace:'nowrap'}}>{v.label}</button>
+              ))}
+            </div>
+            {/* Body */}
+            <textarea
+              ref={bodyRef}
+              defaultValue={macro?.body || ''}
+              onChange={e=>setBody(e.target.value)}
+              placeholder="Write your macro response here. Use the variable buttons above to insert dynamic values."
+              style={{width:'100%',minHeight:200,padding:'12px 14px',border:'1px solid var(--border)',borderRadius:'0 0 8px 8px',resize:'vertical',fontSize:13,lineHeight:1.75,color:'var(--text-1)',background:'var(--bg-surface)',fontFamily:'inherit',outline:'none'}}
+            />
+          </div>
+
+          {/* Tags */}
+          <div>
+            <label style={{display:'block',fontSize:12,fontWeight:600,color:'var(--text-2)',marginBottom:6}}>Tags <span style={{fontSize:11,fontWeight:400,color:'var(--text-3)'}}>(comma separated)</span></label>
+            <input value={tagInput} onChange={e=>setTagInput(e.target.value)} placeholder="e.g. shipping, support" style={{width:'100%',padding:'9px 12px',border:'1px solid var(--border)',borderRadius:8,fontSize:13,color:'var(--text-1)',background:'var(--bg-surface)',fontFamily:'inherit',outline:'none'}} />
+          </div>
+
+          {/* Actions row */}
+          <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',paddingTop:8,borderTop:'1px solid var(--border)'}}>
+            <div style={{display:'flex',gap:8}}>
+              <button onClick={handleSave} style={{padding:'9px 18px',borderRadius:8,border:'none',background:'var(--text-1)',color:'var(--bg-surface)',fontWeight:600,fontSize:13,cursor:'pointer',fontFamily:'inherit'}}>
+                {isNew ? 'Create macro' : 'Update macro'}
+              </button>
+              {!isNew&&<button onClick={()=>onDuplicate(macro)} style={{padding:'9px 16px',borderRadius:8,border:'1px solid var(--border)',background:'var(--bg-surface)',color:'var(--text-1)',fontWeight:500,fontSize:13,cursor:'pointer',fontFamily:'inherit'}}>Duplicate macro</button>}
+            </div>
+            <div style={{display:'flex',gap:8}}>
+              {!isNew&&<button onClick={()=>onDelete(macro.id)} style={{padding:'9px 16px',borderRadius:8,border:'1px solid rgba(220,38,38,0.3)',background:'rgba(220,38,38,0.06)',color:'var(--danger)',fontWeight:500,fontSize:13,cursor:'pointer',fontFamily:'inherit'}}>Delete macro</button>}
+            </div>
+          </div>
+        </div>
+
+        {/* Right col — language */}
+        <div style={{width:220,flexShrink:0,display:'flex',flexDirection:'column',gap:16}}>
+          <div>
+            <label style={{display:'block',fontSize:12,fontWeight:600,color:'var(--text-2)',marginBottom:6}}>Language</label>
+            <select value={language} onChange={e=>setLang(e.target.value)} style={{width:'100%',padding:'9px 12px',border:'1px solid var(--border)',borderRadius:8,fontSize:13,color:'var(--text-1)',background:'var(--bg-surface)',fontFamily:'inherit',outline:'none',cursor:'pointer'}}>
+              {['English','Dutch','German','French','Spanish','Italian','Portuguese'].map(l=>(
+                <option key={l} value={l}>{l}</option>
+              ))}
+            </select>
+            <div style={{fontSize:11,color:'var(--text-3)',marginTop:5}}>Language in which this macro is written</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── Macro Manager ─────────────────────────────────────────────
+function MacroManager({ macros, favs, onClose, onSaveMacro, onDeleteMacro, onToggleFav }) {
+  const [tab, setTab]         = useState('active')
+  const [search, setSearch]   = useState('')
+  const [langFilter, setLangF]= useState('all')
+  const [tagFilter, setTagF]  = useState('all')
+  const [editing, setEditing] = useState(null) // null=list, 'new'=create, macro=edit
+
+  const allTags = [...new Set(macros.flatMap(m=>m.tags||[]))].sort()
+  const allLangs = [...new Set(macros.map(m=>m.language||'English'))].sort()
+
+  const visible = macros.filter(m=>{
+    if(tab==='active' && m.archived) return false
+    if(tab==='archived' && !m.archived) return false
+    if(search && !(m.name+m.body+(m.tags||[]).join('')).toLowerCase().includes(search.toLowerCase())) return false
+    if(langFilter!=='all' && m.language!==langFilter) return false
+    if(tagFilter!=='all' && !(m.tags||[]).includes(tagFilter)) return false
+    return true
+  })
+
+  function handleSave(m) {
+    onSaveMacro(m)
+    setEditing(null)
+  }
+  function handleDuplicate(m) {
+    onSaveMacro({...m, id:`m_${Date.now()}`, name:`${m.name} (copy)`, usageCount:0, updatedAt:new Date().toISOString()})
+    setEditing(null)
+  }
+  function handleDelete(id) {
+    if(!confirm('Delete this macro? This cannot be undone.')) return
+    onDeleteMacro(id); setEditing(null)
+  }
+  function handleArchive(m) {
+    onSaveMacro({...m, archived:!m.archived, updatedAt:new Date().toISOString()})
+  }
+
+  function fmtDate(iso) {
+    if(!iso) return '—'
+    try { return new Date(iso).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}) } catch{ return '—' }
+  }
+
+  if(editing) {
+    return (
+      <div style={{position:'fixed',inset:0,background:'var(--bg-page)',zIndex:200,display:'flex',flexDirection:'column'}}>
+        <MacroEditor
+          macro={editing==='new'?null:editing}
+          onSave={handleSave}
+          onDuplicate={handleDuplicate}
+          onDelete={handleDelete}
+          onBack={()=>setEditing(null)}
+        />
+      </div>
+    )
+  }
+
+  return (
+    <div style={{position:'fixed',inset:0,background:'var(--bg-page)',zIndex:200,display:'flex',flexDirection:'column'}}>
+      {/* Header */}
+      <div style={{display:'flex',alignItems:'center',gap:16,padding:'14px 28px',borderBottom:'1px solid var(--border)',background:'var(--bg-surface)',flexShrink:0}}>
+        <button onClick={onClose} style={{display:'flex',alignItems:'center',gap:5,background:'none',border:'none',cursor:'pointer',color:'var(--text-2)',fontSize:13,padding:'4px 0',fontFamily:'inherit'}}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+          Back to inbox
+        </button>
+        <span style={{flex:1,fontSize:16,fontWeight:700,color:'var(--text-1)'}}>Macros</span>
+        {/* Filters */}
+        <div style={{position:'relative',display:'flex',alignItems:'center'}}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{position:'absolute',left:9,color:'var(--text-3)',pointerEvents:'none'}}><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search macros..." style={{paddingLeft:30,paddingRight:12,paddingTop:7,paddingBottom:7,border:'1px solid var(--border)',borderRadius:8,fontSize:12.5,color:'var(--text-1)',background:'var(--bg-surface-2)',width:200,outline:'none',fontFamily:'inherit'}} />
+        </div>
+        <select value={langFilter} onChange={e=>setLangF(e.target.value)} style={{padding:'7px 10px',border:'1px solid var(--border)',borderRadius:8,fontSize:12.5,color:'var(--text-2)',background:'var(--bg-surface-2)',cursor:'pointer',fontFamily:'inherit',outline:'none'}}>
+          <option value="all">Language</option>
+          {allLangs.map(l=><option key={l} value={l}>{l}</option>)}
+        </select>
+        <select value={tagFilter} onChange={e=>setTagF(e.target.value)} style={{padding:'7px 10px',border:'1px solid var(--border)',borderRadius:8,fontSize:12.5,color:'var(--text-2)',background:'var(--bg-surface-2)',cursor:'pointer',fontFamily:'inherit',outline:'none'}}>
+          <option value="all">All tags</option>
+          {allTags.map(t=><option key={t} value={t}>{t}</option>)}
+        </select>
+        <button onClick={()=>setEditing('new')} style={{padding:'8px 16px',borderRadius:8,border:'none',background:'var(--accent)',color:'#fff',fontWeight:600,fontSize:13,cursor:'pointer',fontFamily:'inherit',whiteSpace:'nowrap'}}>Create macro</button>
+      </div>
+
+      {/* Tabs */}
+      <div style={{display:'flex',gap:0,padding:'0 28px',borderBottom:'1px solid var(--border)',background:'var(--bg-surface)',flexShrink:0}}>
+        {['active','archived'].map(t=>(
+          <button key={t} onClick={()=>setTab(t)} style={{padding:'10px 16px',background:'none',border:'none',borderBottom:`2px solid ${tab===t?'var(--accent)':'transparent'}`,color:tab===t?'var(--text-1)':'var(--text-2)',fontWeight:tab===t?600:500,fontSize:13,cursor:'pointer',fontFamily:'inherit',textTransform:'capitalize',transition:'all .15s'}}>
+            {t.charAt(0).toUpperCase()+t.slice(1)}
+          </button>
+        ))}
+      </div>
+
+      {/* Table */}
+      <div style={{flex:1,overflow:'auto',padding:'0 28px'}}>
+        <table style={{width:'100%',borderCollapse:'collapse'}}>
+          <thead>
+            <tr style={{borderBottom:'1px solid var(--border)'}}>
+              {[['MACRO',''],['TAGS','160px'],['LANGUAGE','110px'],['USAGE','90px'],['LAST UPDATED','140px'],['','56px']].map(([h,w])=>(
+                <th key={h} style={{padding:'10px 12px 10px 0',fontSize:10.5,fontWeight:700,color:'var(--text-3)',letterSpacing:'.05em',textAlign:'left',whiteSpace:'nowrap',width:w||'auto'}}>{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {visible.length===0&&(
+              <tr><td colSpan={6} style={{padding:'40px 0',textAlign:'center',color:'var(--text-3)',fontSize:13}}>No macros found</td></tr>
+            )}
+            {visible.map(m=>(
+              <tr key={m.id} style={{borderBottom:'1px solid var(--border)'}} onMouseEnter={e=>e.currentTarget.style.background='var(--bg-surface-2)'} onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
+                {/* Name */}
+                <td style={{padding:'12px 12px 12px 0'}}>
+                  <div style={{display:'flex',alignItems:'center',gap:8}}>
+                    <button onClick={e=>{e.stopPropagation();onToggleFav(m.id)}} style={{background:'none',border:'none',cursor:'pointer',display:'flex',padding:2,color:favs.includes(m.id)?'#f59e0b':'var(--text-3)',flexShrink:0,opacity:favs.includes(m.id)?1:0.4,transition:'opacity .15s'}}
+                      onMouseEnter={e=>e.currentTarget.style.opacity=1} onMouseLeave={e=>e.currentTarget.style.opacity=favs.includes(m.id)?1:0.4}>
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill={favs.includes(m.id)?'#f59e0b':'none'} stroke={favs.includes(m.id)?'#f59e0b':'currentColor'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                    </button>
+                    <button onClick={()=>setEditing(m)} style={{background:'none',border:'none',cursor:'pointer',fontFamily:'inherit',textAlign:'left',padding:0,color:'var(--text-1)',fontSize:13,fontWeight:500}}>{m.name}</button>
+                  </div>
+                </td>
+                {/* Tags */}
+                <td style={{padding:'12px 12px 12px 0'}}>
+                  <div style={{display:'flex',gap:4,flexWrap:'wrap'}}>
+                    {(m.tags||[]).map(t=><span key={t} style={{fontSize:10,fontWeight:600,padding:'2px 7px',borderRadius:4,background:'var(--accent-soft)',color:'var(--accent-text)'}}>{t}</span>)}
+                  </div>
+                </td>
+                {/* Language */}
+                <td style={{padding:'12px 12px 12px 0',fontSize:12.5,color:'var(--text-2)'}}>{m.language||'English'}</td>
+                {/* Usage */}
+                <td style={{padding:'12px 12px 12px 0',fontSize:12.5,color:'var(--text-2)'}}>{m.usageCount||0}</td>
+                {/* Updated */}
+                <td style={{padding:'12px 12px 12px 0',fontSize:12,color:'var(--text-3)'}}>{fmtDate(m.updatedAt)}</td>
+                {/* Actions */}
+                <td style={{padding:'12px 0',textAlign:'right'}}>
+                  <div style={{display:'flex',alignItems:'center',gap:4,justifyContent:'flex-end'}}>
+                    <button onClick={()=>setEditing(m)} title="Edit" style={{background:'none',border:'none',cursor:'pointer',color:'var(--text-3)',display:'flex',padding:4,borderRadius:5,transition:'color .15s'}} onMouseEnter={e=>e.currentTarget.style.color='var(--text-1)'} onMouseLeave={e=>e.currentTarget.style.color='var(--text-3)'}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    </button>
+                    <button onClick={()=>handleArchive(m)} title={m.archived?'Unarchive':'Archive'} style={{background:'none',border:'none',cursor:'pointer',color:'var(--text-3)',display:'flex',padding:4,borderRadius:5,transition:'color .15s'}} onMouseEnter={e=>e.currentTarget.style.color='var(--text-1)'} onMouseLeave={e=>e.currentTarget.style.color='var(--text-3)'}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>
+                    </button>
+                    <button onClick={()=>handleDelete(m.id)} title="Delete" style={{background:'none',border:'none',cursor:'pointer',color:'var(--text-3)',display:'flex',padding:4,borderRadius:5,transition:'color .15s'}} onMouseEnter={e=>e.currentTarget.style.color='var(--danger)'} onMouseLeave={e=>e.currentTarget.style.color='var(--text-3)'}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   )
@@ -1206,9 +1622,28 @@ function InboxPage() {
   const [statusMenu, setStatusMenu]   = useState(false)
   const [statuses, setStatuses]       = useState(()=>{ try{return JSON.parse(localStorage.getItem('lynq_statuses')||'{}')}catch{return{}} })
   // Macros
-  const [macros, setMacros]           = useState(FALLBACK_MACROS)
+  const [macros, setMacros]           = useState(loadMacros)
   const [aiMacros, setAiMacros]       = useState([])
   const [showMacros, setShowMacros]   = useState(false)
+  const [showMacroManager, setShowMacroManager] = useState(false)
+  const [macroFavs, setMacroFavs]     = useState(()=>{ try{return JSON.parse(localStorage.getItem('lynq_macro_favs')||'[]')}catch{return[]} })
+
+  function saveMacro(m) {
+    setMacros(prev=>{
+      const idx = prev.findIndex(x=>x.id===m.id)
+      const next = idx>=0 ? prev.map(x=>x.id===m.id?m:x) : [...prev, m]
+      saveMacrosToStorage(next); return next
+    })
+  }
+  function deleteMacro(id) {
+    setMacros(prev=>{ const next=prev.filter(x=>x.id!==id); saveMacrosToStorage(next); return next })
+  }
+  function toggleMacroFav(id) {
+    setMacroFavs(prev=>{
+      const next = prev.includes(id)?prev.filter(x=>x!==id):[...prev,id]
+      localStorage.setItem('lynq_macro_favs',JSON.stringify(next)); return next
+    })
+  }
   // Order modals
   const [modal, setModal]             = useState(null) // { type:'refund'|'cancel'|'duplicate'|'address', order }
   // AI triage
@@ -1220,6 +1655,10 @@ function InboxPage() {
   // Composer extras
   const [showEmoji, setShowEmoji]   = useState(false)
   const [attachments, setAttachments] = useState([])
+  const [expandedOrders, setExpandedOrders] = useState({})
+  const [expandedSubs, setExpandedSubs]     = useState({})
+  const [custFieldsOpen, setCustFieldsOpen] = useState(true)
+  const [custShowMore, setCustShowMore]     = useState(false)
 
   const msgEnd       = useRef(null)
   const replyRef     = useRef(null)
@@ -1595,36 +2034,33 @@ function InboxPage() {
               <div key={thread.id} className={`trow${active?' trow-active':''}`}
                 style={!active&&urgUI?{borderLeftColor:urgUI.border}:{}}
                 onClick={()=>openThread(thread)}>
-                <div style={{display:'flex',gap:10}}>
-                  <div style={{position:'relative',flexShrink:0}}>
-                    <Avatar name={name} size={33} />
-                    {thread.unread&&<span style={{position:'absolute',top:0,right:0,width:8,height:8,borderRadius:'50%',background:'var(--accent)',border:'1.5px solid var(--bg-surface)'}} />}
-                  </div>
+                <div style={{display:'flex',gap:0}}>
+                  {thread.unread&&<span style={{position:'absolute',left:6,top:'50%',transform:'translateY(-50%)',width:6,height:6,borderRadius:'50%',background:'var(--accent)',flexShrink:0}} />}
                   <div style={{flex:1,minWidth:0}}>
                     {isSentView ? (
                       /* Sent view: subject is the primary identifier */
                       <>
                         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:3}}>
                           <span style={{fontSize:12.5,fontWeight:600,color:'var(--text-1)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',maxWidth:160,letterSpacing:'-0.01em'}}>{thread.subject||'(no subject)'}</span>
-                          <span style={{fontSize:10,color:'var(--text-3)',flexShrink:0,marginLeft:4}}>{formatDate(thread.date)}</span>
+                          <span style={{fontSize:10,color:'var(--text-2)',flexShrink:0,marginLeft:4}}>{formatDate(thread.date)}</span>
                         </div>
                         <div style={{display:'flex',alignItems:'center',gap:4,marginBottom:3}}>
-                          <span style={{fontSize:9,fontWeight:700,color:'var(--text-3)',letterSpacing:'.06em',textTransform:'uppercase',flexShrink:0}}>To</span>
-                          <span style={{fontSize:11,color:'var(--text-3)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{name||extractEmail(thread.to)}</span>
+                          <span style={{fontSize:9,fontWeight:700,color:'var(--text-2)',letterSpacing:'.06em',textTransform:'uppercase',flexShrink:0}}>To</span>
+                          <span style={{fontSize:11,color:'var(--text-2)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{name||extractEmail(thread.to)}</span>
                         </div>
                       </>
                     ) : (
                       /* Inbox view: sender name is the primary identifier */
                       <>
                         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:2}}>
-                          <span style={{fontSize:12.5,fontWeight:thread.unread?700:500,color:thread.unread?'var(--text-1)':'var(--text-2)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',maxWidth:145}}>{name}</span>
-                          <span style={{fontSize:10,color:'var(--text-3)',flexShrink:0,marginLeft:4}}>{formatDate(thread.date)}</span>
+                          <span style={{fontSize:12.5,fontWeight:thread.unread?700:600,color:'var(--text-1)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',maxWidth:160}}>{name}</span>
+                          <span style={{fontSize:10,color:'var(--text-2)',flexShrink:0,marginLeft:4}}>{formatDate(thread.date)}</span>
                         </div>
-                        <div style={{fontSize:11.5,color:thread.unread?'var(--text-2)':'var(--text-3)',fontWeight:thread.unread?600:400,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',marginBottom:3}}>{thread.subject}</div>
+                        <div style={{fontSize:11.5,color:'var(--text-1)',fontWeight:thread.unread?600:500,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',marginBottom:3}}>{thread.subject}</div>
                       </>
                     )}
-                    {!isSentView&&<div style={{fontSize:10.5,color:'var(--text-3)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',marginBottom:5}}>{thread.snippet}</div>}
-                    {isSentView&&thread.snippet&&<div style={{fontSize:10.5,color:'var(--text-3)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',marginBottom:4,fontStyle:'italic'}}>{thread.snippet}</div>}
+                    {!isSentView&&<div style={{fontSize:11,color:'var(--text-2)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',marginBottom:5}}>{thread.snippet}</div>}
+                    {isSentView&&thread.snippet&&<div style={{fontSize:10.5,color:'var(--text-2)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',marginBottom:4,fontStyle:'italic'}}>{thread.snippet}</div>}
                     {!isSentView&&<div style={{display:'flex',alignItems:'center',gap:5,flexWrap:'wrap'}}>
                       {analysis&&urg&&urg!=='low'&&(
                         <span className={`urg-pill urg-${urg}`} style={{background:urgUI.bg,color:urgUI.color,border:`1px solid ${urgUI.border}`}}>
@@ -1727,9 +2163,11 @@ function InboxPage() {
               {/* Macro panel */}
               {showMacros&&(
                 <MacroPanel
-                  macros={macros}
+                  macros={macros.filter(m=>!m.archived)}
                   aiMacros={aiMacros}
                   customerName={extractName(selected?.from||'')}
+                  favs={macroFavs}
+                  onToggleFav={toggleMacroFav}
                   onInsert={body=>{
                     const safeBody = plainTextToSafeHtml(body)
                     if(replyRef.current){replyRef.current.innerHTML=safeBody;setReply(replyRef.current.textContent)}
@@ -1737,30 +2175,44 @@ function InboxPage() {
                     setShowMacros(false);setTimeout(()=>replyRef.current?.focus(),10)
                   }}
                   onClose={()=>setShowMacros(false)}
+                  onManage={()=>{ setShowMacros(false); setShowMacroManager(true) }}
+                  onCreateNew={()=>{ setShowMacros(false); setShowMacroManager(true) }}
+                  onDeleteMacro={deleteMacro}
                 />
               )}
 
-              {/* Composer tabs */}
+              {/* Composer — Gorgias style */}
               {!showMacros&&(
                 <>
-                  <div style={{display:'flex',borderBottom:'1px solid var(--border)',paddingLeft:16,justifyContent:'space-between',alignItems:'center',paddingRight:14}}>
-                    <div style={{display:'flex'}}>
-                      {[{id:'reply',label:'Reply'},{id:'note',label:'Internal note'}].map(t=>(
-                        <button key={t.id} className={`ctab${composerTab===t.id?' on':''}`} onClick={()=>setComposerTab(t.id)}>{t.label}</button>
-                      ))}
-                    </div>
-                    {/* Macro trigger button */}
-                    <button onClick={()=>setShowMacros(true)} title="Macros (⌘M)" style={{display:'flex',alignItems:'center',gap:5,padding:'5px 10px',background:'transparent',border:'1px solid var(--border)',borderRadius:7,cursor:'pointer',fontSize:11,fontWeight:600,color:'var(--text-3)',transition:'all .15s',fontFamily:'inherit'}} onMouseEnter={e=>{e.currentTarget.style.borderColor='rgba(161,117,252,0.3)';e.currentTarget.style.color='#A175FC';e.currentTarget.style.background='rgba(161,117,252,0.08)'}} onMouseLeave={e=>{e.currentTarget.style.borderColor='var(--border)';e.currentTarget.style.color='var(--text-3)';e.currentTarget.style.background='transparent'}}>
-                      <span style={{display:'flex'}}>{I.lightning}</span>
-                      Macros
-                      {aiMacros.length>0&&<span style={{background:'var(--bg-surface-2)',color:'var(--text-3)',fontSize:9,fontWeight:700,padding:'1px 5px',borderRadius:4}}>AI</span>}
-                    </button>
+                  {/* Tab strip */}
+                  <div style={{display:'flex',borderBottom:'1px solid var(--border)',paddingLeft:16}}>
+                    {[{id:'reply',label:'Reply'},{id:'note',label:'Internal note'}].map(t=>(
+                      <button key={t.id} className={`ctab${composerTab===t.id?' on':''}`} onClick={()=>setComposerTab(t.id)}>{t.label}</button>
+                    ))}
+                  </div>
+
+                  {/* To: row */}
+                  <div style={{display:'flex',alignItems:'center',gap:8,padding:'8px 14px',borderBottom:'1px solid var(--border)'}}>
+                    <span style={{display:'flex',color:'var(--text-3)',flexShrink:0}}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></span>
+                    <span style={{fontSize:11.5,color:'var(--text-2)',fontWeight:600,flexShrink:0}}>To:</span>
+                    <span style={{flex:1,fontSize:12,color:'var(--text-1)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
+                      {extractName(selected.from)}{extractEmail(selected.from)?` (${extractEmail(selected.from)})`:''}</span>
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{color:'var(--text-3)',flexShrink:0}}><polyline points="6 9 12 15 18 9"/></svg>
+                  </div>
+
+                  {/* Macro search row */}
+                  <div style={{display:'flex',alignItems:'center',gap:8,padding:'7px 14px',borderBottom:'1px solid var(--border)',cursor:'pointer',transition:'background .12s'}} onClick={()=>setShowMacros(true)} onMouseEnter={e=>e.currentTarget.style.background='var(--bg-surface-2)'} onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
+                    <span style={{color:'var(--accent-text)',display:'flex',flexShrink:0}}>{I.lightning}</span>
+                    <span style={{flex:1,fontSize:12,color:'var(--text-3)'}}>Search macros by name, tags or body...</span>
+                    {aiMacros.length>0&&<span style={{fontSize:9,fontWeight:700,padding:'1px 6px',borderRadius:4,background:'var(--accent-soft)',color:'var(--accent-text)',letterSpacing:'.04em',flexShrink:0}}>AI</span>}
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{color:'var(--text-3)',flexShrink:0}}><polyline points="6 9 12 15 18 9"/></svg>
                   </div>
 
                   {/* Hidden file inputs */}
                   <input ref={imgUploadRef} type="file" accept="image/*" style={{display:'none'}} onChange={handleImageUpload} />
                   <input ref={fileUploadRef} type="file" multiple style={{display:'none'}} onChange={handleFileAttach} />
 
+                  {/* Flat compose area */}
                   <div className="compose-box" onClick={()=>showEmoji&&setShowEmoji(false)}>
                     {/* Auto-translate banner */}
                     {autoTranslate&&customerLang&&customerLang.code!=='en'&&(
@@ -1771,8 +2223,58 @@ function InboxPage() {
                       </div>
                     )}
 
-                    {/* Formatting toolbar */}
-                    <div className="rtbar">
+                    {/* Attachments */}
+                    {attachments.length>0&&(
+                      <div style={{display:'flex',flexWrap:'wrap',gap:5,padding:'8px 14px 0'}}>
+                        {attachments.map((a,i)=>(
+                          <span key={i} className="attach-chip">
+                            {I.paperclip} {a.name}
+                            <button onClick={()=>setAttachments(p=>p.filter((_,j)=>j!==i))} style={{background:'none',border:'none',cursor:'pointer',color:'var(--text-3)',display:'flex',padding:0,marginLeft:2}}>{I.xsmall}</button>
+                          </span>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Contenteditable composer */}
+                    <div
+                      ref={replyRef}
+                      contentEditable
+                      suppressContentEditableWarning
+                      data-placeholder={composerTab==='reply'?'Click here to reply, or press r.':'Internal note — not visible to customer…'}
+                      onInput={e=>setReply(e.currentTarget.textContent)}
+                      onKeyDown={e=>{if(e.key==='Enter'&&(e.metaKey||e.ctrlKey))handleSend()}}
+                      className="compose-ta"
+                      style={{minHeight:110,background:composerTab==='note'?'rgba(251,191,36,0.03)':'transparent'}}
+                    />
+
+                    {/* AI generating dots */}
+                    {aiLoading&&(
+                      <div style={{padding:'4px 16px 0',display:'flex',alignItems:'center',gap:4}}>
+                        {[0,.18,.36].map(d=><span key={d} style={{width:5,height:5,borderRadius:'50%',background:'var(--accent)',display:'block',animation:`glowPulse .9s ease-in-out ${d}s infinite`}} />)}
+                      </div>
+                    )}
+
+                    {/* Suggested macros */}
+                    {(aiMacros.length>0||macros.length>0)&&(
+                      <div style={{display:'flex',alignItems:'center',gap:6,padding:'6px 14px',borderTop:'1px solid var(--border)',flexWrap:'wrap'}}>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{color:'var(--text-3)',flexShrink:0}}><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+                        <span style={{fontSize:10.5,color:'var(--text-2)',fontWeight:600,flexShrink:0}}>Suggested macros</span>
+                        {(aiMacros.length>0?aiMacros:macros).slice(0,3).map(m=>{
+                          const firstName=extractName(selected?.from||'').split(' ')[0]||'there'
+                          const body=m.body.replace(/{{name}}/gi,firstName).replace(/{{firstname}}/gi,firstName)
+                          return (
+                            <button key={m.id} className="macro-chip-suggest" onClick={()=>{
+                              if(replyRef.current){replyRef.current.innerHTML=body.replace(/\n/g,'<br>');setReply(replyRef.current.textContent)}
+                              else setReply(body)
+                              setTimeout(()=>replyRef.current?.focus(),10)
+                            }}>{m.name}</button>
+                          )
+                        })}
+                      </div>
+                    )}
+
+                    {/* Toolbar + Send buttons — single bottom row */}
+                    <div style={{display:'flex',alignItems:'center',gap:1,padding:'7px 10px',borderTop:'1px solid var(--border)'}}>
                       <button className="rtbar-btn" title="Bold (⌘B)" onClick={()=>formatDoc('bold')} onMouseDown={e=>e.preventDefault()}><span style={{fontWeight:800,fontSize:13}}>B</span></button>
                       <button className="rtbar-btn" title="Italic (⌘I)" onClick={()=>formatDoc('italic')} onMouseDown={e=>e.preventDefault()}><span style={{fontStyle:'italic',fontSize:13}}>I</span></button>
                       <button className="rtbar-btn" title="Underline (⌘U)" onClick={()=>formatDoc('underline')} onMouseDown={e=>e.preventDefault()}><span style={{textDecoration:'underline',fontSize:13}}>U</span></button>
@@ -1793,57 +2295,20 @@ function InboxPage() {
                       </div>
                       <button className="rtbar-btn" title="Attach file" onClick={()=>fileUploadRef.current?.click()} onMouseDown={e=>e.preventDefault()}>{I.paperclip}</button>
                       <div className="rtbar-sep" />
-                      {/* Translate toggle */}
-                      <button
-                        className={`rtbar-btn${autoTranslate?' rton':''}`}
-                        title={customerLang?`Auto-translate to ${customerLang.name}`:'Detect customer language'}
-                        onClick={()=>customerLang?setAutoTranslate(v=>!v):null}
-                        style={{gap:4,paddingLeft:6,paddingRight:8,fontSize:11,fontWeight:600,minWidth:'auto'}}
-                      >
-                        {I.globe}
-                        <span>{customerLang?customerLang.name:'Translate'}</span>
+                      <button className={`rtbar-btn${autoTranslate?' rton':''}`} title={customerLang?`Auto-translate to ${customerLang.name}`:'Detect language'} onClick={()=>customerLang?setAutoTranslate(v=>!v):null} style={{gap:4,paddingLeft:6,paddingRight:8,fontSize:11,fontWeight:600,minWidth:'auto'}}>
+                        {I.globe}<span>{customerLang?customerLang.name:'Translate'}</span>
                       </button>
-                    </div>
-
-                    {/* Attachments */}
-                    {attachments.length>0&&(
-                      <div style={{display:'flex',flexWrap:'wrap',gap:5,padding:'6px 12px 0'}}>
-                        {attachments.map((a,i)=>(
-                          <span key={i} className="attach-chip">
-                            {I.paperclip} {a.name}
-                            <button onClick={()=>setAttachments(p=>p.filter((_,j)=>j!==i))} style={{background:'none',border:'none',cursor:'pointer',color:'var(--text-3)',display:'flex',padding:0,marginLeft:2}}>{I.xsmall}</button>
-                          </span>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* Contenteditable composer */}
-                    <div
-                      ref={replyRef}
-                      contentEditable
-                      suppressContentEditableWarning
-                      data-placeholder={composerTab==='reply'?'Write a reply… (⌘+Enter to send)':'Internal note — not visible to customer…'}
-                      onInput={e=>setReply(e.currentTarget.textContent)}
-                      onKeyDown={e=>{if(e.key==='Enter'&&(e.metaKey||e.ctrlKey))handleSend()}}
-                      className="compose-ta"
-                      style={{minHeight:96,background:composerTab==='note'?'rgba(251,191,36,0.035)':'transparent',borderBottom:`1px solid ${composerTab==='note'?'rgba(251,191,36,0.15)':'var(--bg-input)'}`}}
-                    />
-
-                    <div style={{padding:'10px 14px 12px',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
-                      <button className="btn-iris" onClick={handleAiReply} disabled={aiLoading||!messages.length} style={{display:'flex',alignItems:'center',gap:6}}>
-                        {aiLoading?<Spinner />:I.ai}
-                        {aiLoading?'Generating…':'AI Reply'}
+                      <div style={{flex:1}} />
+                      <button className="btn-iris" onClick={handleAiReply} disabled={aiLoading||!messages.length} style={{display:'flex',alignItems:'center',gap:6,padding:'7px 13px'}}>
+                        {aiLoading?<Spinner />:I.ai}{aiLoading?'Generating…':'AI Reply'}
                       </button>
-                      <div style={{display:'flex',gap:7}}>
-                        <button className="btn-close" onClick={handleSendResolve} disabled={!reply.trim()||sending}>
-                          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                          Send & Close
-                        </button>
-                        <button className="btn-send" onClick={handleSend} disabled={!reply.trim()||sending} style={{display:'flex',alignItems:'center',gap:6}}>
-                          {sending?<Spinner white />:I.send}
-                          {sending?'Sending…':'Send'}
-                        </button>
-                      </div>
+                      <button className="btn-close" onClick={handleSendResolve} disabled={!reply.trim()||sending} style={{marginLeft:6}}>
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                        Send & Close
+                      </button>
+                      <button className="btn-send" onClick={handleSend} disabled={!reply.trim()||sending} style={{display:'flex',alignItems:'center',gap:6,marginLeft:6}}>
+                        {sending?<Spinner white />:I.send}{sending?'Sending…':'Send'}
+                      </button>
                     </div>
                   </div>
                 </>
@@ -1853,165 +2318,273 @@ function InboxPage() {
         )}
       </div>
 
-      {/* ═══════════════ RIGHT: Customer panel ═══════════════ */}
+      {/* ═══════════════ RIGHT: Customer panel — Gorgias style ═══════════════ */}
       {selected&&(
         <div className="sscroll" style={{width:320,borderLeft:'1px solid var(--border)',display:'flex',flexDirection:'column',flexShrink:0,overflowY:'auto',background:'var(--bg-surface)'}}>
 
-          {/* Customer header */}
-          <div style={{padding:'16px 16px 12px',borderBottom:'1px solid var(--border)',flexShrink:0}}>
-            <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:12}}>
-              <Avatar name={customer?.customer?`${customer.customer.firstName||''} ${customer.customer.lastName||''}`.trim()||extractName(selected.from):extractName(selected.from)} size={38} />
-              <div style={{minWidth:0}}>
-                <div style={{fontSize:13.5,fontWeight:700,color:'var(--text-1)',marginBottom:2,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
-                  {customer?.customer?`${customer.customer.firstName||''} ${customer.customer.lastName||''}`.trim()||extractName(selected.from):extractName(selected.from)}
-                </div>
-                <div style={{fontSize:11,color:'var(--text-3)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{extractEmail(selected.from)}</div>
-              </div>
-            </div>
-
-            {/* Tabs */}
-            <div style={{display:'flex',gap:4}}>
-              {[{id:'info',label:'Customer'},{id:'shopify',label:'Orders'}].map(t=>(
-                <button key={t.id} onClick={()=>setRightTab(t.id)} style={{flex:1,padding:'6px 8px',borderRadius:8,fontSize:11.5,fontWeight:500,display:'flex',alignItems:'center',justifyContent:'center',gap:5,background:rightTab===t.id?'var(--bg-surface-2)':'transparent',color:rightTab===t.id?'var(--text-1)':'var(--text-3)',border:rightTab===t.id?'1px solid var(--border)':'1px solid transparent',cursor:'pointer',fontFamily:'inherit',transition:'all .15s'}}>
-                  {t.label}
-                  {t.id==='shopify'&&(customer?.orders||[]).length>0&&<span style={{background:'var(--bg-surface-2)',color:'var(--text-2)',fontSize:9,fontWeight:700,padding:'1px 5px',borderRadius:4,border:'1px solid var(--border)'}}>{customer.orders.length}</span>}
-                </button>
-              ))}
+          {/* Search */}
+          <div style={{padding:'10px 12px',borderBottom:'1px solid var(--border)',flexShrink:0}}>
+            <div style={{position:'relative'}}>
+              <span style={{position:'absolute',left:9,top:'50%',transform:'translateY(-50%)',color:'var(--text-3)',display:'flex',pointerEvents:'none'}}>{I.search}</span>
+              <input className="rp-search" placeholder="Search for customers by email, order number..." />
             </div>
           </div>
 
-          {/* Info tab */}
-          {rightTab==='info'&&(
-            <div style={{padding:'14px 16px',display:'flex',flexDirection:'column',gap:12}}>
-              <div><div className="info-label">Email</div><div className="info-val">{extractEmail(selected.from)}</div></div>
-              {loadingCust&&[0,1,2].map(i=><div key={i} className="skel" style={{height:28,borderRadius:8}} />)}
-              {customer?.customer&&!loadingCust&&(
-                <>
-                  {customer.customer.phone&&<div><div className="info-label">Phone</div><div className="info-val">{customer.customer.phone}</div></div>}
-                  {(customer.customer.city||customer.customer.country)&&<div><div className="info-label">Location</div><div className="info-val">{[customer.customer.city,customer.customer.country].filter(Boolean).join(', ')}</div></div>}
-                  <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginTop:4}}>
-                    <div className="stat-card"><div style={{fontSize:20,fontWeight:800,color:'var(--text-1)',marginBottom:2}}>{customer.customer.ordersCount??'—'}</div><div className="info-label">Orders</div></div>
-                    <div className="stat-card"><div style={{fontSize:16,fontWeight:800,color:'#4ade80',marginBottom:2}}>{fmtPrice(customer.customer.totalSpent,customer.customer.currency)}</div><div className="info-label">Spent</div></div>
-                  </div>
-                  {customer.customer.note&&<div><div className="info-label">Note</div><div className="info-val" style={{fontSize:12,fontStyle:'italic'}}>{customer.customer.note}</div></div>}
-                  {customer.customer.tags&&<div>
-                    <div className="info-label" style={{marginBottom:5}}>Tags</div>
-                    <div style={{display:'flex',flexWrap:'wrap',gap:4}}>
-                      {customer.customer.tags.split(',').filter(Boolean).map(tag=><span key={tag} style={{fontSize:10.5,fontWeight:600,padding:'2px 8px',borderRadius:100,background:'var(--bg-surface-2)',color:'var(--text-2)',border:'1px solid var(--border)'}}>{tag.trim()}</span>)}
-                    </div>
-                  </div>}
-                  {customer.customer.createdAt&&<div><div className="info-label">Customer since</div><div className="info-val">{new Date(customer.customer.createdAt).toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'})}</div></div>}
-                </>
-              )}
-              {!customer?.customer&&!loadingCust&&<div style={{padding:'16px 0',textAlign:'center',fontSize:12,color:'var(--text-3)'}}>No Shopify customer found</div>}
+          {/* Customer header */}
+          <div style={{padding:'12px 14px 11px',borderBottom:'1px solid var(--border)',flexShrink:0}}>
+            <div style={{display:'flex',alignItems:'center',gap:10}}>
+              <Avatar name={customer?.customer?`${customer.customer.firstName||''} ${customer.customer.lastName||''}`.trim()||extractName(selected.from):extractName(selected.from)} size={34} />
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{fontSize:13,fontWeight:700,color:'var(--text-1)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
+                  {customer?.customer?`${customer.customer.firstName||''} ${customer.customer.lastName||''}`.trim()||extractName(selected.from):extractName(selected.from)}
+                </div>
+                <div style={{fontSize:11,color:'var(--text-3)',marginTop:1,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{extractEmail(selected.from)}</div>
+              </div>
+              <button style={{display:'flex',alignItems:'center',justifyContent:'center',width:28,height:28,borderRadius:7,color:'var(--text-3)',cursor:'pointer',transition:'all .15s',border:'1px solid var(--border)',background:'transparent',flexShrink:0}} onMouseEnter={e=>{e.currentTarget.style.color='var(--text-1)';e.currentTarget.style.background='var(--bg-surface-2)'}} onMouseLeave={e=>{e.currentTarget.style.color='var(--text-3)';e.currentTarget.style.background='transparent'}}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
+              </button>
+            </div>
+          </div>
+
+          {/* Customer Fields — collapsible */}
+          <div style={{borderBottom:'1px solid var(--border)',flexShrink:0}}>
+            <button className="rp-section" onClick={()=>setCustFieldsOpen(v=>!v)}>
+              <span style={{fontSize:11.5,fontWeight:700,color:'var(--text-2)',flex:1,letterSpacing:'.01em'}}>Customer Fields</span>
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{transform:custFieldsOpen?'rotate(180deg)':'rotate(0)',transition:'transform .2s',color:'var(--text-3)',flexShrink:0}}><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+            {custFieldsOpen&&(
+              <div style={{padding:'0 14px 10px',display:'flex',flexDirection:'column'}}>
+                <div className="rp-kv"><span className="rp-kv-l">Email</span><span className="rp-kv-v" style={{fontSize:11,wordBreak:'break-all'}}>{extractEmail(selected.from)}</span></div>
+                {loadingCust&&[0,1].map(i=><div key={i} className="skel" style={{height:18,borderRadius:5,margin:'4px 0'}} />)}
+                {customer?.customer&&!loadingCust&&(<>
+                  {customer.customer.phone&&<div className="rp-kv"><span className="rp-kv-l">Phone</span><span className="rp-kv-v">{customer.customer.phone}</span></div>}
+                  {(customer.customer.city||customer.customer.country)&&<div className="rp-kv"><span className="rp-kv-l">Location</span><span className="rp-kv-v">{[customer.customer.city,customer.customer.country].filter(Boolean).join(', ')}</span></div>}
+                  {customer.customer.createdAt&&<div className="rp-kv"><span className="rp-kv-l">Customer since</span><span className="rp-kv-v">{new Date(customer.customer.createdAt).toLocaleDateString('en-US',{year:'numeric',month:'short'})}</span></div>}
+                  {customer.customer.note&&<div style={{marginTop:6,padding:'6px 9px',background:'var(--bg-surface-2)',borderRadius:7,border:'1px solid var(--border)'}}><div style={{fontSize:10,fontWeight:700,color:'var(--text-3)',textTransform:'uppercase',letterSpacing:'.06em',marginBottom:2}}>Note</div><div style={{fontSize:11.5,color:'var(--text-2)',fontStyle:'italic',lineHeight:1.5}}>{customer.customer.note}</div></div>}
+                </>)}
+              </div>
+            )}
+          </div>
+
+          {/* Stats bar */}
+          {customer?.customer&&!loadingCust&&(
+            <div style={{display:'flex',borderBottom:'1px solid var(--border)',flexShrink:0}}>
+              <div style={{flex:1,padding:'10px 0',textAlign:'center',borderRight:'1px solid var(--border)'}}>
+                <div style={{fontSize:14,fontWeight:800,color:'var(--text-1)',letterSpacing:'-0.02em'}}>{fmtPrice(customer.customer.totalSpent,customer.customer.currency)}</div>
+                <div style={{fontSize:9.5,color:'var(--text-3)',marginTop:2,textTransform:'uppercase',letterSpacing:'.06em'}}>Spent</div>
+              </div>
+              <div style={{flex:1,padding:'10px 0',textAlign:'center'}}>
+                <div style={{fontSize:14,fontWeight:800,color:'var(--text-1)',letterSpacing:'-0.02em'}}>{customer.customer.ordersCount??'—'}</div>
+                <div style={{fontSize:9.5,color:'var(--text-3)',marginTop:2,textTransform:'uppercase',letterSpacing:'.06em'}}>Orders</div>
+              </div>
             </div>
           )}
 
-          {/* Orders tab */}
+          {/* Tags */}
+          {customer?.customer?.tags&&(
+            <div style={{padding:'8px 14px',borderBottom:'1px solid var(--border)',display:'flex',flexWrap:'wrap',gap:4,flexShrink:0}}>
+              {customer.customer.tags.split(',').filter(Boolean).map(tag=><span key={tag} className="rp-tag">{tag.trim()}</span>)}
+            </div>
+          )}
+
+          {/* Tabs */}
+          <div style={{display:'flex',borderBottom:'1px solid var(--border)',flexShrink:0}}>
+            <button className={`rp-tab${rightTab==='info'?' on':''}`} onClick={()=>setRightTab('info')}>Customer</button>
+            <button className={`rp-tab${rightTab==='shopify'?' on':''}`} onClick={()=>setRightTab('shopify')}>
+              Orders{(customer?.orders||[]).length>0?` (${customer.orders.length})`:''}
+            </button>
+          </div>
+
+          {/* ── Customer tab ── */}
+          {rightTab==='info'&&(
+            <div style={{flexShrink:0}}>
+              {loadingCust&&<div style={{padding:'12px 14px'}}>{[0,1,2].map(i=><div key={i} className="skel" style={{height:20,borderRadius:5,marginBottom:8}} />)}</div>}
+              {!loadingCust&&(
+                <div style={{padding:'10px 14px 4px',display:'flex',flexDirection:'column',gap:0}}>
+                  {/* Note row */}
+                  <div style={{display:'flex',alignItems:'flex-start',gap:8,padding:'5px 0',borderBottom:'1px solid var(--border)',marginBottom:2}}>
+                    <span style={{display:'flex',color:'var(--text-3)',marginTop:1,flexShrink:0}}><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></span>
+                    <span style={{fontSize:12,color:customer?.customer?.note?'var(--text-2)':'var(--text-3)',fontStyle:customer?.customer?.note?'normal':'italic',lineHeight:1.5}}>{customer?.customer?.note||'This customer has no note.'}</span>
+                  </div>
+                  {/* Email row */}
+                  <div style={{display:'flex',alignItems:'center',gap:8,padding:'5px 0'}}>
+                    <span style={{display:'flex',color:'var(--text-3)',flexShrink:0}}><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></span>
+                    <a href={`mailto:${extractEmail(selected.from)}`} style={{fontSize:12,color:'var(--accent-text)',textDecoration:'none',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}} onMouseEnter={e=>e.currentTarget.style.textDecoration='underline'} onMouseLeave={e=>e.currentTarget.style.textDecoration='none'}>{extractEmail(selected.from)}</a>
+                  </div>
+                  {/* Phone row */}
+                  {customer?.customer?.phone&&(
+                    <div style={{display:'flex',alignItems:'center',gap:8,padding:'5px 0'}}>
+                      <span style={{display:'flex',color:'var(--text-3)',flexShrink:0}}><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.55 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 9.91a16 16 0 0 0 6.16 6.16l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg></span>
+                      <a href={`tel:${customer.customer.phone}`} style={{fontSize:12,color:'var(--accent-text)',textDecoration:'none'}} onMouseEnter={e=>e.currentTarget.style.textDecoration='underline'} onMouseLeave={e=>e.currentTarget.style.textDecoration='none'}>{customer.customer.phone}</a>
+                    </div>
+                  )}
+                  {/* Show more */}
+                  {customer?.customer&&(
+                    <button onClick={()=>setCustShowMore(v=>!v)} style={{display:'flex',alignItems:'center',gap:4,padding:'5px 0',background:'none',border:'none',cursor:'pointer',fontSize:12,color:'var(--accent-text)',fontFamily:'inherit',fontWeight:500}}>
+                      {custShowMore?'Show less':'Show more'}
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{transform:custShowMore?'rotate(180deg)':'rotate(0)',transition:'transform .2s'}}><polyline points="6 9 12 15 18 9"/></svg>
+                    </button>
+                  )}
+                  {custShowMore&&customer?.customer&&(
+                    <div style={{display:'flex',flexDirection:'column',gap:0,paddingTop:4,borderTop:'1px solid var(--border)'}}>
+                      {(customer.customer.city||customer.customer.country)&&<div className="rp-kv"><span className="rp-kv-l">Location</span><span className="rp-kv-v">{[customer.customer.city,customer.customer.country].filter(Boolean).join(', ')}</span></div>}
+                      {customer.customer.createdAt&&<div className="rp-kv"><span className="rp-kv-l">Customer since</span><span className="rp-kv-v">{new Date(customer.customer.createdAt).toLocaleDateString('en-US',{year:'numeric',month:'short'})}</span></div>}
+                      <div className="rp-kv"><span className="rp-kv-l">Orders</span><span className="rp-kv-v">{customer.customer.ordersCount??'—'}</span></div>
+                      <div className="rp-kv"><span className="rp-kv-l">Total spent</span><span className="rp-kv-v" style={{fontWeight:700,color:'var(--text-1)'}}>{fmtPrice(customer.customer.totalSpent,customer.customer.currency)}</span></div>
+                    </div>
+                  )}
+                  {!customer?.customer&&<div style={{padding:'8px 0',fontSize:12,color:'var(--text-3)'}}>No Shopify customer found</div>}
+                </div>
+              )}
+              {/* Open Timeline row */}
+              <div style={{padding:'8px 14px 12px',display:'flex',alignItems:'center',gap:10}}>
+                <button style={{display:'flex',alignItems:'center',gap:6,padding:'5px 12px',borderRadius:7,border:'1px solid var(--border)',background:'transparent',color:'var(--text-2)',fontSize:11.5,fontWeight:600,fontFamily:'inherit',cursor:'pointer',transition:'all .15s',flexShrink:0}} onMouseEnter={e=>{e.currentTarget.style.background='var(--bg-surface-2)';e.currentTarget.style.color='var(--text-1)'}} onMouseLeave={e=>{e.currentTarget.style.background='transparent';e.currentTarget.style.color='var(--text-2)'}}>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                  Open Timeline
+                </button>
+                {selected?.id&&<span style={{fontSize:11,color:'var(--text-3)'}}>1 ticket, 1 open</span>}
+              </div>
+            </div>
+          )}
+
+          {/* ── Orders tab ── */}
           {rightTab==='shopify'&&(
-            <div style={{padding:'12px'}}>
-              {loadingCust&&[0,1].map(i=><div key={i} className="skel" style={{height:120,borderRadius:14,marginBottom:10}} />)}
+            <div>
+              {/* Create order */}
+              <div style={{padding:'10px 12px',borderBottom:'1px solid var(--border)'}}>
+                <button style={{width:'100%',padding:'7px 12px',borderRadius:8,border:'1px solid var(--border)',background:'transparent',color:'var(--text-2)',fontSize:12,fontWeight:600,fontFamily:'inherit',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:6,transition:'all .15s'}} onMouseEnter={e=>{e.currentTarget.style.background='var(--bg-surface-2)';e.currentTarget.style.color='var(--text-1)'}} onMouseLeave={e=>{e.currentTarget.style.background='transparent';e.currentTarget.style.color='var(--text-2)'}}>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                  Create order
+                </button>
+              </div>
+
+              {loadingCust&&[0,1].map(i=>(
+                <div key={i} style={{borderBottom:'1px solid var(--border)',padding:'10px 14px'}}>
+                  <div className="skel" style={{height:16,borderRadius:5,marginBottom:8,width:'60%'}} />
+                  <div className="skel" style={{height:12,borderRadius:5,marginBottom:5,width:'80%'}} />
+                  <div className="skel" style={{height:12,borderRadius:5,width:'50%'}} />
+                </div>
+              ))}
               {!loadingCust&&!customer?.customer&&<div style={{padding:'24px 0',textAlign:'center',fontSize:12,color:'var(--text-3)'}}>No Shopify data found</div>}
               {!loadingCust&&customer?.customer&&(customer.orders||[]).length===0&&<div style={{padding:'24px 0',textAlign:'center',fontSize:12,color:'var(--text-3)'}}>No orders</div>}
+
+              {/* Order sections — Gorgias style */}
               {(customer?.orders||[]).map((order,oi)=>{
-                const isCancelled = order.financialStatus==='cancelled'||order.financialStatus==='voided'
-                const isRefunded  = order.financialStatus==='refunded'
-                const canFulfill  = !isCancelled && (order.fulfillmentStatus==='unfulfilled'||order.fulfillmentStatus==='partial')
-                const canRefund   = !isCancelled && !isRefunded
-                const canCancel   = !isCancelled
-                const shopifyDomain = customer?.shopifyDomain
+                const isOpen       = expandedOrders[order.id]===undefined ? oi===0 : expandedOrders[order.id]
+                const shippingOpen = expandedSubs[`${order.id}_shipping`]===undefined ? true : !!expandedSubs[`${order.id}_shipping`]
+                const trackOpen    = expandedSubs[`${order.id}_track`]===undefined ? true : !!expandedSubs[`${order.id}_track`]
+                const isCancelled  = order.financialStatus==='cancelled'||order.financialStatus==='voided'
+                const isRefunded   = order.financialStatus==='refunded'
+                const canRefund    = !isCancelled && !isRefunded
+                const canCancel    = !isCancelled
+                const finS         = ORDER_STATUS[order.financialStatus?.toLowerCase()]
+                const fulS         = ORDER_STATUS[order.fulfillmentStatus?.toLowerCase()]
+                const sa           = order.shippingAddress
                 return (
-                <div key={order.id} className="order-card" style={{animation:`fadeUp .3s ease ${oi*.06}s both`}}>
-                  {/* Header */}
-                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:9,paddingLeft:8}}>
-                    <div>
-                      <span style={{fontSize:14,fontWeight:800,color:'var(--text-1)',letterSpacing:'-0.02em'}}>{order.name}</span>
-                      <div style={{fontSize:10,color:'var(--text-3)',marginTop:1}}>{new Date(order.createdAt).toLocaleDateString('en-US',{day:'numeric',month:'short',year:'numeric'})}</div>
-                    </div>
-                    <div style={{textAlign:'right'}}>
-                      <div style={{fontSize:15,fontWeight:800,color:'var(--text-1)',letterSpacing:'-0.02em'}}>{fmtPrice(order.totalPrice,order.currency)}</div>
-                    </div>
-                  </div>
+                  <div key={order.id} style={{borderBottom:'1px solid var(--border)'}}>
 
-                  {/* Status badges */}
-                  <div style={{display:'flex',gap:4,flexWrap:'wrap',marginBottom:10,paddingLeft:8}}>
-                    <OrderBadge status={order.financialStatus} />
-                    <OrderBadge status={order.fulfillmentStatus} />
-                    {order.hasRefund&&<span style={{fontSize:10,fontWeight:700,padding:'2px 9px',borderRadius:100,background:'rgba(248,113,133,0.12)',color:'#fb7185',border:'1px solid rgba(248,113,133,0.22)'}}>Partially refunded</span>}
-                  </div>
-
-                  {/* Line items */}
-                  <div style={{marginBottom:10,paddingLeft:8}}>
-                    {(order.lineItems||[]).slice(0,2).map(item=>(
-                      <div key={item.id} style={{display:'flex',justifyContent:'space-between',fontSize:11.5,color:'var(--text-2)',marginBottom:3}}>
-                        <span style={{overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',maxWidth:155}}>{item.quantity}× {item.title}{item.variantTitle?` · ${item.variantTitle}`:''}</span>
-                        <span style={{flexShrink:0,marginLeft:8,color:'var(--text-3)'}}>{fmtPrice(Number(item.price)*item.quantity,order.currency)}</span>
-                      </div>
-                    ))}
-                    {(order.lineItems||[]).length>2&&<div style={{fontSize:10.5,color:'var(--text-3)',marginTop:2}}>+{order.lineItems.length-2} more item{order.lineItems.length-2!==1?'s':''}</div>}
-                  </div>
-
-                  {/* Tracking */}
-                  {(order.fulfillments||[]).length>0&&(
-                    <div style={{marginBottom:9,marginLeft:8,padding:'7px 10px',background:'var(--bg-surface-2)',borderRadius:9,border:'1px solid var(--border)'}}>
-                      {order.fulfillments.slice(0,1).map((f,i)=>(
-                        <div key={i}>
-                          <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:f.trackingNumber?3:0}}>
-                            <span style={{display:'flex',color:'var(--text-3)'}}>{I.truck}</span>
-                            <span style={{fontSize:11,fontWeight:700,color:'var(--text-2)'}}>{f.trackingCompany||'Carrier'}</span>
-                            <span style={{fontSize:9.5,fontWeight:700,padding:'1px 6px',borderRadius:4,background:'var(--bg-surface)',color:'var(--text-2)',textTransform:'capitalize',marginLeft:'auto',border:'1px solid var(--border)'}}>Delivered</span>
-                          </div>
-                          {f.trackingNumber&&<div style={{fontSize:10,color:'var(--text-3)',fontFamily:'monospace'}}>{f.trackingNumber}</div>}
-                          {f.trackingUrl&&<a href={f.trackingUrl} target="_blank" rel="noreferrer" style={{fontSize:10.5,color:'var(--accent-text)',textDecoration:'none',display:'inline-flex',alignItems:'center',gap:3,marginTop:2}}>Track package <span style={{display:'flex'}}>{I.externalLink}</span></a>}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Shipping address */}
-                  {order.shippingAddress&&(
-                    <div style={{marginBottom:9,marginLeft:8,padding:'7px 10px',background:'var(--bg-surface-2)',borderRadius:9,border:'1px solid var(--border)'}}>
-                      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:3}}>
-                        <div style={{display:'flex',alignItems:'center',gap:4,color:'var(--text-3)'}}>
-                          <span style={{display:'flex'}}>{I.mappin}</span>
-                          <span style={{fontSize:9.5,fontWeight:700,letterSpacing:'.07em',textTransform:'uppercase'}}>Shipping address</span>
-                        </div>
-                        <button onClick={()=>setModal({type:'address',order})} style={{display:'flex',alignItems:'center',gap:3,color:'var(--text-3)',cursor:'pointer',fontSize:10,fontWeight:600,padding:'2px 6px',borderRadius:5,border:'1px solid var(--border)',background:'transparent',transition:'all .15s'}} onMouseEnter={e=>{e.currentTarget.style.color='var(--text-1)';e.currentTarget.style.borderColor='var(--border-hover)'}} onMouseLeave={e=>{e.currentTarget.style.color='var(--text-3)';e.currentTarget.style.borderColor='var(--border)'}}>
-                          <span style={{display:'flex'}}>{I.edit}</span> Edit
-                        </button>
-                      </div>
-                      <div style={{fontSize:11,color:'var(--text-2)',lineHeight:1.55}}>
-                        {[order.shippingAddress.firstName,order.shippingAddress.lastName].filter(Boolean).join(' ')}<br/>
-                        {order.shippingAddress.address1}{order.shippingAddress.address2?`, ${order.shippingAddress.address2}`:''}<br/>
-                        {[order.shippingAddress.city,order.shippingAddress.zip].filter(Boolean).join(' ')}{order.shippingAddress.country?`, ${order.shippingAddress.country}`:''}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Action grid */}
-                  <div className="order-actions">
-                    {canRefund&&(
-                      <button className="oa-btn" onClick={()=>setModal({type:'refund',order})}>
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.8"/></svg>
-                        Refund
-                      </button>
-                    )}
-                    <button className="oa-btn" onClick={()=>setModal({type:'duplicate',order})}>
-                      <span style={{display:'flex'}}>{I.copy}</span> Duplicate
+                    {/* ── Order header: row 1 = name + chevron ── */}
+                    <button className="rp-order-hdr" onClick={()=>setExpandedOrders(v=>({...v,[order.id]:!isOpen}))}>
+                      <span style={{fontSize:13.5,fontWeight:700,color:'var(--accent-text)',flex:1,textAlign:'left'}}>{order.name}</span>
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{transform:isOpen?'rotate(180deg)':'rotate(0)',transition:'transform .2s',color:'var(--text-3)',flexShrink:0}}><polyline points="6 9 12 15 18 9"/></svg>
                     </button>
-                    <button className="oa-btn" onClick={()=>setModal({type:'note',order})}>
-                      <span style={{display:'flex'}}>{I.note}</span> Note
-                    </button>
-                    {canCancel&&(
-                      <button className="oa-btn oa-danger" onClick={()=>setModal({type:'cancel',order})}>
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
-                        Cancel
-                      </button>
+
+                    {isOpen&&(
+                      <div style={{padding:'0 14px 12px'}}>
+                        {/* Row 2: status badges */}
+                        <div style={{display:'flex',gap:4,marginBottom:8,flexWrap:'wrap'}}>
+                          {finS&&<span style={{fontSize:10,fontWeight:700,padding:'2px 7px',borderRadius:4,background:finS.bg,color:finS.color,letterSpacing:'.05em',textTransform:'uppercase',border:`1px solid ${finS.color}22`}}>{finS.label}</span>}
+                          {fulS&&<span style={{fontSize:10,fontWeight:700,padding:'2px 7px',borderRadius:4,background:fulS.bg,color:fulS.color,letterSpacing:'.05em',textTransform:'uppercase',border:`1px solid ${fulS.color}22`}}>{fulS.label}</span>}
+                          {order.hasRefund&&<span style={{fontSize:10,fontWeight:700,padding:'2px 7px',borderRadius:4,background:'rgba(248,113,133,0.12)',color:'#fb7185',letterSpacing:'.05em',textTransform:'uppercase',border:'1px solid rgba(248,113,133,0.22)'}}>Partial refund</span>}
+                        </div>
+                        {/* Row 3: action buttons */}
+                        <div style={{display:'flex',gap:4,flexWrap:'wrap',marginBottom:10}}>
+                          <button className="rp-action" onClick={()=>setModal({type:'duplicate',order})}><span style={{display:'flex'}}>{I.copy}</span>Duplicate</button>
+                          {canRefund&&<button className="rp-action" onClick={()=>setModal({type:'refund',order})}>
+                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.8"/></svg>$ Refund
+                          </button>}
+                          {canCancel&&<button className="rp-action danger" onClick={()=>setModal({type:'cancel',order})}>
+                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>Cancel
+                          </button>}
+                          <button className="rp-action" style={{padding:'4px 7px'}} onClick={()=>setModal({type:'note',order})}>
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></svg>
+                          </button>
+                        </div>
+
+                        {/* Key-value rows */}
+                        <div style={{marginBottom:4}}>
+                          <div className="rp-kv"><span className="rp-kv-l">Created</span><span className="rp-kv-v">{new Date(order.createdAt).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}</span></div>
+                          <div className="rp-kv"><span className="rp-kv-l">Total</span><span className="rp-kv-v" style={{fontWeight:700,color:'var(--text-1)'}}>{fmtPrice(order.totalPrice,order.currency)}</span></div>
+                        </div>
+
+                        {/* Tracking — collapsible (default open) */}
+                        {(order.fulfillments||[]).length>0&&(
+                          <>
+                            <button className="rp-subsec" onClick={()=>setExpandedSubs(v=>({...v,[`${order.id}_track`]:!trackOpen}))}>
+                              <span style={{display:'flex',color:'var(--text-3)'}}>{I.truck2}</span>
+                              <span style={{flex:1,fontWeight:600,fontSize:11.5,color:'var(--text-2)'}}>Tracking</span>
+                              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{transform:trackOpen?'rotate(180deg)':'rotate(0)',transition:'transform .2s',color:'var(--text-3)'}}><polyline points="6 9 12 15 18 9"/></svg>
+                            </button>
+                            {trackOpen&&order.fulfillments.slice(0,1).map((f,fi)=>(
+                              <div key={fi} style={{paddingBottom:6}}>
+                                <div className="rp-kv"><span className="rp-kv-l">Carrier</span><span className="rp-kv-v">{f.trackingCompany||'—'}</span></div>
+                                {f.trackingNumber&&<div className="rp-kv"><span className="rp-kv-l">Tracking #</span><span className="rp-kv-v" style={{fontFamily:'monospace',fontSize:10.5}}>{f.trackingNumber}</span></div>}
+                                <div className="rp-kv"><span className="rp-kv-l">Status</span><span style={{fontSize:10,fontWeight:700,padding:'1px 6px',borderRadius:4,background:'rgba(74,222,128,0.12)',color:'#16a34a',border:'1px solid rgba(74,222,128,0.25)',letterSpacing:'.04em',textTransform:'uppercase'}}>Delivered</span></div>
+                                {f.trackingUrl&&<div style={{marginTop:4}}><a href={f.trackingUrl} target="_blank" rel="noreferrer" style={{fontSize:11.5,color:'var(--accent-text)',textDecoration:'none',display:'inline-flex',alignItems:'center',gap:3}}>Track package <span style={{display:'flex'}}>{I.externalLink}</span></a></div>}
+                              </div>
+                            ))}
+                          </>
+                        )}
+
+                        {/* Shipping address — collapsible (default open) */}
+                        {sa&&(
+                          <>
+                            <button className="rp-subsec" onClick={()=>setExpandedSubs(v=>({...v,[`${order.id}_shipping`]:!shippingOpen}))}>
+                              <span style={{display:'flex',color:'var(--text-3)'}}>{I.mappin}</span>
+                              <span style={{flex:1,fontWeight:600,fontSize:11.5,color:'var(--text-2)'}}>Shipping address</span>
+                              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{transform:shippingOpen?'rotate(180deg)':'rotate(0)',transition:'transform .2s',color:'var(--text-3)'}}><polyline points="6 9 12 15 18 9"/></svg>
+                            </button>
+                            {shippingOpen&&(
+                              <div style={{paddingBottom:6}}>
+                                <div style={{marginBottom:6}}>
+                                  <button onClick={()=>setModal({type:'address',order})} style={{display:'inline-flex',alignItems:'center',gap:4,color:'var(--text-2)',cursor:'pointer',fontSize:11,fontWeight:600,padding:'3px 8px',borderRadius:6,border:'1px solid var(--border)',background:'transparent',transition:'all .15s',fontFamily:'inherit'}} onMouseEnter={e=>{e.currentTarget.style.color='var(--text-1)';e.currentTarget.style.borderColor='var(--border-hover)'}} onMouseLeave={e=>{e.currentTarget.style.color='var(--text-2)';e.currentTarget.style.borderColor='var(--border)'}}>
+                                    <span style={{display:'flex'}}>{I.edit}</span> Edit
+                                  </button>
+                                </div>
+                                {[sa.firstName||sa.lastName?{l:'Name',v:[sa.firstName,sa.lastName].filter(Boolean).join(' ')}:null, sa.address1?{l:'Address1',v:sa.address1}:null, sa.address2?{l:'Address2',v:sa.address2}:null, sa.city?{l:'City',v:sa.city}:null, sa.country?{l:'Country',v:sa.country}:null, sa.province?{l:'Province',v:sa.province}:null, sa.zip?{l:'Zip',v:sa.zip}:null].filter(Boolean).map(row=>(
+                                  <div key={row.l} className="rp-kv"><span className="rp-kv-l">{row.l}</span><span className="rp-kv-v">{row.v}</span></div>
+                                ))}
+                              </div>
+                            )}
+                          </>
+                        )}
+
+                        {/* Line items — each item as its own collapsible sub-section */}
+                        {(order.lineItems||[]).map((item,ii)=>{
+                          const itemKey = `${order.id}_item_${item.id}`
+                          const itemOpen = expandedSubs[itemKey]===undefined ? true : !!expandedSubs[itemKey]
+                          return (
+                            <div key={item.id}>
+                              <button className="rp-subsec" onClick={()=>setExpandedSubs(v=>({...v,[itemKey]:!itemOpen}))}>
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{color:'var(--text-3)',flexShrink:0}}><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                                <span style={{flex:1,fontSize:11,fontWeight:600,color:'var(--text-2)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{item.quantity} × {item.title}{item.variantTitle?` · ${item.variantTitle}`:''}</span>
+                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{transform:itemOpen?'rotate(180deg)':'rotate(0)',transition:'transform .2s',color:'var(--text-3)',flexShrink:0}}><polyline points="6 9 12 15 18 9"/></svg>
+                              </button>
+                              {itemOpen&&(
+                                <div style={{paddingBottom:4}}>
+                                  <div className="rp-kv"><span className="rp-kv-l">Amount</span><span className="rp-kv-v">{fmtPrice(Number(item.price)*item.quantity,order.currency)}</span></div>
+                                  {item.sku&&<div className="rp-kv"><span className="rp-kv-l">Sku</span><span className="rp-kv-v" style={{fontFamily:'monospace',fontSize:10.5}}>{item.sku}</span></div>}
+                                  {item.variantTitle&&<div className="rp-kv"><span className="rp-kv-l">Variant</span><span className="rp-kv-v">{item.variantTitle}</span></div>}
+                                </div>
+                              )}
+                            </div>
+                          )
+                        })}
+                      </div>
                     )}
                   </div>
-                </div>
-              )})}
-
+                )
+              })}
             </div>
           )}
         </div>
@@ -2027,6 +2600,18 @@ function InboxPage() {
       {modal?.type==='note'      && <NoteModal        order={modal.order} token={session.access_token} onClose={()=>setModal(null)} onSuccess={handleModalSuccess} />}
 
       {toast&&<Toast msg={toast.msg} type={toast.type} onDone={()=>setToast(null)} />}
+
+      {/* Macro Manager overlay */}
+      {showMacroManager&&(
+        <MacroManager
+          macros={macros}
+          favs={macroFavs}
+          onClose={()=>setShowMacroManager(false)}
+          onSaveMacro={m=>{ saveMacro(m); setToast({msg:'Macro saved',type:'success'}) }}
+          onDeleteMacro={id=>{ deleteMacro(id); setToast({msg:'Macro deleted',type:'info'}) }}
+          onToggleFav={toggleMacroFav}
+        />
+      )}
     </div>
   )
 }

@@ -47,17 +47,17 @@ function computeDelta(cur, prev) {
 
 const CATEGORIES = ['All','Sizing','Damaged','Quality','Not as described','Changed mind','Other']
 const CAT_COLORS = {
-  'Sizing':           { color:'#60A5FA', bg:'rgba(96,165,250,0.12)',  border:'rgba(96,165,250,0.28)',  glow:'rgba(96,165,250,0.3)'  },
-  'Damaged':          { color:'#FB923C', bg:'rgba(251,146,60,0.12)',  border:'rgba(251,146,60,0.28)',  glow:'rgba(251,146,60,0.3)'  },
-  'Quality':          { color:'#F87171', bg:'rgba(248,113,113,0.12)', border:'rgba(248,113,113,0.28)', glow:'rgba(248,113,113,0.3)' },
-  'Not as described': { color:'#C084FC', bg:'rgba(192,132,252,0.12)', border:'rgba(192,132,252,0.28)', glow:'rgba(192,132,252,0.3)' },
-  'Changed mind':     { color:'#FCD34D', bg:'rgba(252,211,77,0.12)',  border:'rgba(252,211,77,0.28)',  glow:'rgba(252,211,77,0.3)'  },
-  'Other':            { color:'#94A3B8', bg:'rgba(148,163,184,0.10)', border:'rgba(148,163,184,0.22)', glow:'rgba(148,163,184,0.2)' },
-  'Customer Outreach':{ color:'#34D399', bg:'rgba(52,211,153,0.10)',  border:'rgba(52,211,153,0.25)',  glow:'rgba(52,211,153,0.2)' },
-  'Supplier':         { color:'#F59E0B', bg:'rgba(245,158,11,0.10)',  border:'rgba(245,158,11,0.25)',  glow:'rgba(245,158,11,0.2)' },
-  'Listing Fix':      { color:'#60A5FA', bg:'rgba(96,165,250,0.10)',  border:'rgba(96,165,250,0.25)',  glow:'rgba(96,165,250,0.2)' },
-  'Quality Control':  { color:'#F87171', bg:'rgba(248,113,113,0.10)', border:'rgba(248,113,113,0.25)', glow:'rgba(248,113,113,0.2)' },
-  'Operations':       { color:'#A78BFA', bg:'rgba(167,139,250,0.10)', border:'rgba(167,139,250,0.25)', glow:'rgba(167,139,250,0.2)' },
+  'Sizing':           { color:'#1D4ED8', bg:'rgba(29,78,216,0.07)',   border:'rgba(29,78,216,0.2)',   glow:'rgba(29,78,216,0.15)'  },
+  'Damaged':          { color:'#C2410C', bg:'rgba(194,65,12,0.07)',   border:'rgba(194,65,12,0.2)',   glow:'rgba(194,65,12,0.15)'  },
+  'Quality':          { color:'#B91C1C', bg:'rgba(185,28,28,0.07)',   border:'rgba(185,28,28,0.2)',   glow:'rgba(185,28,28,0.15)'  },
+  'Not as described': { color:'#6D28D9', bg:'rgba(109,40,217,0.07)',  border:'rgba(109,40,217,0.2)',  glow:'rgba(109,40,217,0.15)' },
+  'Changed mind':     { color:'#92400E', bg:'rgba(146,64,14,0.07)',   border:'rgba(146,64,14,0.2)',   glow:'rgba(146,64,14,0.15)'  },
+  'Other':            { color:'#475569', bg:'rgba(71,85,105,0.07)',   border:'rgba(71,85,105,0.18)',  glow:'rgba(71,85,105,0.12)'  },
+  'Customer Outreach':{ color:'#065F46', bg:'rgba(6,95,70,0.07)',     border:'rgba(6,95,70,0.18)',    glow:'rgba(6,95,70,0.12)'    },
+  'Supplier':         { color:'#78350F', bg:'rgba(120,53,15,0.07)',   border:'rgba(120,53,15,0.18)',  glow:'rgba(120,53,15,0.12)'  },
+  'Listing Fix':      { color:'#1E40AF', bg:'rgba(30,64,175,0.07)',   border:'rgba(30,64,175,0.18)',  glow:'rgba(30,64,175,0.12)'  },
+  'Quality Control':  { color:'#991B1B', bg:'rgba(153,27,27,0.07)',   border:'rgba(153,27,27,0.18)',  glow:'rgba(153,27,27,0.12)'  },
+  'Operations':       { color:'#4C1D95', bg:'rgba(76,29,149,0.07)',   border:'rgba(76,29,149,0.18)',  glow:'rgba(76,29,149,0.12)'  },
 }
 
 function categorizeReason(raw) {
@@ -201,9 +201,9 @@ const CSS = `
   .an-scroll::-webkit-scrollbar-track{background:transparent}
   .an-scroll::-webkit-scrollbar-thumb{background:var(--scrollbar);border-radius:2px}
 
-  .date-inp{background:var(--bg-surface-2);border:1px solid var(--border);border-radius:8px;color:var(--text-1);padding:4px 10px;font-size:11.5px;font-family:inherit;cursor:pointer;outline:none;color-scheme:dark;transition:border-color .15s}
+  .date-inp{background:var(--bg-surface);border:1px solid var(--border);border-radius:8px;color:var(--text-1);padding:4px 10px;font-size:11.5px;font-family:inherit;cursor:pointer;outline:none;transition:border-color .15s}
   .date-inp:focus{border-color:var(--accent-border)}
-  .date-inp::-webkit-calendar-picker-indicator{filter:invert(.6);cursor:pointer}
+  .date-inp::-webkit-calendar-picker-indicator{opacity:.45;cursor:pointer}
 
   .kpi-card{
     background:var(--bg-surface);
@@ -242,18 +242,18 @@ const CSS = `
   .bar-fill{transform-origin:left;animation:growX .6s cubic-bezier(.34,1.56,.64,1) both}
   .bar-col{transform-origin:bottom;animation:barGrow .5s cubic-bezier(.34,1.56,.64,1) both}
 
-  .btn-pickup{padding:5px 13px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;border:1px solid rgba(161,117,252,.3);font-family:inherit;background:rgba(161,117,252,.12);color:#C3A3FF;transition:all .15s}
-  .btn-pickup:hover{background:rgba(161,117,252,.22)}
-  .btn-done{padding:5px 13px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;border:1px solid rgba(74,222,128,.28);font-family:inherit;background:rgba(74,222,128,.1);color:#4ade80;transition:all .15s}
-  .btn-done:hover{background:rgba(74,222,128,.2)}
-  .btn-reopen{padding:4px 11px;border-radius:8px;font-size:10.5px;font-weight:600;cursor:pointer;border:1px solid rgba(255,255,255,.08);font-family:inherit;background:transparent;color:rgba(248,250,252,.28);transition:all .15s}
-  .btn-reopen:hover{border-color:rgba(255,255,255,.18);color:rgba(248,250,252,.55)}
-  .name-inp{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:7px;color:var(--text-1);padding:4px 10px;font-size:11.5px;font-family:inherit;outline:none;transition:border-color .15s;width:140px}
-  .name-inp:focus{border-color:rgba(161,117,252,.45)}
-  .name-inp::placeholder{color:rgba(248,250,252,.3)}
+  .btn-pickup{padding:5px 13px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;border:1px solid var(--accent-border);font-family:inherit;background:var(--accent-soft);color:var(--accent-text);transition:all .15s}
+  .btn-pickup:hover{opacity:.82}
+  .btn-done{padding:5px 13px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;border:1px solid rgba(22,163,74,.22);font-family:inherit;background:rgba(22,163,74,.07);color:var(--success);transition:all .15s}
+  .btn-done:hover{background:rgba(22,163,74,.13)}
+  .btn-reopen{padding:4px 11px;border-radius:8px;font-size:10.5px;font-weight:600;cursor:pointer;border:1px solid var(--border);font-family:inherit;background:transparent;color:var(--text-3);transition:all .15s}
+  .btn-reopen:hover{border-color:var(--border-hover);color:var(--text-2)}
+  .name-inp{background:var(--bg-surface);border:1px solid var(--border);border-radius:7px;color:var(--text-1);padding:4px 10px;font-size:11.5px;font-family:inherit;outline:none;transition:border-color .15s;width:140px}
+  .name-inp:focus{border-color:var(--accent-border)}
+  .name-inp::placeholder{color:var(--text-3)}
 
   .matrix-row{transition:background .15s;border-radius:10px}
-  .matrix-row:hover{background:rgba(255,255,255,.045)}
+  .matrix-row:hover{background:var(--bg-surface-2)}
 `
 
 // ─── Aurora + Grid ────────────────────────────────────────────────────────────
@@ -331,7 +331,7 @@ function KpiRow({ kpis, prevKpis, refunds, loaded }) {
   const aCount = useCountUp(count, loaded.refunds)
   const aRate  = useCountUp(rate, loaded.kpis)
   const aAvg   = useCountUp(avg, loaded.refunds)
-  const isHealthy = rate===0&&loaded.kpis&&loaded.refunds
+  const isHealthy = rate<2&&loaded.kpis&&loaded.refunds
 
   if(!loaded.kpis&&!loaded.refunds) return (
     <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:16, marginBottom:28 }}>
@@ -344,9 +344,9 @@ function KpiRow({ kpis, prevKpis, refunds, loaded }) {
       icon:<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 1 0 0 7h5a3.5 3.5 0 1 1 0 7H6"/></svg> },
     { label:'TOTAL REFUNDS', value:Math.floor(aCount), sub:'fully or partially refunded', accent:'#F97316', grad:'linear-gradient(135deg,#F97316,#fbbf24)', delta:computeDelta(count, prevCount), lowerBetter:true,
       icon:<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.95"/></svg> },
-    { label:'REFUND RATE',   value:isHealthy?'0.0% ✓':`${aRate.toFixed(1)}%`, sub:isHealthy?'Excellent — below average':rate>5?`${(rate/2.5).toFixed(1)}× above 2–5% avg`:'Industry avg: 2–5%', accent:isHealthy?'#22C55E':rate>10?'#EF4444':rate>5?'#F97316':'#22C55E', grad:isHealthy?'linear-gradient(135deg,#22C55E,#86efac)':rate>10?'linear-gradient(135deg,#EF4444,#f87171)':rate>5?'linear-gradient(135deg,#F97316,#fbbf24)':'linear-gradient(135deg,#22C55E,#86efac)', delta:computeDelta(rate, prevRate), lowerBetter:true,
+    { label:'REFUND RATE',   value:isHealthy?'0.0% ✓':`${aRate.toFixed(1)}%`, sub:isHealthy?'Excellent — below average':rate>5?`${(rate/2.5).toFixed(1)}× above 2–5% avg`:'Industry avg: 2–5%', accent:isHealthy?'#16A34A':rate>10?'#DC2626':rate>5?'#C2410C':'#16A34A', grad:isHealthy?'linear-gradient(135deg,#16A34A,#22C55E)':rate>10?'linear-gradient(135deg,#DC2626,#EF4444)':rate>5?'linear-gradient(135deg,#C2410C,#F97316)':'linear-gradient(135deg,#16A34A,#22C55E)', delta:computeDelta(rate, prevRate), lowerBetter:true,
       icon:<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg> },
-    { label:'AVG REFUND',    value:fmtEur(aAvg), sub:'average per refunded order', accent:'#A175FC', grad:'linear-gradient(135deg,#A175FC,#C3A3FF)', delta:computeDelta(avg, prevAvg), lowerBetter:true,
+    { label:'AVG REFUND',    value:fmtEur(aAvg), sub:'average per refunded order', accent:'#7C5CFC', grad:'linear-gradient(135deg,#7C5CFC,#A175FC)', delta:computeDelta(avg, prevAvg), lowerBetter:true,
       icon:<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg> },
   ]
 
@@ -385,19 +385,19 @@ function RevenueTrendChart({ trend, loaded, rangeLabel }) {
     <div className="panel" style={{ marginBottom:24, animation:'fadeIn .3s ease-out both' }}>
       <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:16 }}>
         <div><div style={{ fontSize:13, fontWeight:600, color:'var(--text-1)', marginBottom:3 }}>Revenue Trend</div><div style={{ fontSize:11, color:'var(--text-3)' }}>{rangeLabel} · daily net revenue</div></div>
-        <div style={{ fontSize:16, fontWeight:700, color:'#A175FC', letterSpacing:'-0.02em' }}>{fmtEur(tot)}</div>
+        <div style={{ fontSize:16, fontWeight:700, color:'var(--accent-text)', letterSpacing:'-0.02em' }}>{fmtEur(tot)}</div>
       </div>
       <svg viewBox={`0 0 ${W} ${H}`} style={{ width:'100%', overflow:'visible' }} aria-hidden>
         <defs>
           <linearGradient id="tg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#A175FC" stopOpacity="0.25"/><stop offset="100%" stopColor="#A175FC" stopOpacity="0"/></linearGradient>
           <filter id="glow"><feGaussianBlur stdDeviation="1" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
         </defs>
-        {[0,.5,1].map((s,i)=>{ const y=pT+s*(H-pT-pB); return <line key={i} x1={pL} y1={y} x2={W-pR} y2={y} stroke="rgba(255,255,255,0.05)" strokeWidth="1"/> })}
+        {[0,.5,1].map((s,i)=>{ const y=pT+s*(H-pT-pB); return <line key={i} x1={pL} y1={y} x2={W-pR} y2={y} style={{ stroke:'var(--divider)' }} strokeWidth="1"/> })}
         <polygon points={area} fill="url(#tg)"/>
         <polyline points={line} fill="none" stroke="#A175FC" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" filter="url(#glow)"/>
         {pts.filter(p=>p.revenue>0).map((p,i)=><circle key={i} cx={p.x} cy={p.y} r="2.5" fill="#A175FC" filter="url(#glow)"/>)}
-        {xlbls.map((p,i)=><text key={i} x={p.x} y={H} textAnchor="middle" fontSize="9" fill="rgba(248,250,252,0.28)" fontFamily="sans-serif">{new Date(p.date+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'})}</text>)}
-        {[0,mx/2,mx].map((v,i)=>{ const y=pT+(1-v/mx)*(H-pT-pB); const lbl=v>=1000?`€${(v/1000).toFixed(1)}k`:`€${Math.round(v)}`; return <text key={i} x={pL-6} y={y+3} textAnchor="end" fontSize="9" fill="rgba(248,250,252,0.22)" fontFamily="sans-serif">{lbl}</text> })}
+        {xlbls.map((p,i)=><text key={i} x={p.x} y={H} textAnchor="middle" fontSize="9" style={{ fill:'var(--text-3)' }} fontFamily="sans-serif">{new Date(p.date+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'})}</text>)}
+        {[0,mx/2,mx].map((v,i)=>{ const y=pT+(1-v/mx)*(H-pT-pB); const lbl=v>=1000?`€${(v/1000).toFixed(1)}k`:`€${Math.round(v)}`; return <text key={i} x={pL-6} y={y+3} textAnchor="end" fontSize="9" style={{ fill:'var(--text-3)' }} fontFamily="sans-serif">{lbl}</text> })}
       </svg>
     </div>
   )
@@ -429,7 +429,7 @@ function DonutReasonChart({ refunds, loaded }) {
         {/* Donut */}
         <div style={{ position:'relative', flexShrink:0, width:130, height:130 }}>
           <svg viewBox="0 0 130 130" style={{ width:130, height:130, transform:'rotate(-90deg)' }} aria-hidden>
-            <circle cx="65" cy="65" r={r} fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="18"/>
+            <circle cx="65" cy="65" r={r} fill="none" style={{ stroke:'var(--bg-surface-2)' }} strokeWidth="18"/>
             {slices.map((s,i)=>(
               <circle key={i} cx="65" cy="65" r={r} fill="none" stroke={s.color} strokeWidth="18"
                 strokeDasharray={`${s.dashLen} ${C}`} strokeDashoffset={s.offset} strokeLinecap="butt"
@@ -476,7 +476,7 @@ function MonthlyTrendChart({ allRefunds, loaded }) {
           <div style={{ fontSize:13, fontWeight:600, color:'var(--text-1)', marginBottom:3 }}>Monthly Refunds</div>
           <div style={{ fontSize:11, color:'var(--text-3)' }}>Last 6 months — count + amount</div>
         </div>
-        <div style={{ fontSize:13, fontWeight:700, color:'#EF4444' }}>{fmtEur(totalLost)}</div>
+        <div style={{ fontSize:13, fontWeight:700, color:'var(--danger)' }}>{fmtEur(totalLost)}</div>
       </div>
       <div style={{ display:'flex', alignItems:'flex-end', gap:10, height:110 }}>
         {months.map((m,i)=>{
@@ -484,7 +484,7 @@ function MonthlyTrendChart({ allRefunds, loaded }) {
           const isMax = m.count===maxCount&&m.count>0
           return (
             <div key={i} style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'flex-end', height:'100%', gap:5 }}>
-              <div style={{ fontSize:10, fontWeight:700, color:m.count>0?'#EF4444':'var(--text-3)', fontVariantNumeric:'tabular-nums' }}>{m.count>0?m.count:''}</div>
+              <div style={{ fontSize:10, fontWeight:700, color:m.count>0?'var(--danger)':'var(--text-3)', fontVariantNumeric:'tabular-nums' }}>{m.count>0?m.count:''}</div>
               <div style={{ width:'100%', borderRadius:'5px 5px 0 0', position:'relative', overflow:'hidden',
                 background:m.isCurrentMonth?'rgba(161,117,252,0.15)':isMax?'rgba(239,68,68,0.15)':'var(--bg-input)',
                 border:`1px solid ${m.isCurrentMonth?'rgba(161,117,252,0.3)':isMax?'rgba(239,68,68,0.25)':'var(--bg-input)'}`,
@@ -492,7 +492,7 @@ function MonthlyTrendChart({ allRefunds, loaded }) {
               }}>
                 {m.count>0&&<div className="bar-col" style={{ position:'absolute', inset:0, background:m.isCurrentMonth?'linear-gradient(180deg,rgba(161,117,252,0.6),rgba(161,117,252,0.2))':isMax?'linear-gradient(180deg,rgba(239,68,68,0.7),rgba(239,68,68,0.25))':'linear-gradient(180deg,rgba(255,107,53,0.5),rgba(255,107,53,0.15))', animationDelay:`${i*.06}s` }}/>}
               </div>
-              <div style={{ fontSize:10, color:m.isCurrentMonth?'#C3A3FF':'var(--text-3)', fontWeight:m.isCurrentMonth?700:400 }}>{m.label}</div>
+              <div style={{ fontSize:10, color:m.isCurrentMonth?'var(--accent)':'var(--text-3)', fontWeight:m.isCurrentMonth?700:400 }}>{m.label}</div>
             </div>
           )
         })}
@@ -529,8 +529,8 @@ function ActionBoard({ patternActions, aiInsights, noRefunds, loaded, onStatusCh
     </div>
   )
 
-  const PRIO_C={high:'#F87171',medium:'#FB923C',low:'#A175FC'}
-  const PRIO_BG={high:'rgba(248,113,113,0.1)',medium:'rgba(251,146,60,0.08)',low:'rgba(161,117,252,0.08)'}
+  const PRIO_C={high:'var(--danger)',medium:'var(--warning)',low:'var(--accent)'}
+  const PRIO_BG={high:'rgba(220,38,38,0.07)',medium:'rgba(217,119,6,0.07)',low:'var(--accent-soft)'}
 
   return (
     <div className="panel" style={{ marginBottom:24, animation:'fadeIn .3s ease-out both' }}>
@@ -550,7 +550,7 @@ function ActionBoard({ patternActions, aiInsights, noRefunds, loaded, onStatusCh
           {!noRefunds&&(['open','picked_up','done']).map(tab=>{
             const cnt=tab==='open'?openItems.length:tab==='picked_up'?pickupItems.length:doneItems.length
             const isAct=activeTab===tab
-            return <button key={tab} onClick={()=>setActiveTab(tab)} className="tab-btn" style={{ background:isAct?'rgba(161,117,252,0.18)':'var(--bg-input)', color:isAct?'#C3A3FF':'var(--text-3)', boxShadow:isAct?'inset 0 0 0 1px rgba(161,117,252,0.38)':'inset 0 0 0 1px rgba(255,255,255,0.08)' }}>{tab==='open'?'Open':tab==='picked_up'?'Picked Up':'Done'}{cnt>0&&<span style={{ marginLeft:4, fontSize:10, opacity:.7 }}>{cnt}</span>}</button>
+            return <button key={tab} onClick={()=>setActiveTab(tab)} className="tab-btn" style={{ background:isAct?'var(--accent-soft)':'var(--bg-input)', color:isAct?'var(--accent-text)':'var(--text-2)', boxShadow:isAct?'inset 0 0 0 1px var(--accent-border)':'inset 0 0 0 1px var(--border)' }}>{tab==='open'?'Open':tab==='picked_up'?'Picked Up':'Done'}{cnt>0&&<span style={{ marginLeft:4, fontSize:10, opacity:.7 }}>{cnt}</span>}</button>
           })}
           {noRefunds&&<div style={{ padding:'4px 12px', borderRadius:100, background:'rgba(34,197,94,0.1)', border:'1px solid rgba(34,197,94,0.25)', fontSize:11, fontWeight:700, color:'#22C55E', letterSpacing:'.05em' }}>STORE HEALTHY</div>}
         </div>
@@ -586,8 +586,8 @@ function ActionBoard({ patternActions, aiInsights, noRefunds, loaded, onStatusCh
                   </div>
                   <div style={{ fontSize:13.5, fontWeight:700, color:isDone?'var(--text-3)':'var(--text-1)', marginBottom:6, lineHeight:1.35, textDecoration:isDone?'line-through':'none' }}>{item.title}</div>
                   <div style={{ fontSize:12, color:'var(--text-2)', lineHeight:1.65, marginBottom:status!=='open'?10:0 }}>{item.action}</div>
-                  {status==='picked_up'&&st.pickedUpBy&&<div style={{ fontSize:11, color:'rgba(161,117,252,0.7)', marginBottom:8 }}>Picked up by <strong style={{ color:'#C3A3FF' }}>{st.pickedUpBy}</strong></div>}
-                  {isDone&&<div style={{ fontSize:11, color:'rgba(74,222,128,0.7)', marginBottom:8 }}>{st.pickedUpBy&&<>Completed by <strong style={{ color:'#4ade80' }}>{st.pickedUpBy}</strong>{st.resultNote?' — ':''}</>}{st.resultNote&&<span style={{ color:'var(--text-2)' }}>{st.resultNote}</span>}</div>}
+                  {status==='picked_up'&&st.pickedUpBy&&<div style={{ fontSize:11, color:'var(--accent)', marginBottom:8 }}>Picked up by <strong style={{ color:'var(--accent-text)' }}>{st.pickedUpBy}</strong></div>}
+                  {isDone&&<div style={{ fontSize:11, color:'var(--success)', marginBottom:8 }}>{st.pickedUpBy&&<>Completed by <strong style={{ color:'var(--success)' }}>{st.pickedUpBy}</strong>{st.resultNote?' — ':''}</>}{st.resultNote&&<span style={{ color:'var(--text-2)' }}>{st.resultNote}</span>}</div>}
                 </div>
                 <div style={{ display:'flex', flexDirection:'column', gap:5, alignItems:'flex-end', flexShrink:0 }}>
                   {status==='open'&&<><input className="name-inp" placeholder="Your name (optional)" value={nameInps[item.id]||''} onChange={e=>setNameInps(p=>({...p,[item.id]:e.target.value}))}/><button className="btn-pickup" onClick={()=>onStatusChange(item.id,'picked_up',nameInps[item.id],'')}>Pick Up</button></>}
@@ -612,7 +612,7 @@ function RefundTable({ refunds, loaded }) {
   const sorted=[...filtered].sort((a,b)=>{ let av,bv; if(sortCol==='refundedAt'){av=new Date(a.refundedAt);bv=new Date(b.refundedAt)}else if(sortCol==='refundAmount'){av=parseFloat(a.refundAmount);bv=parseFloat(b.refundAmount)}else if(sortCol==='refundPct'){av=parseFloat(a.refundPct);bv=parseFloat(b.refundPct)}else{av=a[sortCol]||'';bv=b[sortCol]||''}; return sortDir==='desc'?(av<bv?1:-1):(av>bv?1:-1) })
   const display=showAll?sorted:sorted.slice(0,20)
   const toggleSort=col=>{ if(sortCol===col)setSortDir(d=>d==='desc'?'asc':'desc'); else{setSortCol(col);setSortDir('desc')} }
-  const SortIco=({col})=>{ if(sortCol!==col)return<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.18)" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="2" x2="12" y2="22"/></svg>; return sortDir==='desc'?<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="rgba(248,250,252,.55)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>:<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="rgba(248,250,252,.55)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="18 15 12 9 6 15"/></svg> }
+  const SortIco=({col})=>{ if(sortCol!==col)return<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="var(--border-hover)" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="2" x2="12" y2="22"/></svg>; return sortDir==='desc'?<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="var(--text-2)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>:<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="var(--text-2)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="18 15 12 9 6 15"/></svg> }
 
   return (
     <div className="panel" style={{ marginBottom:24, animation:'fadeIn .3s ease-out both' }}>
@@ -623,7 +623,7 @@ function RefundTable({ refunds, loaded }) {
 
       {loaded&&enriched.length>0&&(
         <div style={{ display:'flex', gap:5, flexWrap:'wrap', marginBottom:16 }}>
-          {CATEGORIES.map(cat=>{ const cc=cat==='All'?null:CAT_COLORS[cat]; const cnt=cat==='All'?enriched.length:enriched.filter(r=>r.category===cat).length; if(cnt===0&&cat!=='All')return null; const isAct=catFilter===cat; return <button key={cat} onClick={()=>{setCatFilter(cat);setShowAll(false)}} className="filter-pill" style={{ background:isAct?(cc?cc.bg:'var(--bg-input)'):'transparent', color:isAct?(cc?cc.color:'var(--text-1)'):'var(--text-3)', borderColor:isAct?(cc?cc.border:'rgba(255,255,255,0.2)'):'var(--bg-input)' }}>{cat} <span style={{ opacity:.6, fontSize:10 }}>{cnt}</span></button> })}
+          {CATEGORIES.map(cat=>{ const cc=cat==='All'?null:CAT_COLORS[cat]; const cnt=cat==='All'?enriched.length:enriched.filter(r=>r.category===cat).length; if(cnt===0&&cat!=='All')return null; const isAct=catFilter===cat; return <button key={cat} onClick={()=>{setCatFilter(cat);setShowAll(false)}} className="filter-pill" style={{ background:isAct?(cc?cc.bg:'var(--bg-input)'):'transparent', color:isAct?(cc?cc.color:'var(--text-1)'):'var(--text-3)', borderColor:isAct?(cc?cc.border:'var(--accent-border)'):'var(--border)' }}>{cat} <span style={{ opacity:.6, fontSize:10 }}>{cnt}</span></button> })}
         </div>
       )}
 
@@ -645,7 +645,7 @@ function RefundTable({ refunds, loaded }) {
           <div style={{ overflowX:'auto' }}>
             <table style={{ width:'100%', borderCollapse:'collapse', minWidth:780 }}>
               <thead>
-                <tr style={{ borderBottom:'1px solid rgba(255,255,255,0.06)' }}>
+                <tr style={{ borderBottom:'1px solid var(--divider)' }}>
                   {[{label:'Date',col:'refundedAt',align:'left'},{label:'Order',col:'orderId',align:'left'},{label:'Customer',col:'customer',align:'left'},{label:'Product(s)',col:null,align:'left'},{label:'Category',col:'category',align:'left'},{label:'% of Order',col:'refundPct',align:'right'},{label:'Amount',col:'refundAmount',align:'right'}].map(h=>(
                     <th key={h.label} onClick={()=>h.col&&toggleSort(h.col)} style={{ textAlign:h.align, fontSize:9.5, fontWeight:700, letterSpacing:'.08em', color:'var(--text-3)', textTransform:'uppercase', padding:'0 0 12px', paddingLeft:h.align==='right'?14:0, whiteSpace:'nowrap', cursor:h.col?'pointer':'default', userSelect:'none' }}>
                       <span style={{ display:'inline-flex', alignItems:'center', gap:4 }}>{h.label}{h.col&&<SortIco col={h.col}/>}</span>
@@ -655,14 +655,14 @@ function RefundTable({ refunds, loaded }) {
               </thead>
               <tbody>
                 {display.map((r,ri)=>{ const pct=parseFloat(r.refundPct||0); const pc=pct>=80?'#F87171':pct>=40?'#FB923C':'var(--text-2)'; const pb=pct>=80?'rgba(248,113,113,0.1)':pct>=40?'rgba(251,146,60,0.1)':'var(--bg-input)'; return (
-                  <tr key={`${r.orderId}-${ri}`} className="tbl-row" style={{ borderBottom:ri<display.length-1?'1px solid rgba(255,255,255,0.04)':'none' }}>
+                  <tr key={`${r.orderId}-${ri}`} className="tbl-row" style={{ borderBottom:ri<display.length-1?'1px solid var(--divider)':'none' }}>
                     <td style={{ padding:'11px 14px 11px 0', fontSize:11.5, color:'var(--text-3)', whiteSpace:'nowrap' }}>{fmtDate(r.refundedAt)}</td>
                     <td style={{ padding:'11px 14px', fontSize:12, fontWeight:700, color:'var(--text-2)', whiteSpace:'nowrap' }}>{r.orderId}</td>
                     <td style={{ padding:'11px 14px', maxWidth:130 }}><div style={{ fontSize:12.5, color:'var(--text-1)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }} title={r.customer}>{r.customer}</div>{r.customerEmail&&<div style={{ fontSize:10, color:'var(--text-3)', marginTop:1, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{r.customerEmail}</div>}</td>
                     <td style={{ padding:'11px 14px', fontSize:12, color:'var(--text-2)', maxWidth:160 }}><div style={{ overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }} title={(r.products||[]).join(', ')}>{(r.products||[]).join(', ')||'—'}</div></td>
                     <td style={{ padding:'11px 14px' }}><CatBadge cat={r.category} small/></td>
                     <td style={{ padding:'11px 14px', textAlign:'right', whiteSpace:'nowrap' }}><span style={{ fontSize:11, fontWeight:700, color:pc, background:pb, borderRadius:5, padding:'2px 8px', display:'inline-block' }}>{r.refundPct}%</span></td>
-                    <td style={{ padding:'11px 0 11px 14px', textAlign:'right', fontSize:13, fontWeight:800, color:'#F87171', fontVariantNumeric:'tabular-nums', whiteSpace:'nowrap', textShadow:'none' }}>{fmtEur(r.refundAmount)}</td>
+                    <td style={{ padding:'11px 0 11px 14px', textAlign:'right', fontSize:13, fontWeight:800, color:'var(--danger)', fontVariantNumeric:'tabular-nums', whiteSpace:'nowrap', textShadow:'none' }}>{fmtEur(r.refundAmount)}</td>
                   </tr>
                 )})}
               </tbody>
@@ -700,7 +700,7 @@ function ProductMatrix({ allRefunds, loaded }) {
       </div>
       <table style={{ width:'100%', borderCollapse:'collapse' }}>
         <thead>
-          <tr style={{ borderBottom:'1px solid rgba(255,255,255,0.06)' }}>
+          <tr style={{ borderBottom:'1px solid var(--divider)' }}>
             {['#','Product','Category','Refunds','Avg %','Amount Lost','Risk'].map((h,i)=>(
               <th key={h} style={{ textAlign:i>=3?'right':'left', fontSize:9.5, fontWeight:700, letterSpacing:'.08em', color:'var(--text-3)', textTransform:'uppercase', padding:'0 0 12px', paddingLeft:i>0&&i<3?14:i>=3?14:0, whiteSpace:'nowrap' }}>{h}</th>
             ))}
@@ -711,7 +711,7 @@ function ProductMatrix({ allRefunds, loaded }) {
             const risk = p.count>=3?{ label:'High', color:'#F87171', bg:'rgba(248,113,113,0.1)', border:'rgba(248,113,113,0.25)' }:p.count===2?{ label:'Watch', color:'#FCD34D', bg:'rgba(252,211,77,0.1)', border:'rgba(252,211,77,0.22)' }:{ label:'Low', color:'#4ade80', bg:'rgba(74,222,128,0.08)', border:'rgba(74,222,128,0.2)' }
             const cc=CAT_COLORS[p.topCat]||CAT_COLORS.Other
             return (
-              <tr key={p.name} className="matrix-row" style={{ borderBottom:i<products.length-1?'1px solid rgba(255,255,255,0.04)':'none' }}>
+              <tr key={p.name} className="matrix-row" style={{ borderBottom:i<products.length-1?'1px solid var(--divider)':'none' }}>
                 <td style={{ padding:'11px 0', fontSize:12, fontWeight:700, color:'var(--text-3)', width:28 }}>{i+1}</td>
                 <td style={{ padding:'11px 14px' }}>
                   <div style={{ fontSize:12.5, color:'var(--text-1)', fontWeight:500, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', maxWidth:200 }} title={p.name}>{p.name}</div>
@@ -720,7 +720,7 @@ function ProductMatrix({ allRefunds, loaded }) {
                   </div>
                 </td>
                 <td style={{ padding:'11px 14px' }}><CatBadge cat={p.topCat} small/></td>
-                <td style={{ padding:'11px 14px', textAlign:'right', fontSize:13, fontWeight:800, color:'#F87171', fontVariantNumeric:'tabular-nums' }}>{p.count}</td>
+                <td style={{ padding:'11px 14px', textAlign:'right', fontSize:13, fontWeight:800, color:'var(--danger)', fontVariantNumeric:'tabular-nums' }}>{p.count}</td>
                 <td style={{ padding:'11px 14px', textAlign:'right', fontSize:12, fontWeight:600, color:'var(--text-2)', fontVariantNumeric:'tabular-nums' }}>{p.avgPct}%</td>
                 <td style={{ padding:'11px 14px', textAlign:'right', fontSize:12.5, fontWeight:700, color:'var(--text-2)', fontVariantNumeric:'tabular-nums' }}>{fmtEur(p.amount)}</td>
                 <td style={{ padding:'11px 0 11px 14px', textAlign:'right' }}>
@@ -921,7 +921,7 @@ export default function AnalyticsPage() {
             <div style={{ height:'1px', background:'var(--bg-surface-2)', margin:'20px 0 16px' }}/>
             <div style={{ display:'flex', alignItems:'center', gap:6, flexWrap:'wrap' }}>
               {RANGES.map(r=>(
-                <button key={r.id} onClick={()=>selectRange(r.id)} className="range-pill" style={{ background:dateRange===r.id?'rgba(161,117,252,0.18)':'var(--bg-input)', color:dateRange===r.id?'#C3A3FF':'var(--text-3)', boxShadow:dateRange===r.id?'inset 0 0 0 1px rgba(161,117,252,0.4),0 0 12px rgba(161,117,252,0.08)':'inset 0 0 0 1px rgba(255,255,255,0.08)' }}>{r.label}</button>
+                <button key={r.id} onClick={()=>selectRange(r.id)} className="range-pill" style={{ background:dateRange===r.id?'var(--accent-soft)':'var(--bg-input)', color:dateRange===r.id?'var(--accent-text)':'var(--text-2)', boxShadow:dateRange===r.id?'inset 0 0 0 1px var(--accent-border)':'inset 0 0 0 1px var(--border)' }}>{r.label}</button>
               ))}
               {dateRange==='custom'&&(
                 <div style={{ display:'flex', alignItems:'center', gap:6, marginLeft:4 }}>

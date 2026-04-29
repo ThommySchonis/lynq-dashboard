@@ -1,13 +1,16 @@
 import { supabaseAdmin } from '../../../../../lib/supabaseAdmin'
 import { NextResponse } from 'next/server'
+import { verifyOAuthState } from '../../../../../lib/oauthState'
 
 export async function GET(request) {
   const { searchParams } = new URL(request.url)
   const code = searchParams.get('code')
-  const userId = searchParams.get('state')
+  const state = searchParams.get('state')
   const appUrl = process.env.NEXT_PUBLIC_APP_URL
 
-  if (!code || !userId) {
+  const verifiedState = verifyOAuthState(state, 'gmail')
+
+  if (!code || !verifiedState) {
     return NextResponse.redirect(`${appUrl}/onboarding?error=gmail_failed`)
   }
 
@@ -35,7 +38,7 @@ export async function GET(request) {
 
   // Save tokens
   const { error } = await supabaseAdmin.from('gmail_tokens').upsert({
-    user_id: userId,
+    user_id: verifiedState.userId,
     email: profile.email,
     gmail_address: profile.email,
     access_token: tokens.access_token,

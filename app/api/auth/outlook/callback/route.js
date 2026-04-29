@@ -1,10 +1,12 @@
 import { supabaseAdmin } from '../../../../../lib/supabaseAdmin'
 import { NextResponse } from 'next/server'
+import { verifyOAuthState } from '../../../../../lib/oauthState'
 
 export async function GET(request) {
   const { searchParams } = new URL(request.url)
   const code = searchParams.get('code')
-  const userId = searchParams.get('state')
+  const oauthState = verifyOAuthState(searchParams.get('state'), 'outlook')
+  const userId = oauthState?.userId
   const appUrl = process.env.NEXT_PUBLIC_APP_URL
 
   if (!code || !userId) {

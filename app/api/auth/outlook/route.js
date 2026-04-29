@@ -1,4 +1,5 @@
 import { getUserFromToken } from '../../../../lib/supabaseAdmin'
+import { createOAuthState } from '../../../../lib/oauthState'
 import { NextResponse } from 'next/server'
 
 export async function GET(request) {
@@ -32,7 +33,7 @@ export async function GET(request) {
   url.searchParams.set('response_type', 'code')
   url.searchParams.set('scope', scope)
   url.searchParams.set('response_mode', 'query')
-  url.searchParams.set('state', user.id)
+  url.searchParams.set('state', createOAuthState({ userId: user.id, provider: 'outlook' }))
 
   return NextResponse.redirect(url.toString())
 }

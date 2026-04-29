@@ -16,6 +16,7 @@ export async function GET(request) {
   const { data: agents, error } = await supabaseAdmin
     .from('agents')
     .select('*')
+    .eq('invited_by', user.id)
     .order('created_at', { ascending: true })
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
@@ -35,6 +36,7 @@ export async function POST(request) {
     .from('agents')
     .select('id')
     .eq('email', email)
+    .eq('invited_by', user.id)
     .single()
 
   if (existing) return NextResponse.json({ error: 'An agent with this email already exists' }, { status: 400 })
@@ -87,10 +89,13 @@ export async function DELETE(request) {
     .from('agents')
     .select('user_id')
     .eq('id', id)
-    .single()
+    .eq('invited_by', user.id)
+    .maybeSingle()
+
+  if (!agent) return NextResponse.json({ error: 'Agent not found' }, { status: 404 })
 
   // Delete from agents table
-  await supabaseAdmin.from('agents').delete().eq('id', id)
+  await supabaseAdmin.from('agents').delete().eq('id', id).eq('invited_by', user.id)
 
   // Also remove their Supabase auth account
   if (agent?.user_id) {

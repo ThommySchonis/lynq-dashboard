@@ -13,9 +13,9 @@ export async function POST(request) {
   const user = await getUser(request)
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { agent_id, thread_id, action_type, response_time_seconds } = await request.json()
-  if (!agent_id || !action_type) {
-    return NextResponse.json({ error: 'agent_id and action_type are required' }, { status: 400 })
+  const { thread_id, action_type, response_time_seconds } = await request.json()
+  if (!action_type) {
+    return NextResponse.json({ error: 'action_type is required' }, { status: 400 })
   }
 
   const validTypes = ['reply', 'close', 'refund_processed']
@@ -23,9 +23,18 @@ export async function POST(request) {
     return NextResponse.json({ error: 'Invalid action_type' }, { status: 400 })
   }
 
+  const { data: agent, error: agentError } = await supabaseAdmin
+    .from('agents')
+    .select('id')
+    .eq('user_id', user.id)
+    .maybeSingle()
+
+  if (agentError) return NextResponse.json({ error: agentError.message }, { status: 500 })
+  if (!agent) return NextResponse.json({ error: 'Agent profile not found' }, { status: 403 })
+
   const { data, error } = await supabaseAdmin
     .from('agent_actions')
-    .insert({ agent_id, thread_id, action_type, response_time_seconds: response_time_seconds || null })
+    .insert({ agent_id: agent.id, thread_id, action_type, response_time_seconds: response_time_seconds || null })
     .select()
     .single()
 

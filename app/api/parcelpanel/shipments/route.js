@@ -10,12 +10,12 @@ export async function GET(request) {
   const user = await getUserFromToken(token)
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  // Get ParcelPanel API key for this user
+  // Get ParcelPanel API key for this tenant
   const { data: settings } = await supabaseAdmin
     .from('integrations')
     .select('parcelpanel_api_key')
-    .eq('user_id', user.id)
-    .single()
+    .eq('client_id', user.id)
+    .maybeSingle()
 
   if (!settings?.parcelpanel_api_key) {
     return NextResponse.json({ error: 'ParcelPanel not connected', connected: false }, { status: 200 })

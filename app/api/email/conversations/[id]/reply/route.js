@@ -65,6 +65,7 @@ export async function POST(request, { params }) {
     .from('email_conversations')
     .update({ last_message_at: new Date().toISOString() })
     .eq('id', id)
+    .eq('client_id', user.id)
 
   return NextResponse.json({ success: true })
 }

@@ -1,4 +1,5 @@
 import { getUserFromToken } from '../../../../lib/supabaseAdmin'
+import { createOAuthState } from '../../../../lib/oauthState'
 import { NextResponse } from 'next/server'
 
 export async function GET(request) {
@@ -39,7 +40,7 @@ export async function GET(request) {
   url.searchParams.set('scope', scope)
   url.searchParams.set('access_type', 'offline')
   url.searchParams.set('prompt', 'consent')
-  url.searchParams.set('state', user.id)
+  url.searchParams.set('state', createOAuthState({ userId: user.id, provider: 'gmail' }))
 
   return NextResponse.redirect(url.toString())
 }

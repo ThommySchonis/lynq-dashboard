@@ -1328,7 +1328,7 @@ function InboxPage() {
   async function handleSend() {
     const textContent = replyRef.current?.textContent || reply
     if(!textContent.trim()||!selected) return false
-    if(demoMode){ showT('Demo mode — connect Gmail to send messages','error'); return false }
+    if(demoMode||!emailProvider){ showT('Demo mode — connect an email provider to send messages','error'); return false }
     setSending(true)
     let bodyToSend = replyRef.current?.innerHTML || reply
     // Auto-translate outgoing message to customer's language
@@ -1340,7 +1340,15 @@ function InboxPage() {
       } catch {}
     }
     const last=messages[messages.length-1]
-    const res=await authFetch('/api/gmail/send',{method:'POST',body:JSON.stringify({to:extractEmail(last?.from||selected.from),subject:`Re: ${selected.subject}`,body:bodyToSend,threadId:selected.id,replyToMessageId:last?.id})},session.access_token)
+    const sendPath = emailProvider==='outlook' ? '/api/outlook/send' : emailProvider==='custom' ? '/api/custom-email/send' : '/api/gmail/send'
+    const sendPayload = {
+      to: extractEmail(last?.from||selected.from),
+      subject: `Re: ${selected.subject}`,
+      body: bodyToSend,
+      replyToMessageId: last?.id,
+    }
+    if(emailProvider==='gmail') sendPayload.threadId = selected.id
+    const res=await authFetch(sendPath,{method:'POST',body:JSON.stringify(sendPayload)},session.access_token)
     const data=await res.json()
     if(data.success){
       showT('Message sent!','success')

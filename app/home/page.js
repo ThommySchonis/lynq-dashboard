@@ -77,7 +77,7 @@ const CSS = `
   .send-btn-primary {
     position: relative; overflow: hidden;
     width: 34px; height: 34px; border-radius: 8px;
-    background: #111; border: none; color: #fff;
+    background: #111111 !important; border: none; color: #ffffff !important;
     display: flex; align-items: center; justify-content: center;
     cursor: pointer; flex-shrink: 0;
     transition: background 0.18s, transform 0.18s;
@@ -90,7 +90,7 @@ const CSS = `
     animation: shimmerBtn 2.5s infinite;
     border-radius: inherit;
   }
-  .send-btn-primary:hover:not(:disabled) { background: #333; transform: scale(1.06); }
+  .send-btn-primary:hover:not(:disabled) { background: #333333 !important; transform: scale(1.06); }
   .send-btn-primary:disabled { opacity: 0.4; cursor: default; }
 
   .border-glow { animation: borderGlow 3.5s ease-in-out infinite; }
@@ -337,10 +337,10 @@ export default function HomePage() {
 
       <div ref={containerRef} onMouseMove={onMouseMove} style={{ flex:1, position:'relative', overflow:'hidden', display:'flex', flexDirection:'column', minHeight:'100vh' }}>
 
-        {/* ── Orbs — direct children so they're never clipped ── */}
-        <div aria-hidden style={{ position:'absolute', top:'-200px', right:'-100px', width:'600px', height:'600px', borderRadius:'50%', background:'radial-gradient(circle, rgba(161,117,252,0.35), transparent 70%)', filter:'blur(70px)', zIndex:0, pointerEvents:'none' }} />
-        <div aria-hidden style={{ position:'absolute', bottom:'-200px', left:'-100px', width:'550px', height:'550px', borderRadius:'50%', background:'radial-gradient(circle, rgba(96,165,250,0.28), transparent 70%)', filter:'blur(70px)', zIndex:0, pointerEvents:'none' }} />
-        <div aria-hidden style={{ position:'absolute', top:'30%', left:'20%', width:'400px', height:'400px', borderRadius:'50%', background:'radial-gradient(circle, rgba(244,114,182,0.2), transparent 70%)', filter:'blur(70px)', zIndex:0, pointerEvents:'none' }} />
+        {/* ── Orbs ── */}
+        <div aria-hidden style={{ position:'absolute', top:'-150px', right:'-150px', width:'700px', height:'700px', borderRadius:'50%', background:'radial-gradient(circle, rgba(161,117,252,0.45), transparent 70%)', filter:'blur(80px)', zIndex:0, pointerEvents:'none' }} />
+        <div aria-hidden style={{ position:'absolute', bottom:'-150px', left:'-150px', width:'650px', height:'650px', borderRadius:'50%', background:'radial-gradient(circle, rgba(96,165,250,0.38), transparent 70%)', filter:'blur(80px)', zIndex:0, pointerEvents:'none' }} />
+        <div aria-hidden style={{ position:'absolute', top:'20%', left:'5%', width:'450px', height:'450px', borderRadius:'50%', background:'radial-gradient(circle, rgba(244,114,182,0.25), transparent 70%)', filter:'blur(80px)', zIndex:0, pointerEvents:'none' }} />
 
         {/* ── Background layers (dot grid, beam, spotlight) ── */}
         <div aria-hidden style={{ position:'absolute', inset:0, pointerEvents:'none', zIndex:0 }}>
@@ -361,7 +361,7 @@ export default function HomePage() {
         {/* ── HERO STATE ── */}
         {!hasMsg && (
           <>
-            <div style={{ minHeight:'100vh', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', paddingBottom:80, position:'relative', zIndex:1 }}>
+            <div style={{ minHeight:'100vh', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', paddingBottom:120, position:'relative', zIndex:1 }}>
               <div style={{ display:'flex', flexDirection:'column', alignItems:'center', textAlign:'center' }}>
 
                 {/* Status badge */}
@@ -427,27 +427,6 @@ export default function HomePage() {
                 </motion.div>
 
               </div>
-            </div>
-
-            {/* Floating cards */}
-            <div className="hp-float" aria-hidden>
-              <motion.div className="float-card"
-                initial={{ opacity:0, x:20 }} animate={{ opacity:1, x:0, y:[0,-8,0] }}
-                transition={{ opacity:{ delay:0.7, duration:0.5 }, x:{ delay:0.7, duration:0.5 }, y:{ duration:5, repeat:Infinity, ease:'easeInOut', delay:1 } }}
-                style={{ position:'absolute', right:24, top:'22%', zIndex:2 }}>
-                <div style={{ fontSize:10, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.06em', color:'#BDBDBD', marginBottom:6 }}>Open tickets</div>
-                <div style={{ fontSize:20, fontWeight:700, color:'#111', marginBottom:6 }}><AnimatedCount to={12} /></div>
-                <span style={{ fontSize:10, fontWeight:600, background:'#FEF2F2', color:'#DC2626', borderRadius:100, padding:'2px 8px' }}>5 urgent</span>
-              </motion.div>
-
-              <motion.div className="float-card"
-                initial={{ opacity:0, x:20 }} animate={{ opacity:1, x:0, y:[0,-6,0] }}
-                transition={{ opacity:{ delay:0.9, duration:0.5 }, x:{ delay:0.9, duration:0.5 }, y:{ duration:6.5, repeat:Infinity, ease:'easeInOut', delay:1.2 } }}
-                style={{ position:'absolute', right:24, bottom:'22%', zIndex:2 }}>
-                <div style={{ fontSize:10, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.06em', color:'#BDBDBD', marginBottom:6 }}>Refund rate</div>
-                <div style={{ fontSize:20, fontWeight:700, color:'#111', marginBottom:6 }}><AnimatedCount to={3} suffix="%" /></div>
-                <span style={{ fontSize:10, fontWeight:600, background:'#FEF9EE', color:'#92400E', borderRadius:100, padding:'2px 8px' }}>↑ this week</span>
-              </motion.div>
             </div>
 
             {/* Bottom notification bar */}

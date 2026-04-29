@@ -1592,7 +1592,7 @@ function InboxPage() {
             </div>
 
             {/* Messages */}
-            <div className="sscroll conv-area" style={{flex:1,overflowY:'auto',padding:'24px 28px 16px',background:'var(--bg-page)'}}>
+            <div className="sscroll conv-area" style={{flex:1,overflowY:'auto',padding:'24px 28px 16px',background:'var(--bg-surface)'}}>
               {loadingMsgs&&[0,1].map(i=>(
                 <div key={i} style={{display:'flex',gap:12,flexDirection:i%2===0?'row':'row-reverse',marginBottom:22,animation:`fadeUp .3s ease ${i*.1}s both`}}>
                   <div className="skel" style={{width:34,height:34,borderRadius:'50%',flexShrink:0}} />

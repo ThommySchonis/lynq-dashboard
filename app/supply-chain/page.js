@@ -454,7 +454,7 @@ function SetupScreen({ token, onConnected }) {
         {/* Steps */}
         <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 14, padding: '18px 20px', marginBottom: 20 }}>
           <p style={{ fontSize: 10.5, fontWeight: 700, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '.1em', marginBottom: 14 }}>How to find your API key</p>
-          {['Log in to your Parcel Panel account', 'Go to Settings → Developers → API Access', 'Copy your API key and paste it below'].map((step, i) => (
+          {['Open the Parcel Panel app in your Shopify admin', 'Go to Integration', 'Scroll to the bottom — your API key is listed there'].map((step, i) => (
             <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', marginBottom: i < 2 ? 10 : 0 }}>
               <div style={{ width: 20, height: 20, borderRadius: 6, background: 'rgba(161,117,252,0.15)', border: '1px solid rgba(161,117,252,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 800, color: '#A175FC', flexShrink: 0 }}>{i + 1}</div>
               <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.58)', lineHeight: 1.5, paddingTop: 2 }}>{step}</p>

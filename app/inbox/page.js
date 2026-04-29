@@ -1169,20 +1169,17 @@ function MacroPanel({ macros, aiMacros, onInsert, onClose, customerName }) {
           ))}
         </div>
 
-        {/* Preview */}
-        <div style={{flex:1,display:'flex',flexDirection:'column',overflow:'hidden'}}>
-          {active ? (
-            <>
-              <div className="macro-preview sscroll" style={{flex:1}}>{renderPreview(active.body)}</div>
-              <div style={{padding:'9px 14px',borderTop:'1px solid var(--border)',display:'flex',justifyContent:'flex-end',gap:8,flexShrink:0,background:'var(--bg-surface)'}}>
-                <button className="btn-ghost" style={{fontSize:11.5,padding:'6px 14px'}} onClick={onClose}>Close</button>
-                <button className="btn-send" style={{fontSize:11.5,padding:'6px 16px'}} onClick={()=>applyMacro(active)}>Insert</button>
-              </div>
-            </>
-          ) : (
-            <div style={{flex:1,display:'flex',alignItems:'center',justifyContent:'center',color:'var(--text-3)',fontSize:12.5}}>Select a macro to preview</div>
-          )}
-        </div>
+        {/* Preview — no buttons here */}
+        {active
+          ? <div className="macro-preview sscroll" style={{flex:1}}>{renderPreview(active.body)}</div>
+          : <div style={{flex:1,display:'flex',alignItems:'center',justifyContent:'center',color:'var(--text-3)',fontSize:12.5}}>Select a macro to preview</div>
+        }
+      </div>
+
+      {/* Full-width footer — always visible, connected to bottom of panel */}
+      <div style={{borderTop:'1px solid var(--border)',padding:'8px 14px',display:'flex',alignItems:'center',justifyContent:'flex-end',gap:8,flexShrink:0,background:'var(--bg-surface)'}}>
+        <button className="btn-ghost" style={{fontSize:11.5,padding:'6px 14px'}} onClick={onClose}>Close</button>
+        <button className="btn-send" style={{fontSize:11.5,padding:'6px 16px',opacity:active?1:0.45,cursor:active?'pointer':'default'}} onClick={()=>active&&applyMacro(active)}>Insert</button>
       </div>
     </div>
   )

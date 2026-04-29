@@ -385,9 +385,9 @@ const CSS = `
   .rp-tab:hover:not(.on) { color:var(--text-2); }
   .rp-section { width:100%; display:flex; align-items:center; gap:6px; padding:9px 14px; background:transparent; cursor:pointer; border:none; font-family:inherit; text-align:left; transition:background .12s; }
   .rp-section:hover { background:var(--bg-surface-2); }
-  .rp-kv { display:flex; align-items:flex-start; justify-content:space-between; gap:10px; padding:3.5px 0; }
-  .rp-kv-l { font-size:11px; color:var(--text-3); flex-shrink:0; }
-  .rp-kv-v { font-size:11.5px; color:var(--text-2); text-align:right; }
+  .rp-kv { display:flex; align-items:baseline; justify-content:space-between; gap:16px; padding:3px 0; }
+  .rp-kv-l { font-size:11px; color:var(--text-3); flex-shrink:0; min-width:72px; }
+  .rp-kv-v { font-size:11.5px; color:var(--text-2); text-align:right; word-break:break-word; }
   .rp-order-hdr { width:100%; display:flex; align-items:center; gap:6px; padding:10px 14px 9px; background:transparent; cursor:pointer; border:none; font-family:inherit; text-align:left; transition:background .12s; }
   .rp-order-hdr:hover { background:var(--bg-surface-2); }
   .rp-action { display:inline-flex; align-items:center; gap:4px; font-size:11px; font-weight:500; font-family:inherit; padding:4px 9px; border-radius:6px; border:1px solid var(--border); background:var(--bg-surface); color:var(--text-2); cursor:pointer; transition:all .15s; white-space:nowrap; }
@@ -1172,6 +1172,7 @@ function InboxPage() {
   const [expandedOrders, setExpandedOrders] = useState({})
   const [expandedSubs, setExpandedSubs]     = useState({})
   const [custFieldsOpen, setCustFieldsOpen] = useState(true)
+  const [custShowMore, setCustShowMore]     = useState(false)
 
   const msgEnd       = useRef(null)
   const replyRef     = useRef(null)
@@ -1868,12 +1869,53 @@ function InboxPage() {
 
           {/* ── Customer tab ── */}
           {rightTab==='info'&&(
-            <div style={{padding:'12px 14px',display:'flex',flexDirection:'column',gap:2}}>
-              {!customer?.customer&&!loadingCust&&<div style={{padding:'20px 0',textAlign:'center',fontSize:12,color:'var(--text-3)'}}>No Shopify customer found</div>}
-              {loadingCust&&[0,1,2].map(i=><div key={i} className="skel" style={{height:24,borderRadius:6,marginBottom:6}} />)}
-              {customer?.customer&&!loadingCust&&(
-                <div style={{padding:'4px 0',fontSize:12,color:'var(--text-3)',textAlign:'center'}}>Customer info is shown in the fields above.</div>
+            <div style={{flexShrink:0}}>
+              {loadingCust&&<div style={{padding:'12px 14px'}}>{[0,1,2].map(i=><div key={i} className="skel" style={{height:20,borderRadius:5,marginBottom:8}} />)}</div>}
+              {!loadingCust&&(
+                <div style={{padding:'10px 14px 4px',display:'flex',flexDirection:'column',gap:0}}>
+                  {/* Note row */}
+                  <div style={{display:'flex',alignItems:'flex-start',gap:8,padding:'5px 0',borderBottom:'1px solid var(--border)',marginBottom:2}}>
+                    <span style={{display:'flex',color:'var(--text-3)',marginTop:1,flexShrink:0}}><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></span>
+                    <span style={{fontSize:12,color:customer?.customer?.note?'var(--text-2)':'var(--text-3)',fontStyle:customer?.customer?.note?'normal':'italic',lineHeight:1.5}}>{customer?.customer?.note||'This customer has no note.'}</span>
+                  </div>
+                  {/* Email row */}
+                  <div style={{display:'flex',alignItems:'center',gap:8,padding:'5px 0'}}>
+                    <span style={{display:'flex',color:'var(--text-3)',flexShrink:0}}><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></span>
+                    <a href={`mailto:${extractEmail(selected.from)}`} style={{fontSize:12,color:'var(--accent-text)',textDecoration:'none',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}} onMouseEnter={e=>e.currentTarget.style.textDecoration='underline'} onMouseLeave={e=>e.currentTarget.style.textDecoration='none'}>{extractEmail(selected.from)}</a>
+                  </div>
+                  {/* Phone row */}
+                  {customer?.customer?.phone&&(
+                    <div style={{display:'flex',alignItems:'center',gap:8,padding:'5px 0'}}>
+                      <span style={{display:'flex',color:'var(--text-3)',flexShrink:0}}><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.55 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 9.91a16 16 0 0 0 6.16 6.16l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg></span>
+                      <a href={`tel:${customer.customer.phone}`} style={{fontSize:12,color:'var(--accent-text)',textDecoration:'none'}} onMouseEnter={e=>e.currentTarget.style.textDecoration='underline'} onMouseLeave={e=>e.currentTarget.style.textDecoration='none'}>{customer.customer.phone}</a>
+                    </div>
+                  )}
+                  {/* Show more */}
+                  {customer?.customer&&(
+                    <button onClick={()=>setCustShowMore(v=>!v)} style={{display:'flex',alignItems:'center',gap:4,padding:'5px 0',background:'none',border:'none',cursor:'pointer',fontSize:12,color:'var(--accent-text)',fontFamily:'inherit',fontWeight:500}}>
+                      {custShowMore?'Show less':'Show more'}
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{transform:custShowMore?'rotate(180deg)':'rotate(0)',transition:'transform .2s'}}><polyline points="6 9 12 15 18 9"/></svg>
+                    </button>
+                  )}
+                  {custShowMore&&customer?.customer&&(
+                    <div style={{display:'flex',flexDirection:'column',gap:0,paddingTop:4,borderTop:'1px solid var(--border)'}}>
+                      {(customer.customer.city||customer.customer.country)&&<div className="rp-kv"><span className="rp-kv-l">Location</span><span className="rp-kv-v">{[customer.customer.city,customer.customer.country].filter(Boolean).join(', ')}</span></div>}
+                      {customer.customer.createdAt&&<div className="rp-kv"><span className="rp-kv-l">Customer since</span><span className="rp-kv-v">{new Date(customer.customer.createdAt).toLocaleDateString('en-US',{year:'numeric',month:'short'})}</span></div>}
+                      <div className="rp-kv"><span className="rp-kv-l">Orders</span><span className="rp-kv-v">{customer.customer.ordersCount??'—'}</span></div>
+                      <div className="rp-kv"><span className="rp-kv-l">Total spent</span><span className="rp-kv-v" style={{fontWeight:700,color:'var(--text-1)'}}>{fmtPrice(customer.customer.totalSpent,customer.customer.currency)}</span></div>
+                    </div>
+                  )}
+                  {!customer?.customer&&<div style={{padding:'8px 0',fontSize:12,color:'var(--text-3)'}}>No Shopify customer found</div>}
+                </div>
               )}
+              {/* Open Timeline row */}
+              <div style={{padding:'8px 14px 12px',display:'flex',alignItems:'center',gap:10}}>
+                <button style={{display:'flex',alignItems:'center',gap:6,padding:'5px 12px',borderRadius:7,border:'1px solid var(--border)',background:'transparent',color:'var(--text-2)',fontSize:11.5,fontWeight:600,fontFamily:'inherit',cursor:'pointer',transition:'all .15s',flexShrink:0}} onMouseEnter={e=>{e.currentTarget.style.background='var(--bg-surface-2)';e.currentTarget.style.color='var(--text-1)'}} onMouseLeave={e=>{e.currentTarget.style.background='transparent';e.currentTarget.style.color='var(--text-2)'}}>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                  Open Timeline
+                </button>
+                {selected?.id&&<span style={{fontSize:11,color:'var(--text-3)'}}>1 ticket, 1 open</span>}
+              </div>
             </div>
           )}
 
@@ -1898,122 +1940,118 @@ function InboxPage() {
               {!loadingCust&&!customer?.customer&&<div style={{padding:'24px 0',textAlign:'center',fontSize:12,color:'var(--text-3)'}}>No Shopify data found</div>}
               {!loadingCust&&customer?.customer&&(customer.orders||[]).length===0&&<div style={{padding:'24px 0',textAlign:'center',fontSize:12,color:'var(--text-3)'}}>No orders</div>}
 
-              {/* Order sections — Gorgias collapsible */}
+              {/* Order sections — Gorgias style */}
               {(customer?.orders||[]).map((order,oi)=>{
                 const isOpen       = expandedOrders[order.id]===undefined ? oi===0 : expandedOrders[order.id]
-                const shippingOpen = !!expandedSubs[`${order.id}_shipping`]
-                const itemsOpen    = !!expandedSubs[`${order.id}_items`]
-                const trackOpen    = expandedSubs[`${order.id}_track`]===undefined ? true : expandedSubs[`${order.id}_track`]
+                const shippingOpen = expandedSubs[`${order.id}_shipping`]===undefined ? true : !!expandedSubs[`${order.id}_shipping`]
+                const trackOpen    = expandedSubs[`${order.id}_track`]===undefined ? true : !!expandedSubs[`${order.id}_track`]
                 const isCancelled  = order.financialStatus==='cancelled'||order.financialStatus==='voided'
                 const isRefunded   = order.financialStatus==='refunded'
                 const canRefund    = !isCancelled && !isRefunded
                 const canCancel    = !isCancelled
                 const finS         = ORDER_STATUS[order.financialStatus?.toLowerCase()]
                 const fulS         = ORDER_STATUS[order.fulfillmentStatus?.toLowerCase()]
+                const sa           = order.shippingAddress
                 return (
                   <div key={order.id} style={{borderBottom:'1px solid var(--border)'}}>
-                    {/* Order header — click to expand */}
+
+                    {/* ── Order header: row 1 = name + chevron ── */}
                     <button className="rp-order-hdr" onClick={()=>setExpandedOrders(v=>({...v,[order.id]:!isOpen}))}>
-                      <span style={{fontSize:13,fontWeight:700,color:'var(--accent-text)',flex:1,textAlign:'left'}}>{order.name}</span>
-                      {finS&&<span style={{fontSize:9.5,fontWeight:700,padding:'2px 6px',borderRadius:4,background:finS.bg,color:finS.color,letterSpacing:'.04em',textTransform:'uppercase',border:`1px solid ${finS.color}22`,flexShrink:0}}>{finS.label}</span>}
-                      {fulS&&<span style={{fontSize:9.5,fontWeight:700,padding:'2px 6px',borderRadius:4,background:fulS.bg,color:fulS.color,letterSpacing:'.04em',textTransform:'uppercase',border:`1px solid ${fulS.color}22`,marginLeft:3,flexShrink:0}}>{fulS.label}</span>}
-                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{transform:isOpen?'rotate(180deg)':'rotate(0)',transition:'transform .2s',color:'var(--text-3)',flexShrink:0,marginLeft:4}}><polyline points="6 9 12 15 18 9"/></svg>
+                      <span style={{fontSize:13.5,fontWeight:700,color:'var(--accent-text)',flex:1,textAlign:'left'}}>{order.name}</span>
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{transform:isOpen?'rotate(180deg)':'rotate(0)',transition:'transform .2s',color:'var(--text-3)',flexShrink:0}}><polyline points="6 9 12 15 18 9"/></svg>
                     </button>
 
                     {isOpen&&(
-                      <div style={{padding:'2px 14px 12px'}}>
-                        {/* Action buttons */}
+                      <div style={{padding:'0 14px 12px'}}>
+                        {/* Row 2: status badges */}
+                        <div style={{display:'flex',gap:4,marginBottom:8,flexWrap:'wrap'}}>
+                          {finS&&<span style={{fontSize:10,fontWeight:700,padding:'2px 7px',borderRadius:4,background:finS.bg,color:finS.color,letterSpacing:'.05em',textTransform:'uppercase',border:`1px solid ${finS.color}22`}}>{finS.label}</span>}
+                          {fulS&&<span style={{fontSize:10,fontWeight:700,padding:'2px 7px',borderRadius:4,background:fulS.bg,color:fulS.color,letterSpacing:'.05em',textTransform:'uppercase',border:`1px solid ${fulS.color}22`}}>{fulS.label}</span>}
+                          {order.hasRefund&&<span style={{fontSize:10,fontWeight:700,padding:'2px 7px',borderRadius:4,background:'rgba(248,113,133,0.12)',color:'#fb7185',letterSpacing:'.05em',textTransform:'uppercase',border:'1px solid rgba(248,113,133,0.22)'}}>Partial refund</span>}
+                        </div>
+                        {/* Row 3: action buttons */}
                         <div style={{display:'flex',gap:4,flexWrap:'wrap',marginBottom:10}}>
                           <button className="rp-action" onClick={()=>setModal({type:'duplicate',order})}><span style={{display:'flex'}}>{I.copy}</span>Duplicate</button>
                           {canRefund&&<button className="rp-action" onClick={()=>setModal({type:'refund',order})}>
-                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.8"/></svg>Refund
+                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.8"/></svg>$ Refund
                           </button>}
                           {canCancel&&<button className="rp-action danger" onClick={()=>setModal({type:'cancel',order})}>
                             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>Cancel
                           </button>}
                           <button className="rp-action" style={{padding:'4px 7px'}} onClick={()=>setModal({type:'note',order})}>
-                            <span style={{display:'flex'}}>{I.note}</span>
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></svg>
                           </button>
                         </div>
 
                         {/* Key-value rows */}
-                        <div style={{marginBottom:6}}>
+                        <div style={{marginBottom:4}}>
                           <div className="rp-kv"><span className="rp-kv-l">Created</span><span className="rp-kv-v">{new Date(order.createdAt).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}</span></div>
                           <div className="rp-kv"><span className="rp-kv-l">Total</span><span className="rp-kv-v" style={{fontWeight:700,color:'var(--text-1)'}}>{fmtPrice(order.totalPrice,order.currency)}</span></div>
-                          {order.hasRefund&&<div className="rp-kv"><span className="rp-kv-l">Refund</span><span className="rp-kv-v" style={{color:'#fb7185'}}>Partially refunded</span></div>}
                         </div>
 
-                        {/* Tracking (collapsible, default open) */}
+                        {/* Tracking — collapsible (default open) */}
                         {(order.fulfillments||[]).length>0&&(
                           <>
                             <button className="rp-subsec" onClick={()=>setExpandedSubs(v=>({...v,[`${order.id}_track`]:!trackOpen}))}>
                               <span style={{display:'flex',color:'var(--text-3)'}}>{I.truck2}</span>
-                              <span style={{flex:1}}>Tracking</span>
+                              <span style={{flex:1,fontWeight:600,fontSize:11.5,color:'var(--text-2)'}}>Tracking</span>
                               <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{transform:trackOpen?'rotate(180deg)':'rotate(0)',transition:'transform .2s',color:'var(--text-3)'}}><polyline points="6 9 12 15 18 9"/></svg>
                             </button>
                             {trackOpen&&order.fulfillments.slice(0,1).map((f,fi)=>(
-                              <div key={fi} style={{padding:'8px 10px',background:'var(--bg-surface-2)',borderRadius:8,marginTop:4,border:'1px solid var(--border)'}}>
-                                <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:f.trackingNumber?4:0}}>
-                                  <span style={{fontSize:12,fontWeight:700,color:'var(--text-1)'}}>{f.trackingCompany||'Carrier'}</span>
-                                  <span style={{marginLeft:'auto',fontSize:9.5,fontWeight:700,padding:'1px 6px',borderRadius:4,background:'rgba(74,222,128,0.12)',color:'#16a34a',border:'1px solid rgba(74,222,128,0.25)',textTransform:'uppercase',letterSpacing:'.04em'}}>Delivered</span>
-                                </div>
-                                {f.trackingNumber&&<div style={{fontSize:10.5,color:'var(--text-3)',fontFamily:'monospace',marginBottom:3}}>{f.trackingNumber}</div>}
-                                {f.trackingUrl&&<a href={f.trackingUrl} target="_blank" rel="noreferrer" style={{fontSize:11,color:'var(--accent-text)',textDecoration:'none',display:'inline-flex',alignItems:'center',gap:3}}>Track package <span style={{display:'flex'}}>{I.externalLink}</span></a>}
+                              <div key={fi} style={{paddingBottom:6}}>
+                                <div className="rp-kv"><span className="rp-kv-l">Carrier</span><span className="rp-kv-v">{f.trackingCompany||'—'}</span></div>
+                                {f.trackingNumber&&<div className="rp-kv"><span className="rp-kv-l">Tracking #</span><span className="rp-kv-v" style={{fontFamily:'monospace',fontSize:10.5}}>{f.trackingNumber}</span></div>}
+                                <div className="rp-kv"><span className="rp-kv-l">Status</span><span style={{fontSize:10,fontWeight:700,padding:'1px 6px',borderRadius:4,background:'rgba(74,222,128,0.12)',color:'#16a34a',border:'1px solid rgba(74,222,128,0.25)',letterSpacing:'.04em',textTransform:'uppercase'}}>Delivered</span></div>
+                                {f.trackingUrl&&<div style={{marginTop:4}}><a href={f.trackingUrl} target="_blank" rel="noreferrer" style={{fontSize:11.5,color:'var(--accent-text)',textDecoration:'none',display:'inline-flex',alignItems:'center',gap:3}}>Track package <span style={{display:'flex'}}>{I.externalLink}</span></a></div>}
                               </div>
                             ))}
                           </>
                         )}
 
-                        {/* Shipping address (collapsible) */}
-                        {order.shippingAddress&&(
+                        {/* Shipping address — collapsible (default open) */}
+                        {sa&&(
                           <>
                             <button className="rp-subsec" onClick={()=>setExpandedSubs(v=>({...v,[`${order.id}_shipping`]:!shippingOpen}))}>
                               <span style={{display:'flex',color:'var(--text-3)'}}>{I.mappin}</span>
-                              <span style={{flex:1}}>Shipping address</span>
+                              <span style={{flex:1,fontWeight:600,fontSize:11.5,color:'var(--text-2)'}}>Shipping address</span>
                               <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{transform:shippingOpen?'rotate(180deg)':'rotate(0)',transition:'transform .2s',color:'var(--text-3)'}}><polyline points="6 9 12 15 18 9"/></svg>
                             </button>
                             {shippingOpen&&(
-                              <div style={{padding:'8px 10px',background:'var(--bg-surface-2)',borderRadius:8,marginTop:4,border:'1px solid var(--border)'}}>
-                                <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:6}}>
-                                  <span style={{fontSize:10,fontWeight:700,color:'var(--text-3)',textTransform:'uppercase',letterSpacing:'.06em'}}>Address</span>
-                                  <button onClick={()=>setModal({type:'address',order})} style={{display:'flex',alignItems:'center',gap:3,color:'var(--text-3)',cursor:'pointer',fontSize:10,fontWeight:600,padding:'2px 6px',borderRadius:5,border:'1px solid var(--border)',background:'transparent',transition:'all .15s',fontFamily:'inherit'}} onMouseEnter={e=>{e.currentTarget.style.color='var(--text-1)';e.currentTarget.style.borderColor='var(--border-hover)'}} onMouseLeave={e=>{e.currentTarget.style.color='var(--text-3)';e.currentTarget.style.borderColor='var(--border)'}}>
+                              <div style={{paddingBottom:6}}>
+                                <div style={{marginBottom:6}}>
+                                  <button onClick={()=>setModal({type:'address',order})} style={{display:'inline-flex',alignItems:'center',gap:4,color:'var(--text-2)',cursor:'pointer',fontSize:11,fontWeight:600,padding:'3px 8px',borderRadius:6,border:'1px solid var(--border)',background:'transparent',transition:'all .15s',fontFamily:'inherit'}} onMouseEnter={e=>{e.currentTarget.style.color='var(--text-1)';e.currentTarget.style.borderColor='var(--border-hover)'}} onMouseLeave={e=>{e.currentTarget.style.color='var(--text-2)';e.currentTarget.style.borderColor='var(--border)'}}>
                                     <span style={{display:'flex'}}>{I.edit}</span> Edit
                                   </button>
                                 </div>
-                                <div style={{fontSize:11.5,color:'var(--text-2)',lineHeight:1.6}}>
-                                  {[order.shippingAddress.firstName,order.shippingAddress.lastName].filter(Boolean).join(' ')}<br/>
-                                  {order.shippingAddress.address1}{order.shippingAddress.address2?`, ${order.shippingAddress.address2}`:''}<br/>
-                                  {[order.shippingAddress.city,order.shippingAddress.zip].filter(Boolean).join(' ')}{order.shippingAddress.country?`, ${order.shippingAddress.country}`:''}
-                                </div>
-                              </div>
-                            )}
-                          </>
-                        )}
-
-                        {/* Line items (collapsible) */}
-                        {(order.lineItems||[]).length>0&&(
-                          <>
-                            <button className="rp-subsec" onClick={()=>setExpandedSubs(v=>({...v,[`${order.id}_items`]:!itemsOpen}))}>
-                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{color:'var(--text-3)'}}><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
-                              <span style={{flex:1}}>Line items ({(order.lineItems||[]).length})</span>
-                              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{transform:itemsOpen?'rotate(180deg)':'rotate(0)',transition:'transform .2s',color:'var(--text-3)'}}><polyline points="6 9 12 15 18 9"/></svg>
-                            </button>
-                            {itemsOpen&&(
-                              <div style={{marginTop:4,display:'flex',flexDirection:'column',gap:3}}>
-                                {(order.lineItems||[]).map(item=>(
-                                  <div key={item.id} style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',padding:'6px 9px',background:'var(--bg-surface-2)',borderRadius:6,border:'1px solid var(--border)'}}>
-                                    <div style={{minWidth:0,flex:1}}>
-                                      <div style={{fontSize:11.5,fontWeight:600,color:'var(--text-1)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{item.quantity}× {item.title}</div>
-                                      {item.variantTitle&&<div style={{fontSize:10,color:'var(--text-3)'}}>{item.variantTitle}</div>}
-                                      {item.sku&&<div style={{fontSize:10,color:'var(--text-3)',fontFamily:'monospace'}}>{item.sku}</div>}
-                                    </div>
-                                    <div style={{fontSize:12,fontWeight:600,color:'var(--text-2)',flexShrink:0,marginLeft:8}}>{fmtPrice(Number(item.price)*item.quantity,order.currency)}</div>
-                                  </div>
+                                {[sa.firstName||sa.lastName?{l:'Name',v:[sa.firstName,sa.lastName].filter(Boolean).join(' ')}:null, sa.address1?{l:'Address1',v:sa.address1}:null, sa.address2?{l:'Address2',v:sa.address2}:null, sa.city?{l:'City',v:sa.city}:null, sa.country?{l:'Country',v:sa.country}:null, sa.province?{l:'Province',v:sa.province}:null, sa.zip?{l:'Zip',v:sa.zip}:null].filter(Boolean).map(row=>(
+                                  <div key={row.l} className="rp-kv"><span className="rp-kv-l">{row.l}</span><span className="rp-kv-v">{row.v}</span></div>
                                 ))}
                               </div>
                             )}
                           </>
                         )}
+
+                        {/* Line items — each item as its own collapsible sub-section */}
+                        {(order.lineItems||[]).map((item,ii)=>{
+                          const itemKey = `${order.id}_item_${item.id}`
+                          const itemOpen = expandedSubs[itemKey]===undefined ? true : !!expandedSubs[itemKey]
+                          return (
+                            <div key={item.id}>
+                              <button className="rp-subsec" onClick={()=>setExpandedSubs(v=>({...v,[itemKey]:!itemOpen}))}>
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{color:'var(--text-3)',flexShrink:0}}><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                                <span style={{flex:1,fontSize:11,fontWeight:600,color:'var(--text-2)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{item.quantity} × {item.title}{item.variantTitle?` · ${item.variantTitle}`:''}</span>
+                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{transform:itemOpen?'rotate(180deg)':'rotate(0)',transition:'transform .2s',color:'var(--text-3)',flexShrink:0}}><polyline points="6 9 12 15 18 9"/></svg>
+                              </button>
+                              {itemOpen&&(
+                                <div style={{paddingBottom:4}}>
+                                  <div className="rp-kv"><span className="rp-kv-l">Amount</span><span className="rp-kv-v">{fmtPrice(Number(item.price)*item.quantity,order.currency)}</span></div>
+                                  {item.sku&&<div className="rp-kv"><span className="rp-kv-l">Sku</span><span className="rp-kv-v" style={{fontFamily:'monospace',fontSize:10.5}}>{item.sku}</span></div>}
+                                  {item.variantTitle&&<div className="rp-kv"><span className="rp-kv-l">Variant</span><span className="rp-kv-v">{item.variantTitle}</span></div>}
+                                </div>
+                              )}
+                            </div>
+                          )
+                        })}
                       </div>
                     )}
                   </div>

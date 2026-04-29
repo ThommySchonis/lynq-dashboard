@@ -175,8 +175,10 @@ const CSS = `
   .macro-gear-item:hover { background:var(--bg-surface-2); }
   .macro-gear-item.danger { color:var(--danger); }
   .macro-gear-divider { height:1px; background:var(--border); margin:3px 0; }
-  .macro-star { background:none; border:none; cursor:pointer; display:flex; align-items:center; padding:2px; border-radius:4px; transition:opacity .15s; flex-shrink:0; }
+  .macro-star { background:none; border:none; cursor:pointer; display:flex; align-items:center; padding:2px 3px; border-radius:4px; transition:opacity .15s; flex-shrink:0; opacity:0; }
+  .macro-item:hover .macro-star { opacity:0.45; }
   .macro-star:hover { opacity:1 !important; }
+  .macro-star.fav { opacity:1; }
 
   /* ── Compose textarea ── */
   .compose-ta { width:100%; resize:none; outline:none; font-family:inherit; background:transparent; border:none; padding:14px 16px; font-size:13.5px; color:var(--text-1); line-height:1.78; letter-spacing:.005em; }
@@ -1130,7 +1132,9 @@ function MacroPanel({ macros, aiMacros, onInsert, onClose, customerName }) {
         <div ref={gearRef} style={{position:'relative',flexShrink:0}}>
           <button
             onClick={()=>setGearOpen(p=>!p)}
-            style={{color:gearOpen?'var(--text-1)':'var(--text-3)',cursor:'pointer',display:'flex',padding:'4px 5px',borderRadius:6,background:gearOpen?'var(--bg-surface)':'transparent',border:gearOpen?'1px solid var(--border)':'1px solid transparent',transition:'all .15s'}}
+            style={{color:gearOpen?'var(--accent-text)':'var(--text-2)',cursor:'pointer',display:'flex',padding:'5px 6px',borderRadius:6,background:gearOpen?'var(--accent-soft)':'transparent',border:gearOpen?'1px solid var(--accent-border)':'1px solid transparent',transition:'all .15s'}}
+            onMouseEnter={e=>{if(!gearOpen){e.currentTarget.style.background='var(--bg-surface)';e.currentTarget.style.border='1px solid var(--border)'}}}
+            onMouseLeave={e=>{if(!gearOpen){e.currentTarget.style.background='transparent';e.currentTarget.style.border='1px solid transparent'}}}
             title="Macro settings"
           ><GearIcon /></button>
           {gearOpen&&(
@@ -1160,7 +1164,7 @@ function MacroPanel({ macros, aiMacros, onInsert, onClose, customerName }) {
             </div>
           )}
         </div>
-        <button onClick={onClose} style={{color:'var(--text-3)',cursor:'pointer',display:'flex',padding:'4px 5px',borderRadius:6,border:'1px solid transparent',transition:'color .15s'}} onMouseEnter={e=>e.currentTarget.style.color='var(--text-1)'} onMouseLeave={e=>e.currentTarget.style.color='var(--text-3)'}>{I.close}</button>
+        <button onClick={onClose} style={{color:'var(--text-2)',cursor:'pointer',display:'flex',padding:'5px 6px',borderRadius:6,border:'1px solid transparent',transition:'all .15s'}} onMouseEnter={e=>{e.currentTarget.style.color='var(--text-1)';e.currentTarget.style.background='var(--bg-surface)';e.currentTarget.style.border='1px solid var(--border)'}} onMouseLeave={e=>{e.currentTarget.style.color='var(--text-2)';e.currentTarget.style.background='transparent';e.currentTarget.style.border='1px solid transparent'}}>{I.close}</button>
       </div>
 
       {/* Two-panel — fills remaining height */}
@@ -1196,7 +1200,7 @@ function MacroPanel({ macros, aiMacros, onInsert, onClose, customerName }) {
                       {(m.tags||[]).map(t=><span key={t} className="macro-tag">{t}</span>)}
                     </div>
                   </div>
-                  <button className="macro-star" style={{opacity:1,marginTop:1}} onClick={e=>toggleFav(m.id,e)} title="Remove from favorites"><StarIcon filled /></button>
+                  <button className="macro-star fav" style={{marginTop:1}} onClick={e=>toggleFav(m.id,e)} title="Remove from favorites"><StarIcon filled /></button>
                 </div>
               ))}
               {nonFavMacros.length>0&&<div style={{height:1,background:'var(--border)',margin:'4px 0'}} />}
@@ -1214,7 +1218,7 @@ function MacroPanel({ macros, aiMacros, onInsert, onClose, customerName }) {
                       {(m.tags||[]).map(t=><span key={t} className="macro-tag">{t}</span>)}
                     </div>
                   </div>
-                  <button className="macro-star" style={{opacity:0.25,marginTop:1}} onClick={e=>toggleFav(m.id,e)} title="Add to favorites"><StarIcon filled={false} /></button>
+                  <button className="macro-star" style={{marginTop:1}} onClick={e=>toggleFav(m.id,e)} title="Add to favorites"><StarIcon filled={false} /></button>
                 </div>
               ))}
             </>

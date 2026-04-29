@@ -132,7 +132,7 @@ const CSS = `
   /* ── Thread row ── */
   .trow { padding:11px 14px 11px 12px; cursor:pointer; border-bottom:1px solid var(--border); border-left:3px solid transparent; transition:background .15s; position:relative; display:flex; align-items:flex-start; gap:9px; }
   .trow:hover:not(.trow-active) { background:var(--bg-surface-2); }
-  .trow-active { background:var(--accent-soft); border-left-color:var(--accent); }
+  .trow-active { background:rgba(124,92,252,0.05); border-left-color:var(--accent); }
   [data-theme="dark"] .trow:hover:not(.trow-active) { background:rgba(255,255,255,0.03); }
   [data-theme="dark"] .trow-active { background:linear-gradient(90deg,rgba(161,117,252,0.18) 0%,rgba(161,117,252,0.04) 100%); }
   .trow-active::after { content:''; position:absolute; left:0; top:0; bottom:0; width:3px; background:linear-gradient(180deg,#C3A3FF 0%,#7B45E8 100%); border-radius:0 2px 2px 0; }
@@ -326,7 +326,7 @@ const CSS = `
     color: #0F172A;
     white-space: pre-wrap;
     word-break: break-word;
-    box-shadow: 0 1px 3px rgba(15,23,42,0.05);
+    box-shadow: 0 1px 3px rgba(15,23,42,0.06);
   }
   [data-theme="dark"] .msg-in {
     background: rgba(255,255,255,0.06);
@@ -338,8 +338,8 @@ const CSS = `
     -webkit-backdrop-filter: blur(12px);
   }
   .msg-out {
-    background: #F8FAFC;
-    border: 1px solid #E2E8F0;
+    background: #F0EEFF;
+    border: 1px solid #DDD6FE;
     border-radius: 14px 2px 14px 14px;
     padding: 14px 18px;
     font-size: 13.5px;
@@ -347,7 +347,7 @@ const CSS = `
     color: #0F172A;
     white-space: pre-wrap;
     word-break: break-word;
-    box-shadow: 0 1px 3px rgba(15,23,42,0.05);
+    box-shadow: 0 1px 3px rgba(124,92,252,0.08);
   }
   [data-theme="dark"] .msg-out {
     background: rgba(124,92,252,0.14);
@@ -2133,8 +2133,8 @@ function InboxPage() {
                 <div style={{display:'flex',gap:6,alignItems:'center',flexShrink:0}}>
                   {/* Status dropdown */}
                   <div style={{position:'relative'}}>
-                    <button onClick={()=>setStatusMenu(s=>!s)} style={{display:'flex',alignItems:'center',gap:6,padding:'6px 12px',background:'var(--bg-input)',border:'1px solid var(--border)',borderRadius:8,cursor:'pointer',fontSize:12,fontWeight:600,color:'var(--text-1)',fontFamily:'inherit',transition:'all .15s'}} onMouseEnter={e=>e.currentTarget.style.borderColor='var(--border)'} onMouseLeave={e=>e.currentTarget.style.borderColor='var(--border)'}>
-                      <span style={{width:7,height:7,borderRadius:'50%',background:STATUS[getStatus(selected.id)]?.color,flexShrink:0}} />
+                    <button onClick={()=>setStatusMenu(s=>!s)} style={{display:'flex',alignItems:'center',gap:6,padding:'5px 11px',background:STATUS[getStatus(selected.id)]?.bg,border:`1px solid ${STATUS[getStatus(selected.id)]?.border}`,borderRadius:20,cursor:'pointer',fontSize:12,fontWeight:600,color:STATUS[getStatus(selected.id)]?.color,fontFamily:'inherit',transition:'all .15s'}}>
+                      <span style={{width:6,height:6,borderRadius:'50%',background:STATUS[getStatus(selected.id)]?.color,flexShrink:0}} />
                       {STATUS[getStatus(selected.id)]?.label}
                       {I.chevron}
                     </button>
@@ -2273,7 +2273,7 @@ function InboxPage() {
                       onInput={e=>setReply(e.currentTarget.textContent)}
                       onKeyDown={e=>{if(e.key==='Enter'&&(e.metaKey||e.ctrlKey))handleSend()}}
                       className="compose-ta"
-                      style={{minHeight:110,background:composerTab==='note'?'rgba(251,191,36,0.03)':'transparent'}}
+                      style={{minHeight:150,background:composerTab==='note'?'rgba(251,191,36,0.03)':'transparent'}}
                     />
 
                     {/* AI generating dots */}
@@ -2362,7 +2362,7 @@ function InboxPage() {
           {/* Customer header */}
           <div style={{padding:'12px 14px 11px',borderBottom:'1px solid var(--border)',flexShrink:0}}>
             <div style={{display:'flex',alignItems:'center',gap:10}}>
-              <Avatar name={customer?.customer?`${customer.customer.firstName||''} ${customer.customer.lastName||''}`.trim()||extractName(selected.from):extractName(selected.from)} size={34} />
+              <Avatar name={customer?.customer?`${customer.customer.firstName||''} ${customer.customer.lastName||''}`.trim()||extractName(selected.from):extractName(selected.from)} size={28} />
               <div style={{flex:1,minWidth:0}}>
                 <div style={{fontSize:13,fontWeight:700,color:'var(--text-1)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
                   {customer?.customer?`${customer.customer.firstName||''} ${customer.customer.lastName||''}`.trim()||extractName(selected.from):extractName(selected.from)}

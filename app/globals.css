@@ -3,68 +3,70 @@
 /* ── Theme tokens — light is default ────────────────────────────────────────── */
 :root {
   /* Backgrounds */
-  --bg-page:      #F8FAFC;
+  --bg-page:      #FAFAFA;
   --bg-surface:   #FFFFFF;
-  --bg-surface-2: #F4F6FA;
+  --bg-surface-2: #F5F5F5;
   --bg-row:       #FFFFFF;
-  --bg-input:     rgba(0,0,0,0.03);
+  --bg-input:     #F5F5F5;
+  --hover:        #F5F5F5;
 
   /* Text */
-  --text-1: #0F172A;
-  --text-2: #374151;
-  --text-3: #6B7280;
+  --text-1: #111111;
+  --text-2: #6B6B6B;
+  --text-3: #ABABAB;
 
   /* Borders */
-  --border:        #E5E7EB;
-  --border-hover:  #D1D5DB;
-  --divider:       rgba(0,0,0,0.07);
+  --border:        rgba(0,0,0,0.07);
+  --border-hover:  rgba(0,0,0,0.13);
+  --divider:       rgba(0,0,0,0.06);
 
-  /* Accent (purple — slightly deeper on light for contrast) */
-  --accent:        #7C5CFC;
-  --accent-hover:  #6d4af8;
-  --accent-soft:   rgba(124,92,252,0.08);
-  --accent-border: rgba(124,92,252,0.2);
-  --accent-text:   #7C5CFC;
-  --accent-gradient: linear-gradient(135deg,#7C5CFC 0%,#6d4af8 100%);
+  /* Accent — logo / active nav / AI elements only */
+  --accent:        #A175FC;
+  --accent-hover:  #8B5CF6;
+  --accent-soft:   rgba(161,117,252,0.08);
+  --accent-border: rgba(161,117,252,0.2);
+  --accent-text:   #A175FC;
+  --accent-bg:     #F0EAFF;
+  --accent-gradient: none;
 
-  /* Shadows */
-  --shadow-card:       0 1px 4px rgba(15,23,42,0.08), 0 0 0 1px rgba(15,23,42,0.06);
-  --shadow-card-hover: 0 6px 28px rgba(15,23,42,0.12), 0 0 0 1px rgba(15,23,42,0.07);
-  --shadow-row:        0 1px 3px rgba(15,23,42,0.06);
-  --shadow-row-hover:  0 4px 18px rgba(15,23,42,0.11);
+  /* Shadows — flat / none in Neutral Minimal */
+  --shadow-card:       none;
+  --shadow-card-hover: none;
+  --shadow-row:        none;
+  --shadow-row-hover:  none;
 
   /* Sidebar */
   --sidebar-bg:             #FFFFFF;
   --sidebar-border:         rgba(0,0,0,0.07);
-  --sidebar-active-bg:      rgba(124,92,252,0.08);
-  --sidebar-active-border:  rgba(124,92,252,0.16);
-  --sidebar-hover:          rgba(0,0,0,0.04);
-  --sidebar-icon-inactive:  rgba(15,23,42,0.38);
-  --sidebar-label-inactive: rgba(15,23,42,0.6);
-  --sidebar-label-active:   #0F172A;
-  --sidebar-icon-active:    #7C5CFC;
-  --sidebar-section-label:  rgba(15,23,42,0.28);
+  --sidebar-active-bg:      #F5F5F5;
+  --sidebar-active-border:  transparent;
+  --sidebar-hover:          #F5F5F5;
+  --sidebar-icon-inactive:  #ABABAB;
+  --sidebar-label-inactive: #6B6B6B;
+  --sidebar-label-active:   #111111;
+  --sidebar-icon-active:    #A175FC;
+  --sidebar-section-label:  #ABABAB;
   --sidebar-logo-filter:    none;
 
   /* Glass */
   --glass-bg:     rgba(255,255,255,0.72);
   --glass-blur:   14px;
-  --glass-border: rgba(255,255,255,0.55);
-  --glass-shadow: 0 4px 24px rgba(15,23,42,0.07), 0 1px 2px rgba(15,23,42,0.04), inset 0 1px 0 rgba(255,255,255,0.8);
+  --glass-border: rgba(0,0,0,0.07);
+  --glass-shadow: none;
 
   /* Skeleton */
-  --skeleton-from: rgba(0,0,0,0.05);
-  --skeleton-to:   rgba(0,0,0,0.08);
+  --skeleton-from: rgba(0,0,0,0.04);
+  --skeleton-to:   rgba(0,0,0,0.07);
 
   /* Scrollbar */
-  --scrollbar: rgba(0,0,0,0.12);
-  --scrollbar-hover: rgba(0,0,0,0.2);
+  --scrollbar: rgba(0,0,0,0.10);
+  --scrollbar-hover: rgba(0,0,0,0.18);
 
-  /* Status (adjusted for light contrast) */
+  /* Status */
   --success: #16a34a;
   --warning: #d97706;
   --danger:  #dc2626;
-  --info:    #7C5CFC;
+  --info:    #A175FC;
 }
 
 /* ── Dark mode override ───────────────────────────────────────────────────── */

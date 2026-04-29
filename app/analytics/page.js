@@ -50,14 +50,14 @@ const CAT_COLORS = {
   'Sizing':           { color:'#1D4ED8', bg:'rgba(29,78,216,0.07)',   border:'rgba(29,78,216,0.2)',   glow:'rgba(29,78,216,0.15)'  },
   'Damaged':          { color:'#C2410C', bg:'rgba(194,65,12,0.07)',   border:'rgba(194,65,12,0.2)',   glow:'rgba(194,65,12,0.15)'  },
   'Quality':          { color:'#B91C1C', bg:'rgba(185,28,28,0.07)',   border:'rgba(185,28,28,0.2)',   glow:'rgba(185,28,28,0.15)'  },
-  'Not as described': { color:'#6D28D9', bg:'rgba(109,40,217,0.07)',  border:'rgba(109,40,217,0.2)',  glow:'rgba(109,40,217,0.15)' },
+  'Not as described': { color:'#0369A1', bg:'rgba(3,105,161,0.07)',   border:'rgba(3,105,161,0.2)',   glow:'rgba(3,105,161,0.15)'  },
   'Changed mind':     { color:'#92400E', bg:'rgba(146,64,14,0.07)',   border:'rgba(146,64,14,0.2)',   glow:'rgba(146,64,14,0.15)'  },
   'Other':            { color:'#475569', bg:'rgba(71,85,105,0.07)',   border:'rgba(71,85,105,0.18)',  glow:'rgba(71,85,105,0.12)'  },
   'Customer Outreach':{ color:'#065F46', bg:'rgba(6,95,70,0.07)',     border:'rgba(6,95,70,0.18)',    glow:'rgba(6,95,70,0.12)'    },
   'Supplier':         { color:'#78350F', bg:'rgba(120,53,15,0.07)',   border:'rgba(120,53,15,0.18)',  glow:'rgba(120,53,15,0.12)'  },
   'Listing Fix':      { color:'#1E40AF', bg:'rgba(30,64,175,0.07)',   border:'rgba(30,64,175,0.18)',  glow:'rgba(30,64,175,0.12)'  },
   'Quality Control':  { color:'#991B1B', bg:'rgba(153,27,27,0.07)',   border:'rgba(153,27,27,0.18)',  glow:'rgba(153,27,27,0.12)'  },
-  'Operations':       { color:'#4C1D95', bg:'rgba(76,29,149,0.07)',   border:'rgba(76,29,149,0.18)',  glow:'rgba(76,29,149,0.12)'  },
+  'Operations':       { color:'#374151', bg:'rgba(55,65,81,0.07)',    border:'rgba(55,65,81,0.18)',   glow:'rgba(55,65,81,0.12)'   },
 }
 
 function categorizeReason(raw) {
@@ -208,28 +208,24 @@ const CSS = `
   .kpi-card{
     background:var(--bg-surface);
     border:1px solid var(--border);
-    border-radius:12px;padding:20px 22px;
+    border-radius:8px;padding:20px 22px;
     position:relative;overflow:hidden;
-    transition:border-color .2s ease, background .2s ease, box-shadow .2s ease;
+    transition:border-color .2s ease, background .2s ease;
     cursor:default;
-    box-shadow:var(--shadow-card);
   }
-  .kpi-card:hover{border-color:var(--border-hover);background:var(--bg-surface-2);box-shadow:var(--shadow-card-hover)}
-  .kpi-card .top-bar{position:absolute;top:0;left:0;right:0;height:2px;opacity:0;transition:opacity .25s ease}
-  .kpi-card:hover .top-bar{opacity:1}
+  .kpi-card:hover{border-color:var(--border-hover);background:var(--bg-surface-2)}
   .kpi-glow{text-shadow:none}
 
   .panel{
     background:var(--bg-surface);
     border:1px solid var(--border);
-    border-radius:12px;padding:24px;
-    transition:border-color .2s ease, box-shadow .2s ease;
-    box-shadow:var(--shadow-card);
+    border-radius:8px;padding:24px;
+    transition:border-color .2s ease;
   }
-  .panel:hover{border-color:var(--border-hover);box-shadow:var(--shadow-card-hover)}
+  .panel:hover{border-color:var(--border-hover)}
 
-  .action-card{border-radius:10px;background:var(--bg-input);border:1px solid var(--border);padding:16px 18px;transition:background .2s,border-color .2s,box-shadow .2s;cursor:default;border-left-width:3px;box-shadow:var(--shadow-row)}
-  .action-card:hover{background:var(--bg-surface-2);border-color:var(--border-hover);box-shadow:var(--shadow-row-hover)}
+  .action-card{border-radius:8px;background:var(--bg-input);border:1px solid var(--border);padding:16px 18px;transition:background .2s,border-color .2s;cursor:default;border-left-width:3px}
+  .action-card:hover{background:var(--bg-surface-2);border-color:var(--border-hover)}
   .action-card.done-card{opacity:.45}
 
   .tab-btn{padding:6px 16px;border-radius:100px;font-size:11.5px;font-weight:700;cursor:pointer;border:none;font-family:inherit;letter-spacing:.02em;transition:all .15s ease}
@@ -242,8 +238,8 @@ const CSS = `
   .bar-fill{transform-origin:left;animation:growX .6s cubic-bezier(.34,1.56,.64,1) both}
   .bar-col{transform-origin:bottom;animation:barGrow .5s cubic-bezier(.34,1.56,.64,1) both}
 
-  .btn-pickup{padding:5px 13px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;border:1px solid var(--accent-border);font-family:inherit;background:var(--accent-soft);color:var(--accent-text);transition:all .15s}
-  .btn-pickup:hover{opacity:.82}
+  .btn-pickup{padding:5px 13px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;border:1px solid transparent;font-family:inherit;background:#111111;color:#ffffff;transition:all .15s}
+  .btn-pickup:hover{background:#333333}
   .btn-done{padding:5px 13px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;border:1px solid rgba(22,163,74,.22);font-family:inherit;background:rgba(22,163,74,.07);color:var(--success);transition:all .15s}
   .btn-done:hover{background:rgba(22,163,74,.13)}
   .btn-reopen{padding:4px 11px;border-radius:8px;font-size:10.5px;font-weight:600;cursor:pointer;border:1px solid var(--border);font-family:inherit;background:transparent;color:var(--text-3);transition:all .15s}
@@ -252,21 +248,11 @@ const CSS = `
   .name-inp:focus{border-color:var(--accent-border)}
   .name-inp::placeholder{color:var(--text-3)}
 
-  .matrix-row{transition:background .15s;border-radius:10px}
+  .matrix-row{transition:background .15s;border-radius:6px}
   .matrix-row:hover{background:var(--bg-surface-2)}
 `
 
-// ─── Aurora + Grid ────────────────────────────────────────────────────────────
-
-function PageBackground() {
-  return (
-    <div aria-hidden style={{ position:'absolute', inset:0, overflow:'hidden', pointerEvents:'none', zIndex:0 }}>
-      <div style={{ position:'absolute', top:'-5%', right:'5%', width:750, height:550, borderRadius:'50%', background:'radial-gradient(ellipse,rgba(161,117,252,0.08) 0%,transparent 68%)', filter:'blur(80px)', pointerEvents:'none' }}/>
-      <div style={{ position:'absolute', top:'30%', left:'-5%', width:600, height:450, borderRadius:'50%', background:'radial-gradient(ellipse,rgba(161,117,252,0.04) 0%,transparent 70%)', filter:'blur(90px)', pointerEvents:'none' }}/>
-      <div style={{ position:'absolute', bottom:'10%', right:'20%', width:400, height:300, borderRadius:'50%', background:'radial-gradient(ellipse,rgba(74,222,128,0.03) 0%,transparent 70%)', filter:'blur(60px)', pointerEvents:'none' }}/>
-    </div>
-  )
-}
+// ─── Utilities ────────────────────────────────────────────────────────────────
 
 function Spinner({ size=18 }) {
   return <div style={{ width:size, height:size, border:`2px solid var(--border)`, borderTop:`2px solid #A175FC`, borderRadius:'50%', animation:'spin .7s linear infinite', flexShrink:0 }}/>
@@ -340,13 +326,13 @@ function KpiRow({ kpis, prevKpis, refunds, loaded }) {
   )
 
   const cards = [
-    { label:'MONEY LOST',    value:fmtEur(aTotal), sub:`${count} refunded order${count!==1?'s':''} this period`, accent:'#EF4444', grad:'linear-gradient(135deg,#EF4444,#FF6B35)', delta:computeDelta(totalRef, prevRef), lowerBetter:true,
+    { label:'MONEY LOST',    value:fmtEur(aTotal), sub:`${count} refunded order${count!==1?'s':''} this period`, accent:'#EF4444', delta:computeDelta(totalRef, prevRef), lowerBetter:true,
       icon:<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 1 0 0 7h5a3.5 3.5 0 1 1 0 7H6"/></svg> },
-    { label:'TOTAL REFUNDS', value:Math.floor(aCount), sub:'fully or partially refunded', accent:'#F97316', grad:'linear-gradient(135deg,#F97316,#fbbf24)', delta:computeDelta(count, prevCount), lowerBetter:true,
+    { label:'TOTAL REFUNDS', value:Math.floor(aCount), sub:'fully or partially refunded', accent:'#F97316', delta:computeDelta(count, prevCount), lowerBetter:true,
       icon:<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.95"/></svg> },
-    { label:'REFUND RATE',   value:isHealthy?'0.0% ✓':`${aRate.toFixed(1)}%`, sub:isHealthy?'Excellent — below average':rate>5?`${(rate/2.5).toFixed(1)}× above 2–5% avg`:'Industry avg: 2–5%', accent:isHealthy?'#16A34A':rate>10?'#DC2626':rate>5?'#C2410C':'#16A34A', grad:isHealthy?'linear-gradient(135deg,#16A34A,#22C55E)':rate>10?'linear-gradient(135deg,#DC2626,#EF4444)':rate>5?'linear-gradient(135deg,#C2410C,#F97316)':'linear-gradient(135deg,#16A34A,#22C55E)', delta:computeDelta(rate, prevRate), lowerBetter:true,
+    { label:'REFUND RATE',   value:isHealthy?'0.0% ✓':`${aRate.toFixed(1)}%`, sub:isHealthy?'Excellent — below average':rate>5?`${(rate/2.5).toFixed(1)}× above 2–5% avg`:'Industry avg: 2–5%', accent:isHealthy?'#16A34A':rate>10?'#DC2626':rate>5?'#C2410C':'#16A34A', delta:computeDelta(rate, prevRate), lowerBetter:true,
       icon:<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg> },
-    { label:'AVG REFUND',    value:fmtEur(aAvg), sub:'average per refunded order', accent:'#7C5CFC', grad:'linear-gradient(135deg,#7C5CFC,#A175FC)', delta:computeDelta(avg, prevAvg), lowerBetter:true,
+    { label:'AVG REFUND',    value:fmtEur(aAvg), sub:'average per refunded order', accent:'#111111', delta:computeDelta(avg, prevAvg), lowerBetter:true,
       icon:<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg> },
   ]
 
@@ -354,10 +340,8 @@ function KpiRow({ kpis, prevKpis, refunds, loaded }) {
     <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:16, marginBottom:28 }}>
       {cards.map((c,i)=>(
         <div key={c.label} className="kpi-card" style={{ animation:'fadeIn .3s ease-out both' }}>
-          <div className="top-bar" style={{ background:c.grad }}/>
-          <div style={{ position:'absolute', inset:0, background:`radial-gradient(circle at 100% 0%,${c.accent}08 0%,transparent 60%)`, borderRadius:12, pointerEvents:'none' }}/>
           <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:14 }}>
-            <div style={{ width:36, height:36, borderRadius:10, background:`${c.accent}1a`, border:`1px solid ${c.accent}20`, display:'flex', alignItems:'center', justifyContent:'center', color:c.accent }}>{c.icon}</div>
+            <div style={{ color:'var(--text-3)', display:'flex' }}>{c.icon}</div>
             <DeltaBadge delta={loaded.prevKpis?c.delta:null} lowerIsBetter={c.lowerBetter}/>
           </div>
           <div className="kpi-glow" style={{ fontSize:27, fontWeight:800, letterSpacing:'-0.04em', color:c.accent, lineHeight:1, marginBottom:5, fontVariantNumeric:'tabular-nums' }}>{c.value}</div>
@@ -390,12 +374,11 @@ function RevenueTrendChart({ trend, loaded, rangeLabel }) {
       <svg viewBox={`0 0 ${W} ${H}`} style={{ width:'100%', overflow:'visible' }} aria-hidden>
         <defs>
           <linearGradient id="tg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#A175FC" stopOpacity="0.25"/><stop offset="100%" stopColor="#A175FC" stopOpacity="0"/></linearGradient>
-          <filter id="glow"><feGaussianBlur stdDeviation="1" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
         </defs>
         {[0,.5,1].map((s,i)=>{ const y=pT+s*(H-pT-pB); return <line key={i} x1={pL} y1={y} x2={W-pR} y2={y} style={{ stroke:'var(--divider)' }} strokeWidth="1"/> })}
         <polygon points={area} fill="url(#tg)"/>
-        <polyline points={line} fill="none" stroke="#A175FC" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" filter="url(#glow)"/>
-        {pts.filter(p=>p.revenue>0).map((p,i)=><circle key={i} cx={p.x} cy={p.y} r="2.5" fill="#A175FC" filter="url(#glow)"/>)}
+        <polyline points={line} fill="none" stroke="#A175FC" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+        {pts.filter(p=>p.revenue>0).map((p,i)=><circle key={i} cx={p.x} cy={p.y} r="2.5" fill="#A175FC"/>)}
         {xlbls.map((p,i)=><text key={i} x={p.x} y={H} textAnchor="middle" fontSize="9" style={{ fill:'var(--text-3)' }} fontFamily="sans-serif">{new Date(p.date+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'})}</text>)}
         {[0,mx/2,mx].map((v,i)=>{ const y=pT+(1-v/mx)*(H-pT-pB); const lbl=v>=1000?`€${(v/1000).toFixed(1)}k`:`€${Math.round(v)}`; return <text key={i} x={pL-6} y={y+3} textAnchor="end" fontSize="9" style={{ fill:'var(--text-3)' }} fontFamily="sans-serif">{lbl}</text> })}
       </svg>
@@ -490,7 +473,7 @@ function MonthlyTrendChart({ allRefunds, loaded }) {
                 border:`1px solid ${m.isCurrentMonth?'rgba(161,117,252,0.3)':isMax?'rgba(239,68,68,0.25)':'var(--bg-input)'}`,
                 height:`${Math.max(barH,4)}%`, minHeight:4, transition:'height .3s ease',
               }}>
-                {m.count>0&&<div className="bar-col" style={{ position:'absolute', inset:0, background:m.isCurrentMonth?'linear-gradient(180deg,rgba(161,117,252,0.6),rgba(161,117,252,0.2))':isMax?'linear-gradient(180deg,rgba(239,68,68,0.7),rgba(239,68,68,0.25))':'linear-gradient(180deg,rgba(255,107,53,0.5),rgba(255,107,53,0.15))', animationDelay:`${i*.06}s` }}/>}
+                {m.count>0&&<div className="bar-col" style={{ position:'absolute', inset:0, background:m.isCurrentMonth?'rgba(161,117,252,0.5)':isMax?'rgba(239,68,68,0.55)':'rgba(255,107,53,0.4)', animationDelay:`${i*.06}s` }}/>}
               </div>
               <div style={{ fontSize:10, color:m.isCurrentMonth?'var(--accent)':'var(--text-3)', fontWeight:m.isCurrentMonth?700:400 }}>{m.label}</div>
             </div>
@@ -499,9 +482,8 @@ function MonthlyTrendChart({ allRefunds, loaded }) {
       </div>
       {/* Amount sparkline */}
       <svg viewBox="0 0 300 28" style={{ width:'100%', marginTop:12 }} aria-hidden>
-        <defs><linearGradient id="sparkG" x1="0" y1="0" x2="1" y2="0">{months.map((_,i)=><stop key={i} offset={`${(i/(months.length-1))*100}%`} stopColor="#EF4444" stopOpacity={0.4+i*0.1}/>)}</linearGradient></defs>
-        {months.map((m,i)=>{ const x=(i/(months.length-1))*280+10; const y=28-(m.amount/maxAmt)*22-3; return <circle key={i} cx={x} cy={y} r="2.5" fill="#EF4444" style={{ filter:'none' }}/> })}
-        <polyline points={months.map((m,i)=>{ const x=(i/(months.length-1))*280+10; const y=28-(m.amount/maxAmt)*22-3; return `${x},${y}` }).join(' ')} fill="none" stroke="url(#sparkG)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+        {months.map((m,i)=>{ const x=(i/(months.length-1))*280+10; const y=28-(m.amount/maxAmt)*22-3; return <circle key={i} cx={x} cy={y} r="2.5" fill="#EF4444"/> })}
+        <polyline points={months.map((m,i)=>{ const x=(i/(months.length-1))*280+10; const y=28-(m.amount/maxAmt)*22-3; return `${x},${y}` }).join(' ')} fill="none" stroke="#EF4444" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
       </svg>
     </div>
   )
@@ -558,7 +540,7 @@ function ActionBoard({ patternActions, aiInsights, noRefunds, loaded, onStatusCh
 
       {!noRefunds&&allItems.length>0&&(
         <div style={{ height:3, background:'var(--bg-surface-2)', borderRadius:100, marginBottom:16, overflow:'hidden' }}>
-          <div style={{ height:'100%', borderRadius:100, width:`${(doneItems.length/allItems.length)*100}%`, background:'linear-gradient(90deg,#22C55E,#86efac)', transition:'width .4s ease' }}/>
+          <div style={{ height:'100%', borderRadius:100, width:`${(doneItems.length/allItems.length)*100}%`, background:'#22C55E', transition:'width .4s ease' }}/>
         </div>
       )}
 
@@ -716,7 +698,7 @@ function ProductMatrix({ allRefunds, loaded }) {
                 <td style={{ padding:'11px 14px' }}>
                   <div style={{ fontSize:12.5, color:'var(--text-1)', fontWeight:500, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', maxWidth:200 }} title={p.name}>{p.name}</div>
                   <div style={{ marginTop:5, height:3, background:'var(--bg-surface-2)', borderRadius:100, overflow:'hidden', maxWidth:180 }}>
-                    <div className="bar-fill" style={{ height:'100%', width:`${(p.amount/maxAmt)*100}%`, background:`linear-gradient(90deg,#EF4444,rgba(161,117,252,0.7))`, borderRadius:100, animationDelay:`${i*.05}s` }}/>
+                    <div className="bar-fill" style={{ height:'100%', width:`${(p.amount/maxAmt)*100}%`, background:'#EF4444', borderRadius:100, animationDelay:`${i*.05}s` }}/>
                   </div>
                 </td>
                 <td style={{ padding:'11px 14px' }}><CatBadge cat={p.topCat} small/></td>
@@ -756,7 +738,7 @@ function RefundReasons({ refunds, loaded }) {
               <div style={{ display:'flex', alignItems:'center', gap:7, flexShrink:0 }}><span style={{ fontSize:11, color:'var(--text-3)', fontVariantNumeric:'tabular-nums' }}>{fmtEur(r.amount)}</span><span style={{ fontSize:10, fontWeight:700, color:cc.color, background:cc.bg, borderRadius:5, padding:'1px 7px', border:`1px solid ${cc.border}` }}>{r.count}×</span></div>
             </div>
             <div style={{ height:5, background:'var(--bg-surface-2)', borderRadius:100, overflow:'hidden' }}>
-              <div className="bar-fill" style={{ height:'100%', width:`${(r.amount/mx)*100}%`, borderRadius:100, background:`linear-gradient(90deg,${cc.color},${cc.color}66)`, animationDelay:`${.08*i}s` }}/>
+              <div className="bar-fill" style={{ height:'100%', width:`${(r.amount/mx)*100}%`, borderRadius:100, background:cc.color, animationDelay:`${.08*i}s` }}/>
             </div>
           </div>
         )})}
@@ -897,8 +879,7 @@ export default function AnalyticsPage() {
       <style>{CSS}</style>
       <Sidebar/>
       <main className="an-scroll" style={{ flex:1, overflowY:'auto', padding:'36px 44px', position:'relative' }}>
-        <PageBackground/>
-        <div style={{ position:'relative', zIndex:1, maxWidth:1200, margin:'0 auto' }}>
+        <div style={{ maxWidth:1200, margin:'0 auto' }}>
 
           {/* Header */}
           <div style={{ marginBottom:28, animation:'fadeIn .5s ease-out 0s both' }}>

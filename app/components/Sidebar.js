@@ -33,21 +33,10 @@ const CSS = `
     padding:16px 0 16px;
     font-family:var(--font-rethink),-apple-system,BlinkMacSystemFont,sans-serif;
     -webkit-font-smoothing:antialiased;
-    transition:width .28s cubic-bezier(.16,1,.3,1), box-shadow .28s;
+    transition:width .28s cubic-bezier(.16,1,.3,1);
   }
   .sb-root:hover {
     width:236px;
-    box-shadow:8px 0 32px rgba(0,0,0,0.08);
-  }
-  [data-theme="dark"] .sb-root:hover {
-    box-shadow:8px 0 40px rgba(0,0,0,0.45);
-  }
-
-  /* Top accent line */
-  .sb-root::before {
-    content:''; position:absolute;
-    top:0; left:0; right:0; height:1px;
-    background:linear-gradient(90deg,transparent 0%,var(--accent-border) 50%,transparent 100%);
   }
 
   /* ── Logo ── */
@@ -82,7 +71,7 @@ const CSS = `
   .sb-item {
     display:flex; align-items:center;
     padding:8px 0 8px 20px; gap:11px;
-    border-radius:10px; margin:1px 8px;
+    border-radius:6px; margin:1px 8px;
     text-decoration:none; cursor:pointer;
     position:relative; user-select:none; white-space:nowrap;
     transition:background .15s;
@@ -92,7 +81,6 @@ const CSS = `
   }
   .sb-item.sb-active {
     background:var(--sidebar-active-bg);
-    box-shadow:inset 0 0 0 1px var(--sidebar-active-border);
   }
   .sb-item.sb-locked { cursor:default; pointer-events:none; }
 
@@ -101,8 +89,7 @@ const CSS = `
     content:''; position:absolute; left:0; top:50%;
     transform:translateY(-50%);
     width:3px; height:18px; border-radius:0 3px 3px 0;
-    background:var(--accent-gradient);
-    box-shadow:0 0 8px var(--accent-border);
+    background:#A175FC;
   }
 
   /* ── Icon ── */
@@ -152,17 +139,16 @@ const CSS = `
   /* ── User row ── */
   .sb-user {
     display:flex; align-items:center; gap:10px;
-    padding:8px 0 8px 16px; border-radius:10px; margin:0 8px;
+    padding:8px 0 8px 16px; border-radius:6px; margin:0 8px;
     cursor:default; overflow:hidden; transition:background .15s;
   }
   .sb-user:hover { background:var(--sidebar-hover) }
 
   .sb-avatar {
-    width:32px; height:32px; border-radius:10px;
-    background:var(--accent-gradient);
+    width:32px; height:32px; border-radius:8px;
+    background:#111111;
     display:flex; align-items:center; justify-content:center;
     font-size:12px; font-weight:700; color:#fff; flex-shrink:0;
-    box-shadow:0 0 0 2px var(--accent-border);
     animation:avatarPop .5s cubic-bezier(.16,1,.3,1) .3s both;
     letter-spacing:.02em;
   }
@@ -206,7 +192,7 @@ const CSS = `
     opacity:0; pointer-events:none; margin-right:4px;
   }
   .sb-root:hover .sb-theme-btn { opacity:1; pointer-events:auto }
-  .sb-theme-btn:hover { color:var(--accent); background:var(--accent-soft); border-color:var(--accent-border) }
+  .sb-theme-btn:hover { color:var(--text-1); background:var(--hover); border-color:var(--border-hover) }
 `
 
 const TOP_ITEMS = [

@@ -375,6 +375,28 @@ const CSS = `
   [data-theme="dark"] .in-vig { background:radial-gradient(ellipse 115% 105% at 50% 50%,transparent 32%,rgba(10,5,32,0.42) 70%,rgba(10,5,32,0.82) 100%); }
 
   @media (prefers-reduced-motion:reduce) { *,*::before,*::after { animation-duration:.01ms !important; transition-duration:.01ms !important; } }
+
+  /* ── Right Panel — Gorgias style ── */
+  .rp-search { width:100%; padding:7px 12px 7px 32px; background:var(--bg-surface-2); border:1px solid var(--border); border-radius:8px; color:var(--text-1); font-size:12px; outline:none; transition:border-color .2s; font-family:inherit; }
+  .rp-search:focus { border-color:var(--accent-border); }
+  .rp-search::placeholder { color:var(--text-3); }
+  .rp-tab { flex:1; padding:8px 6px; background:transparent; cursor:pointer; font-size:11.5px; font-weight:500; font-family:inherit; color:var(--text-3); border:none; border-bottom:2px solid transparent; transition:all .15s; white-space:nowrap; text-align:center; }
+  .rp-tab.on { color:var(--text-1); border-bottom-color:var(--accent); font-weight:600; }
+  .rp-tab:hover:not(.on) { color:var(--text-2); }
+  .rp-section { width:100%; display:flex; align-items:center; gap:6px; padding:9px 14px; background:transparent; cursor:pointer; border:none; font-family:inherit; text-align:left; transition:background .12s; }
+  .rp-section:hover { background:var(--bg-surface-2); }
+  .rp-kv { display:flex; align-items:flex-start; justify-content:space-between; gap:10px; padding:3.5px 0; }
+  .rp-kv-l { font-size:11px; color:var(--text-3); flex-shrink:0; }
+  .rp-kv-v { font-size:11.5px; color:var(--text-2); text-align:right; }
+  .rp-order-hdr { width:100%; display:flex; align-items:center; gap:6px; padding:10px 14px 9px; background:transparent; cursor:pointer; border:none; font-family:inherit; text-align:left; transition:background .12s; }
+  .rp-order-hdr:hover { background:var(--bg-surface-2); }
+  .rp-action { display:inline-flex; align-items:center; gap:4px; font-size:11px; font-weight:500; font-family:inherit; padding:4px 9px; border-radius:6px; border:1px solid var(--border); background:var(--bg-surface); color:var(--text-2); cursor:pointer; transition:all .15s; white-space:nowrap; }
+  .rp-action:hover { border-color:var(--border-hover); color:var(--text-1); background:var(--bg-surface-2); }
+  .rp-action.danger:hover { border-color:rgba(220,38,38,0.35); color:#dc2626; background:rgba(220,38,38,0.05); }
+  [data-theme="dark"] .rp-action.danger:hover { color:#f87171; background:rgba(239,68,68,0.08); }
+  .rp-subsec { width:100%; display:flex; align-items:center; gap:6px; padding:7px 0; background:transparent; cursor:pointer; border:none; font-size:11.5px; font-weight:600; font-family:inherit; color:var(--text-2); text-align:left; transition:color .12s; border-top:1px solid var(--border); margin-top:6px; }
+  .rp-subsec:hover { color:var(--text-1); }
+  .rp-tag { font-size:10px; font-weight:500; padding:2px 7px; border-radius:4px; background:var(--bg-surface-2); color:var(--text-2); border:1px solid var(--border); }
 `
 
 // ─── Icons ────────────────────────────────────────────────────
@@ -1147,6 +1169,9 @@ function InboxPage() {
   // Composer extras
   const [showEmoji, setShowEmoji]   = useState(false)
   const [attachments, setAttachments] = useState([])
+  const [expandedOrders, setExpandedOrders] = useState({})
+  const [expandedSubs, setExpandedSubs]     = useState({})
+  const [custFieldsOpen, setCustFieldsOpen] = useState(true)
 
   const msgEnd       = useRef(null)
   const replyRef     = useRef(null)
@@ -1764,165 +1789,236 @@ function InboxPage() {
         )}
       </div>
 
-      {/* ═══════════════ RIGHT: Customer panel ═══════════════ */}
+      {/* ═══════════════ RIGHT: Customer panel — Gorgias style ═══════════════ */}
       {selected&&(
         <div className="sscroll" style={{width:320,borderLeft:'1px solid var(--border)',display:'flex',flexDirection:'column',flexShrink:0,overflowY:'auto',background:'var(--bg-surface)'}}>
 
-          {/* Customer header */}
-          <div style={{padding:'16px 16px 12px',borderBottom:'1px solid var(--border)',flexShrink:0}}>
-            <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:12}}>
-              <Avatar name={customer?.customer?`${customer.customer.firstName||''} ${customer.customer.lastName||''}`.trim()||extractName(selected.from):extractName(selected.from)} size={38} />
-              <div style={{minWidth:0}}>
-                <div style={{fontSize:13.5,fontWeight:700,color:'var(--text-1)',marginBottom:2,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
-                  {customer?.customer?`${customer.customer.firstName||''} ${customer.customer.lastName||''}`.trim()||extractName(selected.from):extractName(selected.from)}
-                </div>
-                <div style={{fontSize:11,color:'var(--text-3)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{extractEmail(selected.from)}</div>
-              </div>
-            </div>
-
-            {/* Tabs */}
-            <div style={{display:'flex',gap:4}}>
-              {[{id:'info',label:'Customer'},{id:'shopify',label:'Orders'}].map(t=>(
-                <button key={t.id} onClick={()=>setRightTab(t.id)} style={{flex:1,padding:'6px 8px',borderRadius:8,fontSize:11.5,fontWeight:500,display:'flex',alignItems:'center',justifyContent:'center',gap:5,background:rightTab===t.id?'var(--bg-surface-2)':'transparent',color:rightTab===t.id?'var(--text-1)':'var(--text-3)',border:rightTab===t.id?'1px solid var(--border)':'1px solid transparent',cursor:'pointer',fontFamily:'inherit',transition:'all .15s'}}>
-                  {t.label}
-                  {t.id==='shopify'&&(customer?.orders||[]).length>0&&<span style={{background:'var(--bg-surface-2)',color:'var(--text-2)',fontSize:9,fontWeight:700,padding:'1px 5px',borderRadius:4,border:'1px solid var(--border)'}}>{customer.orders.length}</span>}
-                </button>
-              ))}
+          {/* Search */}
+          <div style={{padding:'10px 12px',borderBottom:'1px solid var(--border)',flexShrink:0}}>
+            <div style={{position:'relative'}}>
+              <span style={{position:'absolute',left:9,top:'50%',transform:'translateY(-50%)',color:'var(--text-3)',display:'flex',pointerEvents:'none'}}>{I.search}</span>
+              <input className="rp-search" placeholder="Search for customers by email, order number..." />
             </div>
           </div>
 
-          {/* Info tab */}
-          {rightTab==='info'&&(
-            <div style={{padding:'14px 16px',display:'flex',flexDirection:'column',gap:12}}>
-              <div><div className="info-label">Email</div><div className="info-val">{extractEmail(selected.from)}</div></div>
-              {loadingCust&&[0,1,2].map(i=><div key={i} className="skel" style={{height:28,borderRadius:8}} />)}
-              {customer?.customer&&!loadingCust&&(
-                <>
-                  {customer.customer.phone&&<div><div className="info-label">Phone</div><div className="info-val">{customer.customer.phone}</div></div>}
-                  {(customer.customer.city||customer.customer.country)&&<div><div className="info-label">Location</div><div className="info-val">{[customer.customer.city,customer.customer.country].filter(Boolean).join(', ')}</div></div>}
-                  <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginTop:4}}>
-                    <div className="stat-card"><div style={{fontSize:20,fontWeight:800,color:'var(--text-1)',marginBottom:2}}>{customer.customer.ordersCount??'—'}</div><div className="info-label">Orders</div></div>
-                    <div className="stat-card"><div style={{fontSize:16,fontWeight:800,color:'#4ade80',marginBottom:2}}>{fmtPrice(customer.customer.totalSpent,customer.customer.currency)}</div><div className="info-label">Spent</div></div>
-                  </div>
-                  {customer.customer.note&&<div><div className="info-label">Note</div><div className="info-val" style={{fontSize:12,fontStyle:'italic'}}>{customer.customer.note}</div></div>}
-                  {customer.customer.tags&&<div>
-                    <div className="info-label" style={{marginBottom:5}}>Tags</div>
-                    <div style={{display:'flex',flexWrap:'wrap',gap:4}}>
-                      {customer.customer.tags.split(',').filter(Boolean).map(tag=><span key={tag} style={{fontSize:10.5,fontWeight:600,padding:'2px 8px',borderRadius:100,background:'var(--bg-surface-2)',color:'var(--text-2)',border:'1px solid var(--border)'}}>{tag.trim()}</span>)}
-                    </div>
-                  </div>}
-                  {customer.customer.createdAt&&<div><div className="info-label">Customer since</div><div className="info-val">{new Date(customer.customer.createdAt).toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'})}</div></div>}
-                </>
-              )}
-              {!customer?.customer&&!loadingCust&&<div style={{padding:'16px 0',textAlign:'center',fontSize:12,color:'var(--text-3)'}}>No Shopify customer found</div>}
+          {/* Customer header */}
+          <div style={{padding:'12px 14px 11px',borderBottom:'1px solid var(--border)',flexShrink:0}}>
+            <div style={{display:'flex',alignItems:'center',gap:10}}>
+              <Avatar name={customer?.customer?`${customer.customer.firstName||''} ${customer.customer.lastName||''}`.trim()||extractName(selected.from):extractName(selected.from)} size={34} />
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{fontSize:13,fontWeight:700,color:'var(--text-1)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
+                  {customer?.customer?`${customer.customer.firstName||''} ${customer.customer.lastName||''}`.trim()||extractName(selected.from):extractName(selected.from)}
+                </div>
+                <div style={{fontSize:11,color:'var(--text-3)',marginTop:1,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{extractEmail(selected.from)}</div>
+              </div>
+              <button style={{display:'flex',alignItems:'center',justifyContent:'center',width:28,height:28,borderRadius:7,color:'var(--text-3)',cursor:'pointer',transition:'all .15s',border:'1px solid var(--border)',background:'transparent',flexShrink:0}} onMouseEnter={e=>{e.currentTarget.style.color='var(--text-1)';e.currentTarget.style.background='var(--bg-surface-2)'}} onMouseLeave={e=>{e.currentTarget.style.color='var(--text-3)';e.currentTarget.style.background='transparent'}}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
+              </button>
+            </div>
+          </div>
+
+          {/* Customer Fields — collapsible */}
+          <div style={{borderBottom:'1px solid var(--border)',flexShrink:0}}>
+            <button className="rp-section" onClick={()=>setCustFieldsOpen(v=>!v)}>
+              <span style={{fontSize:11.5,fontWeight:700,color:'var(--text-2)',flex:1,letterSpacing:'.01em'}}>Customer Fields</span>
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{transform:custFieldsOpen?'rotate(180deg)':'rotate(0)',transition:'transform .2s',color:'var(--text-3)',flexShrink:0}}><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+            {custFieldsOpen&&(
+              <div style={{padding:'0 14px 10px',display:'flex',flexDirection:'column'}}>
+                <div className="rp-kv"><span className="rp-kv-l">Email</span><span className="rp-kv-v" style={{fontSize:11,wordBreak:'break-all'}}>{extractEmail(selected.from)}</span></div>
+                {loadingCust&&[0,1].map(i=><div key={i} className="skel" style={{height:18,borderRadius:5,margin:'4px 0'}} />)}
+                {customer?.customer&&!loadingCust&&(<>
+                  {customer.customer.phone&&<div className="rp-kv"><span className="rp-kv-l">Phone</span><span className="rp-kv-v">{customer.customer.phone}</span></div>}
+                  {(customer.customer.city||customer.customer.country)&&<div className="rp-kv"><span className="rp-kv-l">Location</span><span className="rp-kv-v">{[customer.customer.city,customer.customer.country].filter(Boolean).join(', ')}</span></div>}
+                  {customer.customer.createdAt&&<div className="rp-kv"><span className="rp-kv-l">Customer since</span><span className="rp-kv-v">{new Date(customer.customer.createdAt).toLocaleDateString('en-US',{year:'numeric',month:'short'})}</span></div>}
+                  {customer.customer.note&&<div style={{marginTop:6,padding:'6px 9px',background:'var(--bg-surface-2)',borderRadius:7,border:'1px solid var(--border)'}}><div style={{fontSize:10,fontWeight:700,color:'var(--text-3)',textTransform:'uppercase',letterSpacing:'.06em',marginBottom:2}}>Note</div><div style={{fontSize:11.5,color:'var(--text-2)',fontStyle:'italic',lineHeight:1.5}}>{customer.customer.note}</div></div>}
+                </>)}
+              </div>
+            )}
+          </div>
+
+          {/* Stats bar */}
+          {customer?.customer&&!loadingCust&&(
+            <div style={{display:'flex',borderBottom:'1px solid var(--border)',flexShrink:0}}>
+              <div style={{flex:1,padding:'10px 0',textAlign:'center',borderRight:'1px solid var(--border)'}}>
+                <div style={{fontSize:14,fontWeight:800,color:'var(--text-1)',letterSpacing:'-0.02em'}}>{fmtPrice(customer.customer.totalSpent,customer.customer.currency)}</div>
+                <div style={{fontSize:9.5,color:'var(--text-3)',marginTop:2,textTransform:'uppercase',letterSpacing:'.06em'}}>Spent</div>
+              </div>
+              <div style={{flex:1,padding:'10px 0',textAlign:'center'}}>
+                <div style={{fontSize:14,fontWeight:800,color:'var(--text-1)',letterSpacing:'-0.02em'}}>{customer.customer.ordersCount??'—'}</div>
+                <div style={{fontSize:9.5,color:'var(--text-3)',marginTop:2,textTransform:'uppercase',letterSpacing:'.06em'}}>Orders</div>
+              </div>
             </div>
           )}
 
-          {/* Orders tab */}
+          {/* Tags */}
+          {customer?.customer?.tags&&(
+            <div style={{padding:'8px 14px',borderBottom:'1px solid var(--border)',display:'flex',flexWrap:'wrap',gap:4,flexShrink:0}}>
+              {customer.customer.tags.split(',').filter(Boolean).map(tag=><span key={tag} className="rp-tag">{tag.trim()}</span>)}
+            </div>
+          )}
+
+          {/* Tabs */}
+          <div style={{display:'flex',borderBottom:'1px solid var(--border)',flexShrink:0}}>
+            <button className={`rp-tab${rightTab==='info'?' on':''}`} onClick={()=>setRightTab('info')}>Customer</button>
+            <button className={`rp-tab${rightTab==='shopify'?' on':''}`} onClick={()=>setRightTab('shopify')}>
+              Orders{(customer?.orders||[]).length>0?` (${customer.orders.length})`:''}
+            </button>
+          </div>
+
+          {/* ── Customer tab ── */}
+          {rightTab==='info'&&(
+            <div style={{padding:'12px 14px',display:'flex',flexDirection:'column',gap:2}}>
+              {!customer?.customer&&!loadingCust&&<div style={{padding:'20px 0',textAlign:'center',fontSize:12,color:'var(--text-3)'}}>No Shopify customer found</div>}
+              {loadingCust&&[0,1,2].map(i=><div key={i} className="skel" style={{height:24,borderRadius:6,marginBottom:6}} />)}
+              {customer?.customer&&!loadingCust&&(
+                <div style={{padding:'4px 0',fontSize:12,color:'var(--text-3)',textAlign:'center'}}>Customer info is shown in the fields above.</div>
+              )}
+            </div>
+          )}
+
+          {/* ── Orders tab ── */}
           {rightTab==='shopify'&&(
-            <div style={{padding:'12px'}}>
-              {loadingCust&&[0,1].map(i=><div key={i} className="skel" style={{height:120,borderRadius:14,marginBottom:10}} />)}
+            <div>
+              {/* Create order */}
+              <div style={{padding:'10px 12px',borderBottom:'1px solid var(--border)'}}>
+                <button style={{width:'100%',padding:'7px 12px',borderRadius:8,border:'1px solid var(--border)',background:'transparent',color:'var(--text-2)',fontSize:12,fontWeight:600,fontFamily:'inherit',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:6,transition:'all .15s'}} onMouseEnter={e=>{e.currentTarget.style.background='var(--bg-surface-2)';e.currentTarget.style.color='var(--text-1)'}} onMouseLeave={e=>{e.currentTarget.style.background='transparent';e.currentTarget.style.color='var(--text-2)'}}>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                  Create order
+                </button>
+              </div>
+
+              {loadingCust&&[0,1].map(i=>(
+                <div key={i} style={{borderBottom:'1px solid var(--border)',padding:'10px 14px'}}>
+                  <div className="skel" style={{height:16,borderRadius:5,marginBottom:8,width:'60%'}} />
+                  <div className="skel" style={{height:12,borderRadius:5,marginBottom:5,width:'80%'}} />
+                  <div className="skel" style={{height:12,borderRadius:5,width:'50%'}} />
+                </div>
+              ))}
               {!loadingCust&&!customer?.customer&&<div style={{padding:'24px 0',textAlign:'center',fontSize:12,color:'var(--text-3)'}}>No Shopify data found</div>}
               {!loadingCust&&customer?.customer&&(customer.orders||[]).length===0&&<div style={{padding:'24px 0',textAlign:'center',fontSize:12,color:'var(--text-3)'}}>No orders</div>}
+
+              {/* Order sections — Gorgias collapsible */}
               {(customer?.orders||[]).map((order,oi)=>{
-                const isCancelled = order.financialStatus==='cancelled'||order.financialStatus==='voided'
-                const isRefunded  = order.financialStatus==='refunded'
-                const canFulfill  = !isCancelled && (order.fulfillmentStatus==='unfulfilled'||order.fulfillmentStatus==='partial')
-                const canRefund   = !isCancelled && !isRefunded
-                const canCancel   = !isCancelled
-                const shopifyDomain = customer?.shopifyDomain
+                const isOpen       = expandedOrders[order.id]===undefined ? oi===0 : expandedOrders[order.id]
+                const shippingOpen = !!expandedSubs[`${order.id}_shipping`]
+                const itemsOpen    = !!expandedSubs[`${order.id}_items`]
+                const trackOpen    = expandedSubs[`${order.id}_track`]===undefined ? true : expandedSubs[`${order.id}_track`]
+                const isCancelled  = order.financialStatus==='cancelled'||order.financialStatus==='voided'
+                const isRefunded   = order.financialStatus==='refunded'
+                const canRefund    = !isCancelled && !isRefunded
+                const canCancel    = !isCancelled
+                const finS         = ORDER_STATUS[order.financialStatus?.toLowerCase()]
+                const fulS         = ORDER_STATUS[order.fulfillmentStatus?.toLowerCase()]
                 return (
-                <div key={order.id} className="order-card" style={{animation:`fadeUp .3s ease ${oi*.06}s both`}}>
-                  {/* Header */}
-                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:9,paddingLeft:8}}>
-                    <div>
-                      <span style={{fontSize:14,fontWeight:800,color:'var(--text-1)',letterSpacing:'-0.02em'}}>{order.name}</span>
-                      <div style={{fontSize:10,color:'var(--text-3)',marginTop:1}}>{new Date(order.createdAt).toLocaleDateString('en-US',{day:'numeric',month:'short',year:'numeric'})}</div>
-                    </div>
-                    <div style={{textAlign:'right'}}>
-                      <div style={{fontSize:15,fontWeight:800,color:'var(--text-1)',letterSpacing:'-0.02em'}}>{fmtPrice(order.totalPrice,order.currency)}</div>
-                    </div>
-                  </div>
-
-                  {/* Status badges */}
-                  <div style={{display:'flex',gap:4,flexWrap:'wrap',marginBottom:10,paddingLeft:8}}>
-                    <OrderBadge status={order.financialStatus} />
-                    <OrderBadge status={order.fulfillmentStatus} />
-                    {order.hasRefund&&<span style={{fontSize:10,fontWeight:700,padding:'2px 9px',borderRadius:100,background:'rgba(248,113,133,0.12)',color:'#fb7185',border:'1px solid rgba(248,113,133,0.22)'}}>Partially refunded</span>}
-                  </div>
-
-                  {/* Line items */}
-                  <div style={{marginBottom:10,paddingLeft:8}}>
-                    {(order.lineItems||[]).slice(0,2).map(item=>(
-                      <div key={item.id} style={{display:'flex',justifyContent:'space-between',fontSize:11.5,color:'var(--text-2)',marginBottom:3}}>
-                        <span style={{overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',maxWidth:155}}>{item.quantity}× {item.title}{item.variantTitle?` · ${item.variantTitle}`:''}</span>
-                        <span style={{flexShrink:0,marginLeft:8,color:'var(--text-3)'}}>{fmtPrice(Number(item.price)*item.quantity,order.currency)}</span>
-                      </div>
-                    ))}
-                    {(order.lineItems||[]).length>2&&<div style={{fontSize:10.5,color:'var(--text-3)',marginTop:2}}>+{order.lineItems.length-2} more item{order.lineItems.length-2!==1?'s':''}</div>}
-                  </div>
-
-                  {/* Tracking */}
-                  {(order.fulfillments||[]).length>0&&(
-                    <div style={{marginBottom:9,marginLeft:8,padding:'7px 10px',background:'var(--bg-surface-2)',borderRadius:9,border:'1px solid var(--border)'}}>
-                      {order.fulfillments.slice(0,1).map((f,i)=>(
-                        <div key={i}>
-                          <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:f.trackingNumber?3:0}}>
-                            <span style={{display:'flex',color:'var(--text-3)'}}>{I.truck}</span>
-                            <span style={{fontSize:11,fontWeight:700,color:'var(--text-2)'}}>{f.trackingCompany||'Carrier'}</span>
-                            <span style={{fontSize:9.5,fontWeight:700,padding:'1px 6px',borderRadius:4,background:'var(--bg-surface)',color:'var(--text-2)',textTransform:'capitalize',marginLeft:'auto',border:'1px solid var(--border)'}}>Delivered</span>
-                          </div>
-                          {f.trackingNumber&&<div style={{fontSize:10,color:'var(--text-3)',fontFamily:'monospace'}}>{f.trackingNumber}</div>}
-                          {f.trackingUrl&&<a href={f.trackingUrl} target="_blank" rel="noreferrer" style={{fontSize:10.5,color:'var(--accent-text)',textDecoration:'none',display:'inline-flex',alignItems:'center',gap:3,marginTop:2}}>Track package <span style={{display:'flex'}}>{I.externalLink}</span></a>}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Shipping address */}
-                  {order.shippingAddress&&(
-                    <div style={{marginBottom:9,marginLeft:8,padding:'7px 10px',background:'var(--bg-surface-2)',borderRadius:9,border:'1px solid var(--border)'}}>
-                      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:3}}>
-                        <div style={{display:'flex',alignItems:'center',gap:4,color:'var(--text-3)'}}>
-                          <span style={{display:'flex'}}>{I.mappin}</span>
-                          <span style={{fontSize:9.5,fontWeight:700,letterSpacing:'.07em',textTransform:'uppercase'}}>Shipping address</span>
-                        </div>
-                        <button onClick={()=>setModal({type:'address',order})} style={{display:'flex',alignItems:'center',gap:3,color:'var(--text-3)',cursor:'pointer',fontSize:10,fontWeight:600,padding:'2px 6px',borderRadius:5,border:'1px solid var(--border)',background:'transparent',transition:'all .15s'}} onMouseEnter={e=>{e.currentTarget.style.color='var(--text-1)';e.currentTarget.style.borderColor='var(--border-hover)'}} onMouseLeave={e=>{e.currentTarget.style.color='var(--text-3)';e.currentTarget.style.borderColor='var(--border)'}}>
-                          <span style={{display:'flex'}}>{I.edit}</span> Edit
-                        </button>
-                      </div>
-                      <div style={{fontSize:11,color:'var(--text-2)',lineHeight:1.55}}>
-                        {[order.shippingAddress.firstName,order.shippingAddress.lastName].filter(Boolean).join(' ')}<br/>
-                        {order.shippingAddress.address1}{order.shippingAddress.address2?`, ${order.shippingAddress.address2}`:''}<br/>
-                        {[order.shippingAddress.city,order.shippingAddress.zip].filter(Boolean).join(' ')}{order.shippingAddress.country?`, ${order.shippingAddress.country}`:''}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Action grid */}
-                  <div className="order-actions">
-                    {canRefund&&(
-                      <button className="oa-btn" onClick={()=>setModal({type:'refund',order})}>
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.8"/></svg>
-                        Refund
-                      </button>
-                    )}
-                    <button className="oa-btn" onClick={()=>setModal({type:'duplicate',order})}>
-                      <span style={{display:'flex'}}>{I.copy}</span> Duplicate
+                  <div key={order.id} style={{borderBottom:'1px solid var(--border)'}}>
+                    {/* Order header — click to expand */}
+                    <button className="rp-order-hdr" onClick={()=>setExpandedOrders(v=>({...v,[order.id]:!isOpen}))}>
+                      <span style={{fontSize:13,fontWeight:700,color:'var(--accent-text)',flex:1,textAlign:'left'}}>{order.name}</span>
+                      {finS&&<span style={{fontSize:9.5,fontWeight:700,padding:'2px 6px',borderRadius:4,background:finS.bg,color:finS.color,letterSpacing:'.04em',textTransform:'uppercase',border:`1px solid ${finS.color}22`,flexShrink:0}}>{finS.label}</span>}
+                      {fulS&&<span style={{fontSize:9.5,fontWeight:700,padding:'2px 6px',borderRadius:4,background:fulS.bg,color:fulS.color,letterSpacing:'.04em',textTransform:'uppercase',border:`1px solid ${fulS.color}22`,marginLeft:3,flexShrink:0}}>{fulS.label}</span>}
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{transform:isOpen?'rotate(180deg)':'rotate(0)',transition:'transform .2s',color:'var(--text-3)',flexShrink:0,marginLeft:4}}><polyline points="6 9 12 15 18 9"/></svg>
                     </button>
-                    <button className="oa-btn" onClick={()=>setModal({type:'note',order})}>
-                      <span style={{display:'flex'}}>{I.note}</span> Note
-                    </button>
-                    {canCancel&&(
-                      <button className="oa-btn oa-danger" onClick={()=>setModal({type:'cancel',order})}>
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
-                        Cancel
-                      </button>
+
+                    {isOpen&&(
+                      <div style={{padding:'2px 14px 12px'}}>
+                        {/* Action buttons */}
+                        <div style={{display:'flex',gap:4,flexWrap:'wrap',marginBottom:10}}>
+                          <button className="rp-action" onClick={()=>setModal({type:'duplicate',order})}><span style={{display:'flex'}}>{I.copy}</span>Duplicate</button>
+                          {canRefund&&<button className="rp-action" onClick={()=>setModal({type:'refund',order})}>
+                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.8"/></svg>Refund
+                          </button>}
+                          {canCancel&&<button className="rp-action danger" onClick={()=>setModal({type:'cancel',order})}>
+                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>Cancel
+                          </button>}
+                          <button className="rp-action" style={{padding:'4px 7px'}} onClick={()=>setModal({type:'note',order})}>
+                            <span style={{display:'flex'}}>{I.note}</span>
+                          </button>
+                        </div>
+
+                        {/* Key-value rows */}
+                        <div style={{marginBottom:6}}>
+                          <div className="rp-kv"><span className="rp-kv-l">Created</span><span className="rp-kv-v">{new Date(order.createdAt).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}</span></div>
+                          <div className="rp-kv"><span className="rp-kv-l">Total</span><span className="rp-kv-v" style={{fontWeight:700,color:'var(--text-1)'}}>{fmtPrice(order.totalPrice,order.currency)}</span></div>
+                          {order.hasRefund&&<div className="rp-kv"><span className="rp-kv-l">Refund</span><span className="rp-kv-v" style={{color:'#fb7185'}}>Partially refunded</span></div>}
+                        </div>
+
+                        {/* Tracking (collapsible, default open) */}
+                        {(order.fulfillments||[]).length>0&&(
+                          <>
+                            <button className="rp-subsec" onClick={()=>setExpandedSubs(v=>({...v,[`${order.id}_track`]:!trackOpen}))}>
+                              <span style={{display:'flex',color:'var(--text-3)'}}>{I.truck2}</span>
+                              <span style={{flex:1}}>Tracking</span>
+                              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{transform:trackOpen?'rotate(180deg)':'rotate(0)',transition:'transform .2s',color:'var(--text-3)'}}><polyline points="6 9 12 15 18 9"/></svg>
+                            </button>
+                            {trackOpen&&order.fulfillments.slice(0,1).map((f,fi)=>(
+                              <div key={fi} style={{padding:'8px 10px',background:'var(--bg-surface-2)',borderRadius:8,marginTop:4,border:'1px solid var(--border)'}}>
+                                <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:f.trackingNumber?4:0}}>
+                                  <span style={{fontSize:12,fontWeight:700,color:'var(--text-1)'}}>{f.trackingCompany||'Carrier'}</span>
+                                  <span style={{marginLeft:'auto',fontSize:9.5,fontWeight:700,padding:'1px 6px',borderRadius:4,background:'rgba(74,222,128,0.12)',color:'#16a34a',border:'1px solid rgba(74,222,128,0.25)',textTransform:'uppercase',letterSpacing:'.04em'}}>Delivered</span>
+                                </div>
+                                {f.trackingNumber&&<div style={{fontSize:10.5,color:'var(--text-3)',fontFamily:'monospace',marginBottom:3}}>{f.trackingNumber}</div>}
+                                {f.trackingUrl&&<a href={f.trackingUrl} target="_blank" rel="noreferrer" style={{fontSize:11,color:'var(--accent-text)',textDecoration:'none',display:'inline-flex',alignItems:'center',gap:3}}>Track package <span style={{display:'flex'}}>{I.externalLink}</span></a>}
+                              </div>
+                            ))}
+                          </>
+                        )}
+
+                        {/* Shipping address (collapsible) */}
+                        {order.shippingAddress&&(
+                          <>
+                            <button className="rp-subsec" onClick={()=>setExpandedSubs(v=>({...v,[`${order.id}_shipping`]:!shippingOpen}))}>
+                              <span style={{display:'flex',color:'var(--text-3)'}}>{I.mappin}</span>
+                              <span style={{flex:1}}>Shipping address</span>
+                              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{transform:shippingOpen?'rotate(180deg)':'rotate(0)',transition:'transform .2s',color:'var(--text-3)'}}><polyline points="6 9 12 15 18 9"/></svg>
+                            </button>
+                            {shippingOpen&&(
+                              <div style={{padding:'8px 10px',background:'var(--bg-surface-2)',borderRadius:8,marginTop:4,border:'1px solid var(--border)'}}>
+                                <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:6}}>
+                                  <span style={{fontSize:10,fontWeight:700,color:'var(--text-3)',textTransform:'uppercase',letterSpacing:'.06em'}}>Address</span>
+                                  <button onClick={()=>setModal({type:'address',order})} style={{display:'flex',alignItems:'center',gap:3,color:'var(--text-3)',cursor:'pointer',fontSize:10,fontWeight:600,padding:'2px 6px',borderRadius:5,border:'1px solid var(--border)',background:'transparent',transition:'all .15s',fontFamily:'inherit'}} onMouseEnter={e=>{e.currentTarget.style.color='var(--text-1)';e.currentTarget.style.borderColor='var(--border-hover)'}} onMouseLeave={e=>{e.currentTarget.style.color='var(--text-3)';e.currentTarget.style.borderColor='var(--border)'}}>
+                                    <span style={{display:'flex'}}>{I.edit}</span> Edit
+                                  </button>
+                                </div>
+                                <div style={{fontSize:11.5,color:'var(--text-2)',lineHeight:1.6}}>
+                                  {[order.shippingAddress.firstName,order.shippingAddress.lastName].filter(Boolean).join(' ')}<br/>
+                                  {order.shippingAddress.address1}{order.shippingAddress.address2?`, ${order.shippingAddress.address2}`:''}<br/>
+                                  {[order.shippingAddress.city,order.shippingAddress.zip].filter(Boolean).join(' ')}{order.shippingAddress.country?`, ${order.shippingAddress.country}`:''}
+                                </div>
+                              </div>
+                            )}
+                          </>
+                        )}
+
+                        {/* Line items (collapsible) */}
+                        {(order.lineItems||[]).length>0&&(
+                          <>
+                            <button className="rp-subsec" onClick={()=>setExpandedSubs(v=>({...v,[`${order.id}_items`]:!itemsOpen}))}>
+                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{color:'var(--text-3)'}}><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+                              <span style={{flex:1}}>Line items ({(order.lineItems||[]).length})</span>
+                              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{transform:itemsOpen?'rotate(180deg)':'rotate(0)',transition:'transform .2s',color:'var(--text-3)'}}><polyline points="6 9 12 15 18 9"/></svg>
+                            </button>
+                            {itemsOpen&&(
+                              <div style={{marginTop:4,display:'flex',flexDirection:'column',gap:3}}>
+                                {(order.lineItems||[]).map(item=>(
+                                  <div key={item.id} style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',padding:'6px 9px',background:'var(--bg-surface-2)',borderRadius:6,border:'1px solid var(--border)'}}>
+                                    <div style={{minWidth:0,flex:1}}>
+                                      <div style={{fontSize:11.5,fontWeight:600,color:'var(--text-1)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{item.quantity}× {item.title}</div>
+                                      {item.variantTitle&&<div style={{fontSize:10,color:'var(--text-3)'}}>{item.variantTitle}</div>}
+                                      {item.sku&&<div style={{fontSize:10,color:'var(--text-3)',fontFamily:'monospace'}}>{item.sku}</div>}
+                                    </div>
+                                    <div style={{fontSize:12,fontWeight:600,color:'var(--text-2)',flexShrink:0,marginLeft:8}}>{fmtPrice(Number(item.price)*item.quantity,order.currency)}</div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </>
+                        )}
+                      </div>
                     )}
                   </div>
-                </div>
-              )})}
-
+                )
+              })}
             </div>
           )}
         </div>

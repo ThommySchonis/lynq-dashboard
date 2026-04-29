@@ -2168,10 +2168,10 @@ function InboxPage() {
             </div>
             <div style={{display:'flex',alignItems:'center',gap:4}}>
               <button onClick={()=>loadThreads(session.access_token)} style={{background:'transparent',color:'var(--text-3)',cursor:'pointer',display:'flex',padding:5,borderRadius:7,transition:'all .15s'}} onMouseEnter={e=>{e.currentTarget.style.color='var(--text-2)';e.currentTarget.style.background='var(--bg-input)'}} onMouseLeave={e=>{e.currentTarget.style.color='var(--text-3)';e.currentTarget.style.background='transparent'}} title="Refresh">{I.refresh}</button>
-              <button onClick={()=>setComposeOpen(true)} style={{display:'flex',alignItems:'center',gap:5,padding:'5px 11px',borderRadius:8,background:'var(--accent)',border:'none',color:'#fff',cursor:'pointer',fontSize:11.5,fontWeight:600,fontFamily:'inherit',transition:'all .18s',letterSpacing:'.01em'}} onMouseEnter={e=>{e.currentTarget.style.background='var(--accent-hover)'}} onMouseLeave={e=>{e.currentTarget.style.background='var(--accent)'}} title="New ticket">
+              {view!=='sent'&&<button onClick={()=>setComposeOpen(true)} style={{display:'flex',alignItems:'center',gap:5,padding:'5px 11px',borderRadius:8,background:'var(--accent)',border:'none',color:'#fff',cursor:'pointer',fontSize:11.5,fontWeight:600,fontFamily:'inherit',transition:'all .18s',letterSpacing:'.01em'}} onMouseEnter={e=>{e.currentTarget.style.background='var(--accent-hover)'}} onMouseLeave={e=>{e.currentTarget.style.background='var(--accent)'}} title="New ticket">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                 New
-              </button>
+              </button>}
             </div>
           </div>
 
@@ -2184,7 +2184,7 @@ function InboxPage() {
           {/* View tabs */}
           <div style={{display:'flex',borderBottom:'1px solid var(--border)',overflowX:'auto'}} className="sscroll">
             {VIEWS.map(v=>(
-              <button key={v.id} className={`vtab${view===v.id?' on':''}`} onClick={()=>{ setView(v.id); if(v.id==='sent'&&session) loadSentThreads(session.access_token, emailProvider) }}>
+              <button key={v.id} className={`vtab${view===v.id?' on':''}`} onClick={()=>{ setView(v.id); if(v.id==='sent'){ setComposeOpen(true); if(session) loadSentThreads(session.access_token, emailProvider) } else { setComposeOpen(false) } }}>
                 {v.label}
                 {v.id!=='sent'&&counts[v.id]>0&&<span style={{marginLeft:4,background:view===v.id?'rgba(161,117,252,0.2)':'var(--bg-input)',color:view===v.id?'#A175FC':'var(--text-3)',fontSize:9,fontWeight:700,padding:'1px 5px',borderRadius:100}}>{counts[v.id]}</span>}
                 {v.id==='sent'&&sentThreads.length>0&&<span style={{marginLeft:4,background:view===v.id?'rgba(161,117,252,0.2)':'var(--bg-input)',color:view===v.id?'#A175FC':'var(--text-3)',fontSize:9,fontWeight:700,padding:'1px 5px',borderRadius:100}}>{sentThreads.length}</span>}
@@ -2302,8 +2302,8 @@ function InboxPage() {
           connectedEmail={connectedEmail}
           token={session?.access_token}
           macros={macros}
-          onClose={()=>setComposeOpen(false)}
-          onSuccess={(msg,type)=>{ showT(msg,type); if(!type||type==='success') { setComposeOpen(false); loadThreads(session.access_token) } }}
+          onClose={()=>{ setComposeOpen(false); if(view==='sent') setView('all') }}
+          onSuccess={(msg,type)=>{ showT(msg,type); if(!type||type==='success') { setComposeOpen(false); if(view==='sent') setView('all'); loadThreads(session.access_token) } }}
         />
       ) : (<>
 

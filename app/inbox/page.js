@@ -380,23 +380,23 @@ const CSS = `
   .rp-search { width:100%; padding:7px 12px 7px 32px; background:var(--bg-surface-2); border:1px solid var(--border); border-radius:8px; color:var(--text-1); font-size:12px; outline:none; transition:border-color .2s; font-family:inherit; }
   .rp-search:focus { border-color:var(--accent-border); }
   .rp-search::placeholder { color:var(--text-3); }
-  .rp-tab { flex:1; padding:8px 6px; background:transparent; cursor:pointer; font-size:11.5px; font-weight:500; font-family:inherit; color:var(--text-3); border:none; border-bottom:2px solid transparent; transition:all .15s; white-space:nowrap; text-align:center; }
+  .rp-tab { flex:1; padding:8px 6px; background:transparent; cursor:pointer; font-size:11.5px; font-weight:500; font-family:inherit; color:var(--text-2); border:none; border-bottom:2px solid transparent; transition:all .15s; white-space:nowrap; text-align:center; }
   .rp-tab.on { color:var(--text-1); border-bottom-color:var(--accent); font-weight:600; }
-  .rp-tab:hover:not(.on) { color:var(--text-2); }
+  .rp-tab:hover:not(.on) { color:var(--text-1); }
   .rp-section { width:100%; display:flex; align-items:center; gap:6px; padding:9px 14px; background:transparent; cursor:pointer; border:none; font-family:inherit; text-align:left; transition:background .12s; }
   .rp-section:hover { background:var(--bg-surface-2); }
   .rp-kv { display:flex; align-items:baseline; justify-content:space-between; gap:16px; padding:3px 0; }
-  .rp-kv-l { font-size:11px; color:var(--text-3); flex-shrink:0; min-width:72px; }
-  .rp-kv-v { font-size:11.5px; color:var(--text-2); text-align:right; word-break:break-word; }
+  .rp-kv-l { font-size:11px; color:var(--text-2); flex-shrink:0; min-width:72px; }
+  .rp-kv-v { font-size:11.5px; color:var(--text-1); text-align:right; word-break:break-word; }
   .rp-order-hdr { width:100%; display:flex; align-items:center; gap:6px; padding:10px 14px 9px; background:transparent; cursor:pointer; border:none; font-family:inherit; text-align:left; transition:background .12s; }
   .rp-order-hdr:hover { background:var(--bg-surface-2); }
-  .rp-action { display:inline-flex; align-items:center; gap:4px; font-size:11px; font-weight:500; font-family:inherit; padding:4px 9px; border-radius:6px; border:1px solid var(--border); background:var(--bg-surface); color:var(--text-2); cursor:pointer; transition:all .15s; white-space:nowrap; }
-  .rp-action:hover { border-color:var(--border-hover); color:var(--text-1); background:var(--bg-surface-2); }
+  .rp-action { display:inline-flex; align-items:center; gap:4px; font-size:11px; font-weight:500; font-family:inherit; padding:4px 9px; border-radius:6px; border:1px solid var(--border); background:var(--bg-surface); color:var(--text-1); cursor:pointer; transition:all .15s; white-space:nowrap; }
+  .rp-action:hover { border-color:var(--border-hover); background:var(--bg-surface-2); }
   .rp-action.danger:hover { border-color:rgba(220,38,38,0.35); color:#dc2626; background:rgba(220,38,38,0.05); }
   [data-theme="dark"] .rp-action.danger:hover { color:#f87171; background:rgba(239,68,68,0.08); }
-  .rp-subsec { width:100%; display:flex; align-items:center; gap:6px; padding:7px 0; background:transparent; cursor:pointer; border:none; font-size:11.5px; font-weight:600; font-family:inherit; color:var(--text-2); text-align:left; transition:color .12s; border-top:1px solid var(--border); margin-top:6px; }
-  .rp-subsec:hover { color:var(--text-1); }
-  .rp-tag { font-size:10px; font-weight:500; padding:2px 7px; border-radius:4px; background:var(--bg-surface-2); color:var(--text-2); border:1px solid var(--border); }
+  .rp-subsec { width:100%; display:flex; align-items:center; gap:6px; padding:7px 0; background:transparent; cursor:pointer; border:none; font-size:11.5px; font-weight:600; font-family:inherit; color:var(--text-1); text-align:left; transition:opacity .12s; border-top:1px solid var(--border); margin-top:6px; }
+  .rp-subsec:hover { opacity:.75; }
+  .rp-tag { font-size:10px; font-weight:500; padding:2px 7px; border-radius:4px; background:var(--bg-surface-2); color:var(--text-1); border:1px solid var(--border); }
 `
 
 // ─── Icons ────────────────────────────────────────────────────

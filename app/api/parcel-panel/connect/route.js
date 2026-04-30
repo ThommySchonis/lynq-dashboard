@@ -20,16 +20,28 @@ export async function POST(request) {
   if (!apiKey) return NextResponse.json({ error: 'API key is required' }, { status: 400 })
 
   // Verify key with Parcel Panel
-  let ppData
   try {
     const ppRes = await fetch('https://open.parcelpanel.com/api/open/v1/auth/token', {
       method: 'GET',
-      headers: { 'Content-Type': 'application/json', 'x-pp-app-key': apiKey },
+      headers: { 'x-pp-app-key': apiKey, 'Accept': 'application/json' },
     })
     console.log('[parcel-panel/connect] PP status:', ppRes.status)
-    ppData = await ppRes.json()
-    console.log('[parcel-panel/connect] PP response:', JSON.stringify(ppData))
-    if (ppRes.status !== 200) {
+    console.log('[parcel-panel/connect] Content-Type:', ppRes.headers.get('content-type'))
+
+    const text = await ppRes.text()
+    console.log('[parcel-panel/connect] Raw response:', text.substring(0, 200))
+
+    let ppData
+    try {
+      ppData = JSON.parse(text)
+    } catch {
+      return NextResponse.json(
+        { error: 'Parcel Panel returned an unexpected response: ' + text.substring(0, 100) },
+        { status: 502 }
+      )
+    }
+
+    if (!ppRes.ok) {
       return NextResponse.json(
         { error: ppData?.message || 'Invalid API key' },
         { status: 400 }

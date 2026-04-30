@@ -48,7 +48,7 @@ function computeDelta(cur, prev) {
 const CATEGORIES = ['All','Sizing','Damaged','Quality','Not as described','Changed mind','Other']
 const CAT_COLORS = {
   'Sizing':           { color:'#555555', bg:'#F5F5F5', border:'rgba(0,0,0,0.08)', chartColor:'#555555'  },
-  'Damaged':          { color:'#D97706', bg:'#FFFBEB', border:'rgba(217,119,6,0.15)', chartColor:'#BDBDBD' },
+  'Damaged':          { color:'#555555', bg:'#F5F5F5', border:'rgba(0,0,0,0.08)', chartColor:'#BDBDBD' },
   'Quality':          { color:'#555555', bg:'#F5F5F5', border:'rgba(0,0,0,0.08)', chartColor:'#111111'  },
   'Not as described': { color:'#555555', bg:'#F5F5F5', border:'rgba(0,0,0,0.08)', chartColor:'#888888'  },
   'Changed mind':     { color:'#555555', bg:'#F5F5F5', border:'rgba(0,0,0,0.08)', chartColor:'#E0E0E0'  },
@@ -270,9 +270,9 @@ function AlertBanner({ rate, loaded }) {
   const r=parseFloat(rate||0); if(r<5) return null
   const isCrit=r>=20
   return (
-    <div style={{ display:'flex', alignItems:'center', gap:12, background:'#FEF2F2', border:'1px solid rgba(220,38,38,0.15)', borderLeft:'3px solid #DC2626', borderRadius:6, padding:'10px 16px', marginBottom:16, animation:'fadeIn .4s ease-out both' }}>
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#DC2626" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink:0 }}><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-      <span style={{ fontSize:12, fontWeight:700, color:'#DC2626', marginRight:6, textTransform:'uppercase', letterSpacing:'.06em' }}>{isCrit?'Critical':'Warning'}</span>
+    <div style={{ display:'flex', alignItems:'center', gap:12, background:'#FEF2F2', border:'1px solid rgba(220,38,38,0.15)', borderLeft:'3px solid #DC2626', borderRadius:6, padding:'10px 14px', marginBottom:16, animation:'fadeIn .4s ease-out both' }}>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#DC2626" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink:0 }}><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      <span style={{ fontSize:12, fontWeight:600, color:'#DC2626', marginRight:4 }}>{isCrit?'Critical':'Warning'}:</span>
       <span style={{ fontSize:12, color:'#DC2626', lineHeight:1.5 }}>
         {isCrit?`Refund rate ${r}% — industry average is 2–5%. Immediate action required.`:`Refund rate ${r}% is above the 2–5% benchmark.`}
       </span>

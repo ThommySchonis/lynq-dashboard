@@ -5,11 +5,8 @@ import { supabase } from '../../lib/supabase'
 import Sidebar from '../components/Sidebar'
 
 const CSS = `
-  @keyframes fadeUp  { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+  @keyframes fadeUp  { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
   @keyframes shimmer { from{background-position:-400% 0} to{background-position:400% 0} }
-  @keyframes spin    { to{transform:rotate(360deg)} }
-  @keyframes pulse   { 0%,100%{opacity:.6} 50%{opacity:1} }
-  @keyframes liveDot { 0%,100%{transform:scale(1);opacity:.7} 50%{transform:scale(1.7);opacity:0} }
 
   @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
 
@@ -20,95 +17,81 @@ const CSS = `
   .vf-scroll::-webkit-scrollbar-thumb { background:var(--scrollbar);border-radius:2px }
 
   .feed-card {
-    background:var(--bg-surface);
-    border:1px solid var(--border);
-    border-radius:14px;overflow:hidden;
-    box-shadow:var(--shadow-card);
-    transition:border-color .2s,transform .25s,box-shadow .25s;
+    background:#FFFFFF;
+    border:1px solid rgba(0,0,0,0.07);
+    border-radius:10px;
+    transition:border-color .15s;
+    overflow:hidden;
   }
-  .feed-card:hover {
-    border-color:var(--border-hover);
-    transform:translateY(-3px);
-    box-shadow:var(--shadow-card-hover);
-  }
+  .feed-card:hover { border-color:rgba(0,0,0,0.12) }
 
   .mc-card {
-    border-radius:16px;overflow:hidden;position:relative;
-    background:var(--bg-surface);
-    border:1px solid var(--border);
-    transition:border-color .2s,transform .25s,box-shadow .25s;
+    background:#FFFFFF;
+    border:1px solid rgba(0,0,0,0.07);
+    border-radius:10px;
+    padding:24px;
+    transition:border-color .15s;
   }
-  .mc-card:hover {
-    border-color:var(--border-hover);
-    transform:translateY(-2px);
-    box-shadow:var(--shadow-card-hover);
-  }
+  .mc-card:hover { border-color:rgba(0,0,0,0.12) }
 
-  .vid-thumb { position:relative;width:100%;padding-top:56.25%;background:#0d0620;overflow:hidden }
-  .vid-thumb img { position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform .5s }
-  .feed-card:hover .vid-thumb img { transform:scale(1.04) }
-  .vid-grad  { position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,0) 45%,rgba(13,6,32,0.88) 100%);pointer-events:none }
+  .vid-thumb { position:relative;width:100%;padding-top:56.25%;background:#111111;overflow:hidden }
+  .vid-thumb img { position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform .4s }
+  .feed-card:hover .vid-thumb img { transform:scale(1.03) }
+  .vid-grad  { position:absolute;inset:0;background:linear-gradient(180deg,transparent 50%,rgba(0,0,0,0.7) 100%);pointer-events:none }
   .play-ring { position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none }
   .play-circle {
-    width:52px;height:52px;border-radius:50%;
-    background:rgba(255,255,255,0.12);border:2px solid rgba(255,255,255,0.25);
-    backdrop-filter:blur(12px);display:flex;align-items:center;justify-content:center;
-    transition:background .2s,border-color .2s,transform .2s;
+    width:48px;height:48px;border-radius:50%;
+    background:rgba(255,255,255,0.15);border:1.5px solid rgba(255,255,255,0.3);
+    backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;
+    transition:background .15s,transform .15s;
   }
-  .feed-card:hover .play-circle { background:rgba(161,117,252,0.45);border-color:rgba(161,117,252,0.7);transform:scale(1.1) }
+  .feed-card:hover .play-circle { background:rgba(255,255,255,0.25);transform:scale(1.08) }
 
-  .type-badge { display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:100px;font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase }
-  .topic-tag  { display:inline-flex;align-items:center;padding:3px 9px;border-radius:100px;font-size:10px;font-weight:600;letter-spacing:.04em;background:var(--bg-surface-2);border:1px solid var(--border);color:var(--text-2) }
-
-  .f-pill { padding:6px 16px;border-radius:100px;font-size:12px;font-weight:600;cursor:pointer;border:none;font-family:inherit;transition:all .15s }
-  .t-pill { padding:5px 14px;border-radius:100px;font-size:11.5px;font-weight:600;cursor:pointer;border:1px solid;font-family:inherit;transition:all .15s }
-
-  .watch-link { display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:700;text-decoration:none;transition:gap .2s }
-  .watch-link:hover { gap:10px }
-
-  .sk { background:linear-gradient(90deg,var(--skeleton-from) 25%,var(--skeleton-to) 50%,var(--skeleton-from) 75%);background-size:400% 100%;animation:shimmer 1.8s ease-in-out infinite;border-radius:8px }
+  .f-pill { padding:4px 12px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s;display:inline-flex;align-items:center;gap:5px }
 
   .join-btn {
-    display:inline-flex;align-items:center;gap:8px;
-    padding:11px 22px;border-radius:10px;border:none;
-    background:#111111;color:#fff;font-size:13px;font-weight:700;
-    cursor:pointer;font-family:inherit;letter-spacing:.01em;
-    transition:background .15s,transform .15s;text-decoration:none;
+    display:inline-flex;align-items:center;gap:7px;
+    height:36px;padding:0 16px;border-radius:7px;border:none;
+    background:#111111;color:#fff;font-size:13px;font-weight:600;
+    cursor:pointer;font-family:inherit;transition:background .15s;text-decoration:none;
   }
-  .join-btn:hover { background:#333333;transform:translateY(-1px) }
+  .join-btn:hover { background:#333333 }
 
   .cal-btn {
     display:inline-flex;align-items:center;gap:7px;
-    padding:11px 18px;border-radius:10px;
-    border:1px solid var(--border);background:var(--bg-surface-2);
-    color:var(--text-2);font-size:13px;font-weight:600;
+    height:36px;padding:0 16px;border-radius:7px;
+    border:1px solid rgba(0,0,0,0.09);background:#FFFFFF;
+    color:#555555;font-size:13px;font-weight:500;
     cursor:pointer;font-family:inherit;text-decoration:none;
-    transition:background .15s,border-color .15s;
+    transition:background .15s;
   }
-  .cal-btn:hover { background:rgba(255,255,255,0.09);border-color:var(--text-3) }
+  .cal-btn:hover { background:#F5F5F5 }
 
   .react-btn {
-    display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:8px;
+    display:inline-flex;align-items:center;gap:4px;padding:4px 9px;border-radius:6px;
     font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;
-    border:1px solid transparent;background:transparent;transition:all .15s;line-height:1;
+    border:1px solid transparent;background:transparent;transition:all .15s;line-height:1;color:#888888;
   }
-  .react-btn:hover { background:var(--bg-surface-2) }
+  .react-btn:hover { background:#F5F5F5;border-color:rgba(0,0,0,0.07) }
+  .react-btn.active { color:#111111;background:#F5F5F5;border-color:rgba(0,0,0,0.09) }
+
+  .sk { background:linear-gradient(90deg,var(--skeleton-from) 25%,var(--skeleton-to) 50%,var(--skeleton-from) 75%);background-size:400% 100%;animation:shimmer 1.8s ease-in-out infinite;border-radius:6px }
 `
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
 const TYPE_CFG = {
-  video:    { label: 'Video',    accent: '#555555', bg: 'rgba(0,0,0,0.05)',        border: 'rgba(0,0,0,0.1)'       },
-  tip:      { label: 'Tip',      accent: '#d97706', bg: 'rgba(251,191,36,0.1)',   border: 'rgba(251,191,36,0.22)' },
-  update:   { label: 'Update',   accent: '#16a34a', bg: 'rgba(74,222,128,0.1)',   border: 'rgba(74,222,128,0.22)' },
-  industry: { label: 'Industry', accent: '#2563eb', bg: 'rgba(96,165,250,0.1)',   border: 'rgba(96,165,250,0.22)' },
+  video:    { label:'Video',    borderColor:'#BDBDBD', badgeBg:'#F5F5F5',   badgeColor:'#555555', badgeBorder:'rgba(0,0,0,0.08)'         },
+  tip:      { label:'Tip',      borderColor:'#D97706', badgeBg:'#FFFBEB',   badgeColor:'#D97706', badgeBorder:'rgba(215,163,6,0.15)'     },
+  update:   { label:'Update',   borderColor:'#16A34A', badgeBg:'#F0FDF4',   badgeColor:'#16A34A', badgeBorder:'rgba(22,163,74,0.15)'     },
+  industry: { label:'Industry', borderColor:'#555555', badgeBg:'#F5F5F5',   badgeColor:'#555555', badgeBorder:'rgba(0,0,0,0.08)'         },
 }
 
 const TYPE_FILTERS = [
-  { id: 'all',      label: 'All' },
-  { id: 'video',    label: 'Videos' },
-  { id: 'tip',      label: 'Tips' },
-  { id: 'update',   label: 'Updates' },
+  { id: 'all',      label: 'All'      },
+  { id: 'video',    label: 'Videos'   },
+  { id: 'tip',      label: 'Tips'     },
+  { id: 'update',   label: 'Updates'  },
   { id: 'industry', label: 'Industry' },
 ]
 
@@ -120,9 +103,7 @@ function getYouTubeId(url) {
   return m ? m[1] : null
 }
 
-function isNew(iso) {
-  return (Date.now() - new Date(iso)) < 7 * 86400000
-}
+function isNew(iso) { return (Date.now() - new Date(iso)) < 7 * 86400000 }
 
 function fmtDate(iso) {
   return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
@@ -157,149 +138,57 @@ function googleCalUrl(mc) {
 
 // ── Components ───────────────────────────────────────────────────────────────
 
-function PageBg() {
-  return null
-}
-
 function MasterclassCard({ mc, i }) {
   const until = timeUntil(mc.scheduled_at)
-  const isImminent = until === 'Starting soon' || until?.startsWith('Today')
 
   return (
-    <div className="mc-card" style={{ padding:'28px 30px', animation:`fadeUp .4s ease ${i * 80}ms both` }}>
-      {/* Decorative glow removed for clean design */}
-
-      <div style={{ position:'relative', zIndex:1 }}>
-        {/* Top row */}
-        <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:18, flexWrap:'wrap' }}>
-          <div style={{ display:'flex', alignItems:'center', gap:6, padding:'4px 12px', borderRadius:100, background:'var(--bg-surface-2)', border:'1px solid var(--border)' }}>
-            <div style={{ width:6, height:6, borderRadius:'50%', background:'#4ade80' }} />
-            <span style={{ fontSize:10.5, fontWeight:700, color:'var(--text-2)', letterSpacing:'.07em', textTransform:'uppercase' }}>Upcoming Masterclass</span>
-          </div>
-          {until && (
-            <span style={{ fontSize:11.5, fontWeight:700, color: isImminent ? '#4ade80' : 'rgba(255,255,255,0.45)', background: isImminent ? 'rgba(74,222,128,0.1)' : 'transparent', padding: isImminent ? '3px 10px' : '0', borderRadius:100, border: isImminent ? '1px solid rgba(74,222,128,0.2)' : 'none' }}>
-              {until}
-            </span>
-          )}
+    <div className="mc-card" style={{ animation:`fadeUp .4s ease ${i * 80}ms both` }}>
+      {/* Badge row */}
+      <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:16, flexWrap:'wrap' }}>
+        <div style={{ display:'inline-flex', alignItems:'center', gap:6, padding:'2px 8px', borderRadius:4, background:'#F5F5F5', border:'1px solid rgba(0,0,0,0.08)' }}>
+          <div style={{ width:6, height:6, borderRadius:'50%', background:'#16A34A', flexShrink:0 }} />
+          <span style={{ fontSize:10, fontWeight:600, color:'#555555', letterSpacing:'.06em', textTransform:'uppercase' }}>Upcoming Masterclass</span>
         </div>
-
-        {/* Title + speaker */}
-        <h2 style={{ fontSize:22, fontWeight:800, color:'var(--text-1)', letterSpacing:'-0.035em', lineHeight:1.25, marginBottom:8 }}>
-          {mc.title}
-        </h2>
-        {mc.speaker && (
-          <p style={{ fontSize:13, color:'var(--text-2)', marginBottom:6, fontWeight:500 }}>
-            with <span style={{ color:'var(--text-2)', fontWeight:600 }}>{mc.speaker}</span>
-          </p>
+        {until && (
+          <span style={{ fontSize:12, fontWeight:500, color:'#888888' }}>{until}</span>
         )}
-        <p style={{ fontSize:12.5, color:'var(--text-3)', marginBottom: mc.description ? 10 : 20, letterSpacing:'.01em' }}>
-          {fmtEventDate(mc.scheduled_at)}
+      </div>
+
+      {/* Title + speaker */}
+      <h2 style={{ fontSize:20, fontWeight:700, color:'#111111', lineHeight:1.25, margin:'12px 0 6px' }}>
+        {mc.title}
+      </h2>
+      {mc.speaker && (
+        <p style={{ fontSize:13, color:'#555555', marginBottom:0 }}>
+          with <strong style={{ fontWeight:600 }}>{mc.speaker}</strong>
         </p>
-        {mc.description && (
-          <p style={{ fontSize:13, color:'rgba(255,255,255,0.48)', lineHeight:1.65, marginBottom:22 }}>
-            {mc.description}
-          </p>
-        )}
+      )}
+      <p style={{ fontSize:13, color:'#888888', marginTop:4, marginBottom: mc.description ? 10 : 20 }}>
+        {fmtEventDate(mc.scheduled_at)}
+      </p>
+      {mc.description && (
+        <p style={{ fontSize:13, color:'#555555', lineHeight:1.6, marginBottom:20 }}>
+          {mc.description}
+        </p>
+      )}
 
-        {/* Actions */}
-        <div style={{ display:'flex', gap:10, flexWrap:'wrap' }}>
-          {mc.zoom_url ? (
-            <a href={mc.zoom_url} target="_blank" rel="noopener noreferrer" className="join-btn">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 10l4.553-2.069A1 1 0 0 1 21 8.87v6.26a1 1 0 0 1-1.447.894L15 14"/><rect x="3" y="6" width="12" height="12" rx="2"/></svg>
-              Join Zoom session
-            </a>
-          ) : (
-            <div style={{ display:'inline-flex', alignItems:'center', gap:7, padding:'11px 18px', borderRadius:10, background:'var(--bg-input)', border:'1px solid var(--border)', color:'var(--text-3)', fontSize:13, fontWeight:600 }}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-              Zoom link coming soon
-            </div>
-          )}
-          <a href={googleCalUrl(mc)} target="_blank" rel="noopener noreferrer" className="cal-btn">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-            Add to calendar
+      {/* Actions */}
+      <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
+        {mc.zoom_url ? (
+          <a href={mc.zoom_url} target="_blank" rel="noopener noreferrer" className="join-btn">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 10l4.553-2.069A1 1 0 0 1 21 8.87v6.26a1 1 0 0 1-1.447.894L15 14"/><rect x="3" y="6" width="12" height="12" rx="2"/></svg>
+            Join Zoom session
           </a>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function TopicTag({ topic }) {
-  if (!topic) return null
-  return <span className="topic-tag">{topic}</span>
-}
-
-function VideoCard({ item, i, reactions, userId, onReact, isPinned }) {
-  const ytId = getYouTubeId(item.youtube_url)
-  const thumb = ytId ? `https://img.youtube.com/vi/${ytId}/maxresdefault.jpg` : null
-  const cfg = TYPE_CFG.video
-
-  return (
-    <div className="feed-card" style={{ animation:`fadeUp .45s ease ${i*60}ms both`, ...(isPinned && { borderColor:'rgba(245,158,11,0.35)', boxShadow:'0 4px 24px rgba(0,0,0,0.25),0 0 0 1px rgba(245,158,11,0.08),inset 0 1px 0 rgba(255,255,255,0.06)' }) }}>
-      <a href={item.youtube_url || '#'} target="_blank" rel="noopener noreferrer" style={{ display:'block', textDecoration:'none' }}>
-        <div className="vid-thumb">
-          {thumb && <img src={thumb} alt={item.title} />}
-          {!thumb && <div style={{ position:'absolute', inset:0, display:'flex', alignItems:'center', justifyContent:'center' }}><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="rgba(161,117,252,0.3)" strokeWidth="1.5"><polygon points="5 3 19 12 5 21 5 3"/></svg></div>}
-          <div className="vid-grad" />
-          <div className="play-ring"><div className="play-circle"><svg width="18" height="18" viewBox="0 0 24 24" fill="#fff" style={{ marginLeft:2 }}><polygon points="5 3 19 12 5 21 5 3"/></svg></div></div>
-          <div style={{ position:'absolute', top:12, left:12 }}>
-            <span className="type-badge" style={{ background:'rgba(0,0,0,0.55)', border:'1px solid var(--border)', color:'#fff', backdropFilter:'blur(8px)' }}>
-              <svg width="8" height="8" viewBox="0 0 24 24" fill="#A175FC"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-              YouTube
-            </span>
+        ) : (
+          <div style={{ display:'inline-flex', alignItems:'center', gap:7, height:36, padding:'0 16px', borderRadius:7, background:'#F5F5F5', border:'1px solid rgba(0,0,0,0.08)', color:'#888888', fontSize:13, fontWeight:500 }}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            Zoom link coming soon
           </div>
-        </div>
-      </a>
-      <div style={{ padding:'18px 22px 22px' }}>
-        <div style={{ display:'flex', alignItems:'center', gap:7, marginBottom:10, flexWrap:'wrap' }}>
-          <span className="type-badge" style={{ background:cfg.bg, border:`1px solid ${cfg.border}`, color:cfg.accent }}>Video</span>
-          <TopicTag topic={item.topic} />
-          {isPinned && <span style={{ display:'inline-flex', alignItems:'center', gap:4, padding:'2px 9px', borderRadius:100, fontSize:10, fontWeight:800, letterSpacing:'.06em', textTransform:'uppercase', background:'rgba(245,158,11,0.1)', border:'1px solid rgba(245,158,11,0.28)', color:'#f59e0b' }}><svg width="8" height="8" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M16 9V4l1-1V2H7v1l1 1v5l-2 3h4v7l1 1 1-1v-7h4l-2-3z"/></svg>Pinned</span>}
-          {isNew(item.created_at) && (
-            <span style={{ display:'inline-flex', alignItems:'center', padding:'2px 8px', borderRadius:100, fontSize:10, fontWeight:800, letterSpacing:'.06em', textTransform:'uppercase', background:'rgba(74,222,128,0.12)', border:'1px solid rgba(74,222,128,0.25)', color:'#4ade80' }}>New</span>
-          )}
-          <span style={{ fontSize:11, color:'var(--text-3)', marginLeft:'auto' }}>{fmtDate(item.created_at)}</span>
-        </div>
-        <h3 style={{ fontSize:16.5, fontWeight:800, color:'var(--text-1)', letterSpacing:'-0.028em', lineHeight:1.3, marginBottom:8 }}>{item.title}</h3>
-        {item.body && <p style={{ fontSize:13, color:'rgba(255,255,255,0.48)', lineHeight:1.65, marginBottom:16, display:'-webkit-box', WebkitLineClamp:3, WebkitBoxOrient:'vertical', overflow:'hidden' }}>{item.body}</p>}
-        {item.youtube_url && (
-          <a href={item.youtube_url} target="_blank" rel="noopener noreferrer" className="watch-link" style={{ color:cfg.accent }}>
-            Watch now
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-          </a>
         )}
-        <Reactions item={item} reactions={reactions} userId={userId} onReact={onReact} />
-      </div>
-    </div>
-  )
-}
-
-function TextCard({ item, i, reactions, userId, onReact, isPinned }) {
-  const cfg = TYPE_CFG[item.type] || TYPE_CFG.update
-  const icons = {
-    tip:      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>,
-    update:   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>,
-    industry: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 20h20M4 20V10l8-6 8 6v10"/><path d="M10 20v-6h4v6"/></svg>,
-  }
-  return (
-    <div className="feed-card" style={{ animation:`fadeUp .45s ease ${i*60}ms both`, position:'relative', ...(isPinned && { borderColor:'rgba(245,158,11,0.35)', boxShadow:'0 4px 24px rgba(0,0,0,0.25),0 0 0 1px rgba(245,158,11,0.08),inset 0 1px 0 rgba(255,255,255,0.06)' }) }}>
-      <div style={{ position:'absolute', top:0, left:0, right:0, height:2, background: isPinned ? 'linear-gradient(90deg,rgba(245,158,11,0.8),rgba(245,158,11,0.2),transparent)' : `linear-gradient(90deg,${cfg.accent}80,${cfg.accent}20,transparent)` }} />
-      <div style={{ padding:'22px 24px' }}>
-        <div style={{ display:'flex', alignItems:'center', gap:7, marginBottom:12, flexWrap:'wrap' }}>
-          <span className="type-badge" style={{ background:cfg.bg, border:`1px solid ${cfg.border}`, color:cfg.accent }}>
-            <span style={{ color:cfg.accent, display:'flex' }}>{icons[item.type] || icons.update}</span>
-            {cfg.label}
-          </span>
-          <TopicTag topic={item.topic} />
-          {isPinned && <span style={{ display:'inline-flex', alignItems:'center', gap:4, padding:'2px 9px', borderRadius:100, fontSize:10, fontWeight:800, letterSpacing:'.06em', textTransform:'uppercase', background:'rgba(245,158,11,0.1)', border:'1px solid rgba(245,158,11,0.28)', color:'#f59e0b' }}><svg width="8" height="8" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M16 9V4l1-1V2H7v1l1 1v5l-2 3h4v7l1 1 1-1v-7h4l-2-3z"/></svg>Pinned</span>}
-          {isNew(item.created_at) && (
-            <span style={{ display:'inline-flex', alignItems:'center', padding:'2px 8px', borderRadius:100, fontSize:10, fontWeight:800, letterSpacing:'.06em', textTransform:'uppercase', background:'rgba(74,222,128,0.12)', border:'1px solid rgba(74,222,128,0.25)', color:'#4ade80' }}>New</span>
-          )}
-          <span style={{ fontSize:11, color:'var(--text-3)', marginLeft:'auto' }}>{fmtDate(item.created_at)}</span>
-        </div>
-        <h3 style={{ fontSize:15.5, fontWeight:800, color:'var(--text-1)', letterSpacing:'-0.025em', lineHeight:1.35, marginBottom:10 }}>{item.title}</h3>
-        {item.body && <p style={{ fontSize:13, color:'var(--text-2)', lineHeight:1.7, whiteSpace:'pre-wrap', overflowWrap:'break-word' }}>{item.body}</p>}
-        <Reactions item={item} reactions={reactions} userId={userId} onReact={onReact} />
+        <a href={googleCalUrl(mc)} target="_blank" rel="noopener noreferrer" className="cal-btn">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          Add to calendar
+        </a>
       </div>
     </div>
   )
@@ -307,26 +196,22 @@ function TextCard({ item, i, reactions, userId, onReact, isPinned }) {
 
 function Reactions({ item, reactions, userId, onReact }) {
   const TYPES = [
-    { id:'thumbs_up', accent:'#60a5fa',
-      svg: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M7 10v12"/><path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2h0a3.13 3.13 0 0 1 3 3.88z"/></svg>
+    { id:'thumbs_up',
+      svg: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M7 10v12"/><path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2h0a3.13 3.13 0 0 1 3 3.88z"/></svg>
     },
-    { id:'fire', accent:'#f97316',
-      svg: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
+    { id:'fire',
+      svg: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
     },
   ]
   return (
-    <div style={{ borderTop:'1px solid rgba(255,255,255,0.06)', marginTop:14, paddingTop:12, display:'flex', gap:3 }}>
-      {TYPES.map(({ id, accent, svg }) => {
+    <div style={{ borderTop:'1px solid rgba(0,0,0,0.06)', marginTop:14, paddingTop:10, display:'flex', gap:3 }}>
+      {TYPES.map(({ id, svg }) => {
         const count = reactions.filter(r => r.broadcast_id === item.id && r.emoji === id).length
         const active = !!userId && reactions.some(r => r.broadcast_id === item.id && r.user_id === userId && r.emoji === id)
         return (
-          <button key={id} className="react-btn" onClick={() => onReact(item.id, id)} style={{
-            color:       active ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.28)',
-            background:  active ? 'var(--bg-input)'  : 'transparent',
-            borderColor: active ? 'var(--bg-surface-2)'   : 'transparent',
-          }}>
+          <button key={id} className={`react-btn${active?' active':''}`} onClick={() => onReact(item.id, id)}>
             {svg}
-            {count > 0 && count}
+            {count > 0 && <span style={{ fontSize:11, fontVariantNumeric:'tabular-nums' }}>{count}</span>}
           </button>
         )
       })}
@@ -334,15 +219,77 @@ function Reactions({ item, reactions, userId, onReact }) {
   )
 }
 
+function VideoCard({ item, i, reactions, userId, onReact }) {
+  const ytId = getYouTubeId(item.youtube_url)
+  const thumb = ytId ? `https://img.youtube.com/vi/${ytId}/maxresdefault.jpg` : null
+  const cfg = TYPE_CFG.video
+
+  return (
+    <div className="feed-card" style={{ animation:`fadeUp .4s ease ${i*60}ms both` }}>
+      <a href={item.youtube_url || '#'} target="_blank" rel="noopener noreferrer" style={{ display:'block', textDecoration:'none' }}>
+        <div className="vid-thumb">
+          {thumb && <img src={thumb} alt={item.title} />}
+          {!thumb && <div style={{ position:'absolute', inset:0, display:'flex', alignItems:'center', justifyContent:'center' }}><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="1.5"><polygon points="5 3 19 12 5 21 5 3"/></svg></div>}
+          <div className="vid-grad" />
+          <div className="play-ring"><div className="play-circle"><svg width="16" height="16" viewBox="0 0 24 24" fill="#fff" style={{ marginLeft:2 }}><polygon points="5 3 19 12 5 21 5 3"/></svg></div></div>
+        </div>
+      </a>
+      <div style={{ padding:'16px 20px 18px' }}>
+        <div style={{ display:'flex', alignItems:'center', gap:7, marginBottom:10, flexWrap:'wrap' }}>
+          <span style={{ fontSize:10, fontWeight:700, letterSpacing:'.06em', textTransform:'uppercase', color:cfg.badgeColor, background:cfg.badgeBg, border:`1px solid ${cfg.badgeBorder}`, borderRadius:4, padding:'2px 7px' }}>Video</span>
+          {isNew(item.created_at) && (
+            <span style={{ fontSize:10, fontWeight:600, color:'#555555', background:'#F5F5F5', borderRadius:4, padding:'2px 7px' }}>NEW</span>
+          )}
+          <span style={{ fontSize:12, color:'#BDBDBD', marginLeft:'auto' }}>{fmtDate(item.created_at)}</span>
+        </div>
+        <h3 style={{ fontSize:14, fontWeight:600, color:'#111111', lineHeight:1.35, marginBottom:8 }}>{item.title}</h3>
+        {item.body && <p style={{ fontSize:13, color:'#555555', lineHeight:1.6, marginBottom:12, display:'-webkit-box', WebkitLineClamp:3, WebkitBoxOrient:'vertical', overflow:'hidden' }}>{item.body}</p>}
+        {item.youtube_url && (
+          <a href={item.youtube_url} target="_blank" rel="noopener noreferrer" style={{ display:'inline-flex', alignItems:'center', gap:5, fontSize:12.5, fontWeight:600, color:'#555555', textDecoration:'none', transition:'gap .15s' }}>
+            Watch now
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          </a>
+        )}
+        <Reactions item={item} reactions={reactions} userId={userId} onReact={onReact} />
+      </div>
+    </div>
+  )
+}
+
+function TextCard({ item, i, reactions, userId, onReact }) {
+  const cfg = TYPE_CFG[item.type] || TYPE_CFG.update
+
+  const updateIcon = <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+
+  return (
+    <div className="feed-card" style={{ animation:`fadeUp .4s ease ${i*60}ms both`, borderLeft:`3px solid ${cfg.borderColor}` }}>
+      <div style={{ padding:'20px 24px' }}>
+        <div style={{ display:'flex', alignItems:'center', gap:7, marginBottom:10, flexWrap:'wrap' }}>
+          <span style={{ display:'inline-flex', alignItems:'center', gap:4, fontSize:10, fontWeight:700, letterSpacing:'.06em', textTransform:'uppercase', color:cfg.badgeColor, background:cfg.badgeBg, border:`1px solid ${cfg.badgeBorder}`, borderRadius:4, padding:'2px 7px' }}>
+            {item.type === 'update' && <span style={{ color:cfg.badgeColor, display:'flex' }}>{updateIcon}</span>}
+            {cfg.label}
+          </span>
+          {isNew(item.created_at) && (
+            <span style={{ fontSize:10, fontWeight:600, color:'#555555', background:'#F5F5F5', borderRadius:4, padding:'2px 7px' }}>NEW</span>
+          )}
+          <span style={{ fontSize:12, color:'#BDBDBD', marginLeft:'auto' }}>{fmtDate(item.created_at)}</span>
+        </div>
+        <h3 style={{ fontSize:14, fontWeight:600, color:'#111111', lineHeight:1.35, marginBottom:8 }}>{item.title}</h3>
+        {item.body && <p style={{ fontSize:13, color:'#555555', lineHeight:1.6, whiteSpace:'pre-wrap', overflowWrap:'break-word' }}>{item.body}</p>}
+        <Reactions item={item} reactions={reactions} userId={userId} onReact={onReact} />
+      </div>
+    </div>
+  )
+}
+
 function SkeletonCard({ i }) {
   return (
-    <div style={{ background:'var(--bg-surface-2)', border:'1px solid var(--border)', borderRadius:14, overflow:'hidden', animation:`fadeUp .3s ease ${i*50}ms both` }}>
-      <div className="sk" style={{ height:190 }} />
-      <div style={{ padding:'18px 22px 22px', display:'flex', flexDirection:'column', gap:10 }}>
-        <div style={{ display:'flex', gap:8 }}><div className="sk" style={{ height:20, width:60 }} /><div className="sk" style={{ height:20, width:80 }} /></div>
-        <div className="sk" style={{ height:22, width:'80%' }} />
-        <div className="sk" style={{ height:14, width:'100%' }} />
-        <div className="sk" style={{ height:14, width:'65%' }} />
+    <div style={{ background:'#FFFFFF', border:'1px solid rgba(0,0,0,0.07)', borderRadius:10, overflow:'hidden', animation:`fadeUp .3s ease ${i*50}ms both` }}>
+      <div style={{ padding:'16px 20px 18px', display:'flex', flexDirection:'column', gap:10 }}>
+        <div style={{ display:'flex', gap:8 }}><div className="sk" style={{ height:18, width:50 }}/><div className="sk" style={{ height:18, width:40 }}/></div>
+        <div className="sk" style={{ height:18, width:'75%' }}/>
+        <div className="sk" style={{ height:13, width:'100%' }}/>
+        <div className="sk" style={{ height:13, width:'60%' }}/>
       </div>
     </div>
   )
@@ -386,8 +333,8 @@ export default function ValueFeedPage() {
     }
   }
 
-  const pinnedPost    = posts.find(p => p.is_pinned) || null
-  const activeTopics  = [...new Set(posts.map(p => p.topic).filter(Boolean))]
+  const pinnedPost   = posts.find(p => p.is_pinned) || null
+  const activeTopics = [...new Set(posts.map(p => p.topic).filter(Boolean))]
 
   const visible = posts.filter(p => {
     if (typeFilter  !== 'all' && p.type  !== typeFilter)  return false
@@ -397,65 +344,60 @@ export default function ValueFeedPage() {
   const feedPosts = visible.filter(p => !p.is_pinned)
 
   return (
-    <div className="vf-root" style={{ display:'flex', minHeight:'100vh', background:'var(--bg-page)', color:'var(--text-1)' }}>
+    <div className="vf-root" style={{ display:'flex', minHeight:'100vh', background:'#FAFAFA' }}>
       <style>{CSS}</style>
-      <PageBg />
       <Sidebar />
 
-      <main className="vf-scroll" style={{ flex:1, overflowY:'auto', padding:'36px 44px', position:'relative' }}>
+      <main className="vf-scroll" style={{ flex:1, overflowY:'auto', padding:'24px', position:'relative' }}>
         <div style={{ position:'relative', zIndex:1, maxWidth:760, margin:'0 auto' }}>
 
           {/* Header */}
-          <div style={{ animation:'fadeUp .4s ease both', marginBottom:28 }}>
+          <div style={{ animation:'fadeUp .4s ease both', marginBottom:24 }}>
             <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', flexWrap:'wrap', gap:12 }}>
               <div>
-                <h1 style={{ fontSize:28, fontWeight:800, color:'var(--text-1)', letterSpacing:'-0.04em', lineHeight:1.15, marginBottom:6 }}>Value Feed</h1>
-                <p style={{ fontSize:13.5, color:'var(--text-3)', fontWeight:500, lineHeight:1.55 }}>
+                <h1 style={{ fontSize:20, fontWeight:700, color:'#111111', lineHeight:1.2, marginBottom:4 }}>Value Feed</h1>
+                <p style={{ fontSize:13, color:'#888888', lineHeight:1.5 }}>
                   Exclusive tips, strategies and videos from the Lynq & Flow team.
                 </p>
               </div>
               {!loading && posts.length > 0 && (
-                <div style={{ display:'flex', alignItems:'center', gap:7, padding:'7px 14px', borderRadius:100, background:'var(--bg-input)', border:'1px solid var(--border)', flexShrink:0 }}>
-                  <span style={{ fontSize:11.5, fontWeight:600, color:'var(--text-3)' }}>{posts.length} post{posts.length !== 1 ? 's' : ''}</span>
+                <div style={{ padding:'4px 10px', borderRadius:6, background:'#F5F5F5', border:'1px solid rgba(0,0,0,0.08)', flexShrink:0 }}>
+                  <span style={{ fontSize:12, fontWeight:500, color:'#555555' }}>{posts.length} post{posts.length !== 1 ? 's' : ''}</span>
                 </div>
               )}
             </div>
 
-            <div style={{ height:1, background:'var(--bg-surface-2)', margin:'20px 0 16px' }} />
+            <div style={{ height:1, background:'rgba(0,0,0,0.06)', margin:'16px 0 12px' }} />
 
             {/* Type filters */}
             <div style={{ display:'flex', gap:6, flexWrap:'wrap', marginBottom: activeTopics.length > 0 ? 10 : 0 }}>
               {TYPE_FILTERS.filter(f => f.id === 'all' || posts.some(p => p.type === f.id)).map(f => {
                 const count = f.id === 'all' ? posts.length : posts.filter(p => p.type === f.id).length
+                const isAct = typeFilter === f.id
                 return (
                   <button key={f.id} className="f-pill" onClick={() => setTypeFilter(f.id)} style={{
-                    background: typeFilter === f.id ? '#111111' : 'var(--bg-input)',
-                    color:      typeFilter === f.id ? '#fff' : 'var(--text-3)',
-                    border:    `1px solid ${typeFilter === f.id ? 'transparent' : 'var(--border)'}`,
-                    display: 'flex', alignItems: 'center', gap: 6,
+                    background: isAct ? '#111111' : 'transparent',
+                    color:      isAct ? '#ffffff' : '#888888',
+                    border:     isAct ? 'none' : '1px solid rgba(0,0,0,0.08)',
                   }}>
                     {f.label}
-                    <span style={{ fontSize:10, opacity: typeFilter === f.id ? 0.7 : 0.45, background: typeFilter === f.id ? 'rgba(255,255,255,0.2)' : 'var(--bg-surface-2)', borderRadius:100, padding:'1px 6px', fontWeight:700 }}>{count}</span>
+                    <span style={{ fontSize:10, fontWeight:600, color: isAct ? 'rgba(255,255,255,0.6)' : '#888888', background: isAct ? 'rgba(255,255,255,0.15)' : '#F5F5F5', borderRadius:4, padding:'1px 5px' }}>{count}</span>
                   </button>
                 )
               })}
             </div>
 
-            {/* Topic filters — only shown if posts have topics */}
+            {/* Topic filters */}
             {activeTopics.length > 0 && (
               <div style={{ display:'flex', gap:6, flexWrap:'wrap', alignItems:'center' }}>
-                <span style={{ fontSize:10, fontWeight:700, color:'rgba(255,255,255,0.2)', letterSpacing:'.07em', textTransform:'uppercase', marginRight:2 }}>Topic</span>
-                <button className="t-pill" onClick={() => setTopicFilter('all')} style={{
-                  borderColor: topicFilter === 'all' ? 'rgba(255,255,255,0.3)' : 'var(--bg-input)',
-                  background:  topicFilter === 'all' ? 'var(--bg-input)' : 'transparent',
-                  color:       topicFilter === 'all' ? '#fff' : 'rgba(255,255,255,0.38)',
-                }}>All</button>
-                {activeTopics.map(t => (
-                  <button key={t} className="t-pill" onClick={() => setTopicFilter(t)} style={{
-                    borderColor: topicFilter === t ? 'rgba(255,255,255,0.3)' : 'var(--bg-input)',
-                    background:  topicFilter === t ? 'var(--bg-input)' : 'transparent',
-                    color:       topicFilter === t ? '#fff' : 'rgba(255,255,255,0.38)',
-                  }}>{t}</button>
+                <span style={{ fontSize:10, fontWeight:600, color:'#BDBDBD', letterSpacing:'.07em', textTransform:'uppercase', marginRight:2 }}>Topic</span>
+                {['all', ...activeTopics].map(t => (
+                  <button key={t} onClick={() => setTopicFilter(t)} style={{
+                    padding:'3px 10px', borderRadius:6, fontSize:11.5, fontWeight:600, cursor:'pointer', fontFamily:'inherit', transition:'all .15s',
+                    background: topicFilter === t ? '#111111' : 'transparent',
+                    color:      topicFilter === t ? '#ffffff' : '#888888',
+                    border:     topicFilter === t ? 'none' : '1px solid rgba(0,0,0,0.08)',
+                  }}>{t === 'all' ? 'All' : t}</button>
                 ))}
               </div>
             )}
@@ -464,20 +406,20 @@ export default function ValueFeedPage() {
           {/* Pinned post */}
           {!loading && pinnedPost && (
             <div style={{ marginBottom:16 }}>
-              <div style={{ fontSize:10, fontWeight:700, color:'rgba(245,158,11,0.55)', textTransform:'uppercase', letterSpacing:'.08em', marginBottom:8, display:'flex', alignItems:'center', gap:5 }}>
-                <svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M16 9V4l1-1V2H7v1l1 1v5l-2 3h4v7l1 1 1-1v-7h4l-2-3z"/></svg>
+              <div style={{ fontSize:10, fontWeight:600, color:'#BDBDBD', textTransform:'uppercase', letterSpacing:'.08em', marginBottom:8, display:'flex', alignItems:'center', gap:5 }}>
+                <svg width="9" height="9" viewBox="0 0 24 24" fill="#BDBDBD" stroke="none"><path d="M16 9V4l1-1V2H7v1l1 1v5l-2 3h4v7l1 1 1-1v-7h4l-2-3z"/></svg>
                 Pinned
               </div>
               {pinnedPost.type === 'video'
-                ? <VideoCard item={pinnedPost} i={0} reactions={reactions} userId={userId} onReact={toggleReaction} isPinned />
-                : <TextCard  item={pinnedPost} i={0} reactions={reactions} userId={userId} onReact={toggleReaction} isPinned />
+                ? <VideoCard item={pinnedPost} i={0} reactions={reactions} userId={userId} onReact={toggleReaction} />
+                : <TextCard  item={pinnedPost} i={0} reactions={reactions} userId={userId} onReact={toggleReaction} />
               }
             </div>
           )}
 
           {/* Upcoming masterclasses */}
           {!loading && masterclasses.length > 0 && (
-            <div style={{ marginBottom:24, animation:'fadeUp .4s ease .05s both' }}>
+            <div style={{ marginBottom:16, animation:'fadeUp .4s ease .05s both' }}>
               <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
                 {masterclasses.map((mc, i) => <MasterclassCard key={mc.id} mc={mc} i={i} />)}
               </div>
@@ -486,24 +428,24 @@ export default function ValueFeedPage() {
 
           {/* Feed */}
           {loading ? (
-            <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
+            <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
               {[0,1,2].map(i => <SkeletonCard key={i} i={i} />)}
             </div>
           ) : feedPosts.length === 0 && !pinnedPost ? (
-            <div style={{ textAlign:'center', padding:'64px 0' }}>
-              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ margin:'0 auto 12px', display:'block' }}><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-              <div style={{ fontSize:15, fontWeight:700, color:'var(--text-3)', marginBottom:4 }}>Nothing here yet</div>
-              <div style={{ fontSize:13, color:'rgba(255,255,255,0.2)' }}>
+            <div style={{ textAlign:'center', padding:'56px 0' }}>
+              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#BDBDBD" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ margin:'0 auto 12px', display:'block' }}><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+              <div style={{ fontSize:14, fontWeight:600, color:'#111111', marginBottom:4 }}>Nothing here yet</div>
+              <div style={{ fontSize:13, color:'#888888' }}>
                 {typeFilter !== 'all' || topicFilter !== 'all' ? 'No posts match this filter.' : 'Your Lynq team will post exclusive content here soon.'}
               </div>
               {(typeFilter !== 'all' || topicFilter !== 'all') && (
-                <button onClick={() => { setTypeFilter('all'); setTopicFilter('all') }} style={{ marginTop:14, padding:'8px 20px', borderRadius:8, border:'1px solid var(--border)', background:'transparent', color:'var(--text-2)', fontSize:12, fontWeight:600, cursor:'pointer', fontFamily:'inherit' }}>
+                <button onClick={() => { setTypeFilter('all'); setTopicFilter('all') }} style={{ marginTop:14, padding:'6px 16px', borderRadius:6, border:'1px solid rgba(0,0,0,0.08)', background:'#F5F5F5', color:'#555555', fontSize:12, fontWeight:600, cursor:'pointer', fontFamily:'inherit' }}>
                   Clear filters
                 </button>
               )}
             </div>
           ) : (
-            <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
+            <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
               {feedPosts.map((item, i) =>
                 item.type === 'video'
                   ? <VideoCard key={item.id} item={item} i={i} reactions={reactions} userId={userId} onReact={toggleReaction} />

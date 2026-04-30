@@ -156,12 +156,12 @@ function Toast({ msg, type, onDone }) {
 }
 
 // ─── Avatar ───────────────────────────────────────────────────
-function Avatar({ name = '?', size = 28 }) {
-  const ini  = (name || '?').split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase()
-  const COLS = ['#7c3aed','#a855f7','#059669','#d97706','#0ea5e9','#be185d']
-  const col  = COLS[(ini.charCodeAt(0) + (ini.charCodeAt(1) || 0)) % COLS.length]
+function Avatar({ name = '?', size = 28, agent = false }) {
+  const ini = (name || '?').split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase()
+  const bg  = agent ? '#111111' : '#F0F0F0'
+  const col = agent ? '#FFFFFF' : '#555555'
   return (
-    <div style={{ width:size, height:size, borderRadius:'50%', background:col, color:'#fff', display:'flex', alignItems:'center', justifyContent:'center', fontSize:size*0.34, fontWeight:700, flexShrink:0, letterSpacing:'-0.01em' }}>
+    <div style={{ width:size, height:size, borderRadius:'50%', background:bg, color:col, display:'flex', alignItems:'center', justifyContent:'center', fontSize:size*0.34, fontWeight:700, flexShrink:0, letterSpacing:'-0.01em' }}>
       {ini}
     </div>
   )
@@ -284,7 +284,7 @@ export default function CreateTicketPage() {
       <div style={{ display:'flex', height:'100vh', background:'var(--bg-page)' }}>
         <Sidebar />
         <div style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center' }}>
-          <div style={{ width:20, height:20, border:'2px solid var(--border)', borderTop:'2px solid var(--accent)', borderRadius:'50%', animation:'spin .7s linear infinite' }} />
+          <div style={{ width:20, height:20, border:'2px solid var(--border)', borderTop:'2px solid #111111', borderRadius:'50%', animation:'spin .7s linear infinite' }} />
         </div>
         <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
       </div>
@@ -310,7 +310,7 @@ export default function CreateTicketPage() {
           <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:10 }}>
             <div style={{ display:'flex', alignItems:'center', gap:8 }}>
               <span style={{ fontSize:15, fontWeight:700, color:'var(--text-1)', letterSpacing:'-0.01em' }}>Inbox</span>
-              <span style={{ fontSize:10, background:'var(--accent-soft)', color:'var(--accent)', border:'1px solid var(--accent-border)', padding:'1px 7px', borderRadius:4, fontWeight:600 }}>New ticket</span>
+              <span style={{ fontSize:10, background:'var(--bg-surface-2)', color:'var(--text-2)', border:'1px solid var(--border)', padding:'1px 7px', borderRadius:4, fontWeight:600 }}>New ticket</span>
             </div>
             <button
               onClick={() => router.push('/inbox')}
@@ -416,7 +416,7 @@ export default function CreateTicketPage() {
                   </button>
                 </span>
               ))}
-              <button onClick={() => setShowTagInput(v => !v)} style={{ display:'inline-flex', alignItems:'center', gap:3, background:'none', border:'none', color:'var(--accent)', fontSize:11.5, fontFamily:'inherit', padding:0 }}>
+              <button onClick={() => setShowTagInput(v => !v)} style={{ display:'inline-flex', alignItems:'center', gap:3, background:'none', border:'none', color:'var(--text-2)', fontSize:11.5, fontFamily:'inherit', padding:0 }}>
                 <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                 Add tags
               </button>
@@ -427,23 +427,23 @@ export default function CreateTicketPage() {
                     if (e.key==='Escape') setShowTagInput(false)
                   }}
                   placeholder="tag name…"
-                  style={{ background:'transparent', border:'none', borderBottom:'1px solid var(--accent)', outline:'none', fontSize:11.5, color:'var(--text-1)', fontFamily:'inherit', width:84 }}
+                  style={{ background:'transparent', border:'none', borderBottom:'1px solid var(--border-hover)', outline:'none', fontSize:11.5, color:'var(--text-1)', fontFamily:'inherit', width:84 }}
                 />
               )}
             </div>
             <div style={{ width:1, height:13, background:'var(--border)', flexShrink:0 }} />
-            <span style={{ color:'var(--text-2)' }}>Contact reason: <button style={{ color:'var(--accent)', background:'none', border:'none', fontFamily:'inherit', fontSize:12, padding:0 }}>+Add</button></span>
+            <span style={{ color:'var(--text-2)' }}>Contact reason: <button style={{ color:'var(--text-2)', background:'none', border:'none', fontFamily:'inherit', fontSize:12, padding:0 }}>+Add</button></span>
             <div style={{ width:1, height:13, background:'var(--border)', flexShrink:0 }} />
-            <span style={{ color:'var(--text-2)' }}>Product: <button style={{ color:'var(--accent)', background:'none', border:'none', fontFamily:'inherit', fontSize:12, padding:0 }}>+Add</button></span>
+            <span style={{ color:'var(--text-2)' }}>Product: <button style={{ color:'var(--text-2)', background:'none', border:'none', fontFamily:'inherit', fontSize:12, padding:0 }}>+Add</button></span>
             <div style={{ width:1, height:13, background:'var(--border)', flexShrink:0 }} />
-            <span style={{ color:'var(--text-2)' }}>Resolution: <button style={{ color:'var(--accent)', background:'none', border:'none', fontFamily:'inherit', fontSize:12, padding:0 }}>+Add</button></span>
+            <span style={{ color:'var(--text-2)' }}>Resolution: <button style={{ color:'var(--text-2)', background:'none', border:'none', fontFamily:'inherit', fontSize:12, padding:0 }}>+Add</button></span>
           </div>
         </div>
 
         {/* ── Thread area ── */}
         <div style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center', flexDirection:'column', gap:10, overflowY:'auto', background:'var(--bg-surface-2)' }}>
           <div style={{ padding:'16px 22px', borderRadius:14, background:'var(--bg-surface)', border:'1px solid var(--border)', textAlign:'center', maxWidth:380, boxShadow:'var(--shadow-card)' }}>
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" style={{ opacity:.7, marginBottom:8 }}><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--text-3)" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" style={{ opacity:.7, marginBottom:8 }}><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
             <div style={{ fontSize:13, fontWeight:600, color:'var(--text-1)', marginBottom:5 }}>New outgoing email</div>
             <div style={{ fontSize:12, color:'var(--text-3)', lineHeight:1.65 }}>
               Fill in the To field and write your message below.<br />
@@ -461,7 +461,7 @@ export default function CreateTicketPage() {
             <input value={to} onChange={e => setTo(e.target.value)} placeholder="customer@email.com" autoFocus
               style={{ flex:1, background:'transparent', border:'none', outline:'none', fontSize:13, color:'var(--text-1)', fontFamily:'inherit' }} />
             <button onClick={() => setShowCC(v => !v)}
-              style={{ fontSize:10.5, fontWeight:600, color:showCC?'var(--accent)':'var(--text-3)', background:'none', border:'1px solid var(--border)', borderRadius:5, padding:'2px 9px', fontFamily:'inherit', flexShrink:0, transition:'all .15s' }}>
+              style={{ fontSize:10.5, fontWeight:600, color:showCC?'var(--text-1)':'var(--text-3)', background:showCC?'var(--bg-surface-2)':'none', border:'1px solid var(--border)', borderRadius:5, padding:'2px 9px', fontFamily:'inherit', flexShrink:0, transition:'all .15s' }}>
               Cc / Bcc
             </button>
           </div>
@@ -471,7 +471,7 @@ export default function CreateTicketPage() {
             <div className="ct-row">
               <span style={{ fontSize:10.5, fontWeight:700, color:'var(--text-3)', letterSpacing:'.09em', textTransform:'uppercase', width:40, flexShrink:0 }}>From</span>
               <div style={{ display:'flex', alignItems:'center', gap:6 }}>
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" style={{color:'var(--text-3)'}}><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
                 <span style={{ fontSize:13, color:'var(--text-2)' }}>{connectedEmail}</span>
               </div>
             </div>
@@ -481,7 +481,7 @@ export default function CreateTicketPage() {
           {!emailProvider && (
             <div className="ct-demo-bar">
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#d97706" strokeWidth="2.2" style={{ flexShrink:0 }}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-              <span style={{ fontSize:11.5, color:'#d97706' }}>Demo mode — <a href="/settings" style={{ color:'var(--accent)', textDecoration:'none', fontWeight:600 }}>connect Gmail or Outlook</a> in Settings to send real emails</span>
+              <span style={{ fontSize:11.5, color:'#d97706' }}>Demo mode — <a href="/settings" style={{ color:'var(--text-1)', textDecoration:'none', fontWeight:600 }}>connect Gmail or Outlook</a> in Settings to send real emails</span>
             </div>
           )}
 
@@ -537,7 +537,7 @@ export default function CreateTicketPage() {
               {suggested.map(m => (
                 <button key={m.id} onClick={() => applyMacro(m)}
                   style={{ padding:'2px 10px', background:'var(--bg-surface)', border:'1px solid var(--border)', borderRadius:100, fontSize:11.5, color:'var(--text-1)', fontFamily:'inherit', transition:'all .15s', boxShadow:'var(--shadow-row)' }}
-                  onMouseEnter={e => { e.currentTarget.style.borderColor='var(--accent)'; e.currentTarget.style.color='var(--accent-text)' }}
+                  onMouseEnter={e => { e.currentTarget.style.borderColor='var(--border-hover)'; e.currentTarget.style.color='var(--text-1)' }}
                   onMouseLeave={e => { e.currentTarget.style.borderColor='var(--border)'; e.currentTarget.style.color='var(--text-1)' }}
                 >
                   {m.name}

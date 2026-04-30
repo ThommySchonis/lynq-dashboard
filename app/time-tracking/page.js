@@ -68,14 +68,14 @@ const CSS = `
     transition:all .2s ease;flex-shrink:0;
   }
   .clock-btn:disabled{opacity:.45;cursor:not-allowed;transform:none!important}
-  .btn-in{background:#A175FC;color:#fff;box-shadow:0 4px 20px rgba(161,117,252,0.4)}
-  .btn-in:hover:not(:disabled){background:#b88fff;box-shadow:0 6px 28px rgba(161,117,252,0.55);transform:translateY(-1px)}
+  .btn-in{background:#111111;color:#fff}
+  .btn-in:hover:not(:disabled){background:#333333;transform:translateY(-1px)}
   .btn-out{background:rgba(248,113,113,0.12);color:#f87171;border:1px solid rgba(248,113,113,0.25)!important}
   .btn-out:hover:not(:disabled){background:rgba(248,113,113,0.2);border-color:rgba(248,113,113,0.4)!important;transform:translateY(-1px)}
-  .btn-pause{background:rgba(251,191,36,0.1);color:#fbbf24;border:1px solid rgba(251,191,36,0.2)!important}
+  .btn-pause{background:rgba(251,191,36,0.1);color:#d97706;border:1px solid rgba(251,191,36,0.2)!important}
   .btn-pause:hover:not(:disabled){background:rgba(251,191,36,0.18);border-color:rgba(251,191,36,0.35)!important;transform:translateY(-1px)}
-  .btn-resume{background:rgba(161,117,252,0.12);color:#A175FC;border:1px solid rgba(161,117,252,0.25)!important}
-  .btn-resume:hover:not(:disabled){background:rgba(161,117,252,0.2);border-color:var(--accent-border)!important;transform:translateY(-1px)}
+  .btn-resume{background:var(--bg-surface-2);color:var(--text-2);border:1px solid var(--border)!important}
+  .btn-resume:hover:not(:disabled){background:var(--bg-input);border-color:var(--border-hover)!important;transform:translateY(-1px)}
 
   .range-pill{padding:5px 14px;border-radius:100px;font-size:11.5px;font-weight:600;cursor:pointer;border:none;font-family:inherit;transition:all .15s ease}
 
@@ -129,16 +129,11 @@ function fmtDate(iso) {
 }
 
 function Spinner({ size = 18 }) {
-  return <div style={{ width: size, height: size, border: '2px solid rgba(255,255,255,0.1)', borderTop: '2px solid #A175FC', borderRadius: '50%', animation: 'spin .7s linear infinite', flexShrink: 0 }} />
+  return <div style={{ width: size, height: size, border: '2px solid var(--border)', borderTop: '2px solid #111111', borderRadius: '50%', animation: 'spin .7s linear infinite', flexShrink: 0 }} />
 }
 
 function PageBackground() {
-  return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none', overflow: 'hidden' }}>
-      <div style={{ position: 'absolute', top: '-10%', left: '-5%', width: '60%', height: '70%', background: 'radial-gradient(ellipse, rgba(161,117,252,0.10) 0%, transparent 60%)', filter: 'blur(40px)' }} />
-      <div style={{ position: 'absolute', bottom: 0, right: '-10%', width: '50%', height: '60%', background: 'radial-gradient(ellipse, rgba(99,102,241,0.07) 0%, transparent 60%)', filter: 'blur(60px)' }} />
-    </div>
-  )
+  return null
 }
 
 // ─── Clock-out Modal ─────────────────────────────────────────────────────────
@@ -172,7 +167,7 @@ function ClockOutModal({ session, elapsedSec, pausedSeconds, onConfirm, onCancel
             Cancel
           </button>
           <button onClick={() => onConfirm(report)} disabled={submitting || !report.trim()}
-            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 24px', borderRadius: 8, border: 'none', background: report.trim() ? '#A175FC' : 'rgba(161,117,252,0.25)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: report.trim() ? 'pointer' : 'not-allowed', fontFamily: 'inherit', boxShadow: report.trim() ? '0 4px 16px rgba(161,117,252,0.35)' : 'none', transition: 'all .15s' }}>
+            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 24px', borderRadius: 8, border: 'none', background: report.trim() ? '#111111' : 'rgba(0,0,0,0.12)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: report.trim() ? 'pointer' : 'not-allowed', fontFamily: 'inherit', transition: 'all .15s' }}>
             {submitting ? <><Spinner size={14} />Clocking out…</> : 'Clock Out →'}
           </button>
         </div>
@@ -471,10 +466,9 @@ export default function TimeTrackingPage() {
             <div style={{ display: 'flex', gap: 6 }}>
               {FILTERS.map(f => (
                 <button key={f.id} className="range-pill" onClick={() => setFilter(f.id)} style={{
-                  background: filter === f.id ? '#A175FC' : 'var(--bg-input)',
-                  color: filter === f.id ? '#fff' : 'rgba(255,255,255,0.42)',
-                  border: `1px solid ${filter === f.id ? 'transparent' : 'var(--bg-input)'}`,
-                  boxShadow: filter === f.id ? '0 2px 10px rgba(161,117,252,0.3)' : 'none',
+                  background: filter === f.id ? '#111111' : 'var(--bg-input)',
+                  color: filter === f.id ? '#fff' : 'var(--text-3)',
+                  border: `1px solid ${filter === f.id ? 'transparent' : 'var(--border)'}`,
                 }}>
                   {f.label}
                 </button>
@@ -484,12 +478,12 @@ export default function TimeTrackingPage() {
 
           {/* Admin preview banner */}
           {isAdmin && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'rgba(161,117,252,0.07)', border: '1px solid rgba(161,117,252,0.2)', borderRadius: 10, padding: '12px 18px', marginBottom: 20, animation: 'fadeIn .4s ease both' }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#A175FC" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'var(--bg-surface-2)', border: '1px solid var(--border)', borderRadius: 10, padding: '12px 18px', marginBottom: 20, animation: 'fadeIn .4s ease both' }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-3)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
               <div style={{ flex: 1 }}>
-                <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--accent)', marginRight: 6 }}>Admin preview</span>
+                <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-2)', marginRight: 6 }}>Admin preview</span>
                 <span style={{ fontSize: 12, color: 'var(--text-3)' }}>This is exactly what team members see when they log in. View all hours in the</span>
-                <a href="/admin" style={{ fontSize: 12, color: 'var(--accent)', marginLeft: 4, textDecoration: 'underline', cursor: 'pointer' }}>Admin Panel → Time Tracking</a>
+                <a href="/admin" style={{ fontSize: 12, color: 'var(--text-2)', marginLeft: 4, textDecoration: 'underline', cursor: 'pointer' }}>Admin Panel → Time Tracking</a>
               </div>
             </div>
           )}
@@ -584,7 +578,7 @@ export default function TimeTrackingPage() {
                 label: filterLabel,
                 value: fmtDur(totalPeriodSec),
                 sub: `${sessions.length} session${sessions.length !== 1 ? 's' : ''}`,
-                accent: '#A175FC',
+                accent: '#555555',
                 icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>,
               },
               {
@@ -610,12 +604,12 @@ export default function TimeTrackingPage() {
                 <div className="top-bar" style={{ background: `linear-gradient(90deg, ${accent}60, ${accent}20)` }} />
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
                   <div style={{ fontSize: 10.5, fontWeight: 700, color: 'var(--text-3)', letterSpacing: '0.07em', textTransform: 'uppercase' }}>{label}</div>
-                  <div style={{ width: 34, height: 34, borderRadius: 9, background: `${accent}1a`, border: `1px solid ${accent}20`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: accent }}>
+                  <div style={{ width: 34, height: 34, borderRadius: 9, background: 'var(--bg-surface-2)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: accent }}>
                     {icon}
                   </div>
                 </div>
                 <div style={{ fontSize: 28, fontWeight: 800, letterSpacing: '-0.04em', color: 'var(--text-1)', lineHeight: 1.1, marginBottom: 4 }}>{value}</div>
-                <div style={{ fontSize: 11.5, color: 'rgba(255,255,255,0.32)', fontWeight: 500 }}>{sub}</div>
+                <div style={{ fontSize: 11.5, color: 'var(--text-3)', fontWeight: 500 }}>{sub}</div>
               </div>
             ))}
           </div>
@@ -624,7 +618,7 @@ export default function TimeTrackingPage() {
           <div className="panel" style={{ animation: 'fadeIn .4s ease .15s both' }}>
             <div style={{ marginBottom: 16 }}>
               <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-1)' }}>Work Log</div>
-              <div style={{ fontSize: 11.5, color: 'rgba(255,255,255,0.32)', marginTop: 2 }}>Your sessions with end-of-day reports</div>
+              <div style={{ fontSize: 11.5, color: 'var(--text-3)', marginTop: 2 }}>Your sessions with end-of-day reports</div>
             </div>
 
             {sessions.length === 0 ? (

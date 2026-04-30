@@ -37,14 +37,21 @@ function getDateRange(filter, customFrom, customTo) {
   return { from, to }
 }
 
+// Active seconds for a completed session (total - paused)
+function workedSec(s) {
+  if (!s.clocked_out_at) return (s.active_seconds || 0)
+  const total = Math.round((new Date(s.clocked_out_at) - new Date(s.clocked_in_at)) / 1000)
+  return Math.max(0, total - (s.paused_seconds || 0))
+}
+
 export async function GET(request) {
   const user = await getUser(request)
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { searchParams } = new URL(request.url)
-  const filter = searchParams.get('filter') || 'week'
+  const filter     = searchParams.get('filter') || 'week'
   const customFrom = searchParams.get('from')
-  const customTo = searchParams.get('to')
+  const customTo   = searchParams.get('to')
   const { from, to } = getDateRange(filter, customFrom, customTo)
 
   const isAdmin = user.email === ADMIN_EMAIL
@@ -64,91 +71,93 @@ export async function GET(request) {
 
     const { data: activeSessions } = await supabaseAdmin
       .from('time_sessions')
-      .select('agent_id, clocked_in_at')
+      .select('agent_id, clocked_in_at, status')
       .is('clocked_out_at', null)
 
     const memberMap = {}
     ;(members || []).forEach(m => {
-      memberMap[m.id] = { ...m, total_seconds: 0, sessions_count: 0, is_active: false }
+      memberMap[m.id] = { ...m, worked_seconds: 0, paused_seconds: 0, sessions_count: 0, is_active: false, is_paused: false }
     })
     ;(activeSessions || []).forEach(s => {
-      if (memberMap[s.agent_id]) memberMap[s.agent_id].is_active = true
+      if (memberMap[s.agent_id]) {
+        memberMap[s.agent_id].is_active = true
+        memberMap[s.agent_id].is_paused = s.status === 'paused'
+      }
     })
     ;(sessions || []).forEach(s => {
       if (memberMap[s.agent_id]) {
-        const dur = s.clocked_out_at
-          ? (new Date(s.clocked_out_at) - new Date(s.clocked_in_at)) / 1000
-          : (s.active_seconds || 0) + (s.idle_seconds || 0)
-        memberMap[s.agent_id].total_seconds += dur
+        memberMap[s.agent_id].worked_seconds  += workedSec(s)
+        memberMap[s.agent_id].paused_seconds  += (s.paused_seconds || 0)
         memberMap[s.agent_id].sessions_count++
       }
     })
 
-    // Attach member name to each session
     const sessionsWithNames = (sessions || []).map(s => ({
       ...s,
-      member_name: memberMap[s.agent_id]?.name || 'Unknown',
+      member_name:  memberMap[s.agent_id]?.name  || 'Unknown',
       member_email: memberMap[s.agent_id]?.email || '',
     }))
 
     return NextResponse.json({
       sessions: sessionsWithNames,
-      members: Object.values(memberMap),
-      active_count: (activeSessions || []).length,
+      members:  Object.values(memberMap),
+      active_count: (activeSessions || []).filter(s => s.status !== 'paused').length,
+      paused_count: (activeSessions || []).filter(s => s.status === 'paused').length,
       from: from.toISOString(),
-      to: to.toISOString(),
+      to:   to.toISOString(),
       is_admin: true,
     })
-  } else {
-    const { data: member } = await supabaseAdmin
-      .from('team_members')
-      .select('id, name, role')
-      .eq('email', user.email)
-      .maybeSingle()
-
-    if (!member) return NextResponse.json({ error: 'Not a team member' }, { status: 403 })
-
-    const { data: sessions } = await supabaseAdmin
-      .from('time_sessions')
-      .select('*')
-      .eq('agent_id', member.id)
-      .gte('clocked_in_at', from.toISOString())
-      .lte('clocked_in_at', to.toISOString())
-      .order('clocked_in_at', { ascending: false })
-
-    const { data: active } = await supabaseAdmin
-      .from('time_sessions')
-      .select('*')
-      .eq('agent_id', member.id)
-      .is('clocked_out_at', null)
-      .order('clocked_in_at', { ascending: false })
-      .limit(1)
-      .maybeSingle()
-
-    // Also fetch today for the today KPI
-    const todayStart = new Date()
-    todayStart.setHours(0, 0, 0, 0)
-    const { data: todaySessions } = await supabaseAdmin
-      .from('time_sessions')
-      .select('clocked_in_at, clocked_out_at, active_seconds, idle_seconds')
-      .eq('agent_id', member.id)
-      .gte('clocked_in_at', todayStart.toISOString())
-      .not('clocked_out_at', 'is', null)
-
-    const todaySeconds = (todaySessions || []).reduce((sum, s) => {
-      return sum + (new Date(s.clocked_out_at) - new Date(s.clocked_in_at)) / 1000
-    }, 0)
-
-    return NextResponse.json({
-      sessions: sessions || [],
-      member,
-      active_session: active || null,
-      today_seconds: Math.round(todaySeconds),
-      from: from.toISOString(),
-      to: to.toISOString(),
-      is_admin: false,
-    })
   }
+
+  // ── Employee view ──────────────────────────────────────────────────────────
+  const { data: member } = await supabaseAdmin
+    .from('team_members')
+    .select('id, name, role')
+    .eq('email', user.email)
+    .maybeSingle()
+
+  if (!member) return NextResponse.json({ error: 'Not a team member' }, { status: 403 })
+
+  const { data: sessions } = await supabaseAdmin
+    .from('time_sessions')
+    .select('*')
+    .eq('agent_id', member.id)
+    .gte('clocked_in_at', from.toISOString())
+    .lte('clocked_in_at', to.toISOString())
+    .order('clocked_in_at', { ascending: false })
+
+  const { data: active } = await supabaseAdmin
+    .from('time_sessions')
+    .select('*')
+    .eq('agent_id', member.id)
+    .is('clocked_out_at', null)
+    .order('clocked_in_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  const todayStart = new Date()
+  todayStart.setHours(0, 0, 0, 0)
+  const { data: todaySessions } = await supabaseAdmin
+    .from('time_sessions')
+    .select('clocked_in_at, clocked_out_at, paused_seconds')
+    .eq('agent_id', member.id)
+    .gte('clocked_in_at', todayStart.toISOString())
+    .not('clocked_out_at', 'is', null)
+
+  const todayWorked = (todaySessions || []).reduce((sum, s) => {
+    const total = Math.round((new Date(s.clocked_out_at) - new Date(s.clocked_in_at)) / 1000)
+    return sum + Math.max(0, total - (s.paused_seconds || 0))
+  }, 0)
+
+  return NextResponse.json({
+    sessions:       sessions || [],
+    member,
+    active_session: active || null,
+    today_seconds:  todayWorked,
+    from: from.toISOString(),
+    to:   to.toISOString(),
+    is_admin: false,
+  })
 }
 
 export async function POST(request) {
@@ -166,10 +175,11 @@ export async function POST(request) {
 
   if (!member) return NextResponse.json({ error: 'Not a team member account' }, { status: 403 })
 
+  // ── CLOCK IN ──────────────────────────────────────────────────────────────
   if (action === 'clock-in') {
     const { data: existing } = await supabaseAdmin
       .from('time_sessions')
-      .select('id, clocked_in_at')
+      .select('id, clocked_in_at, status, paused_seconds, paused_at')
       .eq('agent_id', member.id)
       .is('clocked_out_at', null)
       .maybeSingle()
@@ -178,7 +188,7 @@ export async function POST(request) {
 
     const { data: session, error } = await supabaseAdmin
       .from('time_sessions')
-      .insert({ agent_id: member.id, status: 'active', active_seconds: 0, idle_seconds: 0 })
+      .insert({ agent_id: member.id, status: 'active', active_seconds: 0, idle_seconds: 0, paused_seconds: 0 })
       .select()
       .single()
 
@@ -186,16 +196,80 @@ export async function POST(request) {
     return NextResponse.json({ session })
   }
 
+  // ── PAUSE ─────────────────────────────────────────────────────────────────
+  if (action === 'pause') {
+    const { session_id } = body
+    if (!session_id) return NextResponse.json({ error: 'Missing session_id' }, { status: 400 })
+
+    const { error } = await supabaseAdmin
+      .from('time_sessions')
+      .update({ status: 'paused', paused_at: new Date().toISOString() })
+      .eq('id', session_id)
+      .eq('agent_id', member.id)
+      .is('clocked_out_at', null)
+
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ ok: true })
+  }
+
+  // ── RESUME ────────────────────────────────────────────────────────────────
+  if (action === 'resume') {
+    const { session_id } = body
+    if (!session_id) return NextResponse.json({ error: 'Missing session_id' }, { status: 400 })
+
+    const { data: current } = await supabaseAdmin
+      .from('time_sessions')
+      .select('paused_at, paused_seconds')
+      .eq('id', session_id)
+      .eq('agent_id', member.id)
+      .is('clocked_out_at', null)
+      .maybeSingle()
+
+    if (!current) return NextResponse.json({ error: 'Session not found' }, { status: 404 })
+
+    const added = current.paused_at
+      ? Math.round((Date.now() - new Date(current.paused_at)) / 1000)
+      : 0
+    const newPaused = (current.paused_seconds || 0) + added
+
+    const { error } = await supabaseAdmin
+      .from('time_sessions')
+      .update({ status: 'active', paused_at: null, paused_seconds: newPaused })
+      .eq('id', session_id)
+
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ ok: true, paused_seconds: newPaused })
+  }
+
+  // ── CLOCK OUT ─────────────────────────────────────────────────────────────
   if (action === 'clock-out') {
     const { session_id, eod_report } = body
     if (!session_id) return NextResponse.json({ error: 'Missing session_id' }, { status: 400 })
+
+    // Finalise any ongoing pause before closing
+    const { data: current } = await supabaseAdmin
+      .from('time_sessions')
+      .select('paused_at, paused_seconds')
+      .eq('id', session_id)
+      .eq('agent_id', member.id)
+      .is('clocked_out_at', null)
+      .maybeSingle()
+
+    if (!current) return NextResponse.json({ error: 'Session not found or already closed' }, { status: 404 })
+
+    const extraPaused = current.paused_at
+      ? Math.round((Date.now() - new Date(current.paused_at)) / 1000)
+      : 0
+    const finalPaused = (current.paused_seconds || 0) + extraPaused
 
     const { data: session, error } = await supabaseAdmin
       .from('time_sessions')
       .update({
         clocked_out_at: new Date().toISOString(),
-        status: 'completed',
-        eod_report: eod_report?.trim() || null,
+        status:         'completed',
+        paused_at:      null,
+        paused_seconds: finalPaused,
+        eod_report:     eod_report?.trim() || null,
       })
       .eq('id', session_id)
       .eq('agent_id', member.id)
@@ -207,13 +281,14 @@ export async function POST(request) {
     return NextResponse.json({ session })
   }
 
+  // ── HEARTBEAT ─────────────────────────────────────────────────────────────
   if (action === 'heartbeat') {
     const { session_id } = body
     if (!session_id) return NextResponse.json({ error: 'Missing session_id' }, { status: 400 })
 
     const { data: current } = await supabaseAdmin
       .from('time_sessions')
-      .select('active_seconds')
+      .select('active_seconds, status')
       .eq('id', session_id)
       .eq('agent_id', member.id)
       .is('clocked_out_at', null)
@@ -221,12 +296,15 @@ export async function POST(request) {
 
     if (!current) return NextResponse.json({ error: 'Session not found' }, { status: 404 })
 
-    const { error } = await supabaseAdmin
-      .from('time_sessions')
-      .update({ active_seconds: (current.active_seconds || 0) + 30, status: 'active' })
-      .eq('id', session_id)
+    // Only accumulate active_seconds when not paused
+    if (current.status !== 'paused') {
+      const { error } = await supabaseAdmin
+        .from('time_sessions')
+        .update({ active_seconds: (current.active_seconds || 0) + 30 })
+        .eq('id', session_id)
+      if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    }
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
     return NextResponse.json({ ok: true })
   }
 

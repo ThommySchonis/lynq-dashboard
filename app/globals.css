@@ -7,66 +7,64 @@
   --bg-surface:   #FFFFFF;
   --bg-surface-2: #F5F5F5;
   --bg-row:       #FFFFFF;
-  --bg-input:     #F5F5F5;
-  --hover:        #F5F5F5;
+  --bg-input:     rgba(0,0,0,0.03);
 
   /* Text */
   --text-1: #111111;
-  --text-2: #6B6B6B;
-  --text-3: #ABABAB;
+  --text-2: #555555;
+  --text-3: #999999;
 
   /* Borders */
   --border:        rgba(0,0,0,0.07);
-  --border-hover:  rgba(0,0,0,0.13);
-  --divider:       rgba(0,0,0,0.06);
+  --border-hover:  rgba(0,0,0,0.10);
+  --divider:       rgba(0,0,0,0.07);
 
-  /* Accent — logo / active nav / AI elements only */
+  /* Accent (purple — ONLY for logo, active nav border, unread dot, AI ✦ icon) */
   --accent:        #A175FC;
-  --accent-hover:  #8B5CF6;
-  --accent-soft:   rgba(161,117,252,0.08);
-  --accent-border: rgba(161,117,252,0.2);
-  --accent-text:   #A175FC;
-  --accent-bg:     #F0EAFF;
-  --accent-gradient: none;
+  --accent-hover:  #B990FF;
+  --accent-soft:   #F5F5F5;
+  --accent-border: rgba(0,0,0,0.08);
+  --accent-text:   #111111;
+  --accent-gradient: linear-gradient(135deg,#A175FC 0%,#7C3AED 100%);
 
-  /* Shadows — flat / none in Neutral Minimal */
+  /* Shadows — flat design, no card shadows */
   --shadow-card:       none;
-  --shadow-card-hover: none;
+  --shadow-card-hover: 0 4px 16px rgba(0,0,0,0.08);
   --shadow-row:        none;
-  --shadow-row-hover:  none;
+  --shadow-row-hover:  0 4px 12px rgba(0,0,0,0.07);
 
   /* Sidebar */
   --sidebar-bg:             #FFFFFF;
   --sidebar-border:         rgba(0,0,0,0.07);
   --sidebar-active-bg:      #F5F5F5;
-  --sidebar-active-border:  transparent;
-  --sidebar-hover:          #F5F5F5;
-  --sidebar-icon-inactive:  #ABABAB;
-  --sidebar-label-inactive: #6B6B6B;
+  --sidebar-active-border:  #A175FC;
+  --sidebar-hover:          rgba(0,0,0,0.04);
+  --sidebar-icon-inactive:  rgba(17,17,17,0.38);
+  --sidebar-label-inactive: rgba(17,17,17,0.6);
   --sidebar-label-active:   #111111;
-  --sidebar-icon-active:    #A175FC;
-  --sidebar-section-label:  #ABABAB;
+  --sidebar-icon-active:    #111111;
+  --sidebar-section-label:  rgba(17,17,17,0.28);
   --sidebar-logo-filter:    none;
 
   /* Glass */
   --glass-bg:     rgba(255,255,255,0.72);
   --glass-blur:   14px;
-  --glass-border: rgba(0,0,0,0.07);
-  --glass-shadow: none;
+  --glass-border: rgba(255,255,255,0.55);
+  --glass-shadow: 0 4px 24px rgba(15,23,42,0.07), 0 1px 2px rgba(15,23,42,0.04), inset 0 1px 0 rgba(255,255,255,0.8);
 
   /* Skeleton */
-  --skeleton-from: rgba(0,0,0,0.04);
-  --skeleton-to:   rgba(0,0,0,0.07);
+  --skeleton-from: rgba(0,0,0,0.05);
+  --skeleton-to:   rgba(0,0,0,0.08);
 
   /* Scrollbar */
-  --scrollbar: rgba(0,0,0,0.10);
-  --scrollbar-hover: rgba(0,0,0,0.18);
+  --scrollbar: rgba(0,0,0,0.12);
+  --scrollbar-hover: rgba(0,0,0,0.2);
 
   /* Status */
   --success: #16a34a;
   --warning: #d97706;
   --danger:  #dc2626;
-  --info:    #A175FC;
+  --info:    #555555;
 }
 
 /* ── Dark mode override ───────────────────────────────────────────────────── */
@@ -87,9 +85,9 @@
 
   --accent:        #A175FC;
   --accent-hover:  #B990FF;
-  --accent-soft:   rgba(161,117,252,0.12);
-  --accent-border: rgba(161,117,252,0.22);
-  --accent-text:   #C4A0FF;
+  --accent-soft:   rgba(255,255,255,0.04);
+  --accent-border: rgba(255,255,255,0.10);
+  --accent-text:   #F8FAFC;
   --accent-gradient: linear-gradient(135deg,#A175FC 0%,#7C3AED 100%);
 
   --shadow-card:       none;
@@ -99,8 +97,8 @@
 
   --sidebar-bg:             #0f0826;
   --sidebar-border:         rgba(255,255,255,0.07);
-  --sidebar-active-bg:      rgba(161,117,252,0.16);
-  --sidebar-active-border:  rgba(161,117,252,0.16);
+  --sidebar-active-bg:      rgba(255,255,255,0.06);
+  --sidebar-active-border:  #A175FC;
   --sidebar-hover:          rgba(255,255,255,0.055);
   --sidebar-icon-inactive:  rgba(248,250,252,0.6);
   --sidebar-label-inactive: rgba(248,250,252,0.78);
@@ -123,7 +121,7 @@
   --success: #4ade80;
   --warning: #fb923c;
   --danger:  #f87171;
-  --info:    #A175FC;
+  --info:    #888888;
 }
 
 /* ── Base ────────────────────────────────────────────────────────────────── */
@@ -163,14 +161,14 @@ input, textarea, select {
   transition: border-color 0.15s ease;
   width: 100%;
 }
-input:focus, textarea:focus, select:focus { border-color: var(--accent) }
+input:focus, textarea:focus, select:focus { border-color: var(--border-hover) }
 input::placeholder, textarea::placeholder { color: var(--text-3) }
 
 /* ── Buttons ─────────────────────────────────────────────────────────────── */
 button { font-family: inherit; cursor: pointer; border: none; outline: none; transition: all 0.15s ease }
 
 /* ── Selection ───────────────────────────────────────────────────────────── */
-::selection { background: rgba(124,92,252,0.2) }
+::selection { background: rgba(0,0,0,0.08) }
 
 /* ── Transitions for theme switching ─────────────────────────────────────── */
 *, *::before, *::after {

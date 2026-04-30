@@ -103,7 +103,7 @@ function useCountUp(target, active) {
 }
 
 function Spinner({ size=18 }) {
-  return <div style={{ width:size, height:size, border:`2px solid var(--border)`, borderTop:`2px solid #A175FC`, borderRadius:'50%', animation:'spin .7s linear infinite', flexShrink:0 }}/>
+  return <div style={{ width:size, height:size, border:`2px solid var(--border)`, borderTop:`2px solid #111111`, borderRadius:'50%', animation:'spin .7s linear infinite', flexShrink:0 }}/>
 }
 
 // ─── Date ranges ──────────────────────────────────────────────────────────────
@@ -127,10 +127,7 @@ function getDateRange(id) {
 // ─── PageBackground — matches analytics ───────────────────────────────────────
 function PageBackground() {
   return (
-    <div aria-hidden style={{ position:'absolute', inset:0, overflow:'hidden', pointerEvents:'none', zIndex:0 }}>
-      <div style={{ position:'absolute', top:0, right:0, width:600, height:500, background:'radial-gradient(ellipse at top right,rgba(161,117,252,0.1) 0%,transparent 65%)', pointerEvents:'none' }}/>
-      <div style={{ position:'absolute', bottom:0, left:0, width:400, height:400, background:'radial-gradient(ellipse at bottom left,rgba(161,117,252,0.05) 0%,transparent 65%)', pointerEvents:'none' }}/>
-    </div>
+    <div aria-hidden style={{ display:'none' }}/>
   )
 }
 
@@ -155,7 +152,7 @@ function WorkloadKPIs({ data, loaded }) {
 
   const cards = [
     { label:'Created', value:fmtNum(aCreated), sub:'new tickets this period',
-      accent:'#A175FC', grad:'linear-gradient(135deg,#A175FC,#C3A3FF)',
+      accent:'#555555', grad:'linear-gradient(135deg,#555555,#888888)',
       icon:<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> },
     { label:'Closed', value:fmtNum(aClosed), sub:closeRate?`${closeRate}% close rate`:'resolved this period',
       accent:'#4ade80', grad:'linear-gradient(135deg,#4ade80,#86efac)',
@@ -185,7 +182,7 @@ function WorkloadKPIs({ data, loaded }) {
             <div style={{ width:36, height:36, borderRadius:10, background:`${c.accent}1a`, border:`1px solid ${c.accent}20`, display:'flex', alignItems:'center', justifyContent:'center', color:c.accent }}>{c.icon}</div>
             {c.badge&&<span style={{ fontSize:10, fontWeight:800, color:c.badge.color, background:`${c.badge.color}14`, border:`1px solid ${c.badge.color}28`, borderRadius:6, padding:'2px 8px', letterSpacing:'.03em', fontVariantNumeric:'tabular-nums' }}>{c.badge.value}</span>}
           </div>
-          <div style={{ fontSize:27, fontWeight:800, letterSpacing:'-0.04em', color:c.accent, lineHeight:1, marginBottom:5, fontVariantNumeric:'tabular-nums', position:'relative', zIndex:1 }}>{c.value}</div>
+          <div style={{ fontSize:27, fontWeight:800, letterSpacing:'-0.04em', color:'var(--text-1)', lineHeight:1, marginBottom:5, fontVariantNumeric:'tabular-nums', position:'relative', zIndex:1 }}>{c.value}</div>
           <div style={{ fontSize:9.5, fontWeight:700, letterSpacing:'.1em', color:'var(--text-3)', textTransform:'uppercase', marginBottom:4, position:'relative', zIndex:1 }}>{c.label}</div>
           <div style={{ fontSize:11, color:'var(--text-3)', lineHeight:1.4, position:'relative', zIndex:1 }}>{c.sub}</div>
         </div>
@@ -219,7 +216,7 @@ function WeeklyChart({ weekly, loaded }) {
           <div style={{ fontSize:11, color:'var(--text-3)' }}>Created vs closed per week</div>
         </div>
         <div style={{ display:'flex', gap:18 }}>
-          {[['#A175FC','Created'],['#4ade80','Closed']].map(([color,label])=>(
+          {[['#555555','Created'],['#4ade80','Closed']].map(([color,label])=>(
             <span key={label} style={{ display:'flex', alignItems:'center', gap:6, fontSize:11, color:'var(--text-3)' }}>
               <span style={{ width:10, height:10, borderRadius:3, background:color, display:'inline-block', opacity:.75 }}/>{label}
             </span>
@@ -234,9 +231,9 @@ function WeeklyChart({ weekly, loaded }) {
             return (
               <g key={i} onMouseEnter={()=>setHovIdx(i)} onMouseLeave={()=>setHovIdx(null)} style={{ cursor:'default' }}>
                 <rect x={x-4} y={PAD_TOP} width={barW*2+barGap+8} height={BAR_H} fill="transparent"/>
-                <rect x={x} y={barY(w.created)} width={barW} height={Math.max(barH(w.created),2)} rx={3} fill={isHov?'rgba(161,117,252,0.8)':'rgba(161,117,252,0.5)'} style={{ transition:'fill .15s' }}/>
+                <rect x={x} y={barY(w.created)} width={barW} height={Math.max(barH(w.created),2)} rx={3} fill={isHov?'rgba(17,17,17,0.8)':'rgba(17,17,17,0.5)'} style={{ transition:'fill .15s' }}/>
                 <rect x={x+barW+barGap} y={barY(w.closed)} width={barW} height={Math.max(barH(w.closed),2)} rx={3} fill={isHov?'rgba(74,222,128,0.8)':'rgba(74,222,128,0.5)'} style={{ transition:'fill .15s' }}/>
-                {isHov&&<g><rect x={x-6} y={PAD_TOP-38} width={64} height={32} rx={6} fill="rgba(15,8,40,0.95)" stroke="rgba(255,255,255,0.15)" strokeWidth={1}/><text x={x+26} y={PAD_TOP-25} textAnchor="middle" fill="#A175FC" fontSize={10} fontWeight="700">{w.created}</text><text x={x+26} y={PAD_TOP-13} textAnchor="middle" fill="#4ade80" fontSize={10} fontWeight="700">{w.closed}</text></g>}
+                {isHov&&<g><rect x={x-6} y={PAD_TOP-38} width={64} height={32} rx={6} fill="rgba(17,17,17,0.92)" stroke="rgba(255,255,255,0.15)" strokeWidth={1}/><text x={x+26} y={PAD_TOP-25} textAnchor="middle" fill="#ffffff" fontSize={10} fontWeight="700">{w.created}</text><text x={x+26} y={PAD_TOP-13} textAnchor="middle" fill="#4ade80" fontSize={10} fontWeight="700">{w.closed}</text></g>}
                 <text x={x+barW+barGap/2} y={PAD_TOP+BAR_H+16} textAnchor="middle" fill="rgba(248,250,252,0.3)" fontSize={9}>{w.label}</text>
               </g>
             )
@@ -325,7 +322,7 @@ function ProductivityKPIs({ data, loaded }) {
 
   const cards = [
     { label:'Tickets replied', value:fmtNum(aReplied), sub:'agents sent at least 1 reply',
-      accent:'#A175FC', grad:'linear-gradient(135deg,#A175FC,#C3A3FF)',
+      accent:'#555555', grad:'linear-gradient(135deg,#555555,#888888)',
       icon:<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 0 0-4-4H4"/></svg> },
     { label:'Messages sent', value:fmtNum(aSent), sub:'outbound agent messages',
       accent:'#38bdf8', grad:'linear-gradient(135deg,#38bdf8,#7dd3fc)',
@@ -353,7 +350,7 @@ function ProductivityKPIs({ data, loaded }) {
           <div style={{ marginBottom:14, position:'relative', zIndex:1 }}>
             <div style={{ width:36, height:36, borderRadius:10, background:`${c.accent}1a`, border:`1px solid ${c.accent}20`, display:'flex', alignItems:'center', justifyContent:'center', color:c.accent }}>{c.icon}</div>
           </div>
-          <div style={{ fontSize:27, fontWeight:800, letterSpacing:'-0.04em', color:c.accent, lineHeight:1, marginBottom:5, fontVariantNumeric:'tabular-nums', position:'relative', zIndex:1 }}>{c.value}</div>
+          <div style={{ fontSize:27, fontWeight:800, letterSpacing:'-0.04em', color:'var(--text-1)', lineHeight:1, marginBottom:5, fontVariantNumeric:'tabular-nums', position:'relative', zIndex:1 }}>{c.value}</div>
           <div style={{ fontSize:9.5, fontWeight:700, letterSpacing:'.1em', color:'var(--text-3)', textTransform:'uppercase', marginBottom:4, position:'relative', zIndex:1 }}>{c.label}</div>
           <div style={{ fontSize:11, color:'var(--text-3)', lineHeight:1.4, position:'relative', zIndex:1 }}>{c.sub}</div>
         </div>
@@ -363,7 +360,7 @@ function ProductivityKPIs({ data, loaded }) {
 }
 
 // ─── Channel breakdown ────────────────────────────────────────────────────────
-const CH_COLORS = { email:'#A175FC', chat:'#38bdf8', 'contact form':'#4ade80', sms:'#F97316', api:'#fbbf24', voice:'#f472b6' }
+const CH_COLORS = { email:'#555555', chat:'#38bdf8', 'contact form':'#4ade80', sms:'#F97316', api:'#fbbf24', voice:'#f472b6' }
 
 function ChannelBreakdown({ channels, loaded }) {
   if (!loaded) return (
@@ -486,7 +483,7 @@ export default function PerformancePage() {
               <div style={{ display:'flex', alignItems:'center', gap:8 }}>
                 {demoMode
                   ? <button onClick={exitDemo} style={{ padding:'6px 14px', borderRadius:100, background:'rgba(251,146,60,0.12)', border:'1px solid rgba(251,146,60,0.3)', color:'#FB923C', fontSize:11, fontWeight:700, cursor:'pointer', letterSpacing:'.04em', fontFamily:'inherit' }}>Exit Demo</button>
-                  : <button onClick={loadDemo} style={{ padding:'6px 14px', borderRadius:100, background:'rgba(161,117,252,0.1)', border:'1px solid rgba(161,117,252,0.25)', color:'#C3A3FF', fontSize:11, fontWeight:700, cursor:'pointer', letterSpacing:'.04em', fontFamily:'inherit' }}>Preview Demo</button>
+                  : <button onClick={loadDemo} style={{ padding:'6px 14px', borderRadius:100, background:'var(--bg-surface-2)', border:'1px solid var(--border)', color:'var(--text-2)', fontSize:11, fontWeight:700, cursor:'pointer', letterSpacing:'.04em', fontFamily:'inherit' }}>Preview Demo</button>
                 }
                 <div style={{ display:'flex', alignItems:'center', gap:8, padding:'7px 16px', borderRadius:100, background:'var(--bg-input)', border:'1px solid var(--border)', backdropFilter:'blur(10px)' }}>
                   {!allLoaded
@@ -502,7 +499,7 @@ export default function PerformancePage() {
             <div style={{ height:'1px', background:'var(--bg-surface-2)', margin:'20px 0 16px' }}/>
             <div style={{ display:'flex', alignItems:'center', gap:6, flexWrap:'wrap' }}>
               {RANGES.map(r=>(
-                <button key={r.id} onClick={()=>selectRange(r.id)} className="range-pill" style={{ background:dateRange===r.id?'rgba(161,117,252,0.18)':'var(--bg-input)', color:dateRange===r.id?'#C3A3FF':'var(--text-3)', boxShadow:dateRange===r.id?'inset 0 0 0 1px rgba(161,117,252,0.4),0 0 12px rgba(161,117,252,0.08)':'inset 0 0 0 1px rgba(255,255,255,0.08)' }}>{r.label}</button>
+                <button key={r.id} onClick={()=>selectRange(r.id)} className="range-pill" style={{ background:dateRange===r.id?'#111111':'var(--bg-input)', color:dateRange===r.id?'#ffffff':'var(--text-3)', boxShadow:'none' }}>{r.label}</button>
               ))}
               {dateRange==='custom'&&(
                 <div style={{ display:'flex', alignItems:'center', gap:6, marginLeft:4 }}>
@@ -525,10 +522,10 @@ export default function PerformancePage() {
 
           {/* ── Gorgias not connected ── */}
           {!demoMode&&allLoaded&&!gorgiasOk&&(
-            <div style={{ display:'flex', alignItems:'center', gap:12, background:'rgba(161,117,252,0.07)', border:'1px solid rgba(161,117,252,0.18)', borderRadius:10, padding:'12px 18px', marginBottom:24, animation:'fadeIn .4s ease-out both' }}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#A175FC" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-              <div style={{ flex:1 }}><span style={{ fontSize:12, fontWeight:700, color:'#A175FC', marginRight:8 }}>Gorgias not connected</span><span style={{ fontSize:12, color:'var(--text-2)' }}>Go to Settings → Integrations to connect your Gorgias account.</span></div>
-              <button onClick={loadDemo} style={{ fontSize:11, fontWeight:700, color:'#C3A3FF', background:'rgba(161,117,252,0.12)', border:'1px solid rgba(161,117,252,0.25)', borderRadius:100, padding:'4px 12px', cursor:'pointer', fontFamily:'inherit', whiteSpace:'nowrap' }}>Preview demo</button>
+            <div style={{ display:'flex', alignItems:'center', gap:12, background:'var(--bg-surface-2)', border:'1px solid var(--border)', borderRadius:10, padding:'12px 18px', marginBottom:24, animation:'fadeIn .4s ease-out both' }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text-2)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+              <div style={{ flex:1 }}><span style={{ fontSize:12, fontWeight:700, color:'var(--text-1)', marginRight:8 }}>Gorgias not connected</span><span style={{ fontSize:12, color:'var(--text-2)' }}>Go to Settings → Integrations to connect your Gorgias account.</span></div>
+              <button onClick={loadDemo} style={{ fontSize:11, fontWeight:700, color:'var(--text-2)', background:'var(--bg-surface-2)', border:'1px solid var(--border)', borderRadius:100, padding:'4px 12px', cursor:'pointer', fontFamily:'inherit', whiteSpace:'nowrap' }}>Preview demo</button>
             </div>
           )}
 

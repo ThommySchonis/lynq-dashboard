@@ -8,7 +8,7 @@ import Sidebar from '../components/Sidebar'
 const STATUS = {
   PENDING:          { label: 'Pending',          color: '#94a3b8', bg: 'rgba(148,163,184,0.1)',  border: 'rgba(148,163,184,0.2)'  },
   INFO_RECEIVED:    { label: 'Info Received',     color: '#60a5fa', bg: 'rgba(96,165,250,0.1)',   border: 'rgba(96,165,250,0.2)'   },
-  IN_TRANSIT:       { label: 'In Transit',        color: 'var(--accent)', bg: 'rgba(161,117,252,0.12)', border: 'rgba(161,117,252,0.22)' },
+  IN_TRANSIT:       { label: 'In Transit',        color: '#2563eb', bg: 'rgba(96,165,250,0.1)', border: 'rgba(96,165,250,0.2)' },
   OUT_FOR_DELIVERY: { label: 'Out for Delivery',  color: '#f59e0b', bg: 'rgba(245,158,11,0.1)',   border: 'rgba(245,158,11,0.2)'   },
   DELIVERED:        { label: 'Delivered',         color: '#4ade80', bg: 'rgba(74,222,128,0.1)',   border: 'rgba(74,222,128,0.2)'   },
   EXCEPTION:        { label: 'Exception',         color: '#f87171', bg: 'rgba(248,113,113,0.1)',  border: 'rgba(248,113,113,0.2)'  },
@@ -46,7 +46,7 @@ const ATTENTION = {
   OVERDUE: {
     label: 'Overdue in Transit',
     desc: 'Shipment has been in transit for 7+ days with no tracking updates.',
-    color: 'var(--accent)', bg: 'rgba(161,117,252,0.07)', border: 'rgba(161,117,252,0.18)',
+    color: '#555555', bg: 'rgba(0,0,0,0.04)', border: 'rgba(0,0,0,0.1)',
     priority: 3,
     message: (name, num) =>
       `Hi ${name}, we want to give you an update on your order ${num}. Your package is taking a little longer than expected to arrive. We are monitoring this closely and will let you know as soon as there's an update. Thank you for your patience! 🙏`,
@@ -398,7 +398,7 @@ function ShipmentRow({ order, i, attentionKey }) {
               )}
               {order.tracking_link && (
                 <a href={order.tracking_link} target="_blank" rel="noopener noreferrer"
-                  style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginTop: 16, padding: '8px 14px', borderRadius: 8, background: 'rgba(161,117,252,0.1)', border: '1px solid rgba(161,117,252,0.2)', color: 'var(--accent)', fontSize: 12.5, fontWeight: 600, textDecoration: 'none' }}>
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginTop: 16, padding: '8px 14px', borderRadius: 8, background: 'var(--bg-surface-2)', border: '1px solid var(--border)', color: 'var(--text-2)', fontSize: 12.5, fontWeight: 600, textDecoration: 'none' }}>
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
                   Track on carrier site
                 </a>
@@ -442,8 +442,8 @@ function SetupScreen({ token, onConnected }) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '48px 24px 0', textAlign: 'center' }}>
-      <div style={{ width: 64, height: 64, borderRadius: 18, background: 'rgba(161,117,252,0.1)', border: '1px solid rgba(161,117,252,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 22 }}>
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#A175FC" strokeWidth="1.85" strokeLinecap="round" strokeLinejoin="round">
+      <div style={{ width: 64, height: 64, borderRadius: 18, background: 'var(--bg-surface-2)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 22 }}>
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--text-2)" strokeWidth="1.85" strokeLinecap="round" strokeLinejoin="round">
           <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
           <polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/>
         </svg>
@@ -459,7 +459,7 @@ function SetupScreen({ token, onConnected }) {
           <p style={{ fontSize: 10.5, fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '.1em', marginBottom: 14 }}>How to find your API key</p>
           {['Open the Parcel Panel app in your Shopify admin', 'Go to Integration', 'Scroll to the bottom — your API key is listed there'].map((step, i) => (
             <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', marginBottom: i < 2 ? 10 : 0 }}>
-              <div style={{ width: 20, height: 20, borderRadius: 6, background: 'rgba(161,117,252,0.15)', border: '1px solid rgba(161,117,252,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 800, color: 'var(--accent)', flexShrink: 0 }}>{i + 1}</div>
+              <div style={{ width: 20, height: 20, borderRadius: 6, background: 'var(--bg-surface-2)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700, color: 'var(--text-2)', flexShrink: 0 }}>{i + 1}</div>
               <p style={{ fontSize: 13, color: 'var(--text-2)', lineHeight: 1.5, paddingTop: 2 }}>{step}</p>
             </div>
           ))}
@@ -478,7 +478,7 @@ function SetupScreen({ token, onConnected }) {
         <button
           onClick={connect}
           disabled={saving || !apiKey.trim()}
-          style={{ width: '100%', padding: '12px', borderRadius: 10, background: saving || !apiKey.trim() ? 'rgba(161,117,252,0.35)' : '#A175FC', color: '#fff', border: 'none', fontSize: 14, fontWeight: 700, cursor: saving || !apiKey.trim() ? 'not-allowed' : 'pointer', fontFamily: 'inherit', transition: 'background .15s' }}>
+          style={{ width: '100%', padding: '12px', borderRadius: 10, background: saving || !apiKey.trim() ? 'rgba(0,0,0,0.2)' : '#111111', color: '#fff', border: 'none', fontSize: 14, fontWeight: 700, cursor: saving || !apiKey.trim() ? 'not-allowed' : 'pointer', fontFamily: 'inherit', transition: 'background .15s' }}>
           {saving ? 'Connecting…' : 'Connect Parcel Panel'}
         </button>
       </div>
@@ -587,7 +587,7 @@ export default function SupplyChainPage() {
 
   // ── KPI config ──
   const KPIS = [
-    { label: 'In Transit',       value: counts.inTransit,                          color: 'var(--accent)',
+    { label: 'In Transit',       value: counts.inTransit,                          color: '#2563eb',
       icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 17H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v3"/><rect x="9" y="11" width="14" height="10" rx="1"/><circle cx="12" cy="21" r="1"/><circle cx="20" cy="21" r="1"/></svg> },
     { label: 'Out for Delivery', value: counts.outForDel,                          color: '#f59e0b',
       icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> },
@@ -607,8 +607,6 @@ export default function SupplyChainPage() {
       <Sidebar />
 
       <main className="sc-scroll" style={{ flex: 1, overflowY: 'auto', padding: '40px 44px', position: 'relative' }}>
-        {/* Ambient glow */}
-        <div style={{ position: 'fixed', top: '-5%', right: '5%', width: '55%', height: '55%', background: 'radial-gradient(ellipse,rgba(161,117,252,0.07) 0%,transparent 65%)', filter: 'blur(50px)', pointerEvents: 'none', zIndex: 0 }} />
 
         <div style={{ position: 'relative', zIndex: 1, maxWidth: 980, margin: '0 auto' }}>
 
@@ -617,18 +615,18 @@ export default function SupplyChainPage() {
             <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
-                  <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(161,117,252,0.1)', border: '1px solid rgba(161,117,252,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#A175FC" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <div style={{ width: 36, height: 36, borderRadius: 10, background: 'var(--bg-surface-2)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--text-2)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
                       <polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/>
                     </svg>
                   </div>
-                  <span style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--text-2)', textTransform: 'uppercase', letterSpacing: '.08em' }}>Supply Chain</span>
+                  <span style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '.08em' }}>Supply Chain</span>
                 </div>
-                <h1 style={{ fontSize: 32, fontWeight: 800, letterSpacing: '-0.045em', lineHeight: 1.1, marginBottom: 8, background: 'linear-gradient(135deg,#F8FAFC 0%,#c4a8ff 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+                <h1 style={{ fontSize: 32, fontWeight: 800, letterSpacing: '-0.045em', lineHeight: 1.1, marginBottom: 8, color: 'var(--text-1)' }}>
                   Shipment Tracker
                 </h1>
-                <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.42)' }}>
+                <p style={{ fontSize: 14, color: 'var(--text-3)' }}>
                   {lastUpdated
                     ? `Last updated at ${lastUpdated.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}`
                     : 'Live tracking powered by Parcel Panel'}
@@ -682,7 +680,7 @@ export default function SupplyChainPage() {
               </div>
               <p style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-1)', marginBottom: 6 }}>Could not load shipments</p>
               <p style={{ fontSize: 13.5, color: 'var(--text-3)', marginBottom: 20 }}>{error}</p>
-              <button onClick={() => loadData(token)} style={{ padding: '9px 20px', borderRadius: 9, background: '#A175FC', color: '#fff', border: 'none', fontSize: 13.5, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+              <button onClick={() => loadData(token)} style={{ padding: '9px 20px', borderRadius: 9, background: '#111111', color: '#fff', border: 'none', fontSize: 13.5, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
                 Try again
               </button>
             </div>

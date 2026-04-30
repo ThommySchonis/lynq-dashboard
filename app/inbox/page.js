@@ -7,7 +7,7 @@ import Sidebar from '../components/Sidebar'
 
 // ─── Status configs ───────────────────────────────────────────
 const STATUS = {
-  open:     { label:'Open',     bg:'rgba(161,117,252,0.15)', color:'#A175FC',  border:'rgba(161,117,252,0.3)'  },
+  open:     { label:'Open',     bg:'rgba(37,99,235,0.08)',   color:'#2563eb',  border:'rgba(37,99,235,0.2)'    },
   pending:  { label:'Pending',  bg:'rgba(251,191,36,0.14)',  color:'#fbbf24',  border:'rgba(251,191,36,0.3)'   },
   resolved: { label:'Resolved', bg:'rgba(74,222,128,0.14)',  color:'#4ade80',  border:'rgba(74,222,128,0.3)'   },
   closed:   { label:'Closed',   bg:'var(--bg-input)', color:'var(--text-3)', border:'var(--bg-surface-2)' },
@@ -126,29 +126,29 @@ const CSS = `
   input,textarea,select { font-family:inherit; }
 
   /* ── Global focus ring (keyboard nav) ── */
-  button:focus-visible,a:focus-visible { outline:2px solid rgba(161,117,252,0.65); outline-offset:2px; border-radius:6px; }
+  button:focus-visible,a:focus-visible { outline:2px solid rgba(17,17,17,0.45); outline-offset:2px; border-radius:6px; }
   input:focus-visible,textarea:focus-visible,[contenteditable]:focus-visible { outline:none; }
 
   /* ── Thread row ── */
-  .trow { padding:11px 14px 11px 12px; cursor:pointer; border-bottom:1px solid var(--border); border-left:3px solid transparent; transition:background .15s; position:relative; display:flex; align-items:flex-start; gap:9px; }
+  .trow { padding:10px 14px; cursor:pointer; border-bottom:1px solid rgba(0,0,0,0.05); border-left:3px solid transparent; transition:background .15s; position:relative; display:flex; align-items:flex-start; gap:9px; }
   .trow:hover:not(.trow-active) { background:var(--bg-surface-2); }
-  .trow-active { background:rgba(124,92,252,0.05); border-left-color:var(--accent); }
+  .trow-active { background:var(--bg-surface-2); border-left-color:var(--accent); }
   [data-theme="dark"] .trow:hover:not(.trow-active) { background:rgba(255,255,255,0.03); }
-  [data-theme="dark"] .trow-active { background:linear-gradient(90deg,rgba(161,117,252,0.18) 0%,rgba(161,117,252,0.04) 100%); }
-  .trow-active::after { content:''; position:absolute; left:0; top:0; bottom:0; width:3px; background:linear-gradient(180deg,#C3A3FF 0%,#7B45E8 100%); border-radius:0 2px 2px 0; }
+  [data-theme="dark"] .trow-active { background:rgba(255,255,255,0.06); }
+  .trow-active::after { content:''; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--accent); border-radius:0 2px 2px 0; }
   .trow-cb { width:16px; height:16px; border-radius:4px; border:1.5px solid var(--border); background:var(--bg-surface); cursor:pointer; appearance:none; -webkit-appearance:none; flex-shrink:0; margin-top:2px; transition:all .15s; }
-  .trow-cb:checked { background:var(--accent); border-color:var(--accent); background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 16 16' fill='white' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M13.3 4.3a1 1 0 0 1 0 1.4l-6 6a1 1 0 0 1-1.4 0l-3-3a1 1 0 1 1 1.4-1.4L6.6 9.6l5.3-5.3a1 1 0 0 1 1.4 0z'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:center; }
-  .trow-cb:hover:not(:checked) { border-color:var(--accent-border); }
+  .trow-cb:checked { background:#111111; border-color:#111111; background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 16 16' fill='white' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M13.3 4.3a1 1 0 0 1 0 1.4l-6 6a1 1 0 0 1-1.4 0l-3-3a1 1 0 1 1 1.4-1.4L6.6 9.6l5.3-5.3a1 1 0 0 1 1.4 0z'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:center; }
+  .trow-cb:hover:not(:checked) { border-color:var(--border-hover); }
   .trow-snippet { overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
 
   /* ── View tabs — pill style ── */
-  .vtab { padding:6px 12px; background:transparent; cursor:pointer; font-size:11.5px; font-weight:500; font-family:inherit; border-radius:0; transition:all .18s; color:var(--text-3); white-space:nowrap; letter-spacing:.01em; border:none; border-bottom:2px solid transparent; }
-  .vtab.on { color:var(--text-1); border-bottom-color:var(--accent); font-weight:600; background:transparent; }
+  .vtab { padding:8px 6px; background:transparent; cursor:pointer; font-size:12px; font-weight:500; font-family:inherit; border-radius:0; transition:all .18s; color:var(--text-3); white-space:nowrap; letter-spacing:.01em; border:none; border-bottom:2px solid transparent; }
+  .vtab.on { color:var(--text-1); border-bottom-color:#111111; font-weight:600; background:transparent; }
   .vtab:hover:not(.on) { color:var(--text-2); }
 
   /* ── Composer tab ── */
-  .ctab { padding:9px 15px; background:transparent; cursor:pointer; font-size:12.5px; font-weight:500; font-family:inherit; border-bottom:2px solid transparent; transition:color .15s,border-color .15s; color:var(--text-3); }
-  .ctab.on { color:var(--text-1); border-bottom-color:#A175FC; font-weight:600; }
+  .ctab { padding:9px 16px; background:transparent; cursor:pointer; font-size:13px; font-weight:500; font-family:inherit; border-bottom:2px solid transparent; transition:color .15s,border-color .15s; color:var(--text-3); }
+  .ctab.on { color:var(--text-1); border-bottom-color:#111111; font-weight:600; }
   .ctab:hover:not(.on) { color:var(--text-2); }
 
   /* ── Scrollbar ── */
@@ -167,7 +167,7 @@ const CSS = `
 
   /* ── Inbox search ── */
   .isearch { width:100%; padding:9px 12px 9px 34px; background:var(--bg-input); border:1px solid var(--border); border-radius:10px; color:var(--text-1); font-size:12.5px; outline:none; transition:all .2s; }
-  .isearch:focus { border-color:var(--accent-border); background:rgba(161,117,252,0.05); box-shadow:0 0 0 3px rgba(161,117,252,0.08); }
+  .isearch:focus { border-color:var(--border-hover); background:var(--bg-input); }
   .isearch::placeholder { color:var(--text-3); }
 
   /* ── Macro ── */
@@ -175,9 +175,9 @@ const CSS = `
   .macro-list { width:230px; border-right:1px solid var(--border); overflow-y:auto; flex-shrink:0; }
   .macro-item { padding:10px 14px; cursor:pointer; transition:background .12s; border-left:2px solid transparent; }
   .macro-item:hover { background:var(--bg-surface-2); }
-  .macro-item.mi-active { background:rgba(161,117,252,0.09); border-left-color:#A175FC; }
+  .macro-item.mi-active { background:var(--bg-surface-2); border-left-color:var(--text-2); }
   .macro-preview { flex:1; padding:14px 16px; overflow-y:auto; font-size:13px; line-height:1.75; color:var(--text-2); white-space:pre-wrap; }
-  .macro-var { color:#A175FC; background:rgba(161,117,252,0.12); padding:1px 5px; border-radius:4px; font-weight:600; font-size:11px; }
+  .macro-var { color:var(--text-2); background:var(--bg-surface-2); padding:1px 5px; border-radius:4px; font-weight:600; font-size:11px; border:1px solid var(--border); }
   .macro-suggest { padding:4px 14px 6px; font-size:9.5px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--text-3); }
   .macro-tag { font-size:10px; font-weight:600; padding:1px 6px; border-radius:4px; background:var(--bg-surface-2); color:var(--text-3); }
   .macro-gear-menu { position:absolute; top:calc(100% + 4px); right:0; min-width:192px; background:var(--bg-surface); border:1px solid var(--border); border-radius:10px; box-shadow:0 8px 24px rgba(15,23,42,0.12),0 2px 6px rgba(15,23,42,0.06); z-index:40; padding:4px; animation:fadeUp .14s ease both; }
@@ -191,21 +191,21 @@ const CSS = `
   .macro-star.fav { opacity:1; }
 
   /* ── Compose textarea ── */
-  .compose-ta { width:100%; resize:none; outline:none; font-family:inherit; background:transparent; border:none; padding:14px 16px; font-size:13.5px; color:var(--text-1); line-height:1.78; letter-spacing:.005em; }
+  .compose-ta { width:100%; resize:none; outline:none; font-family:inherit; background:transparent; border:none; padding:12px 16px; font-size:14px; color:#111111; line-height:1.6; min-height:90px; letter-spacing:.005em; }
 
   /* ── Compose box ── */
   .compose-box { background:var(--bg-surface); }
   [data-theme="dark"] .compose-box { background:rgba(255,255,255,0.025); }
 
   /* ── Suggested macro chips ── */
-  .macro-chip-suggest { display:inline-flex; align-items:center; font-size:11px; font-weight:500; font-family:inherit; padding:3px 10px; border-radius:6px; border:1px solid var(--border); background:var(--bg-surface); color:var(--text-1); cursor:pointer; transition:all .15s; white-space:nowrap; }
-  .macro-chip-suggest:hover { border-color:var(--accent-border); color:var(--accent-text); background:var(--accent-soft); }
+  .macro-chip-suggest { display:inline-flex; align-items:center; font-size:12px; font-weight:500; font-family:inherit; padding:3px 10px; border-radius:5px; border:1px solid rgba(0,0,0,0.08); background:#F5F5F5; color:#555555; cursor:pointer; transition:all .15s; white-space:nowrap; }
+  .macro-chip-suggest:hover { border-color:var(--border-hover); color:var(--text-1); background:var(--bg-surface-2); }
 
   /* ── Buttons ── */
-  .btn-send { padding:9px 20px; font-size:13px; font-weight:600; font-family:inherit; background:linear-gradient(135deg,#A175FC 0%,#7B45E8 100%); color:#fff; border-radius:10px; cursor:pointer; transition:all .2s cubic-bezier(.16,1,.3,1); box-shadow:0 2px 14px rgba(161,117,252,0.45); letter-spacing:.01em; }
-  .btn-send:hover:not(:disabled) { background:linear-gradient(135deg,#BA96FF 0%,#9B6FFF 100%); box-shadow:0 6px 24px rgba(161,117,252,0.6); transform:translateY(-1px); }
-  .btn-send:active:not(:disabled) { transform:translateY(0); box-shadow:0 2px 8px rgba(161,117,252,0.4); }
-  .btn-send:disabled { opacity:.28; cursor:not-allowed; transform:none; box-shadow:none; }
+  .btn-send { padding:0 18px; height:32px; font-size:13px; font-weight:600; font-family:inherit; background:#111111; color:#fff; border-radius:7px; cursor:pointer; transition:all .15s; letter-spacing:.01em; }
+  .btn-send:hover:not(:disabled) { background:#333333; transform:translateY(-1px); }
+  .btn-send:active:not(:disabled) { transform:translateY(0); }
+  .btn-send:disabled { opacity:.28; cursor:not-allowed; transform:none; }
   .btn-ghost { padding:9px 16px; font-size:12.5px; font-weight:500; font-family:inherit; background:var(--bg-input); border:1px solid var(--border); color:var(--text-2); border-radius:10px; cursor:pointer; transition:all .15s; }
   .btn-ghost:hover:not(:disabled) { border-color:var(--text-3); color:var(--text-1); background:var(--bg-surface-2); }
   .btn-ghost:disabled { opacity:.28; cursor:not-allowed; }
@@ -216,20 +216,19 @@ const CSS = `
   .btn-danger:hover:not(:disabled) { background:linear-gradient(135deg,#f87171,#ef4444); box-shadow:0 6px 24px rgba(239,68,68,0.5); transform:translateY(-1px); }
   .btn-danger:active:not(:disabled) { transform:translateY(0); }
   .btn-danger:disabled { opacity:.3; cursor:not-allowed; }
-  .btn-iris { padding:8px 16px; font-size:12.5px; font-weight:600; font-family:inherit; background:var(--accent-soft); border:1px solid var(--accent-border); color:var(--accent-text); border-radius:11px; cursor:pointer; transition:all .2s cubic-bezier(.16,1,.3,1); box-shadow:var(--shadow-row); }
-  .btn-iris:hover:not(:disabled) { background:linear-gradient(135deg,rgba(124,92,252,0.16) 0%,rgba(124,92,252,0.10) 100%); border-color:var(--accent); transform:translateY(-1px); box-shadow:0 6px 20px rgba(124,92,252,0.18); }
+  .btn-iris { padding:0 12px; height:32px; font-size:12.5px; font-weight:600; font-family:inherit; background:#F5F5F5; border:1px solid rgba(0,0,0,0.08); color:#111111; border-radius:7px; cursor:pointer; transition:all .2s cubic-bezier(.16,1,.3,1); }
+  .btn-iris:hover:not(:disabled) { background:var(--bg-input); border-color:var(--border-hover); color:var(--text-1); transform:translateY(-1px); }
   .btn-iris:disabled { opacity:.3; cursor:not-allowed; }
 
   /* ── Order card ── */
-  .order-card { background:var(--bg-surface); border:1px solid var(--border); border-radius:18px; padding:16px 16px 14px; margin-bottom:10px; position:relative; overflow:hidden; transition:all .24s cubic-bezier(.16,1,.3,1); box-shadow:var(--shadow-card); }
-  .order-card::before { content:''; position:absolute; left:0; top:0; bottom:0; width:3px; background:linear-gradient(180deg,#C3A3FF 0%,rgba(161,117,252,0.1) 100%); border-radius:0 3px 3px 0; }
-  .order-card::after { content:''; position:absolute; inset:0; background:radial-gradient(ellipse 50% 35% at 85% 0%,rgba(161,117,252,0.07) 0%,transparent 65%); pointer-events:none; }
-  .order-card:hover { border-color:var(--accent-border); box-shadow:var(--shadow-card-hover); transform:translateY(-1px); }
+  .order-card { background:#FAFAFA; border:1px solid rgba(0,0,0,0.07); border-radius:8px; padding:10px 12px; margin:6px 14px; position:relative; overflow:hidden; transition:all .24s cubic-bezier(.16,1,.3,1); box-shadow:var(--shadow-card); }
+  .order-card::before { content:''; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--border); border-radius:0 3px 3px 0; }
+  .order-card:hover { border-color:var(--border-hover); box-shadow:var(--shadow-card-hover); transform:translateY(-1px); }
 
   /* ── Order actions grid ── */
   .order-actions { display:grid; grid-template-columns:1fr 1fr; gap:5px; padding-top:11px; border-top:1px solid var(--border); margin-top:4px; }
   .oa-btn { padding:8px 10px; display:flex; align-items:center; justify-content:center; gap:6px; font-size:11.5px; font-weight:600; font-family:inherit; background:var(--bg-input); border:1px solid var(--border); color:var(--text-3); border-radius:10px; cursor:pointer; transition:all .18s cubic-bezier(.16,1,.3,1); white-space:nowrap; }
-  .oa-btn:hover { background:rgba(161,117,252,0.12); border-color:rgba(161,117,252,0.28); color:#C3A3FF; transform:translateY(-1px); box-shadow:0 4px 14px rgba(161,117,252,0.18); }
+  .oa-btn:hover { background:var(--bg-surface-2); border-color:var(--border-hover); color:var(--text-1); transform:translateY(-1px); }
   .oa-btn:active { transform:translateY(0); }
   .oa-btn.oa-danger:hover { background:rgba(239,68,68,0.09); border-color:rgba(239,68,68,0.28); color:#fca5a5; box-shadow:0 4px 14px rgba(239,68,68,0.14); }
   .oa-btn.oa-green:hover { background:rgba(74,222,128,0.09); border-color:rgba(74,222,128,0.28); color:#86efac; }
@@ -239,12 +238,12 @@ const CSS = `
   /* ── Modal ── */
   .modal-backdrop { position:fixed; inset:0; background:rgba(0,0,0,0.75); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); z-index:500; display:flex; align-items:center; justify-content:center; padding:20px; animation:fadeIn .2s ease; }
   .modal-box { background:var(--bg-surface); border:1px solid var(--border); border-radius:22px; padding:28px 30px; box-shadow:var(--shadow-card-hover); width:100%; max-width:560px; animation:modalIn .24s cubic-bezier(.16,1,.3,1); max-height:88vh; display:flex; flex-direction:column; overflow:hidden; }
-  [data-theme="dark"] .modal-box { border-color:rgba(161,117,252,0.2); box-shadow:0 48px 120px rgba(0,0,0,0.8),0 0 0 1px rgba(161,117,252,0.08); }
+  [data-theme="dark"] .modal-box { border-color:var(--border); box-shadow:0 48px 120px rgba(0,0,0,0.8); }
   .modal-body { overflow-y:auto; flex:1; }
   .modal-body::-webkit-scrollbar { width:3px; }
   .modal-body::-webkit-scrollbar-thumb { background:var(--bg-surface-2); border-radius:2px; }
   .modal-input { width:100%; background:var(--bg-surface-2); border:1px solid var(--border); border-radius:10px; padding:11px 14px; font-size:13.5px; color:var(--text-1); outline:none; transition:border-color .2s,box-shadow .2s; font-family:inherit; }
-  .modal-input:focus { border-color:var(--accent-border); box-shadow:0 0 0 3px rgba(161,117,252,0.1); }
+  .modal-input:focus { border-color:var(--border-hover); }
   .modal-input::placeholder { color:var(--text-3); }
   .modal-select { width:100%; background:var(--bg-surface-2); border:1px solid var(--border); border-radius:10px; padding:11px 14px; font-size:13.5px; color:var(--text-1); outline:none; font-family:inherit; cursor:pointer; }
   .modal-select option { background:#130a2e; }
@@ -252,20 +251,20 @@ const CSS = `
   .modal-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
   .chk-row { display:flex; align-items:center; gap:9px; cursor:pointer; user-select:none; }
   .chk-box { width:18px; height:18px; border-radius:5px; border:1.5px solid rgba(255,255,255,0.13); background:var(--bg-input); display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:all .15s; }
-  .chk-box.chk-on { background:#A175FC; border-color:#A175FC; box-shadow:0 0 14px rgba(161,117,252,0.5); }
+  .chk-box.chk-on { background:#111111; border-color:#111111; }
   .li-row { display:flex; align-items:center; gap:12px; padding:11px 0; border-bottom:1px solid var(--border); }
   .li-row:last-child { border-bottom:none; }
   .qty-btn { width:28px; height:28px; border-radius:7px; background:var(--bg-surface-2); border:1px solid var(--border); color:var(--text-2); font-size:15px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all .15s; flex-shrink:0; }
-  .qty-btn:hover:not(:disabled) { background:rgba(161,117,252,0.18); border-color:rgba(161,117,252,0.35); color:#B48CFF; }
+  .qty-btn:hover:not(:disabled) { background:var(--bg-surface-2); border-color:var(--border-hover); color:var(--text-1); }
   .qty-btn:disabled { opacity:.28; cursor:not-allowed; }
 
   /* ── Info grid ── */
   .info-label { font-size:10px; font-weight:700; color:var(--text-3); letter-spacing:.07em; text-transform:uppercase; }
   .info-val   { font-size:12.5px; color:var(--text-1); margin-top:2px; line-height:1.5; }
   .stat-card  { background:var(--bg-surface); border:1px solid var(--border); border-radius:14px; padding:13px 15px; transition:all .22s cubic-bezier(.16,1,.3,1); box-shadow:var(--shadow-card); }
-  .stat-card:hover { border-color:var(--accent-border); box-shadow:var(--shadow-card-hover); transform:translateY(-1px); }
-  [data-theme="dark"] .stat-card { background:linear-gradient(145deg,rgba(255,255,255,0.055) 0%,rgba(161,117,252,0.018) 100%); box-shadow:0 4px 16px rgba(0,0,0,0.18); }
-  [data-theme="dark"] .stat-card:hover { background:linear-gradient(145deg,rgba(255,255,255,0.07) 0%,rgba(161,117,252,0.03) 100%); box-shadow:0 8px 28px rgba(0,0,0,0.28),0 0 0 1px rgba(161,117,252,0.1); }
+  .stat-card:hover { border-color:var(--border-hover); box-shadow:var(--shadow-card-hover); transform:translateY(-1px); }
+  [data-theme="dark"] .stat-card { background:rgba(255,255,255,0.04); box-shadow:0 4px 16px rgba(0,0,0,0.18); }
+  [data-theme="dark"] .stat-card:hover { background:rgba(255,255,255,0.06); box-shadow:0 8px 28px rgba(0,0,0,0.28); }
 
   /* ── Tracking ── */
   .track-pill { display:inline-flex; align-items:center; gap:5px; font-size:10.5px; font-weight:600; padding:3px 9px; border-radius:100px; }
@@ -283,76 +282,74 @@ const CSS = `
   .rtbar::-webkit-scrollbar { display:none; }
   .rtbar-btn { min-width:30px; height:30px; display:flex; align-items:center; justify-content:center; border-radius:7px; cursor:pointer; font-size:12px; font-weight:700; font-family:inherit; color:var(--text-3); transition:all .16s; border:none; background:transparent; padding:0 6px; white-space:nowrap; gap:4px; }
   .rtbar-btn:hover { background:var(--bg-surface-2); color:var(--text-1); }
-  .rtbar-btn.rton { background:rgba(161,117,252,0.16); color:#B48CFF; }
+  .rtbar-btn.rton { background:var(--bg-surface-2); color:var(--text-1); }
   .rtbar-sep { width:1px; height:18px; background:var(--bg-surface-2); margin:0 6px; flex-shrink:0; }
   .compose-ta[contenteditable=true]:empty:before { content:attr(data-placeholder); color:var(--text-3); pointer-events:none; display:block; }
   .cm-input { color:var(--text-1) !important; -webkit-text-fill-color:var(--text-1) !important; background:transparent !important; }
   .cm-input::placeholder { color:var(--text-3); -webkit-text-fill-color:var(--text-3); }
-  .cm-input:focus { caret-color:#A175FC; outline:none; }
+  .cm-input:focus { caret-color:var(--text-1); outline:none; }
   .cm-input:-webkit-autofill,
   .cm-input:-webkit-autofill:hover,
   .cm-input:-webkit-autofill:focus,
   .cm-input:-webkit-autofill:active {
     -webkit-box-shadow: 0 0 0 1000px var(--bg-surface) inset !important;
     -webkit-text-fill-color: var(--text-1) !important;
-    caret-color: var(--accent);
+    caret-color: var(--text-1);
     transition: background-color 9999s ease-in-out 0s;
   }
 
   /* ── Emoji picker — glassmorphism ── */
-  .emoji-pop { position:absolute; bottom:calc(100% + 8px); left:-8px; background:rgba(12,6,32,0.94); backdrop-filter:blur(28px); -webkit-backdrop-filter:blur(28px); border:1px solid var(--border); border-radius:16px; padding:10px; z-index:200; box-shadow:0 24px 80px rgba(0,0,0,0.72),0 0 0 1px rgba(161,117,252,0.07); animation:fadeUp .16s ease both; }
+  .emoji-pop { position:absolute; bottom:calc(100% + 8px); left:-8px; background:var(--bg-surface); backdrop-filter:blur(28px); -webkit-backdrop-filter:blur(28px); border:1px solid var(--border); border-radius:16px; padding:10px; z-index:200; box-shadow:0 24px 80px rgba(0,0,0,0.2); animation:fadeUp .16s ease both; }
   .emoji-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:2px; }
   .emoji-btn { width:32px; height:32px; display:flex; align-items:center; justify-content:center; border-radius:8px; font-size:17px; cursor:pointer; border:none; background:transparent; transition:background .1s; }
-  .emoji-btn:hover { background:rgba(161,117,252,0.15); }
+  .emoji-btn:hover { background:var(--bg-surface-2); }
 
   /* ── Attachments ── */
-  .attach-chip { display:inline-flex; align-items:center; gap:5px; padding:4px 10px 4px 8px; background:rgba(161,117,252,0.08); border:1px solid rgba(161,117,252,0.2); border-radius:8px; font-size:11px; color:rgba(161,117,252,0.85); }
+  .attach-chip { display:inline-flex; align-items:center; gap:5px; padding:4px 10px 4px 8px; background:var(--bg-surface-2); border:1px solid var(--border); border-radius:8px; font-size:11px; color:var(--text-2); }
 
   /* ── Translate banner ── */
-  .xlate-bar { display:flex; align-items:center; gap:8px; padding:6px 14px; background:linear-gradient(90deg,rgba(161,117,252,0.1) 0%,rgba(161,117,252,0.04) 100%); border-bottom:1px solid rgba(161,117,252,0.14); font-size:11.5px; color:#B48CFF; }
+  .xlate-bar { display:flex; align-items:center; gap:8px; padding:6px 14px; background:var(--bg-surface-2); border-bottom:1px solid var(--border); font-size:11.5px; color:var(--text-2); }
 
   /* ── Msg translate btn ── */
   .msg-xlate-btn { font-size:10px; font-weight:600; color:var(--text-3); background:none; border:none; cursor:pointer; padding:2px 7px; font-family:inherit; transition:all .15s; border-radius:5px; }
-  .msg-xlate-btn:hover { color:#A175FC; background:rgba(161,117,252,0.1); }
+  .msg-xlate-btn:hover { color:var(--text-1); background:var(--bg-surface-2); }
 
   /* ── Message bubbles — clean, email-style ── */
   .msg-in  {
     background: #FFFFFF;
-    border: 1px solid #E2E8F0;
-    border-radius: 2px 14px 14px 14px;
-    padding: 14px 18px;
-    font-size: 13.5px;
-    line-height: 1.75;
-    color: #0F172A;
+    border: 1px solid rgba(0,0,0,0.08);
+    border-radius: 4px 12px 12px 12px;
+    padding: 12px 16px;
+    font-size: 14px;
+    line-height: 1.6;
+    color: #111111;
     white-space: pre-wrap;
     word-break: break-word;
-    box-shadow: 0 1px 3px rgba(15,23,42,0.06);
   }
   [data-theme="dark"] .msg-in {
     background: rgba(255,255,255,0.06);
     border: 1px solid rgba(255,255,255,0.1);
-    border-radius: 2px 14px 14px 14px;
+    border-radius: 4px 12px 12px 12px;
     color: var(--text-1);
     box-shadow: none;
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
   }
   .msg-out {
-    background: #F0EEFF;
-    border: 1px solid #DDD6FE;
-    border-radius: 14px 2px 14px 14px;
-    padding: 14px 18px;
-    font-size: 13.5px;
-    line-height: 1.75;
-    color: #0F172A;
+    background: #F5F5F5;
+    border: 1px solid rgba(0,0,0,0.06);
+    border-radius: 12px 4px 12px 12px;
+    padding: 12px 16px;
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--text-1);
     white-space: pre-wrap;
     word-break: break-word;
-    box-shadow: 0 1px 3px rgba(124,92,252,0.08);
   }
   [data-theme="dark"] .msg-out {
-    background: rgba(124,92,252,0.14);
-    border: 1px solid rgba(161,117,252,0.22);
-    border-radius: 14px 2px 14px 14px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 12px 4px 12px 12px;
     color: var(--text-1);
     box-shadow: none;
     backdrop-filter: blur(12px);
@@ -399,16 +396,16 @@ const CSS = `
 
   /* ── Right Panel — Gorgias style ── */
   .rp-search { width:100%; padding:7px 12px 7px 32px; background:var(--bg-surface-2); border:1px solid var(--border); border-radius:8px; color:var(--text-1); font-size:12px; outline:none; transition:border-color .2s; font-family:inherit; }
-  .rp-search:focus { border-color:var(--accent-border); }
+  .rp-search:focus { border-color:var(--border-hover); }
   .rp-search::placeholder { color:var(--text-3); }
   .rp-tab { flex:1; padding:8px 6px; background:transparent; cursor:pointer; font-size:11.5px; font-weight:500; font-family:inherit; color:var(--text-2); border:none; border-bottom:2px solid transparent; transition:all .15s; white-space:nowrap; text-align:center; }
-  .rp-tab.on { color:var(--text-1); border-bottom-color:var(--accent); font-weight:600; }
+  .rp-tab.on { color:var(--text-1); border-bottom-color:#111111; font-weight:600; }
   .rp-tab:hover:not(.on) { color:var(--text-1); }
   .rp-section { width:100%; display:flex; align-items:center; gap:6px; padding:9px 14px; background:transparent; cursor:pointer; border:none; font-family:inherit; text-align:left; transition:background .12s; }
   .rp-section:hover { background:var(--bg-surface-2); }
-  .rp-kv { display:flex; align-items:baseline; justify-content:space-between; gap:16px; padding:3px 0; }
-  .rp-kv-l { font-size:11px; color:var(--text-2); flex-shrink:0; min-width:72px; }
-  .rp-kv-v { font-size:11.5px; color:var(--text-1); text-align:right; word-break:break-word; }
+  .rp-kv { display:flex; align-items:baseline; justify-content:space-between; gap:16px; padding:4px 14px; }
+  .rp-kv-l { font-size:12px; color:var(--text-3); flex-shrink:0; min-width:72px; }
+  .rp-kv-v { font-size:12px; font-weight:500; color:var(--text-1); text-align:right; word-break:break-word; }
   .rp-order-hdr { width:100%; display:flex; align-items:center; gap:6px; padding:10px 14px 9px; background:transparent; cursor:pointer; border:none; font-family:inherit; text-align:left; transition:background .12s; }
   .rp-order-hdr:hover { background:var(--bg-surface-2); }
   .rp-action { display:inline-flex; align-items:center; gap:4px; font-size:11px; font-weight:500; font-family:inherit; padding:4px 9px; border-radius:6px; border:1px solid var(--border); background:var(--bg-surface); color:var(--text-1); cursor:pointer; transition:all .15s; white-space:nowrap; }
@@ -442,7 +439,7 @@ const I = {
   truck2:     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>,
   note:       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>,
   tag:        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>,
-  spin:       <div style={{width:13,height:13,border:'2px solid rgba(255,255,255,0.18)',borderTop:'2px solid #A175FC',borderRadius:'50%',animation:'spin .7s linear infinite',flexShrink:0}} />,
+  spin:       <div style={{width:13,height:13,border:'2px solid var(--border)',borderTop:'2px solid #111111',borderRadius:'50%',animation:'spin .7s linear infinite',flexShrink:0}} />,
   bold:       <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M6 4h8a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/><path d="M6 12h9a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/></svg>,
   italic:     <svg width="11" height="12" viewBox="0 0 24 24" fill="currentColor"><line x1="19" y1="4" x2="10" y2="4" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/><line x1="14" y1="20" x2="5" y2="20" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/><line x1="15" y1="4" x2="9" y2="20" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/></svg>,
   underline:  <svg width="12" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M6 3v7a6 6 0 0 0 6 6 6 6 0 0 0 6-6V3"/><line x1="4" y1="21" x2="20" y2="21"/></svg>,
@@ -470,11 +467,11 @@ function fmtPrice(v,c='EUR') { return new Intl.NumberFormat('en-US',{style:'curr
 function authFetch(url, opts={}, token) { return fetch(url,{...opts,headers:{'Content-Type':'application/json',Authorization:`Bearer ${token}`,...opts.headers}}) }
 
 // ─── Base components ─────────────────────────────────────────
-function Avatar({ name='?', size=32 }) {
+function Avatar({ name='?', size=32, agent=false }) {
   const ini=(name||'?').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase()
-  const COLS=['#7c3aed','#a855f7','#059669','#d97706','#0ea5e9','#be185d','#6d28d9']
-  const col=COLS[(ini.charCodeAt(0)+(ini.charCodeAt(1)||0))%COLS.length]
-  return <div style={{width:size,height:size,borderRadius:'50%',background:col,color:'#fff',display:'flex',alignItems:'center',justifyContent:'center',fontSize:size*0.34,fontWeight:700,flexShrink:0,letterSpacing:'-0.01em'}}>{ini}</div>
+  const bg = agent ? '#111111' : '#F0F0F0'
+  const col = agent ? '#FFFFFF' : '#555555'
+  return <div style={{width:size,height:size,borderRadius:'50%',background:bg,color:col,display:'flex',alignItems:'center',justifyContent:'center',fontSize:size*0.34,fontWeight:700,flexShrink:0,letterSpacing:'-0.01em'}}>{ini}</div>
 }
 
 function OrderBadge({ status }) {
@@ -489,7 +486,7 @@ function TicketBadge({ status }) {
 }
 
 function Spinner({ size=13, white=false }) {
-  return <div style={{width:size,height:size,border:`2px solid rgba(255,255,255,0.18)`,borderTop:`2px solid ${white?'#fff':'#A175FC'}`,borderRadius:'50%',animation:'spin .7s linear infinite',flexShrink:0}} />
+  return <div style={{width:size,height:size,border:`2px solid var(--border)`,borderTop:`2px solid ${white?'#fff':'#111111'}`,borderRadius:'50%',animation:'spin .7s linear infinite',flexShrink:0}} />
 }
 
 function Toast({ msg, type, onDone }) {
@@ -722,7 +719,7 @@ function CreateTicketView({ token, emailProvider, connectedEmail, onClose, onSuc
                   </button>
                 </span>
               ))}
-              <button onClick={()=>setShowTagInput(v=>!v)} style={{display:'inline-flex',alignItems:'center',gap:3,background:'none',border:'none',cursor:'pointer',color:'var(--accent)',fontSize:11.5,fontFamily:'inherit',padding:0}}>
+              <button onClick={()=>setShowTagInput(v=>!v)} style={{display:'inline-flex',alignItems:'center',gap:3,background:'none',border:'none',cursor:'pointer',color:'var(--text-2)',fontSize:11.5,fontFamily:'inherit',padding:0}}>
                 <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                 Add tags
               </button>
@@ -733,16 +730,16 @@ function CreateTicketView({ token, emailProvider, connectedEmail, onClose, onSuc
                     if(e.key==='Escape')setShowTagInput(false)
                   }}
                   placeholder="tag name…"
-                  style={{background:'transparent',border:'none',borderBottom:'1px solid var(--accent)',outline:'none',fontSize:11.5,color:'var(--text-1)',fontFamily:'inherit',width:84}}
+                  style={{background:'transparent',border:'none',borderBottom:'1px solid var(--border-hover)',outline:'none',fontSize:11.5,color:'var(--text-1)',fontFamily:'inherit',width:84}}
                 />
               )}
             </div>
             <div style={{width:1,height:13,background:'var(--border)',flexShrink:0}} />
-            <span>Contact reason: <button style={{color:'var(--accent)',background:'none',border:'none',cursor:'pointer',fontFamily:'inherit',fontSize:12,padding:0}}>+Add</button></span>
+            <span>Contact reason: <button style={{color:'var(--text-2)',background:'none',border:'none',cursor:'pointer',fontFamily:'inherit',fontSize:12,padding:0}}>+Add</button></span>
             <div style={{width:1,height:13,background:'var(--border)',flexShrink:0}} />
-            <span>Product: <button style={{color:'var(--accent)',background:'none',border:'none',cursor:'pointer',fontFamily:'inherit',fontSize:12,padding:0}}>+Add</button></span>
+            <span>Product: <button style={{color:'var(--text-2)',background:'none',border:'none',cursor:'pointer',fontFamily:'inherit',fontSize:12,padding:0}}>+Add</button></span>
             <div style={{width:1,height:13,background:'var(--border)',flexShrink:0}} />
-            <span>Resolution: <button style={{color:'var(--accent)',background:'none',border:'none',cursor:'pointer',fontFamily:'inherit',fontSize:12,padding:0}}>+Add</button></span>
+            <span>Resolution: <button style={{color:'var(--text-2)',background:'none',border:'none',cursor:'pointer',fontFamily:'inherit',fontSize:12,padding:0}}>+Add</button></span>
           </div>
         </div>
 
@@ -756,7 +753,7 @@ function CreateTicketView({ token, emailProvider, connectedEmail, onClose, onSuc
           <div style={{display:'flex',alignItems:'center',padding:'8px 14px',borderBottom:'1px solid var(--border)',gap:8}}>
             <span style={{fontSize:10.5,fontWeight:700,color:'var(--text-3)',letterSpacing:'.08em',textTransform:'uppercase',width:38,flexShrink:0}}>To</span>
             <input value={to} onChange={e=>setTo(e.target.value)} placeholder="Search customers..." autoFocus style={{flex:1,background:'transparent',border:'none',outline:'none',fontSize:13,color:'var(--text-1)',fontFamily:'inherit'}} />
-            <button onClick={()=>setShowCC(v=>!v)} style={{fontSize:10.5,fontWeight:600,color:showCC?'var(--accent)':'var(--text-3)',background:'none',border:'1px solid var(--border)',borderRadius:5,padding:'2px 9px',cursor:'pointer',fontFamily:'inherit',flexShrink:0,transition:'all .15s'}}>Cc / Bcc</button>
+            <button onClick={()=>setShowCC(v=>!v)} style={{fontSize:10.5,fontWeight:600,color:showCC?'var(--text-1)':'var(--text-3)',background:showCC?'var(--bg-surface-2)':'none',border:'1px solid var(--border)',borderRadius:5,padding:'2px 9px',cursor:'pointer',fontFamily:'inherit',flexShrink:0,transition:'all .15s'}}>Cc / Bcc</button>
           </div>
 
           {/* From row */}
@@ -823,7 +820,7 @@ function CreateTicketView({ token, emailProvider, connectedEmail, onClose, onSuc
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--text-3)" strokeWidth="2.2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
               <span style={{fontSize:11,color:'var(--text-3)',fontWeight:500}}>Suggested macros</span>
               {suggested.map(m=>(
-                <button key={m.id} onClick={()=>applyMacro(m)} style={{padding:'2px 10px',background:'var(--bg-input)',border:'1px solid var(--border)',borderRadius:100,fontSize:11.5,color:'var(--text-1)',cursor:'pointer',fontFamily:'inherit',transition:'border-color .15s'}} onMouseEnter={e=>e.currentTarget.style.borderColor='var(--accent)'} onMouseLeave={e=>e.currentTarget.style.borderColor='var(--border)'}>
+                <button key={m.id} onClick={()=>applyMacro(m)} style={{padding:'2px 10px',background:'var(--bg-input)',border:'1px solid var(--border)',borderRadius:100,fontSize:11.5,color:'var(--text-1)',cursor:'pointer',fontFamily:'inherit',transition:'border-color .15s'}} onMouseEnter={e=>e.currentTarget.style.borderColor='var(--border-hover)'} onMouseLeave={e=>e.currentTarget.style.borderColor='var(--border)'}>
                   {m.name}
                 </button>
               ))}
@@ -844,15 +841,15 @@ function CreateTicketView({ token, emailProvider, connectedEmail, onClose, onSuc
             </button>
             <div style={{flex:1}} />
             {/* Send button group */}
-            <div style={{display:'flex',alignItems:'stretch',borderRadius:9,overflow:'hidden',boxShadow:'0 2px 10px rgba(161,117,252,0.35)',flexShrink:0}}>
-              <button onClick={doSend} disabled={sending} style={{display:'flex',alignItems:'center',gap:6,padding:'7px 16px',background:'linear-gradient(135deg,#A175FC 0%,#7B45E8 100%)',color:'#fff',border:'none',cursor:sending?'not-allowed':'pointer',fontSize:12.5,fontWeight:600,fontFamily:'inherit',opacity:sending?0.7:1,transition:'opacity .15s'}}>
+            <div style={{display:'flex',alignItems:'stretch',borderRadius:9,overflow:'hidden',gap:1,flexShrink:0}}>
+              <button onClick={doSend} disabled={sending} style={{display:'flex',alignItems:'center',gap:6,padding:'7px 16px',background:'#111111',color:'#fff',border:'none',cursor:sending?'not-allowed':'pointer',fontSize:12.5,fontWeight:600,fontFamily:'inherit',opacity:sending?0.7:1,transition:'background .15s'}}>
                 {sending
                   ? <><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" style={{animation:'spin .8s linear infinite'}}><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>Sending…</>
                   : <>Send</>
                 }
               </button>
-              <div style={{width:1,background:'rgba(255,255,255,0.22)',flexShrink:0}} />
-              <button onClick={doSend} disabled={sending} style={{display:'flex',alignItems:'center',gap:5,padding:'7px 16px',background:'linear-gradient(135deg,#A175FC 0%,#7B45E8 100%)',color:'#fff',border:'none',cursor:sending?'not-allowed':'pointer',fontSize:12.5,fontWeight:600,fontFamily:'inherit',opacity:sending?0.7:1,transition:'opacity .15s',whiteSpace:'nowrap'}}>
+              <div style={{width:1,background:'rgba(255,255,255,0.15)',flexShrink:0}} />
+              <button onClick={doSend} disabled={sending} style={{display:'flex',alignItems:'center',gap:5,padding:'7px 16px',background:'#111111',color:'#fff',border:'none',cursor:sending?'not-allowed':'pointer',fontSize:12.5,fontWeight:600,fontFamily:'inherit',opacity:sending?0.7:1,transition:'background .15s',whiteSpace:'nowrap'}}>
                 Send &amp; Close
               </button>
             </div>
@@ -913,7 +910,7 @@ function RefundModal({ order, token, onClose, onSuccess }) {
       {/* 3-way mode toggle */}
       <div style={{display:'flex',gap:5,marginBottom:18,padding:'4px',background:'var(--bg-input)',borderRadius:11,border:'1px solid var(--border)'}}>
         {MODES.map(o=>(
-          <button key={o.v} onClick={()=>setMode(o.v)} style={{flex:1,padding:'8px 10px',borderRadius:8,fontSize:12,fontWeight:600,fontFamily:'inherit',cursor:'pointer',transition:'all .15s',background:mode===o.v?'rgba(161,117,252,0.2)':'transparent',color:mode===o.v?'#C3A3FF':'var(--text-3)',border:mode===o.v?'1px solid rgba(161,117,252,0.35)':'1px solid transparent',boxShadow:mode===o.v?'0 2px 8px rgba(161,117,252,0.15)':'none'}}>{o.l}</button>
+          <button key={o.v} onClick={()=>setMode(o.v)} style={{flex:1,padding:'8px 10px',borderRadius:8,fontSize:12,fontWeight:600,fontFamily:'inherit',cursor:'pointer',transition:'all .15s',background:mode===o.v?'#111111':'transparent',color:mode===o.v?'#ffffff':'var(--text-3)',border:'1px solid transparent'}}>{o.l}</button>
         ))}
       </div>
 
@@ -1078,7 +1075,7 @@ function DuplicateModal({ order, token, onClose, onSuccess }) {
         <label className="modal-label">Discount</label>
         <div style={{display:'flex',gap:6,marginBottom:discountType!=='none'?10:0}}>
           {[{v:'none',l:'None'},{v:'percentage',l:'Percentage %'},{v:'fixed',l:'Fixed amount'}].map(o=>(
-            <button key={o.v} onClick={()=>{setDiscountType(o.v);setDiscountValue('')}} style={{flex:1,padding:'7px 8px',borderRadius:8,fontSize:11.5,fontWeight:600,fontFamily:'inherit',cursor:'pointer',transition:'all .15s',background:discountType===o.v?'rgba(161,117,252,0.18)':'var(--bg-input)',color:discountType===o.v?'#A175FC':'var(--text-3)',border:discountType===o.v?'1px solid rgba(161,117,252,0.3)':'1px solid rgba(255,255,255,0.07)'}}>{o.l}</button>
+            <button key={o.v} onClick={()=>{setDiscountType(o.v);setDiscountValue('')}} style={{flex:1,padding:'7px 8px',borderRadius:8,fontSize:11.5,fontWeight:600,fontFamily:'inherit',cursor:'pointer',transition:'all .15s',background:discountType===o.v?'#111111':'var(--bg-input)',color:discountType===o.v?'#ffffff':'var(--text-3)',border:'1px solid transparent'}}>{o.l}</button>
           ))}
         </div>
         {discountType!=='none'&&(
@@ -1091,7 +1088,7 @@ function DuplicateModal({ order, token, onClose, onSuccess }) {
 
       {/* New total preview */}
       {discountType!=='none'&&Number(discountValue)>0&&(
-        <div style={{background:'rgba(161,117,252,0.06)',border:'1px solid rgba(161,117,252,0.15)',borderRadius:10,padding:'10px 14px',marginBottom:14,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+        <div style={{background:'var(--bg-surface-2)',border:'1px solid var(--border)',borderRadius:10,padding:'10px 14px',marginBottom:14,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
           <div>
             <div style={{fontSize:11,color:'var(--text-3)',marginBottom:2}}>Discount</div>
             <div style={{fontSize:12.5,fontWeight:700,color:'#fb7185'}}>− {fmtPrice(discountAmount,order.currency)}</div>
@@ -1245,10 +1242,10 @@ function TicketActionBar({ meta, status, onClose, onAddTag, onRemoveTag, onField
   )
 
   return (
-    <div style={{display:'flex',alignItems:'center',gap:18,padding:'9px 0 0',marginTop:9,borderTop:'1px solid var(--border)',minHeight:34,flexWrap:'wrap'}}>
+    <div style={{display:'flex',alignItems:'center',gap:8,padding:'8px 0 0',marginTop:9,borderTop:'1px solid var(--border)',minHeight:42,flexWrap:'wrap'}}>
       <button
         onClick={onClose}
-        style={{display:'inline-flex',alignItems:'center',gap:5,padding:'4px 9px',border:'1px solid var(--border)',borderRadius:7,background:status==='closed'?'var(--bg-surface-2)':'var(--bg-surface)',color:'var(--text-2)',fontSize:11,fontWeight:600,cursor:'pointer',fontFamily:'inherit'}}
+        style={{display:'inline-flex',alignItems:'center',gap:5,height:26,padding:'0 10px',border:'1px solid rgba(0,0,0,0.09)',borderRadius:5,background:'#FAFAFA',color:'#555555',fontSize:12,fontWeight:600,cursor:'pointer',fontFamily:'inherit'}}
         title="Close ticket"
       >
         <span style={{fontSize:12}}>✓</span>
@@ -1261,7 +1258,7 @@ function TicketActionBar({ meta, status, onClose, onAddTag, onRemoveTag, onField
             key={tag}
             onClick={() => onRemoveTag(tag)}
             title="Remove tag"
-            style={{display:'inline-flex',alignItems:'center',gap:4,padding:'3px 7px',border:'1px solid var(--border)',borderRadius:999,background:'var(--bg-surface-2)',color:'var(--text-2)',fontSize:10.5,fontWeight:600,cursor:'pointer',fontFamily:'inherit'}}
+            style={{display:'inline-flex',alignItems:'center',gap:4,height:22,padding:'0 8px',border:'1px solid rgba(0,0,0,0.09)',borderRadius:100,background:'#F5F5F5',color:'#555555',fontSize:11,fontWeight:500,cursor:'pointer',fontFamily:'inherit'}}
           >
             {tag}
             <span style={{color:'var(--text-3)'}}>×</span>
@@ -1348,14 +1345,14 @@ function MacroPanel({ macros, aiMacros, onInsert, onClose, customerName, onManag
     <div style={{borderTop:'1px solid var(--border)',animation:'fadeUp .18s ease both',display:'flex',flexDirection:'column',height:'min(360px,46vh)',minHeight:220,background:'var(--bg-surface)'}}>
       {/* Search + gear row */}
       <div style={{display:'flex',alignItems:'center',gap:8,padding:'8px 12px',borderBottom:'1px solid var(--border)',background:'var(--bg-surface-2)',flexShrink:0}}>
-        <span style={{color:'var(--accent-text)',display:'flex',flexShrink:0}}>{I.lightning}</span>
+        <span style={{color:'var(--text-3)',display:'flex',flexShrink:0}}>{I.lightning}</span>
         <input ref={searchRef} value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search macros by name, tag or content…" style={{flex:1,background:'transparent',border:'none',outline:'none',fontSize:12.5,color:'var(--text-1)',fontFamily:'inherit'}} />
-        {aiMacros?.length>0 && <span style={{fontSize:10,fontWeight:700,padding:'2px 7px',borderRadius:5,background:'rgba(161,117,252,0.15)',color:'#A175FC',letterSpacing:'.04em',flexShrink:0}}>AI ✦</span>}
+        {aiMacros?.length>0 && <span style={{fontSize:10,fontWeight:700,padding:'2px 7px',borderRadius:5,background:'var(--bg-surface-2)',color:'var(--text-2)',letterSpacing:'.04em',flexShrink:0}}>AI ✦</span>}
         {/* Gear settings */}
         <div ref={gearRef} style={{position:'relative',flexShrink:0}}>
           <button
             onClick={()=>setGearOpen(p=>!p)}
-            style={{color:gearOpen?'var(--accent-text)':'var(--text-2)',cursor:'pointer',display:'flex',padding:'5px 6px',borderRadius:6,background:gearOpen?'var(--accent-soft)':'transparent',border:gearOpen?'1px solid var(--accent-border)':'1px solid transparent',transition:'all .15s'}}
+            style={{color:gearOpen?'var(--text-1)':'var(--text-2)',cursor:'pointer',display:'flex',padding:'5px 6px',borderRadius:6,background:gearOpen?'var(--bg-surface-2)':'transparent',border:gearOpen?'1px solid var(--border)':'1px solid transparent',transition:'all .15s'}}
             onMouseEnter={e=>{if(!gearOpen){e.currentTarget.style.background='var(--bg-surface)';e.currentTarget.style.border='1px solid var(--border)'}}}
             onMouseLeave={e=>{if(!gearOpen){e.currentTarget.style.background='transparent';e.currentTarget.style.border='1px solid transparent'}}}
             title="Macro settings"
@@ -1400,7 +1397,7 @@ function MacroPanel({ macros, aiMacros, onInsert, onClose, customerName, onManag
               {aiMacros.map(m=>(
                 <div key={m.id} className={`macro-item${active?.id===m.id?' mi-active':''}`} onClick={()=>setSelected(m)} onDoubleClick={()=>applyMacro(m)} style={{display:'flex',alignItems:'flex-start',gap:6}}>
                   <div style={{flex:1,minWidth:0}}>
-                    <div style={{fontSize:12.5,fontWeight:600,color:active?.id===m.id?'#A175FC':'var(--text-1)',marginBottom:3}}>{m.name}</div>
+                    <div style={{fontSize:12.5,fontWeight:600,color:'var(--text-1)',marginBottom:3}}>{m.name}</div>
                   </div>
                 </div>
               ))}
@@ -1418,7 +1415,7 @@ function MacroPanel({ macros, aiMacros, onInsert, onClose, customerName, onManag
               {favMacros.map(m=>(
                 <div key={m.id} className={`macro-item${active?.id===m.id?' mi-active':''}`} onClick={()=>setSelected(m)} onDoubleClick={()=>applyMacro(m)} style={{display:'flex',alignItems:'flex-start',gap:6}}>
                   <div style={{flex:1,minWidth:0}}>
-                    <div style={{fontSize:12.5,fontWeight:600,color:active?.id===m.id?'#A175FC':'var(--text-1)',marginBottom:3}}>{m.name}</div>
+                    <div style={{fontSize:12.5,fontWeight:600,color:'var(--text-1)',marginBottom:3}}>{m.name}</div>
                     <div style={{display:'flex',gap:4,flexWrap:'wrap'}}>
                       {(m.tags||[]).map(t=><span key={t} className="macro-tag">{t}</span>)}
                     </div>
@@ -1436,7 +1433,7 @@ function MacroPanel({ macros, aiMacros, onInsert, onClose, customerName, onManag
               {nonFavMacros.map(m=>(
                 <div key={m.id} className={`macro-item${active?.id===m.id?' mi-active':''}`} onClick={()=>setSelected(m)} onDoubleClick={()=>applyMacro(m)} style={{display:'flex',alignItems:'flex-start',gap:6}}>
                   <div style={{flex:1,minWidth:0}}>
-                    <div style={{fontSize:12.5,fontWeight:600,color:active?.id===m.id?'#A175FC':'var(--text-1)',marginBottom:3}}>{m.name}</div>
+                    <div style={{fontSize:12.5,fontWeight:600,color:'var(--text-1)',marginBottom:3}}>{m.name}</div>
                     <div style={{display:'flex',gap:4,flexWrap:'wrap'}}>
                       {(m.tags||[]).map(t=><span key={t} className="macro-tag">{t}</span>)}
                     </div>
@@ -1537,7 +1534,7 @@ function MacroEditor({ macro, onSave, onDuplicate, onDelete, onBack }) {
             {/* Recipient row */}
             <div style={{display:'flex',alignItems:'center',gap:8,padding:'7px 12px',borderRadius:'8px 8px 0 0',border:'1px solid var(--border)',borderBottom:'none',background:'var(--bg-surface-2)',fontSize:12,color:'var(--text-2)'}}>
               <span style={{fontWeight:600}}>To:</span>
-              <span style={{padding:'2px 8px',borderRadius:5,background:'var(--accent-soft)',color:'var(--accent-text)',fontWeight:600,fontSize:11}}>Current client</span>
+              <span style={{padding:'2px 8px',borderRadius:5,background:'var(--bg-surface-2)',color:'var(--text-2)',fontWeight:600,fontSize:11,border:'1px solid var(--border)'}}>Current client</span>
             </div>
             {/* Toolbar */}
             <div style={{display:'flex',alignItems:'center',gap:2,padding:'5px 10px',border:'1px solid var(--border)',borderBottom:'none',background:'var(--bg-surface)',flexWrap:'wrap'}}>
@@ -1673,13 +1670,13 @@ function MacroManager({ macros, favs, onClose, onSaveMacro, onDeleteMacro, onTog
           <option value="all">All tags</option>
           {allTags.map(t=><option key={t} value={t}>{t}</option>)}
         </select>
-        <button onClick={()=>setEditing('new')} style={{padding:'8px 16px',borderRadius:8,border:'none',background:'var(--accent)',color:'#fff',fontWeight:600,fontSize:13,cursor:'pointer',fontFamily:'inherit',whiteSpace:'nowrap'}}>Create macro</button>
+        <button onClick={()=>setEditing('new')} style={{padding:'8px 16px',borderRadius:8,border:'none',background:'#111111',color:'#fff',fontWeight:600,fontSize:13,cursor:'pointer',fontFamily:'inherit',whiteSpace:'nowrap'}}>Create macro</button>
       </div>
 
       {/* Tabs */}
       <div style={{display:'flex',gap:0,padding:'0 28px',borderBottom:'1px solid var(--border)',background:'var(--bg-surface)',flexShrink:0}}>
         {['active','archived'].map(t=>(
-          <button key={t} onClick={()=>setTab(t)} style={{padding:'10px 16px',background:'none',border:'none',borderBottom:`2px solid ${tab===t?'var(--accent)':'transparent'}`,color:tab===t?'var(--text-1)':'var(--text-2)',fontWeight:tab===t?600:500,fontSize:13,cursor:'pointer',fontFamily:'inherit',textTransform:'capitalize',transition:'all .15s'}}>
+          <button key={t} onClick={()=>setTab(t)} style={{padding:'10px 16px',background:'none',border:'none',borderBottom:`2px solid ${tab===t?'#111111':'transparent'}`,color:tab===t?'var(--text-1)':'var(--text-2)',fontWeight:tab===t?600:500,fontSize:13,cursor:'pointer',fontFamily:'inherit',textTransform:'capitalize',transition:'all .15s'}}>
             {t.charAt(0).toUpperCase()+t.slice(1)}
           </button>
         ))}
@@ -1714,7 +1711,7 @@ function MacroManager({ macros, favs, onClose, onSaveMacro, onDeleteMacro, onTog
                 {/* Tags */}
                 <td style={{padding:'12px 12px 12px 0'}}>
                   <div style={{display:'flex',gap:4,flexWrap:'wrap'}}>
-                    {(m.tags||[]).map(t=><span key={t} style={{fontSize:10,fontWeight:600,padding:'2px 7px',borderRadius:4,background:'var(--accent-soft)',color:'var(--accent-text)'}}>{t}</span>)}
+                    {(m.tags||[]).map(t=><span key={t} style={{fontSize:10,fontWeight:600,padding:'2px 7px',borderRadius:4,background:'var(--bg-surface-2)',color:'var(--text-2)',border:'1px solid var(--border)'}}>{t}</span>)}
                   </div>
                 </td>
                 {/* Language */}
@@ -2135,7 +2132,7 @@ function InboxPage() {
       <Sidebar />
 
       {/* ═══════════════ LEFT: Thread list ═══════════════ */}
-      <div className="in-panel-l" style={{width:308,display:'flex',flexDirection:'column',flexShrink:0,position:'relative',zIndex:1}}>
+      <div className="in-panel-l" style={{width:260,display:'flex',flexDirection:'column',flexShrink:0,position:'relative',zIndex:1}}>
 
         {/* Header */}
         <div style={{padding:'14px 14px 0',flexShrink:0}}>
@@ -2146,7 +2143,7 @@ function InboxPage() {
             </div>
             <div style={{display:'flex',alignItems:'center',gap:4}}>
               <button onClick={()=>loadThreads(session.access_token)} style={{background:'transparent',color:'var(--text-3)',cursor:'pointer',display:'flex',padding:5,borderRadius:7,transition:'all .15s'}} onMouseEnter={e=>{e.currentTarget.style.color='var(--text-2)';e.currentTarget.style.background='var(--bg-input)'}} onMouseLeave={e=>{e.currentTarget.style.color='var(--text-3)';e.currentTarget.style.background='transparent'}} title="Refresh">{I.refresh}</button>
-              <button onClick={()=>router.push('/inbox/create')} style={{display:'flex',alignItems:'center',gap:5,padding:'5px 11px',borderRadius:8,background:'var(--accent)',border:'none',color:'#fff',cursor:'pointer',fontSize:11.5,fontWeight:600,fontFamily:'inherit',transition:'all .18s',letterSpacing:'.01em'}} onMouseEnter={e=>{e.currentTarget.style.background='var(--accent-hover)'}} onMouseLeave={e=>{e.currentTarget.style.background='var(--accent)'}} title="Create Ticket">
+              <button onClick={()=>router.push('/inbox/create')} style={{display:'flex',alignItems:'center',gap:5,padding:'5px 11px',borderRadius:8,background:'#111111',border:'none',color:'#fff',cursor:'pointer',fontSize:11.5,fontWeight:600,fontFamily:'inherit',transition:'all .18s',letterSpacing:'.01em'}} onMouseEnter={e=>{e.currentTarget.style.background='#333333'}} onMouseLeave={e=>{e.currentTarget.style.background='#111111'}} title="Create Ticket">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                 Create Ticket
               </button>
@@ -2164,7 +2161,7 @@ function InboxPage() {
             {VIEWS.map(v=>(
               <button key={v.id} className={`vtab${view===v.id?' on':''}`} onClick={()=>setView(v.id)}>
                 {v.label}
-                {counts[v.id]>0&&<span style={{marginLeft:4,background:view===v.id?'rgba(161,117,252,0.2)':'var(--bg-input)',color:view===v.id?'#A175FC':'var(--text-3)',fontSize:9,fontWeight:700,padding:'1px 5px',borderRadius:100}}>{counts[v.id]}</span>}
+                {counts[v.id]>0&&<span style={{marginLeft:4,background:view===v.id?'#111111':'var(--bg-surface-2)',color:view===v.id?'#ffffff':'var(--text-3)',fontSize:9,fontWeight:700,padding:'1px 5px',borderRadius:100,border:'1px solid var(--border)'}}>{counts[v.id]}</span>}
               </button>
             ))}
           </div>
@@ -2208,9 +2205,9 @@ function InboxPage() {
             )
           })()}
           {demoMode&&(
-            <div style={{margin:'10px 10px 4px',padding:'8px 12px',background:'rgba(251,191,36,0.07)',border:'1px solid rgba(251,191,36,0.22)',borderRadius:9,display:'flex',alignItems:'center',justifyContent:'space-between',gap:8}}>
-              <span style={{fontSize:11,fontWeight:600,color:'rgba(251,191,36,0.85)'}}>Demo mode</span>
-              <a href="/settings" style={{fontSize:10.5,fontWeight:700,color:'#A175FC',textDecoration:'none',flexShrink:0}}>Connect →</a>
+            <div style={{margin:'8px 12px',padding:'6px 12px',background:'#FAFAFA',border:'1px solid rgba(0,0,0,0.07)',borderRadius:6,display:'flex',alignItems:'center',justifyContent:'space-between',gap:8}}>
+              <span style={{fontSize:12,fontWeight:600,color:'#555555'}}>Demo mode</span>
+              <a href="/settings" style={{fontSize:10.5,fontWeight:700,color:'var(--text-1)',textDecoration:'none',flexShrink:0}}>Connect →</a>
             </div>
           )}
           {loadingThreads&&[0,1,2,3,4].map(i=>(
@@ -2253,7 +2250,7 @@ function InboxPage() {
                     </span>
                     <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{color:'var(--text-1)',flexShrink:0}}><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
                     <span style={{fontSize:10.5,color:'var(--text-1)',flexShrink:0,whiteSpace:'nowrap'}}>{formatDate(thread.date)}</span>
-                    {thread.unread&&<span style={{width:7,height:7,borderRadius:'50%',background:'#ef4444',flexShrink:0,boxShadow:'0 0 0 1.5px rgba(239,68,68,0.25)'}} />}
+                    {thread.unread&&<span style={{width:7,height:7,borderRadius:'50%',background:'#A175FC',flexShrink:0,boxShadow:'0 0 0 1.5px rgba(161,117,252,0.25)'}} />}
                   </div>
                   {/* Row 2: subject */}
                   <div style={{fontSize:12,fontWeight:thread.unread?600:500,color:thread.unread?'var(--text-1)':'var(--text-2)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',marginBottom:3}}>
@@ -2313,9 +2310,9 @@ function InboxPage() {
             </div>
 
             {/* Messages */}
-            <div className="sscroll conv-area" style={{flex:1,overflowY:'auto',padding:'24px 28px 16px',background:'var(--bg-surface)'}}>
+            <div className="sscroll conv-area" style={{flex:1,overflowY:'auto',padding:'20px 24px',background:'#FAFAFA'}}>
               {loadingMsgs&&[0,1].map(i=>(
-                <div key={i} style={{display:'flex',gap:12,flexDirection:i%2===0?'row':'row-reverse',marginBottom:22,animation:`fadeUp .3s ease ${i*.1}s both`}}>
+                <div key={i} style={{display:'flex',gap:12,flexDirection:i%2===0?'row':'row-reverse',marginBottom:20,animation:`fadeUp .3s ease ${i*.1}s both`}}>
                   <div className="skel" style={{width:34,height:34,borderRadius:'50%',flexShrink:0}} />
                   <div className="skel" style={{height:80,width:'60%',borderRadius:18}} />
                 </div>
@@ -2325,10 +2322,10 @@ function InboxPage() {
                 const isNote=msg.isNote
                 const name=extractName(msg.from)
                 return (
-                  <div key={msg.id||idx} style={{marginBottom:22,display:'flex',gap:12,flexDirection:isAgent?'row-reverse':'row',animation:'msgIn .3s cubic-bezier(.16,1,.3,1) both'}}>
-                    {!isNote&&<Avatar name={name} size={32} />}
-                    <div style={{maxWidth:'76%'}}>
-                      <div style={{fontSize:10.5,marginBottom:5,textAlign:isAgent?'right':'left'}}>
+                  <div key={msg.id||idx} style={{marginBottom:20,display:'flex',gap:12,flexDirection:isAgent?'row-reverse':'row',animation:'msgIn .3s cubic-bezier(.16,1,.3,1) both'}}>
+                    {!isNote&&<Avatar name={name} size={26} agent={isAgent} />}
+                    <div style={{maxWidth:'72%'}}>
+                      <div style={{fontSize:12,marginBottom:5,textAlign:isAgent?'right':'left'}}>
                         <span className="msg-sender">{name}</span>
                         <span className="msg-time">{formatDate(msg.date)}</span>
                       </div>
@@ -2399,9 +2396,9 @@ function InboxPage() {
 
                   {/* Macro search row */}
                   <div style={{display:'flex',alignItems:'center',gap:8,padding:'7px 14px',borderBottom:'1px solid var(--border)',cursor:'pointer',transition:'background .12s'}} onClick={()=>setShowMacros(true)} onMouseEnter={e=>e.currentTarget.style.background='var(--bg-surface-2)'} onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
-                    <span style={{color:'var(--accent-text)',display:'flex',flexShrink:0}}>{I.lightning}</span>
+                    <span style={{color:'var(--text-3)',display:'flex',flexShrink:0}}>{I.lightning}</span>
                     <span style={{flex:1,fontSize:12,color:'var(--text-3)'}}>Search macros by name, tags or body...</span>
-                    {aiMacros.length>0&&<span style={{fontSize:9,fontWeight:700,padding:'1px 6px',borderRadius:4,background:'var(--accent-soft)',color:'var(--accent-text)',letterSpacing:'.04em',flexShrink:0}}>AI</span>}
+                    {aiMacros.length>0&&<span style={{fontSize:9,fontWeight:700,padding:'1px 6px',borderRadius:4,background:'var(--bg-surface-2)',color:'var(--text-2)',letterSpacing:'.04em',flexShrink:0,border:'1px solid var(--border)'}}>AI</span>}
                     <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{color:'var(--text-3)',flexShrink:0}}><polyline points="6 9 12 15 18 9"/></svg>
                   </div>
 
@@ -2416,7 +2413,7 @@ function InboxPage() {
                       <div className="xlate-bar">
                         <span style={{display:'flex'}}>{I.globe}</span>
                         <span style={{flex:1}}>Auto-translating to <strong>{customerLang.name}</strong></span>
-                        <button onClick={()=>setAutoTranslate(false)} style={{background:'none',border:'none',cursor:'pointer',color:'rgba(161,117,252,0.6)',display:'flex',padding:0}}>{I.xsmall}</button>
+                        <button onClick={()=>setAutoTranslate(false)} style={{background:'none',border:'none',cursor:'pointer',color:'var(--text-3)',display:'flex',padding:0}}>{I.xsmall}</button>
                       </div>
                     )}
 
@@ -2447,7 +2444,7 @@ function InboxPage() {
                     {/* AI generating dots */}
                     {aiLoading&&(
                       <div style={{padding:'4px 16px 0',display:'flex',alignItems:'center',gap:4}}>
-                        {[0,.18,.36].map(d=><span key={d} style={{width:5,height:5,borderRadius:'50%',background:'var(--accent)',display:'block',animation:`glowPulse .9s ease-in-out ${d}s infinite`}} />)}
+                        {[0,.18,.36].map(d=><span key={d} style={{width:5,height:5,borderRadius:'50%',background:'var(--text-3)',display:'block',animation:`glowPulse .9s ease-in-out ${d}s infinite`}} />)}
                       </div>
                     )}
 
@@ -2497,7 +2494,7 @@ function InboxPage() {
                       </button>
                       <div style={{flex:1}} />
                       <button className="btn-iris" onClick={handleAiReply} disabled={aiLoading||!messages.length} style={{display:'flex',alignItems:'center',gap:6,padding:'7px 13px'}}>
-                        {aiLoading?<Spinner />:I.ai}{aiLoading?'Generating…':'AI Reply'}
+                        {aiLoading?<Spinner />:<span style={{color:'#A175FC',fontSize:13,lineHeight:1}}>✦</span>}{aiLoading?'Generating…':'AI Reply'}
                       </button>
                       <button className="btn-close" onClick={handleSendResolve} disabled={!reply.trim()||sending} style={{marginLeft:6}}>
                         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
@@ -2517,7 +2514,7 @@ function InboxPage() {
 
       {/* ═══════════════ RIGHT: Customer panel — Gorgias style ═══════════════ */}
       {selected&&(
-        <div className="sscroll" style={{width:320,borderLeft:'1px solid var(--border)',display:'flex',flexDirection:'column',flexShrink:0,overflowY:'auto',background:'var(--bg-surface)'}}>
+        <div className="sscroll" style={{width:280,borderLeft:'1px solid var(--border)',display:'flex',flexDirection:'column',flexShrink:0,overflowY:'auto',background:'var(--bg-surface)'}}>
 
           {/* Search */}
           <div style={{padding:'10px 12px',borderBottom:'1px solid var(--border)',flexShrink:0}}>
@@ -2528,7 +2525,7 @@ function InboxPage() {
           </div>
 
           {/* Customer header */}
-          <div style={{padding:'12px 14px 11px',borderBottom:'1px solid var(--border)',flexShrink:0}}>
+          <div style={{padding:'16px 14px',borderBottom:'1px solid var(--border)',flexShrink:0}}>
             <div style={{display:'flex',alignItems:'center',gap:10}}>
               <Avatar name={customer?.customer?`${customer.customer.firstName||''} ${customer.customer.lastName||''}`.trim()||extractName(selected.from):extractName(selected.from)} size={28} />
               <div style={{flex:1,minWidth:0}}>
@@ -2546,7 +2543,7 @@ function InboxPage() {
           {/* Customer Fields — collapsible */}
           <div style={{borderBottom:'1px solid var(--border)',flexShrink:0}}>
             <button className="rp-section" onClick={()=>setCustFieldsOpen(v=>!v)}>
-              <span style={{fontSize:11.5,fontWeight:700,color:'var(--text-2)',flex:1,letterSpacing:'.01em'}}>Customer Fields</span>
+              <span style={{fontSize:10,fontWeight:700,color:'var(--text-3)',flex:1,letterSpacing:'.07em',textTransform:'uppercase'}}>Customer Fields</span>
               <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{transform:custFieldsOpen?'rotate(180deg)':'rotate(0)',transition:'transform .2s',color:'var(--text-3)',flexShrink:0}}><polyline points="6 9 12 15 18 9"/></svg>
             </button>
             {custFieldsOpen&&(
@@ -2606,18 +2603,18 @@ function InboxPage() {
                   {/* Email row */}
                   <div style={{display:'flex',alignItems:'center',gap:8,padding:'5px 0'}}>
                     <span style={{display:'flex',color:'var(--text-3)',flexShrink:0}}><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></span>
-                    <a href={`mailto:${extractEmail(selected.from)}`} style={{fontSize:12,color:'var(--accent-text)',textDecoration:'none',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}} onMouseEnter={e=>e.currentTarget.style.textDecoration='underline'} onMouseLeave={e=>e.currentTarget.style.textDecoration='none'}>{extractEmail(selected.from)}</a>
+                    <a href={`mailto:${extractEmail(selected.from)}`} style={{fontSize:12,color:'var(--text-1)',textDecoration:'none',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}} onMouseEnter={e=>e.currentTarget.style.textDecoration='underline'} onMouseLeave={e=>e.currentTarget.style.textDecoration='none'}>{extractEmail(selected.from)}</a>
                   </div>
                   {/* Phone row */}
                   {customer?.customer?.phone&&(
                     <div style={{display:'flex',alignItems:'center',gap:8,padding:'5px 0'}}>
                       <span style={{display:'flex',color:'var(--text-3)',flexShrink:0}}><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.55 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 9.91a16 16 0 0 0 6.16 6.16l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg></span>
-                      <a href={`tel:${customer.customer.phone}`} style={{fontSize:12,color:'var(--accent-text)',textDecoration:'none'}} onMouseEnter={e=>e.currentTarget.style.textDecoration='underline'} onMouseLeave={e=>e.currentTarget.style.textDecoration='none'}>{customer.customer.phone}</a>
+                      <a href={`tel:${customer.customer.phone}`} style={{fontSize:12,color:'var(--text-1)',textDecoration:'none'}} onMouseEnter={e=>e.currentTarget.style.textDecoration='underline'} onMouseLeave={e=>e.currentTarget.style.textDecoration='none'}>{customer.customer.phone}</a>
                     </div>
                   )}
                   {/* Show more */}
                   {customer?.customer&&(
-                    <button onClick={()=>setCustShowMore(v=>!v)} style={{display:'flex',alignItems:'center',gap:4,padding:'5px 0',background:'none',border:'none',cursor:'pointer',fontSize:12,color:'var(--accent-text)',fontFamily:'inherit',fontWeight:500}}>
+                    <button onClick={()=>setCustShowMore(v=>!v)} style={{display:'flex',alignItems:'center',gap:4,padding:'5px 0',background:'none',border:'none',cursor:'pointer',fontSize:12,color:'var(--text-2)',fontFamily:'inherit',fontWeight:500}}>
                       {custShowMore?'Show less':'Show more'}
                       <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{transform:custShowMore?'rotate(180deg)':'rotate(0)',transition:'transform .2s'}}><polyline points="6 9 12 15 18 9"/></svg>
                     </button>
@@ -2682,7 +2679,7 @@ function InboxPage() {
 
                     {/* ── Order header: row 1 = name + chevron ── */}
                     <button className="rp-order-hdr" onClick={()=>setExpandedOrders(v=>({...v,[order.id]:!isOpen}))}>
-                      <span style={{fontSize:13.5,fontWeight:700,color:'var(--accent-text)',flex:1,textAlign:'left'}}>{order.name}</span>
+                      <span style={{fontSize:13.5,fontWeight:700,color:'var(--text-1)',flex:1,textAlign:'left'}}>{order.name}</span>
                       <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{transform:isOpen?'rotate(180deg)':'rotate(0)',transition:'transform .2s',color:'var(--text-3)',flexShrink:0}}><polyline points="6 9 12 15 18 9"/></svg>
                     </button>
 
@@ -2727,7 +2724,7 @@ function InboxPage() {
                                 <div className="rp-kv"><span className="rp-kv-l">Carrier</span><span className="rp-kv-v">{f.trackingCompany||'—'}</span></div>
                                 {f.trackingNumber&&<div className="rp-kv"><span className="rp-kv-l">Tracking #</span><span className="rp-kv-v" style={{fontFamily:'monospace',fontSize:10.5}}>{f.trackingNumber}</span></div>}
                                 <div className="rp-kv"><span className="rp-kv-l">Status</span><span style={{fontSize:10,fontWeight:700,padding:'1px 6px',borderRadius:4,background:'rgba(74,222,128,0.12)',color:'#16a34a',border:'1px solid rgba(74,222,128,0.25)',letterSpacing:'.04em',textTransform:'uppercase'}}>Delivered</span></div>
-                                {f.trackingUrl&&<div style={{marginTop:4}}><a href={f.trackingUrl} target="_blank" rel="noreferrer" style={{fontSize:11.5,color:'var(--accent-text)',textDecoration:'none',display:'inline-flex',alignItems:'center',gap:3}}>Track package <span style={{display:'flex'}}>{I.externalLink}</span></a></div>}
+                                {f.trackingUrl&&<div style={{marginTop:4}}><a href={f.trackingUrl} target="_blank" rel="noreferrer" style={{fontSize:11.5,color:'var(--text-1)',textDecoration:'none',display:'inline-flex',alignItems:'center',gap:3}}>Track package <span style={{display:'flex'}}>{I.externalLink}</span></a></div>}
                               </div>
                             ))}
                           </>

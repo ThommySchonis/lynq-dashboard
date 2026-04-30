@@ -34,15 +34,14 @@ const CSS = `
 
   .mc-card {
     border-radius:16px;overflow:hidden;position:relative;
-    background:linear-gradient(135deg,rgba(161,117,252,0.1) 0%,rgba(99,102,241,0.06) 50%,rgba(255,255,255,0.03) 100%);
-    border:1px solid rgba(161,117,252,0.25);
-    box-shadow:0 8px 40px rgba(161,117,252,0.15),inset 0 1px 0 rgba(255,255,255,0.08);
+    background:var(--bg-surface);
+    border:1px solid var(--border);
     transition:border-color .2s,transform .25s,box-shadow .25s;
   }
   .mc-card:hover {
-    border-color:rgba(161,117,252,0.45);
+    border-color:var(--border-hover);
     transform:translateY(-2px);
-    box-shadow:0 16px 48px rgba(161,117,252,0.2),inset 0 1px 0 rgba(255,255,255,0.1);
+    box-shadow:var(--shadow-card-hover);
   }
 
   .vid-thumb { position:relative;width:100%;padding-top:56.25%;background:#0d0620;overflow:hidden }
@@ -72,12 +71,11 @@ const CSS = `
   .join-btn {
     display:inline-flex;align-items:center;gap:8px;
     padding:11px 22px;border-radius:10px;border:none;
-    background:#A175FC;color:#fff;font-size:13px;font-weight:700;
+    background:#111111;color:#fff;font-size:13px;font-weight:700;
     cursor:pointer;font-family:inherit;letter-spacing:.01em;
-    box-shadow:0 4px 18px rgba(161,117,252,0.45);
-    transition:background .15s,transform .15s,box-shadow .15s;text-decoration:none;
+    transition:background .15s,transform .15s;text-decoration:none;
   }
-  .join-btn:hover { background:#b88fff;transform:translateY(-1px);box-shadow:0 6px 24px rgba(161,117,252,0.55) }
+  .join-btn:hover { background:#333333;transform:translateY(-1px) }
 
   .cal-btn {
     display:inline-flex;align-items:center;gap:7px;
@@ -100,10 +98,10 @@ const CSS = `
 // ── Constants ────────────────────────────────────────────────────────────────
 
 const TYPE_CFG = {
-  video:    { label: 'Video',    accent: '#A175FC', bg: 'rgba(161,117,252,0.12)', border: 'rgba(161,117,252,0.25)' },
-  tip:      { label: 'Tip',      accent: '#fbbf24', bg: 'rgba(251,191,36,0.1)',   border: 'rgba(251,191,36,0.22)' },
-  update:   { label: 'Update',   accent: '#4ade80', bg: 'rgba(74,222,128,0.1)',   border: 'rgba(74,222,128,0.22)' },
-  industry: { label: 'Industry', accent: '#60a5fa', bg: 'rgba(96,165,250,0.1)',   border: 'rgba(96,165,250,0.22)' },
+  video:    { label: 'Video',    accent: '#555555', bg: 'rgba(0,0,0,0.05)',        border: 'rgba(0,0,0,0.1)'       },
+  tip:      { label: 'Tip',      accent: '#d97706', bg: 'rgba(251,191,36,0.1)',   border: 'rgba(251,191,36,0.22)' },
+  update:   { label: 'Update',   accent: '#16a34a', bg: 'rgba(74,222,128,0.1)',   border: 'rgba(74,222,128,0.22)' },
+  industry: { label: 'Industry', accent: '#2563eb', bg: 'rgba(96,165,250,0.1)',   border: 'rgba(96,165,250,0.22)' },
 }
 
 const TYPE_FILTERS = [
@@ -160,12 +158,7 @@ function googleCalUrl(mc) {
 // ── Components ───────────────────────────────────────────────────────────────
 
 function PageBg() {
-  return (
-    <div style={{ position:'fixed', inset:0, zIndex:0, pointerEvents:'none', overflow:'hidden' }}>
-      <div style={{ position:'absolute', top:'-5%', right:'5%',  width:'55%', height:'65%', background:'radial-gradient(ellipse,rgba(161,117,252,0.08) 0%,transparent 65%)', filter:'blur(50px)' }} />
-      <div style={{ position:'absolute', bottom:'5%', left:'-5%', width:'45%', height:'50%', background:'radial-gradient(ellipse,rgba(99,102,241,0.06) 0%,transparent 60%)',  filter:'blur(60px)' }} />
-    </div>
-  )
+  return null
 }
 
 function MasterclassCard({ mc, i }) {
@@ -174,15 +167,14 @@ function MasterclassCard({ mc, i }) {
 
   return (
     <div className="mc-card" style={{ padding:'28px 30px', animation:`fadeUp .4s ease ${i * 80}ms both` }}>
-      {/* Decorative glow */}
-      <div style={{ position:'absolute', top:'-30%', right:'-10%', width:'50%', height:'160%', background:'radial-gradient(ellipse,rgba(161,117,252,0.12) 0%,transparent 65%)', pointerEvents:'none' }} />
+      {/* Decorative glow removed for clean design */}
 
       <div style={{ position:'relative', zIndex:1 }}>
         {/* Top row */}
         <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:18, flexWrap:'wrap' }}>
-          <div style={{ display:'flex', alignItems:'center', gap:6, padding:'4px 12px', borderRadius:100, background:'rgba(161,117,252,0.15)', border:'1px solid rgba(161,117,252,0.3)' }}>
-            <div style={{ width:6, height:6, borderRadius:'50%', background:'#A175FC', boxShadow:'0 0 8px rgba(161,117,252,0.8)', animation:'pulse 2s ease-in-out infinite' }} />
-            <span style={{ fontSize:10.5, fontWeight:800, color:'#A175FC', letterSpacing:'.07em', textTransform:'uppercase' }}>Upcoming Masterclass</span>
+          <div style={{ display:'flex', alignItems:'center', gap:6, padding:'4px 12px', borderRadius:100, background:'var(--bg-surface-2)', border:'1px solid var(--border)' }}>
+            <div style={{ width:6, height:6, borderRadius:'50%', background:'#4ade80' }} />
+            <span style={{ fontSize:10.5, fontWeight:700, color:'var(--text-2)', letterSpacing:'.07em', textTransform:'uppercase' }}>Upcoming Masterclass</span>
           </div>
           {until && (
             <span style={{ fontSize:11.5, fontWeight:700, color: isImminent ? '#4ade80' : 'rgba(255,255,255,0.45)', background: isImminent ? 'rgba(74,222,128,0.1)' : 'transparent', padding: isImminent ? '3px 10px' : '0', borderRadius:100, border: isImminent ? '1px solid rgba(74,222,128,0.2)' : 'none' }}>
@@ -424,8 +416,7 @@ export default function ValueFeedPage() {
               </div>
               {!loading && posts.length > 0 && (
                 <div style={{ display:'flex', alignItems:'center', gap:7, padding:'7px 14px', borderRadius:100, background:'var(--bg-input)', border:'1px solid var(--border)', flexShrink:0 }}>
-                  <div style={{ width:6, height:6, borderRadius:'50%', background:'#A175FC', boxShadow:'0 0 8px rgba(161,117,252,0.7)', animation:'pulse 2s ease-in-out infinite' }} />
-                  <span style={{ fontSize:11.5, fontWeight:600, color:'var(--text-2)' }}>{posts.length} post{posts.length !== 1 ? 's' : ''}</span>
+                  <span style={{ fontSize:11.5, fontWeight:600, color:'var(--text-3)' }}>{posts.length} post{posts.length !== 1 ? 's' : ''}</span>
                 </div>
               )}
             </div>
@@ -438,10 +429,9 @@ export default function ValueFeedPage() {
                 const count = f.id === 'all' ? posts.length : posts.filter(p => p.type === f.id).length
                 return (
                   <button key={f.id} className="f-pill" onClick={() => setTypeFilter(f.id)} style={{
-                    background: typeFilter === f.id ? '#A175FC' : 'var(--bg-input)',
-                    color:      typeFilter === f.id ? '#fff' : 'rgba(255,255,255,0.42)',
-                    border:    `1px solid ${typeFilter === f.id ? 'transparent' : 'var(--bg-input)'}`,
-                    boxShadow:  typeFilter === f.id ? '0 2px 12px rgba(161,117,252,0.35)' : 'none',
+                    background: typeFilter === f.id ? '#111111' : 'var(--bg-input)',
+                    color:      typeFilter === f.id ? '#fff' : 'var(--text-3)',
+                    border:    `1px solid ${typeFilter === f.id ? 'transparent' : 'var(--border)'}`,
                     display: 'flex', alignItems: 'center', gap: 6,
                   }}>
                     {f.label}

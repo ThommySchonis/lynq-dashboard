@@ -49,10 +49,9 @@ const CSS = `
     font-size:13px;font-weight:700;cursor:pointer;
     font-family:inherit;letter-spacing:.015em;
     transition:all .15s;
-    background:#A175FC;color:#fff;border:none;
-    box-shadow:0 4px 20px rgba(161,117,252,0.38);
+    background:#111111;color:#fff;border:none;
   }
-  .req-btn:hover { background:#b88fff;transform:translateY(-1px);box-shadow:0 6px 24px rgba(161,117,252,0.48) }
+  .req-btn:hover { background:#333333;transform:translateY(-1px) }
 
   .modal-overlay {
     position:fixed;inset:0;z-index:100;
@@ -91,7 +90,7 @@ const CSS = `
     transition:border-color .15s;outline:none;
   }
   .tel-input::placeholder { color:var(--text-3) }
-  .tel-input:focus { border-color:rgba(161,117,252,0.45) }
+  .tel-input:focus { border-color:var(--border-hover) }
 
   .msg-input {
     width:100%;padding:12px 14px;
@@ -105,18 +104,17 @@ const CSS = `
     line-height:1.65;
   }
   .msg-input::placeholder { color:var(--text-3) }
-  .msg-input:focus { border-color:rgba(161,117,252,0.45) }
+  .msg-input:focus { border-color:var(--border-hover) }
 
   .send-btn {
     width:100%;margin-top:16px;padding:13px 20px;
     border-radius:11px;border:none;
-    background:#A175FC;color:#fff;
+    background:#111111;color:#fff;
     font-size:13.5px;font-weight:700;cursor:pointer;
     font-family:inherit;letter-spacing:.015em;
-    box-shadow:0 4px 20px rgba(161,117,252,0.38);
     transition:all .15s;
   }
-  .send-btn:hover:not(:disabled) { background:#b88fff;transform:translateY(-1px);box-shadow:0 6px 24px rgba(161,117,252,0.48) }
+  .send-btn:hover:not(:disabled) { background:#333333;transform:translateY(-1px) }
   .send-btn:disabled { opacity:.55;cursor:not-allowed }
 `
 
@@ -126,12 +124,12 @@ const SERVICES = [
   {
     id: 'customer_service_agent',
     title: 'Customer Service Agent',
-    badge: { label: 'Most Popular', color: 'var(--accent)', bg: 'rgba(161,117,252,0.12)', border: 'rgba(161,117,252,0.28)' },
+    badge: { label: 'Most Popular', color: '#fff', bg: '#111111', border: 'rgba(0,0,0,0.1)' },
     description: 'A trained specialist who handles all incoming customer inquiries — tracking, refunds, returns, and general support. Fully onboarded to your brand voice and policies.',
-    accent: '#A175FC',
-    iconBg: 'rgba(161,117,252,0.1)',
-    iconBorder: 'rgba(161,117,252,0.22)',
-    cardBorderHover: 'rgba(161,117,252,0.22)',
+    accent: '#555555',
+    iconBg: 'var(--bg-surface-2)',
+    iconBorder: 'var(--border)',
+    cardBorderHover: 'rgba(0,0,0,0.12)',
     features: ['100+ tickets handled daily', 'Trained on your brand voice & policies', 'Gorgias, Zendesk & Re:amaze certified'],
     icon: (c) => (
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
@@ -399,14 +397,14 @@ function InquiryForm({ service, phone, setPhone, message, setMessage, onSubmit, 
         ) : (
           <div>
             <h3 style={{ fontSize:22, fontWeight:800, color:'var(--text-1)', letterSpacing:'-0.04em', marginBottom:6 }}>Let's talk</h3>
-            <p style={{ fontSize:13.5, color:'rgba(255,255,255,0.62)' }}>Tell us what you're looking for and we'll find the right fit.</p>
+            <p style={{ fontSize:13.5, color:'var(--text-2)' }}>Tell us what you're looking for and we'll find the right fit.</p>
           </div>
         )}
       </div>
 
       {/* Reply time */}
-      <div style={{ display:'flex', alignItems:'center', gap:8, padding:'10px 14px', borderRadius:9, background:'rgba(161,117,252,0.07)', border:'1px solid rgba(161,117,252,0.15)', marginBottom:24 }}>
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#A175FC" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      <div style={{ display:'flex', alignItems:'center', gap:8, padding:'10px 14px', borderRadius:9, background:'var(--bg-surface-2)', border:'1px solid var(--border)', marginBottom:24 }}>
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--text-3)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
         <span style={{ fontSize:12.5, color:'var(--text-2)' }}>We reply within <strong style={{ color:'var(--text-2)' }}>24 hours</strong></span>
       </div>
 
@@ -529,24 +527,22 @@ export default function ServicesPage() {
       <Sidebar />
 
       <main className="sv-scroll" style={{ flex:1, overflowY:'auto', padding:'40px 44px', position:'relative' }}>
-        {/* Ambient glow */}
-        <div style={{ position:'fixed', top:'-5%', right:'5%', width:'55%', height:'60%', background:'radial-gradient(ellipse,rgba(161,117,252,0.07) 0%,transparent 65%)', filter:'blur(50px)', pointerEvents:'none', zIndex:0 }} />
 
         <div style={{ position:'relative', zIndex:1, maxWidth:840, margin:'0 auto' }}>
 
           {/* ── Header ── */}
           <div style={{ animation:'fadeUp .4s ease both', marginBottom:40 }}>
             <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:12 }}>
-              <div style={{ width:36, height:36, borderRadius:10, background:'rgba(161,117,252,0.1)', border:'1px solid rgba(161,117,252,0.2)', display:'flex', alignItems:'center', justifyContent:'center' }}>
-                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#A175FC" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <div style={{ width:36, height:36, borderRadius:10, background:'var(--bg-surface-2)', border:'1px solid var(--border)', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--text-2)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
                   <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
                 </svg>
               </div>
-              <span style={{ fontSize:11.5, fontWeight:700, color:'rgba(255,255,255,0.52)', textTransform:'uppercase', letterSpacing:'.08em' }}>Services</span>
+              <span style={{ fontSize:11.5, fontWeight:700, color:'var(--text-3)', textTransform:'uppercase', letterSpacing:'.08em' }}>Services</span>
             </div>
-            <h1 style={{ fontSize:36, fontWeight:800, letterSpacing:'-0.045em', lineHeight:1.1, marginBottom:12, background:'linear-gradient(135deg,#F8FAFC 0%,#c4a8ff 100%)', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent', backgroundClip:'text' }}>Grow Your Team</h1>
-            <p style={{ fontSize:14.5, color:'rgba(255,255,255,0.62)', lineHeight:1.65, maxWidth:500 }}>
+            <h1 style={{ fontSize:36, fontWeight:800, letterSpacing:'-0.045em', lineHeight:1.1, marginBottom:12, color:'var(--text-1)' }}>Grow Your Team</h1>
+            <p style={{ fontSize:14.5, color:'var(--text-2)', lineHeight:1.65, maxWidth:500 }}>
               World-class e-commerce specialists, trained to your brand standards and ready to perform from day one.
             </p>
             <div style={{ height:1, background:'var(--bg-surface-2)', marginTop:28 }} />
@@ -574,13 +570,13 @@ export default function ServicesPage() {
             }}>
               <div>
                 <p style={{ fontSize:15.5, fontWeight:700, color:'var(--text-1)', marginBottom:4 }}>Not sure which role you need?</p>
-                <p style={{ fontSize:13.5, color:'rgba(255,255,255,0.62)' }}>We'll help you figure out the perfect fit for your brand and team size.</p>
+                <p style={{ fontSize:13.5, color:'var(--text-2)' }}>We'll help you figure out the perfect fit for your brand and team size.</p>
               </div>
               <button
-                onClick={() => openModal({ id:'general', title:'General Inquiry', accent:'#A175FC', icon:null, iconBg:'rgba(161,117,252,0.1)', iconBorder:'rgba(161,117,252,0.2)' })}
-                style={{ padding:'13px 28px', borderRadius:11, background:'#A175FC', color:'#fff', border:'none', fontSize:14, fontWeight:700, cursor:'pointer', fontFamily:'inherit', letterSpacing:'.01em', boxShadow:'0 4px 20px rgba(161,117,252,0.38)', transition:'all .15s', whiteSpace:'nowrap' }}
-                onMouseEnter={e => { e.currentTarget.style.background='#b88fff'; e.currentTarget.style.transform='translateY(-1px)'; e.currentTarget.style.boxShadow='0 6px 26px rgba(161,117,252,0.48)' }}
-                onMouseLeave={e => { e.currentTarget.style.background='#A175FC'; e.currentTarget.style.transform='translateY(0)'; e.currentTarget.style.boxShadow='0 4px 20px rgba(161,117,252,0.38)' }}>
+                onClick={() => openModal({ id:'general', title:'General Inquiry', accent:'#555555', icon:null, iconBg:'var(--bg-surface-2)', iconBorder:'var(--border)' })}
+                style={{ padding:'13px 28px', borderRadius:11, background:'#111111', color:'#fff', border:'none', fontSize:14, fontWeight:700, cursor:'pointer', fontFamily:'inherit', letterSpacing:'.01em', transition:'all .15s', whiteSpace:'nowrap' }}
+                onMouseEnter={e => { e.currentTarget.style.background='#333333'; e.currentTarget.style.transform='translateY(-1px)' }}
+                onMouseLeave={e => { e.currentTarget.style.background='#111111'; e.currentTarget.style.transform='translateY(0)' }}>
                 Talk to Us →
               </button>
             </div>

@@ -60,29 +60,9 @@ export async function GET(request) {
     console.log('[parcel-panel/tracking] PP status:', res.status)
     console.log('[parcel-panel/tracking] PP content-type:', res.headers.get('content-type'))
     const text = await res.text()
-    console.log('[parcel-panel/tracking] PP raw response:', text.substring(0, 500))
+    console.log('[parcel-panel/tracking] PP raw response:', text.substring(0, 1000))
 
-    if (res.status === 404) {
-      return NextResponse.json({ orders: [] })
-    }
-
-    let data
-    try {
-      data = JSON.parse(text)
-    } catch {
-      return NextResponse.json(
-        { error: 'Invalid tracking response', raw: text.substring(0, 200) },
-        { status: 502 }
-      )
-    }
-
-    if (!res.ok) {
-      return NextResponse.json({ error: data?.message || 'Parcel Panel API error' }, { status: 502 })
-    }
-
-    const raw = data.orders ?? data.trackings ?? data.data ?? data
-    const orders = Array.isArray(raw) ? raw : (raw?.orders ?? raw?.trackings ?? raw?.data ?? [])
-    return NextResponse.json({ orders: Array.isArray(orders) ? orders : [] })
+    return NextResponse.json({ raw: text.substring(0, 1000) })
   } catch (e) {
     console.error('[parcel-panel/tracking] fetch error', e)
     return NextResponse.json({ error: 'Failed to reach Parcel Panel' }, { status: 500 })

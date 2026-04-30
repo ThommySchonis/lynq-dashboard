@@ -51,8 +51,6 @@ export async function GET(request) {
   const page  = Math.max(1, parseInt(request.nextUrl.searchParams.get('page')  || '1', 10) || 1)
   const limit = Math.min(Math.max(parseInt(request.nextUrl.searchParams.get('limit') || '50', 10) || 50, 1), 100)
 
-  console.log('[parcel-panel/tracking] fetching page', page, 'limit', limit)
-
   try {
     const res = await fetch(
       `${PP_BASE}/api/v2/tracking?page=${page}&limit=${limit}`,
@@ -60,20 +58,24 @@ export async function GET(request) {
     )
 
     console.log('[parcel-panel/tracking] PP status:', res.status)
+    console.log('[parcel-panel/tracking] PP content-type:', res.headers.get('content-type'))
     const text = await res.text()
-    console.log('[parcel-panel/tracking] PP response:', text.substring(0, 500))
+    console.log('[parcel-panel/tracking] PP raw response:', text.substring(0, 500))
+
+    if (res.status === 404) {
+      return NextResponse.json({ orders: [] })
+    }
 
     let data
     try {
       data = JSON.parse(text)
     } catch {
-      return NextResponse.json({ error: 'Invalid tracking response from Parcel Panel' }, { status: 502 })
+      return NextResponse.json(
+        { error: 'Invalid tracking response', raw: text.substring(0, 200) },
+        { status: 502 }
+      )
     }
 
-    if (res.status === 404) {
-      // PP returns 404 when there are no tracked shipments yet
-      return NextResponse.json({ orders: [] })
-    }
     if (!res.ok) {
       return NextResponse.json({ error: data?.message || 'Parcel Panel API error' }, { status: 502 })
     }

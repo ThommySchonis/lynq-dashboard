@@ -424,16 +424,21 @@ function SetupScreen({ token, onConnected }) {
   const connect = async () => {
     if (!apiKey.trim()) return
     setSaving(true); setErr('')
+    const endpoint = '/api/parcel-panel/connect'
+    console.log('API key ingevoerd:', apiKey.trim().slice(0, 8) + '…')
+    console.log('Versturen naar:', endpoint)
     try {
-      const res  = await fetch('/api/parcel-panel/setup', {
+      const res  = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ apiKey: apiKey.trim() }),
       })
       const data = await res.json()
+      console.log('Response:', res.status, data)
       if (!res.ok) throw new Error(data.error || 'Failed to connect')
       onConnected()
     } catch (e) {
+      console.error('Connect error:', e)
       setErr(e.message)
     } finally {
       setSaving(false)

@@ -39,35 +39,14 @@ export async function POST(request) {
     return NextResponse.json({ error: 'Could not reach Parcel Panel' }, { status: 503 })
   }
 
-  // ── STAP 1: diagnose auth user ───────────────────────────────────────────
-  const { data: { user: authUser }, error: authError } = await supabaseAdmin.auth.getUser(token)
-  console.log('[parcel-panel/connect] getUserFromToken email:', user.email)
-  console.log('[parcel-panel/connect] auth.getUser email:', authUser?.email, 'id:', authUser?.id)
-  console.log('[parcel-panel/connect] auth error:', authError?.message)
-
-  // ── STAP 2: check clients table ──────────────────────────────────────────
-  const { data: allClients } = await supabaseAdmin.from('clients').select('id, email').limit(5)
-  console.log('[parcel-panel/connect] clients in DB:', JSON.stringify(allClients))
-
-  // ── Save verified key ────────────────────────────────────────────────────
-  const { data: updated, error: dbError } = await supabaseAdmin
+  // Save verified key — upsert so the row is created if it doesn't exist yet
+  const { error: upsertError } = await supabaseAdmin
     .from('clients')
-    .update({ parcel_panel_api_key: apiKey })
-    .eq('email', user.email)
-    .select('id')
+    .upsert({ email: user.email, parcel_panel_api_key: apiKey }, { onConflict: 'email' })
 
-  console.log('[parcel-panel/connect] update result:', JSON.stringify(updated), 'error:', dbError?.message)
-
-  if (dbError) {
-    console.error('[parcel-panel/connect] db error', dbError)
-    return NextResponse.json({ error: 'Failed to save API key' }, { status: 500 })
-  }
-  if (!updated || updated.length === 0) {
-    console.error('[parcel-panel/connect] no client row for email:', user.email)
-    return NextResponse.json({
-      error: 'Client account not found. Please contact support.',
-      debug: { userEmail: user.email, clientsInDB: allClients?.map(c => c.email) }
-    }, { status: 404 })
+  if (upsertError) {
+    console.error('[parcel-panel/connect] upsert error', upsertError)
+    return NextResponse.json({ error: 'Failed to save: ' + upsertError.message }, { status: 500 })
   }
   return NextResponse.json({ success: true })
 }

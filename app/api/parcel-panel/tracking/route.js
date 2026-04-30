@@ -1,7 +1,7 @@
 import { getUserFromToken, supabaseAdmin } from '../../../../lib/supabaseAdmin'
 import { NextResponse } from 'next/server'
 
-const PP_BASE = 'https://open.parcelpanel.com'
+const PP_BASE = 'https://api.parcelpanel.com/api/open/v1'
 
 export async function GET(request) {
   const authHeader = request.headers.get('authorization')
@@ -22,9 +22,13 @@ export async function GET(request) {
   }
 
   const apiKey = client.parcel_panel_api_key
-  const ordersParam = request.nextUrl.searchParams.get('orders') || ''
+  const ppHeaders = {
+    'Authorization': `Bearer ${apiKey}`,
+    'Content-Type': 'application/json',
+  }
 
   // ── Mode A: specific order numbers ────────────────────────────────────────
+  const ordersParam = request.nextUrl.searchParams.get('orders') || ''
   if (ordersParam) {
     const orderNumbers = ordersParam.split(',').map(o => o.trim()).filter(Boolean).slice(0, 20)
     const results = await Promise.allSettled(
@@ -32,12 +36,13 @@ export async function GET(request) {
         const orderNum = num.startsWith('#') ? num : `#${num}`
         try {
           const res = await fetch(
-            `${PP_BASE}/api/v2/tracking/order?order_number=${encodeURIComponent(orderNum)}`,
-            { headers: { 'x-parcelpanel-api-key': apiKey }, cache: 'no-store' }
+            `${PP_BASE}/shipments?order_number=${encodeURIComponent(orderNum)}`,
+            { headers: ppHeaders, cache: 'no-store' }
           )
           if (!res.ok) return null
           const data = await res.json()
-          return data.order || null
+          const raw = data.data ?? data.orders ?? data.trackings ?? data.shipments ?? data
+          return Array.isArray(raw) ? raw[0] : raw
         } catch { return null }
       })
     )
@@ -51,20 +56,25 @@ export async function GET(request) {
 
   try {
     const res = await fetch(
-      `${PP_BASE}/api/v2/tracking?page=${page}&limit=${limit}`,
-      { headers: { 'x-parcelpanel-api-key': apiKey }, cache: 'no-store' }
+      `${PP_BASE}/shipments?page=${page}&limit=${limit}`,
+      { headers: ppHeaders, cache: 'no-store' }
     )
 
     if (!res.ok) {
       const body = await res.text()
+      console.error('[parcel-panel/tracking] PP error', res.status, body)
       return NextResponse.json({ error: 'Parcel Panel API error', detail: body }, { status: 502 })
     }
 
     const data = await res.json()
-    // PP may return orders under different keys
-    const orders = data.orders ?? data.trackings ?? data.data ?? data ?? []
+    console.log('[parcel-panel/tracking] PP response keys:', Object.keys(data))
+
+    // Normalize — PP may nest under different keys
+    const raw = data.data ?? data.orders ?? data.trackings ?? data.shipments ?? data
+    const orders = Array.isArray(raw) ? raw : (raw?.orders ?? raw?.trackings ?? raw?.shipments ?? raw?.data ?? [])
     return NextResponse.json({ orders: Array.isArray(orders) ? orders : [] })
   } catch (e) {
+    console.error('[parcel-panel/tracking] fetch error', e)
     return NextResponse.json({ error: 'Failed to reach Parcel Panel' }, { status: 500 })
   }
 }

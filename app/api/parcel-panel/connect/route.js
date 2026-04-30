@@ -43,14 +43,19 @@ export async function POST(request) {
   }
 
   // Save verified key to clients table
-  const { error: dbError } = await supabaseAdmin
+  const { data: updated, error: dbError } = await supabaseAdmin
     .from('clients')
     .update({ parcel_panel_api_key: apiKey })
     .eq('email', user.email)
+    .select('id')
 
   if (dbError) {
     console.error('[parcel-panel/connect] db error', dbError)
     return NextResponse.json({ error: 'Failed to save API key' }, { status: 500 })
+  }
+  if (!updated || updated.length === 0) {
+    console.error('[parcel-panel/connect] no client row for email:', user.email)
+    return NextResponse.json({ error: 'Client account not found. Please contact support.' }, { status: 404 })
   }
   return NextResponse.json({ success: true })
 }

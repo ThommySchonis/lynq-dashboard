@@ -6,14 +6,14 @@ import Sidebar from '../components/Sidebar'
 
 // ── Status config ─────────────────────────────────────────────────────────────
 const STATUS = {
-  PENDING:          { label: 'Pending',          color: '#94a3b8', bg: 'rgba(148,163,184,0.1)',  border: 'rgba(148,163,184,0.2)'  },
-  INFO_RECEIVED:    { label: 'Info Received',     color: '#60a5fa', bg: 'rgba(96,165,250,0.1)',   border: 'rgba(96,165,250,0.2)'   },
-  IN_TRANSIT:       { label: 'In Transit',        color: '#2563eb', bg: 'rgba(96,165,250,0.1)', border: 'rgba(96,165,250,0.2)' },
-  OUT_FOR_DELIVERY: { label: 'Out for Delivery',  color: '#f59e0b', bg: 'rgba(245,158,11,0.1)',   border: 'rgba(245,158,11,0.2)'   },
-  DELIVERED:        { label: 'Delivered',         color: '#4ade80', bg: 'rgba(74,222,128,0.1)',   border: 'rgba(74,222,128,0.2)'   },
-  EXCEPTION:        { label: 'Exception',         color: '#f87171', bg: 'rgba(248,113,113,0.1)',  border: 'rgba(248,113,113,0.2)'  },
-  FAILED_ATTEMPT:   { label: 'Failed Attempt',    color: '#fb923c', bg: 'rgba(251,146,60,0.1)',   border: 'rgba(251,146,60,0.2)'   },
-  EXPIRED:          { label: 'Expired',           color: '#6b7280', bg: 'rgba(107,114,128,0.1)',  border: 'rgba(107,114,128,0.2)'  },
+  PENDING:          { label: 'Pending',          color: '#888888', bg: 'rgba(0,0,0,0.04)',      border: 'rgba(0,0,0,0.08)'      },
+  INFO_RECEIVED:    { label: 'Info Received',     color: '#555555', bg: 'rgba(0,0,0,0.04)',      border: 'rgba(0,0,0,0.08)'      },
+  IN_TRANSIT:       { label: 'In Transit',        color: '#2563EB', bg: 'rgba(37,99,235,0.07)',  border: 'rgba(37,99,235,0.15)'  },
+  OUT_FOR_DELIVERY: { label: 'Out for Delivery',  color: '#D97706', bg: 'rgba(217,119,6,0.07)',  border: 'rgba(217,119,6,0.15)'  },
+  DELIVERED:        { label: 'Delivered',         color: '#16A34A', bg: 'rgba(22,163,74,0.07)',  border: 'rgba(22,163,74,0.15)'  },
+  EXCEPTION:        { label: 'Exception',         color: '#DC2626', bg: 'rgba(220,38,38,0.07)',  border: 'rgba(220,38,38,0.15)'  },
+  FAILED_ATTEMPT:   { label: 'Failed Attempt',    color: '#D97706', bg: 'rgba(217,119,6,0.07)',  border: 'rgba(217,119,6,0.15)'  },
+  EXPIRED:          { label: 'Expired',           color: '#888888', bg: 'rgba(0,0,0,0.04)',      border: 'rgba(0,0,0,0.08)'      },
 }
 function getStatus(key) { return STATUS[key] || STATUS.PENDING }
 
@@ -22,7 +22,7 @@ const ATTENTION = {
   FAILED_ATTEMPT: {
     label: 'Failed Delivery',
     desc: 'Carrier attempted delivery but failed. Customer needs to reschedule or arrange pickup.',
-    color: '#f87171', bg: 'rgba(248,113,113,0.07)', border: 'rgba(248,113,113,0.18)',
+    color: '#DC2626', bg: 'rgba(220,38,38,0.05)', border: 'rgba(220,38,38,0.12)',
     priority: 1,
     message: (name, num) =>
       `Hi ${name}, we noticed that the delivery of your order ${num} could not be completed. Please contact the carrier to reschedule delivery or collect the parcel at your nearest pickup point. Let us know if you need any help! 🙏`,
@@ -30,7 +30,7 @@ const ATTENTION = {
   PICKUP_REQUIRED: {
     label: 'Pickup Required',
     desc: 'Package is waiting at a pickup point. Customer must collect it before it expires.',
-    color: '#f59e0b', bg: 'rgba(245,158,11,0.07)', border: 'rgba(245,158,11,0.18)',
+    color: '#D97706', bg: 'rgba(217,119,6,0.05)', border: 'rgba(217,119,6,0.12)',
     priority: 1,
     message: (name, num) =>
       `Hi ${name}, your order ${num} is ready for pickup at your local pickup point or parcel locker. Please collect it as soon as possible — packages are usually held for 7–10 days before being returned. Let us know if you need help finding the location! 📦`,
@@ -38,7 +38,7 @@ const ATTENTION = {
   EXCEPTION: {
     label: 'Shipping Exception',
     desc: 'An unexpected issue has occurred during shipping. Requires investigation.',
-    color: '#fb923c', bg: 'rgba(251,146,60,0.07)', border: 'rgba(251,146,60,0.18)',
+    color: '#D97706', bg: 'rgba(217,119,6,0.05)', border: 'rgba(217,119,6,0.12)',
     priority: 2,
     message: (name, num) =>
       `Hi ${name}, we've been notified of a shipping issue with your order ${num}. We are actively investigating and working to resolve this as quickly as possible. We'll keep you updated — thank you for your patience! 🙏`,
@@ -54,7 +54,7 @@ const ATTENTION = {
   EXPIRED: {
     label: 'Tracking Expired',
     desc: 'Tracking information has expired. Package may be lost or returned to sender.',
-    color: '#6b7280', bg: 'rgba(107,114,128,0.07)', border: 'rgba(107,114,128,0.18)',
+    color: '#888888', bg: 'rgba(0,0,0,0.04)', border: 'rgba(0,0,0,0.10)',
     priority: 2,
     message: (name, num) =>
       `Hi ${name}, the tracking for your order ${num} has unfortunately expired. We are contacting the carrier to find out what happened and will update you as soon as we have news. We sincerely apologize for the inconvenience! 🙏`,
@@ -141,16 +141,16 @@ const CSS = `
     outline:none; transition:border-color .15s;
   }
   .sc-search::placeholder { color:var(--text-3) }
-  .sc-search:focus { border-color:var(--accent-border) }
+  .sc-search:focus { border-color:var(--border-hover) }
 
   .sc-tab {
-    padding:6px 13px; border-radius:8px; border:1px solid transparent;
+    padding:6px 13px; border-radius:8px; border:1px solid rgba(0,0,0,0.08);
     font-size:12px; font-weight:600; cursor:pointer; font-family:inherit;
-    transition:all .15s; white-space:nowrap; background:transparent;
-    color:var(--text-3);
+    transition:all .15s; white-space:nowrap; background:#FAFAFA;
+    color:#888888;
   }
   .sc-tab:hover:not(.sc-tab-active) { color:var(--text-2);background:var(--bg-surface-2) }
-  .sc-tab-active { background:var(--accent-soft);border-color:var(--accent-border);color:var(--accent-text) }
+  .sc-tab-active { background:#111111;border-color:transparent;color:#FFFFFF }
 
   .sc-btn {
     display:inline-flex; align-items:center; gap:5px;
@@ -181,7 +181,7 @@ const CSS = `
     border-radius:10px; color:var(--text-1); font-size:14px; font-family:inherit;
     outline:none; transition:border-color .15s;
   }
-  .sc-setup-input:focus { border-color:var(--accent-border);background:var(--bg-surface-2) }
+  .sc-setup-input:focus { border-color:var(--border-hover);background:var(--bg-surface-2) }
   .sc-setup-input::placeholder { color:var(--text-3) }
 `
 
@@ -216,7 +216,7 @@ function CarrierBadge({ name, logoUrl }) {
   if (!name) return <span style={{ fontSize: 12, color: 'var(--text-3)' }}>—</span>
   return (
     <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '3px 10px', borderRadius: 8, background: 'var(--bg-surface-2)', border: '1px solid var(--border)', fontSize: 12, color: 'var(--text-2)', fontWeight: 500 }}>
-      {logoUrl && <img src={logoUrl} alt={name} style={{ height: 13, objectFit: 'contain', filter: 'brightness(0) invert(1)', opacity: .7 }} />}
+      {logoUrl && <img src={logoUrl} alt={name} style={{ height: 13, objectFit: 'contain', opacity: .55 }} />}
       {name}
     </span>
   )
@@ -286,7 +286,7 @@ function AttentionCard({ item, onDismiss }) {
             </p>
           </div>
           {daysSince !== null && (
-            <span style={{ fontSize: 11, fontWeight: 600, color: daysSince >= 10 ? '#f87171' : 'rgba(255,255,255,0.35)', flexShrink: 0 }}>
+            <span style={{ fontSize: 11, fontWeight: 600, color: daysSince >= 10 ? '#DC2626' : 'var(--text-3)', flexShrink: 0 }}>
               {daysSince === 0 ? 'Today' : `${daysSince}d ago`}
             </span>
           )}
@@ -367,10 +367,10 @@ function ShipmentRow({ order, i, attentionKey }) {
       </div>
 
       {expanded && (
-        <div style={{ borderTop: '1px solid rgba(255,255,255,0.07)', padding: '20px 20px 22px 24px', animation: 'fadeIn .2s ease both' }}>
+        <div style={{ borderTop: '1px solid var(--divider)', padding: '20px 20px 22px 24px', animation: 'fadeIn .2s ease both' }}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 28 }}>
             <div>
-              <p style={{ fontSize: 10.5, fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 14 }}>Tracking Details</p>
+              <p style={{ fontSize: 10.5, fontWeight: 700, color: '#BDBDBD', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 14 }}>Tracking Details</p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 {[
                   ['Tracking #',        shipment.tracking_number],
@@ -381,14 +381,14 @@ function ShipmentRow({ order, i, attentionKey }) {
                   ['Delivery date',     fmt(shipment.delivery_date)],
                 ].filter(([, v]) => v && v !== '—').map(([label, val]) => (
                   <div key={label} style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
-                    <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.32)', minWidth: 130, flexShrink: 0 }}>{label}</span>
+                    <span style={{ fontSize: 12, color: 'var(--text-3)', minWidth: 130, flexShrink: 0 }}>{label}</span>
                     <span style={{ fontSize: 12.5, color: 'var(--text-2)', wordBreak: 'break-all' }}>{val}</span>
                   </div>
                 ))}
               </div>
               {order.shipping_address && (
                 <div style={{ marginTop: 18 }}>
-                  <p style={{ fontSize: 10.5, fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 8 }}>Ship to</p>
+                  <p style={{ fontSize: 10.5, fontWeight: 700, color: '#BDBDBD', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 8 }}>Ship to</p>
                   <p style={{ fontSize: 12.5, color: 'var(--text-2)', lineHeight: 1.65 }}>
                     {order.shipping_address.name}<br />
                     {order.shipping_address.city}{order.shipping_address.province_code ? `, ${order.shipping_address.province_code}` : ''} {order.shipping_address.zip}<br />
@@ -405,7 +405,7 @@ function ShipmentRow({ order, i, attentionKey }) {
               )}
             </div>
             <div>
-              <p style={{ fontSize: 10.5, fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 14 }}>Tracking Events</p>
+              <p style={{ fontSize: 10.5, fontWeight: 700, color: '#BDBDBD', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 14 }}>Tracking Events</p>
               <CheckpointTimeline checkpoints={shipment.checkpoints} />
             </div>
           </div>
@@ -442,24 +442,24 @@ function SetupScreen({ token, onConnected }) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '48px 24px 0', textAlign: 'center' }}>
-      <div style={{ width: 64, height: 64, borderRadius: 18, background: 'var(--bg-surface-2)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 22 }}>
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--text-2)" strokeWidth="1.85" strokeLinecap="round" strokeLinejoin="round">
+      <div style={{ width: 64, height: 64, borderRadius: 18, background: '#F5F5F5', border: '1px solid rgba(0,0,0,0.07)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 22 }}>
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#555555" strokeWidth="1.85" strokeLinecap="round" strokeLinejoin="round">
           <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
           <polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/>
         </svg>
       </div>
       <h2 style={{ fontSize: 26, fontWeight: 800, letterSpacing: '-0.04em', color: 'var(--text-1)', marginBottom: 10 }}>Connect Parcel Panel</h2>
-      <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.48)', maxWidth: 420, lineHeight: 1.7, marginBottom: 36 }}>
+      <p style={{ fontSize: 14, color: 'var(--text-2)', maxWidth: 420, lineHeight: 1.7, marginBottom: 36 }}>
         Link your Parcel Panel account to track all shipments, detect delivery issues automatically, and get proactive alerts — all in one place.
       </p>
 
       <div style={{ width: '100%', maxWidth: 420, textAlign: 'left' }}>
         {/* Steps */}
-        <div style={{ background: 'var(--bg-surface-2)', border: '1px solid var(--border)', borderRadius: 14, padding: '18px 20px', marginBottom: 20 }}>
-          <p style={{ fontSize: 10.5, fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '.1em', marginBottom: 14 }}>How to find your API key</p>
+        <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 12, padding: '18px 20px', marginBottom: 20 }}>
+          <p style={{ fontSize: 10.5, fontWeight: 700, color: '#BDBDBD', textTransform: 'uppercase', letterSpacing: '.1em', marginBottom: 14 }}>How to find your API key</p>
           {['Open the Parcel Panel app in your Shopify admin', 'Go to Integration', 'Scroll to the bottom — your API key is listed there'].map((step, i) => (
             <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', marginBottom: i < 2 ? 10 : 0 }}>
-              <div style={{ width: 20, height: 20, borderRadius: 6, background: 'var(--bg-surface-2)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700, color: 'var(--text-2)', flexShrink: 0 }}>{i + 1}</div>
+              <div style={{ width: 20, height: 20, borderRadius: 6, background: '#F5F5F5', border: '1px solid rgba(0,0,0,0.07)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700, color: '#888888', flexShrink: 0 }}>{i + 1}</div>
               <p style={{ fontSize: 13, color: 'var(--text-2)', lineHeight: 1.5, paddingTop: 2 }}>{step}</p>
             </div>
           ))}
@@ -474,11 +474,16 @@ function SetupScreen({ token, onConnected }) {
           type="password"
           style={{ marginBottom: 10 }}
         />
-        {err && <p style={{ fontSize: 12.5, color: '#f87171', marginBottom: 10 }}>{err}</p>}
+        {err && (
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: 10, padding: '10px 12px', background: 'rgba(220,38,38,0.06)', border: '1px solid rgba(220,38,38,0.14)', borderRadius: 8 }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#DC2626" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 1 }}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            <p style={{ fontSize: 12.5, color: '#DC2626', lineHeight: 1.5 }}>{err}</p>
+          </div>
+        )}
         <button
           onClick={connect}
           disabled={saving || !apiKey.trim()}
-          style={{ width: '100%', padding: '12px', borderRadius: 10, background: saving || !apiKey.trim() ? 'rgba(0,0,0,0.2)' : '#111111', color: '#fff', border: 'none', fontSize: 14, fontWeight: 700, cursor: saving || !apiKey.trim() ? 'not-allowed' : 'pointer', fontFamily: 'inherit', transition: 'background .15s' }}>
+          style={{ width: '100%', padding: '12px', borderRadius: 10, background: saving || !apiKey.trim() ? '#F5F5F5' : '#111111', color: saving || !apiKey.trim() ? '#BDBDBD' : '#FFFFFF', border: '1px solid', borderColor: saving || !apiKey.trim() ? 'rgba(0,0,0,0.08)' : 'transparent', fontSize: 14, fontWeight: 700, cursor: saving || !apiKey.trim() ? 'not-allowed' : 'pointer', fontFamily: 'inherit', transition: 'all .15s' }}>
           {saving ? 'Connecting…' : 'Connect Parcel Panel'}
         </button>
       </div>
@@ -586,18 +591,19 @@ export default function SupplyChainPage() {
   const visibleAttention = showAllAttention ? attentionItems : attentionItems.slice(0, 3)
 
   // ── KPI config ──
+  const attnColor = attentionItems.length > 0 ? '#DC2626' : '#16A34A'
   const KPIS = [
-    { label: 'In Transit',       value: counts.inTransit,                          color: '#2563eb',
+    { label: 'In Transit',       value: counts.inTransit,
       icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 17H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v3"/><rect x="9" y="11" width="14" height="10" rx="1"/><circle cx="12" cy="21" r="1"/><circle cx="20" cy="21" r="1"/></svg> },
-    { label: 'Out for Delivery', value: counts.outForDel,                          color: '#f59e0b',
+    { label: 'Out for Delivery', value: counts.outForDel,
       icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> },
-    { label: 'Needs Attention',  value: attentionItems.length,                     color: attentionItems.length > 0 ? '#f87171' : '#4ade80',
+    { label: 'Needs Attention',  value: attentionItems.length, accentColor: attnColor,
       sub: attentionItems.length > 0 ? 'action required' : 'all good',
       icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> },
-    { label: 'Avg Delivery',     value: counts.avgDays ? `${counts.avgDays}d` : '—', color: '#60a5fa',
+    { label: 'Avg Delivery',     value: counts.avgDays ? `${counts.avgDays}d` : '—',
       sub: counts.onTimeRate !== null ? `${counts.onTimeRate}% on time` : null,
       icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg> },
-    { label: 'Delivered',        value: counts.delivered,                           color: '#4ade80',
+    { label: 'Delivered',        value: counts.delivered,
       icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg> },
   ]
 
@@ -691,14 +697,14 @@ export default function SupplyChainPage() {
             <>
               {/* KPI row */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 14, marginBottom: 30, animation: 'fadeUp .4s ease .05s both' }}>
-                {KPIS.map(({ label, value, color, sub, icon }) => (
+                {KPIS.map(({ label, value, accentColor, sub, icon }) => (
                   <div key={label} className="sc-card">
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-                      <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-3)', letterSpacing: '.02em' }}>{label}</span>
-                      <div style={{ width: 26, height: 26, borderRadius: 7, background: `${color}18`, border: `1px solid ${color}28`, display: 'flex', alignItems: 'center', justifyContent: 'center', color }}>{icon}</div>
+                      <span style={{ fontSize: 11, fontWeight: 600, color: '#BDBDBD', letterSpacing: '.06em', textTransform: 'uppercase' }}>{label}</span>
+                      <div style={{ width: 28, height: 28, borderRadius: 7, background: '#F5F5F5', border: '1px solid rgba(0,0,0,0.07)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: accentColor || '#555555' }}>{icon}</div>
                     </div>
-                    <div style={{ fontSize: 26, fontWeight: 800, color, letterSpacing: '-0.04em', lineHeight: 1 }}>{value}</div>
-                    {sub && <p style={{ fontSize: 10.5, color: 'var(--text-3)', marginTop: 5 }}>{sub}</p>}
+                    <div style={{ fontSize: 26, fontWeight: 700, color: accentColor || 'var(--text-1)', letterSpacing: '-0.04em', lineHeight: 1 }}>{value}</div>
+                    {sub && <p style={{ fontSize: 10.5, color: accentColor ? accentColor : 'var(--text-3)', marginTop: 5 }}>{sub}</p>}
                   </div>
                 ))}
               </div>
@@ -708,9 +714,9 @@ export default function SupplyChainPage() {
                 <div style={{ marginBottom: 32, animation: 'fadeUp .4s ease .1s both' }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
-                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#f87171" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#DC2626" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
                       <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-1)' }}>Action Required</span>
-                      <span style={{ fontSize: 11, fontWeight: 800, background: 'rgba(248,113,113,0.15)', border: '1px solid rgba(248,113,113,0.28)', color: '#f87171', padding: '2px 8px', borderRadius: 100 }}>{attentionItems.length}</span>
+                      <span style={{ fontSize: 11, fontWeight: 800, background: 'rgba(220,38,38,0.08)', border: '1px solid rgba(220,38,38,0.18)', color: '#DC2626', padding: '2px 8px', borderRadius: 100 }}>{attentionItems.length}</span>
                     </div>
                     {attentionItems.length > 3 && (
                       <button onClick={() => setShowAllAttention(a => !a)}
@@ -743,10 +749,10 @@ export default function SupplyChainPage() {
                       return (
                         <button key={f} onClick={() => setFilter(f)}
                           className={`sc-tab${isActive ? ' sc-tab-active' : ''}`}
-                          style={hasIssue ? { color: isActive ? '#f87171' : 'rgba(248,113,113,0.65)', background: isActive ? 'rgba(248,113,113,0.1)' : undefined, borderColor: isActive ? 'rgba(248,113,113,0.3)' : undefined } : {}}>
+                          style={hasIssue && !isActive ? { color: '#DC2626', background: 'rgba(220,38,38,0.06)', borderColor: 'rgba(220,38,38,0.14)' } : hasIssue && isActive ? { background: '#DC2626', borderColor: 'transparent', color: '#FFFFFF' } : {}}>
                           {f}
                           {isAttn && attentionItems.length > 0 && (
-                            <span style={{ marginLeft: 5, fontSize: 10, fontWeight: 800, background: 'rgba(248,113,113,0.18)', color: '#f87171', padding: '1px 5px', borderRadius: 100, border: '1px solid rgba(248,113,113,0.28)' }}>{attentionItems.length}</span>
+                            <span style={{ marginLeft: 5, fontSize: 10, fontWeight: 800, background: isActive ? 'rgba(255,255,255,0.2)' : 'rgba(220,38,38,0.12)', color: isActive ? '#FFFFFF' : '#DC2626', padding: '1px 5px', borderRadius: 100, border: isActive ? '1px solid rgba(255,255,255,0.15)' : '1px solid rgba(220,38,38,0.2)' }}>{attentionItems.length}</span>
                           )}
                         </button>
                       )

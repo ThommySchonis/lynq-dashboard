@@ -290,39 +290,36 @@ function ServiceCard({ svc, i, onRequest }) {
 
 function TrainCard({ svc, onRequest }) {
   return (
-    <div className="svc-card">
-      <div style={{ display: 'flex', gap: 32, alignItems: 'flex-start', flexWrap: 'wrap' }}>
-        {/* Left */}
-        <div style={{ flex: '1 1 300px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
-            <IconBox icon={svc.icon} />
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                <h2 style={{ fontSize: 16, fontWeight: 700, color: '#111111' }}>{svc.title}</h2>
-                <Badge badge={svc.badge} />
-              </div>
-              <p style={{ fontSize: 12, color: '#888888' }}>For brands with an in-house team</p>
-            </div>
-          </div>
-          <p style={{ fontSize: 13, color: '#555555', lineHeight: 1.6 }}>{svc.description}</p>
+    <div className="svc-card" style={{ animation: 'fadeUp .5s ease .32s both' }}>
+      {/* Badge top-right */}
+      {svc.badge && (
+        <div style={{ position: 'absolute', top: 18, right: 18 }}>
+          <Badge badge={svc.badge} />
         </div>
+      )}
 
-        {/* Right */}
-        <div style={{ flex: '0 1 260px', display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
-            {svc.features.map(f => (
-              <div key={f} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-                <CheckIcon size={14} />
-                <span style={{ fontSize: 13, color: '#555555' }}>{f}</span>
-              </div>
-            ))}
+      {/* Icon */}
+      <IconBox icon={svc.icon} />
+
+      {/* Content */}
+      <h2 style={{ fontSize: 16, fontWeight: 700, color: '#111111', marginTop: 14, marginBottom: 8 }}>{svc.title}</h2>
+      <p style={{ fontSize: 13, color: '#555555', lineHeight: 1.6, marginBottom: 16, flex: 1 }}>{svc.description}</p>
+
+      {/* Feature list */}
+      <div style={{ display: 'flex', flexDirection: 'column', marginBottom: 0 }}>
+        {svc.features.map(f => (
+          <div key={f} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+            <CheckIcon size={14} />
+            <span style={{ fontSize: 13, color: '#555555' }}>{f}</span>
           </div>
-          <GuaranteeBlock />
-          <button className="req-btn" onClick={onRequest}>
-            Request More Info
-          </button>
-        </div>
+        ))}
       </div>
+
+      <GuaranteeBlock />
+
+      <button className="req-btn" onClick={onRequest}>
+        Request More Info
+      </button>
     </div>
   )
 }
@@ -501,7 +498,7 @@ export default function ServicesPage() {
           </div>
 
           {/* ── Train Your Team — full-width ── */}
-          <div style={{ animation: 'fadeUp .5s ease .32s both', marginBottom: 16 }}>
+          <div style={{ marginBottom: 16 }}>
             <TrainCard svc={TRAIN_SERVICE} onRequest={() => openModal(TRAIN_SERVICE)} />
           </div>
 

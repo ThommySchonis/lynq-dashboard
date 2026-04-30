@@ -13,7 +13,7 @@ export async function GET(request) {
 
   const { data: clients } = await supabaseAdmin
     .from('clients')
-    .select('parcel_panel_api_key')
+    .select('id, parcel_panel_api_key')
     .eq('email', user.email)
     .limit(1)
 
@@ -47,24 +47,17 @@ export async function GET(request) {
     return NextResponse.json({ orders })
   }
 
-  // ── Mode B: paginated list ────────────────────────────────────────────────
-  const page  = Math.max(1, parseInt(request.nextUrl.searchParams.get('page')  || '1', 10) || 1)
-  const limit = Math.min(Math.max(parseInt(request.nextUrl.searchParams.get('limit') || '50', 10) || 50, 1), 100)
+  // ── Mode B: shipments from DB filtered by client_id ───────────────────────
+  const { data: shipments, error } = await supabaseAdmin
+    .from('shipments')
+    .select('*')
+    .eq('client_id', client.id)
+    .order('last_updated', { ascending: false })
 
-  try {
-    const res = await fetch(
-      `${PP_BASE}/api/v2/tracking?page=${page}&limit=${limit}`,
-      { headers: ppHeaders, cache: 'no-store' }
-    )
-
-    console.log('[parcel-panel/tracking] PP status:', res.status)
-    console.log('[parcel-panel/tracking] PP content-type:', res.headers.get('content-type'))
-    const text = await res.text()
-    console.log('[parcel-panel/tracking] PP raw response:', text.substring(0, 1000))
-
-    return NextResponse.json({ raw: text.substring(0, 1000) })
-  } catch (e) {
-    console.error('[parcel-panel/tracking] fetch error', e)
-    return NextResponse.json({ error: 'Failed to reach Parcel Panel' }, { status: 500 })
+  if (error) {
+    console.error('[parcel-panel/tracking] DB error:', error.message)
+    return NextResponse.json({ error: error.message }, { status: 500 })
   }
+
+  return NextResponse.json({ orders: shipments || [] })
 }

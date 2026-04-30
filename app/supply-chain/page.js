@@ -418,32 +418,48 @@ function ShipmentRow({ order, i, attentionKey }) {
 // ── Setup screen ──────────────────────────────────────────────────────────────
 function SetupScreen({ token, onConnected }) {
   const [apiKey, setApiKey] = useState('')
-  const [saving, setSaving]   = useState(false)
-  const [err, setErr]         = useState('')
+  const [saving, setSaving] = useState(false)
+  const [err, setErr]       = useState('')
+  const [copied, setCopied] = useState(false)
+
+  const webhookUrl = typeof window !== 'undefined'
+    ? `${window.location.origin}/api/parcel-panel/webhook`
+    : '/api/parcel-panel/webhook'
+
+  const copyWebhook = () => {
+    navigator.clipboard.writeText(webhookUrl).catch(() => {})
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
 
   const connect = async () => {
     if (!apiKey.trim()) return
     setSaving(true); setErr('')
-    const endpoint = '/api/parcel-panel/connect'
-    console.log('API key ingevoerd:', apiKey.trim().slice(0, 8) + '…')
-    console.log('Versturen naar:', endpoint)
     try {
-      const res  = await fetch(endpoint, {
+      const res  = await fetch('/api/parcel-panel/connect', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ apiKey: apiKey.trim() }),
       })
       const data = await res.json()
-      console.log('Response:', res.status, data)
       if (!res.ok) throw new Error(data.error || 'Failed to connect')
       onConnected()
     } catch (e) {
-      console.error('Connect error:', e)
       setErr(e.message)
     } finally {
       setSaving(false)
     }
   }
+
+  const Step = ({ n, title, children }) => (
+    <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start', marginBottom: 20 }}>
+      <div style={{ width: 22, height: 22, borderRadius: 6, background: '#F5F5F5', border: '1px solid rgba(0,0,0,0.07)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700, color: '#888888', flexShrink: 0, marginTop: 1 }}>{n}</div>
+      <div style={{ flex: 1 }}>
+        <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-1)', marginBottom: 4 }}>{title}</p>
+        {children}
+      </div>
+    </div>
+  )
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '48px 24px 0', textAlign: 'center' }}>
@@ -454,20 +470,52 @@ function SetupScreen({ token, onConnected }) {
         </svg>
       </div>
       <h2 style={{ fontSize: 26, fontWeight: 800, letterSpacing: '-0.04em', color: 'var(--text-1)', marginBottom: 10 }}>Connect Parcel Panel</h2>
-      <p style={{ fontSize: 14, color: 'var(--text-2)', maxWidth: 420, lineHeight: 1.7, marginBottom: 36 }}>
-        Link your Parcel Panel account to track all shipments, detect delivery issues automatically, and get proactive alerts — all in one place.
+      <p style={{ fontSize: 14, color: 'var(--text-2)', maxWidth: 440, lineHeight: 1.7, marginBottom: 28 }}>
+        Link your Parcel Panel account to automatically track all shipments and get proactive alerts.
       </p>
 
-      <div style={{ width: '100%', maxWidth: 420, textAlign: 'left' }}>
+      {/* Amber notice */}
+      <div style={{ width: '100%', maxWidth: 440, marginBottom: 28, padding: '11px 14px', background: 'rgba(217,119,6,0.06)', border: '1px solid rgba(217,119,6,0.18)', borderRadius: 10, textAlign: 'left', display: 'flex', gap: 9, alignItems: 'flex-start' }}>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#D97706" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 1 }}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <p style={{ fontSize: 12.5, color: '#D97706', lineHeight: 1.55 }}>
+          <strong>Note:</strong> Only new shipments from the moment of connection will be tracked. Existing orders will not appear retroactively.
+        </p>
+      </div>
+
+      <div style={{ width: '100%', maxWidth: 440, textAlign: 'left' }}>
         {/* Steps */}
-        <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 12, padding: '18px 20px', marginBottom: 20 }}>
-          <p style={{ fontSize: 10.5, fontWeight: 700, color: '#BDBDBD', textTransform: 'uppercase', letterSpacing: '.1em', marginBottom: 14 }}>How to find your API key</p>
-          {['Open the Parcel Panel app in your Shopify admin', 'Go to Integration', 'Scroll to the bottom — your API key is listed there'].map((step, i) => (
-            <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', marginBottom: i < 2 ? 10 : 0 }}>
-              <div style={{ width: 20, height: 20, borderRadius: 6, background: '#F5F5F5', border: '1px solid rgba(0,0,0,0.07)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700, color: '#888888', flexShrink: 0 }}>{i + 1}</div>
-              <p style={{ fontSize: 13, color: 'var(--text-2)', lineHeight: 1.5, paddingTop: 2 }}>{step}</p>
+        <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 12, padding: '20px 20px 4px', marginBottom: 16 }}>
+          <p style={{ fontSize: 10.5, fontWeight: 700, color: '#BDBDBD', textTransform: 'uppercase', letterSpacing: '.1em', marginBottom: 18 }}>Setup instructions</p>
+
+          <Step n={1} title="Add your API key">
+            <p style={{ fontSize: 12.5, color: 'var(--text-2)', lineHeight: 1.55 }}>
+              Copy your API key from Parcel Panel → Settings → API and paste it below.
+            </p>
+          </Step>
+
+          <Step n={2} title="Add the webhook URL in Parcel Panel">
+            <p style={{ fontSize: 12.5, color: 'var(--text-2)', lineHeight: 1.55, marginBottom: 8 }}>
+              Go to Parcel Panel → Settings → Webhooks → Add webhook and enter this URL:
+            </p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#F5F5F5', border: '1px solid rgba(0,0,0,0.07)', borderRadius: 8, padding: '8px 10px' }}>
+              <code style={{ flex: 1, fontSize: 11, color: '#555555', wordBreak: 'break-all', fontFamily: 'monospace' }}>{webhookUrl}</code>
+              <button onClick={copyWebhook} style={{ flexShrink: 0, padding: '4px 8px', borderRadius: 6, background: copied ? '#16A34A' : '#FFFFFF', color: copied ? '#FFFFFF' : '#555555', border: '1px solid rgba(0,0,0,0.1)', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', transition: 'all .15s' }}>
+                {copied ? 'Copied!' : 'Copy'}
+              </button>
             </div>
-          ))}
+          </Step>
+
+          <Step n={3} title="Select all shipping status events">
+            <p style={{ fontSize: 12.5, color: 'var(--text-2)', lineHeight: 1.55 }}>
+              Enable all event types so every status update is sent to your dashboard.
+            </p>
+          </Step>
+
+          <Step n={4} title="Confirm connection">
+            <p style={{ fontSize: 12.5, color: 'var(--text-2)', lineHeight: 1.55 }}>
+              Paste your API key below and click Connect to activate tracking.
+            </p>
+          </Step>
         </div>
 
         <input
@@ -475,7 +523,7 @@ function SetupScreen({ token, onConnected }) {
           value={apiKey}
           onChange={e => setApiKey(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && connect()}
-          placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+          placeholder="Paste your Parcel Panel API key…"
           type="password"
           style={{ marginBottom: 10 }}
         />
@@ -603,7 +651,7 @@ export default function SupplyChainPage() {
     { label: 'Out for Delivery', value: counts.outForDel,
       icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> },
     { label: 'Needs Attention',  value: attentionItems.length, accentColor: attnColor,
-      sub: attentionItems.length > 0 ? 'action required' : 'all good',
+      sub: attentionItems.length > 0 ? 'action required' : 'no action items',
       icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> },
     { label: 'Avg Delivery',     value: counts.avgDays ? `${counts.avgDays}d` : '—',
       sub: counts.onTimeRate !== null ? `${counts.onTimeRate}% on time` : null,
@@ -714,13 +762,19 @@ export default function SupplyChainPage() {
                 ))}
               </div>
 
-              {/* ── Action Required section ── */}
+              {/* ── Action items section ── */}
+              {attentionItems.length === 0 && orders.length > 0 && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 16px', borderRadius: 10, background: 'rgba(22,163,74,0.06)', border: '1px solid rgba(22,163,74,0.15)', marginBottom: 24, animation: 'fadeUp .4s ease .1s both' }}>
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#16A34A" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                  <span style={{ fontSize: 13.5, color: '#16A34A', fontWeight: 600 }}>All good — no action items required</span>
+                </div>
+              )}
               {attentionItems.length > 0 && (
                 <div style={{ marginBottom: 32, animation: 'fadeUp .4s ease .1s both' }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
                       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#DC2626" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                      <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-1)' }}>Action Required</span>
+                      <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-1)' }}>Action items</span>
                       <span style={{ fontSize: 11, fontWeight: 800, background: 'rgba(220,38,38,0.08)', border: '1px solid rgba(220,38,38,0.18)', color: '#DC2626', padding: '2px 8px', borderRadius: 100 }}>{attentionItems.length}</span>
                     </div>
                     {attentionItems.length > 3 && (
@@ -771,9 +825,12 @@ export default function SupplyChainPage() {
 
                 {filtered.length === 0 ? (
                   <div className="sc-card" style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--text-3)', fontSize: 13.5 }}>
-                    {orders.length === 0
-                      ? 'No shipments found. Orders will appear here once tracking is active in Parcel Panel.'
-                      : 'No shipments match this filter.'}
+                    {orders.length === 0 ? (
+                      <>
+                        <p style={{ fontWeight: 600, color: 'var(--text-2)', marginBottom: 6 }}>No shipments received yet</p>
+                        <p>Shipments will appear here once Parcel Panel sends a status update. Existing orders will not appear retroactively.</p>
+                      </>
+                    ) : 'No shipments match this filter.'}
                   </div>
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>

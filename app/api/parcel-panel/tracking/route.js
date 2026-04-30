@@ -22,7 +22,7 @@ export async function GET(request) {
   }
 
   const apiKey = client.parcel_panel_api_key
-  const ppHeaders = { 'x-parcelpanel-api-key': apiKey }
+  const ppHeaders = { 'x-parcelpanel-api-key': apiKey, 'Accept': 'application/json' }
 
   // ── Mode A: specific order numbers ────────────────────────────────────────
   const ordersParam = request.nextUrl.searchParams.get('orders') || ''
@@ -50,19 +50,29 @@ export async function GET(request) {
   const page  = Math.max(1, parseInt(request.nextUrl.searchParams.get('page')  || '1', 10) || 1)
   const limit = Math.min(Math.max(parseInt(request.nextUrl.searchParams.get('limit') || '50', 10) || 50, 1), 100)
 
+  console.log('[parcel-panel/tracking] fetching page', page, 'limit', limit)
+
   try {
     const res = await fetch(
       `${PP_BASE}/api/v2/tracking?page=${page}&limit=${limit}`,
       { headers: ppHeaders, cache: 'no-store' }
     )
 
-    if (!res.ok) {
-      const body = await res.text()
-      console.error('[parcel-panel/tracking] PP error', res.status, body.substring(0, 200))
-      return NextResponse.json({ error: 'Parcel Panel API error', detail: body }, { status: 502 })
+    console.log('[parcel-panel/tracking] PP status:', res.status)
+    const text = await res.text()
+    console.log('[parcel-panel/tracking] PP response:', text.substring(0, 500))
+
+    let data
+    try {
+      data = JSON.parse(text)
+    } catch {
+      return NextResponse.json({ error: 'Invalid tracking response from Parcel Panel' }, { status: 502 })
     }
 
-    const data = await res.json()
+    if (!res.ok) {
+      return NextResponse.json({ error: data?.message || 'Parcel Panel API error' }, { status: 502 })
+    }
+
     const raw = data.orders ?? data.trackings ?? data.data ?? data
     const orders = Array.isArray(raw) ? raw : (raw?.orders ?? raw?.trackings ?? raw?.data ?? [])
     return NextResponse.json({ orders: Array.isArray(orders) ? orders : [] })

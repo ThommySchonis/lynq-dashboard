@@ -29,12 +29,11 @@ const DEMO_PERF = {
   },
 }
 
-// ─── CSS — exact analytics tokens ─────────────────────────────────────────────
+// ─── CSS ──────────────────────────────────────────────────────────────────────
 const CSS = `
   @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
   @keyframes shimmer{from{background-position:-400% 0}to{background-position:400% 0}}
   @keyframes spin{to{transform:rotate(360deg)}}
-  @keyframes glowPulse{0%,100%{opacity:.5}50%{opacity:1}}
 
   @media(prefers-reduced-motion:reduce){
     *,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}
@@ -46,38 +45,35 @@ const CSS = `
   .pf-scroll::-webkit-scrollbar-track{background:transparent}
   .pf-scroll::-webkit-scrollbar-thumb{background:var(--scrollbar);border-radius:2px}
 
-  .date-inp{background:var(--bg-surface-2);border:1px solid var(--border);border-radius:8px;color:var(--text-1);padding:4px 10px;font-size:11.5px;font-family:inherit;cursor:pointer;outline:none;color-scheme:dark;transition:border-color .15s}
-  .date-inp:focus{border-color:var(--accent-border)}
-  .date-inp::-webkit-calendar-picker-indicator{filter:invert(.6);cursor:pointer}
+  .date-inp{background:#F5F5F5;border:1px solid rgba(0,0,0,0.08);border-radius:7px;color:#111111;padding:4px 10px;font-size:11.5px;font-family:inherit;cursor:pointer;outline:none;transition:border-color .15s}
+  .date-inp:focus{border-color:rgba(0,0,0,0.18)}
+  .date-inp::-webkit-calendar-picker-indicator{cursor:pointer}
 
   .kpi-card{
-    background:var(--bg-surface);
-    border:1px solid var(--border);
-    border-radius:12px;padding:20px 22px;
+    background:#FFFFFF;
+    border:1px solid rgba(0,0,0,0.07);
+    border-radius:8px;
+    padding:16px;
     position:relative;overflow:hidden;
-    transition:border-color .2s ease, background .2s ease, box-shadow .2s ease;
+    transition:border-color .2s ease;
     cursor:default;
-    box-shadow:var(--shadow-card);
   }
-  .kpi-card:hover{border-color:var(--border-hover);background:var(--bg-surface-2);box-shadow:var(--shadow-card-hover)}
-  .kpi-card .top-bar{position:absolute;top:0;left:0;right:0;height:2px;opacity:0;transition:opacity .25s ease}
-  .kpi-card:hover .top-bar{opacity:1}
+  .kpi-card:hover{border-color:rgba(0,0,0,0.12)}
 
   .panel{
-    background:var(--bg-surface);
-    border:1px solid var(--border);
-    border-radius:12px;padding:24px;
-    transition:border-color .2s ease, box-shadow .2s ease;
-    box-shadow:var(--shadow-card);
+    background:#FFFFFF;
+    border:1px solid rgba(0,0,0,0.07);
+    border-radius:10px;
+    padding:20px;
+    margin-bottom:16px;
   }
-  .panel:hover{border-color:var(--border-hover);box-shadow:var(--shadow-card-hover)}
 
-  .range-pill{padding:5px 14px;border-radius:100px;font-size:11.5px;font-weight:600;cursor:pointer;border:none;font-family:inherit;transition:all .15s ease}
+  .range-pill{padding:5px 12px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s ease}
 
   .sk{background:linear-gradient(90deg,var(--skeleton-from) 25%,var(--skeleton-to) 50%,var(--skeleton-from) 75%);background-size:400% 100%;animation:shimmer 1.8s ease-in-out infinite;border-radius:8px}
 
-  .ch-row{transition:background .15s;border-radius:8px;padding:8px 0}
-  .ch-row:hover{background:var(--bg-input)}
+  .ch-row{transition:background .15s;border-radius:6px;padding:8px 4px}
+  .ch-row:hover{background:#FAFAFA}
 `
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -103,16 +99,16 @@ function useCountUp(target, active) {
 }
 
 function Spinner({ size=18 }) {
-  return <div style={{ width:size, height:size, border:`2px solid var(--border)`, borderTop:`2px solid #111111`, borderRadius:'50%', animation:'spin .7s linear infinite', flexShrink:0 }}/>
+  return <div style={{ width:size, height:size, border:`2px solid rgba(0,0,0,0.08)`, borderTop:`2px solid #111111`, borderRadius:'50%', animation:'spin .7s linear infinite', flexShrink:0 }}/>
 }
 
 // ─── Date ranges ──────────────────────────────────────────────────────────────
 const RANGES = [
-  { id:'7d',     label:'7D'          },
-  { id:'30d',    label:'30D'         },
-  { id:'month',  label:'This month'  },
-  { id:'3month', label:'3 months'    },
-  { id:'custom', label:'Custom'      },
+  { id:'7d',     label:'7D'         },
+  { id:'30d',    label:'30D'        },
+  { id:'month',  label:'This month' },
+  { id:'3month', label:'3 months'   },
+  { id:'custom', label:'Custom'     },
 ]
 
 function getDateRange(id) {
@@ -124,20 +120,11 @@ function getDateRange(id) {
   return{from:'',to:''}
 }
 
-// ─── PageBackground — matches analytics ───────────────────────────────────────
-function PageBackground() {
+// ─── Section header ───────────────────────────────────────────────────────────
+function SectionHeader({ title, marginTop=24 }) {
   return (
-    <div aria-hidden style={{ display:'none' }}/>
-  )
-}
-
-// ─── Section divider — minimal, consistent ────────────────────────────────────
-function SectionDivider({ title, marginTop=8 }) {
-  return (
-    <div style={{ display:'flex', alignItems:'center', gap:14, marginBottom:18, marginTop, animation:'fadeIn .3s ease-out both' }}>
-      <div style={{ height:1, flex:1, background:'var(--bg-surface-2)' }}/>
-      <span style={{ fontSize:10.5, fontWeight:700, letterSpacing:'.13em', color:'var(--text-3)', textTransform:'uppercase', flexShrink:0 }}>{title}</span>
-      <div style={{ height:1, flex:1, background:'var(--bg-surface-2)' }}/>
+    <div style={{ textAlign:'center', margin:`${marginTop}px 0 16px`, animation:'fadeIn .3s ease-out both' }}>
+      <span style={{ fontSize:11, fontWeight:600, letterSpacing:'.08em', color:'#BDBDBD', textTransform:'uppercase' }}>{title}</span>
     </div>
   )
 }
@@ -151,40 +138,34 @@ function WorkloadKPIs({ data, loaded }) {
   const closeRate = data.created>0 ? ((data.closed/data.created)*100).toFixed(0) : null
 
   const cards = [
-    { label:'Created', value:fmtNum(aCreated), sub:'new tickets this period',
-      accent:'#555555', grad:'linear-gradient(135deg,#555555,#888888)',
-      icon:<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> },
-    { label:'Closed', value:fmtNum(aClosed), sub:closeRate?`${closeRate}% close rate`:'resolved this period',
-      accent:'#4ade80', grad:'linear-gradient(135deg,#4ade80,#86efac)',
-      badge:closeRate?{value:`${closeRate}%`,color:'#4ade80'}:null,
-      icon:<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg> },
-    { label:'Open', value:fmtNum(aOpen), sub:'currently awaiting reply',
-      accent:'#F97316', grad:'linear-gradient(135deg,#F97316,#fbbf24)',
-      icon:<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> },
-    { label:'Messages', value:fmtNum(aMessages), sub:'total messages received',
-      accent:'#38bdf8', grad:'linear-gradient(135deg,#38bdf8,#7dd3fc)',
-      icon:<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg> },
+    { label:'CREATED', value:fmtNum(aCreated), sub:'new tickets this period',
+      icon:<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#555555" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> },
+    { label:'CLOSED', value:fmtNum(aClosed), sub:closeRate?`${closeRate}% close rate`:'resolved this period',
+      badge:closeRate?{value:`${closeRate}%`}:null,
+      icon:<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#555555" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg> },
+    { label:'OPEN', value:fmtNum(aOpen), sub:'currently awaiting reply',
+      icon:<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#555555" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> },
+    { label:'MESSAGES', value:fmtNum(aMessages), sub:'total messages received',
+      icon:<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#555555" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg> },
   ]
 
   if (!loaded) return (
-    <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:16, marginBottom:28 }}>
+    <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:16, marginBottom:16 }}>
       {[0,1,2,3].map(i=><div key={i} className="kpi-card"><div className="sk" style={{ height:11, width:'55%', marginBottom:14 }}/><div className="sk" style={{ height:30, width:'65%', marginBottom:8 }}/><div className="sk" style={{ height:9, width:'80%' }}/></div>)}
     </div>
   )
 
   return (
-    <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:16, marginBottom:28 }}>
+    <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:16, marginBottom:16 }}>
       {cards.map(c=>(
         <div key={c.label} className="kpi-card" style={{ animation:'fadeIn .3s ease-out both' }}>
-          <div className="top-bar" style={{ background:c.grad }}/>
-          <div style={{ position:'absolute', inset:0, background:`radial-gradient(circle at 100% 0%,${c.accent}08 0%,transparent 60%)`, borderRadius:12, pointerEvents:'none' }}/>
-          <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:14, position:'relative', zIndex:1 }}>
-            <div style={{ width:36, height:36, borderRadius:10, background:`${c.accent}1a`, border:`1px solid ${c.accent}20`, display:'flex', alignItems:'center', justifyContent:'center', color:c.accent }}>{c.icon}</div>
-            {c.badge&&<span style={{ fontSize:10, fontWeight:800, color:c.badge.color, background:`${c.badge.color}14`, border:`1px solid ${c.badge.color}28`, borderRadius:6, padding:'2px 8px', letterSpacing:'.03em', fontVariantNumeric:'tabular-nums' }}>{c.badge.value}</span>}
+          <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:14 }}>
+            <div style={{ width:28, height:28, borderRadius:7, background:'#F5F5F5', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>{c.icon}</div>
+            {c.badge&&<span style={{ fontSize:11, fontWeight:600, color:'#16A34A', background:'#F0FDF4', borderRadius:4, padding:'2px 7px', letterSpacing:'.02em', fontVariantNumeric:'tabular-nums' }}>{c.badge.value}</span>}
           </div>
-          <div style={{ fontSize:27, fontWeight:800, letterSpacing:'-0.04em', color:'var(--text-1)', lineHeight:1, marginBottom:5, fontVariantNumeric:'tabular-nums', position:'relative', zIndex:1 }}>{c.value}</div>
-          <div style={{ fontSize:9.5, fontWeight:700, letterSpacing:'.1em', color:'var(--text-3)', textTransform:'uppercase', marginBottom:4, position:'relative', zIndex:1 }}>{c.label}</div>
-          <div style={{ fontSize:11, color:'var(--text-3)', lineHeight:1.4, position:'relative', zIndex:1 }}>{c.sub}</div>
+          <div style={{ fontSize:28, fontWeight:700, color:'#111111', lineHeight:1, marginBottom:8, fontVariantNumeric:'tabular-nums' }}>{c.value}</div>
+          <div style={{ fontSize:11, fontWeight:600, letterSpacing:'.06em', color:'#BDBDBD', textTransform:'uppercase', marginBottom:4 }}>{c.label}</div>
+          <div style={{ fontSize:12, color:'#888888', lineHeight:1.4 }}>{c.sub}</div>
         </div>
       ))}
     </div>
@@ -196,7 +177,7 @@ function WeeklyChart({ weekly, loaded }) {
   const [hovIdx, setHovIdx] = useState(null)
 
   if (!loaded) return (
-    <div className="panel" style={{ marginBottom:24 }}>
+    <div className="panel">
       <div className="sk" style={{ height:13, width:'28%', marginBottom:6 }}/><div className="sk" style={{ height:10, width:'18%', marginBottom:22 }}/>
       <div className="sk" style={{ height:110, borderRadius:8 }}/>
     </div>
@@ -209,32 +190,38 @@ function WeeklyChart({ weekly, loaded }) {
   const barY=v=>PAD_TOP+BAR_H-(v/maxVal)*BAR_H, barH=v=>(v/maxVal)*BAR_H
 
   return (
-    <div className="panel" style={{ marginBottom:24, animation:'fadeIn .3s ease-out both' }}>
+    <div className="panel" style={{ animation:'fadeIn .3s ease-out both' }}>
       <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:18 }}>
         <div>
-          <div style={{ fontSize:13, fontWeight:600, color:'var(--text-1)', marginBottom:3 }}>Weekly ticket volume</div>
-          <div style={{ fontSize:11, color:'var(--text-3)' }}>Created vs closed per week</div>
+          <div style={{ fontSize:13, fontWeight:600, color:'#111111', marginBottom:3 }}>Weekly ticket volume</div>
+          <div style={{ fontSize:11, color:'#888888' }}>Created vs closed per week</div>
         </div>
-        <div style={{ display:'flex', gap:18 }}>
-          {[['#555555','Created'],['#4ade80','Closed']].map(([color,label])=>(
-            <span key={label} style={{ display:'flex', alignItems:'center', gap:6, fontSize:11, color:'var(--text-3)' }}>
-              <span style={{ width:10, height:10, borderRadius:3, background:color, display:'inline-block', opacity:.75 }}/>{label}
+        <div style={{ display:'flex', gap:16 }}>
+          {[['#111111','Created'],['#E0E0E0','Closed']].map(([color,label])=>(
+            <span key={label} style={{ display:'flex', alignItems:'center', gap:6, fontSize:12, color:'#555555' }}>
+              <span style={{ width:10, height:10, borderRadius:2, background:color, display:'inline-block', flexShrink:0 }}/>{label}
             </span>
           ))}
         </div>
       </div>
       <div style={{ overflowX:'auto' }}>
         <svg width={totalW} height={PAD_TOP+BAR_H+PAD_BOT} style={{ display:'block', minWidth:'100%', overflow:'visible' }}>
-          {[.25,.5,.75,1].map(p=>{const y=PAD_TOP+BAR_H-p*BAR_H; return <line key={p} x1={0} y1={y} x2={totalW} y2={y} stroke={p===1?'var(--bg-surface-2)':'var(--bg-input)'} strokeWidth={1} strokeDasharray={p===1?'0':'3 4'}/>})}
+          {[.25,.5,.75,1].map(p=>{ const y=PAD_TOP+BAR_H-p*BAR_H; return <line key={p} x1={0} y1={y} x2={totalW} y2={y} stroke="rgba(0,0,0,0.05)" strokeWidth={1} strokeDasharray={p===1?'0':'3 4'}/> })}
           {weekly.map((w,i)=>{
             const x=i*colW+9, isHov=hovIdx===i
             return (
               <g key={i} onMouseEnter={()=>setHovIdx(i)} onMouseLeave={()=>setHovIdx(null)} style={{ cursor:'default' }}>
                 <rect x={x-4} y={PAD_TOP} width={barW*2+barGap+8} height={BAR_H} fill="transparent"/>
-                <rect x={x} y={barY(w.created)} width={barW} height={Math.max(barH(w.created),2)} rx={3} fill={isHov?'rgba(17,17,17,0.8)':'rgba(17,17,17,0.5)'} style={{ transition:'fill .15s' }}/>
-                <rect x={x+barW+barGap} y={barY(w.closed)} width={barW} height={Math.max(barH(w.closed),2)} rx={3} fill={isHov?'rgba(74,222,128,0.8)':'rgba(74,222,128,0.5)'} style={{ transition:'fill .15s' }}/>
-                {isHov&&<g><rect x={x-6} y={PAD_TOP-38} width={64} height={32} rx={6} fill="rgba(17,17,17,0.92)" stroke="rgba(255,255,255,0.15)" strokeWidth={1}/><text x={x+26} y={PAD_TOP-25} textAnchor="middle" fill="#ffffff" fontSize={10} fontWeight="700">{w.created}</text><text x={x+26} y={PAD_TOP-13} textAnchor="middle" fill="#4ade80" fontSize={10} fontWeight="700">{w.closed}</text></g>}
-                <text x={x+barW+barGap/2} y={PAD_TOP+BAR_H+16} textAnchor="middle" fill="rgba(248,250,252,0.3)" fontSize={9}>{w.label}</text>
+                <rect x={x} y={barY(w.created)} width={barW} height={Math.max(barH(w.created),2)} rx={3} fill={isHov?'#111111':'rgba(17,17,17,0.7)'} style={{ transition:'fill .15s' }}/>
+                <rect x={x+barW+barGap} y={barY(w.closed)} width={barW} height={Math.max(barH(w.closed),2)} rx={3} fill={isHov?'#BDBDBD':'#E0E0E0'} style={{ transition:'fill .15s' }}/>
+                {isHov&&(
+                  <g>
+                    <rect x={x-6} y={PAD_TOP-40} width={66} height={34} rx={6} fill="rgba(17,17,17,0.92)" stroke="rgba(255,255,255,0.1)" strokeWidth={1}/>
+                    <text x={x+27} y={PAD_TOP-26} textAnchor="middle" fill="#ffffff" fontSize={10} fontWeight="700">{w.created} created</text>
+                    <text x={x+27} y={PAD_TOP-13} textAnchor="middle" fill="#BDBDBD" fontSize={10}>{w.closed} closed</text>
+                  </g>
+                )}
+                <text x={x+barW+barGap/2} y={PAD_TOP+BAR_H+16} textAnchor="middle" fill="#BDBDBD" fontSize={9} fontFamily="sans-serif">{w.label}</text>
               </g>
             )
           })}
@@ -245,70 +232,48 @@ function WeeklyChart({ weekly, loaded }) {
 }
 
 // ─── Response Times ───────────────────────────────────────────────────────────
-function getRTStatus(mins, thresholds) {
-  if (mins==null) return { color:'var(--text-3)', grad:'linear-gradient(135deg,rgba(255,255,255,0.15),rgba(255,255,255,0.05))', label:'No data' }
-  if (mins<thresholds[0]) return { color:'#4ade80', grad:'linear-gradient(135deg,#4ade80,#86efac)', label:'Excellent' }
-  if (mins<thresholds[1]) return { color:'#fbbf24', grad:'linear-gradient(135deg,#fbbf24,#fde68a)', label:'Average' }
-  return { color:'#f87171', grad:'linear-gradient(135deg,#f87171,#fca5a5)', label:'Slow' }
+function getRTLabel(mins, thresholds) {
+  if (mins==null) return null
+  if (mins<thresholds[0]) return { label:'Excellent', color:'#16A34A', bg:'#F0FDF4', border:'rgba(22,163,74,0.15)' }
+  if (mins<thresholds[1]) return { label:'Average',   color:'#D97706', bg:'#FFFBEB', border:'rgba(215,163,6,0.15)' }
+  return                          { label:'Slow',      color:'#DC2626', bg:'#FEF2F2', border:'rgba(220,38,38,0.15)' }
 }
 
 function ResponseTimesSection({ data, loaded }) {
   if (!loaded) return (
-    <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16, marginBottom:28 }}>
-      {[0,1].map(i=><div key={i} className="kpi-card" style={{ padding:'22px 24px' }}><div className="sk" style={{ height:11, width:'45%', marginBottom:20 }}/><div className="sk" style={{ height:36, width:'48%', marginBottom:10 }}/><div className="sk" style={{ height:1, marginBottom:14 }}/><div className="sk" style={{ height:9, width:'60%' }}/></div>)}
+    <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16, marginBottom:16 }}>
+      {[0,1].map(i=><div key={i} className="kpi-card"><div className="sk" style={{ height:11, width:'45%', marginBottom:20 }}/><div className="sk" style={{ height:36, width:'48%', marginBottom:10 }}/><div className="sk" style={{ height:1, marginBottom:14 }}/><div className="sk" style={{ height:9, width:'60%' }}/></div>)}
     </div>
   )
 
   const cards = [
-    { label:'First Response Time', value:fmtMinutes(data.avgFirstResponse), sub:data.firstResponseSample?`Avg across ${data.firstResponseSample} tickets`:'No tickets with response data yet', benchmark:'< 4h target', status:getRTStatus(data.avgFirstResponse,[240,720]), icon:<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> },
-    { label:'Resolution Time', value:fmtMinutes(data.avgResolution), sub:data.resolutionSample?`Avg across ${data.resolutionSample} closed tickets`:'No closed tickets in this range', benchmark:'< 24h target', status:getRTStatus(data.avgResolution,[1440,4320]), icon:<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> },
+    { label:'FIRST RESPONSE TIME', value:fmtMinutes(data.avgFirstResponse),
+      sub:data.firstResponseSample?`Avg across ${data.firstResponseSample} tickets`:'No tickets with response data yet',
+      benchmark:'< 4h target', rtLabel:getRTLabel(data.avgFirstResponse,[240,720]),
+      icon:<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#555555" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> },
+    { label:'RESOLUTION TIME', value:fmtMinutes(data.avgResolution),
+      sub:data.resolutionSample?`Avg across ${data.resolutionSample} closed tickets`:'No closed tickets in this range',
+      benchmark:'< 24h target', rtLabel:getRTLabel(data.avgResolution,[1440,4320]),
+      icon:<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#555555" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> },
   ]
 
   return (
-    <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16, marginBottom:28, animation:'fadeIn .3s ease-out both' }}>
-      {cards.map(c=>{
-        const noData = c.value===null
-        return (
-          <div key={c.label} className="kpi-card" style={{ padding:'22px 24px' }}>
-            <div className="top-bar" style={{ background:c.status.grad }}/>
-            <div style={{ position:'absolute', inset:0, background:`radial-gradient(circle at 100% 0%,${noData?'var(--bg-input)':c.status.color+'08'} 0%,transparent 55%)`, borderRadius:12, pointerEvents:'none' }}/>
-            {noData ? (
-              <div style={{ display:'flex', alignItems:'center', gap:20, position:'relative', zIndex:1 }}>
-                <div style={{ flexShrink:0, position:'relative' }}>
-                  <svg width="64" height="64" viewBox="0 0 64 64">
-                    <circle cx="32" cy="32" r="27" fill="none" stroke="rgba(255,255,255,0.07)" strokeWidth="1.5" strokeDasharray="5 4"/>
-                    <circle cx="32" cy="32" r="18" fill="rgba(255,255,255,0.04)"/>
-                  </svg>
-                  <div style={{ position:'absolute', inset:0, display:'flex', alignItems:'center', justifyContent:'center', color:'var(--text-3)' }}>{c.icon}</div>
-                </div>
-                <div>
-                  <div style={{ fontSize:9.5, fontWeight:700, letterSpacing:'.1em', color:'var(--text-3)', textTransform:'uppercase', marginBottom:7 }}>{c.label}</div>
-                  <div style={{ fontSize:14, fontWeight:700, color:'var(--text-3)', marginBottom:5 }}>No data yet</div>
-                  <div style={{ fontSize:11, color:'var(--text-3)', lineHeight:1.5, marginBottom:10 }}>{c.sub}</div>
-                  <span style={{ display:'inline-flex', alignItems:'center', gap:5, fontSize:10.5, color:'var(--text-3)', background:'var(--bg-surface-2)', border:'1px solid var(--border)', borderRadius:6, padding:'2px 9px' }}>
-                    <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                    {c.benchmark}
-                  </span>
-                </div>
-              </div>
-            ) : (
-              <div style={{ position:'relative', zIndex:1 }}>
-                <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:16 }}>
-                  <div style={{ width:36, height:36, borderRadius:10, background:`${c.status.color}1a`, border:`1px solid ${c.status.color}20`, display:'flex', alignItems:'center', justifyContent:'center', color:c.status.color }}>{c.icon}</div>
-                  <span style={{ fontSize:10, fontWeight:800, color:c.status.color, background:`${c.status.color}14`, border:`1px solid ${c.status.color}28`, borderRadius:6, padding:'2px 9px', letterSpacing:'.04em' }}>{c.status.label}</span>
-                </div>
-                <div style={{ fontSize:38, fontWeight:800, letterSpacing:'-0.04em', color:c.status.color, lineHeight:1, marginBottom:7, fontVariantNumeric:'tabular-nums' }}>{c.value}</div>
-                <div style={{ fontSize:9.5, fontWeight:700, letterSpacing:'.1em', color:'var(--text-3)', textTransform:'uppercase', marginBottom:14 }}>{c.label}</div>
-                <div style={{ height:1, background:'var(--bg-surface-2)', marginBottom:12 }}/>
-                <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-                  <div style={{ fontSize:11, color:'var(--text-3)', lineHeight:1.4 }}>{c.sub}</div>
-                  <span style={{ fontSize:10.5, color:c.status.color, background:`${c.status.color}12`, border:`1px solid ${c.status.color}22`, borderRadius:6, padding:'2px 9px', flexShrink:0, marginLeft:12, whiteSpace:'nowrap' }}>{c.benchmark}</span>
-                </div>
-              </div>
-            )}
+    <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16, marginBottom:16, animation:'fadeIn .3s ease-out both' }}>
+      {cards.map(c=>(
+        <div key={c.label} className="kpi-card" style={{ padding:'16px' }}>
+          <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:14 }}>
+            <div style={{ width:28, height:28, borderRadius:7, background:'#F5F5F5', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>{c.icon}</div>
+            {c.rtLabel&&<span style={{ fontSize:10, fontWeight:600, color:c.rtLabel.color, background:c.rtLabel.bg, border:`1px solid ${c.rtLabel.border}`, borderRadius:4, padding:'2px 8px' }}>{c.rtLabel.label}</span>}
           </div>
-        )
-      })}
+          <div style={{ fontSize:28, fontWeight:700, color:'#111111', lineHeight:1, marginBottom:8, fontVariantNumeric:'tabular-nums' }}>{c.value||'—'}</div>
+          <div style={{ fontSize:11, fontWeight:600, letterSpacing:'.06em', color:'#BDBDBD', textTransform:'uppercase', marginBottom:14 }}>{c.label}</div>
+          <div style={{ height:1, background:'rgba(0,0,0,0.06)', marginBottom:12 }}/>
+          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:10 }}>
+            <div style={{ fontSize:12, color:'#888888', lineHeight:1.4 }}>{c.sub}</div>
+            <span style={{ fontSize:11, color:'#888888', background:'#F5F5F5', borderRadius:4, padding:'2px 8px', flexShrink:0, whiteSpace:'nowrap' }}>{c.benchmark}</span>
+          </div>
+        </div>
+      ))}
     </div>
   )
 }
@@ -321,38 +286,32 @@ function ProductivityKPIs({ data, loaded }) {
   const aOTN      = useCountUp(data.oneTouchCount ||0, loaded)
 
   const cards = [
-    { label:'Tickets replied', value:fmtNum(aReplied), sub:'agents sent at least 1 reply',
-      accent:'#555555', grad:'linear-gradient(135deg,#555555,#888888)',
-      icon:<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 0 0-4-4H4"/></svg> },
-    { label:'Messages sent', value:fmtNum(aSent), sub:'outbound agent messages',
-      accent:'#38bdf8', grad:'linear-gradient(135deg,#38bdf8,#7dd3fc)',
-      icon:<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg> },
-    { label:'One-touch', value:`${aOT.toFixed(1)}%`, sub:`${fmtNum(aOTN)} tickets closed in one reply`,
-      accent:'#4ade80', grad:'linear-gradient(135deg,#4ade80,#86efac)',
-      icon:<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z"/><path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg> },
-    { label:'Avg messages', value:data.avgMessages||'—', sub:'per ticket on average',
-      accent:'#FB923C', grad:'linear-gradient(135deg,#F97316,#fbbf24)',
-      icon:<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><line x1="9" y1="10" x2="15" y2="10"/></svg> },
+    { label:'TICKETS REPLIED', value:fmtNum(aReplied), sub:'agents sent at least 1 reply',
+      icon:<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#555555" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 0 0-4-4H4"/></svg> },
+    { label:'MESSAGES SENT', value:fmtNum(aSent), sub:'outbound agent messages',
+      icon:<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#555555" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg> },
+    { label:'ONE-TOUCH', value:`${aOT.toFixed(1)}%`, sub:`${fmtNum(aOTN)} tickets closed in one reply`,
+      icon:<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#555555" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z"/><path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg> },
+    { label:'AVG MESSAGES', value:data.avgMessages||'—', sub:'per ticket on average',
+      icon:<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#555555" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><line x1="9" y1="10" x2="15" y2="10"/></svg> },
   ]
 
   if (!loaded) return (
-    <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:16, marginBottom:28 }}>
+    <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:16, marginBottom:16 }}>
       {[0,1,2,3].map(i=><div key={i} className="kpi-card"><div className="sk" style={{ height:11, width:'55%', marginBottom:14 }}/><div className="sk" style={{ height:30, width:'65%', marginBottom:8 }}/><div className="sk" style={{ height:9, width:'80%' }}/></div>)}
     </div>
   )
 
   return (
-    <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:16, marginBottom:28 }}>
+    <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:16, marginBottom:16 }}>
       {cards.map(c=>(
         <div key={c.label} className="kpi-card" style={{ animation:'fadeIn .3s ease-out both' }}>
-          <div className="top-bar" style={{ background:c.grad }}/>
-          <div style={{ position:'absolute', inset:0, background:`radial-gradient(circle at 100% 0%,${c.accent}08 0%,transparent 60%)`, borderRadius:12, pointerEvents:'none' }}/>
-          <div style={{ marginBottom:14, position:'relative', zIndex:1 }}>
-            <div style={{ width:36, height:36, borderRadius:10, background:`${c.accent}1a`, border:`1px solid ${c.accent}20`, display:'flex', alignItems:'center', justifyContent:'center', color:c.accent }}>{c.icon}</div>
+          <div style={{ marginBottom:14 }}>
+            <div style={{ width:28, height:28, borderRadius:7, background:'#F5F5F5', display:'flex', alignItems:'center', justifyContent:'center' }}>{c.icon}</div>
           </div>
-          <div style={{ fontSize:27, fontWeight:800, letterSpacing:'-0.04em', color:'var(--text-1)', lineHeight:1, marginBottom:5, fontVariantNumeric:'tabular-nums', position:'relative', zIndex:1 }}>{c.value}</div>
-          <div style={{ fontSize:9.5, fontWeight:700, letterSpacing:'.1em', color:'var(--text-3)', textTransform:'uppercase', marginBottom:4, position:'relative', zIndex:1 }}>{c.label}</div>
-          <div style={{ fontSize:11, color:'var(--text-3)', lineHeight:1.4, position:'relative', zIndex:1 }}>{c.sub}</div>
+          <div style={{ fontSize:24, fontWeight:700, color:'#111111', lineHeight:1, marginBottom:8, fontVariantNumeric:'tabular-nums' }}>{c.value}</div>
+          <div style={{ fontSize:11, fontWeight:600, letterSpacing:'.06em', color:'#BDBDBD', textTransform:'uppercase', marginBottom:4 }}>{c.label}</div>
+          <div style={{ fontSize:12, color:'#888888', lineHeight:1.4 }}>{c.sub}</div>
         </div>
       ))}
     </div>
@@ -360,46 +319,55 @@ function ProductivityKPIs({ data, loaded }) {
 }
 
 // ─── Channel breakdown ────────────────────────────────────────────────────────
-const CH_COLORS = { email:'#555555', chat:'#38bdf8', 'contact form':'#4ade80', sms:'#F97316', api:'#fbbf24', voice:'#f472b6' }
+const CH_COLORS = {
+  email:          '#111111',
+  chat:           '#555555',
+  'contact form': '#888888',
+  sms:            '#BDBDBD',
+  api:            '#BDBDBD',
+  voice:          '#BDBDBD',
+}
 
 function ChannelBreakdown({ channels, loaded }) {
   if (!loaded) return (
-    <div className="panel" style={{ marginBottom:24 }}>
+    <div className="panel">
       <div className="sk" style={{ height:13, width:'25%', marginBottom:6 }}/><div className="sk" style={{ height:10, width:'18%', marginBottom:18 }}/>
-      <div className="sk" style={{ height:7, borderRadius:4, marginBottom:20 }}/>
-      {[0,1,2].map(i=><div key={i} style={{ marginBottom:12 }}><div style={{ display:'flex', gap:10, marginBottom:7 }}><div className="sk" style={{ width:70, height:11 }}/><div className="sk" style={{ flex:1, height:11 }}/><div className="sk" style={{ width:28, height:11 }}/></div><div className="sk" style={{ height:5, borderRadius:3 }}/></div>)}
+      <div className="sk" style={{ height:6, borderRadius:3, marginBottom:20 }}/>
+      {[0,1,2].map(i=><div key={i} style={{ marginBottom:12 }}><div style={{ display:'flex', gap:10, marginBottom:7 }}><div className="sk" style={{ width:70, height:11 }}/><div className="sk" style={{ flex:1, height:11 }}/><div className="sk" style={{ width:28, height:11 }}/></div><div className="sk" style={{ height:6, borderRadius:3 }}/></div>)}
     </div>
   )
   if (!channels||channels.length===0) return null
   const total = channels.reduce((s,c)=>s+c.count, 0)
+
   return (
-    <div className="panel" style={{ marginBottom:24, animation:'fadeIn .3s ease-out both' }}>
+    <div className="panel" style={{ animation:'fadeIn .3s ease-out both' }}>
       <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:16 }}>
         <div>
-          <div style={{ fontSize:13, fontWeight:600, color:'var(--text-1)', marginBottom:3 }}>Tickets by channel</div>
-          <div style={{ fontSize:11, color:'var(--text-3)' }}>{total.toLocaleString()} tickets · this period</div>
+          <div style={{ fontSize:13, fontWeight:600, color:'#111111', marginBottom:3 }}>Tickets by channel</div>
+          <div style={{ fontSize:11, color:'#888888' }}>{total.toLocaleString()} tickets · this period</div>
         </div>
       </div>
-      <div style={{ display:'flex', height:7, borderRadius:5, overflow:'hidden', marginBottom:22, gap:1.5 }}>
-        {channels.map(ch=>{ const color=CH_COLORS[ch.name.toLowerCase()]||'var(--text-3)'; return <div key={ch.name} style={{ flex:ch.pct, background:color, opacity:.7, minWidth:2 }}/> })}
+      {/* Combined bar */}
+      <div style={{ display:'flex', height:6, borderRadius:3, overflow:'hidden', marginBottom:22, gap:1.5 }}>
+        {channels.map(ch=>{ const color=CH_COLORS[ch.name.toLowerCase()]||'#BDBDBD'; return <div key={ch.name} style={{ flex:ch.pct, background:color, minWidth:2 }}/> })}
       </div>
       <div style={{ display:'flex', flexDirection:'column', gap:2 }}>
         {channels.map((ch,i)=>{
-          const color=CH_COLORS[ch.name.toLowerCase()]||'var(--text-3)'
+          const color=CH_COLORS[ch.name.toLowerCase()]||'#BDBDBD'
           return (
             <div key={ch.name} className="ch-row" style={{ animation:`fadeIn .3s ease-out ${i*60}ms both` }}>
-              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:7, paddingLeft:4, paddingRight:4 }}>
+              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:7, paddingLeft:2, paddingRight:2 }}>
                 <div style={{ display:'flex', alignItems:'center', gap:9 }}>
-                  <div style={{ width:8, height:8, borderRadius:2, background:color, flexShrink:0, opacity:.85 }}/>
-                  <span style={{ fontSize:12.5, fontWeight:600, color:'var(--text-2)' }}>{ch.name}</span>
+                  <div style={{ width:7, height:7, borderRadius:'50%', background:color, flexShrink:0 }}/>
+                  <span style={{ fontSize:13, color:'#111111' }}>{ch.name}</span>
                 </div>
                 <div style={{ display:'flex', alignItems:'center', gap:12 }}>
-                  <span style={{ fontSize:11, color:'var(--text-3)', fontVariantNumeric:'tabular-nums' }}>{ch.count.toLocaleString()}</span>
-                  <span style={{ fontSize:12, fontWeight:800, color, minWidth:36, textAlign:'right', fontVariantNumeric:'tabular-nums' }}>{ch.pct}%</span>
+                  <span style={{ fontSize:12, color:'#888888', fontVariantNumeric:'tabular-nums' }}>{ch.count.toLocaleString()}</span>
+                  <span style={{ fontSize:12, fontWeight:600, color:'#111111', minWidth:36, textAlign:'right', fontVariantNumeric:'tabular-nums' }}>{ch.pct}%</span>
                 </div>
               </div>
-              <div style={{ height:4, borderRadius:3, background:'var(--bg-surface-2)', overflow:'hidden', marginLeft:4, marginRight:4 }}>
-                <div style={{ height:'100%', borderRadius:3, background:color, width:`${ch.pct}%`, opacity:.65, transition:'width .9s cubic-bezier(0.34,1.56,0.64,1)' }}/>
+              <div style={{ height:6, borderRadius:3, background:'#F5F5F5', overflow:'hidden', marginLeft:2, marginRight:2 }}>
+                <div style={{ height:'100%', borderRadius:3, background:color, width:`${ch.pct}%`, transition:'width .9s cubic-bezier(0.34,1.56,0.64,1)' }}/>
               </div>
             </div>
           )
@@ -465,82 +433,82 @@ export default function PerformancePage() {
   if (!mounted) return null
 
   return (
-    <div className="pf-root" style={{ display:'flex', minHeight:'100vh', background:'var(--bg-page)' }}>
+    <div className="pf-root" style={{ display:'flex', minHeight:'100vh', background:'#FAFAFA' }}>
       <style>{CSS}</style>
       <Sidebar/>
 
-      <main className="pf-scroll" style={{ flex:1, overflowY:'auto', padding:'36px 44px', position:'relative' }}>
-        <PageBackground/>
+      <main className="pf-scroll" style={{ flex:1, overflowY:'auto', padding:'24px', position:'relative' }}>
         <div style={{ position:'relative', zIndex:1, maxWidth:1200, margin:'0 auto' }}>
 
-          {/* ── Header — matches analytics exactly ── */}
-          <div style={{ marginBottom:28, animation:'fadeIn .5s ease-out both' }}>
+          {/* Header */}
+          <div style={{ marginBottom:24, animation:'fadeIn .5s ease-out both' }}>
             <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
               <div>
-                <h1 style={{ fontSize:28, fontWeight:800, color:'var(--text-1)', letterSpacing:'-0.04em', lineHeight:1.15, marginBottom:5, textShadow:'none' }}>Performance</h1>
-                <p style={{ fontSize:12.5, color:'var(--text-3)' }}>Customer support metrics · Gorgias</p>
+                <h1 style={{ fontSize:20, fontWeight:700, color:'#111111', lineHeight:1.2, marginBottom:4 }}>Performance</h1>
+                <p style={{ fontSize:12, color:'#888888' }}>Customer support metrics · Gorgias</p>
               </div>
               <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                {demoMode&&(
+                  <span style={{ fontSize:10, fontWeight:700, background:'#F5F5F5', color:'#555555', border:'1px solid rgba(0,0,0,0.08)', borderRadius:4, padding:'2px 7px', letterSpacing:'.05em', textTransform:'uppercase' }}>DEMO</span>
+                )}
                 {demoMode
-                  ? <button onClick={exitDemo} style={{ padding:'6px 14px', borderRadius:100, background:'rgba(251,146,60,0.12)', border:'1px solid rgba(251,146,60,0.3)', color:'#FB923C', fontSize:11, fontWeight:700, cursor:'pointer', letterSpacing:'.04em', fontFamily:'inherit' }}>Exit Demo</button>
-                  : <button onClick={loadDemo} style={{ padding:'6px 14px', borderRadius:100, background:'var(--bg-surface-2)', border:'1px solid var(--border)', color:'var(--text-2)', fontSize:11, fontWeight:700, cursor:'pointer', letterSpacing:'.04em', fontFamily:'inherit' }}>Preview Demo</button>
+                  ? <button onClick={exitDemo} style={{ padding:'5px 12px', borderRadius:7, background:'#F5F5F5', border:'1px solid rgba(0,0,0,0.09)', color:'#555555', fontSize:12, fontWeight:600, cursor:'pointer', fontFamily:'inherit' }}>Exit Demo</button>
+                  : <button onClick={loadDemo} style={{ padding:'5px 12px', borderRadius:7, background:'#F5F5F5', border:'1px solid rgba(0,0,0,0.09)', color:'#555555', fontSize:12, fontWeight:600, cursor:'pointer', fontFamily:'inherit' }}>Preview Demo</button>
                 }
-                <div style={{ display:'flex', alignItems:'center', gap:8, padding:'7px 16px', borderRadius:100, background:'var(--bg-input)', border:'1px solid var(--border)', backdropFilter:'blur(10px)' }}>
-                  {!allLoaded
-                    ? <Spinner size={14}/>
-                    : <div style={{ width:6, height:6, borderRadius:'50%', background:demoMode?'#FB923C':gorgiasOk?'#4ade80':'#f87171', boxShadow:`0 0 6px ${demoMode?'rgba(251,146,60,0.5)':gorgiasOk?'rgba(74,222,128,0.5)':'rgba(248,113,113,0.5)'}`, animation:'glowPulse 2s ease-in-out infinite' }}/>
-                  }
-                  <span style={{ fontSize:10.5, fontWeight:700, letterSpacing:'.09em', color:'var(--text-3)', textTransform:'uppercase' }}>
-                    {!allLoaded?'Loading…':demoMode?'Demo':gorgiasOk?'Live':'Disconnected'}
-                  </span>
+                <div style={{ display:'flex', alignItems:'center', gap:6, padding:'5px 12px', borderRadius:7, background:allLoaded&&!demoMode&&gorgiasOk?'#F0FDF4':'#F5F5F5', border:allLoaded&&!demoMode&&gorgiasOk?'1px solid rgba(22,163,74,0.15)':'1px solid rgba(0,0,0,0.08)' }}>
+                  {!allLoaded?<Spinner size={12}/>:<div style={{ width:6, height:6, borderRadius:'50%', background:demoMode?'#F59E0B':gorgiasOk?'#16A34A':'#DC2626', flexShrink:0 }}/>}
+                  <span style={{ fontSize:11, fontWeight:600, color:allLoaded&&!demoMode&&gorgiasOk?'#15803D':'#555555' }}>{!allLoaded?'Loading…':demoMode?'Demo':gorgiasOk?'Live':'Disconnected'}</span>
                 </div>
               </div>
             </div>
-            <div style={{ height:'1px', background:'var(--bg-surface-2)', margin:'20px 0 16px' }}/>
+            <div style={{ height:'1px', background:'rgba(0,0,0,0.06)', margin:'16px 0 12px' }}/>
             <div style={{ display:'flex', alignItems:'center', gap:6, flexWrap:'wrap' }}>
               {RANGES.map(r=>(
-                <button key={r.id} onClick={()=>selectRange(r.id)} className="range-pill" style={{ background:dateRange===r.id?'#111111':'var(--bg-input)', color:dateRange===r.id?'#ffffff':'var(--text-3)', boxShadow:'none' }}>{r.label}</button>
+                <button key={r.id} onClick={()=>selectRange(r.id)} className="range-pill" style={{ background:dateRange===r.id?'#111111':'transparent', color:dateRange===r.id?'#ffffff':'#888888', border:dateRange===r.id?'none':'1px solid rgba(0,0,0,0.08)' }}>{r.label}</button>
               ))}
               {dateRange==='custom'&&(
                 <div style={{ display:'flex', alignItems:'center', gap:6, marginLeft:4 }}>
                   <input type="date" className="date-inp" value={customFrom} max={customTo||undefined} onChange={e=>{ setCustomFrom(e.target.value); applyCustomRange(e.target.value,customTo) }}/>
-                  <span style={{ fontSize:11, color:'var(--text-3)' }}>→</span>
+                  <span style={{ fontSize:11, color:'#888888' }}>→</span>
                   <input type="date" className="date-inp" value={customTo} min={customFrom||undefined} max={new Date().toISOString().slice(0,10)} onChange={e=>{ setCustomTo(e.target.value); applyCustomRange(customFrom,e.target.value) }}/>
                 </div>
               )}
             </div>
           </div>
 
-          {/* ── Demo banner ── */}
+          {/* Demo banner */}
           {demoMode&&(
-            <div style={{ display:'flex', alignItems:'center', gap:12, background:'rgba(251,146,60,0.07)', border:'1px solid rgba(251,146,60,0.2)', borderRadius:10, padding:'12px 18px', marginBottom:24, animation:'fadeIn .4s ease-out both' }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FB923C" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-              <div style={{ flex:1 }}><span style={{ fontSize:12, fontWeight:700, color:'#FB923C', marginRight:8 }}>Demo mode</span><span style={{ fontSize:12, color:'var(--text-2)' }}>Showing example data — connect Gorgias in Settings to see live metrics.</span></div>
-              <button onClick={exitDemo} style={{ fontSize:11, fontWeight:600, color:'rgba(251,146,60,0.7)', background:'transparent', border:'none', cursor:'pointer', fontFamily:'inherit', whiteSpace:'nowrap' }}>Exit demo →</button>
+            <div style={{ display:'flex', alignItems:'center', gap:10, background:'#FAFAFA', border:'1px solid rgba(0,0,0,0.07)', borderRadius:6, padding:'8px 14px', marginBottom:16, animation:'fadeIn .4s ease-out both' }}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#888888" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink:0 }}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              <div style={{ flex:1 }}>
+                <span style={{ fontSize:12, fontWeight:600, color:'#555555', marginRight:6 }}>Demo mode</span>
+                <span style={{ fontSize:12, color:'#888888' }}>Showing example data — connect Gorgias in Settings to see live metrics.</span>
+              </div>
+              <button onClick={exitDemo} style={{ fontSize:12, fontWeight:600, color:'#555555', background:'transparent', border:'none', cursor:'pointer', fontFamily:'inherit', whiteSpace:'nowrap' }}>Exit demo →</button>
             </div>
           )}
 
-          {/* ── Gorgias not connected ── */}
+          {/* Gorgias not connected */}
           {!demoMode&&allLoaded&&!gorgiasOk&&(
-            <div style={{ display:'flex', alignItems:'center', gap:12, background:'var(--bg-surface-2)', border:'1px solid var(--border)', borderRadius:10, padding:'12px 18px', marginBottom:24, animation:'fadeIn .4s ease-out both' }}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text-2)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-              <div style={{ flex:1 }}><span style={{ fontSize:12, fontWeight:700, color:'var(--text-1)', marginRight:8 }}>Gorgias not connected</span><span style={{ fontSize:12, color:'var(--text-2)' }}>Go to Settings → Integrations to connect your Gorgias account.</span></div>
-              <button onClick={loadDemo} style={{ fontSize:11, fontWeight:700, color:'var(--text-2)', background:'var(--bg-surface-2)', border:'1px solid var(--border)', borderRadius:100, padding:'4px 12px', cursor:'pointer', fontFamily:'inherit', whiteSpace:'nowrap' }}>Preview demo</button>
+            <div style={{ display:'flex', alignItems:'center', gap:10, background:'#FAFAFA', border:'1px solid rgba(0,0,0,0.07)', borderRadius:6, padding:'8px 14px', marginBottom:16, animation:'fadeIn .4s ease-out both' }}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#888888" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink:0 }}><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+              <div style={{ flex:1 }}><span style={{ fontSize:12, fontWeight:600, color:'#555555', marginRight:6 }}>Gorgias not connected</span><span style={{ fontSize:12, color:'#888888' }}>Go to Settings → Integrations to connect your Gorgias account.</span></div>
+              <button onClick={loadDemo} style={{ fontSize:12, fontWeight:600, color:'#555555', background:'#F5F5F5', border:'1px solid rgba(0,0,0,0.08)', borderRadius:6, padding:'4px 10px', cursor:'pointer', fontFamily:'inherit', whiteSpace:'nowrap' }}>Preview demo</button>
             </div>
           )}
 
-          <SectionDivider title="Workload"/>
+          <SectionHeader title="Workload"/>
           <WorkloadKPIs data={workload} loaded={loaded.workload}/>
           <WeeklyChart  weekly={workload.weekly} loaded={loaded.workload}/>
 
-          <SectionDivider title="Response Times" marginTop={8}/>
+          <SectionHeader title="Response Times"/>
           <ResponseTimesSection data={responseTimes} loaded={loaded.responseTimes}/>
 
-          <SectionDivider title="Productivity" marginTop={8}/>
+          <SectionHeader title="Productivity"/>
           <ProductivityKPIs data={productivity} loaded={loaded.productivity}/>
           <ChannelBreakdown channels={productivity.channels} loaded={loaded.productivity}/>
 
-          <div style={{ marginTop:16, textAlign:'center', fontSize:10.5, color:'var(--text-3)', letterSpacing:'.04em' }}>
+          <div style={{ marginTop:16, textAlign:'center', fontSize:10.5, color:'#BDBDBD', letterSpacing:'.04em' }}>
             Lynq Analytics · Gorgias data · Refreshed on load
           </div>
         </div>

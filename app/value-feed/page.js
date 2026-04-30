@@ -361,9 +361,9 @@ export default function ValueFeedPage() {
                 </p>
               </div>
               {!loading && posts.length > 0 && (
-                <div style={{ padding:'4px 10px', borderRadius:6, background:'#F5F5F5', border:'1px solid rgba(0,0,0,0.08)', flexShrink:0 }}>
-                  <span style={{ fontSize:12, fontWeight:500, color:'#555555' }}>{posts.length} post{posts.length !== 1 ? 's' : ''}</span>
-                </div>
+                <span style={{ display:'inline-block', padding:'4px 10px', borderRadius:6, background:'#F5F5F5', border:'1px solid rgba(0,0,0,0.08)', fontSize:12, fontWeight:500, color:'#555555', flexShrink:0 }}>
+                  {posts.length} post{posts.length !== 1 ? 's' : ''}
+                </span>
               )}
             </div>
 
@@ -376,12 +376,12 @@ export default function ValueFeedPage() {
                 const isAct = typeFilter === f.id
                 return (
                   <button key={f.id} className="f-pill" onClick={() => setTypeFilter(f.id)} style={{
-                    background: isAct ? '#111111' : 'transparent',
+                    background: isAct ? '#111111' : '#FAFAFA',
                     color:      isAct ? '#ffffff' : '#888888',
-                    border:     isAct ? 'none' : '1px solid rgba(0,0,0,0.08)',
+                    border:     isAct ? '1px solid transparent' : '1px solid rgba(0,0,0,0.08)',
                   }}>
                     {f.label}
-                    <span style={{ fontSize:10, fontWeight:600, color: isAct ? 'rgba(255,255,255,0.6)' : '#888888', background: isAct ? 'rgba(255,255,255,0.15)' : '#F5F5F5', borderRadius:4, padding:'1px 5px' }}>{count}</span>
+                    <span style={{ fontSize:10, fontWeight:600, color: isAct ? 'rgba(255,255,255,0.6)' : '#888888', background: isAct ? 'rgba(255,255,255,0.18)' : '#EBEBEB', borderRadius:4, padding:'1px 5px' }}>{count}</span>
                   </button>
                 )
               })}

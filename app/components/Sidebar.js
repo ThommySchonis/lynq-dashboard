@@ -145,7 +145,8 @@ const CSS = `
     font-size:10px; color:var(--text-3); margin-top:1px;
   }
   .sb-online-dot {
-    width:5px; height:5px; border-radius:50%; background:#4ade80; flex-shrink:0;
+    width:6px; height:6px; border-radius:50%; background:#22C55E; flex-shrink:0;
+    animation:pulse 2s ease-in-out infinite;
   }
 
   .sb-icon-btn {

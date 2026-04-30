@@ -11,12 +11,13 @@ export async function GET(request) {
   const user = await getUserFromToken(token)
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { data: client } = await supabaseAdmin
+  const { data: clients } = await supabaseAdmin
     .from('clients')
     .select('parcel_panel_api_key')
     .eq('email', user.email)
-    .single()
+    .limit(1)
 
+  const client = clients?.[0]
   if (!client?.parcel_panel_api_key) {
     return NextResponse.json({ error: 'Parcel Panel not configured' }, { status: 404 })
   }
@@ -69,6 +70,10 @@ export async function GET(request) {
       return NextResponse.json({ error: 'Invalid tracking response from Parcel Panel' }, { status: 502 })
     }
 
+    if (res.status === 404) {
+      // PP returns 404 when there are no tracked shipments yet
+      return NextResponse.json({ orders: [] })
+    }
     if (!res.ok) {
       return NextResponse.json({ error: data?.message || 'Parcel Panel API error' }, { status: 502 })
     }

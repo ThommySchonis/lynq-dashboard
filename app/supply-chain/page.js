@@ -661,7 +661,7 @@ export default function SupplyChainPage() {
           </div>
 
           {/* ── Setup ── */}
-          {notConfigured && <SetupScreen token={token} onConnected={() => loadData(token)} />}
+          {notConfigured && <SetupScreen token={token} onConnected={() => { setNotConfigured(false); loadData(token) }} />}
 
           {/* ── Skeleton ── */}
           {loading && !notConfigured && (

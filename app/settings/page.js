@@ -332,6 +332,14 @@ function IconShield() {
     </svg>
   )
 }
+function IconTag() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>
+      <line x1="7" y1="7" x2="7.01" y2="7"/>
+    </svg>
+  )
+}
 function IconLock() {
   return (
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -458,6 +466,111 @@ function Toggle({ on, onChange }) {
     >
       <div className="toggle-thumb" style={{ left: on ? '23px' : '3px' }}/>
     </button>
+  )
+}
+
+const DEFAULT_TICKET_TAGS = [
+  { id:'order-status', name:'ORDER-STATUS', color:'#84cc16', description:'Questions about order status or delivery updates' },
+  { id:'feedback', name:'feedback', color:'#a78bfa', description:'Customer feedback or product experience' },
+  { id:'negative', name:'negative', color:'#f97316', description:'Negative sentiment or complaint' },
+  { id:'return-exchange', name:'RETURN/EXCHANGE', color:'#8b5cf6', description:'Return, exchange, or size change request' },
+  { id:'order-change-cancel', name:'ORDER-CHANGE/CANCEL', color:'#f59e0b', description:'Order edit, address change, or cancellation' },
+  { id:'positive', name:'positive', color:'#22c55e', description:'Positive sentiment or compliment' },
+  { id:'promotion', name:'PROMOTION', color:'#fb923c', description:'Promotion, discount, or coupon question' },
+  { id:'product', name:'PRODUCT', color:'#38bdf8', description:'Product details, stock, sizing, or recommendation' },
+]
+
+function loadTicketTags() {
+  try {
+    const saved = JSON.parse(localStorage.getItem('lynq_tags') || 'null')
+    if (Array.isArray(saved) && saved.length) return saved
+  } catch {}
+  return DEFAULT_TICKET_TAGS
+}
+
+function saveTicketTags(tags) {
+  localStorage.setItem('lynq_tags', JSON.stringify(tags))
+}
+
+/* ─── TAB: Tags ─── */
+function TagsTab() {
+  const [tags, setTags] = useState(loadTicketTags)
+  const [form, setForm] = useState({ name: '', color: '#A175FC', description: '' })
+  const [toast, setToast] = useState(null)
+
+  function persist(next) {
+    setTags(next)
+    saveTicketTags(next)
+    setToast({ message: 'Tags saved', type: 'success' })
+  }
+
+  function createTag() {
+    const name = form.name.trim()
+    if (!name) {
+      setToast({ message: 'Tag name is required', type: 'error' })
+      return
+    }
+    if (tags.some(t => t.name.toLowerCase() === name.toLowerCase())) {
+      setToast({ message: 'Tag already exists', type: 'error' })
+      return
+    }
+    persist([...tags, { id: name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || `tag-${Date.now()}`, ...form, name }])
+    setForm({ name: '', color: '#A175FC', description: '' })
+  }
+
+  function updateTag(id, patch) {
+    persist(tags.map(tag => tag.id === id ? { ...tag, ...patch } : tag))
+  }
+
+  function deleteTag(id) {
+    if (!confirm('Delete this tag? Existing tickets keep their text label, but the tag will disappear from the picker.')) return
+    persist(tags.filter(tag => tag.id !== id))
+  }
+
+  return (
+    <div style={{ display:'flex', flexDirection:'column', gap:24 }}>
+      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)}/>}
+      <div className="section-header">
+        <h2>Tags</h2>
+        <p>Manage ticket tags used inside the inbox for overview, routing and reporting.</p>
+      </div>
+
+      <div className="settings-card" style={{ display:'grid', gridTemplateColumns:'1fr 140px 1.4fr auto', gap:12, alignItems:'end' }}>
+        <div>
+          <div className="label-text">Tag name</div>
+          <input className="settings-input" value={form.name} onChange={e=>setForm(f=>({...f,name:e.target.value}))} placeholder="e.g. VIP customer" />
+        </div>
+        <div>
+          <div className="label-text">Color</div>
+          <div className="color-input-wrapper">
+            <input type="color" value={form.color} onChange={e=>setForm(f=>({...f,color:e.target.value}))} />
+            <span style={{fontSize:12,color:'var(--text-2)'}}>{form.color}</span>
+          </div>
+        </div>
+        <div>
+          <div className="label-text">Description</div>
+          <input className="settings-input" value={form.description} onChange={e=>setForm(f=>({...f,description:e.target.value}))} placeholder="What should this tag be used for?" />
+        </div>
+        <button className="primary-btn" onClick={createTag}>Create tag</button>
+      </div>
+
+      <div className="settings-card" style={{ padding:0, overflow:'hidden' }}>
+        <div style={{display:'grid',gridTemplateColumns:'32px 1fr 1.6fr 90px',gap:16,padding:'12px 18px',borderBottom:'1px solid var(--border)',fontSize:10.5,fontWeight:800,color:'var(--text-3)',letterSpacing:'.08em',textTransform:'uppercase'}}>
+          <span />
+          <span>Tag</span>
+          <span>Description</span>
+          <span style={{textAlign:'right'}}>Actions</span>
+        </div>
+        {tags.map(tag=>(
+          <div key={tag.id} style={{display:'grid',gridTemplateColumns:'32px 1fr 1.6fr 90px',gap:16,alignItems:'center',padding:'12px 18px',borderBottom:'1px solid var(--border)'}}>
+            <input type="color" value={tag.color || '#A175FC'} onChange={e=>updateTag(tag.id,{color:e.target.value})} style={{width:22,height:22,border:'none',background:'transparent',padding:0}} />
+            <input className="settings-input" value={tag.name} onChange={e=>updateTag(tag.id,{name:e.target.value})} />
+            <input className="settings-input" value={tag.description || ''} onChange={e=>updateTag(tag.id,{description:e.target.value})} placeholder="No description" />
+            <button className="danger-btn" onClick={()=>deleteTag(tag.id)} style={{padding:'8px 10px',justifyContent:'center'}}>Delete</button>
+          </div>
+        ))}
+      </div>
+    </div>
   )
 }
 
@@ -1041,6 +1154,7 @@ const TABS = [
   { id: 'profile',       label: 'Profile',       icon: <IconUser/> },
   { id: 'integrations',  label: 'Integrations',  icon: <IconLink/> },
   { id: 'brand',         label: 'Brand',         icon: <IconPalette/> },
+  { id: 'tags',          label: 'Tags',          icon: <IconTag/> },
   { id: 'notifications', label: 'Notifications', icon: <IconBell/> },
   { id: 'security',      label: 'Security',      icon: <IconShield/> },
 ]
@@ -1065,6 +1179,7 @@ export default function SettingsPage() {
       case 'profile':       return <ProfileTab session={session}/>
       case 'integrations':  return <IntegrationsTab session={session}/>
       case 'brand':         return <BrandTab session={session}/>
+      case 'tags':          return <TagsTab/>
       case 'notifications': return <NotificationsTab/>
       case 'security':      return <SecurityTab session={session}/>
       default:              return null

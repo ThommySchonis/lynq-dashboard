@@ -227,7 +227,7 @@ const CSS = `
   .action-card.done-card{opacity:.45}
 
   .tab-btn{padding:4px 12px;border-radius:6px;font-size:11.5px;font-weight:600;cursor:pointer;border:none;font-family:inherit;transition:all .15s ease}
-  .range-pill{padding:4px 12px;border-radius:6px;font-size:11.5px;font-weight:600;cursor:pointer;border:none;font-family:inherit;transition:all .15s ease}
+  .range-pill{padding:5px 12px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;border:none;font-family:inherit;transition:all .15s ease}
   .filter-pill{padding:4px 12px;border-radius:100px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid transparent;font-family:inherit;transition:all .15s ease;white-space:nowrap}
   .tbl-row{transition:background .15s ease;cursor:default}
   .tbl-row:hover{background:#FAFAFA}
@@ -525,7 +525,7 @@ function ActionBoard({ patternActions, aiInsights, noRefunds, loaded, onStatusCh
             const isAct=activeTab===tab
             return <button key={tab} onClick={()=>setActiveTab(tab)} className="tab-btn" style={{ background:isAct?'#111111':'#F5F5F5', color:isAct?'#ffffff':'#555555' }}>{tab==='open'?'Open':tab==='picked_up'?'Picked Up':'Done'}{cnt>0&&<span style={{ marginLeft:4, fontSize:10, opacity:.7 }}>{cnt}</span>}</button>
           })}
-          {noRefunds&&<div style={{ padding:'4px 12px', borderRadius:4, background:'#F0FDF4', border:'1px solid rgba(21,128,61,0.15)', fontSize:10, fontWeight:700, color:'#15803D', letterSpacing:'.05em', textTransform:'uppercase' }}>Store healthy</div>}
+          {noRefunds&&<div style={{ padding:'4px 12px', borderRadius:6, background:'#F0FDF4', border:'1px solid rgba(22,163,74,0.2)', fontSize:11, fontWeight:600, color:'#15803D', letterSpacing:'.05em', textTransform:'uppercase' }}>Store healthy</div>}
         </div>
       </div>
 
@@ -547,7 +547,6 @@ function ActionBoard({ patternActions, aiInsights, noRefunds, loaded, onStatusCh
       <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
         {tabItems.map(item=>{
           const status=getStatus(item.id), st=statuses[item.id]||{}
-          const pc=PRIO_C[item.priority]||'#94A3B8', pbg=PRIO_BG[item.priority]||'rgba(148,163,184,0.08)'
           const isDone=status==='done'
           return (
             <div key={item.id} className={`action-card${isDone?' done-card':''}`}>
@@ -605,10 +604,10 @@ function RefundTable({ refunds, loaded }) {
 
       {loaded&&enriched.length===0&&(
         <div style={{ display:'flex', flexDirection:'column', alignItems:'center', padding:'48px 0', gap:12 }}>
-          <div style={{ width:48, height:48, borderRadius:8, background:'#F0FDF4', display:'flex', alignItems:'center', justifyContent:'center' }}>
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#15803D" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          <div style={{ width:48, height:48, borderRadius:8, background:'#F5F5F5', display:'flex', alignItems:'center', justifyContent:'center' }}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#BDBDBD" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
           </div>
-          <div style={{ textAlign:'center' }}><div style={{ fontSize:14, fontWeight:600, color:'var(--text-2)', marginBottom:4 }}>No refunds this period</div><div style={{ fontSize:12, color:'var(--text-3)' }}>Keep it up — no refunded orders found</div></div>
+          <div style={{ textAlign:'center' }}><div style={{ fontSize:14, fontWeight:600, color:'#111111', marginBottom:4 }}>No refunds this period</div><div style={{ fontSize:13, color:'#888888' }}>Keep it up — no refunded orders found</div></div>
         </div>
       )}
 
@@ -756,7 +755,7 @@ function WeeklyReport({ allRefunds, loaded }) {
         {weeks.map((w,i)=>{ const cc=w.topReason?(CAT_COLORS[w.topReason]||CAT_COLORS.Other):null; return (
           <div key={i} style={{ borderRadius:8, padding:'14px 16px', background:w.isCurrentWeek?'#FFFFFF':'#FAFAFA', border:`1px solid ${w.isCurrentWeek?'rgba(0,0,0,0.09)':'rgba(0,0,0,0.05)'}` }}>
             <div style={{ fontSize:10, fontWeight:700, color:w.isCurrentWeek?'#111111':'#BDBDBD', letterSpacing:'.05em', marginBottom:10, textTransform:'uppercase' }}>{w.label}</div>
-            <div style={{ fontSize:24, fontWeight:700, color:w.refundCount===0?'#16A34A':'#111111', letterSpacing:'-0.03em', marginBottom:2, fontVariantNumeric:'tabular-nums' }}>{w.refundCount}</div>
+            <div style={{ fontSize:24, fontWeight:700, color:'#111111', letterSpacing:'-0.03em', marginBottom:2, fontVariantNumeric:'tabular-nums' }}>{w.refundCount}</div>
             <div style={{ fontSize:11, color:'#888888', marginBottom:10 }}>refund{w.refundCount!==1?'s':''}</div>
             {w.refundCount>0&&<><div style={{ fontSize:12, fontWeight:600, color:'#DC2626', fontVariantNumeric:'tabular-nums', marginBottom:8 }}>{fmtEur(w.totalAmount)} lost</div>{w.topReason&&<div style={{ marginBottom:4 }}><CatBadge cat={w.topReason} small/></div>}{w.topProduct&&<div style={{ fontSize:10, color:'#888888', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', marginTop:4 }} title={w.topProduct}>{w.topProduct}</div>}</>}
             {w.refundCount===0&&<div style={{ fontSize:11, color:'#16A34A' }}>No refunds ✓</div>}
@@ -892,9 +891,9 @@ export default function AnalyticsPage() {
                   ? <button onClick={exitDemo} style={{ padding:'5px 12px', borderRadius:7, background:'#F5F5F5', border:'1px solid rgba(0,0,0,0.09)', color:'#555555', fontSize:12, fontWeight:600, cursor:'pointer', fontFamily:'inherit' }}>Exit Demo</button>
                   : <button onClick={loadDemo} style={{ padding:'5px 12px', borderRadius:7, background:'#F5F5F5', border:'1px solid rgba(0,0,0,0.09)', color:'#555555', fontSize:12, fontWeight:600, cursor:'pointer', fontFamily:'inherit' }}>Preview Demo</button>
                 }
-                <div style={{ display:'flex', alignItems:'center', gap:6, padding:'5px 12px', borderRadius:7, background:'#F5F5F5', border:'1px solid rgba(0,0,0,0.08)' }}>
+                <div style={{ display:'flex', alignItems:'center', gap:6, padding:'5px 12px', borderRadius:7, background:allLoaded&&!demoMode?'#F0FDF4':'#F5F5F5', border:allLoaded&&!demoMode?'1px solid rgba(22,163,74,0.15)':'1px solid rgba(0,0,0,0.08)' }}>
                   {!allLoaded?<Spinner size={12}/>:<div style={{ width:6, height:6, borderRadius:'50%', background:demoMode?'#F59E0B':'#16A34A', flexShrink:0 }}/>}
-                  <span style={{ fontSize:11, fontWeight:600, color:'#555555' }}>{!allLoaded?'Loading…':demoMode?'Demo':'Live'}</span>
+                  <span style={{ fontSize:11, fontWeight:600, color:allLoaded&&!demoMode?'#15803D':'#555555' }}>{!allLoaded?'Loading…':demoMode?'Demo':'Live'}</span>
                 </div>
               </div>
             </div>

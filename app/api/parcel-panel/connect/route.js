@@ -19,53 +19,27 @@ export async function POST(request) {
 
   if (!apiKey) return NextResponse.json({ error: 'API key is required' }, { status: 400 })
 
-  // Verify key with Parcel Panel
-  try {
-    const ppRes = await fetch('https://open.parcelpanel.com/api/v1/auth', {
-      method: 'GET',
-      headers: { 'Content-Type': 'application/json', 'Authorization': apiKey },
-    })
-    console.log('[parcel-panel/connect] PP status:', ppRes.status)
+  // ── TEMP: full endpoint scan ─────────────────────────────────────────────
+  const endpoints = [
+    { name: 'PP1', url: `https://open.parcelpanel.com/api/v2/auth?app_key=${apiKey}`, method: 'GET', headers: {} },
+    { name: 'PP2', url: 'https://open.parcelpanel.com/api/v2/tracking',               method: 'GET', headers: { 'x-parcelpanel-api-key': apiKey } },
+    { name: 'PP3', url: `https://open.parcelpanel.com/api/v2/orders?app_key=${apiKey}`, method: 'GET', headers: {} },
+    { name: 'PP4', url: 'https://parcelpanel.com/api/open/v1/auth/token',             method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ app_key: apiKey }) },
+  ]
 
-    const text = await ppRes.text()
-    console.log('[parcel-panel/connect] Raw response:', text.substring(0, 500))
-
-    let ppData
+  const results = {}
+  for (const ep of endpoints) {
     try {
-      ppData = JSON.parse(text)
-    } catch {
-      return NextResponse.json(
-        { error: 'Invalid response from Parcel Panel: ' + text.substring(0, 100) },
-        { status: 502 }
-      )
+      const res = await fetch(ep.url, { method: ep.method, headers: ep.headers, body: ep.body })
+      const text = await res.text()
+      results[ep.name] = { status: res.status, body: text.substring(0, 150) }
+      console.log(`[parcel-panel/connect] ${ep.name}: ${res.status} — ${text.substring(0, 100)}`)
+    } catch (e) {
+      results[ep.name] = { error: e.message }
+      console.log(`[parcel-panel/connect] ${ep.name} error:`, e.message)
     }
-    console.log('[parcel-panel/connect] Parsed data:', JSON.stringify(ppData))
-
-    if (!ppRes.ok) {
-      return NextResponse.json(
-        { error: ppData?.message || 'Authentication failed' },
-        { status: 401 }
-      )
-    }
-  } catch (err) {
-    console.error('[parcel-panel/connect] fetch error', err)
-    return NextResponse.json({ error: 'Could not reach Parcel Panel' }, { status: 503 })
   }
 
-  // Save verified key to clients table
-  const { data: updated, error: dbError } = await supabaseAdmin
-    .from('clients')
-    .update({ parcel_panel_api_key: apiKey })
-    .eq('email', user.email)
-    .select('id')
-
-  if (dbError) {
-    console.error('[parcel-panel/connect] db error', dbError)
-    return NextResponse.json({ error: 'Failed to save API key' }, { status: 500 })
-  }
-  if (!updated || updated.length === 0) {
-    console.error('[parcel-panel/connect] no client row for email:', user.email)
-    return NextResponse.json({ error: 'Client account not found. Please contact support.' }, { status: 404 })
-  }
-  return NextResponse.json({ success: true })
+  return NextResponse.json(results)
+  // ── END TEMP ──────────────────────────────────────────────────────────────
 }

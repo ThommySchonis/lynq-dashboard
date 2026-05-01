@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
 import { supabase } from '../../lib/supabase'
 import Sidebar from '../components/Sidebar'
 
@@ -18,8 +17,6 @@ const SUGGESTIONS = [
   'Which orders are still unfulfilled?',
   "What's my refund rate trend?",
 ]
-
-const EASE = [0.16, 1, 0.3, 1]
 
 const CSS = `
   @keyframes pulseGreen {
@@ -40,10 +37,9 @@ const CSS = `
     from { opacity:0; transform:translateY(10px) scale(.98); }
     to   { opacity:1; transform:translateY(0)    scale(1);   }
   }
-  @keyframes shimmer {
-    0%   { background-position: 200% center; }
-    25%  { background-position:-200% center; }
-    100% { background-position:-200% center; }
+  @keyframes toastIn {
+    from { opacity:0; transform:translateX(-20px); }
+    to   { opacity:1; transform:translateX(0); }
   }
 
   @media (prefers-reduced-motion:reduce) {
@@ -78,18 +74,18 @@ const CSS = `
     width:34px; height:34px; border-radius:8px;
     background:#111111; border:none;
     display:flex; align-items:center; justify-content:center;
-    cursor:pointer; flex-shrink:0; transition:all .15s ease;
+    cursor:pointer; flex-shrink:0; transition:background .15s ease;
   }
-  .send-btn:hover:not(:disabled) { background:#333333; }
+  .send-btn:hover:not(:disabled) { background:#333333 !important; }
   .send-btn:disabled              { opacity:.26; cursor:not-allowed; }
 
   .send-btn-lg {
     width:42px; height:42px; border-radius:10px;
     background:#0F0F10; border:none;
     display:flex; align-items:center; justify-content:center;
-    cursor:pointer; flex-shrink:0; transition:all .15s ease;
+    cursor:pointer; flex-shrink:0; transition:background .15s ease;
   }
-  .send-btn-lg:hover:not(:disabled) { background:#1a1a1a; }
+  .send-btn-lg:hover:not(:disabled) { background:#1a1a1a !important; }
   .send-btn-lg:disabled              { opacity:.26; cursor:not-allowed; }
 
   .chat-bottom {
@@ -119,6 +115,26 @@ const CSS = `
     font-family:'Switzer',-apple-system,BlinkMacSystemFont,sans-serif;
   }
   .search-input::placeholder { color:#BDBDBD; }
+
+  .chip-btn {
+    background:rgba(255,255,255,0.8);
+    backdrop-filter:blur(10px);
+    -webkit-backdrop-filter:blur(10px);
+    border:1px solid rgba(0,0,0,0.08);
+    border-radius:20px;
+    padding:7px 14px;
+    font-size:12px; font-weight:500; color:#555555;
+    cursor:pointer;
+    box-shadow:0 1px 3px rgba(0,0,0,0.05);
+    transition:all 0.15s ease;
+    font-family:inherit;
+  }
+  .chip-btn:hover:not(:disabled) {
+    transform:translateY(-2px);
+    box-shadow:0 4px 16px rgba(139,92,246,0.12);
+    border-color:rgba(139,92,246,0.2);
+  }
+  .chip-btn:disabled { opacity:.5; cursor:not-allowed; }
 `
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
@@ -257,83 +273,46 @@ export default function HomePage() {
 
       <div style={{ marginLeft: 208, flex: 1, minHeight: '100vh', background: '#F9F9FB', position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
 
-        {/* ── 4 Animating orbs ── */}
-        <motion.div
-          animate={{ x: [0, -30, 20, 0], y: [0, 25, -15, 0] }}
-          transition={{ duration: 18, repeat: Infinity, ease: 'easeInOut' }}
-          style={{ position: 'absolute', top: -200, right: -100, width: 700, height: 700, borderRadius: '50%', background: 'radial-gradient(circle, rgba(139,92,246,0.15), transparent 70%)', filter: 'blur(60px)', pointerEvents: 'none', zIndex: 0 }}
-        />
-        <motion.div
-          animate={{ x: [0, 40, -20, 0], y: [0, -30, 20, 0] }}
-          transition={{ duration: 22, repeat: Infinity, ease: 'easeInOut' }}
-          style={{ position: 'absolute', bottom: -200, left: -100, width: 650, height: 650, borderRadius: '50%', background: 'radial-gradient(circle, rgba(99,102,241,0.12), transparent 70%)', filter: 'blur(60px)', pointerEvents: 'none', zIndex: 0 }}
-        />
-        <motion.div
-          animate={{ x: [0, 30, -20, 0], y: [0, 20, -30, 0] }}
-          transition={{ duration: 15, repeat: Infinity, ease: 'easeInOut' }}
-          style={{ position: 'absolute', top: '20%', left: '5%', width: 400, height: 400, borderRadius: '50%', background: 'radial-gradient(circle, rgba(59,130,246,0.08), transparent 70%)', filter: 'blur(80px)', pointerEvents: 'none', zIndex: 0 }}
-        />
-        <motion.div
-          animate={{ x: [0, -20, 15, 0], y: [0, -25, 15, 0] }}
-          transition={{ duration: 19, repeat: Infinity, ease: 'easeInOut' }}
-          style={{ position: 'absolute', bottom: '10%', right: '5%', width: 350, height: 350, borderRadius: '50%', background: 'radial-gradient(circle, rgba(16,185,129,0.07), transparent 70%)', filter: 'blur(80px)', pointerEvents: 'none', zIndex: 0 }}
-        />
+        {/* ── 4 CSS orbs ── */}
+        <div style={{ position: 'absolute', top: -200, right: -100, width: 700, height: 700, borderRadius: '50%', background: 'radial-gradient(circle, rgba(139,92,246,0.2), transparent 70%)', filter: 'blur(60px)', pointerEvents: 'none', zIndex: 0, animation: 'orbFloat1 18s ease-in-out infinite' }} />
+        <div style={{ position: 'absolute', bottom: -200, left: -100, width: 650, height: 650, borderRadius: '50%', background: 'radial-gradient(circle, rgba(99,102,241,0.15), transparent 70%)', filter: 'blur(60px)', pointerEvents: 'none', zIndex: 0, animation: 'orbFloat2 22s ease-in-out infinite' }} />
+        <div style={{ position: 'absolute', top: '20%', left: '5%', width: 400, height: 400, borderRadius: '50%', background: 'radial-gradient(circle, rgba(59,130,246,0.1), transparent 70%)', filter: 'blur(80px)', pointerEvents: 'none', zIndex: 0, animation: 'orbFloat3 15s ease-in-out infinite' }} />
+        <div style={{ position: 'absolute', bottom: '10%', right: '5%', width: 350, height: 350, borderRadius: '50%', background: 'radial-gradient(circle, rgba(16,185,129,0.1), transparent 70%)', filter: 'blur(80px)', pointerEvents: 'none', zIndex: 0, animation: 'orbFloat4 19s ease-in-out infinite' }} />
 
-        {/* ── HERO STATE (no messages) ── */}
+        {/* ── HERO STATE ── */}
         {!hasMsg && (
           <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', zIndex: 1, padding: '40px 0' }}>
-            <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', padding: '0 24px', maxWidth: 640, width: '100%' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', padding: '0 24px', maxWidth: 640, width: '100%' }}>
 
-              {/* Good morning badge */}
-              <motion.div
-                initial={{ opacity: 0, y: 14 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, ease: EASE }}
-              >
+              {/* Badge */}
+              <div className="home-content-item">
                 <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: 'rgba(255,255,255,0.8)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 20, padding: '5px 14px', marginBottom: 24, boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
                   <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#22C55E', animation: 'pulseGreen 2s ease-in-out infinite', flexShrink: 0 }} />
                   <span style={{ fontSize: 11, fontWeight: 600, color: '#555555', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
                     {greeting}
                   </span>
                 </div>
-              </motion.div>
+              </div>
 
               {/* Headline */}
-              <motion.h1
-                initial={{ opacity: 0, y: 14 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.1, ease: EASE }}
-                style={{ fontSize: 42, fontWeight: 800, color: '#0F0F10', letterSpacing: '-0.03em', lineHeight: 1.1, marginBottom: 12 }}
-              >
-                Hey there,{' '}
+              <h1 className="home-content-item" style={{ fontSize: 42, fontWeight: 800, color: '#0F0F10', letterSpacing: '-0.03em', lineHeight: 1.1, marginBottom: 12 }}>
+                Welcome back,{' '}
                 <span style={{ background: 'linear-gradient(135deg, #8B5CF6 0%, #6366F1 50%, #3B82F6 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text', display: 'inline-block' }}>
                   {userName || 'there'}
                 </span>
-              </motion.h1>
+              </h1>
 
               {/* Subtitle */}
-              <motion.p
-                initial={{ opacity: 0, y: 14 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.2, ease: EASE }}
-                style={{ fontSize: 15, color: '#6B7280', lineHeight: 1.6, marginBottom: 32, maxWidth: 420 }}
-              >
+              <p className="home-content-item" style={{ fontSize: 15, color: '#6B7280', lineHeight: 1.6, marginBottom: 32, maxWidth: 420 }}>
                 {contextLoaded
                   ? 'Ask anything about your store — revenue, refunds, orders, trends.'
                   : 'Connecting to your store data…'}
-              </motion.p>
+              </p>
 
               {/* Search bar */}
-              <motion.div
-                initial={{ opacity: 0, y: 14 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.3, ease: EASE }}
-                style={{ width: '100%' }}
-              >
+              <div className="home-content-item" style={{ width: '100%' }}>
                 <div style={{ position: 'relative', width: 'min(520px, 90vw)', margin: '0 auto 20px' }}>
-                  {/* Gradient border ring */}
                   <div style={{ position: 'absolute', top: -1.5, right: -1.5, bottom: -1.5, left: -1.5, borderRadius: 14, background: 'linear-gradient(135deg, rgba(139,92,246,0.5), rgba(99,102,241,0.3), rgba(96,165,250,0.4))', zIndex: 0, animation: 'borderPulse 3.5s ease-in-out infinite' }} />
-                  {/* Inner bar */}
                   <div style={{ background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', borderRadius: 12, padding: '10px 12px', display: 'flex', alignItems: 'center', gap: 10, position: 'relative', zIndex: 1 }}>
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#BDBDBD" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
                       <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
@@ -356,28 +335,16 @@ export default function HomePage() {
                     </button>
                   </div>
                 </div>
-              </motion.div>
+              </div>
 
               {/* Chips */}
-              <motion.div
-                initial={{ opacity: 0, y: 14 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.4, ease: EASE }}
-                style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center' }}
-              >
-                {SUGGESTIONS.map((text) => (
-                  <motion.button
-                    key={text}
-                    whileHover={{ y: -2, boxShadow: '0 4px 16px rgba(139,92,246,0.12)' }}
-                    transition={{ duration: 0.12 }}
-                    onClick={() => sendMessage(text)}
-                    disabled={isLoading || !contextLoaded}
-                    style={{ background: 'rgba(255,255,255,0.8)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 20, padding: '7px 14px', fontSize: 12, fontWeight: 500, color: '#555555', cursor: 'pointer', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', transition: 'all 0.15s ease', fontFamily: 'inherit' }}
-                  >
+              <div className="home-content-item" style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center' }}>
+                {SUGGESTIONS.map(text => (
+                  <button key={text} className="chip-btn" onClick={() => sendMessage(text)} disabled={isLoading || !contextLoaded}>
                     {text}
-                  </motion.button>
+                  </button>
                 ))}
-              </motion.div>
+              </div>
 
               {/* Footer */}
               <div style={{ fontSize: 11, color: '#BDBDBD', marginTop: 16, textAlign: 'center' }}>
@@ -388,7 +355,7 @@ export default function HomePage() {
           </div>
         )}
 
-        {/* ── CONVERSATION STATE (has messages) ── */}
+        {/* ── CONVERSATION STATE ── */}
         {hasMsg && (
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', position: 'relative', zIndex: 1 }}>
             <div className="chat-scroll" style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '48px 44px 16px' }}>
@@ -427,27 +394,19 @@ export default function HomePage() {
 
       </div>
 
-      {/* ── Toast notification ── */}
-      <AnimatePresence>
-        {showToast && (
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            transition={{ duration: 0.3, ease: EASE }}
-            style={{ position: 'fixed', bottom: 20, left: 236, background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 10, padding: '10px 14px', display: 'flex', alignItems: 'center', gap: 10, boxShadow: '0 4px 20px rgba(0,0,0,0.08)', zIndex: 100 }}
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10B981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
-              <line x1="3" y1="6" x2="21" y2="6"/>
-              <path d="M16 10a4 4 0 0 1-8 0"/>
-            </svg>
-            <span style={{ fontSize: 13, fontWeight: 500, color: '#111111' }}>New order</span>
-            <span style={{ fontSize: 13, fontWeight: 700, color: '#0F0F10' }}>€129.00</span>
-            <button onClick={() => setShowToast(false)} style={{ marginLeft: 4, background: 'none', border: 'none', cursor: 'pointer', color: '#9CA3AF', fontSize: 16, lineHeight: 1, padding: 0 }}>×</button>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* ── Toast ── */}
+      {showToast && (
+        <div style={{ position: 'fixed', bottom: 20, left: 236, background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 10, padding: '10px 14px', display: 'flex', alignItems: 'center', gap: 10, boxShadow: '0 4px 20px rgba(0,0,0,0.08)', zIndex: 100, animation: 'toastIn 0.3s ease forwards' }}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10B981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+            <line x1="3" y1="6" x2="21" y2="6"/>
+            <path d="M16 10a4 4 0 0 1-8 0"/>
+          </svg>
+          <span style={{ fontSize: 13, fontWeight: 500, color: '#111111' }}>New order</span>
+          <span style={{ fontSize: 13, fontWeight: 700, color: '#0F0F10' }}>€129.00</span>
+          <button onClick={() => setShowToast(false)} style={{ marginLeft: 4, background: 'none', border: 'none', cursor: 'pointer', color: '#9CA3AF', fontSize: 16, lineHeight: 1, padding: 0 }}>×</button>
+        </div>
+      )}
 
     </div>
   )

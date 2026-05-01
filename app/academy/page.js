@@ -454,16 +454,6 @@ const CSS = `
   .progress-ring-track { fill: none; stroke: #F3F4F6; }
   .progress-ring-fill  { fill: none; stroke-linecap: round; transition: stroke-dashoffset 1s ease; }
 
-  .no-access-card {
-    background: #FFFFFF;
-    border: 1px solid rgba(0,0,0,0.07);
-    border-radius: 12px;
-    padding: 48px;
-    max-width: 480px;
-    margin: 0 auto;
-    text-align: center;
-  }
-
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation-duration: .01ms !important; }
   }
@@ -1013,7 +1003,6 @@ export default function AcademyPage() {
   const [session,     setSession]     = useState(null)
   const [userName,    setUserName]    = useState('')
   const [mounted,     setMounted]     = useState(false)
-  const [hasAccess,   setHasAccess]   = useState(null) // null = loading
   const [passedTypes, setPassedTypes] = useState([])   // exam_type strings
   const [view,        setView]        = useState('overview') // 'overview'|'module'|'quiz'|'results'|'certificate'
   const [activeModule,setActiveModule]= useState(null)
@@ -1027,25 +1016,16 @@ export default function AcademyPage() {
       const raw  = (s.user.email || '').split('@')[0]
       setUserName(meta.full_name || meta.name || (raw.charAt(0).toUpperCase() + raw.slice(1)))
 
-      // Check access
-      const accessRes = await fetch('/api/academy/access', {
+      // Load exam results (passed types)
+      const resultRes = await fetch('/api/exams/result', {
         headers: { Authorization: `Bearer ${s.access_token}` },
       })
-      const accessData = await accessRes.json()
-      setHasAccess(accessData.hasAccess ?? false)
-
-      // Load exam results (passed types)
-      if (accessData.hasAccess) {
-        const resultRes = await fetch('/api/exams/result', {
-          headers: { Authorization: `Bearer ${s.access_token}` },
-        })
-        const resultData = await resultRes.json()
-        const submissions = resultData.submissions || resultData || []
-        const passed = [...new Set(
-          submissions.filter(s => s.passed).map(s => s.exam_type)
-        )]
-        setPassedTypes(passed)
-      }
+      const resultData = await resultRes.json()
+      const submissions = resultData.submissions || resultData || []
+      const passed = [...new Set(
+        submissions.filter(s => s.passed).map(s => s.exam_type)
+      )]
+      setPassedTypes(passed)
     })
   }, [])
 
@@ -1080,92 +1060,57 @@ export default function AcademyPage() {
 
       <div style={{ marginLeft: SIDEBAR_W, flex: 1, minHeight: '100vh', overflow: 'auto' }}>
 
-        {/* Loading */}
-        {hasAccess === null && (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ width: 32, height: 32, border: '3px solid #E5E7EB', borderTop: '3px solid #8B5CF6', borderRadius: '50%', animation: 'spin .7s linear infinite', margin: '0 auto 12px' }} />
-              <div style={{ fontSize: 13, color: '#6B7280' }}>Loading Academy…</div>
-            </div>
-          </div>
+        {view === 'overview' && (
+          <OverviewView
+            passedTypes={passedTypes}
+            onSelectModule={handleModuleSelect}
+            userName={userName}
+          />
+        )}
+        {view === 'module' && activeModule && (
+          <ModuleView
+            mod={activeModule}
+            passedTypes={passedTypes}
+            session={session}
+            onBack={() => setView('overview')}
+            onStartQuiz={() => setView('quiz')}
+          />
+        )}
+        {view === 'quiz' && activeModule && (
+          <QuizView
+            mod={activeModule}
+            session={session}
+            onBack={() => setView('module')}
+            onComplete={handleQuizComplete}
+          />
+        )}
+        {view === 'certificate' && (
+          <CertificateView
+            userName={userName}
+            passedTypes={passedTypes}
+            onBack={() => setView('overview')}
+          />
         )}
 
-        {/* No access */}
-        {hasAccess === false && (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '70vh', padding: 40 }}>
-            <div className="no-access-card">
-              <div style={{ width: 52, height: 52, borderRadius: '50%', background: 'rgba(139,92,246,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#8B5CF6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        {/* Certificate banner — shown when all done */}
+        {view === 'overview' && allModulesDone && (
+          <div style={{ maxWidth: 960, margin: '0 auto', padding: '0 40px 24px' }}>
+            <div
+              onClick={() => setView('certificate')}
+              style={{ background: 'linear-gradient(135deg,#8B5CF6,#6366F1)', borderRadius: 10, padding: '16px 24px', display: 'flex', alignItems: 'center', gap: 14, cursor: 'pointer' }}
+            >
+              <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                   <circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/>
                 </svg>
               </div>
-              <h2 style={{ fontSize: 20, fontWeight: 700, color: '#0F0F10', marginBottom: 8, letterSpacing: '-0.02em' }}>Academy Access Required</h2>
-              <p style={{ fontSize: 14, color: '#6B7280', lineHeight: 1.6, marginBottom: 24 }}>
-                The Lynq & Flow Academy is available on the Scale plan or as a standalone add-on for €100.
-              </p>
-              <div style={{ fontSize: 13, color: '#9CA3AF', padding: '12px 16px', background: '#F9F9FB', borderRadius: 8, border: '1px solid rgba(0,0,0,0.06)' }}>
-                Contact your account manager or upgrade your plan to unlock all 6 modules + certification.
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: '#fff' }}>🎉 You've completed all modules!</div>
+                <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.75)', marginTop: 2 }}>Click to view and download your certificate</div>
               </div>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
             </div>
           </div>
-        )}
-
-        {/* Academy views */}
-        {hasAccess === true && (
-          <>
-            {view === 'overview' && (
-              <OverviewView
-                passedTypes={passedTypes}
-                onSelectModule={handleModuleSelect}
-                userName={userName}
-              />
-            )}
-            {view === 'module' && activeModule && (
-              <ModuleView
-                mod={activeModule}
-                passedTypes={passedTypes}
-                session={session}
-                onBack={() => setView('overview')}
-                onStartQuiz={() => setView('quiz')}
-              />
-            )}
-            {view === 'quiz' && activeModule && (
-              <QuizView
-                mod={activeModule}
-                session={session}
-                onBack={() => setView('module')}
-                onComplete={handleQuizComplete}
-              />
-            )}
-            {view === 'certificate' && (
-              <CertificateView
-                userName={userName}
-                passedTypes={passedTypes}
-                onBack={() => setView('overview')}
-              />
-            )}
-
-            {/* Certificate banner — shown when all done */}
-            {view === 'overview' && allModulesDone && (
-              <div style={{ maxWidth: 960, margin: '0 auto', padding: '0 40px 24px' }}>
-                <div
-                  onClick={() => setView('certificate')}
-                  style={{ background: 'linear-gradient(135deg,#8B5CF6,#6366F1)', borderRadius: 10, padding: '16px 24px', display: 'flex', alignItems: 'center', gap: 14, cursor: 'pointer' }}
-                >
-                  <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                      <circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/>
-                    </svg>
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: '#fff' }}>🎉 You've completed all modules!</div>
-                    <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.75)', marginTop: 2 }}>Click to view and download your certificate</div>
-                  </div>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-                </div>
-              </div>
-            )}
-          </>
         )}
       </div>
     </div>

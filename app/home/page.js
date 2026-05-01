@@ -267,17 +267,17 @@ export default function HomePage() {
   if (!mounted) return null
 
   return (
-    <div className="h-root" style={{ display: 'flex', minHeight: '100vh', background: '#F9F9FB' }}>
+    <div className="h-root" style={{ display: 'flex', minHeight: '100vh', background: '#F5F4FF' }}>
       <style>{CSS}</style>
       <Sidebar />
 
-      <div style={{ marginLeft: 208, flex: 1, minHeight: '100vh', background: '#F9F9FB', position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+      <div style={{ marginLeft: 208, flex: 1, minHeight: '100vh', background: '#F5F4FF', position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
 
         {/* ── 4 CSS orbs ── */}
-        <div style={{ position: 'absolute', top: -200, right: -100, width: 700, height: 700, borderRadius: '50%', background: 'radial-gradient(circle, rgba(139,92,246,0.2), transparent 70%)', filter: 'blur(60px)', pointerEvents: 'none', zIndex: 0, animation: 'orbFloat1 18s ease-in-out infinite' }} />
-        <div style={{ position: 'absolute', bottom: -200, left: -100, width: 650, height: 650, borderRadius: '50%', background: 'radial-gradient(circle, rgba(99,102,241,0.15), transparent 70%)', filter: 'blur(60px)', pointerEvents: 'none', zIndex: 0, animation: 'orbFloat2 22s ease-in-out infinite' }} />
-        <div style={{ position: 'absolute', top: '20%', left: '5%', width: 400, height: 400, borderRadius: '50%', background: 'radial-gradient(circle, rgba(59,130,246,0.1), transparent 70%)', filter: 'blur(80px)', pointerEvents: 'none', zIndex: 0, animation: 'orbFloat3 15s ease-in-out infinite' }} />
-        <div style={{ position: 'absolute', bottom: '10%', right: '5%', width: 350, height: 350, borderRadius: '50%', background: 'radial-gradient(circle, rgba(16,185,129,0.1), transparent 70%)', filter: 'blur(80px)', pointerEvents: 'none', zIndex: 0, animation: 'orbFloat4 19s ease-in-out infinite' }} />
+        <div style={{ position: 'absolute', top: -200, right: -100, width: 800, height: 800, borderRadius: '50%', background: 'radial-gradient(circle, rgba(139,92,246,0.35), transparent 70%)', filter: 'blur(60px)', pointerEvents: 'none', zIndex: 0, animation: 'orbFloat1 18s ease-in-out infinite' }} />
+        <div style={{ position: 'absolute', bottom: -200, left: -100, width: 700, height: 700, borderRadius: '50%', background: 'radial-gradient(circle, rgba(99,102,241,0.25), transparent 70%)', filter: 'blur(60px)', pointerEvents: 'none', zIndex: 0, animation: 'orbFloat2 22s ease-in-out infinite' }} />
+        <div style={{ position: 'absolute', top: '20%', left: '5%', width: 500, height: 500, borderRadius: '50%', background: 'radial-gradient(circle, rgba(59,130,246,0.18), transparent 70%)', filter: 'blur(80px)', pointerEvents: 'none', zIndex: 0, animation: 'orbFloat3 15s ease-in-out infinite' }} />
+        <div style={{ position: 'absolute', bottom: '10%', right: '5%', width: 450, height: 450, borderRadius: '50%', background: 'radial-gradient(circle, rgba(16,185,129,0.15), transparent 70%)', filter: 'blur(80px)', pointerEvents: 'none', zIndex: 0, animation: 'orbFloat4 19s ease-in-out infinite' }} />
 
         {/* ── HERO STATE ── */}
         {!hasMsg && (

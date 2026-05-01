@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { supabase } from '../../lib/supabase'
 import Sidebar from '../components/Sidebar'
 
@@ -12,128 +13,37 @@ function getGreeting() {
 }
 
 const SUGGESTIONS = [
-  {
-    text: 'Top refunded products this month',
-    color: '#fb7185',
-    icon: (
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
-        <polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.95"/>
-      </svg>
-    ),
-  },
-  {
-    text: 'What is my revenue this month?',
-    color: '#4ade80',
-    icon: (
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
-        <line x1="12" y1="1" x2="12" y2="23"/>
-        <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
-      </svg>
-    ),
-  },
-  {
-    text: 'Which orders are still unfulfilled?',
-    color: '#FB923C',
-    icon: (
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
-        <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
-        <line x1="12" y1="22.08" x2="12" y2="12"/>
-      </svg>
-    ),
-  },
-  {
-    text: "What's my refund rate trend?",
-    color: 'var(--accent)',
-    icon: (
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
-        <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/>
-        <polyline points="16 7 22 7 22 13"/>
-      </svg>
-    ),
-  },
+  'Top refunded products this month',
+  'What is my revenue this month?',
+  'Which orders are still unfulfilled?',
+  "What's my refund rate trend?",
 ]
 
-const FLOAT_ITEMS = [
-  { label: 'New order',       value: '€129.00',  icon: 'order',  delay: 0,  duration: 34, left: '7%'  },
-  { label: 'Ticket closed',   value: '#4521',    icon: 'check',  delay: 9,  duration: 29, left: '26%' },
-  { label: 'Revenue today',   value: '€3.2k',    icon: 'chart',  delay: 17, duration: 38, left: '51%' },
-  { label: 'Refund approved', value: '€45.00',   icon: 'refund', delay: 25, duration: 31, left: '72%' },
-  { label: 'New message',     value: 'Sarah K.', icon: 'msg',    delay: 6,  duration: 36, left: '87%' },
-]
-
-const FLOAT_ICON = {
-  order:  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>,
-  check:  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>,
-  chart:  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/></svg>,
-  refund: <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg>,
-  msg:    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>,
-}
-
+const EASE = [0.16, 1, 0.3, 1]
 
 const CSS = `
-  @keyframes auroraA {
-    0%,100% { transform:translate(0,0) scale(1);           opacity:.9; }
-    33%      { transform:translate(90px,-110px) scale(1.3); opacity:1; }
-    66%      { transform:translate(-65px,55px) scale(.85);  opacity:.7; }
+  @keyframes pulseGreen {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(34,197,94,0.4) }
+    50%       { box-shadow: 0 0 0 8px rgba(34,197,94,0) }
   }
-  @keyframes auroraB {
-    0%,100% { transform:translate(0,0) scale(1);            opacity:.85; }
-    40%      { transform:translate(-110px,75px) scale(1.28); opacity:1; }
-    75%      { transform:translate(65px,-45px) scale(.78);   opacity:.6; }
+  @keyframes borderPulse {
+    0%, 100% { opacity: 0.4 }
+    50%       { opacity: 0.9 }
   }
-  @keyframes auroraC {
-    0%,100% { transform:translate(0,0) scale(1);          opacity:.75; }
-    55%      { transform:translate(55px,95px) scale(1.18); opacity:1; }
-  }
-  @keyframes auroraD {
-    0%,100% { transform:translate(0,0) scale(1);            opacity:.8; }
-    45%      { transform:translate(-65px,-60px) scale(1.35); opacity:1; }
-  }
-  @keyframes auroraE {
-    0%,100% { transform:translate(0,0) scale(1);          opacity:.65; }
-    60%      { transform:translate(85px,40px) scale(1.18); opacity:1; }
-  }
-  @keyframes floatUp {
-    0%   { transform:translateY(0) translateX(0);    opacity:0; }
-    8%   { opacity:1; }
-    88%  { opacity:1; }
-    100% { transform:translateY(-500px) translateX(10px); opacity:0; }
-  }
-  @keyframes revealUp {
-    from { opacity:0; transform:translateY(20px); }
-    to   { opacity:1; transform:translateY(0); }
-  }
-  @keyframes shimmer {
-    0%   { background-position:200% center; }
-    25%  { background-position:-200% center; }
-    100% { background-position:-200% center; }
+  @keyframes spin  { to { transform: rotate(360deg); } }
+  @keyframes blink { 0%,100% { opacity:1; } 50% { opacity:0; } }
+  @keyframes dotBounce {
+    0%,60%,100% { transform:translateY(0);    opacity:.35; }
+    30%          { transform:translateY(-5px); opacity:1;   }
   }
   @keyframes msgIn {
     from { opacity:0; transform:translateY(10px) scale(.98); }
-    to   { opacity:1; transform:translateY(0) scale(1); }
+    to   { opacity:1; transform:translateY(0)    scale(1);   }
   }
-  @keyframes dotBounce {
-    0%,60%,100% { transform:translateY(0); opacity:.35; }
-    30%          { transform:translateY(-5px); opacity:1; }
-  }
-  @keyframes blink { 0%,100% { opacity:1; } 50% { opacity:0; } }
-  @keyframes spin { to { transform:rotate(360deg); } }
-  @keyframes liveBlip {
-    0%,100% { transform:scale(1); opacity:.85; }
-    50%      { transform:scale(2); opacity:0; }
-  }
-  @keyframes chipReveal {
-    from { opacity:0; transform:translateY(8px); }
-    to   { opacity:1; transform:translateY(0); }
-  }
-  @keyframes inputReveal {
-    from { opacity:0; transform:translateY(16px) scale(.98); }
-    to   { opacity:1; transform:translateY(0) scale(1); }
-  }
-  @keyframes pulseGlow {
-    0%,100% { box-shadow:none; }
-    50%      { box-shadow:none; }
+  @keyframes shimmer {
+    0%   { background-position: 200% center; }
+    25%  { background-position:-200% center; }
+    100% { background-position:-200% center; }
   }
 
   @media (prefers-reduced-motion:reduce) {
@@ -143,217 +53,81 @@ const CSS = `
   .h-root { font-family:'Switzer',-apple-system,BlinkMacSystemFont,sans-serif; -webkit-font-smoothing:antialiased; }
   .h-root * { box-sizing:border-box; margin:0; padding:0; }
 
-  /* ── Chip ── */
-  .chip {
-    display:inline-flex; align-items:center; gap:9px;
-    padding:9px 15px;
-    background:rgba(255,255,255,0.85);
-    border:1px solid rgba(0,0,0,0.08);
-    border-radius:13px;
-    color:var(--text-2);
-    font-size:12.5px; font-family:inherit;
-    cursor:pointer;
-    transition:all .24s cubic-bezier(.16,1,.3,1);
-    white-space:nowrap;
-    box-shadow:0 1px 4px rgba(0,0,0,0.06);
-    backdrop-filter:blur(10px) saturate(140%);
-    -webkit-backdrop-filter:blur(10px) saturate(140%);
-  }
-  [data-theme="dark"] .chip {
-    background:var(--glass-bg);
-    border-color:var(--glass-border);
-    box-shadow:var(--glass-shadow);
-  }
-  .chip:hover {
-    background:rgba(255,255,255,0.96);
-    border-color:rgba(0,0,0,0.12);
-    color:var(--text-1);
-    transform:translateY(-2px);
-    box-shadow:0 4px 12px rgba(0,0,0,0.1);
-  }
-  [data-theme="dark"] .chip:hover {
-    background:rgba(255,255,255,0.9);
-    border-color:var(--border-hover);
-    box-shadow:var(--shadow-card-hover);
-  }
-  .chip .ci { flex-shrink:0; display:flex; transition:transform .2s cubic-bezier(.16,1,.3,1); }
-  .chip:hover .ci { transform:translateY(-1px); }
+  .chat-scroll::-webkit-scrollbar       { width:3px; }
+  .chat-scroll::-webkit-scrollbar-track { background:transparent; }
+  .chat-scroll::-webkit-scrollbar-thumb { background:rgba(0,0,0,0.1); border-radius:2px; }
 
-  /* ── Chat input ── */
-  .chat-box {
-    background:var(--bg-surface);
-    border:1px solid var(--border);
-    border-radius:22px;
-    transition:all .3s cubic-bezier(.16,1,.3,1);
-    box-shadow:var(--shadow-card);
+  .msg-user {
+    background:rgba(139,92,246,0.08);
+    border:1px solid rgba(139,92,246,0.15);
+    border-radius:20px 20px 5px 20px;
+    padding:13px 17px; max-width:72%;
+    font-size:14px; line-height:1.72; color:#0F0F10;
+    white-space:pre-wrap; word-break:break-word;
   }
-  .chat-box:focus-within {
-    border-color:var(--border-hover);
-    background:var(--bg-surface);
-    box-shadow:var(--shadow-card-hover);
+  .msg-ai {
+    background:#FFFFFF;
+    border:1px solid rgba(0,0,0,0.07);
+    border-radius:20px 20px 20px 5px;
+    padding:13px 17px; max-width:72%;
+    font-size:14px; line-height:1.72; color:#0F0F10;
+    white-space:pre-wrap; word-break:break-word;
   }
-  .chat-box textarea {
+
+  .send-btn {
+    width:34px; height:34px; border-radius:8px;
+    background:#111111; border:none;
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer; flex-shrink:0; transition:all .15s ease;
+  }
+  .send-btn:hover:not(:disabled) { background:#333333; }
+  .send-btn:disabled              { opacity:.26; cursor:not-allowed; }
+
+  .send-btn-lg {
+    width:42px; height:42px; border-radius:10px;
+    background:#0F0F10; border:none;
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer; flex-shrink:0; transition:all .15s ease;
+  }
+  .send-btn-lg:hover:not(:disabled) { background:#1a1a1a; }
+  .send-btn-lg:disabled              { opacity:.26; cursor:not-allowed; }
+
+  .chat-bottom {
+    background:#FFFFFF;
+    border:1px solid rgba(0,0,0,0.08);
+    border-radius:14px;
+    padding:14px 14px 14px 18px;
+    display:flex; align-items:flex-end; gap:12px;
+    box-shadow:0 2px 12px rgba(0,0,0,0.06);
+    transition:border-color .2s, box-shadow .2s;
+  }
+  .chat-bottom:focus-within {
+    border-color:rgba(0,0,0,0.14);
+    box-shadow:0 4px 20px rgba(0,0,0,0.08);
+  }
+  .chat-bottom textarea {
     background:transparent; border:none; outline:none;
-    color:var(--text-1); font-size:15px; line-height:1.65; resize:none;
+    color:#0F0F10; font-size:14px; line-height:1.65; resize:none;
     font-family:inherit; width:100%; padding:0;
     max-height:180px; overflow-y:auto;
   }
-  .chat-box textarea::placeholder { color:var(--text-3); }
+  .chat-bottom textarea::placeholder { color:#9CA3AF; }
 
-  /* ── Hero chat box ── */
-  .chat-box-hero {
-    background:var(--glass-bg);
-    border:1px solid var(--glass-border);
-    border-radius:24px;
-    transition:border-color .3s cubic-bezier(.16,1,.3,1), box-shadow .3s cubic-bezier(.16,1,.3,1), background .3s;
-    box-shadow:var(--glass-shadow);
-    backdrop-filter:blur(20px) saturate(160%);
-    -webkit-backdrop-filter:blur(20px) saturate(160%);
-    animation:inputReveal .62s cubic-bezier(.16,1,.3,1) .22s both;
+  .search-input {
+    font-size:14px; color:#111111; border:none; outline:none;
+    flex:1; background:transparent;
+    font-family:'Switzer',-apple-system,BlinkMacSystemFont,sans-serif;
   }
-  .chat-box-hero:focus-within {
-    border-color:rgba(0,0,0,0.12);
-    background:rgba(255,255,255,0.96);
-    box-shadow:var(--shadow-card-hover);
-  }
-  .chat-box-hero textarea {
-    background:transparent; border:none; outline:none;
-    color:var(--text-1); font-size:16px; line-height:1.7; resize:none;
-    font-family:inherit; width:100%; padding:0;
-    max-height:200px; overflow-y:auto;
-  }
-  .chat-box-hero textarea::placeholder { color:var(--text-3); font-size:16px; }
-
-  /* ── Send button ── */
-  .send-btn {
-    width:42px; height:42px; border-radius:13px;
-    background:#111111;
-    border:none; display:flex; align-items:center; justify-content:center;
-    cursor:pointer; flex-shrink:0;
-    transition:all .15s;
-  }
-  .send-btn-hero {
-    width:48px; height:48px; border-radius:15px;
-    background:#111111;
-    border:none; display:flex; align-items:center; justify-content:center;
-    cursor:pointer; flex-shrink:0;
-    transition:all .15s;
-  }
-  .send-btn:hover:not(:disabled), .send-btn-hero:hover:not(:disabled) {
-    transform:translateY(-1px) scale(1.04);
-    background:#333333;
-  }
-  .send-btn:active:not(:disabled), .send-btn-hero:active:not(:disabled) { transform:scale(.95); }
-  .send-btn:disabled, .send-btn-hero:disabled { opacity:.26; cursor:not-allowed; }
-
-  /* ── Bubbles ── */
-  .msg-user {
-    background:var(--accent-soft);
-    border:1px solid var(--accent-border);
-    border-radius:20px 20px 5px 20px;
-    box-shadow:var(--shadow-row);
-  }
-  .msg-ai {
-    background:var(--bg-surface-2);
-    border:1px solid var(--border);
-    border-radius:20px 20px 20px 5px;
-  }
-
-  /* ── Float cards ── */
-  .float-card {
-    position:absolute;
-    display:flex; align-items:center; gap:9px;
-    padding:8px 13px;
-    background:var(--glass-bg);
-    border:1px solid var(--glass-border);
-    border-radius:12px;
-    white-space:nowrap; pointer-events:none; opacity:0;
-    box-shadow:var(--glass-shadow);
-    backdrop-filter:blur(var(--glass-blur)) saturate(150%);
-    -webkit-backdrop-filter:blur(var(--glass-blur)) saturate(150%);
-  }
-
-  /* ── Status pill ── */
-  .status-pill {
-    display:inline-flex; align-items:center; gap:10px;
-    padding:6px 16px 6px 10px; border-radius:100px;
-    background:var(--glass-bg);
-    border:1px solid var(--glass-border);
-    box-shadow:var(--glass-shadow);
-    backdrop-filter:blur(8px) saturate(130%);
-    -webkit-backdrop-filter:blur(8px) saturate(130%);
-  }
-
-  /* ── Scrollbar ── */
-  .chat-scroll::-webkit-scrollbar { width:3px; }
-  .chat-scroll::-webkit-scrollbar-track { background:transparent; }
-  .chat-scroll::-webkit-scrollbar-thumb { background:var(--bg-surface-2); border-radius:2px; }
-
-  /* ── Aurora layers — subtle in light, full in dark ── */
-  .aurora-l1 {
-    position:absolute; top:-28%; left:10%; width:900px; height:800px; border-radius:50%;
-    background:radial-gradient(ellipse,rgba(124,92,252,0.14) 0%,rgba(124,92,252,0.06) 45%,transparent 70%);
-    animation:auroraA 22s ease-in-out infinite; filter:blur(55px);
-  }
-  [data-theme="dark"] .aurora-l1 {
-    background:radial-gradient(ellipse,rgba(161,117,252,0.52) 0%,rgba(124,58,237,0.26) 38%,rgba(109,40,217,0.08) 60%,transparent 72%);
-  }
-  .aurora-l4 {
-    position:absolute; top:2%; left:2%; width:380px; height:380px; border-radius:50%;
-    background:radial-gradient(ellipse,rgba(124,92,252,0.10) 0%,transparent 72%);
-    animation:auroraD 19s ease-in-out infinite; filter:blur(42px);
-  }
-  [data-theme="dark"] .aurora-l4 {
-    background:radial-gradient(ellipse,rgba(139,92,246,0.48) 0%,rgba(109,40,217,0.18) 50%,transparent 72%);
-  }
-  .aurora-l5 {
-    position:absolute; bottom:-8%; right:4%; width:580px; height:480px; border-radius:50%;
-    background:radial-gradient(ellipse,rgba(99,102,241,0.09) 0%,rgba(124,92,252,0.04) 50%,transparent 72%);
-    animation:auroraB 28s ease-in-out infinite; filter:blur(60px);
-  }
-  [data-theme="dark"] .aurora-l5 { opacity:0; }
-  .aurora-grid {
-    position:absolute; inset:0;
-    background-image:linear-gradient(rgba(15,23,42,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(15,23,42,0.04) 1px,transparent 1px);
-    background-size:72px 72px;
-    mask-image:radial-gradient(ellipse 90% 85% at 50% 22%,black 25%,transparent 100%);
-    -webkit-mask-image:radial-gradient(ellipse 90% 85% at 50% 22%,black 25%,transparent 100%);
-  }
-  [data-theme="dark"] .aurora-grid {
-    background-image:linear-gradient(rgba(255,255,255,0.016) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.016) 1px,transparent 1px);
-  }
-  .aurora-vignette { position:absolute; inset:0; }
-  [data-theme="dark"] .aurora-vignette {
-    background:radial-gradient(ellipse 115% 105% at 50% 50%,transparent 30%,rgba(28,15,54,0.55) 75%,rgba(28,15,54,0.9) 100%);
-  }
-  .bottom-fade {
-    background:linear-gradient(to top,var(--bg-page) 52%,transparent 100%);
-  }
-  [data-theme="dark"] .bottom-fade {
-    background:linear-gradient(to top,#1C0F36 52%,rgba(28,15,54,0.88) 80%,transparent 100%);
-  }
+  .search-input::placeholder { color:#BDBDBD; }
 `
 
-
-function FloatCard({ label, value, icon, delay, duration, left }) {
-  return (
-    <div className="float-card" style={{ left, bottom: '2%', animation: `floatUp ${duration}s ease-in-out ${delay}s infinite`, zIndex: 0 }}>
-      <span style={{ color: 'var(--text-3)', display: 'flex' }}>{FLOAT_ICON[icon]}</span>
-      <span style={{ fontSize: 11, color: 'var(--text-2)', fontWeight: 500 }}>{label}</span>
-      <span style={{ fontSize: 11, color: 'var(--text-1)', fontWeight: 700, marginLeft: 2 }}>{value}</span>
-    </div>
-  )
-}
+// ─── Sub-components ───────────────────────────────────────────────────────────
 
 function TypingDots() {
   return (
     <div style={{ display: 'flex', gap: 5, alignItems: 'center', padding: '3px 0' }}>
       {[0, 1, 2].map(i => (
-        <div key={i} style={{
-          width: 6, height: 6, borderRadius: '50%',
-          background: 'var(--text-3)',
-          animation: `dotBounce 1.2s ease-in-out ${i * 0.18}s infinite`,
-        }} />
+        <div key={i} style={{ width: 6, height: 6, borderRadius: '50%', background: '#9CA3AF', animation: `dotBounce 1.2s ease-in-out ${i * 0.18}s infinite` }} />
       ))}
     </div>
   )
@@ -361,12 +135,7 @@ function TypingDots() {
 
 function LynqBadge() {
   return (
-    <div style={{
-      width: 30, height: 30, borderRadius: 9,
-      background: 'linear-gradient(135deg,#A175FC 0%,#7C3AED 100%)',
-      display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-      boxShadow: '0 2px 8px rgba(161,117,252,0.4), inset 0 1px 0 rgba(255,255,255,0.2)',
-    }}>
+    <div style={{ width: 30, height: 30, borderRadius: 9, background: 'linear-gradient(135deg,#A175FC 0%,#7C3AED 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: '0 2px 8px rgba(161,117,252,0.4)' }}>
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M12 2L2 7l10 5 10-5-10-5z"/>
         <path d="M2 17l10 5 10-5"/>
@@ -381,15 +150,17 @@ function ChatMessage({ role, content, isStreaming }) {
   return (
     <div style={{ display: 'flex', justifyContent: isUser ? 'flex-end' : 'flex-start', marginBottom: 14, animation: 'msgIn .3s cubic-bezier(.16,1,.3,1) both' }}>
       {!isUser && <div style={{ marginRight: 10, marginTop: 2, flexShrink: 0 }}><LynqBadge /></div>}
-      <div className={isUser ? 'msg-user' : 'msg-ai'} style={{ maxWidth: '72%', padding: '13px 17px', fontSize: 14, lineHeight: 1.72, color: isUser ? 'var(--text-1)' : 'var(--text-1)', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+      <div className={isUser ? 'msg-user' : 'msg-ai'}>
         {isStreaming && !content ? <TypingDots /> : content}
         {isStreaming && content && (
-          <span style={{ display: 'inline-block', width: 2, height: 14, background: 'var(--text-2)', marginLeft: 2, verticalAlign: 'text-bottom', animation: 'blink 1s ease-in-out infinite' }} />
+          <span style={{ display: 'inline-block', width: 2, height: 14, background: '#6B7280', marginLeft: 2, verticalAlign: 'text-bottom', animation: 'blink 1s ease-in-out infinite' }} />
         )}
       </div>
     </div>
   )
 }
+
+// ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function HomePage() {
   const [session, setSession]             = useState(null)
@@ -400,6 +171,7 @@ export default function HomePage() {
   const [storeContext, setStoreContext]    = useState(null)
   const [contextLoaded, setContextLoaded] = useState(false)
   const [mounted, setMounted]             = useState(false)
+  const [showToast, setShowToast]         = useState(false)
   const messagesEndRef = useRef(null)
   const heroInputRef   = useRef(null)
   const bottomInputRef = useRef(null)
@@ -415,6 +187,8 @@ export default function HomePage() {
       setUserName(meta.full_name || meta.name || (raw.charAt(0).toUpperCase() + raw.slice(1)))
       loadContext(session.access_token)
     })
+    const t = setTimeout(() => setShowToast(true), 1800)
+    return () => clearTimeout(t)
   }, [])
 
   useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [messages])
@@ -442,8 +216,6 @@ export default function HomePage() {
     setIsLoading(true)
     setMessages(prev => [...prev, { role: 'user', content: t }, { role: 'assistant', content: '', isStreaming: true }])
     try {
-      // Snapshot history before adding the new streaming message.
-      // Filter out streaming placeholders; pass only completed turns.
       const history = messages.filter(m => !m.isStreaming).map(m => ({ role: m.role, content: m.content }))
       const res = await fetch('/api/ai/chat', {
         method: 'POST',
@@ -468,12 +240,9 @@ export default function HomePage() {
       setIsLoading(false)
       setTimeout(() => bottomInputRef.current?.focus(), 60)
     }
-  }, [isLoading, session, storeContext])
+  }, [isLoading, session, storeContext, messages])
 
-  function onHeroKey(e) {
-    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(input) }
-  }
-  function onBottomKey(e) {
+  function onKey(e) {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(input) }
   }
 
@@ -482,112 +251,137 @@ export default function HomePage() {
   if (!mounted) return null
 
   return (
-    <div className="h-root" style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg-page)' }}>
+    <div className="h-root" style={{ display: 'flex', minHeight: '100vh', background: '#F9F9FB' }}>
       <style>{CSS}</style>
       <Sidebar />
 
-      <div style={{ marginLeft: 208, flex: 1, display: 'flex', flexDirection: 'column', position: 'relative', overflow: 'hidden', minHeight: '100vh', background: 'transparent', minWidth: 0 }}>
+      <div style={{ marginLeft: 208, flex: 1, minHeight: '100vh', background: '#F9F9FB', position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
 
-        {/* ── 5-layer aurora ── */}
-        <div aria-hidden style={{ position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: 'none', zIndex: 0 }}>
-
-          {/* Layer 1 — brand purple bloom (subtle light, full dark) */}
-          <div className="aurora-l1" />
-          {/* Layer 4 — violet accent top-left */}
-          <div className="aurora-l4" />
-          {/* Layer 5 — indigo bottom-right (light only) */}
-          <div className="aurora-l5" />
-
-          {/* Dot grid (dark dots in light, white lines in dark) */}
-          <div className="aurora-grid" />
-
-          {/* Edge vignette (none in light, dark in dark mode) */}
-          <div className="aurora-vignette" />
-
-          {/* Ambient float cards */}
-          {FLOAT_ITEMS.map(item => <FloatCard key={item.label} {...item} />)}
-        </div>
+        {/* ── 4 Animating orbs ── */}
+        <motion.div
+          animate={{ x: [0, -30, 20, 0], y: [0, 25, -15, 0] }}
+          transition={{ duration: 18, repeat: Infinity, ease: 'easeInOut' }}
+          style={{ position: 'absolute', top: -200, right: -100, width: 700, height: 700, borderRadius: '50%', background: 'radial-gradient(circle, rgba(139,92,246,0.15), transparent 70%)', filter: 'blur(60px)', pointerEvents: 'none', zIndex: 0 }}
+        />
+        <motion.div
+          animate={{ x: [0, 40, -20, 0], y: [0, -30, 20, 0] }}
+          transition={{ duration: 22, repeat: Infinity, ease: 'easeInOut' }}
+          style={{ position: 'absolute', bottom: -200, left: -100, width: 650, height: 650, borderRadius: '50%', background: 'radial-gradient(circle, rgba(99,102,241,0.12), transparent 70%)', filter: 'blur(60px)', pointerEvents: 'none', zIndex: 0 }}
+        />
+        <motion.div
+          animate={{ x: [0, 30, -20, 0], y: [0, 20, -30, 0] }}
+          transition={{ duration: 15, repeat: Infinity, ease: 'easeInOut' }}
+          style={{ position: 'absolute', top: '20%', left: '5%', width: 400, height: 400, borderRadius: '50%', background: 'radial-gradient(circle, rgba(59,130,246,0.08), transparent 70%)', filter: 'blur(80px)', pointerEvents: 'none', zIndex: 0 }}
+        />
+        <motion.div
+          animate={{ x: [0, -20, 15, 0], y: [0, -25, 15, 0] }}
+          transition={{ duration: 19, repeat: Infinity, ease: 'easeInOut' }}
+          style={{ position: 'absolute', bottom: '10%', right: '5%', width: 350, height: 350, borderRadius: '50%', background: 'radial-gradient(circle, rgba(16,185,129,0.07), transparent 70%)', filter: 'blur(80px)', pointerEvents: 'none', zIndex: 0 }}
+        />
 
         {/* ── HERO STATE (no messages) ── */}
         {!hasMsg && (
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '0 44px 40px', position: 'relative', zIndex: 1, isolation: 'isolate', willChange: 'transform' }}>
-            <div style={{ width: '100%', maxWidth: 760, display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
+          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', zIndex: 1, padding: '40px 0' }}>
+            <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', padding: '0 24px', maxWidth: 640, width: '100%' }}>
 
-              {/* Status pill */}
-              <div className="status-pill" style={{ marginBottom: 28, animation: 'revealUp .5s cubic-bezier(.16,1,.3,1) both' }}>
-                <div style={{ position: 'relative', width: 8, height: 8, flexShrink: 0 }}>
-                  <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#4ade80', boxShadow: '0 0 8px #4ade80' }} />
-                  <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: '#4ade80', animation: 'liveBlip 2.4s ease-in-out infinite' }} />
+              {/* Good morning badge */}
+              <motion.div
+                initial={{ opacity: 0, y: 14 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, ease: EASE }}
+              >
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: 'rgba(255,255,255,0.8)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 20, padding: '5px 14px', marginBottom: 24, boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+                  <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#22C55E', animation: 'pulseGreen 2s ease-in-out infinite', flexShrink: 0 }} />
+                  <span style={{ fontSize: 11, fontWeight: 600, color: '#555555', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+                    {greeting}
+                  </span>
                 </div>
-                <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--text-2)' }}>
-                  {contextLoaded ? greeting : 'Connecting…'}
-                </span>
-              </div>
+              </motion.div>
 
-              {/* Heading */}
-              <h1 style={{ fontSize: 'clamp(36px,5.2vw,60px)', fontWeight: 800, letterSpacing: '-0.025em', lineHeight: 1.07, color: 'var(--text-1)', marginBottom: 14, animation: 'revealUp .58s cubic-bezier(.16,1,.3,1) .07s both' }}>
+              {/* Headline */}
+              <motion.h1
+                initial={{ opacity: 0, y: 14 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.1, ease: EASE }}
+                style={{ fontSize: 42, fontWeight: 800, color: '#0F0F10', letterSpacing: '-0.03em', lineHeight: 1.1, marginBottom: 12 }}
+              >
                 Welcome back,{' '}
-                <span style={{
-                  background: 'linear-gradient(120deg,#A175FC 0%,#9B6FFF 40%,#7C3AED 100%)',
-                  backgroundSize: '200% auto',
-                  WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
-                  animation: 'shimmer 10s ease-in-out infinite',
-                  display: 'inline',
-                }}>
+                <span style={{ background: 'linear-gradient(135deg, #8B5CF6 0%, #6366F1 50%, #3B82F6 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text', display: 'inline-block' }}>
                   {userName || 'there'}
                 </span>
-              </h1>
+              </motion.h1>
 
               {/* Subtitle */}
-              <p style={{ fontSize: 15, color: 'var(--text-2)', lineHeight: 1.8, maxWidth: 340, marginBottom: 36, fontWeight: 400, animation: 'revealUp .58s cubic-bezier(.16,1,.3,1) .14s both' }}>
+              <motion.p
+                initial={{ opacity: 0, y: 14 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.2, ease: EASE }}
+                style={{ fontSize: 15, color: '#6B7280', lineHeight: 1.6, marginBottom: 32, maxWidth: 420 }}
+              >
                 {contextLoaded
                   ? 'Ask anything about your store — revenue, refunds, orders, trends.'
                   : 'Connecting to your store data…'}
-              </p>
+              </motion.p>
 
-
-              {/* ── HERO CHAT INPUT ── */}
-              <div style={{ width: '100%' }}>
-                <div className="chat-box-hero" style={{ padding: '20px 20px 20px 24px', display: 'flex', alignItems: 'flex-end', gap: 14 }}>
-                  <textarea
-                    ref={heroInputRef}
-                    value={input}
-                    onChange={e => setInput(e.target.value)}
-                    onKeyDown={onHeroKey}
-                    placeholder={contextLoaded ? 'Ask anything about your store…' : 'Connecting to your store…'}
-                    disabled={!contextLoaded || isLoading}
-                    rows={1}
-                    onInput={e => { e.target.style.height = 'auto'; e.target.style.height = Math.min(e.target.scrollHeight, 200) + 'px' }}
-                  />
-                  <button className="send-btn-hero" onClick={() => sendMessage(input)} disabled={!input.trim() || isLoading || !contextLoaded} aria-label="Send message">
-                    {isLoading
-                      ? <div style={{ width: 16, height: 16, border: '2px solid rgba(255,255,255,0.22)', borderTop: '2px solid #fff', borderRadius: '50%', animation: 'spin .7s linear infinite' }} />
-                      : <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-                    }
-                  </button>
-                </div>
-
-                {/* Suggestion chips — below the input */}
-                {contextLoaded && (
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7, justifyContent: 'center', marginTop: 14, animation: 'revealUp .58s cubic-bezier(.16,1,.3,1) .32s both' }}>
-                    {SUGGESTIONS.map(({ text, icon, color }, i) => (
-                      <button
-                        key={text}
-                        className="chip"
-                        onClick={() => sendMessage(text)}
-                        disabled={isLoading}
-                        style={{ animation: `chipReveal .42s cubic-bezier(.16,1,.3,1) ${.36 + i * .055}s both` }}
-                      >
-                        <span className="ci" style={{ color }}>{icon}</span>
-                        {text}
-                      </button>
-                    ))}
+              {/* Search bar */}
+              <motion.div
+                initial={{ opacity: 0, y: 14 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.3, ease: EASE }}
+                style={{ width: '100%' }}
+              >
+                <div style={{ position: 'relative', width: 'min(520px, 90vw)', margin: '0 auto 20px' }}>
+                  {/* Gradient border ring */}
+                  <div style={{ position: 'absolute', top: -1.5, right: -1.5, bottom: -1.5, left: -1.5, borderRadius: 14, background: 'linear-gradient(135deg, rgba(139,92,246,0.5), rgba(99,102,241,0.3), rgba(96,165,250,0.4))', zIndex: 0, animation: 'borderPulse 3.5s ease-in-out infinite' }} />
+                  {/* Inner bar */}
+                  <div style={{ background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', borderRadius: 12, padding: '10px 12px', display: 'flex', alignItems: 'center', gap: 10, position: 'relative', zIndex: 1 }}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#BDBDBD" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                      <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                    </svg>
+                    <input
+                      ref={heroInputRef}
+                      className="search-input"
+                      type="text"
+                      value={input}
+                      onChange={e => setInput(e.target.value)}
+                      onKeyDown={onKey}
+                      placeholder={contextLoaded ? 'Ask anything about your store…' : 'Connecting…'}
+                      disabled={!contextLoaded || isLoading}
+                    />
+                    <button className="send-btn" onClick={() => sendMessage(input)} disabled={!input.trim() || isLoading || !contextLoaded} aria-label="Send">
+                      {isLoading
+                        ? <div style={{ width: 14, height: 14, border: '2px solid rgba(255,255,255,0.3)', borderTop: '2px solid #fff', borderRadius: '50%', animation: 'spin .7s linear infinite' }} />
+                        : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+                      }
+                    </button>
                   </div>
-                )}
-
-                <div style={{ textAlign: 'center', marginTop: 12, fontSize: 11, color: 'var(--text-3)', letterSpacing: '.04em' }}>
-                  Lynq AI · Answers based on live store data · ↵ Enter to send
                 </div>
+              </motion.div>
+
+              {/* Chips */}
+              <motion.div
+                initial={{ opacity: 0, y: 14 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.4, ease: EASE }}
+                style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center' }}
+              >
+                {SUGGESTIONS.map((text) => (
+                  <motion.button
+                    key={text}
+                    whileHover={{ y: -2, boxShadow: '0 4px 16px rgba(139,92,246,0.12)' }}
+                    transition={{ duration: 0.12 }}
+                    onClick={() => sendMessage(text)}
+                    disabled={isLoading || !contextLoaded}
+                    style={{ background: 'rgba(255,255,255,0.8)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 20, padding: '7px 14px', fontSize: 12, fontWeight: 500, color: '#555555', cursor: 'pointer', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', transition: 'all 0.15s ease', fontFamily: 'inherit' }}
+                  >
+                    {text}
+                  </motion.button>
+                ))}
+              </motion.div>
+
+              {/* Footer */}
+              <div style={{ fontSize: 11, color: '#BDBDBD', marginTop: 16, textAlign: 'center' }}>
+                Lynq AI · Answers based on live store data · ↵ Enter to send
               </div>
 
             </div>
@@ -596,45 +390,65 @@ export default function HomePage() {
 
         {/* ── CONVERSATION STATE (has messages) ── */}
         {hasMsg && (
-          <>
-            {/* Scrollable messages */}
-            <div className="chat-scroll" style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '48px 44px 16px', position: 'relative', zIndex: 1 }}>
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', position: 'relative', zIndex: 1 }}>
+            <div className="chat-scroll" style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '48px 44px 16px' }}>
               <div style={{ width: '100%', maxWidth: 780 }}>
                 {messages.map((msg, i) => <ChatMessage key={i} {...msg} />)}
                 <div ref={messagesEndRef} />
               </div>
             </div>
-
-            {/* Bottom input */}
-            <div className="bottom-fade" style={{ padding: '16px 44px 36px', display: 'flex', justifyContent: 'center', position: 'relative', zIndex: 2 }}>
+            <div style={{ padding: '16px 44px 36px', display: 'flex', justifyContent: 'center', background: 'linear-gradient(to top, #F9F9FB 52%, transparent 100%)' }}>
               <div style={{ width: '100%', maxWidth: 780 }}>
-                <div className="chat-box" style={{ padding: '18px 18px 18px 22px', display: 'flex', alignItems: 'flex-end', gap: 12 }}>
+                <div className="chat-bottom">
                   <textarea
                     ref={bottomInputRef}
                     value={input}
                     onChange={e => setInput(e.target.value)}
-                    onKeyDown={onBottomKey}
+                    onKeyDown={onKey}
                     placeholder="Ask a follow-up…"
                     disabled={isLoading}
                     rows={1}
                     onInput={e => { e.target.style.height = 'auto'; e.target.style.height = Math.min(e.target.scrollHeight, 180) + 'px' }}
                   />
-                  <button className="send-btn" onClick={() => sendMessage(input)} disabled={!input.trim() || isLoading} aria-label="Send message">
+                  <button className="send-btn-lg" onClick={() => sendMessage(input)} disabled={!input.trim() || isLoading} aria-label="Send">
                     {isLoading
                       ? <div style={{ width: 15, height: 15, border: '2px solid rgba(255,255,255,0.22)', borderTop: '2px solid #fff', borderRadius: '50%', animation: 'spin .7s linear infinite' }} />
                       : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
                     }
                   </button>
                 </div>
-                <div style={{ textAlign: 'center', marginTop: 10, fontSize: 11, color: 'var(--text-3)', letterSpacing: '.04em' }}>
+                <div style={{ textAlign: 'center', marginTop: 10, fontSize: 11, color: '#BDBDBD' }}>
                   Lynq AI · Answers based on live store data · ↵ Enter to send
                 </div>
               </div>
             </div>
-          </>
+          </div>
         )}
 
       </div>
+
+      {/* ── Toast notification ── */}
+      <AnimatePresence>
+        {showToast && (
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            transition={{ duration: 0.3, ease: EASE }}
+            style={{ position: 'fixed', bottom: 20, left: 236, background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 10, padding: '10px 14px', display: 'flex', alignItems: 'center', gap: 10, boxShadow: '0 4px 20px rgba(0,0,0,0.08)', zIndex: 100 }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10B981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+              <line x1="3" y1="6" x2="21" y2="6"/>
+              <path d="M16 10a4 4 0 0 1-8 0"/>
+            </svg>
+            <span style={{ fontSize: 13, fontWeight: 500, color: '#111111' }}>New order</span>
+            <span style={{ fontSize: 13, fontWeight: 700, color: '#0F0F10' }}>€129.00</span>
+            <button onClick={() => setShowToast(false)} style={{ marginLeft: 4, background: 'none', border: 'none', cursor: 'pointer', color: '#9CA3AF', fontSize: 16, lineHeight: 1, padding: 0 }}>×</button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
     </div>
   )
 }

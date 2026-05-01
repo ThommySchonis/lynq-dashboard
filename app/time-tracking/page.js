@@ -36,17 +36,14 @@ const CSS = `
     padding:24px 28px;position:relative;overflow:hidden;
     display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:20px;
   }
-  .clock-card::before{
-    content:'';position:absolute;top:0;left:0;right:0;height:2px;
-    background:var(--clock-grad,linear-gradient(90deg,#8B5CF6,#6366F1));
-  }
+  .clock-card::before{ content:none; }
 
   .kpi-card{
     background:#FFFFFF;border:1px solid rgba(0,0,0,0.07);border-radius:10px;
     padding:18px 20px;position:relative;overflow:hidden;cursor:default;
     transition:border-color .2s ease;
   }
-  .kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--kpi-grad)}
+  .kpi-card::before{ content:none; }
   .kpi-card:hover{border-color:rgba(0,0,0,0.12)}
 
   .btn{display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 20px;border-radius:8px;border:none;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s ease;flex-shrink:0}
@@ -223,10 +220,10 @@ function AdminLogRow({ session: s }) {
 }
 
 const TEAM_KPI = [
-  { key: 'active', label: 'ACTIVE NOW',  grad: 'linear-gradient(90deg,#10B981,#34D399)', iconBg: 'rgba(16,185,129,0.08)',  iconColor: '#10B981' },
-  { key: 'break',  label: 'ON BREAK',    grad: 'linear-gradient(90deg,#F59E0B,#FBBF24)', iconBg: 'rgba(245,158,11,0.08)',  iconColor: '#F59E0B' },
-  { key: 'total',  label: 'TOTAL HOURS', grad: 'linear-gradient(90deg,#8B5CF6,#A78BFA)', iconBg: 'rgba(139,92,246,0.08)',  iconColor: '#8B5CF6' },
-  { key: 'team',   label: 'TEAM SIZE',   grad: 'linear-gradient(90deg,#3B82F6,#60A5FA)', iconBg: 'rgba(59,130,246,0.08)',  iconColor: '#3B82F6' },
+  { key: 'active', label: 'ACTIVE NOW'  },
+  { key: 'break',  label: 'ON BREAK'   },
+  { key: 'total',  label: 'TOTAL HOURS'},
+  { key: 'team',   label: 'TEAM SIZE'  },
 ]
 
 function KpiIcon({ id, color }) {
@@ -284,12 +281,12 @@ function TeamView({ data, filter, onFilterChange }) {
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 16, animation: 'fadeIn .4s ease .05s both' }}>
-            {TEAM_KPI.map(({ key, label, grad, iconBg, iconColor }) => (
-              <div key={key} className="kpi-card" style={{ '--kpi-grad': grad }}>
+            {TEAM_KPI.map(({ key, label }) => (
+              <div key={key} className="kpi-card">
                 <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 14 }}>
                   <div style={{ fontSize: 10, fontWeight: 700, color: '#9CA3AF', letterSpacing: '0.07em', textTransform: 'uppercase' }}>{label}</div>
-                  <div style={{ width: 28, height: 28, borderRadius: 7, background: iconBg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    <KpiIcon id={key} color={iconColor} />
+                  <div style={{ width: 28, height: 28, borderRadius: 7, background: 'rgba(161,117,252,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <KpiIcon id={key} color="#9B91A8" />
                   </div>
                 </div>
                 <div style={{ fontSize: 22, fontWeight: 700, color: '#0F0F10', letterSpacing: '-0.02em', lineHeight: 1.1, marginBottom: 4, fontVariantNumeric: 'tabular-nums' }}>
@@ -338,9 +335,9 @@ function TeamView({ data, filter, onFilterChange }) {
 // ─── Employee metric card config ──────────────────────────────────────────────
 
 const EMP_KPI = [
-  { id: 'week',  label: null,         grad: 'linear-gradient(90deg,#8B5CF6,#A78BFA)', iconBg: 'rgba(139,92,246,0.08)', iconColor: '#8B5CF6' },
-  { id: 'today', label: 'TODAY',      grad: 'linear-gradient(90deg,#3B82F6,#60A5FA)', iconBg: 'rgba(59,130,246,0.08)', iconColor: '#3B82F6' },
-  { id: 'avg',   label: 'AVG PER DAY',grad: 'linear-gradient(90deg,#10B981,#34D399)', iconBg: 'rgba(16,185,129,0.08)', iconColor: '#10B981' },
+  { id: 'week',  label: null          },
+  { id: 'today', label: 'TODAY'       },
+  { id: 'avg',   label: 'AVG PER DAY'},
 ]
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
@@ -583,12 +580,12 @@ export default function TimeTrackingPage() {
 
           {/* Admin preview banner */}
           {isAdmin && (
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, background: 'linear-gradient(135deg,#F3EEFF,#EFF6FF)', border: '1px solid rgba(139,92,246,0.15)', borderLeft: '3px solid #8B5CF6', borderRadius: 8, padding: '10px 16px', marginBottom: 16, animation: 'fadeIn .4s ease both' }}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8B5CF6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 1 }}><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, background: '#F7F3FF', border: '1px solid #E5E0EB', borderRadius: 8, padding: '10px 16px', marginBottom: 16, animation: 'fadeIn .4s ease both' }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9B91A8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 1 }}><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
               <div style={{ fontSize: 12 }}>
-                <span style={{ fontWeight: 600, color: '#7C3AED' }}>Admin preview</span>
-                <span style={{ color: '#6B7280', marginLeft: 6 }}>This is exactly what team members see when they log in. View all hours in the</span>
-                <a href="/admin" style={{ color: '#8B5CF6', marginLeft: 4, textDecoration: 'underline', cursor: 'pointer' }}>Admin Panel → Time Tracking</a>
+                <span style={{ fontWeight: 600, color: '#1C0F36' }}>Admin preview</span>
+                <span style={{ color: '#6B5E7B', marginLeft: 6 }}>This is exactly what team members see when they log in. View all hours in the</span>
+                <a href="/admin" style={{ color: '#A175FC', marginLeft: 4, textDecoration: 'underline', cursor: 'pointer' }}>Admin Panel → Time Tracking</a>
               </div>
             </div>
           )}
@@ -603,7 +600,7 @@ export default function TimeTrackingPage() {
           )}
 
           {/* Clock In card */}
-          <div className="clock-card" style={{ '--clock-grad': clockGrad, marginBottom: 14, animation: 'fadeIn .4s ease .05s both' }}>
+          <div className="clock-card" style={{ marginBottom: 14, animation: 'fadeIn .4s ease .05s both' }}>
             <div>
               {isActive ? (
                 <>
@@ -677,12 +674,12 @@ export default function TimeTrackingPage() {
 
           {/* Metric cards */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 14, animation: 'fadeIn .4s ease .1s both' }}>
-            {empKpiCards.map(({ id, label, grad, iconBg, iconColor, value, sub }) => (
-              <div key={id} className="kpi-card" style={{ '--kpi-grad': grad }}>
+            {empKpiCards.map(({ id, label, value, sub }) => (
+              <div key={id} className="kpi-card">
                 <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 14 }}>
                   <div style={{ fontSize: 10, fontWeight: 700, color: '#9CA3AF', letterSpacing: '0.07em', textTransform: 'uppercase' }}>{label}</div>
-                  <div style={{ width: 28, height: 28, borderRadius: 7, background: iconBg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    <KpiIcon id={id} color={iconColor} />
+                  <div style={{ width: 28, height: 28, borderRadius: 7, background: 'rgba(161,117,252,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <KpiIcon id={id} color="#9B91A8" />
                   </div>
                 </div>
                 <div style={{ fontSize: 22, fontWeight: 700, color: '#0F0F10', letterSpacing: '-0.02em', lineHeight: 1.1, marginBottom: 4, fontVariantNumeric: 'tabular-nums' }}>{value}</div>

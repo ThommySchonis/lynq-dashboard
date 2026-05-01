@@ -171,11 +171,7 @@ const CSS = `
     transition:border-color .2s,box-shadow .2s;
     position:relative; overflow:hidden;
   }
-  .metric-card::before {
-    content:''; position:absolute; top:0; left:0; right:0; height:3px;
-    background:var(--metric-gradient,transparent);
-    border-radius:16px 16px 0 0;
-  }
+  .metric-card::before { content:none; }
   .metric-card:hover { border-color:var(--border-hover);box-shadow:var(--shadow-card-hover) }
   .animate-fade-in-1 { animation:fadeUp .4s ease .05s both }
   .animate-fade-in-2 { animation:fadeUp .4s ease .10s both }
@@ -256,10 +252,10 @@ function KpiCard({ label, value, numericValue, accentColor, sub, icon, gradient,
     ? (label === 'Avg Delivery' && numericValue ? `${animated}d` : animated)
     : value
   return (
-    <div className={`metric-card animate-fade-in-${animIndex}`} style={{ '--metric-gradient': gradient }}>
+    <div className={`metric-card animate-fade-in-${animIndex}`}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
         <span style={{ fontSize: 11, fontWeight: 600, color: '#BDBDBD', letterSpacing: '.06em', textTransform: 'uppercase' }}>{label}</span>
-        <div style={{ width: 28, height: 28, borderRadius: 7, background: '#F5F5F5', border: '1px solid rgba(0,0,0,0.07)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: accentColor || '#555555' }}>{icon}</div>
+        <div style={{ width: 28, height: 28, borderRadius: 7, background: 'rgba(161,117,252,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9B91A8' }}>{icon}</div>
       </div>
       <div style={{ fontSize: 26, fontWeight: 700, color: accentColor || 'var(--text-1)', letterSpacing: '-0.04em', lineHeight: 1 }}>{displayValue}</div>
       {sub && <p style={{ fontSize: 10.5, color: accentColor ? accentColor : 'var(--text-3)', marginTop: 5 }}>{sub}</p>}

@@ -74,7 +74,7 @@ const CSS = `
     cursor:default;
   }
   .metric-card:hover{border-color:rgba(0,0,0,0.12)}
-  .metric-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--metric-gradient,linear-gradient(90deg,#6366F1,#8B5CF6))}
+  .metric-card::before{content:none}
 
   .animate-fade-in{animation:fadeIn 0.5s cubic-bezier(0.16,1,0.3,1) both}
   .animate-fade-in-1{animation:fadeIn1 0.4s cubic-bezier(0.16,1,0.3,1) 0.00s both}
@@ -244,17 +244,10 @@ function WorkloadKPIs({ data, loaded }) {
     },
   ]
 
-  const WORKLOAD_GRADIENTS = [
-    'linear-gradient(90deg, #6366F1, #8B5CF6)',
-    'linear-gradient(90deg, #10B981, #34D399)',
-    'linear-gradient(90deg, #F59E0B, #FCD34D)',
-    'linear-gradient(90deg, #3B82F6, #60A5FA)',
-  ]
-
   if (!loaded) return (
     <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:12, marginBottom:12 }}>
       {[0,1,2,3].map(i=>(
-        <div key={i} className={`metric-card animate-fade-in-${i+1}`} style={{ '--metric-gradient': WORKLOAD_GRADIENTS[i] }}>
+        <div key={i} className={`metric-card animate-fade-in-${i+1}`}>
           <div className="sk" style={{ height:11, width:'55%', marginBottom:14, marginTop:4 }}/>
           <div className="sk" style={{ height:28, width:'65%', marginBottom:8 }}/>
           <div className="sk" style={{ height:9, width:'80%' }}/>
@@ -271,9 +264,8 @@ function WorkloadKPIs({ data, loaded }) {
           className={`animate-fade-in-${index+1}`}
           style={{ background:'#FFFFFF', border:'1px solid rgba(0,0,0,0.07)', borderRadius:'10px', padding:'18px 20px', position:'relative', overflow:'hidden', transition:'all 0.2s ease' }}
         >
-          <div style={{ position:'absolute', top:0, left:0, right:0, height:'2px', background:c.topGradient }}/>
           <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:14, marginTop:4 }}>
-            <div style={{ width:30, height:30, borderRadius:8, background:c.iconBg, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>{c.icon(c.iconColor)}</div>
+            <div style={{ width:30, height:30, borderRadius:8, background:'rgba(161,117,252,0.08)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>{c.icon('#9B91A8')}</div>
             {c.badge&&<span style={{ fontSize:11, fontWeight:600, color:'#059669', background:'rgba(16,185,129,0.08)', border:'1px solid rgba(16,185,129,0.15)', borderRadius:5, padding:'2px 7px', fontVariantNumeric:'tabular-nums' }}>{c.badge.value}</span>}
           </div>
           <div style={{ fontSize:26, fontWeight:700, color:'#0F0F10', lineHeight:1, marginBottom:6, letterSpacing:'-0.025em', fontVariantNumeric:'tabular-nums' }}>{c.valueNode}</div>
@@ -355,11 +347,8 @@ function getRTLabel(mins, thresholds) {
 function ResponseTimesSection({ data, loaded }) {
   if (!loaded) return (
     <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12, marginBottom:12 }}>
-      {[
-        { grad:'linear-gradient(90deg, #F59E0B, #FCD34D)' },
-        { grad:'linear-gradient(90deg, #EF4444, #F87171)' },
-      ].map((item,i)=>(
-        <div key={i} className="metric-card" style={{ padding:20, '--metric-gradient': item.grad }}>
+      {[0,1].map(i=>(
+        <div key={i} className="metric-card" style={{ padding:20 }}>
           <div className="sk" style={{ height:11, width:'45%', marginBottom:20, marginTop:4 }}/>
           <div className="sk" style={{ height:36, width:'48%', marginBottom:10 }}/>
           <div className="sk" style={{ height:1, marginBottom:14 }}/>
@@ -395,9 +384,8 @@ function ResponseTimesSection({ data, loaded }) {
           key={c.label}
           style={{ background:'#FFFFFF', border:'1px solid rgba(0,0,0,0.07)', borderRadius:'10px', padding:20, position:'relative', overflow:'hidden', transition:'all 0.2s ease' }}
         >
-          <div style={{ position:'absolute', top:0, left:0, right:0, height:'2px', background:c.topGradient }}/>
           <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:14, marginTop:4 }}>
-            <div style={{ width:30, height:30, borderRadius:8, background:c.iconBg, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>{c.icon(c.iconColor)}</div>
+            <div style={{ width:30, height:30, borderRadius:8, background:'rgba(161,117,252,0.08)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>{c.icon('#9B91A8')}</div>
             {c.rtLabel&&<span style={{ fontSize:10, fontWeight:700, color:c.rtLabel.color, background:c.rtLabel.bg, border:`1px solid ${c.rtLabel.border}`, borderRadius:5, padding:'2px 8px' }}>{c.rtLabel.label}</span>}
           </div>
           <div style={{ fontSize:28, fontWeight:700, color:'#0F0F10', lineHeight:1, marginBottom:8, letterSpacing:'-0.025em', fontVariantNumeric:'tabular-nums' }}>{c.value||'—'}</div>
@@ -448,17 +436,10 @@ function ProductivityKPIs({ data, loaded }) {
     },
   ]
 
-  const PROD_GRADIENTS = [
-    'linear-gradient(90deg, #8B5CF6, #A78BFA)',
-    'linear-gradient(90deg, #3B82F6, #60A5FA)',
-    'linear-gradient(90deg, #10B981, #34D399)',
-    'linear-gradient(90deg, #F59E0B, #FCD34D)',
-  ]
-
   if (!loaded) return (
     <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:12, marginBottom:12 }}>
       {[0,1,2,3].map(i=>(
-        <div key={i} className={`metric-card animate-fade-in-${i+1}`} style={{ '--metric-gradient': PROD_GRADIENTS[i] }}>
+        <div key={i} className={`metric-card animate-fade-in-${i+1}`}>
           <div className="sk" style={{ height:11, width:'55%', marginBottom:14, marginTop:4 }}/>
           <div className="sk" style={{ height:28, width:'65%', marginBottom:8 }}/>
           <div className="sk" style={{ height:9, width:'80%' }}/>
@@ -475,9 +456,8 @@ function ProductivityKPIs({ data, loaded }) {
           className={`animate-fade-in-${index+1}`}
           style={{ background:'#FFFFFF', border:'1px solid rgba(0,0,0,0.07)', borderRadius:'10px', padding:'18px 20px', position:'relative', overflow:'hidden', transition:'all 0.2s ease' }}
         >
-          <div style={{ position:'absolute', top:0, left:0, right:0, height:'2px', background:c.topGradient }}/>
           <div style={{ marginBottom:14, marginTop:4 }}>
-            <div style={{ width:30, height:30, borderRadius:8, background:c.iconBg, display:'flex', alignItems:'center', justifyContent:'center' }}>{c.icon(c.iconColor)}</div>
+            <div style={{ width:30, height:30, borderRadius:8, background:'rgba(161,117,252,0.08)', display:'flex', alignItems:'center', justifyContent:'center' }}>{c.icon('#9B91A8')}</div>
           </div>
           <div style={{ fontSize:24, fontWeight:700, color:'#0F0F10', lineHeight:1, marginBottom:6, letterSpacing:'-0.02em', fontVariantNumeric:'tabular-nums' }}>{c.valueNode}</div>
           <div style={{ fontSize:11, fontWeight:600, letterSpacing:'.06em', color:'#9CA3AF', textTransform:'uppercase', marginBottom:4 }}>{c.label}</div>

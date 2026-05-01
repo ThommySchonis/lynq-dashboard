@@ -367,11 +367,10 @@ function KpiCardInner({ c, index, loaded }) {
       className={`animate-fade-in-${index + 1}`}
       style={{ background:'#FFFFFF', border:'1px solid rgba(0,0,0,0.07)', borderRadius:'10px', padding:'18px 20px', position:'relative', overflow:'hidden', transition:'all 0.2s ease' }}
     >
-      <div style={{ position:'absolute', top:0, left:0, right:0, height:'2px', background:c.metricGradient }}/>
       <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:14 }}>
         <div style={{ fontSize:11, fontWeight:600, textTransform:'uppercase', letterSpacing:'.06em', color:'#BDBDBD' }}>{c.label}</div>
-        <div style={{ width:30, height:30, borderRadius:7, background:c.accentBg, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={c.accent} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">{c.icon}</svg>
+        <div style={{ width:30, height:30, borderRadius:7, background:'rgba(161,117,252,0.08)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9B91A8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">{c.icon}</svg>
         </div>
       </div>
       <div style={{ fontSize:24, fontWeight:700, color:'#111111', lineHeight:1, marginBottom:8, fontVariantNumeric:'tabular-nums' }}>{displayVal}</div>

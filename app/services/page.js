@@ -200,7 +200,7 @@ const GUARANTEE_ITEMS = [
 
 // ── Sub-components ────────────────────────────────────────────────────────────
 
-function CheckIcon({ size = 14, color = '#10B981' }) {
+function CheckIcon({ size = 14, color = '#9B91A8' }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
       <polyline points="20 6 9 17 4 12"/>
@@ -216,7 +216,7 @@ function ShieldSmIcon({ color }) {
   )
 }
 
-function GuaranteeBlock({ iconColor = '#10B981' }) {
+function GuaranteeBlock({ iconColor = '#9B91A8' }) {
   return (
     <div style={{ background: '#F9F8FF', border: '1px solid rgba(0,0,0,0.06)', borderRadius: 8, padding: '14px 16px', margin: '16px 0' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
@@ -236,9 +236,6 @@ function GuaranteeBlock({ iconColor = '#10B981' }) {
 function ServiceCard({ svc, i, onRequest }) {
   return (
     <div className="svc-card" style={{ animation: `fadeInUp 0.5s ease ${i * 0.07}s forwards`, opacity: 0 }}>
-      {/* Colored top border */}
-      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: svc.topGradient }} />
-
       {/* Badge top-right */}
       {svc.badge && (
         <span style={{
@@ -252,8 +249,8 @@ function ServiceCard({ svc, i, onRequest }) {
       )}
 
       {/* Icon */}
-      <div style={{ width: 40, height: 40, borderRadius: 10, background: svc.iconBg, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
-        {svc.icon(svc.iconColor)}
+      <div style={{ width: 40, height: 40, borderRadius: 10, background: 'rgba(161,117,252,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
+        {svc.icon('#6B5E7B')}
       </div>
 
       {/* Title */}
@@ -266,13 +263,13 @@ function ServiceCard({ svc, i, onRequest }) {
       <div style={{ display: 'flex', flexDirection: 'column' }}>
         {svc.features.map(f => (
           <div key={f} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-            <CheckIcon size={14} color={svc.iconColor} />
+            <CheckIcon size={14} />
             <span style={{ fontSize: 13, color: '#374151' }}>{f}</span>
           </div>
         ))}
       </div>
 
-      <GuaranteeBlock iconColor={svc.iconColor} />
+      <GuaranteeBlock />
 
       <button className="req-btn" onClick={onRequest}>
         Request More Info
@@ -285,8 +282,6 @@ function ServiceCard({ svc, i, onRequest }) {
 
 function InquiryForm({ service, phone, setPhone, message, setMessage, onSubmit, submitting, error, onClose }) {
   const isGeneral = service.id === 'general'
-  const iconBg    = service.iconBg || 'var(--bg-surface-2)'
-  const iconColor = service.iconColor || '#555555'
   return (
     <>
       <button className="close-btn" onClick={onClose} aria-label="Close">
@@ -296,8 +291,8 @@ function InquiryForm({ service, phone, setPhone, message, setMessage, onSubmit, 
       <div style={{ marginBottom: 24 }}>
         {!isGeneral && service.icon ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: 13 }}>
-            <div style={{ width: 44, height: 44, borderRadius: 12, background: iconBg, border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              {typeof service.icon === 'function' ? service.icon(iconColor) : service.icon}
+            <div style={{ width: 44, height: 44, borderRadius: 12, background: 'rgba(161,117,252,0.08)', border: '1px solid #E5E0EB', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              {typeof service.icon === 'function' ? service.icon('#6B5E7B') : service.icon}
             </div>
             <div>
               <div style={{ fontSize: 10.5, fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '.07em', marginBottom: 3 }}>Service Inquiry</div>

@@ -93,7 +93,7 @@ const CSS = `
     border-radius:10px; overflow:hidden;
     padding:18px 20px 20px;
   }
-  .ap-metric-topbar { height:3px; margin:-18px -20px 16px; }
+  .ap-metric-topbar { display:none; }
 
   .ap-type-pill {
     display:flex; align-items:center; gap:8px;
@@ -436,16 +436,15 @@ export default function AdminPage() {
             <div>
               <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:12, marginBottom:24 }}>
                 {[
-                  { label:'TOTAL CLIENTS', value:clients.length, icon:Users, topGrad:'linear-gradient(90deg,#8B5CF6,#A78BFA)', iconBg:'rgba(139,92,246,0.08)', iconColor:'#8B5CF6' },
-                  { label:'ACTIVE CLIENTS', value:activeClients, icon:UserCheck, topGrad:'linear-gradient(90deg,#10B981,#34D399)', iconBg:'rgba(16,185,129,0.08)', iconColor:'#10B981' },
-                  { label:'BROADCASTS', value:broadcasts.length, icon:Radio, topGrad:'linear-gradient(90deg,#3B82F6,#60A5FA)', iconBg:'rgba(59,130,246,0.08)', iconColor:'#3B82F6' },
-                  { label:'NOTIFICATIONS', value:notifications.length, icon:Bell, topGrad:'linear-gradient(90deg,#F59E0B,#FCD34D)', iconBg:'rgba(245,158,11,0.08)', iconColor:'#F59E0B' },
-                ].map(({ label, value, icon:Icon, topGrad, iconBg, iconColor }) => (
+                  { label:'TOTAL CLIENTS',   value:clients.length,       icon:Users    },
+                  { label:'ACTIVE CLIENTS',  value:activeClients,         icon:UserCheck },
+                  { label:'BROADCASTS',      value:broadcasts.length,     icon:Radio    },
+                  { label:'NOTIFICATIONS',   value:notifications.length,  icon:Bell     },
+                ].map(({ label, value, icon:Icon }) => (
                   <div key={label} className="ap-metric-card">
-                    <div className="ap-metric-topbar" style={{ background:topGrad }} />
                     <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:12 }}>
-                      <div style={{ width:36, height:36, borderRadius:8, background:iconBg, display:'flex', alignItems:'center', justifyContent:'center' }}>
-                        <Icon size={18} strokeWidth={1.75} color={iconColor} />
+                      <div style={{ width:36, height:36, borderRadius:8, background:'rgba(161,117,252,0.08)', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                        <Icon size={18} strokeWidth={1.75} color="#9B91A8" />
                       </div>
                     </div>
                     <div style={{ fontSize:28, fontWeight:800, color:'#0F0F10', letterSpacing:'-0.03em', lineHeight:1, marginBottom:4 }}>{value}</div>
@@ -758,7 +757,7 @@ export default function AdminPage() {
             return (
               <div>
                 <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:12, maxWidth:420, marginBottom:20 }}>
-                  {[{label:'Total',value:inquiries.length,color:'#7C3AED'},{label:'New',value:unread.length,color:'#EF4444'},{label:'Read',value:read.length,color:'#059669'}].map(({label,value,color}) => (
+                  {[{label:'Total',value:inquiries.length,color:'#0F0F10'},{label:'New',value:unread.length,color:'#EF4444'},{label:'Read',value:read.length,color:'#0F0F10'}].map(({label,value,color}) => (
                     <div key={label} className="ap-metric-card" style={{ padding:'16px 18px' }}>
                       <div style={{ fontSize:24, fontWeight:800, color, letterSpacing:'-0.03em', lineHeight:1, marginBottom:4 }}>{value}</div>
                       <div style={{ fontSize:10, fontWeight:600, textTransform:'uppercase', letterSpacing:'0.07em', color:'#9CA3AF' }}>{label}</div>
@@ -899,9 +898,9 @@ export default function AdminPage() {
                 <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:12, marginBottom:20 }}>
                   {[
                     {label:'Active now',value:activeCount,color:'#059669',sub:pausedCount>0?`${pausedCount} on break`:null},
-                    {label:'Total worked',value:fmtSec(totalSec),color:'#7C3AED',sub:null},
-                    {label:'Sessions',value:sessions.filter(s=>s.clocked_out_at).length,color:'#2563EB',sub:null},
-                    {label:'Team members',value:members.length,color:'#D97706',sub:null},
+                    {label:'Total worked',value:fmtSec(totalSec),color:'#0F0F10',sub:null},
+                    {label:'Sessions',value:sessions.filter(s=>s.clocked_out_at).length,color:'#0F0F10',sub:null},
+                    {label:'Team members',value:members.length,color:'#0F0F10',sub:null},
                   ].map(({label,value,color,sub})=>(
                     <div key={label} className="ap-metric-card">
                       <div style={{ fontSize:24, fontWeight:800, color, letterSpacing:'-0.03em', lineHeight:1, marginBottom:4 }}>{value}</div>
@@ -928,7 +927,7 @@ export default function AdminPage() {
                                 {m.is_paused&&<span style={{ marginLeft:'auto', fontSize:10, fontWeight:600, color:'#D97706', background:'rgba(217,119,6,0.08)', border:'1px solid rgba(217,119,6,0.2)', borderRadius:4, padding:'1px 6px' }}>Break</span>}
                                 {m.is_active&&!m.is_paused&&<span style={{ marginLeft:'auto', fontSize:10, fontWeight:600, color:'#059669', background:'rgba(16,185,129,0.08)', border:'1px solid rgba(16,185,129,0.2)', borderRadius:4, padding:'1px 6px' }}>Active</span>}
                               </div>
-                              <div style={{ fontSize:22, fontWeight:800, color:'#7C3AED', letterSpacing:'-0.03em', marginBottom:4 }}>{fmtSec(m.worked_seconds)}</div>
+                              <div style={{ fontSize:22, fontWeight:800, color:'#0F0F10', letterSpacing:'-0.03em', marginBottom:4 }}>{fmtSec(m.worked_seconds)}</div>
                               <div style={{ display:'flex', gap:10, fontSize:11, color:'#9CA3AF' }}>
                                 <span>{m.sessions_count} session{m.sessions_count!==1?'s':''}</span>
                                 {m.paused_seconds>0&&<span style={{ color:'#D97706' }}>Break {fmtSec(m.paused_seconds)}</span>}
@@ -989,10 +988,10 @@ export default function AdminPage() {
                   <div>
                     <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:12, marginBottom:20 }}>
                       {[
-                        {label:'MRR',value:fmtE(f.mrr),color:'#059669',sub:`${f.activeClients} active clients`},
-                        {label:'Costs this month',value:fmtE(f.totalCostMonth),color:'#D97706',sub:`Fixed €${f.fixedCosts} + AI $${f.aiCostMonth.toFixed(4)}`},
+                        {label:'MRR',value:fmtE(f.mrr),color:'#0F0F10',sub:`${f.activeClients} active clients`},
+                        {label:'Costs this month',value:fmtE(f.totalCostMonth),color:'#0F0F10',sub:`Fixed €${f.fixedCosts} + AI $${f.aiCostMonth.toFixed(4)}`},
                         {label:'Net margin',value:fmtE(f.netMargin),color:f.netMargin>=0?'#059669':'#EF4444',sub:`${f.marginPct}% of MRR`},
-                        {label:'AI costs today',value:fmt(ai.today.cost),color:'#7C3AED',sub:`${ai.today.calls} calls`},
+                        {label:'AI costs today',value:fmt(ai.today.cost),color:'#0F0F10',sub:`${ai.today.calls} calls`},
                       ].map(({label,value,color,sub})=>(
                         <div key={label} className="ap-metric-card">
                           <div style={{ fontSize:24, fontWeight:800, color, letterSpacing:'-0.03em', lineHeight:1, marginBottom:4 }}>{value}</div>

@@ -13,6 +13,52 @@ const PASS_THRESHOLD = 75
 
 function readKey(moduleId, idx) { return `ac_read_${moduleId}_${idx}` }
 
+// ─── Quiz questions per module ────────────────────────────────────────────────
+const QUIZ_QUESTIONS = {
+  'cs-fundamentals': [
+    { q: 'What is the first step when handling a customer complaint?', opts: ['Offer a refund immediately', 'Listen and acknowledge the issue', 'Transfer to manager', 'Close the ticket'], correct: 1 },
+    { q: 'What does CSAT stand for?', opts: ['Customer Satisfaction Score', 'Customer Service Agent Training', 'Case Status And Tracking', 'Client Support Action Team'], correct: 0 },
+    { q: 'What is the ideal first response time for support tickets?', opts: ['24 hours', '12 hours', '4 hours', '1 hour'], correct: 2 },
+    { q: 'Which tool is used for helpdesk management at Lynq?', opts: ['Shopify', 'Klaviyo', 'Gorgias', 'Meta Ads'], correct: 2 },
+    { q: 'What should you always do before closing a ticket?', opts: ['Ask for payment', 'Confirm the issue is resolved', 'Send a survey', 'Escalate to manager'], correct: 1 },
+  ],
+  'refund-handling': [
+    { q: 'What is the typical refund processing time?', opts: ['24 hours', '3–5 business days', '7–10 business days', '30 days'], correct: 1 },
+    { q: 'When should you offer a replacement instead of a refund?', opts: ['Always', 'Never', 'When item is damaged in transit', 'When customer is angry'], correct: 2 },
+    { q: 'What is a chargeback?', opts: ['A discount code', 'A disputed transaction via the bank', 'A shipping fee', 'A product return'], correct: 1 },
+    { q: 'What refund rate is considered healthy for e-commerce?', opts: ['Under 1%', 'Under 3%', 'Under 10%', 'Under 15%'], correct: 1 },
+    { q: 'What should you document for every refund?', opts: ['Customer age', 'Reason, amount, and resolution', 'Delivery address only', 'Payment method only'], correct: 1 },
+  ],
+  'shopify-ops': [
+    { q: "Where can you view a customer's full order history in Shopify?", opts: ['The analytics dashboard', 'The customer timeline view', 'The inventory tab', 'The reports section'], correct: 1 },
+    { q: 'What does "Unfulfilled" status mean in Shopify?', opts: ['Order was cancelled', 'Order was refunded', 'Order has not been shipped yet', 'Order is pending payment'], correct: 2 },
+    { q: 'What is the most common cause of WISMO tickets?', opts: ['Wrong addresses', 'The gap between label creation and first carrier scan', 'International customs', 'Stock shortages'], correct: 1 },
+    { q: 'Where should support actions be recorded in Shopify?', opts: ["Nowhere, it's automatic", 'Internal order notes', "The customer's profile", 'A spreadsheet'], correct: 1 },
+    { q: 'What is the recommended low-stock alert threshold?', opts: ['When stock hits zero', 'When you have 1 item left', 'At 20% of average weekly sales', 'When a customer complains'], correct: 2 },
+  ],
+  'email-comms': [
+    { q: 'What is the ideal length for a first-response email?', opts: ['As long as needed', 'Under 50 words', 'Under 120 words', 'Exactly 200 words'], correct: 2 },
+    { q: 'What is a macro in customer support?', opts: ['A pricing rule', 'A pre-written response template', 'A tracking system', 'A refund policy'], correct: 1 },
+    { q: 'What is a P1 ticket?', opts: ['A standard inquiry', 'A product question', 'A chargeback or legal threat requiring <2h response', 'A positive review'], correct: 2 },
+    { q: 'What phrase should you AVOID in customer emails?', opts: ['Thank you for reaching out', 'I understand your frustration', 'Per our policy', 'How can I help?'], correct: 2 },
+    { q: 'How often should macros be reviewed and updated?', opts: ['Never', 'Daily', 'Quarterly', 'Annually'], correct: 2 },
+  ],
+  'dispute-mgmt': [
+    { q: 'What chargeback rate triggers card processor scrutiny?', opts: ['Above 5%', 'Above 1%', 'Above 10%', 'Above 0.1%'], correct: 1 },
+    { q: 'What is the most common chargeback reason in e-commerce?', opts: ['Duplicate charge', 'Item not received (INR)', 'Wrong amount charged', 'Unauthorized transaction'], correct: 1 },
+    { q: 'When is the best time to resolve a PayPal dispute?', opts: ['At the claim stage', 'At the inquiry stage', 'After PayPal decides', 'Never respond'], correct: 1 },
+    { q: 'Which is NOT valid chargeback evidence?', opts: ['Delivery confirmation', 'Customer communication history', 'Your refund policy screenshot', 'A verbal promise to the customer'], correct: 3 },
+    { q: 'What reduces unauthorized transaction disputes by up to 80%?', opts: ['Free shipping', 'Better product photos', '3D Secure authentication', 'Signature confirmation'], correct: 2 },
+  ],
+  'performance-kpis': [
+    { q: 'What does FCR stand for?', opts: ['First Customer Review', 'Full Charge Rate', 'First Contact Resolution', 'Forwarded Case Report'], correct: 2 },
+    { q: 'What CSAT score requires immediate intervention?', opts: ['Below 4.5', 'Below 4.0', 'Below 3.5', 'Below 3.0'], correct: 2 },
+    { q: 'What is the target FCR rate for e-commerce support?', opts: ['Above 50%', 'Above 60%', 'Above 75%', 'Above 90%'], correct: 2 },
+    { q: 'What often predicts a refund spike 48–72 hours later?', opts: ['A volume decrease', 'A ticket volume spike', 'A weekend surge', 'A Monday drop'], correct: 1 },
+    { q: 'How frequently should KPI reviews be run?', opts: ['Daily', 'Weekly', 'Monthly', 'Quarterly'], correct: 1 },
+  ],
+}
+
 // ─── Module data ──────────────────────────────────────────────────────────────
 const MODULES = [
   {
@@ -175,6 +221,12 @@ const MODULES = [
     ],
   },
 ]
+
+// Attach quiz data + Knowledge Check section to each module
+MODULES.forEach(mod => {
+  mod.quiz = QUIZ_QUESTIONS[mod.id] || []
+  mod.sections.push({ title: 'Knowledge Check', type: 'quiz', mins: 10 })
+})
 
 // ─── CSS ─────────────────────────────────────────────────────────────────────
 const CSS = `
@@ -625,12 +677,29 @@ function ModuleView({ mod, passedTypes, readMap, onSelectLesson, onStartQuiz, on
 
 // ─── Lesson Content View ──────────────────────────────────────────────────────
 
-function LessonView({ mod, lessonIdx, readMap, onMarkRead, onBack, onNext, onPrev, onStartQuiz, passedTypes }) {
+function LessonView({ mod, lessonIdx, readMap, onMarkRead, onBack, onNext, onPrev, onStartQuiz, passedTypes, session }) {
   const sec       = mod.sections[lessonIdx]
   const isRead    = !!readMap[readKey(mod.id, lessonIdx)]
   const isLast    = lessonIdx === mod.sections.length - 1
   const allRead   = mod.sections.every((_, i) => readMap[readKey(mod.id, i)])
   const isDone    = passedTypes.includes(mod.examType)
+
+  // Quiz section — render inline quiz instead of text content
+  if (sec.type === 'quiz') {
+    return (
+      <div style={{ maxWidth: 800, margin: '0 auto', padding: '32px 24px' }}>
+        <div style={{ marginBottom: 24 }}>
+          <div style={{ fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: mod.color, marginBottom: 4 }}>Knowledge Check</div>
+          <h2 style={{ fontSize: 24, fontWeight: 700, color: '#0F0F10', letterSpacing: '-0.02em', marginBottom: 8 }}>Test Your Knowledge</h2>
+          <p style={{ fontSize: 14, color: '#6B7280' }}>Answer all questions and score 70% or higher to complete this module.</p>
+        </div>
+        <InlineQuizView mod={mod} session={session} onPass={() => onMarkRead(lessonIdx)} />
+        <div style={{ marginTop: 24 }}>
+          <button className="ac-btn-secondary" onClick={onBack}>← Back to module</button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div style={{ maxWidth: 800, margin: '0 auto', padding: '32px 24px' }}>
@@ -711,6 +780,135 @@ function LessonView({ mod, lessonIdx, readMap, onMarkRead, onBack, onNext, onPre
           {isLast && isDone && <button className="ac-btn-secondary" onClick={onBack}>Back to module</button>}
         </div>
       </motion.div>
+    </div>
+  )
+}
+
+// ─── Inline Quiz View (per-module Knowledge Check) ────────────────────────────
+
+function InlineQuizView({ mod, session, onPass }) {
+  const [current,   setCurrent]   = useState(0)
+  const [answers,   setAnswers]   = useState({})
+  const [submitted, setSubmitted] = useState(false)
+  const [score,     setScore]     = useState(0)
+  const [saving,    setSaving]    = useState(false)
+  const questions = mod.quiz || []
+
+  async function submit() {
+    let correct = 0
+    questions.forEach((q, i) => { if (answers[i] === q.correct) correct++ })
+    const pct = Math.round((correct / questions.length) * 100)
+    setScore(pct)
+    setSubmitted(true)
+    if (pct >= 70) {
+      setSaving(true)
+      try {
+        if (session?.user?.id) {
+          await supabase.from('exam_submissions').upsert({
+            user_id: session.user.id,
+            module_id: mod.id,
+            score: pct,
+            passed: true,
+            completed_at: new Date().toISOString(),
+          }, { onConflict: 'user_id,module_id' })
+        }
+      } catch (_) {}
+      setSaving(false)
+      onPass()
+    }
+  }
+
+  if (questions.length === 0) return (
+    <div style={{ padding:'32px', textAlign:'center', color:'#9CA3AF' }}>No quiz questions available for this module yet.</div>
+  )
+
+  if (submitted) {
+    const passed = score >= 70
+    const ringR = 54, rStroke = 6, rCirc = 2*Math.PI*ringR
+    return (
+      <motion.div initial={{ opacity:0, y:12 }} animate={{ opacity:1, y:0 }} transition={{ duration:0.4, ease:EASE }}
+        style={{ maxWidth:600, margin:'0 auto', textAlign:'center', padding:'20px 0' }}>
+        <div style={{ position:'relative', display:'inline-flex', alignItems:'center', justifyContent:'center', marginBottom:20 }}>
+          <svg width="120" height="120" viewBox="0 0 120 120" style={{ transform:'rotate(-90deg)' }}>
+            <circle cx="60" cy="60" r={ringR} fill="none" stroke="rgba(0,0,0,0.07)" strokeWidth={rStroke}/>
+            <motion.circle cx="60" cy="60" r={ringR} fill="none" stroke={passed ? '#10B981' : '#EF4444'}
+              strokeWidth={rStroke} strokeLinecap="round" strokeDasharray={rCirc}
+              initial={{ strokeDashoffset: rCirc }}
+              animate={{ strokeDashoffset: rCirc - (score/100)*rCirc }}
+              transition={{ duration:1.2, ease:'easeOut', delay:0.2 }}/>
+          </svg>
+          <div style={{ position:'absolute', textAlign:'center' }}>
+            <div style={{ fontSize:28, fontWeight:800, color:'#0F0F10' }}>{score}%</div>
+            <div style={{ fontSize:11, color:'#9CA3AF' }}>score</div>
+          </div>
+        </div>
+        <h3 style={{ fontSize:20, fontWeight:700, color:'#0F0F10', marginBottom:6 }}>{passed ? 'Knowledge Check Passed!' : 'Not quite yet'}</h3>
+        <p style={{ fontSize:14, color:'#6B7280', marginBottom:24, lineHeight:1.6 }}>
+          {passed ? `You scored ${score}% — module complete.` : `You scored ${score}%. You need 70% to pass. Review the lessons and try again.`}
+        </p>
+        {!passed && (
+          <button className="ac-btn-primary" onClick={() => { setSubmitted(false); setAnswers({}); setCurrent(0) }}>
+            Try Again
+          </button>
+        )}
+        {saving && <p style={{ fontSize:12, color:'#9CA3AF', marginTop:12 }}>Saving result…</p>}
+      </motion.div>
+    )
+  }
+
+  const q = questions[current]
+  const total = questions.length
+  const allAnswered = Object.keys(answers).length === total
+
+  return (
+    <div style={{ maxWidth:640, margin:'0 auto' }}>
+      {/* Progress */}
+      <div style={{ marginBottom:24 }}>
+        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:8 }}>
+          <span style={{ fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.1em', color:'#9CA3AF' }}>Question {current+1} of {total}</span>
+          <span style={{ fontSize:11, color:'#9CA3AF' }}>{Object.keys(answers).length}/{total} answered</span>
+        </div>
+        <div style={{ height:3, borderRadius:10, background:'rgba(0,0,0,0.08)', overflow:'hidden' }}>
+          <motion.div style={{ height:'100%', borderRadius:10, background:'linear-gradient(90deg,#8B5CF6,#6366F1)' }}
+            animate={{ width:`${((current+1)/total)*100}%` }} transition={{ duration:0.3 }}/>
+        </div>
+      </div>
+
+      {/* Question */}
+      <AnimatePresence mode="wait">
+        <motion.div key={current} initial={{ opacity:0, x:20 }} animate={{ opacity:1, x:0 }} exit={{ opacity:0, x:-20 }} transition={{ duration:0.2, ease:EASE }}>
+          <div style={{ background:'#FFFFFF', border:'1px solid rgba(0,0,0,0.07)', borderRadius:12, padding:'28px 32px', marginBottom:16 }}>
+            <h3 style={{ fontSize:18, fontWeight:600, color:'#0F0F10', lineHeight:1.45, marginBottom:0 }}>{q.q}</h3>
+          </div>
+          <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+            {q.opts.map((opt, idx) => {
+              const sel = answers[current] === idx
+              return (
+                <motion.div key={idx} initial={{ opacity:0, x:-8 }} animate={{ opacity:1, x:0 }} transition={{ delay:idx*0.06, duration:0.25, ease:EASE }}
+                  onClick={() => !submitted && setAnswers(prev => ({ ...prev, [current]: idx }))}
+                  className={`ac-option ${sel ? 'selected' : ''}`}
+                >
+                  <div className="ac-radio">
+                    {sel && <div style={{ width:8, height:8, borderRadius:'50%', background:'#FFFFFF' }}/>}
+                  </div>
+                  <span style={{ fontSize:15, color:'#0F0F10', flex:1 }}>{opt}</span>
+                </motion.div>
+              )
+            })}
+          </div>
+        </motion.div>
+      </AnimatePresence>
+
+      {/* Navigation */}
+      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginTop:20 }}>
+        <button className="ac-btn-secondary" onClick={() => setCurrent(c => Math.max(0,c-1))} disabled={current===0} style={{ opacity:current===0?0.35:1 }}>← Previous</button>
+        {current < total-1
+          ? <button className="ac-btn-primary" onClick={() => setCurrent(c => c+1)}>Next →</button>
+          : <button className="ac-btn-primary" onClick={submit} disabled={!allAnswered || saving} style={{ opacity:allAnswered?1:0.5 }}>
+              {saving ? 'Saving…' : 'Submit Quiz'}
+            </button>
+        }
+      </div>
     </div>
   )
 }
@@ -1043,6 +1241,11 @@ export default function AcademyPage() {
     const k = readKey(moduleId, lessonIdx)
     localStorage.setItem(k, '1')
     setReadMap(prev => ({ ...prev, [k]: true }))
+    // If this was the Knowledge Check (last section = quiz), add module's examType to passedTypes
+    const mod = MODULES.find(m => m.id === moduleId)
+    if (mod && lessonIdx === mod.sections.length - 1 && mod.sections[lessonIdx]?.type === 'quiz') {
+      setPassedTypes(prev => prev.includes(mod.examType) ? prev : [...prev, mod.examType])
+    }
   }
 
   function handleSelectModule(mod) {
@@ -1181,6 +1384,7 @@ export default function AcademyPage() {
                 <LessonView
                   mod={selectedModule} lessonIdx={selectedLesson} readMap={readMap}
                   passedTypes={passedTypes}
+                  session={session}
                   onMarkRead={idx => markRead(selectedModule.id, idx)}
                   onBack={() => setView('module')}
                   onNext={() => { const next = selectedLesson + 1; if (next < selectedModule.sections.length) { setSelLesson(next) } else setView('module') }}

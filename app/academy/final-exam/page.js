@@ -366,32 +366,41 @@ export default function FinalExamPage() {
             <p style={{ fontSize:15, color:'#6B7280', lineHeight:1.65, maxWidth:460, margin:'0 auto' }}>Complete all 50 questions to earn your certificate.</p>
           </div>
 
-          <div style={{ display:'flex', gap:10, justifyContent:'center', marginBottom:36, flexWrap:'wrap' }}>
-            {[['50 Questions','<polyline points="20 6 9 17 4 12"/>'],['5 Sections','<line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/>'],['~45 minutes','<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>'],['80% to pass','<circle cx="12" cy="12" r="10"/>']].map(([text], i) => (
-              <div key={i} style={{ background:'#FFFFFF', border:'1px solid rgba(0,0,0,0.08)', borderRadius:20, padding:'8px 18px', display:'flex', alignItems:'center', gap:7 }}>
-                <span style={{ fontSize:13, fontWeight:500, color:'#555' }}>{text}</span>
+          <div style={{ display:'flex', gap:8, justifyContent:'center', marginBottom:36, flexWrap:'wrap' }}>
+            {[['50 Questions', false],['5 Sections', false],['~45 minutes', false],['80% to pass', true]].map(([text, isGreen], i) => (
+              <div key={i} style={{ background: isGreen ? 'rgba(16,185,129,0.07)' : '#F5F5F5', border: isGreen ? '1px solid rgba(16,185,129,0.18)' : '1px solid rgba(0,0,0,0.08)', borderRadius:20, padding:'7px 16px', display:'flex', alignItems:'center', gap:6 }}>
+                <span style={{ fontSize:13, fontWeight:500, color: isGreen ? '#10B981' : '#555555' }}>{text}</span>
               </div>
             ))}
           </div>
 
-          <div style={{ display:'flex', flexDirection:'column', gap:10, marginBottom:36 }}>
-            {SECTION_META.map(({ label, color }, i) => (
-              <div key={i} style={{ background:'#FFFFFF', border:'1px solid rgba(0,0,0,0.07)', borderRadius:12, padding:'16px 20px', display:'flex', alignItems:'center', gap:16 }}>
-                <div style={{ width:40, height:40, borderRadius:10, background:`${color}18`, border:`1px solid ${color}35`, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
-                  <span style={{ fontSize:13, fontWeight:800, color }}>{String(i+1).padStart(2,'0')}</span>
+          <div style={{ display:'flex', flexDirection:'column', gap:8, marginBottom:36 }}>
+            {SECTION_META.map(({ label }, i) => (
+              <div key={i}
+                style={{ background:'#FFFFFF', border:'1px solid rgba(0,0,0,0.07)', borderRadius:10, padding:'14px 18px', display:'flex', alignItems:'center', gap:14, cursor:'default', transition:'background 0.15s' }}
+                onMouseEnter={e=>e.currentTarget.style.background='#F9F8FF'}
+                onMouseLeave={e=>e.currentTarget.style.background='#FFFFFF'}>
+                <div style={{ width:28, height:28, borderRadius:8, background:'#F5F5F5', border:'1px solid rgba(0,0,0,0.08)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                  <span style={{ fontSize:12, fontWeight:700, color:'#555555' }}>{String(i+1).padStart(2,'0')}</span>
                 </div>
                 <div>
-                  <div style={{ fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em', color, marginBottom:3 }}>Section {i+1}</div>
-                  <div style={{ fontSize:15, fontWeight:600, color:'#0F0F10' }}>{label}</div>
-                  <div style={{ fontSize:12, color:'#6B7280', marginTop:2 }}>10 questions</div>
+                  <div style={{ fontSize:10, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em', color:'#9CA3AF', marginBottom:3 }}>Section {i+1}</div>
+                  <div style={{ fontSize:14, fontWeight:600, color:'#0F0F10' }}>{label}</div>
                 </div>
+                <div style={{ marginLeft:'auto', fontSize:11, color:'#C4C4C4' }}>10 questions</div>
               </div>
             ))}
           </div>
 
           <div style={{ display:'flex', gap:12, justifyContent:'center' }}>
             <button className="fe-btn-secondary" onClick={() => window.location.href = '/academy'}>← Back to Academy</button>
-            <button className="fe-btn-primary" onClick={() => { setCurrentQ(0); setAnswers({}); setView('exam') }}>Start Exam →</button>
+            <button
+              onClick={() => { setCurrentQ(0); setAnswers({}); setView('exam') }}
+              style={{ background:'#111111', color:'#FFFFFF', border:'none', borderRadius:8, padding:'11px 28px', fontSize:13, fontWeight:600, cursor:'pointer', fontFamily:'inherit', transition:'opacity 0.15s' }}
+              onMouseEnter={e=>e.currentTarget.style.opacity='0.85'}
+              onMouseLeave={e=>e.currentTarget.style.opacity='1'}>
+              Start Exam →
+            </button>
           </div>
         </motion.div>
       </div>

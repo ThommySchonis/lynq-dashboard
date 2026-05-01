@@ -7,10 +7,11 @@ import Sidebar from '../components/Sidebar'
 // ── Styles ────────────────────────────────────────────────────────────────────
 
 const CSS = `
-  @keyframes fadeUp  { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
-  @keyframes fadeIn  { from{opacity:0} to{opacity:1} }
-  @keyframes slideUp { from{opacity:0;transform:translateY(22px)} to{opacity:1;transform:translateY(0)} }
-  @keyframes checkPop{ 0%{transform:scale(0)} 65%{transform:scale(1.18)} 100%{transform:scale(1)} }
+  @keyframes fadeUp    { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
+  @keyframes fadeInUp  { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+  @keyframes fadeIn    { from{opacity:0} to{opacity:1} }
+  @keyframes slideUp   { from{opacity:0;transform:translateY(22px)} to{opacity:1;transform:translateY(0)} }
+  @keyframes checkPop  { 0%{transform:scale(0)} 65%{transform:scale(1.18)} 100%{transform:scale(1)} }
 
   @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
 
@@ -31,7 +32,7 @@ const CSS = `
   }
   .svc-card:hover {
     transform:translateY(-2px);
-    box-shadow:0 8px 24px rgba(0,0,0,0.08);
+    box-shadow:0 8px 32px rgba(0,0,0,0.10);
     border-color:rgba(0,0,0,0.12);
   }
 
@@ -136,7 +137,7 @@ const SERVICES = [
     title: 'Customer Service Agent',
     badge: { label: 'Most Popular', color: '#FFFFFF', bg: '#0F0F10' },
     topGradient: 'linear-gradient(90deg, #6366F1, #8B5CF6)',
-    iconBg: 'rgba(99,102,241,0.1)',
+    iconBg: 'rgba(99,102,241,0.07)',
     iconColor: '#6366F1',
     icon: Icons.headset,
     description: 'A trained specialist who handles all incoming customer inquiries — tracking, refunds, returns, and general support. Fully onboarded to your brand voice and policies.',
@@ -146,7 +147,7 @@ const SERVICES = [
     id: 'dispute_manager',
     title: 'Dispute Manager',
     topGradient: 'linear-gradient(90deg, #EF4444, #F87171)',
-    iconBg: 'rgba(239,68,68,0.1)',
+    iconBg: 'rgba(239,68,68,0.07)',
     iconColor: '#EF4444',
     icon: Icons.shield,
     description: 'An expert in handling chargebacks, payment disputes, and escalated cases. Protects your revenue and keeps your chargeback rate under control.',
@@ -156,7 +157,7 @@ const SERVICES = [
     id: 'supply_chain_manager',
     title: 'Supply Chain Manager',
     topGradient: 'linear-gradient(90deg, #10B981, #34D399)',
-    iconBg: 'rgba(16,185,129,0.1)',
+    iconBg: 'rgba(16,185,129,0.07)',
     iconColor: '#10B981',
     icon: Icons.package,
     description: 'Oversees supplier relationships, order fulfillment, stock management, and shipping performance. Keeps your operations running without bottlenecks.',
@@ -166,7 +167,7 @@ const SERVICES = [
     id: 'senior_backend_manager',
     title: 'Senior Backend Manager',
     topGradient: 'linear-gradient(90deg, #F59E0B, #FCD34D)',
-    iconBg: 'rgba(245,158,11,0.1)',
+    iconBg: 'rgba(245,158,11,0.07)',
     iconColor: '#F59E0B',
     icon: Icons.barchart2,
     description: 'Manages your entire CS operation end-to-end. Sets up systems, leads the team, handles escalations, and reports directly to you.',
@@ -179,7 +180,7 @@ const TRAIN_SERVICE = {
   title: 'Train Your Existing Team',
   badge: { label: 'New', color: '#2563EB', bg: '#EFF6FF', border: 'rgba(59,130,246,0.2)' },
   topGradient: 'linear-gradient(90deg, #3B82F6, #60A5FA)',
-  iconBg: 'rgba(59,130,246,0.1)',
+  iconBg: 'rgba(59,130,246,0.07)',
   iconColor: '#3B82F6',
   icon: Icons.graduation,
   description: "Upskill your in-house team with Lynq & Flow's proven e-commerce CS frameworks. We deliver structured training sessions, battle-tested playbooks, and ongoing coaching to bring your team to agency-level performance.",
@@ -217,7 +218,7 @@ function ShieldSmIcon({ color }) {
 
 function GuaranteeBlock({ iconColor = '#10B981' }) {
   return (
-    <div style={{ background: '#F9F9FB', border: '1px solid rgba(0,0,0,0.06)', borderRadius: 8, padding: '14px 16px', margin: '16px 0' }}>
+    <div style={{ background: '#F9F8FF', border: '1px solid rgba(0,0,0,0.06)', borderRadius: 8, padding: '14px 16px', margin: '16px 0' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
         <ShieldSmIcon color={iconColor} />
         <span style={{ fontSize: 9, fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '.1em' }}>Our Guarantee</span>
@@ -234,7 +235,7 @@ function GuaranteeBlock({ iconColor = '#10B981' }) {
 
 function ServiceCard({ svc, i, onRequest }) {
   return (
-    <div className="svc-card" style={{ animation: `fadeUp .45s ease ${i * 75}ms both` }}>
+    <div className="svc-card" style={{ animation: `fadeInUp 0.5s ease ${i * 0.07}s forwards`, opacity: 0 }}>
       {/* Colored top border */}
       <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: svc.topGradient }} />
 
@@ -419,11 +420,11 @@ export default function ServicesPage() {
   }
 
   return (
-    <div className="sv-root" style={{ display: 'flex', minHeight: '100vh', background: '#F9F9FB', color: 'var(--text-1)' }}>
+    <div className="sv-root" style={{ display: 'flex', minHeight: '100vh', background: '#F9F8FF', color: 'var(--text-1)' }}>
       <style>{CSS}</style>
       <Sidebar />
 
-      <main className="sv-scroll" style={{ flex: 1, overflowY: 'auto', padding: 24, background: '#F9F9FB', position: 'relative', scrollbarWidth: 'thin' }}>
+      <main className="sv-scroll" style={{ flex: 1, overflowY: 'auto', padding: 24, background: '#F9F8FF', position: 'relative', scrollbarWidth: 'thin' }}>
         <div style={{ maxWidth: 840, margin: '0 auto' }}>
 
           {/* ── Header ── */}
@@ -431,7 +432,7 @@ export default function ServicesPage() {
             <div style={{ fontSize: 10, fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '.1em', marginBottom: 10 }}>
               Services
             </div>
-            <h1 style={{ fontSize: 28, fontWeight: 800, color: '#0F0F10', letterSpacing: '-0.025em', marginBottom: 8 }}>Grow Your Team</h1>
+            <h1 className="animate-fade-in" style={{ fontSize: 20, fontWeight: 700, color: '#0F0F10', letterSpacing: '-0.02em', marginBottom: 8 }}>Grow Your Team</h1>
             <p style={{ fontSize: 14, color: '#6B7280', maxWidth: 480, lineHeight: 1.6 }}>
               World-class e-commerce specialists, trained to your brand standards and ready to perform from day one.
             </p>

@@ -34,6 +34,11 @@ const DEMO_PERF = {
 const CSS = `
   @keyframes shimmer{from{background-position:-400% 0}to{background-position:400% 0}}
   @keyframes spin{to{transform:rotate(360deg)}}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes fadeIn1{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes fadeIn2{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes fadeIn3{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes fadeIn4{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 
   @media(prefers-reduced-motion:reduce){
     *,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}
@@ -60,6 +65,24 @@ const CSS = `
   }
   .kpi-card:hover{border-color:rgba(0,0,0,0.12)}
 
+  .metric-card{
+    background:#FFFFFF;
+    border:1px solid rgba(0,0,0,0.07);
+    border-radius:10px;
+    padding:18px 20px;
+    position:relative;overflow:hidden;
+    transition:border-color 0.15s ease, box-shadow 0.15s ease;
+    cursor:default;
+  }
+  .metric-card:hover{border-color:rgba(0,0,0,0.12)}
+  .metric-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--metric-gradient,linear-gradient(90deg,#6366F1,#8B5CF6))}
+
+  .animate-fade-in{animation:fadeIn 0.5s cubic-bezier(0.16,1,0.3,1) both}
+  .animate-fade-in-1{animation:fadeIn1 0.4s cubic-bezier(0.16,1,0.3,1) 0.00s both}
+  .animate-fade-in-2{animation:fadeIn2 0.4s cubic-bezier(0.16,1,0.3,1) 0.08s both}
+  .animate-fade-in-3{animation:fadeIn3 0.4s cubic-bezier(0.16,1,0.3,1) 0.16s both}
+  .animate-fade-in-4{animation:fadeIn4 0.4s cubic-bezier(0.16,1,0.3,1) 0.24s both}
+
   .panel{
     background:#FFFFFF;
     border:1px solid rgba(0,0,0,0.07);
@@ -69,14 +92,16 @@ const CSS = `
   }
 
   .section-divider{
-    display:flex;align-items:center;
+    display:flex;align-items:center;gap:12px;
     padding:20px 0 12px;
   }
   .section-divider::before,.section-divider::after{
-    content:'';flex:1;height:1px;background:rgba(0,0,0,0.07);
+    content:'';flex:1;height:1px;background:rgba(0,0,0,0.06);
   }
-  .section-divider::before{margin-right:12px}
-  .section-divider::after{margin-left:12px}
+
+  .filter-pill-bar{
+    display:inline-flex;gap:2px;background:#FFFFFF;border:1px solid rgba(0,0,0,0.08);border-radius:8px;padding:3px;
+  }
 
   .filter-pill{
     padding:4px 12px;border-radius:6px;
@@ -84,14 +109,32 @@ const CSS = `
     cursor:pointer;font-family:'Switzer',sans-serif;
     border:none;outline:none;
     transition:all .15s ease;
-    background:transparent;
+    background:transparent;color:#6B7280;
   }
+  .filter-pill.active{background:#111111;color:#FFFFFF}
 
   .sk{background:linear-gradient(90deg,#F3F4F6 25%,#E9EAEC 50%,#F3F4F6 75%);background-size:400% 100%;animation:shimmer 1.8s ease-in-out infinite;border-radius:8px}
 
   .ch-row{transition:background .15s;border-radius:6px;padding:8px 4px}
-  .ch-row:hover{background:#F9F9FB}
+  .ch-row:hover{background:#F9F8FF}
 `
+
+// ─── useCountUp ───────────────────────────────────────────────────────────────
+function useCountUp(end, duration = 1200) {
+  const [count, setCount] = useState(0)
+  useEffect(() => {
+    if (!end || end === 0) { setCount(0); return }
+    let start = 0
+    const step = end / (duration / 16)
+    const timer = setInterval(() => {
+      start += step
+      if (start >= end) { setCount(end); clearInterval(timer) }
+      else setCount(Math.floor(start))
+    }, 16)
+    return () => clearInterval(timer)
+  }, [end])
+  return count
+}
 
 // ─── AnimatedNumber ───────────────────────────────────────────────────────────
 function AnimatedNumber({ value, suffix = '', decimals = 0 }) {
@@ -202,11 +245,17 @@ function WorkloadKPIs({ data, loaded }) {
     },
   ]
 
+  const WORKLOAD_GRADIENTS = [
+    'linear-gradient(90deg, #6366F1, #8B5CF6)',
+    'linear-gradient(90deg, #10B981, #34D399)',
+    'linear-gradient(90deg, #F59E0B, #FCD34D)',
+    'linear-gradient(90deg, #3B82F6, #60A5FA)',
+  ]
+
   if (!loaded) return (
     <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:12, marginBottom:12 }}>
       {[0,1,2,3].map(i=>(
-        <div key={i} className="kpi-card" style={{ position:'relative', overflow:'hidden' }}>
-          <div style={{position:'absolute',top:0,left:0,right:0,height:2,background:'#F3F4F6'}}/>
+        <div key={i} className={`metric-card animate-fade-in-${i+1}`} style={{ '--metric-gradient': WORKLOAD_GRADIENTS[i] }}>
           <div className="sk" style={{ height:11, width:'55%', marginBottom:14, marginTop:4 }}/>
           <div className="sk" style={{ height:28, width:'65%', marginBottom:8 }}/>
           <div className="sk" style={{ height:9, width:'80%' }}/>
@@ -220,14 +269,13 @@ function WorkloadKPIs({ data, loaded }) {
       {cards.map((c, index) => (
         <motion.div
           key={c.label}
-          className="kpi-card"
-          style={{ position:'relative', overflow:'hidden' }}
+          className={`metric-card animate-fade-in-${index+1}`}
+          style={{ '--metric-gradient': c.topGradient }}
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: index * 0.08, ease: [0.16, 1, 0.3, 1] }}
           whileHover={{ y: -1, boxShadow: '0 4px 12px rgba(0,0,0,0.06)', transition: { duration: 0.15, ease: 'easeOut' } }}
         >
-          <div style={{ position:'absolute', top:0, left:0, right:0, height:2, background:c.topGradient }}/>
           <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:14, marginTop:4 }}>
             <div style={{ width:30, height:30, borderRadius:8, background:c.iconBg, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>{c.icon(c.iconColor)}</div>
             {c.badge&&<span style={{ fontSize:11, fontWeight:600, color:'#059669', background:'rgba(16,185,129,0.08)', border:'1px solid rgba(16,185,129,0.15)', borderRadius:5, padding:'2px 7px', fontVariantNumeric:'tabular-nums' }}>{c.badge.value}</span>}
@@ -282,7 +330,7 @@ function WeeklyChart({ weekly, loaded }) {
               <g key={i} onMouseEnter={()=>setHovIdx(i)} onMouseLeave={()=>setHovIdx(null)} style={{ cursor:'default' }}>
                 <rect x={x-4} y={PAD_TOP} width={barW*2+barGap+8} height={BAR_H} fill="transparent"/>
                 <rect x={x} y={barY(w.created)} width={barW} height={Math.max(barH(w.created),2)} rx={3} fill={isHov?'#4F46E5':'#6366F1'} style={{ transition:'fill .15s' }}/>
-                <rect x={x+barW+barGap} y={barY(w.closed)} width={barW} height={Math.max(barH(w.closed),2)} rx={3} fill={isHov?'rgba(99,102,241,0.35)':'rgba(99,102,241,0.2)'} style={{ transition:'fill .15s' }}/>
+                <rect x={x+barW+barGap} y={barY(w.closed)} width={barW} height={Math.max(barH(w.closed),2)} rx={3} fill={isHov?'rgba(99,102,241,0.40)':'rgba(99,102,241,0.25)'} style={{ transition:'fill .15s' }}/>
                 {isHov&&(
                   <g>
                     <rect x={x-6} y={PAD_TOP-40} width={66} height={34} rx={6} fill="rgba(17,17,17,0.92)" stroke="rgba(255,255,255,0.1)" strokeWidth={1}/>
@@ -311,9 +359,11 @@ function getRTLabel(mins, thresholds) {
 function ResponseTimesSection({ data, loaded }) {
   if (!loaded) return (
     <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12, marginBottom:12 }}>
-      {[0,1].map(i=>(
-        <div key={i} className="kpi-card" style={{ padding:20, position:'relative', overflow:'hidden' }}>
-          <div style={{position:'absolute',top:0,left:0,right:0,height:3,background:'#F3F4F6'}}/>
+      {[
+        { grad:'linear-gradient(90deg, #F59E0B, #FCD34D)' },
+        { grad:'linear-gradient(90deg, #EF4444, #F87171)' },
+      ].map((item,i)=>(
+        <div key={i} className="metric-card" style={{ padding:20, '--metric-gradient': item.grad }}>
           <div className="sk" style={{ height:11, width:'45%', marginBottom:20, marginTop:4 }}/>
           <div className="sk" style={{ height:36, width:'48%', marginBottom:10 }}/>
           <div className="sk" style={{ height:1, marginBottom:14 }}/>
@@ -347,14 +397,13 @@ function ResponseTimesSection({ data, loaded }) {
       {cards.map((c, index) => (
         <motion.div
           key={c.label}
-          className="kpi-card"
-          style={{ padding:20, position:'relative', overflow:'hidden' }}
+          className="metric-card"
+          style={{ padding:20, '--metric-gradient': c.topGradient }}
           initial={{ opacity: 0, x: -8 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.4, delay: 0.2 + index * 0.06, ease: [0.16, 1, 0.3, 1] }}
           whileHover={{ y: -1, boxShadow: '0 4px 12px rgba(0,0,0,0.06)', transition: { duration: 0.15, ease: 'easeOut' } }}
         >
-          <div style={{ position:'absolute', top:0, left:0, right:0, height:3, background:c.topGradient }}/>
           <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:14, marginTop:4 }}>
             <div style={{ width:30, height:30, borderRadius:8, background:c.iconBg, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>{c.icon(c.iconColor)}</div>
             {c.rtLabel&&<span style={{ fontSize:10, fontWeight:700, color:c.rtLabel.color, background:c.rtLabel.bg, border:`1px solid ${c.rtLabel.border}`, borderRadius:5, padding:'2px 8px' }}>{c.rtLabel.label}</span>}
@@ -407,11 +456,17 @@ function ProductivityKPIs({ data, loaded }) {
     },
   ]
 
+  const PROD_GRADIENTS = [
+    'linear-gradient(90deg, #8B5CF6, #A78BFA)',
+    'linear-gradient(90deg, #3B82F6, #60A5FA)',
+    'linear-gradient(90deg, #10B981, #34D399)',
+    'linear-gradient(90deg, #F59E0B, #FCD34D)',
+  ]
+
   if (!loaded) return (
     <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:12, marginBottom:12 }}>
       {[0,1,2,3].map(i=>(
-        <div key={i} className="kpi-card" style={{ position:'relative', overflow:'hidden' }}>
-          <div style={{position:'absolute',top:0,left:0,right:0,height:3,background:'#F3F4F6'}}/>
+        <div key={i} className={`metric-card animate-fade-in-${i+1}`} style={{ '--metric-gradient': PROD_GRADIENTS[i] }}>
           <div className="sk" style={{ height:11, width:'55%', marginBottom:14, marginTop:4 }}/>
           <div className="sk" style={{ height:28, width:'65%', marginBottom:8 }}/>
           <div className="sk" style={{ height:9, width:'80%' }}/>
@@ -425,14 +480,13 @@ function ProductivityKPIs({ data, loaded }) {
       {cards.map((c, index) => (
         <motion.div
           key={c.label}
-          className="kpi-card"
-          style={{ position:'relative', overflow:'hidden' }}
+          className={`metric-card animate-fade-in-${index+1}`}
+          style={{ '--metric-gradient': c.topGradient }}
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.3 + index * 0.08, ease: [0.16, 1, 0.3, 1] }}
           whileHover={{ y: -1, boxShadow: '0 4px 12px rgba(0,0,0,0.06)', transition: { duration: 0.15, ease: 'easeOut' } }}
         >
-          <div style={{ position:'absolute', top:0, left:0, right:0, height:3, background:c.topGradient }}/>
           <div style={{ marginBottom:14, marginTop:4 }}>
             <div style={{ width:30, height:30, borderRadius:8, background:c.iconBg, display:'flex', alignItems:'center', justifyContent:'center' }}>{c.icon(c.iconColor)}</div>
           </div>
@@ -574,7 +628,7 @@ export default function PerformancePage() {
   if (!mounted) return null
 
   return (
-    <div className="pf-root" style={{ display:'flex', minHeight:'100vh', background:'#F9F9FB' }}>
+    <div className="pf-root" style={{ display:'flex', minHeight:'100vh', background:'#F9F8FF' }}>
       <style>{CSS}</style>
       <Sidebar/>
 
@@ -590,7 +644,7 @@ export default function PerformancePage() {
           <div style={{ marginBottom:24 }}>
             <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
               <div>
-                <h1 style={{ fontSize:20, fontWeight:700, color:'#0F0F10', lineHeight:1.2, marginBottom:4, letterSpacing:'-0.02em' }}>Performance</h1>
+                <h1 className="animate-fade-in" style={{ fontSize:20, fontWeight:700, color:'#0F0F10', lineHeight:1.2, marginBottom:4, letterSpacing:'-0.02em' }}>Performance</h1>
                 <p style={{ fontSize:13, color:'#6B7280' }}>Customer support metrics · Gorgias</p>
               </div>
               <div style={{ display:'flex', alignItems:'center', gap:8 }}>
@@ -609,9 +663,9 @@ export default function PerformancePage() {
             </div>
             <div style={{ height:'1px', background:'rgba(0,0,0,0.06)', margin:'16px 0 12px' }}/>
             <div style={{ display:'flex', alignItems:'center', gap:12, flexWrap:'wrap' }}>
-              <div style={{ display:'inline-flex', gap:2, background:'#FFFFFF', border:'1px solid rgba(0,0,0,0.08)', borderRadius:8, padding:3 }}>
+              <div className="filter-pill-bar">
                 {RANGES.map(r=>(
-                  <button key={r.id} onClick={()=>selectRange(r.id)} className="filter-pill" style={{ background:dateRange===r.id?'#111111':'transparent', color:dateRange===r.id?'#FFFFFF':'#6B7280' }}>{r.label}</button>
+                  <button key={r.id} onClick={()=>selectRange(r.id)} className={`filter-pill${dateRange===r.id?' active':''}`}>{r.label}</button>
                 ))}
               </div>
               {dateRange==='custom'&&(

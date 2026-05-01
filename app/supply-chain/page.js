@@ -1,19 +1,19 @@
 'use client'
 
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import React, { useState, useEffect, useCallback, useMemo } from 'react'
 import { supabase } from '../../lib/supabase'
 import Sidebar from '../components/Sidebar'
 
 // ── Status config ─────────────────────────────────────────────────────────────
 const STATUS = {
-  PENDING:          { label: 'Pending',          color: '#888888', bg: 'rgba(0,0,0,0.04)',      border: 'rgba(0,0,0,0.08)'      },
-  INFO_RECEIVED:    { label: 'Info Received',     color: '#555555', bg: 'rgba(0,0,0,0.04)',      border: 'rgba(0,0,0,0.08)'      },
-  IN_TRANSIT:       { label: 'In Transit',        color: '#2563EB', bg: 'rgba(37,99,235,0.07)',  border: 'rgba(37,99,235,0.15)'  },
-  OUT_FOR_DELIVERY: { label: 'Out for Delivery',  color: '#D97706', bg: 'rgba(217,119,6,0.07)',  border: 'rgba(217,119,6,0.15)'  },
-  DELIVERED:        { label: 'Delivered',         color: '#16A34A', bg: 'rgba(22,163,74,0.07)',  border: 'rgba(22,163,74,0.15)'  },
-  EXCEPTION:        { label: 'Exception',         color: '#DC2626', bg: 'rgba(220,38,38,0.07)',  border: 'rgba(220,38,38,0.15)'  },
-  FAILED_ATTEMPT:   { label: 'Failed Attempt',    color: '#D97706', bg: 'rgba(217,119,6,0.07)',  border: 'rgba(217,119,6,0.15)'  },
-  EXPIRED:          { label: 'Expired',           color: '#888888', bg: 'rgba(0,0,0,0.04)',      border: 'rgba(0,0,0,0.08)'      },
+  PENDING:          { label: 'Pending',          color: '#6B7280', bg: '#F5F5F5',                  border: '#F5F5F5'                       },
+  INFO_RECEIVED:    { label: 'Info Received',     color: '#6B7280', bg: '#F5F5F5',                  border: '#F5F5F5'                       },
+  IN_TRANSIT:       { label: 'In Transit',        color: '#2563EB', bg: 'rgba(59,130,246,0.08)',    border: 'rgba(59,130,246,0.15)'         },
+  OUT_FOR_DELIVERY: { label: 'Out for Delivery',  color: '#D97706', bg: 'rgba(245,158,11,0.08)',    border: 'rgba(245,158,11,0.15)'         },
+  DELIVERED:        { label: 'Delivered',         color: '#059669', bg: 'rgba(16,185,129,0.08)',    border: 'rgba(16,185,129,0.15)'         },
+  EXCEPTION:        { label: 'Exception',         color: '#DC2626', bg: 'rgba(239,68,68,0.08)',     border: 'rgba(239,68,68,0.15)'          },
+  FAILED_ATTEMPT:   { label: 'Failed Attempt',    color: '#DC2626', bg: 'rgba(239,68,68,0.08)',     border: 'rgba(239,68,68,0.15)'          },
+  EXPIRED:          { label: 'Expired',           color: '#6B7280', bg: '#F5F5F5',                  border: '#F5F5F5'                       },
 }
 function getStatus(key) { return STATUS[key] || STATUS.PENDING }
 
@@ -105,7 +105,8 @@ const CSS = `
   @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
 
   .sc-root * { box-sizing:border-box;margin:0;padding:0 }
-  .sc-root { font-family:'Switzer',-apple-system,BlinkMacSystemFont,sans-serif;-webkit-font-smoothing:antialiased }
+  .sc-root { font-family:'Switzer',-apple-system,BlinkMacSystemFont,sans-serif;-webkit-font-smoothing:antialiased;background:#F9F8FF }
+  .sc-root main { background:#F9F8FF }
   .sc-scroll::-webkit-scrollbar       { width:3px }
   .sc-scroll::-webkit-scrollbar-track { background:transparent }
   .sc-scroll::-webkit-scrollbar-thumb { background:var(--scrollbar);border-radius:2px }
@@ -151,6 +152,36 @@ const CSS = `
   }
   .sc-tab:hover:not(.sc-tab-active) { color:var(--text-2);background:var(--bg-surface-2) }
   .sc-tab-active { background:#111111;border-color:transparent;color:#FFFFFF }
+
+  .filter-pill-bar { display:flex;gap:4px;flex-wrap:wrap }
+  .filter-pill {
+    padding:6px 13px; border-radius:8px; border:1px solid rgba(0,0,0,0.08);
+    font-size:12px; font-weight:600; cursor:pointer; font-family:inherit;
+    transition:all .15s; white-space:nowrap; background:#FAFAFA;
+    color:#888888;
+  }
+  .filter-pill:hover:not(.active) { color:var(--text-2);background:var(--bg-surface-2) }
+  .filter-pill.active { background:#111111;border-color:transparent;color:#FFFFFF }
+
+  .metric-card {
+    background:var(--bg-surface);
+    border:1px solid var(--border);
+    border-radius:16px; padding:20px 22px;
+    box-shadow:var(--shadow-card);
+    transition:border-color .2s,box-shadow .2s;
+    position:relative; overflow:hidden;
+  }
+  .metric-card::before {
+    content:''; position:absolute; top:0; left:0; right:0; height:3px;
+    background:var(--metric-gradient,transparent);
+    border-radius:16px 16px 0 0;
+  }
+  .metric-card:hover { border-color:var(--border-hover);box-shadow:var(--shadow-card-hover) }
+  .animate-fade-in-1 { animation:fadeUp .4s ease .05s both }
+  .animate-fade-in-2 { animation:fadeUp .4s ease .10s both }
+  .animate-fade-in-3 { animation:fadeUp .4s ease .15s both }
+  .animate-fade-in-4 { animation:fadeUp .4s ease .20s both }
+  .animate-fade-in-5 { animation:fadeUp .4s ease .25s both }
 
   .sc-btn {
     display:inline-flex; align-items:center; gap:5px;
@@ -201,7 +232,41 @@ function daysDiff(a, b = new Date()) {
   return Math.round((new Date(b) - new Date(a)) / 86400000)
 }
 
+// ── useCountUp hook ───────────────────────────────────────────────────────────
+function useCountUp(end, duration = 1200) {
+  const [count, setCount] = React.useState(0)
+  React.useEffect(() => {
+    if (!end || end === 0) { setCount(0); return }
+    let start = 0
+    const step = end / (duration / 16)
+    const timer = setInterval(() => {
+      start += step
+      if (start >= end) { setCount(end); clearInterval(timer) }
+      else setCount(Math.floor(start))
+    }, 16)
+    return () => clearInterval(timer)
+  }, [end])
+  return count
+}
+
 // ── Sub-components ────────────────────────────────────────────────────────────
+function KpiCard({ label, value, numericValue, accentColor, sub, icon, gradient, animIndex }) {
+  const animated = useCountUp(typeof numericValue === 'number' ? numericValue : 0)
+  const displayValue = typeof numericValue === 'number'
+    ? (label === 'Avg Delivery' && numericValue ? `${animated}d` : animated)
+    : value
+  return (
+    <div className={`metric-card animate-fade-in-${animIndex}`} style={{ '--metric-gradient': gradient }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+        <span style={{ fontSize: 11, fontWeight: 600, color: '#BDBDBD', letterSpacing: '.06em', textTransform: 'uppercase' }}>{label}</span>
+        <div style={{ width: 28, height: 28, borderRadius: 7, background: '#F5F5F5', border: '1px solid rgba(0,0,0,0.07)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: accentColor || '#555555' }}>{icon}</div>
+      </div>
+      <div style={{ fontSize: 26, fontWeight: 700, color: accentColor || 'var(--text-1)', letterSpacing: '-0.04em', lineHeight: 1 }}>{displayValue}</div>
+      {sub && <p style={{ fontSize: 10.5, color: accentColor ? accentColor : 'var(--text-3)', marginTop: 5 }}>{sub}</p>}
+    </div>
+  )
+}
+
 function StatusBadge({ status }) {
   const s = getStatus(status)
   return (
@@ -270,8 +335,12 @@ function AttentionCard({ item, onDismiss }) {
   const phone     = order.customer?.phone
   const msg       = cfg.message(firstName, orderNum)
 
+  const borderLeft = cfg.priority === 1
+    ? '3px solid #EF4444'
+    : '3px solid #F59E0B'
+
   return (
-    <div className="sc-attn" style={{ background: cfg.bg, border: `1px solid ${cfg.border}` }}>
+    <div className="sc-attn" style={{ background: cfg.bg, border: `1px solid ${cfg.border}`, borderLeft }}>
       <div style={{ padding: '16px 18px' }}>
         {/* Header row */}
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginBottom: 10 }}>
@@ -370,7 +439,7 @@ function ShipmentRow({ order, i, attentionKey }) {
         <div style={{ borderTop: '1px solid var(--divider)', padding: '20px 20px 22px 24px', animation: 'fadeIn .2s ease both' }}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 28 }}>
             <div>
-              <p style={{ fontSize: 10.5, fontWeight: 700, color: '#BDBDBD', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 14 }}>Tracking Details</p>
+              <p style={{ fontSize: 10, fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 14 }}>Tracking Details</p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 {[
                   ['Tracking #',        shipment.tracking_number],
@@ -388,7 +457,7 @@ function ShipmentRow({ order, i, attentionKey }) {
               </div>
               {order.shipping_address && (
                 <div style={{ marginTop: 18 }}>
-                  <p style={{ fontSize: 10.5, fontWeight: 700, color: '#BDBDBD', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 8 }}>Ship to</p>
+                  <p style={{ fontSize: 10, fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 8 }}>Ship to</p>
                   <p style={{ fontSize: 12.5, color: 'var(--text-2)', lineHeight: 1.65 }}>
                     {order.shipping_address.name}<br />
                     {order.shipping_address.city}{order.shipping_address.province_code ? `, ${order.shipping_address.province_code}` : ''} {order.shipping_address.zip}<br />
@@ -405,7 +474,7 @@ function ShipmentRow({ order, i, attentionKey }) {
               )}
             </div>
             <div>
-              <p style={{ fontSize: 10.5, fontWeight: 700, color: '#BDBDBD', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 14 }}>Tracking Events</p>
+              <p style={{ fontSize: 10, fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 14 }}>Tracking Events</p>
               <CheckpointTimeline checkpoints={shipment.checkpoints} />
             </div>
           </div>
@@ -485,7 +554,7 @@ function SetupScreen({ token, onConnected }) {
       <div style={{ width: '100%', maxWidth: 440, textAlign: 'left' }}>
         {/* Steps */}
         <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 12, padding: '20px 20px 4px', marginBottom: 16 }}>
-          <p style={{ fontSize: 10.5, fontWeight: 700, color: '#BDBDBD', textTransform: 'uppercase', letterSpacing: '.1em', marginBottom: 18 }}>Setup instructions</p>
+          <p style={{ fontSize: 10, fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '.1em', marginBottom: 18 }}>Setup instructions</p>
 
           <Step n={1} title="Add your API key">
             <p style={{ fontSize: 12.5, color: 'var(--text-2)', lineHeight: 1.55 }}>
@@ -645,18 +714,26 @@ export default function SupplyChainPage() {
 
   // ── KPI config ──
   const attnColor = attentionItems.length > 0 ? '#DC2626' : '#16A34A'
+  const attnGradient = attentionItems.length > 0
+    ? 'linear-gradient(90deg, #EF4444, #F87171)'
+    : 'linear-gradient(90deg, #10B981, #34D399)'
   const KPIS = [
-    { label: 'In Transit',       value: counts.inTransit,
+    { label: 'In Transit',       value: counts.inTransit,      numericValue: counts.inTransit,
+      gradient: 'linear-gradient(90deg, #3B82F6, #60A5FA)',
       icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 17H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v3"/><rect x="9" y="11" width="14" height="10" rx="1"/><circle cx="12" cy="21" r="1"/><circle cx="20" cy="21" r="1"/></svg> },
-    { label: 'Out for Delivery', value: counts.outForDel,
+    { label: 'Out for Delivery', value: counts.outForDel,      numericValue: counts.outForDel,
+      gradient: 'linear-gradient(90deg, #F59E0B, #FCD34D)',
       icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> },
-    { label: 'Needs Attention',  value: attentionItems.length, accentColor: attnColor,
+    { label: 'Needs Attention',  value: attentionItems.length, numericValue: attentionItems.length, accentColor: attnColor,
+      gradient: attnGradient,
       sub: attentionItems.length > 0 ? 'action required' : 'no action items',
       icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> },
-    { label: 'Avg Delivery',     value: counts.avgDays ? `${counts.avgDays}d` : '—',
+    { label: 'Avg Delivery',     value: counts.avgDays ? `${counts.avgDays}d` : '—', numericValue: counts.avgDays,
+      gradient: 'linear-gradient(90deg, #8B5CF6, #A78BFA)',
       sub: counts.onTimeRate !== null ? `${counts.onTimeRate}% on time` : null,
       icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg> },
-    { label: 'Delivered',        value: counts.delivered,
+    { label: 'Delivered',        value: counts.delivered,      numericValue: counts.delivered,
+      gradient: 'linear-gradient(90deg, #10B981, #34D399)',
       icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg> },
   ]
 
@@ -682,7 +759,7 @@ export default function SupplyChainPage() {
                   </div>
                   <span style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '.08em' }}>Supply Chain</span>
                 </div>
-                <h1 style={{ fontSize: 32, fontWeight: 800, letterSpacing: '-0.045em', lineHeight: 1.1, marginBottom: 8, color: 'var(--text-1)' }}>
+                <h1 className="animate-fade-in" style={{ fontSize: 20, fontWeight: 700, letterSpacing: '-0.02em', lineHeight: 1.1, marginBottom: 8, color: '#0F0F10' }}>
                   Shipment Tracker
                 </h1>
                 <p style={{ fontSize: 14, color: 'var(--text-3)' }}>
@@ -750,15 +827,8 @@ export default function SupplyChainPage() {
             <>
               {/* KPI row */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 14, marginBottom: 30, animation: 'fadeUp .4s ease .05s both' }}>
-                {KPIS.map(({ label, value, accentColor, sub, icon }) => (
-                  <div key={label} className="sc-card">
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-                      <span style={{ fontSize: 11, fontWeight: 600, color: '#BDBDBD', letterSpacing: '.06em', textTransform: 'uppercase' }}>{label}</span>
-                      <div style={{ width: 28, height: 28, borderRadius: 7, background: '#F5F5F5', border: '1px solid rgba(0,0,0,0.07)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: accentColor || '#555555' }}>{icon}</div>
-                    </div>
-                    <div style={{ fontSize: 26, fontWeight: 700, color: accentColor || 'var(--text-1)', letterSpacing: '-0.04em', lineHeight: 1 }}>{value}</div>
-                    {sub && <p style={{ fontSize: 10.5, color: accentColor ? accentColor : 'var(--text-3)', marginTop: 5 }}>{sub}</p>}
-                  </div>
+                {KPIS.map(({ label, value, numericValue, accentColor, sub, icon, gradient }, idx) => (
+                  <KpiCard key={label} label={label} value={value} numericValue={numericValue} accentColor={accentColor} sub={sub} icon={icon} gradient={gradient} animIndex={idx + 1} />
                 ))}
               </div>
 
@@ -800,14 +870,14 @@ export default function SupplyChainPage() {
                     <svg style={{ position: 'absolute', left: 11, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--text-3)' }} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                     <input className="sc-search" value={search} onChange={e => setSearch(e.target.value)} placeholder="Search order, customer, tracking #…" />
                   </div>
-                  <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+                  <div className="filter-pill-bar">
                     {ALL_FILTERS.map(f => {
                       const isAttn   = f === 'Needs Attention'
                       const isActive = filter === f
                       const hasIssue = isAttn && attentionItems.length > 0
                       return (
                         <button key={f} onClick={() => setFilter(f)}
-                          className={`sc-tab${isActive ? ' sc-tab-active' : ''}`}
+                          className={`filter-pill${isActive ? ' active' : ''}`}
                           style={hasIssue && !isActive ? { color: '#DC2626', background: 'rgba(220,38,38,0.06)', borderColor: 'rgba(220,38,38,0.14)' } : hasIssue && isActive ? { background: '#DC2626', borderColor: 'transparent', color: '#FFFFFF' } : {}}>
                           {f}
                           {isAttn && attentionItems.length > 0 && (
@@ -822,6 +892,17 @@ export default function SupplyChainPage() {
                 <p style={{ fontSize: 12, color: 'var(--text-3)', marginBottom: 10 }}>
                   {filtered.length} shipment{filtered.length !== 1 ? 's' : ''}{filter !== 'All' ? ` · ${filter}` : ''}
                 </p>
+
+                {/* Table column headers */}
+                {filtered.length > 0 && (
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto auto auto', gap: 16, alignItems: 'center', padding: '8px 20px', background: '#F9F8FF', borderRadius: 10, marginBottom: 6 }}>
+                    <span style={{ fontSize: 10, fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '.08em' }}>Order / Customer</span>
+                    <span style={{ fontSize: 10, fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '.08em' }}>Products</span>
+                    <span style={{ fontSize: 10, fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '.08em' }}>Carrier</span>
+                    <span style={{ fontSize: 10, fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '.08em', textAlign: 'right', minWidth: 90 }}>Date</span>
+                    <span />
+                  </div>
+                )}
 
                 {filtered.length === 0 ? (
                   <div className="sc-card" style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--text-3)', fontSize: 13.5 }}>

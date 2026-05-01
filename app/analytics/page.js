@@ -179,10 +179,20 @@ function buildRepeatRefunders(allRefunds) {
 
 // ─── Count-up hook ────────────────────────────────────────────────────────────
 
-function useCountUp(target, loaded) {
-  const [val,setVal]=useState(0); const raf=useRef(null)
-  useEffect(()=>{ cancelAnimationFrame(raf.current); if(!loaded){setVal(0);return}; const num=parseFloat(target)||0; if(num===0){setVal(0);return}; const start=performance.now(),dur=900; function tick(now){const p=Math.min((now-start)/dur,1),ease=1-Math.pow(1-p,3); setVal(num*ease); if(p<1)raf.current=requestAnimationFrame(tick)}; raf.current=requestAnimationFrame(tick); return()=>cancelAnimationFrame(raf.current) },[target,loaded])
-  return val
+function useCountUp(end, duration = 1200) {
+  const [count, setCount] = useState(0)
+  useEffect(() => {
+    if (!end || end === 0) { setCount(0); return }
+    let start = 0
+    const step = end / (duration / 16)
+    const timer = setInterval(() => {
+      start += step
+      if (start >= end) { setCount(end); clearInterval(timer) }
+      else setCount(Math.floor(start))
+    }, 16)
+    return () => clearInterval(timer)
+  }, [end])
+  return count
 }
 
 // ─── Animated Number ──────────────────────────────────────────────────────────
@@ -312,9 +322,23 @@ function AlertBanner({ rate, loaded }) {
 
 // ─── KPI Row ──────────────────────────────────────────────────────────────────
 
+const BADGE_COLORS = {
+  'Sizing':           { bg:'rgba(245,158,11,0.08)', color:'#D97706', border:'none' },
+  'Damaged':          { bg:'rgba(239,68,68,0.08)',  color:'#DC2626', border:'1px solid rgba(239,68,68,0.15)' },
+  'Quality':          { bg:'rgba(139,92,246,0.08)', color:'#7C3AED', border:'none' },
+  'Quality Control':  { bg:'rgba(139,92,246,0.08)', color:'#7C3AED', border:'none' },
+  'Not as described': { bg:'rgba(16,185,129,0.08)', color:'#059669', border:'none' },
+  'Changed mind':     { bg:'#F5F5F5',               color:'#555555', border:'none' },
+  'Customer Outreach':{ bg:'rgba(59,130,246,0.08)', color:'#2563EB', border:'none' },
+  'Supplier':         { bg:'rgba(16,185,129,0.08)', color:'#059669', border:'none' },
+  'Listing Fix':      { bg:'rgba(16,185,129,0.08)', color:'#059669', border:'none' },
+  'Operations':       { bg:'#F5F5F5',               color:'#555555', border:'none' },
+  'Other':            { bg:'#F5F5F5',               color:'#555555', border:'none' },
+}
+
 function CatBadge({ cat, small }) {
-  const c = CAT_COLORS[cat]||CAT_COLORS.Other
-  return <span style={{ display:'inline-block', fontSize:small?9.5:10.5, fontWeight:700, letterSpacing:'.05em', textTransform:'uppercase', color:c.color, background:c.bg, border:`1px solid ${c.border}`, borderRadius:100, padding:small?'1px 7px':'2px 9px', whiteSpace:'nowrap' }}>{cat}</span>
+  const c = BADGE_COLORS[cat] || BADGE_COLORS['Other']
+  return <span style={{ display:'inline-block', fontSize:small?9.5:10.5, fontWeight:700, letterSpacing:'.05em', textTransform:'uppercase', color:c.color, background:c.bg, border:c.border||'none', borderRadius:100, padding:small?'1px 7px':'2px 9px', whiteSpace:'nowrap' }}>{cat}</span>
 }
 
 function DeltaBadge({ delta, lowerIsBetter=true }) {
@@ -328,6 +352,38 @@ function DeltaBadge({ delta, lowerIsBetter=true }) {
       <span>{Math.abs(delta.pct).toFixed(1)}%</span>
       <span style={{ opacity:.55, fontSize:11, fontWeight:400, color:'#888888' }}>vs prev</span>
     </div>
+  )
+}
+
+function KpiCardInner({ c, index, loaded }) {
+  const animCount = useCountUp(index === 0 ? Math.round(c.rawValue * 100) : index === 2 ? Math.round(c.rawValue * 10) : index === 3 ? Math.round(c.rawValue * 100) : c.rawValue)
+  let displayVal
+  if (index === 0) displayVal = `€${(animCount / 100).toFixed(2)}`
+  else if (index === 1) displayVal = animCount.toLocaleString()
+  else if (index === 2) displayVal = `${(animCount / 10).toFixed(1)}%`
+  else displayVal = `€${(animCount / 100).toFixed(2)}`
+
+  return (
+    <motion.div
+      className={`metric-card animate-fade-in-${index + 1}`}
+      initial={{ opacity:0, y:12 }}
+      animate={{ opacity:1, y:0 }}
+      transition={{ duration:0.4, delay:index*0.08, ease:[0.16,1,0.3,1] }}
+      style={{ '--metric-gradient': c.metricGradient }}
+    >
+      <div style={{ position:'absolute', top:0, left:0, right:0, height:3, background:c.accent }}/>
+      <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:14 }}>
+        <div style={{ fontSize:11, fontWeight:600, textTransform:'uppercase', letterSpacing:'.06em', color:'#BDBDBD' }}>{c.label}</div>
+        <div style={{ width:30, height:30, borderRadius:7, background:c.accentBg, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={c.accent} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">{c.icon}</svg>
+        </div>
+      </div>
+      <div style={{ fontSize:24, fontWeight:700, color:'#111111', lineHeight:1, marginBottom:8, fontVariantNumeric:'tabular-nums' }}>{displayVal}</div>
+      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:8 }}>
+        <div style={{ fontSize:11, color:'#888888' }}>{c.sub}</div>
+        <DeltaBadge delta={loaded.prevKpis?c.delta:null} lowerIsBetter={c.lowerBetter}/>
+      </div>
+    </motion.div>
   )
 }
 
@@ -350,10 +406,10 @@ function KpiRow({ kpis, prevKpis, refunds, loaded }) {
   )
 
   const cards = [
-    { label:'REFUNDS THIS PERIOD', display:<AnimatedNumber value={totalRef} prefix="€" decimals={2}/>, sub:`${count} refunded order${count!==1?'s':''}`, delta:computeDelta(totalRef, prevRef), lowerBetter:true, accent:'#EF4444', accentBg:'rgba(239,68,68,0.08)', icon:<><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></> },
-    { label:'TOTAL REFUNDS',       display:<AnimatedNumber value={count}/>,                           sub:'fully or partially refunded',               delta:computeDelta(count, prevCount),   lowerBetter:true, accent:'#F59E0B', accentBg:'rgba(245,158,11,0.08)', icon:<><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></> },
-    { label:'REFUND RATE',         display:<AnimatedNumber value={rate} decimals={1} suffix="%"/>,    sub:isHealthy?'Below average':rate>5?`${(rate/2.5).toFixed(1)}× above avg`:'Industry avg: 2–5%', delta:computeDelta(rate, prevRate), lowerBetter:true, accent:'#8B5CF6', accentBg:'rgba(139,92,246,0.08)', icon:<><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></> },
-    { label:'AVG REFUND',          display:<AnimatedNumber value={avg} prefix="€" decimals={2}/>,     sub:'per refunded order',                        delta:computeDelta(avg, prevAvg),       lowerBetter:true, accent:'#10B981', accentBg:'rgba(16,185,129,0.08)', icon:<><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></> },
+    { label:'REFUNDS THIS PERIOD', rawValue:totalRef, sub:`${count} refunded order${count!==1?'s':''}`, delta:computeDelta(totalRef, prevRef), lowerBetter:true, accent:'#EF4444', accentBg:'rgba(239,68,68,0.06)', metricGradient:'linear-gradient(90deg, #EF4444, #F87171)', icon:<><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></> },
+    { label:'TOTAL REFUNDS',       rawValue:count,    sub:'fully or partially refunded',               delta:computeDelta(count, prevCount),   lowerBetter:true, accent:'#F59E0B', accentBg:'rgba(245,158,11,0.06)', metricGradient:'linear-gradient(90deg, #F59E0B, #FCD34D)', icon:<><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></> },
+    { label:'REFUND RATE',         rawValue:rate,     sub:isHealthy?'Below average':rate>5?`${(rate/2.5).toFixed(1)}× above avg`:'Industry avg: 2–5%', delta:computeDelta(rate, prevRate), lowerBetter:true, accent:'#8B5CF6', accentBg:'rgba(139,92,246,0.06)', metricGradient:'linear-gradient(90deg, #8B5CF6, #A78BFA)', icon:<><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></> },
+    { label:'AVG REFUND',          rawValue:avg,      sub:'per refunded order',                        delta:computeDelta(avg, prevAvg),       lowerBetter:true, accent:'#10B981', accentBg:'rgba(16,185,129,0.06)', metricGradient:'linear-gradient(90deg, #10B981, #34D399)', icon:<><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></> },
   ]
 
   return (
@@ -364,27 +420,7 @@ function KpiRow({ kpis, prevKpis, refunds, loaded }) {
       style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:16, marginBottom:24 }}
     >
       {cards.map((c,i)=>(
-        <motion.div
-          key={c.label}
-          className="kpi-card"
-          initial={{ opacity:0, y:12 }}
-          animate={{ opacity:1, y:0 }}
-          transition={{ duration:0.4, delay:i*0.08, ease:[0.16,1,0.3,1] }}
-          style={{ overflow:'hidden', borderRadius:10, transition:'all 0.15s ease', cursor:'default' }}
-        >
-          <div style={{ position:'absolute', top:0, left:0, right:0, height:3, background:c.accent }}/>
-          <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:14 }}>
-            <div style={{ fontSize:11, fontWeight:600, textTransform:'uppercase', letterSpacing:'.06em', color:'#BDBDBD' }}>{c.label}</div>
-            <div style={{ width:30, height:30, borderRadius:7, background:c.accentBg, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={c.accent} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">{c.icon}</svg>
-            </div>
-          </div>
-          <div style={{ fontSize:24, fontWeight:700, color:'#111111', lineHeight:1, marginBottom:8, fontVariantNumeric:'tabular-nums' }}>{c.display}</div>
-          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:8 }}>
-            <div style={{ fontSize:11, color:'#888888' }}>{c.sub}</div>
-            <DeltaBadge delta={loaded.prevKpis?c.delta:null} lowerIsBetter={c.lowerBetter}/>
-          </div>
-        </motion.div>
+        <KpiCardInner key={c.label} c={c} index={i} loaded={loaded}/>
       ))}
     </motion.div>
   )
@@ -410,9 +446,9 @@ function RevenueTrendChart({ trend, loaded, rangeLabel }) {
       </div>
       <svg viewBox={`0 0 ${W} ${H}`} style={{ width:'100%', overflow:'visible' }} aria-hidden>
         <defs>
-          <linearGradient id="tg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#10B981" stopOpacity="0.08"/><stop offset="100%" stopColor="#10B981" stopOpacity="0"/></linearGradient>
+          <linearGradient id="tg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#10B981" stopOpacity="0.06"/><stop offset="100%" stopColor="#10B981" stopOpacity="0"/></linearGradient>
         </defs>
-        {[0,.5,1].map((s,i)=>{ const y=pT+s*(H-pT-pB); return <line key={i} x1={pL} y1={y} x2={W-pR} y2={y} stroke="rgba(0,0,0,0.05)" strokeWidth="1"/> })}
+        {[0,.5,1].map((s,i)=>{ const y=pT+s*(H-pT-pB); return <line key={i} x1={pL} y1={y} x2={W-pR} y2={y} stroke="rgba(0,0,0,0.04)" strokeWidth="1"/> })}
         <polygon points={area} fill="url(#tg)"/>
         <polyline points={line} fill="none" stroke="#10B981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
         {pts.filter(p=>p.revenue>0).map((p,i)=><circle key={i} cx={p.x} cy={p.y} r="2.5" fill="#10B981"/>)}
@@ -597,7 +633,7 @@ function ActionBoard({ patternActions, aiInsights, noRefunds, loaded, onStatusCh
               <div style={{ display:'flex', alignItems:'flex-start', gap:12 }}>
                 <div style={{ flex:1, minWidth:0 }}>
                   <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:6, flexWrap:'wrap' }}>
-                    {item.priority==='high'&&<span style={{ display:'inline-block', fontSize:10, fontWeight:600, color:'#DC2626', background:'#FEF2F2', border:'1px solid rgba(220,38,38,0.12)', borderRadius:4, padding:'2px 7px' }}>URGENT</span>}
+                    {item.priority==='high'&&<span style={{ display:'inline-block', fontSize:10, fontWeight:600, color:'#DC2626', background:'rgba(239,68,68,0.08)', border:'1px solid rgba(239,68,68,0.15)', borderRadius:4, padding:'2px 7px' }}>URGENT</span>}
                     <CatBadge cat={item.category} small/>
                     {item.type==='pattern'&&item.refundCount&&<span style={{ fontSize:10.5, color:'#888888', fontVariantNumeric:'tabular-nums' }}>{item.refundCount}× · {fmtEur(item.totalAmount)} lost</span>}
                   </div>
@@ -639,8 +675,8 @@ function RefundTable({ refunds, loaded }) {
       </div>
 
       {loaded&&enriched.length>0&&(
-        <div style={{ display:'flex', gap:5, flexWrap:'wrap', marginBottom:16 }}>
-          {CATEGORIES.map(cat=>{ const cnt=cat==='All'?enriched.length:enriched.filter(r=>r.category===cat).length; if(cnt===0&&cat!=='All')return null; const isAct=catFilter===cat; return <button key={cat} onClick={()=>{setCatFilter(cat);setShowAll(false)}} className="filter-pill" style={{ background:isAct?'#111111':'transparent', color:isAct?'#ffffff':'#888888', borderColor:isAct?'#111111':'transparent' }}>{cat} <span style={{ opacity:.7, fontSize:10 }}>{cnt}</span></button> })}
+        <div className="filter-pill-bar" style={{ flexWrap:'wrap', marginBottom:16 }}>
+          {CATEGORIES.map(cat=>{ const cnt=cat==='All'?enriched.length:enriched.filter(r=>r.category===cat).length; if(cnt===0&&cat!=='All')return null; const isAct=catFilter===cat; return <button key={cat} onClick={()=>{setCatFilter(cat);setShowAll(false)}} className={`filter-pill${isAct?' active':''}`}>{cat} <span style={{ opacity:.7, fontSize:10 }}>{cnt}</span></button> })}
         </div>
       )}
 
@@ -662,7 +698,7 @@ function RefundTable({ refunds, loaded }) {
           <div style={{ overflowX:'auto' }}>
             <table style={{ width:'100%', borderCollapse:'collapse', minWidth:780 }}>
               <thead>
-                <tr style={{ borderBottom:'1px solid rgba(0,0,0,0.07)', background:'#F9FAFB' }}>
+                <tr style={{ borderBottom:'1px solid rgba(0,0,0,0.07)', background:'#F9F8FF' }}>
                   {[{label:'Date',col:'refundedAt',align:'left'},{label:'Order',col:'orderId',align:'left'},{label:'Customer',col:'customer',align:'left'},{label:'Product(s)',col:null,align:'left'},{label:'Category',col:'category',align:'left'},{label:'% of Order',col:'refundPct',align:'right'},{label:'Amount',col:'refundAmount',align:'right'}].map(h=>(
                     <th key={h.label} onClick={()=>h.col&&toggleSort(h.col)} style={{ textAlign:h.align, fontSize:11, fontWeight:600, letterSpacing:'.06em', color:'#9CA3AF', textTransform:'uppercase', padding:'9px 12px', paddingLeft:h.align==='right'?12:0, whiteSpace:'nowrap', cursor:h.col?'pointer':'default', userSelect:'none' }}>
                       <span style={{ display:'inline-flex', alignItems:'center', gap:4 }}>{h.label}{h.col&&<SortIco col={h.col}/>}</span>
@@ -717,7 +753,7 @@ function ProductMatrix({ allRefunds, loaded }) {
       </div>
       <table style={{ width:'100%', borderCollapse:'collapse' }}>
         <thead>
-          <tr style={{ borderBottom:'1px solid rgba(0,0,0,0.07)', background:'#F9FAFB' }}>
+          <tr style={{ borderBottom:'1px solid rgba(0,0,0,0.07)', background:'#F9F8FF' }}>
             {['#','Product','Category','Refunds','Avg %','Amount Lost','Risk'].map((h,i)=>(
               <th key={h} style={{ textAlign:i>=3?'right':'left', fontSize:11, fontWeight:600, letterSpacing:'.06em', color:'#9CA3AF', textTransform:'uppercase', padding:'9px 12px', paddingLeft:i>0&&i<3?12:i>=3?12:0, whiteSpace:'nowrap' }}>{h}</th>
             ))}
@@ -923,7 +959,7 @@ export default function AnalyticsPage() {
     <div className="an-root" style={{ display:'flex', minHeight:'100vh', background:'var(--bg-page)' }}>
       <style>{CSS}</style>
       <Sidebar/>
-      <main className="an-scroll" style={{ flex:1, overflowY:'auto', padding:'24px', background:'#F9F9FB', position:'relative', scrollbarWidth:'thin' }}>
+      <main className="an-scroll" style={{ flex:1, overflowY:'auto', padding:'24px', background:'#F9F8FF', position:'relative', scrollbarWidth:'thin' }}>
         <PageBackground/>
         <div style={{ position:'relative', zIndex:1, maxWidth:1200, margin:'0 auto' }}>
 
@@ -931,8 +967,8 @@ export default function AnalyticsPage() {
           <div style={{ marginBottom:24, animation:'fadeIn .5s ease-out 0s both' }}>
             <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
               <div>
-                <h1 style={{ fontSize:20, fontWeight:700, color:'#111111', lineHeight:1.2, marginBottom:4 }}>Refund Intelligence</h1>
-                <p style={{ fontSize:12, color:'#888888' }}>Where money is lost · {rangeLabel}</p>
+                <h1 className="animate-fade-in" style={{ fontSize:20, fontWeight:700, color:'#0F0F10', lineHeight:1.2, marginBottom:4, letterSpacing:'-0.02em' }}>Refund Intelligence</h1>
+                <p style={{ fontSize:13, color:'#6B7280' }}>Where money is lost · {rangeLabel}</p>
               </div>
               <div style={{ display:'flex', alignItems:'center', gap:8 }}>
                 {demoMode&&(
@@ -950,9 +986,9 @@ export default function AnalyticsPage() {
             </div>
             <div style={{ height:'1px', background:'rgba(0,0,0,0.06)', margin:'16px 0 12px' }}/>
             <div style={{ display:'flex', alignItems:'center', gap:8, flexWrap:'wrap' }}>
-              <div style={{ display:'inline-flex', gap:2, background:'#FFFFFF', border:'1px solid rgba(0,0,0,0.08)', borderRadius:8, padding:3 }}>
+              <div className="filter-pill-bar">
                 {RANGES.map(r=>(
-                  <button key={r.id} onClick={()=>selectRange(r.id)} className="range-pill" style={{ background:dateRange===r.id?'#111111':'transparent', color:dateRange===r.id?'#ffffff':'#888888', borderRadius:6, padding:'5px 14px' }}>{r.label}</button>
+                  <button key={r.id} onClick={()=>selectRange(r.id)} className={`filter-pill${dateRange===r.id?' active':''}`}>{r.label}</button>
                 ))}
               </div>
               {dateRange==='custom'&&(

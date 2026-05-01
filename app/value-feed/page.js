@@ -20,19 +20,22 @@ const CSS = `
     background:#FFFFFF;
     border:1px solid rgba(0,0,0,0.07);
     border-radius:10px;
-    transition:border-color .15s;
+    transition:all 0.2s ease;
     overflow:hidden;
   }
-  .feed-card:hover { border-color:rgba(0,0,0,0.12) }
+  .feed-card:hover { border-color:rgba(0,0,0,0.12);transform:translateY(-1px);box-shadow:0 4px 16px rgba(0,0,0,0.06) }
 
   .mc-card {
+    position:relative;
     background:#FFFFFF;
     border:1px solid rgba(0,0,0,0.07);
     border-radius:10px;
     padding:24px;
-    transition:border-color .15s;
+    transition:all 0.2s ease;
+    overflow:hidden;
   }
-  .mc-card:hover { border-color:rgba(0,0,0,0.12) }
+  .mc-card:hover { border-color:rgba(0,0,0,0.12);transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,0.07) }
+  .mc-card::before { content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,#8B5CF6,#6366F1) }
 
   .vid-thumb { position:relative;width:100%;padding-top:56.25%;background:#111111;overflow:hidden }
   .vid-thumb img { position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform .4s }
@@ -47,12 +50,17 @@ const CSS = `
   }
   .feed-card:hover .play-circle { background:rgba(255,255,255,0.25);transform:scale(1.08) }
 
+  .filter-pill-bar { display:flex;gap:6px;flexWrap:wrap }
+
+  .filter-pill { padding:4px 12px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s;display:inline-flex;align-items:center;gap:5px;background:#FAFAFA;color:#888888;border:1px solid rgba(0,0,0,0.08) }
+  .filter-pill.active { background:#111111;color:#ffffff;border-color:transparent }
+
   .f-pill { padding:4px 12px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s;display:inline-flex;align-items:center;gap:5px }
 
   .join-btn {
     display:inline-flex;align-items:center;gap:7px;
     height:36px;padding:0 16px;border-radius:7px;border:none;
-    background:#111111;color:#fff;font-size:13px;font-weight:600;
+    background:#0F0F10;color:#FFFFFF;font-size:13px;font-weight:600;
     cursor:pointer;font-family:inherit;transition:background .15s;text-decoration:none;
   }
   .join-btn:hover { background:#333333 }
@@ -76,15 +84,21 @@ const CSS = `
   .react-btn.active { color:#111111;background:#F5F5F5;border-color:rgba(0,0,0,0.09) }
 
   .sk { background:linear-gradient(90deg,var(--skeleton-from) 25%,var(--skeleton-to) 50%,var(--skeleton-from) 75%);background-size:400% 100%;animation:shimmer 1.8s ease-in-out infinite;border-radius:6px }
+
+  .animate-fade-in   { animation:fadeUp .4s ease both }
+  .animate-fade-in-0 { animation:fadeUp .4s ease 0ms both }
+  .animate-fade-in-1 { animation:fadeUp .4s ease 60ms both }
+  .animate-fade-in-2 { animation:fadeUp .4s ease 120ms both }
+  .animate-fade-in-3 { animation:fadeUp .4s ease 180ms both }
 `
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
 const TYPE_CFG = {
-  video:    { label:'Video',    borderColor:'#BDBDBD', badgeBg:'#F5F5F5',   badgeColor:'#555555', badgeBorder:'rgba(0,0,0,0.08)'         },
-  tip:      { label:'Tip',      borderColor:'#D97706', badgeBg:'#FFFBEB',   badgeColor:'#D97706', badgeBorder:'rgba(215,163,6,0.15)'     },
-  update:   { label:'Update',   borderColor:'#16A34A', badgeBg:'#F0FDF4',   badgeColor:'#16A34A', badgeBorder:'rgba(22,163,74,0.15)'     },
-  industry: { label:'Industry', borderColor:'#555555', badgeBg:'#F5F5F5',   badgeColor:'#555555', badgeBorder:'rgba(0,0,0,0.08)'         },
+  video:    { label:'Video',    borderColor:'#7C3AED', badgeBg:'rgba(124,58,237,0.08)',  badgeColor:'#7C3AED', badgeBorder:undefined                          },
+  tip:      { label:'Tip',      borderColor:'#F59E0B', badgeBg:'rgba(245,158,11,0.08)',  badgeColor:'#D97706', badgeBorder:'rgba(245,158,11,0.15)'             },
+  update:   { label:'Update',   borderColor:'#10B981', badgeBg:'rgba(16,185,129,0.08)',  badgeColor:'#059669', badgeBorder:'rgba(16,185,129,0.15)'             },
+  industry: { label:'Industry', borderColor:'#2563EB', badgeBg:'rgba(37,99,235,0.08)',   badgeColor:'#2563EB', badgeBorder:undefined                          },
 }
 
 const TYPE_FILTERS = [
@@ -219,13 +233,13 @@ function Reactions({ item, reactions, userId, onReact }) {
   )
 }
 
-function VideoCard({ item, i, reactions, userId, onReact }) {
+function VideoCard({ item, i, staggerClass, reactions, userId, onReact }) {
   const ytId = getYouTubeId(item.youtube_url)
   const thumb = ytId ? `https://img.youtube.com/vi/${ytId}/maxresdefault.jpg` : null
   const cfg = TYPE_CFG.video
 
   return (
-    <div className="feed-card" style={{ animation:`fadeUp .4s ease ${i*60}ms both` }}>
+    <div className={`feed-card${staggerClass ? ` ${staggerClass}` : ''}`} style={{ borderLeft:`3px solid ${cfg.borderColor}` }}>
       <a href={item.youtube_url || '#'} target="_blank" rel="noopener noreferrer" style={{ display:'block', textDecoration:'none' }}>
         <div className="vid-thumb">
           {thumb && <img src={thumb} alt={item.title} />}
@@ -236,7 +250,7 @@ function VideoCard({ item, i, reactions, userId, onReact }) {
       </a>
       <div style={{ padding:'16px 20px 18px' }}>
         <div style={{ display:'flex', alignItems:'center', gap:7, marginBottom:10, flexWrap:'wrap' }}>
-          <span style={{ fontSize:10, fontWeight:700, letterSpacing:'.06em', textTransform:'uppercase', color:cfg.badgeColor, background:cfg.badgeBg, border:`1px solid ${cfg.badgeBorder}`, borderRadius:4, padding:'2px 7px' }}>Video</span>
+          <span style={{ fontSize:10, fontWeight:700, letterSpacing:'.06em', textTransform:'uppercase', color:cfg.badgeColor, background:cfg.badgeBg, border:cfg.badgeBorder ? `1px solid ${cfg.badgeBorder}` : 'none', borderRadius:4, padding:'2px 7px' }}>Video</span>
           {isNew(item.created_at) && (
             <span style={{ fontSize:10, fontWeight:600, color:'#555555', background:'#F5F5F5', borderRadius:4, padding:'2px 7px' }}>NEW</span>
           )}
@@ -256,16 +270,16 @@ function VideoCard({ item, i, reactions, userId, onReact }) {
   )
 }
 
-function TextCard({ item, i, reactions, userId, onReact }) {
+function TextCard({ item, i, staggerClass, reactions, userId, onReact }) {
   const cfg = TYPE_CFG[item.type] || TYPE_CFG.update
 
   const updateIcon = <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
 
   return (
-    <div className="feed-card" style={{ animation:`fadeUp .4s ease ${i*60}ms both`, borderLeft:`3px solid ${cfg.borderColor}` }}>
+    <div className={`feed-card${staggerClass ? ` ${staggerClass}` : ''}`} style={{ borderLeft:`3px solid ${cfg.borderColor}` }}>
       <div style={{ padding:'20px 24px' }}>
         <div style={{ display:'flex', alignItems:'center', gap:7, marginBottom:10, flexWrap:'wrap' }}>
-          <span style={{ display:'inline-flex', alignItems:'center', gap:4, fontSize:10, fontWeight:700, letterSpacing:'.06em', textTransform:'uppercase', color:cfg.badgeColor, background:cfg.badgeBg, border:`1px solid ${cfg.badgeBorder}`, borderRadius:4, padding:'2px 7px' }}>
+          <span style={{ display:'inline-flex', alignItems:'center', gap:4, fontSize:10, fontWeight:700, letterSpacing:'.06em', textTransform:'uppercase', color:cfg.badgeColor, background:cfg.badgeBg, border:cfg.badgeBorder ? `1px solid ${cfg.badgeBorder}` : 'none', borderRadius:4, padding:'2px 7px' }}>
             {item.type === 'update' && <span style={{ color:cfg.badgeColor, display:'flex' }}>{updateIcon}</span>}
             {cfg.label}
           </span>
@@ -344,7 +358,7 @@ export default function ValueFeedPage() {
   const feedPosts = visible.filter(p => !p.is_pinned)
 
   return (
-    <div className="vf-root" style={{ display:'flex', minHeight:'100vh', background:'#F9F9FB' }}>
+    <div className="vf-root" style={{ display:'flex', minHeight:'100vh', background:'#F9F8FF' }}>
       <style>{CSS}</style>
       <Sidebar />
 
@@ -355,7 +369,7 @@ export default function ValueFeedPage() {
           <div style={{ animation:'fadeUp .4s ease both', marginBottom:24 }}>
             <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', flexWrap:'wrap', gap:12 }}>
               <div>
-                <h1 style={{ fontSize:20, fontWeight:700, color:'#111111', lineHeight:1.2, marginBottom:4 }}>Value Feed</h1>
+                <h1 style={{ fontSize:20, fontWeight:700, color:'#0F0F10', lineHeight:1.2, marginBottom:4, letterSpacing:'-0.02em' }}>Value Feed</h1>
                 <p style={{ fontSize:13, color:'#888888', lineHeight:1.5 }}>
                   Exclusive tips, strategies and videos from the Lynq & Flow team.
                 </p>
@@ -370,16 +384,12 @@ export default function ValueFeedPage() {
             <div style={{ height:1, background:'rgba(0,0,0,0.06)', margin:'16px 0 12px' }} />
 
             {/* Type filters */}
-            <div style={{ display:'flex', gap:6, flexWrap:'wrap', marginBottom: activeTopics.length > 0 ? 10 : 0 }}>
+            <div className="filter-pill-bar" style={{ marginBottom: activeTopics.length > 0 ? 10 : 0 }}>
               {TYPE_FILTERS.filter(f => f.id === 'all' || posts.some(p => p.type === f.id)).map(f => {
                 const count = f.id === 'all' ? posts.length : posts.filter(p => p.type === f.id).length
                 const isAct = typeFilter === f.id
                 return (
-                  <button key={f.id} className="f-pill" onClick={() => setTypeFilter(f.id)} style={{
-                    background: isAct ? '#111111' : '#FAFAFA',
-                    color:      isAct ? '#ffffff' : '#888888',
-                    border:     isAct ? '1px solid transparent' : '1px solid rgba(0,0,0,0.08)',
-                  }}>
+                  <button key={f.id} className={`filter-pill${isAct ? ' active' : ''}`} onClick={() => setTypeFilter(f.id)}>
                     {f.label}
                     <span style={{ fontSize:10, fontWeight:600, color: isAct ? 'rgba(255,255,255,0.6)' : '#888888', background: isAct ? 'rgba(255,255,255,0.18)' : '#EBEBEB', borderRadius:4, padding:'1px 5px' }}>{count}</span>
                   </button>
@@ -432,10 +442,10 @@ export default function ValueFeedPage() {
               {[0,1,2].map(i => <SkeletonCard key={i} i={i} />)}
             </div>
           ) : feedPosts.length === 0 && !pinnedPost ? (
-            <div style={{ textAlign:'center', padding:'56px 0' }}>
-              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#BDBDBD" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ margin:'0 auto 12px', display:'block' }}><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            <div className="animate-fade-in" style={{ textAlign:'center', padding:'56px 0' }}>
+              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ margin:'0 auto 12px', display:'block' }}><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
               <div style={{ fontSize:14, fontWeight:600, color:'#111111', marginBottom:4 }}>Nothing here yet</div>
-              <div style={{ fontSize:13, color:'#888888' }}>
+              <div style={{ fontSize:13, color:'#9CA3AF' }}>
                 {typeFilter !== 'all' || topicFilter !== 'all' ? 'No posts match this filter.' : 'Your Lynq team will post exclusive content here soon.'}
               </div>
               {(typeFilter !== 'all' || topicFilter !== 'all') && (
@@ -448,8 +458,8 @@ export default function ValueFeedPage() {
             <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
               {feedPosts.map((item, i) =>
                 item.type === 'video'
-                  ? <VideoCard key={item.id} item={item} i={i} reactions={reactions} userId={userId} onReact={toggleReaction} />
-                  : <TextCard  key={item.id} item={item} i={i} reactions={reactions} userId={userId} onReact={toggleReaction} />
+                  ? <VideoCard key={item.id} item={item} i={i} staggerClass={i < 4 ? `animate-fade-in-${i}` : undefined} reactions={reactions} userId={userId} onReact={toggleReaction} />
+                  : <TextCard  key={item.id} item={item} i={i} staggerClass={i < 4 ? `animate-fade-in-${i}` : undefined} reactions={reactions} userId={userId} onReact={toggleReaction} />
               )}
             </div>
           )}

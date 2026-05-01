@@ -67,15 +67,15 @@ const CSS = `
 
   .member-row{display:flex;align-items:center;gap:12px;padding:12px 18px;border-bottom:1px solid rgba(0,0,0,0.05);transition:background .15s;cursor:default}
   .member-row:last-child{border-bottom:none}
-  .member-row:hover{background:#F9F9FB}
+  .member-row:hover{background:#F9F8FF}
 
   .session-row{display:grid;grid-template-columns:130px 110px 60px 60px 70px 1fr;gap:12px;align-items:start;padding:11px 18px;border-bottom:1px solid rgba(0,0,0,0.05);transition:background .15s;cursor:default}
   .session-row:last-child{border-bottom:none}
-  .session-row:hover{background:#F9F9FB}
+  .session-row:hover{background:#F9F8FF}
 
   .emp-row{display:grid;grid-template-columns:130px 140px 70px 1fr;gap:12px;align-items:start;padding:11px 18px;border-bottom:1px solid rgba(0,0,0,0.05);transition:background .15s;cursor:default}
   .emp-row:last-child{border-bottom:none}
-  .emp-row:hover{background:#F9F9FB}
+  .emp-row:hover{background:#F9F8FF}
 
   .modal-overlay{position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.5);backdrop-filter:blur(6px);padding:24px}
   .modal-box{background:#FFFFFF;border:1px solid rgba(0,0,0,0.09);border-radius:12px;padding:28px;width:100%;max-width:500px}
@@ -200,7 +200,7 @@ function MemberRow({ member: m }) {
         <div style={{ fontSize: 11, color: '#9CA3AF' }}>{m.sessions_count} session{m.sessions_count !== 1 ? 's' : ''}</div>
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '4px 10px', borderRadius: 6, background: badgeBg, border: `1px solid ${badgeBorder}`, flexShrink: 0 }}>
-        <div style={{ width: 6, height: 6, borderRadius: '50%', background: dotColor, flexShrink: 0 }} />
+        <div style={{ width: 6, height: 6, borderRadius: '50%', background: dotColor, flexShrink: 0, animation: active ? 'pulse 2s ease-in-out infinite' : 'none' }} />
         <span style={{ fontSize: 11, fontWeight: 600, color: badgeColor }}>{badgeLabel}</span>
       </div>
     </div>
@@ -267,7 +267,7 @@ function TeamView({ data, filter, onFilterChange }) {
   }
 
   return (
-    <div className="tt-root" style={{ display: 'flex', minHeight: '100vh', background: '#F9F9FB' }}>
+    <div className="tt-root" style={{ display: 'flex', minHeight: '100vh', background: '#F9F8FF' }}>
       <style>{CSS}</style>
       <Sidebar />
       <main className="tt-scroll" style={{ flex: 1, overflowY: 'auto', padding: '32px 28px' }}>
@@ -522,14 +522,14 @@ export default function TimeTrackingPage() {
   }, 0)
 
   if (loading) return (
-    <div style={{ minHeight: '100vh', background: '#F9F9FB', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+    <div style={{ minHeight: '100vh', background: '#F9F8FF', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <style>{CSS}</style>
       <Spinner size={28} />
     </div>
   )
 
   if (accessError) return (
-    <div className="tt-root" style={{ display: 'flex', minHeight: '100vh', background: '#F9F9FB' }}>
+    <div className="tt-root" style={{ display: 'flex', minHeight: '100vh', background: '#F9F8FF' }}>
       <style>{CSS}</style>
       <Sidebar />
       <main style={{ flex: 1, padding: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -563,7 +563,7 @@ export default function TimeTrackingPage() {
   ]
 
   return (
-    <div className="tt-root" style={{ display: 'flex', minHeight: '100vh', background: '#F9F9FB' }}>
+    <div className="tt-root" style={{ display: 'flex', minHeight: '100vh', background: '#F9F8FF' }}>
       <style>{CSS}</style>
       <Sidebar />
 

@@ -356,105 +356,6 @@ function ModuleIcon({ id, color, size = 16 }) {
   )
 }
 
-// ─── Academy Sidebar ──────────────────────────────────────────────────────────
-
-function AcademySidebar({ passedTypes, readMap, selectedModule, selectedLesson, onSelectModule, onSelectLesson, view, onGoWelcome }) {
-  const completed = MODULES.filter(m => passedTypes.includes(m.examType)).length
-  const pct       = Math.round((completed / MODULES.length) * 100)
-
-  return (
-    <div style={{ width: AC_SIDEBAR, minWidth: AC_SIDEBAR, height: '100vh', background: '#FFFFFF', borderRight: '1px solid rgba(0,0,0,0.07)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-
-      {/* Header */}
-      <div style={{ padding: '18px 16px 14px', borderBottom: '1px solid rgba(0,0,0,0.07)', flexShrink: 0 }}>
-        <div onClick={onGoWelcome} style={{ display: 'flex', alignItems: 'center', gap: 9, cursor: 'pointer', marginBottom: 14 }}>
-          <div style={{ width: 28, height: 28, borderRadius: 8, background: 'linear-gradient(135deg,#8B5CF6,#6366F1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: '0 2px 8px rgba(139,92,246,0.4)' }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/>
-            </svg>
-          </div>
-          <span style={{ fontSize: 13, fontWeight: 600, color: '#0F0F10' }}>Lynq Academy</span>
-        </div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-          <span style={{ fontSize: 11, color: '#9CA3AF' }}>{completed} of {MODULES.length} modules complete</span>
-          <span style={{ fontSize: 12, fontWeight: 600, color: '#8B5CF6' }}>{pct}%</span>
-        </div>
-        <div style={{ height: 3, borderRadius: 10, background: 'rgba(0,0,0,0.08)', overflow: 'hidden' }}>
-          <div style={{ height: '100%', borderRadius: 10, background: 'linear-gradient(90deg,#8B5CF6,#6366F1)', width: `${pct}%`, transition: 'width 0.6s ease' }} />
-        </div>
-      </div>
-
-      {/* Nav */}
-      <div className="ac-scroll" style={{ flex: 1, overflowY: 'auto', padding: '10px 8px' }}>
-        {MODULES.map((mod, mi) => {
-          const isDone    = passedTypes.includes(mod.examType)
-          const isActive  = selectedModule?.id === mod.id
-          const readCount = mod.sections.filter((_, si) => readMap[readKey(mod.id, si)]).length
-
-          return (
-            <motion.div key={mod.id}
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: mi * 0.04, duration: 0.3, ease: EASE }}
-            >
-              <div
-                className={`ac-nav-item ${isActive ? 'active' : ''} ${isDone ? 'done' : ''}`}
-                onClick={() => onSelectModule(mod)}
-              >
-                {isDone
-                  ? <CheckIcon size={16} color="#10B981" />
-                  : <div style={{ width: 22, height: 22, borderRadius: 6, background: isActive ? 'linear-gradient(135deg,#8B5CF6,#6366F1)' : 'rgba(0,0,0,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                      <span style={{ fontSize: 10, fontWeight: 700, color: isActive ? '#FFF' : '#9CA3AF' }}>{mod.num}</span>
-                    </div>
-                }
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 13, fontWeight: isActive ? 600 : 400, color: isDone ? '#9CA3AF' : isActive ? '#0F0F10' : '#6B7280', textDecoration: isDone ? 'line-through' : 'none', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                    {mod.label}
-                  </div>
-                  <div style={{ fontSize: 11, color: '#9CA3AF', marginTop: 1 }}>{readCount}/{mod.sections.length} lessons</div>
-                </div>
-              </div>
-
-              {/* Sub-lessons */}
-              <AnimatePresence>
-                {isActive && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: 'auto', opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.25, ease: EASE }}
-                    style={{ overflow: 'hidden' }}
-                  >
-                    {mod.sections.map((sec, si) => {
-                      const isRead     = !!readMap[readKey(mod.id, si)]
-                      const isLessonActive = selectedLesson === si && view === 'lesson'
-                      return (
-                        <div key={si} className={`ac-sub-item ${isLessonActive ? 'active' : ''} ${isRead ? 'done' : ''}`}
-                          onClick={() => onSelectLesson(si)}>
-                          <div style={{ width: 6, height: 6, borderRadius: '50%', background: isRead ? '#10B981' : isLessonActive ? '#6366F1' : 'rgba(0,0,0,0.15)', flexShrink: 0 }} />
-                          <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{sec.title}</span>
-                        </div>
-                      )
-                    })}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </motion.div>
-          )
-        })}
-      </div>
-
-      {/* Footer */}
-      <div style={{ padding: '10px 16px', borderTop: '1px solid rgba(0,0,0,0.07)', flexShrink: 0 }}>
-        <div style={{ fontSize: 11, color: '#9CA3AF', display: 'flex', alignItems: 'center', gap: 5, cursor: 'pointer' }}
-          onClick={() => window.history.back()}>
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-          Lynq Platform
-        </div>
-      </div>
-    </div>
-  )
-}
 
 // ─── Topbar ───────────────────────────────────────────────────────────────────
 
@@ -1168,24 +1069,79 @@ export default function AcademyPage() {
 
   if (!mounted) return null
 
-  const allDone = MODULES.every(m => passedTypes.includes(m.examType))
+  const allDone      = MODULES.every(m => passedTypes.includes(m.examType))
+  const completedCnt = MODULES.filter(m => passedTypes.includes(m.examType)).length
+  const progressPct  = Math.round((completedCnt / MODULES.length) * 100)
 
   return (
     <div className="ac" style={{ display:'flex', height:'100vh', background:'#F9F9FB', marginLeft:SIDEBAR_W, overflow:'hidden' }}>
       <style>{CSS}</style>
       <Sidebar />
 
-      {/* Academy sidebar */}
-      <AcademySidebar
-        passedTypes={passedTypes}
-        readMap={readMap}
-        selectedModule={selectedModule}
-        selectedLesson={selectedLesson}
-        view={view}
-        onSelectModule={handleSelectModule}
-        onSelectLesson={handleSelectLesson}
-        onGoWelcome={() => setView('welcome')}
-      />
+      {/* Module list panel */}
+      <div style={{ width:280, minWidth:280, height:'100vh', background:'#FFFFFF', borderRight:'1px solid rgba(0,0,0,0.07)', display:'flex', flexDirection:'column', overflow:'hidden', flexShrink:0 }}>
+        {/* Header */}
+        <div style={{ padding:'18px 16px 14px', borderBottom:'1px solid rgba(0,0,0,0.07)', flexShrink:0 }}>
+          <div onClick={() => setView('welcome')} style={{ display:'flex', alignItems:'center', gap:9, cursor:'pointer', marginBottom:14 }}>
+            <div style={{ width:28, height:28, borderRadius:8, background:'linear-gradient(135deg,#8B5CF6,#6366F1)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, boxShadow:'0 2px 8px rgba(139,92,246,0.4)' }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/>
+              </svg>
+            </div>
+            <span style={{ fontSize:14, fontWeight:600, color:'#0F0F10' }}>Lynq Academy</span>
+          </div>
+          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:8 }}>
+            <span style={{ fontSize:11, color:'#9CA3AF' }}>{completedCnt} of {MODULES.length} modules complete</span>
+            <span style={{ fontSize:12, fontWeight:600, color:'#8B5CF6' }}>{progressPct}%</span>
+          </div>
+          <div style={{ height:3, borderRadius:10, background:'rgba(0,0,0,0.08)', overflow:'hidden' }}>
+            <div style={{ height:'100%', borderRadius:10, background:'linear-gradient(90deg,#8B5CF6,#6366F1)', width:`${progressPct}%`, transition:'width 0.6s ease' }} />
+          </div>
+        </div>
+
+        {/* Module nav */}
+        <div className="ac-scroll" style={{ flex:1, overflowY:'auto', padding:'10px 8px' }}>
+          {MODULES.map((mod, mi) => {
+            const isDone    = passedTypes.includes(mod.examType)
+            const isActive  = selectedModule?.id === mod.id
+            const readCount = mod.sections.filter((_, si) => readMap[readKey(mod.id, si)]).length
+            return (
+              <motion.div key={mod.id} initial={{ opacity:0, x:-10 }} animate={{ opacity:1, x:0 }} transition={{ delay:mi*0.04, duration:0.3, ease:EASE }}>
+                <div className={`ac-nav-item ${isActive ? 'active' : ''} ${isDone ? 'done' : ''}`} onClick={() => handleSelectModule(mod)}>
+                  {isDone
+                    ? <CheckIcon size={16} color="#10B981" />
+                    : <div style={{ width:22, height:22, borderRadius:6, background:isActive ? 'linear-gradient(135deg,#8B5CF6,#6366F1)' : 'rgba(0,0,0,0.06)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                        <span style={{ fontSize:10, fontWeight:700, color:isActive ? '#FFF' : '#9CA3AF' }}>{mod.num}</span>
+                      </div>
+                  }
+                  <div style={{ flex:1, minWidth:0 }}>
+                    <div style={{ fontSize:13, fontWeight:isActive ? 600 : 400, color:isDone ? '#9CA3AF' : isActive ? '#0F0F10' : '#6B7280', textDecoration:isDone ? 'line-through' : 'none', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>
+                      {mod.label}
+                    </div>
+                    <div style={{ fontSize:11, color:'#9CA3AF', marginTop:1 }}>{readCount}/{mod.sections.length} lessons</div>
+                  </div>
+                </div>
+                <AnimatePresence>
+                  {isActive && (
+                    <motion.div initial={{ height:0, opacity:0 }} animate={{ height:'auto', opacity:1 }} exit={{ height:0, opacity:0 }} transition={{ duration:0.25, ease:EASE }} style={{ overflow:'hidden' }}>
+                      {mod.sections.map((sec, si) => {
+                        const isRead        = !!readMap[readKey(mod.id, si)]
+                        const isLessonActive = selectedLesson === si && view === 'lesson'
+                        return (
+                          <div key={si} className={`ac-sub-item ${isLessonActive ? 'active' : ''} ${isRead ? 'done' : ''}`} onClick={() => handleSelectLesson(si)}>
+                            <div style={{ width:6, height:6, borderRadius:'50%', background:isRead ? '#10B981' : isLessonActive ? '#6366F1' : 'rgba(0,0,0,0.15)', flexShrink:0 }} />
+                            <span style={{ whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{sec.title}</span>
+                          </div>
+                        )
+                      })}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.div>
+            )
+          })}
+        </div>
+      </div>
 
       {/* Main area */}
       <div style={{ flex:1, display:'flex', flexDirection:'column', overflow:'hidden' }}>

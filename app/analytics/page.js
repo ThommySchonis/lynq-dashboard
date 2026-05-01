@@ -238,8 +238,8 @@ const CSS = `
   .bar-fill{transform-origin:left;animation:growX .6s cubic-bezier(.34,1.56,.64,1) both}
   .bar-col{transform-origin:bottom;animation:barGrow .5s cubic-bezier(.34,1.56,.64,1) both}
 
-  .btn-pickup{padding:5px 14px;border-radius:100px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid rgba(0,0,0,0.1);font-family:inherit;background:#111111;color:#ffffff;transition:all .15s}
-  .btn-pickup:hover{background:#333333}
+  .btn-pickup{padding:5px 14px;border-radius:6px;font-size:12px;font-weight:500;cursor:pointer;border:1px solid rgba(0,0,0,0.08);font-family:inherit;background:#F3F4F6;color:#374151;transition:all .15s}
+  .btn-pickup:hover{background:#E5E7EB}
   .btn-done{padding:5px 14px;border-radius:100px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid rgba(21,128,61,0.25);font-family:inherit;background:#F0FDF4;color:#15803D;transition:all .15s}
   .btn-done:hover{background:#DCFCE7}
   .btn-reopen{padding:4px 11px;border-radius:100px;font-size:11px;font-weight:500;cursor:pointer;border:1px solid rgba(0,0,0,0.08);font-family:inherit;background:transparent;color:#888888;transition:all .15s}
@@ -335,7 +335,8 @@ function KpiRow({ kpis, prevKpis, refunds, loaded }) {
   return (
     <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:16, marginBottom:24 }}>
       {cards.map((c,i)=>(
-        <div key={c.label} className="kpi-card" style={{ animation:'fadeIn .3s ease-out both', borderTop:`2.5px solid ${c.accent}` }}>
+        <div key={c.label} className="kpi-card" style={{ animation:'fadeIn .3s ease-out both', overflow:'hidden', borderRadius:10 }}>
+          <div style={{ position:'absolute', top:0, left:0, right:0, height:3, background:c.accent }}/>
           <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:14 }}>
             <div style={{ fontSize:11, fontWeight:600, textTransform:'uppercase', letterSpacing:'.06em', color:'#BDBDBD' }}>{c.label}</div>
             <div style={{ width:30, height:30, borderRadius:7, background:c.accentBg, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
@@ -912,12 +913,14 @@ export default function AnalyticsPage() {
               </div>
             </div>
             <div style={{ height:'1px', background:'rgba(0,0,0,0.06)', margin:'16px 0 12px' }}/>
-            <div style={{ display:'flex', alignItems:'center', gap:6, flexWrap:'wrap' }}>
-              {RANGES.map(r=>(
-                <button key={r.id} onClick={()=>selectRange(r.id)} className="range-pill" style={{ background:dateRange===r.id?'#111111':'transparent', color:dateRange===r.id?'#ffffff':'#888888' }}>{r.label}</button>
-              ))}
+            <div style={{ display:'flex', alignItems:'center', gap:8, flexWrap:'wrap' }}>
+              <div style={{ display:'inline-flex', gap:2, background:'#FFFFFF', border:'1px solid rgba(0,0,0,0.08)', borderRadius:8, padding:3 }}>
+                {RANGES.map(r=>(
+                  <button key={r.id} onClick={()=>selectRange(r.id)} className="range-pill" style={{ background:dateRange===r.id?'#111111':'transparent', color:dateRange===r.id?'#ffffff':'#888888', borderRadius:6, padding:'5px 14px' }}>{r.label}</button>
+                ))}
+              </div>
               {dateRange==='custom'&&(
-                <div style={{ display:'flex', alignItems:'center', gap:6, marginLeft:4 }}>
+                <div style={{ display:'flex', alignItems:'center', gap:6 }}>
                   <input type="date" className="date-inp" value={customFrom} max={customTo||undefined} onChange={e=>{ const v=e.target.value; setCustomFrom(v); applyCustomRange(v,customTo) }}/>
                   <span style={{ fontSize:11, color:'var(--text-3)' }}>→</span>
                   <input type="date" className="date-inp" value={customTo} min={customFrom||undefined} max={new Date().toISOString().slice(0,10)} onChange={e=>{ const v=e.target.value; setCustomTo(v); applyCustomRange(customFrom,v) }}/>

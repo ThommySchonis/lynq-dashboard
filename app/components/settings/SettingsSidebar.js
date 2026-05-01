@@ -8,7 +8,7 @@ import { Search } from 'lucide-react'
 const NAV_GROUPS = [
   { label: 'WORKSPACE', items: [
     { label: 'General', href: '/settings/workspace/general' },
-    { label: 'Members', href: '/settings/workspace/members' },
+    { label: 'Users', href: '/settings/workspace/members' },
     { label: 'Billing', href: '/settings/workspace/billing' },
   ]},
   { label: 'EMAIL', items: [

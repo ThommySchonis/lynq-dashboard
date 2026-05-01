@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server'
-import { getUserFromToken } from '../../../../../lib/supabaseAdmin'
-import { supabaseAdmin } from '../../../../../lib/supabaseAdmin'
+import { getUserFromToken, supabaseAdmin } from '../../../../../lib/supabaseAdmin'
 
 // POST — accept an invite (requires auth)
 export async function POST(request, { params }) {
@@ -8,41 +7,56 @@ export async function POST(request, { params }) {
 
   const authHeader = request.headers.get('authorization')
   if (!authHeader) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
   const user = await getUserFromToken(authHeader.replace('Bearer ', ''))
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { data: invite, error: fetchError } = await supabaseAdmin
+  // Use atomic RPC — handles locking, idempotency, expiry, and member upsert
+  const { data: result, error: rpcError } = await supabaseAdmin
+    .rpc('accept_workspace_invite', {
+      p_token:   token,
+      p_user_id: user.id,
+    })
+
+  if (rpcError) {
+    console.error('[invite accept] RPC error:', rpcError.message)
+    return NextResponse.json({ error: 'Failed to accept invite' }, { status: 500 })
+  }
+
+  if (result?.error === 'not_found') {
+    return NextResponse.json({ error: 'Invite not found' }, { status: 404 })
+  }
+
+  if (result?.error === 'expired') {
+    return NextResponse.json({ error: 'Invite has expired' }, { status: 410 })
+  }
+
+  if (!result?.ok) {
+    return NextResponse.json({ error: 'Invite could not be accepted' }, { status: 400 })
+  }
+
+  // Email match guard: verify the logged-in user's email matches the invite
+  // Do this after the RPC so we can still return workspace_id for redirect,
+  // but reject if there's a mismatch (prevents invite-link theft).
+  const { data: invite } = await supabaseAdmin
     .from('workspace_invites')
-    .select('id, workspace_id, email, role, expires_at, accepted_at')
+    .select('email')
     .eq('token', token)
     .maybeSingle()
 
-  if (fetchError || !invite) return NextResponse.json({ error: 'Invite not found' }, { status: 404 })
-  if (invite.accepted_at) return NextResponse.json({ error: 'Invite already accepted' }, { status: 410 })
-  if (new Date(invite.expires_at) < new Date()) return NextResponse.json({ error: 'Invite has expired' }, { status: 410 })
+  if (invite && user.email && invite.email.toLowerCase() !== user.email.toLowerCase()) {
+    // Roll back the membership we just inserted
+    await supabaseAdmin
+      .from('workspace_members')
+      .delete()
+      .eq('workspace_id', result.workspace_id)
+      .eq('user_id', user.id)
 
-  // Check the user isn't already a member of this workspace
-  const { data: existing } = await supabaseAdmin
-    .from('workspace_members')
-    .select('id')
-    .eq('workspace_id', invite.workspace_id)
-    .eq('user_id', user.id)
-    .maybeSingle()
+    return NextResponse.json(
+      { error: `This invite was sent to ${invite.email}. Please sign in with that account.` },
+      { status: 403 }
+    )
+  }
 
-  if (existing) return NextResponse.json({ error: 'You are already a member of this workspace' }, { status: 400 })
-
-  // Add to workspace
-  const { error: joinError } = await supabaseAdmin
-    .from('workspace_members')
-    .insert({ workspace_id: invite.workspace_id, user_id: user.id, role: invite.role })
-
-  if (joinError) return NextResponse.json({ error: joinError.message }, { status: 500 })
-
-  // Mark invite as accepted
-  await supabaseAdmin
-    .from('workspace_invites')
-    .update({ accepted_at: new Date().toISOString() })
-    .eq('id', invite.id)
-
-  return NextResponse.json({ success: true, workspaceId: invite.workspace_id })
+  return NextResponse.json({ success: true, workspaceId: result.workspace_id })
 }

@@ -11,9 +11,10 @@ export async function PATCH(request, { params }) {
 
   const { id } = await params
   const { role } = await request.json()
-  if (!['admin', 'agent', 'observer'].includes(role)) return NextResponse.json({ error: 'Invalid role' }, { status: 400 })
+  if (!['admin', 'agent', 'observer'].includes(role)) {
+    return NextResponse.json({ error: 'Invalid role' }, { status: 400 })
+  }
 
-  // Prevent demoting yourself if you're the only owner
   const { data: target } = await supabaseAdmin
     .from('workspace_members')
     .select('user_id, role')
@@ -23,7 +24,20 @@ export async function PATCH(request, { params }) {
 
   if (!target) return NextResponse.json({ error: 'Member not found' }, { status: 404 })
   if (target.user_id === ctx.user.id) return NextResponse.json({ error: 'Cannot change your own role' }, { status: 400 })
-  if (target.role === 'owner') return NextResponse.json({ error: 'Cannot change the owner\'s role' }, { status: 400 })
+  if (target.role === 'owner') return NextResponse.json({ error: "Cannot change the owner's role" }, { status: 400 })
+
+  // Last-admin protection: if demoting an admin, ensure at least one other admin/owner remains
+  if (target.role === 'admin' && role !== 'admin') {
+    const { count } = await supabaseAdmin
+      .from('workspace_members')
+      .select('id', { count: 'exact', head: true })
+      .eq('workspace_id', ctx.workspaceId)
+      .in('role', ['owner', 'admin'])
+
+    if ((count ?? 0) <= 1) {
+      return NextResponse.json({ error: 'Cannot demote the last admin. Promote another member first.' }, { status: 400 })
+    }
+  }
 
   const { data: member, error } = await supabaseAdmin
     .from('workspace_members')
@@ -58,7 +72,6 @@ export async function DELETE(request, { params }) {
     return NextResponse.json({ success: true })
   }
 
-  // Guard: cannot remove the workspace owner
   const { data: target } = await supabaseAdmin
     .from('workspace_members')
     .select('user_id, role')

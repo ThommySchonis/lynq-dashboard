@@ -575,10 +575,10 @@ function WelcomeView({ passedTypes, onSelectModule }) {
 
 // ─── Module Overview View ─────────────────────────────────────────────────────
 
-function ModuleView({ mod, passedTypes, readMap, onSelectLesson, onStartQuiz, onBack }) {
+function ModuleView({ mod, passedTypes, readMap, onSelectLesson, onStartQuiz, onBack, isAdmin }) {
   const isDone      = passedTypes.includes(mod.examType)
   const readCount   = mod.sections.filter((_, i) => readMap[readKey(mod.id, i)]).length
-  const allRead     = readCount === mod.sections.length
+  const allRead     = readCount === mod.sections.length || isAdmin
   const pct         = Math.round((readCount / mod.sections.length) * 100)
   const r = 36, stroke = 5, circ = 2 * Math.PI * r, offset = circ - (pct / 100) * circ
 
@@ -677,11 +677,11 @@ function ModuleView({ mod, passedTypes, readMap, onSelectLesson, onStartQuiz, on
 
 // ─── Lesson Content View ──────────────────────────────────────────────────────
 
-function LessonView({ mod, lessonIdx, readMap, onMarkRead, onBack, onNext, onPrev, onStartQuiz, passedTypes, session }) {
+function LessonView({ mod, lessonIdx, readMap, onMarkRead, onBack, onNext, onPrev, onStartQuiz, passedTypes, session, isAdmin }) {
   const sec       = mod.sections[lessonIdx]
   const isRead    = !!readMap[readKey(mod.id, lessonIdx)]
   const isLast    = lessonIdx === mod.sections.length - 1
-  const allRead   = mod.sections.every((_, i) => readMap[readKey(mod.id, i)])
+  const allRead   = mod.sections.every((_, i) => readMap[readKey(mod.id, i)]) || isAdmin
   const isDone    = passedTypes.includes(mod.examType)
 
   // Quiz section — render inline quiz instead of text content
@@ -1206,6 +1206,7 @@ export default function AcademyPage() {
   const [session,      setSession]      = useState(null)
   const [userName,     setUserName]     = useState('')
   const [mounted,      setMounted]      = useState(false)
+  const isAdmin = session?.user?.email === 'info@lynqagency.com'
   const [passedTypes,  setPassedTypes]  = useState([])
   const [readMap,      setReadMap]      = useState({})
   const [view,         setView]         = useState('welcome')
@@ -1376,6 +1377,7 @@ export default function AcademyPage() {
                   onSelectLesson={handleSelectLesson}
                   onStartQuiz={() => setView('quiz')}
                   onBack={() => setView('welcome')}
+                  isAdmin={isAdmin}
                 />
               </motion.div>
             )}
@@ -1385,6 +1387,7 @@ export default function AcademyPage() {
                   mod={selectedModule} lessonIdx={selectedLesson} readMap={readMap}
                   passedTypes={passedTypes}
                   session={session}
+                  isAdmin={isAdmin}
                   onMarkRead={idx => markRead(selectedModule.id, idx)}
                   onBack={() => setView('module')}
                   onNext={() => { const next = selectedLesson + 1; if (next < selectedModule.sections.length) { setSelLesson(next) } else setView('module') }}

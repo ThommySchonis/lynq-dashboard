@@ -305,7 +305,7 @@ export default function HomePage() {
                 transition={{ duration: 0.6, delay: 0.1, ease: EASE }}
                 style={{ fontSize: 42, fontWeight: 800, color: '#0F0F10', letterSpacing: '-0.03em', lineHeight: 1.1, marginBottom: 12 }}
               >
-                Welcome back,{' '}
+                Hey there,{' '}
                 <span style={{ background: 'linear-gradient(135deg, #8B5CF6 0%, #6366F1 50%, #3B82F6 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text', display: 'inline-block' }}>
                   {userName || 'there'}
                 </span>

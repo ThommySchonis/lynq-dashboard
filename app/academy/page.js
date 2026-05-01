@@ -184,7 +184,7 @@ const CSS = `
   /* Scrollbars */
   .ac-scroll::-webkit-scrollbar { width: 3px; }
   .ac-scroll::-webkit-scrollbar-track { background: transparent; }
-  .ac-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+  .ac-scroll::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 2px; }
 
   /* Sidebar items */
   .ac-nav-item {
@@ -193,9 +193,9 @@ const CSS = `
     transition: all 0.15s ease; position: relative;
     border-left: 2px solid transparent;
   }
-  .ac-nav-item:hover { background: rgba(255,255,255,0.05); }
+  .ac-nav-item:hover { background: rgba(0,0,0,0.03); }
   .ac-nav-item.active {
-    background: rgba(139,92,246,0.12);
+    background: rgba(139,92,246,0.08);
     border-left-color: #8B5CF6;
   }
   .ac-nav-item.done { opacity: 0.55; }
@@ -204,54 +204,54 @@ const CSS = `
     display: flex; align-items: center; gap: 8px;
     padding: 6px 14px 6px 42px; border-radius: 6px; cursor: pointer;
     transition: all 0.12s ease; font-size: 12px;
-    color: rgba(255,255,255,0.4);
+    color: #9CA3AF;
   }
-  .ac-sub-item:hover { background: rgba(255,255,255,0.04); color: rgba(255,255,255,0.7); }
-  .ac-sub-item.active { color: #FFFFFF; }
-  .ac-sub-item.done { color: rgba(255,255,255,0.5); }
+  .ac-sub-item:hover { background: rgba(0,0,0,0.03); color: #374151; }
+  .ac-sub-item.active { color: #0F0F10; }
+  .ac-sub-item.done { color: #6B7280; }
 
   /* Lesson rows */
   .ac-lesson-row {
     display: flex; align-items: center; gap: 16px;
-    background: rgba(255,255,255,0.03);
-    border: 1px solid rgba(255,255,255,0.07);
+    background: #FFFFFF;
+    border: 1px solid rgba(0,0,0,0.07);
     border-radius: 10px; padding: 16px 20px; margin-bottom: 8px;
     cursor: pointer; transition: all 0.15s ease;
   }
   .ac-lesson-row:hover {
-    background: rgba(255,255,255,0.06);
-    border-color: rgba(255,255,255,0.12);
+    background: #F9F9FB;
+    border-color: rgba(139,92,246,0.2);
     transform: translateX(2px);
   }
 
   /* Quiz options */
   .ac-option {
-    background: rgba(255,255,255,0.04);
-    border: 1px solid rgba(255,255,255,0.09);
+    background: #FFFFFF;
+    border: 1px solid rgba(0,0,0,0.09);
     border-radius: 12px; padding: 16px 20px;
     display: flex; align-items: center; gap: 16px;
     cursor: pointer; transition: all 0.15s ease; margin-bottom: 10px;
   }
   .ac-option:hover {
-    background: rgba(255,255,255,0.07);
-    border-color: rgba(139,92,246,0.4);
+    background: #F9F9FB;
+    border-color: rgba(139,92,246,0.3);
   }
   .ac-option.selected {
-    background: rgba(139,92,246,0.10);
-    border-color: rgba(139,92,246,0.55);
+    background: rgba(139,92,246,0.06);
+    border-color: #8B5CF6;
   }
   .ac-option.correct {
-    background: rgba(16,185,129,0.10);
-    border-color: rgba(16,185,129,0.55);
+    background: rgba(16,185,129,0.06);
+    border-color: #10B981;
   }
   .ac-option.incorrect {
-    background: rgba(239,68,68,0.10);
-    border-color: rgba(239,68,68,0.45);
+    background: rgba(239,68,68,0.06);
+    border-color: #EF4444;
   }
 
   .ac-radio {
     width: 20px; height: 20px; border-radius: 50%;
-    border: 2px solid rgba(255,255,255,0.2);
+    border: 2px solid rgba(0,0,0,0.2);
     flex-shrink: 0; display: flex; align-items: center; justify-content: center;
     transition: all 0.15s;
   }
@@ -272,13 +272,13 @@ const CSS = `
   .ac-btn-primary:disabled { opacity: 0.35; cursor: not-allowed; transform: none; filter: none; }
 
   .ac-btn-secondary {
-    background: rgba(255,255,255,0.05);
-    border: 1px solid rgba(255,255,255,0.1);
-    color: rgba(255,255,255,0.6); border-radius: 20px;
+    background: rgba(0,0,0,0.04);
+    border: 1px solid rgba(0,0,0,0.09);
+    color: #6B7280; border-radius: 20px;
     padding: 10px 20px; font-size: 13px; font-weight: 500;
     cursor: pointer; transition: all 0.15s; font-family: inherit;
   }
-  .ac-btn-secondary:hover { background: rgba(255,255,255,0.09); color: rgba(255,255,255,0.85); }
+  .ac-btn-secondary:hover { background: rgba(0,0,0,0.07); color: #374151; }
 
   .ac-btn-green {
     background: linear-gradient(135deg, #10B981, #059669);
@@ -334,7 +334,7 @@ const CheckIcon = ({ size = 14, color = '#10B981' }) => (
 )
 
 const LockIcon = ({ size = 13 }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="rgba(0,0,0,0.3)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
     <path d="M7 11V7a5 5 0 0 1 10 0v4" />
   </svg>
@@ -363,23 +363,23 @@ function AcademySidebar({ passedTypes, readMap, selectedModule, selectedLesson, 
   const pct       = Math.round((completed / MODULES.length) * 100)
 
   return (
-    <div style={{ width: AC_SIDEBAR, minWidth: AC_SIDEBAR, height: '100vh', background: 'rgba(255,255,255,0.03)', borderRight: '1px solid rgba(255,255,255,0.06)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+    <div style={{ width: AC_SIDEBAR, minWidth: AC_SIDEBAR, height: '100vh', background: '#FFFFFF', borderRight: '1px solid rgba(0,0,0,0.07)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
 
       {/* Header */}
-      <div style={{ padding: '18px 16px 14px', borderBottom: '1px solid rgba(255,255,255,0.06)', flexShrink: 0 }}>
+      <div style={{ padding: '18px 16px 14px', borderBottom: '1px solid rgba(0,0,0,0.07)', flexShrink: 0 }}>
         <div onClick={onGoWelcome} style={{ display: 'flex', alignItems: 'center', gap: 9, cursor: 'pointer', marginBottom: 14 }}>
           <div style={{ width: 28, height: 28, borderRadius: 8, background: 'linear-gradient(135deg,#8B5CF6,#6366F1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: '0 2px 8px rgba(139,92,246,0.4)' }}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/>
             </svg>
           </div>
-          <span style={{ fontSize: 13, fontWeight: 600, color: '#FFFFFF' }}>Lynq Academy</span>
+          <span style={{ fontSize: 13, fontWeight: 600, color: '#0F0F10' }}>Lynq Academy</span>
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-          <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.38)' }}>{completed} of {MODULES.length} modules complete</span>
+          <span style={{ fontSize: 11, color: '#9CA3AF' }}>{completed} of {MODULES.length} modules complete</span>
           <span style={{ fontSize: 12, fontWeight: 600, color: '#8B5CF6' }}>{pct}%</span>
         </div>
-        <div style={{ height: 3, borderRadius: 10, background: 'rgba(255,255,255,0.1)', overflow: 'hidden' }}>
+        <div style={{ height: 3, borderRadius: 10, background: 'rgba(0,0,0,0.08)', overflow: 'hidden' }}>
           <div style={{ height: '100%', borderRadius: 10, background: 'linear-gradient(90deg,#8B5CF6,#6366F1)', width: `${pct}%`, transition: 'width 0.6s ease' }} />
         </div>
       </div>
@@ -403,15 +403,15 @@ function AcademySidebar({ passedTypes, readMap, selectedModule, selectedLesson, 
               >
                 {isDone
                   ? <CheckIcon size={16} color="#10B981" />
-                  : <div style={{ width: 22, height: 22, borderRadius: 6, background: isActive ? 'linear-gradient(135deg,#8B5CF6,#6366F1)' : 'rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                      <span style={{ fontSize: 10, fontWeight: 700, color: isActive ? '#FFF' : 'rgba(255,255,255,0.5)' }}>{mod.num}</span>
+                  : <div style={{ width: 22, height: 22, borderRadius: 6, background: isActive ? 'linear-gradient(135deg,#8B5CF6,#6366F1)' : 'rgba(0,0,0,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <span style={{ fontSize: 10, fontWeight: 700, color: isActive ? '#FFF' : '#9CA3AF' }}>{mod.num}</span>
                     </div>
                 }
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 13, fontWeight: isActive ? 600 : 400, color: isDone ? 'rgba(255,255,255,0.5)' : isActive ? '#FFFFFF' : 'rgba(255,255,255,0.7)', textDecoration: isDone ? 'line-through' : 'none', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  <div style={{ fontSize: 13, fontWeight: isActive ? 600 : 400, color: isDone ? '#9CA3AF' : isActive ? '#0F0F10' : '#6B7280', textDecoration: isDone ? 'line-through' : 'none', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                     {mod.label}
                   </div>
-                  <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', marginTop: 1 }}>{readCount}/{mod.sections.length} lessons</div>
+                  <div style={{ fontSize: 11, color: '#9CA3AF', marginTop: 1 }}>{readCount}/{mod.sections.length} lessons</div>
                 </div>
               </div>
 
@@ -431,7 +431,7 @@ function AcademySidebar({ passedTypes, readMap, selectedModule, selectedLesson, 
                       return (
                         <div key={si} className={`ac-sub-item ${isLessonActive ? 'active' : ''} ${isRead ? 'done' : ''}`}
                           onClick={() => onSelectLesson(si)}>
-                          <div style={{ width: 6, height: 6, borderRadius: '50%', background: isRead ? '#10B981' : isLessonActive ? '#6366F1' : 'rgba(255,255,255,0.2)', flexShrink: 0 }} />
+                          <div style={{ width: 6, height: 6, borderRadius: '50%', background: isRead ? '#10B981' : isLessonActive ? '#6366F1' : 'rgba(0,0,0,0.15)', flexShrink: 0 }} />
                           <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{sec.title}</span>
                         </div>
                       )
@@ -445,8 +445,8 @@ function AcademySidebar({ passedTypes, readMap, selectedModule, selectedLesson, 
       </div>
 
       {/* Footer */}
-      <div style={{ padding: '10px 16px', borderTop: '1px solid rgba(255,255,255,0.06)', flexShrink: 0 }}>
-        <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.25)', display: 'flex', alignItems: 'center', gap: 5, cursor: 'pointer' }}
+      <div style={{ padding: '10px 16px', borderTop: '1px solid rgba(0,0,0,0.07)', flexShrink: 0 }}>
+        <div style={{ fontSize: 11, color: '#9CA3AF', display: 'flex', alignItems: 'center', gap: 5, cursor: 'pointer' }}
           onClick={() => window.history.back()}>
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
           Lynq Platform
@@ -466,50 +466,50 @@ function Topbar({ view, selectedModule, selectedLesson, passedTypes, userName, o
     if (view === 'welcome') return null
     if (view === 'module') return (
       <>
-        <span onClick={onGoWelcome} style={{ cursor: 'pointer', color: 'rgba(255,255,255,0.4)', transition: 'color 0.1s' }}
-          onMouseEnter={e=>e.target.style.color='rgba(255,255,255,0.7)'}
-          onMouseLeave={e=>e.target.style.color='rgba(255,255,255,0.4)'}>Academy</span>
-        <span style={{ color: 'rgba(255,255,255,0.2)', margin: '0 6px' }}>›</span>
-        <span style={{ color: 'rgba(255,255,255,0.9)', fontWeight: 500 }}>{selectedModule?.label}</span>
+        <span onClick={onGoWelcome} style={{ cursor: 'pointer', color: '#6B7280', transition: 'color 0.1s' }}
+          onMouseEnter={e=>e.target.style.color='#374151'}
+          onMouseLeave={e=>e.target.style.color='#6B7280'}>Academy</span>
+        <span style={{ color: 'rgba(0,0,0,0.2)', margin: '0 6px' }}>›</span>
+        <span style={{ color: '#0F0F10', fontWeight: 500 }}>{selectedModule?.label}</span>
       </>
     )
     if (view === 'lesson') return (
       <>
-        <span onClick={onGoWelcome} style={{ cursor: 'pointer', color: 'rgba(255,255,255,0.4)' }}>Academy</span>
-        <span style={{ color: 'rgba(255,255,255,0.2)', margin: '0 6px' }}>›</span>
-        <span onClick={onGoModule} style={{ cursor: 'pointer', color: 'rgba(255,255,255,0.4)' }}>{selectedModule?.label}</span>
-        <span style={{ color: 'rgba(255,255,255,0.2)', margin: '0 6px' }}>›</span>
-        <span style={{ color: 'rgba(255,255,255,0.9)', fontWeight: 500 }}>{selectedModule?.sections[selectedLesson]?.title}</span>
+        <span onClick={onGoWelcome} style={{ cursor: 'pointer', color: '#6B7280' }}>Academy</span>
+        <span style={{ color: 'rgba(0,0,0,0.2)', margin: '0 6px' }}>›</span>
+        <span onClick={onGoModule} style={{ cursor: 'pointer', color: '#6B7280' }}>{selectedModule?.label}</span>
+        <span style={{ color: 'rgba(0,0,0,0.2)', margin: '0 6px' }}>›</span>
+        <span style={{ color: '#0F0F10', fontWeight: 500 }}>{selectedModule?.sections[selectedLesson]?.title}</span>
       </>
     )
     if (view === 'quiz') return (
       <>
-        <span onClick={onGoWelcome} style={{ cursor: 'pointer', color: 'rgba(255,255,255,0.4)' }}>Academy</span>
-        <span style={{ color: 'rgba(255,255,255,0.2)', margin: '0 6px' }}>›</span>
-        <span onClick={onGoModule} style={{ cursor: 'pointer', color: 'rgba(255,255,255,0.4)' }}>{selectedModule?.label}</span>
-        <span style={{ color: 'rgba(255,255,255,0.2)', margin: '0 6px' }}>›</span>
-        <span style={{ color: 'rgba(255,255,255,0.9)', fontWeight: 500 }}>Quiz</span>
+        <span onClick={onGoWelcome} style={{ cursor: 'pointer', color: '#6B7280' }}>Academy</span>
+        <span style={{ color: 'rgba(0,0,0,0.2)', margin: '0 6px' }}>›</span>
+        <span onClick={onGoModule} style={{ cursor: 'pointer', color: '#6B7280' }}>{selectedModule?.label}</span>
+        <span style={{ color: 'rgba(0,0,0,0.2)', margin: '0 6px' }}>›</span>
+        <span style={{ color: '#0F0F10', fontWeight: 500 }}>Quiz</span>
       </>
     )
     if (view === 'certificate') return (
       <>
-        <span onClick={onGoWelcome} style={{ cursor: 'pointer', color: 'rgba(255,255,255,0.4)' }}>Academy</span>
-        <span style={{ color: 'rgba(255,255,255,0.2)', margin: '0 6px' }}>›</span>
-        <span style={{ color: 'rgba(255,255,255,0.9)', fontWeight: 500 }}>Certificate</span>
+        <span onClick={onGoWelcome} style={{ cursor: 'pointer', color: '#6B7280' }}>Academy</span>
+        <span style={{ color: 'rgba(0,0,0,0.2)', margin: '0 6px' }}>›</span>
+        <span style={{ color: '#0F0F10', fontWeight: 500 }}>Certificate</span>
       </>
     )
     return null
   }
 
   return (
-    <div style={{ height: 52, background: 'rgba(255,255,255,0.03)', borderBottom: '1px solid rgba(255,255,255,0.06)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', display: 'flex', alignItems: 'center', padding: '0 24px', gap: 16, flexShrink: 0 }}>
+    <div style={{ height: 52, background: '#FFFFFF', borderBottom: '1px solid rgba(0,0,0,0.07)', display: 'flex', alignItems: 'center', padding: '0 24px', gap: 16, flexShrink: 0 }}>
       <div style={{ flex: 1, fontSize: 13, display: 'flex', alignItems: 'center' }}>{breadcrumb()}</div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
         <div style={{ background: 'rgba(139,92,246,0.15)', border: '1px solid rgba(139,92,246,0.3)', borderRadius: 20, padding: '4px 12px', fontSize: 12, fontWeight: 600, color: 'rgba(161,117,252,1)' }}>
           {pct}% complete
         </div>
         {userName && (
-          <div style={{ width: 30, height: 30, borderRadius: '50%', background: 'linear-gradient(135deg,#8B5CF6,#6366F1)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(255,255,255,0.15)', fontSize: 12, fontWeight: 700, color: '#fff', flexShrink: 0 }}>
+          <div style={{ width: 30, height: 30, borderRadius: '50%', background: 'linear-gradient(135deg,#8B5CF6,#6366F1)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(0,0,0,0.1)', fontSize: 12, fontWeight: 700, color: '#fff', flexShrink: 0 }}>
             {userName.charAt(0).toUpperCase()}
           </div>
         )}
@@ -528,11 +528,11 @@ function WelcomeView({ passedTypes, onSelectModule }) {
     <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden', padding: '40px 24px' }}>
       {/* Orbs */}
       <motion.div animate={{ x:[0,40,-30,0], y:[0,-50,30,0] }} transition={{ duration:20, repeat:Infinity, ease:'easeInOut' }}
-        style={{ position:'absolute', top:'-15%', right:'-5%', width:600, height:600, borderRadius:'50%', background:'radial-gradient(circle,rgba(139,92,246,0.22),transparent 70%)', filter:'blur(80px)', pointerEvents:'none' }} />
+        style={{ position:'absolute', top:'-15%', right:'-5%', width:600, height:600, borderRadius:'50%', background:'radial-gradient(circle,rgba(139,92,246,0.10),transparent 70%)', filter:'blur(80px)', pointerEvents:'none', opacity:0.5 }} />
       <motion.div animate={{ x:[0,-40,20,0], y:[0,40,-20,0] }} transition={{ duration:25, repeat:Infinity, ease:'easeInOut' }}
-        style={{ position:'absolute', bottom:'-10%', left:'-5%', width:550, height:550, borderRadius:'50%', background:'radial-gradient(circle,rgba(99,102,241,0.16),transparent 70%)', filter:'blur(80px)', pointerEvents:'none' }} />
+        style={{ position:'absolute', bottom:'-10%', left:'-5%', width:550, height:550, borderRadius:'50%', background:'radial-gradient(circle,rgba(99,102,241,0.08),transparent 70%)', filter:'blur(80px)', pointerEvents:'none', opacity:0.5 }} />
       <motion.div animate={{ x:[0,20,-15,0], y:[0,-20,15,0] }} transition={{ duration:18, repeat:Infinity, ease:'easeInOut' }}
-        style={{ position:'absolute', top:'30%', left:'20%', width:400, height:400, borderRadius:'50%', background:'radial-gradient(circle,rgba(236,72,153,0.08),transparent 70%)', filter:'blur(80px)', pointerEvents:'none' }} />
+        style={{ position:'absolute', top:'30%', left:'20%', width:400, height:400, borderRadius:'50%', background:'radial-gradient(circle,rgba(99,102,241,0.06),transparent 70%)', filter:'blur(80px)', pointerEvents:'none', opacity:0.5 }} />
 
       {/* Content */}
       <div style={{ position:'relative', zIndex:1, display:'flex', flexDirection:'column', alignItems:'center', textAlign:'center', maxWidth:620 }}>
@@ -549,19 +549,19 @@ function WelcomeView({ passedTypes, onSelectModule }) {
 
         {/* Badge */}
         <motion.div initial={{ opacity:0, y:16 }} animate={{ opacity:1, y:0 }} transition={{ delay:0.1, duration:0.5, ease:EASE }}
-          style={{ background:'rgba(139,92,246,0.15)', border:'1px solid rgba(139,92,246,0.3)', borderRadius:20, padding:'4px 14px', marginBottom:18, display:'inline-block' }}>
-          <span style={{ fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.1em', color:'rgba(161,117,252,1)' }}>Lynq Academy</span>
+          style={{ background:'rgba(139,92,246,0.08)', border:'1px solid rgba(139,92,246,0.15)', borderRadius:20, padding:'4px 14px', marginBottom:18, display:'inline-block' }}>
+          <span style={{ fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.1em', color:'#7C3AED' }}>Lynq Academy</span>
         </motion.div>
 
         {/* Title */}
         <motion.div initial={{ opacity:0, y:20 }} animate={{ opacity:1, y:0 }} transition={{ delay:0.15, duration:0.6, ease:EASE }}>
-          <h1 style={{ fontSize:'clamp(36px,5vw,52px)', fontWeight:800, letterSpacing:'-0.03em', lineHeight:1.08, color:'#FFFFFF', marginBottom:0 }}>Master E-commerce</h1>
+          <h1 style={{ fontSize:'clamp(36px,5vw,52px)', fontWeight:800, letterSpacing:'-0.03em', lineHeight:1.08, color:'#0F0F10', marginBottom:0 }}>Master E-commerce</h1>
           <h1 style={{ fontSize:'clamp(36px,5vw,52px)', fontWeight:800, letterSpacing:'-0.03em', lineHeight:1.08, background:'linear-gradient(135deg,#8B5CF6,#6366F1,#3B82F6)', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent', backgroundClip:'text', marginBottom:18 }}>Operations</h1>
         </motion.div>
 
         {/* Subtitle */}
         <motion.p initial={{ opacity:0, y:16 }} animate={{ opacity:1, y:0 }} transition={{ delay:0.22, duration:0.5, ease:EASE }}
-          style={{ fontSize:16, color:'rgba(255,255,255,0.5)', lineHeight:1.65, maxWidth:440, marginBottom:28 }}>
+          style={{ fontSize:16, color:'#6B7280', lineHeight:1.65, maxWidth:440, marginBottom:28 }}>
           Your complete training program for e-commerce customer service and backend operations.
         </motion.p>
 
@@ -573,9 +573,9 @@ function WelcomeView({ passedTypes, onSelectModule }) {
             { icon:<><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></>, text:'~4 Hours' },
             { icon:<><polyline points="20 6 9 17 4 12"/></>, text:'Certificate' },
           ].map(({ icon, text }, i) => (
-            <div key={i} style={{ background:'rgba(255,255,255,0.05)', border:'1px solid rgba(255,255,255,0.1)', backdropFilter:'blur(10px)', borderRadius:20, padding:'8px 16px', display:'flex', alignItems:'center', gap:7 }}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">{icon}</svg>
-              <span style={{ fontSize:13, fontWeight:500, color:'rgba(255,255,255,0.8)' }}>{text}</span>
+            <div key={i} style={{ background:'#F5F5F5', border:'1px solid rgba(0,0,0,0.08)', borderRadius:20, padding:'8px 16px', display:'flex', alignItems:'center', gap:7 }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">{icon}</svg>
+              <span style={{ fontSize:13, fontWeight:500, color:'#555555' }}>{text}</span>
             </div>
           ))}
         </motion.div>
@@ -595,12 +595,12 @@ function WelcomeView({ passedTypes, onSelectModule }) {
             return (
               <motion.div key={mod.id} initial={{ opacity:0, scale:0.9 }} animate={{ opacity:1, scale:1 }} transition={{ delay:0.55 + i*0.06 }}
                 onClick={() => onSelectModule(mod)}
-                style={{ background:'rgba(255,255,255,0.04)', border:`1px solid ${done ? mod.color + '40' : 'rgba(255,255,255,0.1)'}`, borderRadius:20, padding:'6px 14px', display:'flex', alignItems:'center', gap:7, cursor:'pointer', transition:'all 0.15s' }}
-                onMouseEnter={e=>e.currentTarget.style.background='rgba(255,255,255,0.08)'}
-                onMouseLeave={e=>e.currentTarget.style.background='rgba(255,255,255,0.04)'}
+                style={{ background:'#F5F5F5', border:`1px solid ${done ? mod.color + '40' : 'rgba(0,0,0,0.08)'}`, borderRadius:20, padding:'6px 14px', display:'flex', alignItems:'center', gap:7, cursor:'pointer', transition:'all 0.15s' }}
+                onMouseEnter={e=>e.currentTarget.style.background='rgba(0,0,0,0.06)'}
+                onMouseLeave={e=>e.currentTarget.style.background='#F5F5F5'}
               >
                 <div style={{ width:7, height:7, borderRadius:'50%', background:done ? '#10B981' : mod.color, flexShrink:0 }} />
-                <span style={{ fontSize:12, fontWeight:500, color:'rgba(255,255,255,0.65)' }}>{mod.label}</span>
+                <span style={{ fontSize:12, fontWeight:500, color:'#555555' }}>{mod.label}</span>
                 {done && <CheckIcon size={11} color="#10B981" />}
               </motion.div>
             )
@@ -631,25 +631,25 @@ function ModuleView({ mod, passedTypes, readMap, onSelectLesson, onStartQuiz, on
 
       {/* Module header */}
       <motion.div initial={{ opacity:0, y:20 }} animate={{ opacity:1, y:0 }} transition={{ duration:0.5, ease:EASE }}
-        style={{ background:`linear-gradient(135deg,${mod.color}22,${mod.color}0A)`, border:`1px solid ${mod.color}30`, backdropFilter:'blur(20px)', WebkitBackdropFilter:'blur(20px)', borderRadius:12, padding:'24px 28px', marginBottom:24, display:'flex', justifyContent:'space-between', alignItems:'center', gap:20 }}>
+        style={{ background:'rgba(139,92,246,0.05)', border:'1px solid rgba(139,92,246,0.12)', borderRadius:12, padding:'24px 28px', marginBottom:24, display:'flex', justifyContent:'space-between', alignItems:'center', gap:20 }}>
         <div>
           <div style={{ fontSize:10, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.1em', color:mod.color, marginBottom:10 }}>Module {mod.num}</div>
-          <h2 style={{ fontSize:24, fontWeight:700, color:'#FFFFFF', letterSpacing:'-0.025em', marginBottom:8 }}>{mod.label}</h2>
-          <p style={{ fontSize:14, color:'rgba(255,255,255,0.6)', lineHeight:1.6 }}>{mod.description}</p>
+          <h2 style={{ fontSize:24, fontWeight:700, color:'#0F0F10', letterSpacing:'-0.025em', marginBottom:8 }}>{mod.label}</h2>
+          <p style={{ fontSize:14, color:'#6B7280', lineHeight:1.6 }}>{mod.description}</p>
           <div style={{ display:'flex', gap:16, marginTop:14 }}>
-            <span style={{ fontSize:12, color:'rgba(255,255,255,0.4)' }}>{mod.sections.length} lessons</span>
+            <span style={{ fontSize:12, color:'#9CA3AF' }}>{mod.sections.length} lessons</span>
             {isDone && <span style={{ fontSize:12, color:'#10B981', fontWeight:600 }}>✓ Completed</span>}
           </div>
         </div>
         {/* Progress ring */}
         <div style={{ position:'relative', flexShrink:0 }}>
           <svg width={82} height={82} viewBox={`0 0 ${r*2+stroke} ${r*2+stroke}`} style={{ transform:'rotate(-90deg)' }}>
-            <circle cx={r+stroke/2} cy={r+stroke/2} r={r} fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth={stroke} />
+            <circle cx={r+stroke/2} cy={r+stroke/2} r={r} fill="none" stroke="rgba(0,0,0,0.08)" strokeWidth={stroke} />
             <circle cx={r+stroke/2} cy={r+stroke/2} r={r} fill="none" stroke={isDone ? '#10B981' : mod.color} strokeWidth={stroke}
               strokeLinecap="round" strokeDasharray={circ} strokeDashoffset={offset} style={{ transition:'stroke-dashoffset 0.8s ease' }} />
           </svg>
           <div style={{ position:'absolute', inset:0, display:'flex', alignItems:'center', justifyContent:'center', flexDirection:'column' }}>
-            <span style={{ fontSize:18, fontWeight:700, color:'#FFFFFF' }}>{isDone ? '✓' : pct + '%'}</span>
+            <span style={{ fontSize:18, fontWeight:700, color:'#0F0F10' }}>{isDone ? '✓' : pct + '%'}</span>
           </div>
         </div>
       </motion.div>
@@ -673,15 +673,15 @@ function ModuleView({ mod, passedTypes, readMap, onSelectLesson, onStartQuiz, on
                 }
               </div>
               <div style={{ flex:1, minWidth:0 }}>
-                <div style={{ fontSize:14, fontWeight:500, color:'#FFFFFF', marginBottom:3 }}>{sec.title}</div>
+                <div style={{ fontSize:14, fontWeight:500, color:'#0F0F10', marginBottom:3 }}>{sec.title}</div>
                 <div style={{ display:'flex', gap:8 }}>
-                  <span style={{ fontSize:11, fontWeight:600, color:'rgba(96,165,250,1)', background:'rgba(59,130,246,0.15)', border:'1px solid rgba(59,130,246,0.3)', borderRadius:4, padding:'1px 6px' }}>TEXT</span>
-                  {isRead && <span style={{ fontSize:11, color:'rgba(255,255,255,0.35)' }}>Completed</span>}
+                  <span style={{ fontSize:11, fontWeight:600, color:'rgba(96,165,250,1)', background:'rgba(59,130,246,0.10)', border:'1px solid rgba(59,130,246,0.2)', borderRadius:4, padding:'1px 6px' }}>TEXT</span>
+                  {isRead && <span style={{ fontSize:11, color:'#9CA3AF' }}>Completed</span>}
                 </div>
               </div>
               <div style={{ display:'flex', alignItems:'center', gap:8, flexShrink:0 }}>
-                <span style={{ fontSize:12, color:'rgba(255,255,255,0.35)' }}>{sec.mins} min</span>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                <span style={{ fontSize:12, color:'#9CA3AF' }}>{sec.mins} min</span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(0,0,0,0.2)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
               </div>
             </motion.div>
           )
@@ -702,16 +702,16 @@ function ModuleView({ mod, passedTypes, readMap, onSelectLesson, onStartQuiz, on
             }
           </div>
           <div style={{ flex:1 }}>
-            <div style={{ fontSize:14, fontWeight:500, color:'#FFFFFF', marginBottom:3 }}>Module Quiz</div>
+            <div style={{ fontSize:14, fontWeight:500, color:'#0F0F10', marginBottom:3 }}>Module Quiz</div>
             <div style={{ display:'flex', gap:8 }}>
-              <span style={{ fontSize:11, fontWeight:600, color:'rgba(161,117,252,1)', background:'rgba(139,92,246,0.15)', border:'1px solid rgba(139,92,246,0.3)', borderRadius:4, padding:'1px 6px' }}>QUIZ</span>
-              {!allRead && !isDone && <span style={{ fontSize:11, color:'rgba(255,255,255,0.3)' }}>Read all lessons to unlock</span>}
+              <span style={{ fontSize:11, fontWeight:600, color:'rgba(161,117,252,1)', background:'rgba(139,92,246,0.10)', border:'1px solid rgba(139,92,246,0.2)', borderRadius:4, padding:'1px 6px' }}>QUIZ</span>
+              {!allRead && !isDone && <span style={{ fontSize:11, color:'#9CA3AF' }}>Read all lessons to unlock</span>}
               {isDone && <span style={{ fontSize:11, color:'#10B981' }}>Passed</span>}
             </div>
           </div>
           <div style={{ display:'flex', alignItems:'center', gap:8, flexShrink:0 }}>
             {!allRead && !isDone && <LockIcon />}
-            {(allRead || isDone) && <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>}
+            {(allRead || isDone) && <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(0,0,0,0.2)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>}
           </div>
         </motion.div>
       </div>
@@ -734,17 +734,17 @@ function LessonView({ mod, lessonIdx, readMap, onMarkRead, onBack, onNext, onPre
       {/* Progress bar */}
       <motion.div initial={{ opacity:0 }} animate={{ opacity:1 }} transition={{ duration:0.4 }}>
         <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:10 }}>
-          <span style={{ fontSize:12, color:'rgba(255,255,255,0.35)' }}>Lesson {lessonIdx + 1} of {mod.sections.length}</span>
-          <span style={{ fontSize:12, color:'rgba(255,255,255,0.35)' }}>{mod.label}</span>
+          <span style={{ fontSize:12, color:'#9CA3AF' }}>Lesson {lessonIdx + 1} of {mod.sections.length}</span>
+          <span style={{ fontSize:12, color:'#9CA3AF' }}>{mod.label}</span>
         </div>
-        <div style={{ height:3, borderRadius:10, background:'rgba(255,255,255,0.1)', marginBottom:28, overflow:'hidden' }}>
+        <div style={{ height:3, borderRadius:10, background:'rgba(0,0,0,0.08)', marginBottom:28, overflow:'hidden' }}>
           <div style={{ height:'100%', borderRadius:10, background:'linear-gradient(90deg,#3B82F6,#6366F1)', width:`${((lessonIdx+1)/mod.sections.length)*100}%`, transition:'width 0.4s ease' }} />
         </div>
       </motion.div>
 
       {/* Title */}
       <motion.div initial={{ opacity:0, y:16 }} animate={{ opacity:1, y:0 }} transition={{ duration:0.5, ease:EASE }}>
-        <h2 style={{ fontSize:28, fontWeight:700, color:'#FFFFFF', letterSpacing:'-0.02em', marginBottom:24, lineHeight:1.25 }}>{sec.title}</h2>
+        <h2 style={{ fontSize:28, fontWeight:700, color:'#0F0F10', letterSpacing:'-0.02em', marginBottom:24, lineHeight:1.25 }}>{sec.title}</h2>
       </motion.div>
 
       {/* Content */}
@@ -753,27 +753,27 @@ function LessonView({ mod, lessonIdx, readMap, onMarkRead, onBack, onNext, onPre
           para.match(/^\d+\./) || para.match(/^P[1-3]/)
             ? <div key={pi} style={{ display:'flex', gap:10, marginBottom:10 }}>
                 <div style={{ width:6, height:6, borderRadius:'50%', background:'#6366F1', flexShrink:0, marginTop:9 }} />
-                <p style={{ fontSize:16, color:'rgba(255,255,255,0.78)', lineHeight:1.8 }}>{para}</p>
+                <p style={{ fontSize:16, color:'#374151', lineHeight:1.8 }}>{para}</p>
               </div>
-            : <p key={pi} style={{ fontSize:16, color:'rgba(255,255,255,0.78)', lineHeight:1.8, marginBottom:16 }}>{para}</p>
+            : <p key={pi} style={{ fontSize:16, color:'#374151', lineHeight:1.8, marginBottom:16 }}>{para}</p>
         ))}
 
         {/* Tips */}
         {sec.tips?.map((tip, ti) => (
-          <div key={ti} style={{ background:'rgba(99,102,241,0.08)', borderLeft:'3px solid #6366F1', borderRadius:'0 8px 8px 0', padding:'14px 18px', marginBottom:12 }}>
-            <span style={{ fontSize:11, fontWeight:700, color:'#818CF8', marginRight:8, textTransform:'uppercase', letterSpacing:'0.06em' }}>TIP</span>
-            <span style={{ fontSize:15, color:'rgba(255,255,255,0.78)' }}>{tip}</span>
+          <div key={ti} style={{ background:'rgba(99,102,241,0.05)', borderLeft:'3px solid #6366F1', borderRadius:'0 8px 8px 0', padding:'14px 18px', marginBottom:12 }}>
+            <span style={{ fontSize:11, fontWeight:700, color:'#6366F1', marginRight:8, textTransform:'uppercase', letterSpacing:'0.06em' }}>TIP</span>
+            <span style={{ fontSize:15, color:'#374151' }}>{tip}</span>
           </div>
         ))}
 
         {/* Takeaways */}
         {sec.takeaways && (
-          <div style={{ background:'rgba(16,185,129,0.08)', border:'1px solid rgba(16,185,129,0.2)', borderRadius:10, padding:'18px 20px', marginBottom:20 }}>
+          <div style={{ background:'rgba(16,185,129,0.06)', border:'1px solid rgba(16,185,129,0.15)', borderRadius:10, padding:'18px 20px', marginBottom:20 }}>
             <div style={{ fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.07em', color:'#10B981', marginBottom:12 }}>Key Takeaways</div>
             {sec.takeaways.map((t, ti) => (
               <div key={ti} style={{ display:'flex', gap:10, marginBottom:8 }}>
                 <CheckIcon size={13} color="#10B981" />
-                <span style={{ fontSize:14, color:'rgba(255,255,255,0.75)', lineHeight:1.55 }}>{t}</span>
+                <span style={{ fontSize:14, color:'#374151', lineHeight:1.55 }}>{t}</span>
               </div>
             ))}
           </div>
@@ -781,9 +781,9 @@ function LessonView({ mod, lessonIdx, readMap, onMarkRead, onBack, onNext, onPre
 
         {/* Example */}
         {sec.example && (
-          <div style={{ background:'rgba(255,255,255,0.05)', border:'1px solid rgba(255,255,255,0.1)', borderRadius:10, padding:18, marginBottom:20, backdropFilter:'blur(10px)', WebkitBackdropFilter:'blur(10px)' }}>
-            <div style={{ fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.07em', color:'rgba(255,255,255,0.4)', marginBottom:10 }}>Example</div>
-            <pre style={{ fontSize:13, color:'rgba(255,255,255,0.72)', lineHeight:1.7, whiteSpace:'pre-wrap', fontFamily:'inherit' }}>{sec.example}</pre>
+          <div style={{ background:'rgba(0,0,0,0.03)', border:'1px solid rgba(0,0,0,0.08)', borderRadius:10, padding:18, marginBottom:20 }}>
+            <div style={{ fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.07em', color:'#9CA3AF', marginBottom:10 }}>Example</div>
+            <pre style={{ fontSize:13, color:'#374151', lineHeight:1.7, whiteSpace:'pre-wrap', fontFamily:'inherit' }}>{sec.example}</pre>
           </div>
         )}
       </motion.div>
@@ -853,8 +853,8 @@ function QuizView({ mod, session, onBack, onComplete }) {
   const LoadSpinner = () => (
     <div style={{ display:'flex', justifyContent:'center', alignItems:'center', minHeight:400 }}>
       <div style={{ textAlign:'center' }}>
-        <div style={{ width:32, height:32, border:'3px solid rgba(255,255,255,0.1)', borderTop:'3px solid #8B5CF6', borderRadius:'50%', animation:'ac-spin .7s linear infinite', margin:'0 auto 12px' }} />
-        <div style={{ fontSize:13, color:'rgba(255,255,255,0.4)' }}>Loading questions…</div>
+        <div style={{ width:32, height:32, border:'3px solid rgba(0,0,0,0.08)', borderTop:'3px solid #8B5CF6', borderRadius:'50%', animation:'ac-spin .7s linear infinite', margin:'0 auto 12px' }} />
+        <div style={{ fontSize:13, color:'#9CA3AF' }}>Loading questions…</div>
       </div>
     </div>
   )
@@ -869,14 +869,14 @@ function QuizView({ mod, session, onBack, onComplete }) {
   if (!canAttempt) return (
     <div style={{ padding:40, textAlign:'center', maxWidth:500, margin:'80px auto' }}>
       <div style={{ fontSize:36, marginBottom:16 }}>⛔</div>
-      <div style={{ fontSize:20, fontWeight:700, color:'#FFFFFF', marginBottom:8 }}>Maximum attempts reached</div>
-      <div style={{ fontSize:14, color:'rgba(255,255,255,0.5)', marginBottom:24 }}>You have used all 3 attempts for this module's exam.</div>
+      <div style={{ fontSize:20, fontWeight:700, color:'#0F0F10', marginBottom:8 }}>Maximum attempts reached</div>
+      <div style={{ fontSize:14, color:'#6B7280', marginBottom:24 }}>You have used all 3 attempts for this module's exam.</div>
       <button className="ac-btn-secondary" onClick={onBack}>← Back to module</button>
     </div>
   )
   if (questions.length === 0) return (
     <div style={{ padding:40, textAlign:'center', maxWidth:500, margin:'80px auto' }}>
-      <div style={{ fontSize:14, color:'rgba(255,255,255,0.5)', marginBottom:16 }}>No questions available for this module yet.</div>
+      <div style={{ fontSize:14, color:'#6B7280', marginBottom:16 }}>No questions available for this module yet.</div>
       <button className="ac-btn-secondary" onClick={onBack}>← Back</button>
     </div>
   )
@@ -894,7 +894,7 @@ function QuizView({ mod, session, onBack, onComplete }) {
           {/* Score ring */}
           <div style={{ position:'relative', display:'inline-flex', alignItems:'center', justifyContent:'center', marginBottom:24 }}>
             <svg width="158" height="158" viewBox="0 0 158 158" style={{ transform:'rotate(-90deg)' }}>
-              <circle cx="79" cy="79" r={ringR} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth={rStroke} />
+              <circle cx="79" cy="79" r={ringR} fill="none" stroke="rgba(0,0,0,0.08)" strokeWidth={rStroke} />
               <motion.circle cx="79" cy="79" r={ringR} fill="none"
                 stroke={passed ? '#10B981' : '#EF4444'} strokeWidth={rStroke}
                 strokeLinecap="round" strokeDasharray={rCirc}
@@ -904,15 +904,15 @@ function QuizView({ mod, session, onBack, onComplete }) {
               />
             </svg>
             <div style={{ position:'absolute', textAlign:'center' }}>
-              <div style={{ fontSize:36, fontWeight:800, color:'#FFFFFF' }}>{Math.round(pct)}%</div>
-              <div style={{ fontSize:11, color:'rgba(255,255,255,0.4)' }}>score</div>
+              <div style={{ fontSize:36, fontWeight:800, color:'#0F0F10' }}>{Math.round(pct)}%</div>
+              <div style={{ fontSize:11, color:'#9CA3AF' }}>score</div>
             </div>
           </div>
 
-          <h2 style={{ fontSize:24, fontWeight:700, color:'#FFFFFF', marginBottom:8, letterSpacing:'-0.02em' }}>
+          <h2 style={{ fontSize:24, fontWeight:700, color:'#0F0F10', marginBottom:8, letterSpacing:'-0.02em' }}>
             {passed ? 'Excellent work! 🎉' : 'Keep practicing'}
           </h2>
-          <p style={{ fontSize:15, color:'rgba(255,255,255,0.55)', marginBottom:28, lineHeight:1.6 }}>
+          <p style={{ fontSize:15, color:'#6B7280', marginBottom:28, lineHeight:1.6 }}>
             {passed
               ? `You passed with ${Math.round(pct)}%. ${mod.label} is now complete!`
               : `You scored ${Math.round(pct)}%. You need ${PASS_THRESHOLD}% to pass. Review the lessons and try again.`}
@@ -925,11 +925,11 @@ function QuizView({ mod, session, onBack, onComplete }) {
               const correctIdx = typeof q.correct_answer_index === 'number' ? q.correct_answer_index : null
               const isCorrect  = userIdx !== null && userIdx === correctIdx
               return (
-                <div key={q.id} style={{ background:'rgba(255,255,255,0.03)', border:`1px solid rgba(255,255,255,0.06)`, borderRadius:8, padding:'12px 16px', marginBottom:6, display:'flex', alignItems:'center', gap:12 }}>
+                <div key={q.id} style={{ background:'rgba(0,0,0,0.02)', border:`1px solid rgba(0,0,0,0.06)`, borderRadius:8, padding:'12px 16px', marginBottom:6, display:'flex', alignItems:'center', gap:12 }}>
                   <div style={{ width:20, height:20, borderRadius:'50%', background:isCorrect ? 'rgba(16,185,129,0.2)' : 'rgba(239,68,68,0.2)', border:`1px solid ${isCorrect ? 'rgba(16,185,129,0.4)' : 'rgba(239,68,68,0.4)'}`, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
                     {isCorrect ? <CheckIcon size={10} color="#10B981" /> : <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#EF4444" strokeWidth="3" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>}
                   </div>
-                  <span style={{ fontSize:13, color:'rgba(255,255,255,0.7)', flex:1 }}>Q{qi+1}: {q.question || q.text}</span>
+                  <span style={{ fontSize:13, color:'#374151', flex:1 }}>Q{qi+1}: {q.question || q.text}</span>
                   <span style={{ fontSize:11, fontWeight:600, color:isCorrect ? '#10B981' : '#EF4444' }}>{isCorrect ? 'Correct' : 'Wrong'}</span>
                 </div>
               )
@@ -957,10 +957,10 @@ function QuizView({ mod, session, onBack, onComplete }) {
     <div style={{ maxWidth:680, margin:'0 auto', padding:'40px 24px' }}>
       {/* Progress */}
       <div style={{ marginBottom:28 }}>
-        <div style={{ fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.1em', color:'rgba(255,255,255,0.4)', marginBottom:10 }}>
+        <div style={{ fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.1em', color:'#9CA3AF', marginBottom:10 }}>
           Question {current+1} of {questions.length}
         </div>
-        <div style={{ height:3, borderRadius:10, background:'rgba(255,255,255,0.1)', overflow:'hidden' }}>
+        <div style={{ height:3, borderRadius:10, background:'rgba(0,0,0,0.08)', overflow:'hidden' }}>
           <motion.div style={{ height:'100%', borderRadius:10, background:'linear-gradient(90deg,#8B5CF6,#6366F1)' }}
             animate={{ width:`${((current+1)/questions.length)*100}%` }} transition={{ duration:0.3 }} />
         </div>
@@ -969,7 +969,7 @@ function QuizView({ mod, session, onBack, onComplete }) {
       {/* Question */}
       <AnimatePresence mode="wait">
         <motion.div key={current} initial={{ opacity:0, x:20 }} animate={{ opacity:1, x:0 }} exit={{ opacity:0, x:-20 }} transition={{ duration:0.25, ease:EASE }}>
-          <h3 style={{ fontSize:22, fontWeight:700, color:'#FFFFFF', letterSpacing:'-0.01em', marginBottom:24, lineHeight:1.4 }}>{q?.question || q?.text}</h3>
+          <h3 style={{ fontSize:22, fontWeight:700, color:'#0F0F10', letterSpacing:'-0.01em', marginBottom:24, lineHeight:1.4 }}>{q?.question || q?.text}</h3>
 
           {opts.map((opt, idx) => (
             <motion.div key={idx}
@@ -981,7 +981,7 @@ function QuizView({ mod, session, onBack, onComplete }) {
               <div className="ac-radio">
                 {answers[q.id] === idx && <div style={{ width:8, height:8, borderRadius:'50%', background:'#FFFFFF' }} />}
               </div>
-              <span style={{ fontSize:15, color:'rgba(255,255,255,0.85)', flex:1 }}>{opt}</span>
+              <span style={{ fontSize:15, color:'#0F0F10', flex:1 }}>{opt}</span>
             </motion.div>
           ))}
         </motion.div>
@@ -1011,10 +1011,10 @@ function CertificateView({ userName, passedTypes, onBack }) {
       <button className="ac-btn-secondary" onClick={onBack} style={{ marginBottom:24, fontSize:12 }}>← Academy</button>
 
       <motion.div initial={{ opacity:0, scale:0.95 }} animate={{ opacity:1, scale:1 }} transition={{ duration:0.5, ease:EASE }}>
-        <div style={{ background:'rgba(255,255,255,0.04)', border:'1px solid rgba(255,255,255,0.1)', backdropFilter:'blur(20px)', WebkitBackdropFilter:'blur(20px)', borderRadius:16, padding:48, maxWidth:720, margin:'0 auto', textAlign:'center', position:'relative', overflow:'hidden' }}>
+        <div style={{ background:'#FFFFFF', border:'1px solid rgba(0,0,0,0.07)', borderRadius:16, padding:48, maxWidth:720, margin:'0 auto', textAlign:'center', position:'relative', overflow:'hidden' }}>
 
           {/* Decorative */}
-          <div style={{ position:'absolute', inset:0, backgroundImage:'radial-gradient(circle,rgba(255,255,255,0.06) 1px,transparent 1px)', backgroundSize:'28px 28px', opacity:0.4, pointerEvents:'none' }} />
+          <div style={{ position:'absolute', inset:0, backgroundImage:'radial-gradient(circle,rgba(0,0,0,0.06) 1px,transparent 1px)', backgroundSize:'28px 28px', opacity:0.4, pointerEvents:'none' }} />
           <div style={{ position:'absolute', top:-60, left:-60, width:200, height:200, borderRadius:'50%', background:'radial-gradient(circle,rgba(139,92,246,0.18),transparent 70%)', pointerEvents:'none' }} />
           <div style={{ position:'absolute', bottom:-60, right:-60, width:200, height:200, borderRadius:'50%', background:'radial-gradient(circle,rgba(99,102,241,0.14),transparent 70%)', pointerEvents:'none' }} />
 
@@ -1024,48 +1024,48 @@ function CertificateView({ userName, passedTypes, onBack }) {
               <div style={{ width:26, height:26, borderRadius:7, background:'linear-gradient(135deg,#A175FC,#7C3AED)', display:'flex', alignItems:'center', justifyContent:'center' }}>
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
               </div>
-              <span style={{ fontSize:14, color:'rgba(255,255,255,0.6)', fontWeight:500 }}>Lynq & Flow Academy</span>
+              <span style={{ fontSize:14, color:'#6B7280', fontWeight:500 }}>Lynq & Flow Academy</span>
             </div>
 
-            <div style={{ fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.12em', color:'rgba(255,255,255,0.38)', marginBottom:16 }}>Certificate of Completion</div>
+            <div style={{ fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.12em', color:'#9CA3AF', marginBottom:16 }}>Certificate of Completion</div>
 
-            <div style={{ fontSize:36, fontWeight:800, background:'linear-gradient(135deg,#FFFFFF,rgba(255,255,255,0.7))', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent', backgroundClip:'text', letterSpacing:'-0.025em', marginBottom:8 }}>
+            <div style={{ fontSize:36, fontWeight:800, color:'#0F0F10', letterSpacing:'-0.025em', marginBottom:8 }}>
               {userName || 'Student'}
             </div>
-            <div style={{ fontSize:14, color:'rgba(255,255,255,0.5)', marginBottom:6 }}>has successfully completed the</div>
+            <div style={{ fontSize:14, color:'#6B7280', marginBottom:6 }}>has successfully completed the</div>
             <div style={{ fontSize:18, fontWeight:600, background:'linear-gradient(135deg,#8B5CF6,#6366F1)', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent', backgroundClip:'text', marginBottom:28 }}>
               E-commerce Customer Service Mastery
             </div>
 
-            <div style={{ height:1, background:'rgba(255,255,255,0.08)', margin:'0 0 20px' }} />
+            <div style={{ height:1, background:'rgba(0,0,0,0.07)', margin:'0 0 20px' }} />
 
-            <div style={{ fontSize:13, color:'rgba(255,255,255,0.38)', marginBottom:20 }}>Completed on {today}</div>
+            <div style={{ fontSize:13, color:'#9CA3AF', marginBottom:20 }}>Completed on {today}</div>
 
             {/* Module badges */}
             <div style={{ display:'flex', flexWrap:'wrap', gap:7, justifyContent:'center', marginBottom:28 }}>
               {MODULES.map(mod => {
                 const done = passedTypes.includes(mod.examType)
                 return (
-                  <div key={mod.id} style={{ background:'rgba(255,255,255,0.06)', border:`1px solid ${done ? mod.color + '35' : 'rgba(255,255,255,0.08)'}`, borderRadius:20, padding:'4px 12px', display:'flex', alignItems:'center', gap:6 }}>
-                    <div style={{ width:6, height:6, borderRadius:'50%', background: done ? mod.color : 'rgba(255,255,255,0.2)' }} />
-                    <span style={{ fontSize:11, fontWeight:500, color:done ? 'rgba(255,255,255,0.7)' : 'rgba(255,255,255,0.3)' }}>{mod.label}</span>
+                  <div key={mod.id} style={{ background:done ? 'rgba(0,0,0,0.03)' : 'rgba(0,0,0,0.03)', border:`1px solid ${done ? mod.color + '40' : 'rgba(0,0,0,0.08)'}`, borderRadius:20, padding:'4px 12px', display:'flex', alignItems:'center', gap:6 }}>
+                    <div style={{ width:6, height:6, borderRadius:'50%', background: done ? mod.color : 'rgba(0,0,0,0.15)' }} />
+                    <span style={{ fontSize:11, fontWeight:500, color:done ? '#374151' : '#9CA3AF' }}>{mod.label}</span>
                     {done && <CheckIcon size={10} color="#10B981" />}
                   </div>
                 )
               })}
             </div>
 
-            <div style={{ height:1, background:'rgba(255,255,255,0.08)', margin:'0 0 24px' }} />
+            <div style={{ height:1, background:'rgba(0,0,0,0.07)', margin:'0 0 24px' }} />
 
             {/* Signature */}
             <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-end', marginBottom:32 }}>
               <div style={{ textAlign:'left' }}>
-                <div style={{ fontSize:12, color:'rgba(255,255,255,0.35)', marginBottom:4 }}>Certified by</div>
-                <div style={{ fontSize:15, fontWeight:600, color:'rgba(255,255,255,0.9)' }}>Lynq & Flow</div>
+                <div style={{ fontSize:12, color:'#9CA3AF', marginBottom:4 }}>Certified by</div>
+                <div style={{ fontSize:15, fontWeight:600, color:'#0F0F10' }}>Lynq & Flow</div>
               </div>
               <div style={{ textAlign:'right' }}>
-                <div style={{ fontSize:12, color:'rgba(255,255,255,0.35)', marginBottom:4 }}>Date</div>
-                <div style={{ fontSize:14, color:'rgba(255,255,255,0.7)' }}>{today}</div>
+                <div style={{ fontSize:12, color:'#9CA3AF', marginBottom:4 }}>Date</div>
+                <div style={{ fontSize:14, color:'#374151' }}>{today}</div>
               </div>
             </div>
 
@@ -1171,7 +1171,7 @@ export default function AcademyPage() {
   const allDone = MODULES.every(m => passedTypes.includes(m.examType))
 
   return (
-    <div className="ac" style={{ display:'flex', height:'100vh', background:'#0A0B14', marginLeft:SIDEBAR_W, overflow:'hidden' }}>
+    <div className="ac" style={{ display:'flex', height:'100vh', background:'#F9F9FB', marginLeft:SIDEBAR_W, overflow:'hidden' }}>
       <style>{CSS}</style>
       <Sidebar />
 
@@ -1252,10 +1252,10 @@ export default function AcademyPage() {
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8B5CF6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/></svg>
             </div>
             <div style={{ flex:1 }}>
-              <div style={{ fontSize:13, fontWeight:600, color:'#FFFFFF' }}>🎉 All modules completed!</div>
-              <div style={{ fontSize:12, color:'rgba(255,255,255,0.5)', marginTop:2 }}>Click to view and download your certificate</div>
+              <div style={{ fontSize:13, fontWeight:600, color:'#0F0F10' }}>🎉 All modules completed!</div>
+              <div style={{ fontSize:12, color:'#6B7280', marginTop:2 }}>Click to view and download your certificate</div>
             </div>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(0,0,0,0.3)" strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>
           </motion.div>
         )}
       </div>

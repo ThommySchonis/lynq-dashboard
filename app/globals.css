@@ -68,6 +68,69 @@
   --info:    #555555;
 }
 
+/* ── GLASS DESIGN SYSTEM ────────────────────────────────────────────────── */
+:root {
+  /* Glass surfaces */
+  --glass-bg:           rgba(255,255,255,0.70);
+  --glass-bg-strong:    rgba(255,255,255,0.85);
+  --glass-bg-subtle:    rgba(255,255,255,0.50);
+  --glass-border:       rgba(255,255,255,0.60);
+  --glass-border-subtle:rgba(0,0,0,0.07);
+  --glass-blur:         blur(16px);
+  --glass-blur-strong:  blur(24px);
+  --glass-shadow:       0 4px 24px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --glass-shadow-hover: 0 8px 32px rgba(0,0,0,0.10), 0 2px 4px rgba(0,0,0,0.06);
+
+  /* Premium gradients */
+  --gradient-purple: linear-gradient(135deg,#8B5CF6,#6366F1);
+  --gradient-blue:   linear-gradient(135deg,#3B82F6,#6366F1);
+  --gradient-green:  linear-gradient(135deg,#10B981,#059669);
+  --gradient-amber:  linear-gradient(135deg,#F59E0B,#D97706);
+  --gradient-red:    linear-gradient(135deg,#EF4444,#DC2626);
+
+  /* Glow effects */
+  --glow-purple: 0 0 20px rgba(139,92,246,0.3);
+  --glow-blue:   0 0 20px rgba(99,102,241,0.3);
+  --glow-green:  0 0 20px rgba(16,185,129,0.3);
+}
+
+/* Glass utility classes */
+.glass-card {
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  transition: box-shadow 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+}
+.glass-card:hover {
+  box-shadow: var(--glass-shadow-hover);
+}
+.glass-card-strong {
+  background: var(--glass-bg-strong);
+  backdrop-filter: var(--glass-blur-strong);
+  -webkit-backdrop-filter: var(--glass-blur-strong);
+  border: 1px solid rgba(255,255,255,0.7);
+  box-shadow: var(--glass-shadow);
+}
+.premium-input {
+  background: rgba(255,255,255,0.8);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(0,0,0,0.10);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 13px;
+  color: #111;
+  transition: all 0.15s ease;
+}
+.premium-input:focus {
+  background: rgba(255,255,255,0.95);
+  border-color: rgba(139,92,246,0.4);
+  box-shadow: 0 0 0 3px rgba(139,92,246,0.08);
+  outline: none;
+}
+
 /* ── Dark mode override ───────────────────────────────────────────────────── */
 [data-theme="dark"] {
   --bg-page:      #1C0F36;

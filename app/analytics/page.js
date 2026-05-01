@@ -226,28 +226,34 @@ const CSS = `
   .date-inp::-webkit-calendar-picker-indicator{cursor:pointer}
 
   .kpi-card{
-    background:#FFFFFF;
-    border:1px solid rgba(0,0,0,0.07);
+    background:rgba(255,255,255,0.80);
+    backdrop-filter:blur(12px);
+    -webkit-backdrop-filter:blur(12px);
+    border:1px solid rgba(255,255,255,0.65);
     border-radius:10px;
     padding:18px 20px;
     position:relative;overflow:hidden;
-    transition:border-color .2s ease,box-shadow .2s ease;
+    box-shadow:0 2px 16px rgba(0,0,0,0.05);
+    transition:border-color .2s ease,box-shadow .2s ease,transform .2s ease;
     cursor:default;
   }
-  .kpi-card:hover{border-color:rgba(0,0,0,0.12);box-shadow:0 4px 16px rgba(0,0,0,0.04);transform:translateY(-1px)}
+  .kpi-card:hover{border-color:rgba(255,255,255,0.9);box-shadow:0 8px 32px rgba(0,0,0,0.08);transform:translateY(-1px)}
 
   .panel{
-    background:#FFFFFF;
-    border:1px solid rgba(0,0,0,0.07);
+    background:rgba(255,255,255,0.80);
+    backdrop-filter:blur(12px);
+    -webkit-backdrop-filter:blur(12px);
+    border:1px solid rgba(255,255,255,0.65);
     border-radius:12px;
     padding:22px 24px;
     margin-bottom:16px;
+    box-shadow:0 2px 12px rgba(0,0,0,0.04);
     transition:box-shadow .2s ease;
   }
-  .panel:hover{box-shadow:0 4px 20px rgba(0,0,0,0.04)}
+  .panel:hover{box-shadow:0 8px 28px rgba(0,0,0,0.07)}
 
-  .action-card{border-radius:8px;background:#FFFFFF;border:1px solid rgba(0,0,0,0.07);padding:12px 14px;margin-bottom:6px;cursor:pointer;transition:all 0.15s ease}
-  .action-card:hover{border-color:rgba(0,0,0,0.12);box-shadow:0 2px 12px rgba(0,0,0,0.05);transform:translateY(-1px)}
+  .action-card{border-radius:8px;background:rgba(255,255,255,0.75);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,0.6);padding:12px 14px;margin-bottom:6px;cursor:pointer;transition:all 0.15s ease;box-shadow:0 1px 6px rgba(0,0,0,0.04)}
+  .action-card:hover{background:rgba(255,255,255,0.92);border-color:rgba(255,255,255,0.85);box-shadow:0 4px 16px rgba(0,0,0,0.07);transform:translateY(-1px)}
   .action-card.done-card{opacity:.45}
 
   .tab-btn{padding:4px 14px;border-radius:100px;font-size:11.5px;font-weight:600;cursor:pointer;border:1px solid transparent;font-family:inherit;transition:all .15s ease}

@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { motion } from 'framer-motion'
 import { supabase } from '../../lib/supabase'
 import Sidebar from '../components/Sidebar'
 
@@ -267,15 +266,12 @@ function WorkloadKPIs({ data, loaded }) {
   return (
     <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:12, marginBottom:12 }}>
       {cards.map((c, index) => (
-        <motion.div
+        <div
           key={c.label}
-          className={`metric-card animate-fade-in-${index+1}`}
-          style={{ '--metric-gradient': c.topGradient }}
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: index * 0.08, ease: [0.16, 1, 0.3, 1] }}
-          whileHover={{ y: -1, boxShadow: '0 4px 12px rgba(0,0,0,0.06)', transition: { duration: 0.15, ease: 'easeOut' } }}
+          className={`animate-fade-in-${index+1}`}
+          style={{ background:'#FFFFFF', border:'1px solid rgba(0,0,0,0.07)', borderRadius:'10px', padding:'18px 20px', position:'relative', overflow:'hidden', transition:'all 0.2s ease' }}
         >
+          <div style={{ position:'absolute', top:0, left:0, right:0, height:'2px', background:c.topGradient }}/>
           <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:14, marginTop:4 }}>
             <div style={{ width:30, height:30, borderRadius:8, background:c.iconBg, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>{c.icon(c.iconColor)}</div>
             {c.badge&&<span style={{ fontSize:11, fontWeight:600, color:'#059669', background:'rgba(16,185,129,0.08)', border:'1px solid rgba(16,185,129,0.15)', borderRadius:5, padding:'2px 7px', fontVariantNumeric:'tabular-nums' }}>{c.badge.value}</span>}
@@ -283,7 +279,7 @@ function WorkloadKPIs({ data, loaded }) {
           <div style={{ fontSize:26, fontWeight:700, color:'#0F0F10', lineHeight:1, marginBottom:6, letterSpacing:'-0.025em', fontVariantNumeric:'tabular-nums' }}>{c.valueNode}</div>
           <div style={{ fontSize:11, fontWeight:600, letterSpacing:'.06em', color:'#9CA3AF', textTransform:'uppercase', marginBottom:2 }}>{c.label}</div>
           <div style={{ fontSize:12, color:'#6B7280', lineHeight:1.4 }}>{c.sub}</div>
-        </motion.div>
+        </div>
       ))}
     </div>
   )
@@ -395,15 +391,11 @@ function ResponseTimesSection({ data, loaded }) {
   return (
     <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12, marginBottom:12 }}>
       {cards.map((c, index) => (
-        <motion.div
+        <div
           key={c.label}
-          className="metric-card"
-          style={{ padding:20, '--metric-gradient': c.topGradient }}
-          initial={{ opacity: 0, x: -8 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.4, delay: 0.2 + index * 0.06, ease: [0.16, 1, 0.3, 1] }}
-          whileHover={{ y: -1, boxShadow: '0 4px 12px rgba(0,0,0,0.06)', transition: { duration: 0.15, ease: 'easeOut' } }}
+          style={{ background:'#FFFFFF', border:'1px solid rgba(0,0,0,0.07)', borderRadius:'10px', padding:20, position:'relative', overflow:'hidden', transition:'all 0.2s ease' }}
         >
+          <div style={{ position:'absolute', top:0, left:0, right:0, height:'2px', background:c.topGradient }}/>
           <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:14, marginTop:4 }}>
             <div style={{ width:30, height:30, borderRadius:8, background:c.iconBg, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>{c.icon(c.iconColor)}</div>
             {c.rtLabel&&<span style={{ fontSize:10, fontWeight:700, color:c.rtLabel.color, background:c.rtLabel.bg, border:`1px solid ${c.rtLabel.border}`, borderRadius:5, padding:'2px 8px' }}>{c.rtLabel.label}</span>}
@@ -415,7 +407,7 @@ function ResponseTimesSection({ data, loaded }) {
             <div style={{ fontSize:12, color:'#6B7280', lineHeight:1.4 }}>{c.sub}</div>
             <span style={{ fontSize:11, color:'#6B7280', background:'#F3F4F6', borderRadius:4, padding:'2px 8px', flexShrink:0, whiteSpace:'nowrap' }}>{c.benchmark}</span>
           </div>
-        </motion.div>
+        </div>
       ))}
     </div>
   )
@@ -478,22 +470,19 @@ function ProductivityKPIs({ data, loaded }) {
   return (
     <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:12, marginBottom:12 }}>
       {cards.map((c, index) => (
-        <motion.div
+        <div
           key={c.label}
-          className={`metric-card animate-fade-in-${index+1}`}
-          style={{ '--metric-gradient': c.topGradient }}
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.3 + index * 0.08, ease: [0.16, 1, 0.3, 1] }}
-          whileHover={{ y: -1, boxShadow: '0 4px 12px rgba(0,0,0,0.06)', transition: { duration: 0.15, ease: 'easeOut' } }}
+          className={`animate-fade-in-${index+1}`}
+          style={{ background:'#FFFFFF', border:'1px solid rgba(0,0,0,0.07)', borderRadius:'10px', padding:'18px 20px', position:'relative', overflow:'hidden', transition:'all 0.2s ease' }}
         >
+          <div style={{ position:'absolute', top:0, left:0, right:0, height:'2px', background:c.topGradient }}/>
           <div style={{ marginBottom:14, marginTop:4 }}>
             <div style={{ width:30, height:30, borderRadius:8, background:c.iconBg, display:'flex', alignItems:'center', justifyContent:'center' }}>{c.icon(c.iconColor)}</div>
           </div>
           <div style={{ fontSize:24, fontWeight:700, color:'#0F0F10', lineHeight:1, marginBottom:6, letterSpacing:'-0.02em', fontVariantNumeric:'tabular-nums' }}>{c.valueNode}</div>
           <div style={{ fontSize:11, fontWeight:600, letterSpacing:'.06em', color:'#9CA3AF', textTransform:'uppercase', marginBottom:4 }}>{c.label}</div>
           <div style={{ fontSize:12, color:'#6B7280', lineHeight:1.4 }}>{c.sub}</div>
-        </motion.div>
+        </div>
       ))}
     </div>
   )
@@ -544,12 +533,9 @@ function ChannelBreakdown({ channels, loaded }) {
         {channels.map((ch, i)=>{
           const color=CH_COLORS[ch.name.toLowerCase()]||'#9CA3AF'
           return (
-            <motion.div
+            <div
               key={ch.name}
               className="ch-row"
-              initial={{ opacity: 0, x: -6 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.3, delay: i * 0.06, ease: [0.16, 1, 0.3, 1] }}
             >
               <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:7, paddingLeft:2, paddingRight:2 }}>
                 <div style={{ display:'flex', alignItems:'center', gap:9 }}>
@@ -564,7 +550,7 @@ function ChannelBreakdown({ channels, loaded }) {
               <div style={{ height:6, borderRadius:10, background:'#F3F4F6', overflow:'hidden', marginLeft:2, marginRight:2 }}>
                 <div style={{ height:'100%', borderRadius:10, background:color, width: barMounted ? `${ch.pct}%` : '0%', transition:'width 1s cubic-bezier(0.16, 1, 0.3, 1)' }}/>
               </div>
-            </motion.div>
+            </div>
           )
         })}
       </div>
@@ -633,12 +619,7 @@ export default function PerformancePage() {
       <Sidebar/>
 
       <main className="pf-scroll" style={{ flex:1, overflowY:'auto', padding:'24px', position:'relative' }}>
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.3 }}
-          style={{ position:'relative', zIndex:1, maxWidth:1200, margin:'0 auto' }}
-        >
+        <div style={{ position:'relative', zIndex:1, maxWidth:1200, margin:'0 auto' }}>
 
           {/* Header */}
           <div style={{ marginBottom:24 }}>
@@ -713,7 +694,7 @@ export default function PerformancePage() {
           <div style={{ marginTop:16, textAlign:'center', fontSize:10.5, color:'#9CA3AF', letterSpacing:'.04em' }}>
             Lynq Analytics · Gorgias data · Refreshed on load
           </div>
-        </motion.div>
+        </div>
       </main>
     </div>
   )

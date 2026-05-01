@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { motion } from 'framer-motion'
 import { supabase } from '../../lib/supabase'
 import Sidebar from '../components/Sidebar'
 import { DEMO_REFUNDS, DEMO_KPIS, DEMO_TREND, DEMO_INSIGHTS } from '../../lib/demoData'
@@ -364,14 +363,11 @@ function KpiCardInner({ c, index, loaded }) {
   else displayVal = `€${(animCount / 100).toFixed(2)}`
 
   return (
-    <motion.div
-      className={`metric-card animate-fade-in-${index + 1}`}
-      initial={{ opacity:0, y:12 }}
-      animate={{ opacity:1, y:0 }}
-      transition={{ duration:0.4, delay:index*0.08, ease:[0.16,1,0.3,1] }}
-      style={{ '--metric-gradient': c.metricGradient }}
+    <div
+      className={`animate-fade-in-${index + 1}`}
+      style={{ background:'#FFFFFF', border:'1px solid rgba(0,0,0,0.07)', borderRadius:'10px', padding:'18px 20px', position:'relative', overflow:'hidden', transition:'all 0.2s ease' }}
     >
-      <div style={{ position:'absolute', top:0, left:0, right:0, height:3, background:c.accent }}/>
+      <div style={{ position:'absolute', top:0, left:0, right:0, height:'2px', background:c.metricGradient }}/>
       <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:14 }}>
         <div style={{ fontSize:11, fontWeight:600, textTransform:'uppercase', letterSpacing:'.06em', color:'#BDBDBD' }}>{c.label}</div>
         <div style={{ width:30, height:30, borderRadius:7, background:c.accentBg, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
@@ -383,7 +379,7 @@ function KpiCardInner({ c, index, loaded }) {
         <div style={{ fontSize:11, color:'#888888' }}>{c.sub}</div>
         <DeltaBadge delta={loaded.prevKpis?c.delta:null} lowerIsBetter={c.lowerBetter}/>
       </div>
-    </motion.div>
+    </div>
   )
 }
 
@@ -413,16 +409,11 @@ function KpiRow({ kpis, prevKpis, refunds, loaded }) {
   ]
 
   return (
-    <motion.div
-      initial={{ opacity:0, y:12 }}
-      animate={{ opacity:1, y:0 }}
-      transition={{ duration:0.4, ease:[0.16,1,0.3,1] }}
-      style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:16, marginBottom:24 }}
-    >
+    <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:16, marginBottom:24 }}>
       {cards.map((c,i)=>(
         <KpiCardInner key={c.label} c={c} index={i} loaded={loaded}/>
       ))}
-    </motion.div>
+    </div>
   )
 }
 

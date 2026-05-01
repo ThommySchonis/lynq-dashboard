@@ -9,14 +9,28 @@ jobs:
       - name: Wait for Vercel build
         run: sleep 90
 
-      - name: Find team and project
+      - name: Promote to Production
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          TEAM_ID: team_ifXMn8UAOW7SQdfkPuup4hwc
+          PROJECT_ID: prj_BGEwMVnJHGxwzQ37gZHjieFE0luq
         run: |
-          echo "=== TEAMS ==="
-          curl -s "https://api.vercel.com/v2/teams" \
-            -H "Authorization: Bearer $VERCEL_TOKEN"
-
-          echo "=== PROJECTS ==="
-          curl -s "https://api.vercel.com/v9/projects" \
-            -H "Authorization: Bearer $VERCEL_TOKEN"
+          RESPONSE=$(curl -s \
+            "https://api.vercel.com/v6/deployments?projectId=$PROJECT_ID&teamId=$TEAM_ID&limit=1&target=production&sort=createdAt" \
+            -H "Authorization: Bearer $VERCEL_TOKEN")
+          echo "Response: $RESPONSE"
+          DEPLOYMENT=$(echo $RESPONSE | python3 -c "
+          import sys, json
+          data = json.load(sys.stdin)
+          deployments = data.get('deployments', [])
+          if deployments:
+              print(deployments[0]['uid'])
+          else:
+              exit(1)
+          ")
+          echo "Promoting: $DEPLOYMENT"
+          curl -X PATCH \
+            "https://api.vercel.com/v10/deployments/$DEPLOYMENT/promote?teamId=$TEAM_ID" \
+            -H "Authorization: Bearer $VERCEL_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d "{}"

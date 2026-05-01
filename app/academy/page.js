@@ -181,6 +181,9 @@ const CSS = `
   .ac * { box-sizing: border-box; margin: 0; padding: 0; }
   .ac { font-family: 'Switzer', -apple-system, BlinkMacSystemFont, sans-serif; -webkit-font-smoothing: antialiased; }
 
+  /* Remove sidebar right border — causes white line against the white module panel */
+  .ac .sb-root { border-right: none; }
+
   /* Scrollbars */
   .ac-scroll::-webkit-scrollbar { width: 3px; }
   .ac-scroll::-webkit-scrollbar-track { background: transparent; }
@@ -1079,7 +1082,7 @@ export default function AcademyPage() {
       <Sidebar />
 
       {/* Module list panel */}
-      <div style={{ width:280, minWidth:280, height:'100vh', background:'#FFFFFF', borderRight:'1px solid rgba(0,0,0,0.07)', display:'flex', flexDirection:'column', overflow:'hidden', flexShrink:0 }}>
+      <div style={{ width:280, minWidth:280, height:'100vh', background:'#FFFFFF', borderLeft:'none', borderRight:'1px solid rgba(0,0,0,0.07)', boxShadow:'none', display:'flex', flexDirection:'column', overflow:'hidden', flexShrink:0 }}>
         {/* Header */}
         <div style={{ padding:'18px 16px 14px', borderBottom:'1px solid rgba(0,0,0,0.07)', flexShrink:0 }}>
           <div onClick={() => setView('welcome')} style={{ display:'flex', alignItems:'center', gap:9, cursor:'pointer', marginBottom:14 }}>

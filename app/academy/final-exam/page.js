@@ -5,19 +5,10 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { supabase } from '../../../lib/supabase'
 import Sidebar from '../../components/Sidebar'
 
-// ─── Constants ────────────────────────────────────────────────────────────────
 const EASE = [0.16, 1, 0.3, 1]
 
-const ALL_MODULE_IDS = [
-  'cs-fundamentals',
-  'refund-handling',
-  'shopify-ops',
-  'email-comms',
-  'dispute-mgmt',
-  'performance-kpis',
-]
-
-const MODULE_LABELS = {
+const ALL_MODULE_IDS = ['cs-fundamentals','refund-handling','shopify-ops','email-comms','dispute-mgmt','performance-kpis']
+const MODULE_LABELS  = {
   'cs-fundamentals':  'CS Fundamentals',
   'refund-handling':  'Refund Handling',
   'shopify-ops':      'Shopify Operations',
@@ -26,483 +17,453 @@ const MODULE_LABELS = {
   'performance-kpis': 'Performance & KPIs',
 }
 
-// ─── Exam Data ────────────────────────────────────────────────────────────────
-
-const CASE_STUDIES = [
-  {
-    title: 'The Angry Customer',
-    context: 'A customer ordered a Premium Cotton T-shirt 3 weeks ago and has not received it. Tracking shows the package has been stuck in transit for 10 days. The customer emails you furious, threatening a chargeback.',
-    questions: [
-      { q: 'What is your FIRST response action?', opts: ['Offer immediate refund', 'Apologize and ask for order number to investigate', 'Tell them to wait longer', 'Blame the carrier'], correct: 1 },
-      { q: 'You check tracking and the package is lost. What do you offer?', opts: ['10% discount on next order', "Resend the item or full refund, customer's choice", 'Partial refund only', 'Store credit only'], correct: 1 },
-      { q: 'The customer threatens a chargeback. What do you do?', opts: ['Ignore the threat', 'Immediately resolve to prevent chargeback', 'Tell them to go ahead', 'Escalate to manager without responding'], correct: 1 },
-      { q: 'After resolving, what should you do?', opts: ['Nothing, case is closed', 'Send a follow-up email to confirm satisfaction', 'Ask for a review immediately', 'Close the ticket without response'], correct: 1 },
-      { q: 'What do you document in the ticket?', opts: ['Just the resolution', 'The full timeline, actions taken, and outcome', 'Only the refund amount', 'Nothing additional'], correct: 1 },
-    ],
-  },
-  {
-    title: 'The Wrong Item',
-    context: 'A customer received a Black L t-shirt but ordered a White M. They send photos as proof. They want an exchange but you are out of White M stock.',
-    questions: [
-      { q: 'What is your FIRST action after seeing the proof photos?', opts: ['Ask the customer to ship back before doing anything', 'Apologize and confirm you will make it right', 'Ask if they want a refund instead', 'Blame the warehouse'], correct: 1 },
-      { q: 'White M is out of stock. What do you offer?', opts: ['Nothing, wait for restock', 'Tell them to wait 4–6 weeks', 'Refund, store credit, or nearest available size', 'Store credit only'], correct: 2 },
-      { q: 'What happens to the incorrect item they received?', opts: ['Always request it back', 'For low-value items, let them keep it to avoid return friction', 'Always charge return shipping', 'Ignore it'], correct: 1 },
-      { q: 'Customer needs the shirt for an event in 3 days. What do you do?', opts: ['Tell them it is impossible', 'Offer expedited shipping on the replacement and flag as priority', 'Refund only', 'Ask them to order again'], correct: 1 },
-      { q: 'What tag do you add to this order in Shopify?', opts: ['customer_complaint', 'Relevant action tag like exchange_sent', 'pending_review', 'No tag needed'], correct: 1 },
-    ],
-  },
-  {
-    title: 'The Dispute Manager',
-    context: 'A customer filed a chargeback with their bank for €89.95 claiming they never received their order. Your tracking shows it was delivered 2 weeks ago.',
-    questions: [
-      { q: 'What is your first step?', opts: ['Immediately refund', 'Gather evidence: tracking, delivery confirmation, and communication history', 'Ask customer to check with neighbors', 'Tell them they are wrong'], correct: 1 },
-      { q: 'What is the typical window to respond to chargebacks?', opts: ['30 days', '60 days', '7–21 days depending on card network', '48 hours'], correct: 2 },
-      { q: 'Which evidence is MOST important for an INR dispute?', opts: ['Your refund policy', 'Product description', 'Proof of delivery with timestamp and address', 'The original order confirmation'], correct: 2 },
-      { q: 'Investigation reveals the customer actually never received it. What do you do?', opts: ['Fight the chargeback anyway', 'Withdraw the dispute and refund proactively', 'Ignore the chargeback', 'Ask for more time'], correct: 1 },
-      { q: 'How should your dispute response be formatted?', opts: ['Emotional and detailed narrative', 'Concise, timestamped, and evidence-backed', 'As long as possible', 'Just attach the tracking number'], correct: 1 },
-    ],
-  },
+const SECTION_META = [
+  { label: 'CS Fundamentals',      color: '#6366F1' },
+  { label: 'Refunds & Returns',    color: '#3B82F6' },
+  { label: 'Case Studies',         color: '#8B5CF6' },
+  { label: 'Shopify & Operations', color: '#10B981' },
+  { label: 'Performance & KPIs',   color: '#F59E0B' },
 ]
 
-const KNOWLEDGE_QUESTIONS = [
-  { q: 'What does FCR stand for?', opts: ['First Customer Review', 'Full Charge Rate', 'First Contact Resolution', 'Forwarded Case Report'], correct: 2 },
-  { q: 'What is the target FCR rate?', opts: ['Above 50%', 'Above 60%', 'Above 75%', 'Above 90%'], correct: 2 },
-  { q: 'Which chargeback rate triggers card processor scrutiny?', opts: ['Above 5%', 'Above 1%', 'Above 10%', 'Above 0.1%'], correct: 1 },
-  { q: 'What is a P1 support ticket?', opts: ['Standard inquiry', 'Product question', 'Chargeback or legal threat requiring <2h response', 'Positive review'], correct: 2 },
-  { q: 'What does CSAT stand for?', opts: ['Customer Satisfaction Score', 'Customer Service Agent Training', 'Case Status And Tracking', 'Client Support Action Team'], correct: 0 },
-  { q: 'What refund rate is healthy for e-commerce?', opts: ['Under 1%', 'Under 3%', 'Under 10%', 'Under 15%'], correct: 1 },
-  { q: 'What does "Unfulfilled" mean in Shopify?', opts: ['Cancelled', 'Refunded', 'Not yet shipped', 'Pending payment'], correct: 2 },
-  { q: 'What reduces unauthorized chargebacks by up to 80%?', opts: ['Free shipping', 'Better photos', '3D Secure authentication', 'Signature confirmation'], correct: 2 },
-  { q: 'When should you respond to a PayPal dispute?', opts: ['At the claim stage', 'At the inquiry stage', 'After PayPal decides', 'Never'], correct: 1 },
-  { q: 'What is the ideal first response email length?', opts: ['As long as needed', 'Under 50 words', 'Under 120 words', 'Exactly 200 words'], correct: 2 },
-  { q: 'How often should support macros be reviewed?', opts: ['Never', 'Daily', 'Quarterly', 'Annually'], correct: 2 },
-  { q: 'What is the most common chargeback reason?', opts: ['Duplicate charge', 'Item not received (INR)', 'Wrong amount', 'Unauthorized transaction'], correct: 1 },
-  { q: 'What should you ALWAYS do before closing a ticket?', opts: ['Ask for payment', 'Confirm issue is resolved', 'Send a survey', 'Escalate'], correct: 1 },
-  { q: 'What CSAT score needs immediate intervention?', opts: ['Below 4.5', 'Below 4.0', 'Below 3.5', 'Below 3.0'], correct: 2 },
-  { q: 'What is the low-stock alert threshold in Shopify?', opts: ['Zero stock', '1 item left', '20% of average weekly sales', 'When customer complains'], correct: 2 },
-  { q: 'What is the typical refund processing time?', opts: ['24 hours', '3–5 business days', '7–10 business days', '30 days'], correct: 1 },
-  { q: 'What is the first step when handling a complaint?', opts: ['Offer refund', 'Listen and acknowledge', 'Transfer to manager', 'Close ticket'], correct: 1 },
-  { q: 'Where are support actions recorded in Shopify?', opts: ['Automatically', 'Internal order notes', "Customer's profile", 'Spreadsheet'], correct: 1 },
-  { q: 'What makes a good macro?', opts: ['Copy-paste as-is always', 'Starting point that agents personalize', 'Never update it', 'Use only for refunds'], correct: 1 },
-  { q: 'What phrase should be avoided in support emails?', opts: ['Thank you', 'I understand', 'Per our policy', 'How can I help'], correct: 2 },
+// ─── 50 Questions — flat array, section determined by Math.floor(idx/10) ─────
+const ALL_Q = [
+  // ── Section 0: CS Fundamentals (0-9) ─────────────────────────────────────
+  { q: "A customer emails saying their order arrived damaged. What is your FIRST action?",
+    opts: ['Issue an immediate refund', 'Apologize, ask for photos and order number', 'Tell them to contact the carrier', 'Ignore and close the ticket'], correct: 1 },
+  { q: "What does 'first contact resolution' mean?",
+    opts: ['Solving the issue in the first email', 'Responding within one hour', 'Escalating to a manager immediately', 'Closing the ticket after one reply'], correct: 0 },
+  { q: "A customer is extremely angry and uses offensive language. What do you do?",
+    opts: ['Match their tone', 'Ignore the message', 'Calmly acknowledge frustration, set boundaries, offer solution', 'Immediately refund without investigating'], correct: 2 },
+  { q: "What is the ideal response time for email support?",
+    opts: ['Same day', 'Within 4 hours', 'Within 24 hours', 'Within 48 hours'], correct: 1 },
+  { q: "Which metric measures customer satisfaction after a ticket?",
+    opts: ['NPS', 'CSAT', 'AOV', 'CTR'], correct: 1 },
+  { q: "A customer asks a question outside your knowledge. What do you do?",
+    opts: ['Make up an answer', "Tell them you don't know and close the ticket", 'Escalate or research before responding', 'Copy paste from Google'], correct: 2 },
+  { q: "What is the purpose of an internal note in Gorgias?",
+    opts: ['To send to the customer', 'To communicate with teammates without the customer seeing', 'To log shipping updates', 'To create refunds'], correct: 1 },
+  { q: "A VIP customer complains about a €15 order issue. How do you handle it?",
+    opts: ['Same as any other customer', 'Prioritize, offer extra compensation, personal touch', 'Ignore because amount is small', 'Immediately escalate'], correct: 1 },
+  { q: "What should every CS reply include?",
+    opts: ['Your personal opinion', 'A clear acknowledgment, solution, and next step', 'An apology for everything', 'A discount code'], correct: 1 },
+  { q: "What is 'ticket deflection'?",
+    opts: ['Closing tickets without solving them', 'Preventing tickets through proactive communication', 'Transferring tickets to other agents', 'Deleting spam tickets'], correct: 1 },
+
+  // ── Section 1: Refunds & Returns (10-19) ─────────────────────────────────
+  { q: "A customer wants to return an item after 45 days. Your policy is 30 days. What do you do?",
+    opts: ['Deny immediately', 'Approve regardless', 'Assess the situation, consider customer history, escalate if needed', 'Offer store credit automatically'], correct: 2 },
+  { q: "What is the difference between a refund and a chargeback?",
+    opts: ['No difference', 'A refund is customer-initiated, chargeback is bank-initiated', 'A chargeback is cheaper', 'A refund takes longer'], correct: 1 },
+  { q: "Customer received wrong item. What do you offer FIRST?",
+    opts: ['Full refund', 'Apology + send correct item + let them keep wrong one', '10% discount', 'Ask them to return wrong item first'], correct: 1 },
+  { q: "What refund rate percentage triggers a review with the supplier?",
+    opts: ['1%', '3%', '5%', '10%'], correct: 2 },
+  { q: "A customer claims non-delivery but tracking shows delivered. What do you do?",
+    opts: ['Immediately refund', 'Deny the claim', 'Investigate — check address, ask neighbors, wait 3 days', 'Tell them to contact carrier themselves'], correct: 2 },
+  { q: "What documentation should you always request for a damage claim?",
+    opts: ['Customer ID', 'Clear photos of damage and packaging', 'Bank statement', 'Original purchase receipt only'], correct: 1 },
+  { q: "When should you escalate a refund request?",
+    opts: ['Never', 'When amount exceeds your authorization limit', 'For all requests', 'Only for VIP customers'], correct: 1 },
+  { q: "What is 'return merchandise authorization' (RMA)?",
+    opts: ['A refund method', 'A formal approval process for returns', 'A shipping label', 'A customer satisfaction score'], correct: 1 },
+  { q: "Customer wants refund for 'not as described.' You have photos proving it matches. What do you do?",
+    opts: ['Deny immediately', 'Share the product photos, offer partial refund as goodwill', 'Full refund no questions', 'Ignore the request'], correct: 1 },
+  { q: "What is the most common reason customers request refunds in dropshipping?",
+    opts: ['Price too high', 'Long delivery times', 'Poor packaging', 'Wrong payment method'], correct: 1 },
+
+  // ── Section 2: Case Studies (20-29) ──────────────────────────────────────
+  { caseTitle: 'The Repeat Returner',
+    caseContext: "Emma has ordered 8 times in 6 months and requested 5 refunds. Her latest request is for 'item not as described' for a €49 order.",
+    showContext: true,
+    q: "What is your first step?",
+    opts: ['Approve immediately', 'Check her order history and refund pattern', 'Deny without investigating', 'Escalate to manager immediately'], correct: 1 },
+  { caseTitle: 'The Repeat Returner',
+    q: "You notice a pattern of abuse. What do you do?",
+    opts: ['Accuse her directly', 'Deny all future orders', 'Document the pattern, offer this refund, flag account for review', 'Block her account immediately'], correct: 2 },
+  { caseTitle: 'The Repeat Returner',
+    q: "How do you word your response to maintain professionalism?",
+    opts: ["\"We've noticed you return a lot\"", "\"We're happy to help with this order, and we'll review your account to ensure the best experience going forward\"", '"This is your last refund"', '"We cannot process this request"'], correct: 1 },
+
+  { caseTitle: 'The Chargeback Threat',
+    caseContext: "Mark ordered €127 of products. Tracking shows delivered. He threatens chargeback saying he never received it.",
+    showContext: true,
+    q: "What evidence do you gather?",
+    opts: ['Nothing, just refund', 'Tracking confirmation, delivery photo, IP/address match', 'Ask him to prove non-delivery', 'Contact carrier only'], correct: 1 },
+  { caseTitle: 'The Chargeback Threat',
+    q: "You decide to refund to avoid chargeback. What do you document?",
+    opts: ['Nothing', 'Full interaction, decision rationale, amount', 'Only the refund amount', "Customer's name only"], correct: 1 },
+
+  { caseTitle: 'The Product Quality Issue',
+    caseContext: "12 customers in one week complain about the same product — stitching comes apart after one wash. Total refund value: €480.",
+    showContext: true,
+    q: "What is your immediate action?",
+    opts: ['Refund all 12 individually and move on', 'Refund all + alert supplier + pause product sales', 'Only refund customers who complain loudly', 'Ignore until more complaints come in'], correct: 1 },
+  { caseTitle: 'The Product Quality Issue',
+    q: "How do you communicate with the supplier?",
+    opts: ['Angry email', 'Formal complaint with all evidence, photos, customer feedback', 'Phone call only', 'Wait for them to contact you'], correct: 1 },
+  { caseTitle: 'The Product Quality Issue',
+    q: "What should you add to the refund intelligence dashboard?",
+    opts: ['Nothing', 'Product flagged, reason: quality, 12 refunds in 7 days', 'Only the total amount', 'Customer names only'], correct: 1 },
+  { caseTitle: 'The Product Quality Issue',
+    q: "How do you proactively handle customers who bought this product but haven't complained yet?",
+    opts: ['Do nothing', 'Send proactive email acknowledging potential issue', 'Remove product silently', 'Wait for them to contact you'], correct: 1 },
+  { caseTitle: 'The Product Quality Issue',
+    q: "After resolving, what process improvement do you suggest?",
+    opts: ['Nothing', "Add quality check step before shipping this supplier's products", 'Stop working with this supplier immediately', 'Hire more CS agents'], correct: 1 },
+
+  // ── Section 3: Shopify & Operations (30-39) ───────────────────────────────
+  { q: "Where do you find a customer's order history in Shopify?",
+    opts: ['Analytics tab', 'Customers section, search by email', 'Orders tab only', 'Settings'], correct: 1 },
+  { q: "What does 'fulfillment status: unfulfilled' mean?",
+    opts: ['Order was cancelled', 'Order placed but not yet shipped', 'Order was refunded', 'Order is on hold'], correct: 1 },
+  { q: "How do you process a partial refund in Shopify?",
+    opts: ['Cancel the order', 'Orders > select order > Refund > enter partial amount', 'Delete the line item', 'Contact Shopify support'], correct: 1 },
+  { q: "A customer's tracking link is broken. What do you check first?",
+    opts: ['Shopify settings', 'Whether the fulfillment was created correctly with tracking number', 'Carrier website directly', "Customer's browser"], correct: 1 },
+  { q: "What is Parcel Panel used for?",
+    opts: ['Creating shipping labels', 'Tracking shipments and notifying customers', 'Processing payments', 'Managing inventory'], correct: 1 },
+  { q: "How long does a typical dropshipping delivery take?",
+    opts: ['1-3 days', '5-7 days', '7-21 days depending on origin', '30+ days always'], correct: 2 },
+  { q: "A customer wants to change their shipping address after order placed. What do you do?",
+    opts: ['Always possible', 'Check if order is fulfilled yet — if not, contact supplier immediately', 'Never possible', 'Ignore the request'], correct: 1 },
+  { q: "What information do you always confirm before escalating an order issue?",
+    opts: ["Customer's age", 'Order number, item, shipping address, tracking status', 'Payment method only', 'Delivery date only'], correct: 1 },
+  { q: "What does 'on hold' status mean in Gorgias?",
+    opts: ['Ticket is closed', 'Ticket is waiting for customer or third party response', 'Ticket is spam', 'Ticket needs immediate action'], correct: 1 },
+  { q: "How do you handle a customer who emails in a language you don't speak?",
+    opts: ['Ignore the email', 'Use translation tool, respond in their language', 'Reply in English only', 'Close the ticket'], correct: 1 },
+
+  // ── Section 4: Performance & KPIs (40-49) ────────────────────────────────
+  { q: "What is a healthy CSAT score?",
+    opts: ['Above 50%', 'Above 70%', 'Above 85%', '100% always'], correct: 2 },
+  { q: "What does a high 'first response time' indicate?",
+    opts: ['Great service', 'Too many tickets or understaffed team', 'Complex tickets', 'Bad customers'], correct: 1 },
+  { q: "If your refund rate spikes from 2% to 8% in one week, what do you investigate FIRST?",
+    opts: ['Agent performance', 'Whether a specific product is causing issues', 'Customer demographics', 'Shipping carrier'], correct: 1 },
+  { q: "What is 'one-touch resolution'?",
+    opts: ['Using one hand to type', 'Resolving a ticket in a single response', 'One agent handles all tickets', 'One refund per customer'], correct: 1 },
+  { q: "Which metric shows how efficiently your team closes tickets?",
+    opts: ['CSAT', 'Close rate', 'Response time', 'Ticket volume'], correct: 1 },
+  { q: "A customer hasn't responded in 5 days. What do you do?",
+    opts: ['Keep the ticket open indefinitely', 'Send a follow-up, then close if no response in 2 more days', 'Close immediately', 'Escalate to manager'], correct: 1 },
+  { q: "What does 'handle time' measure?",
+    opts: ['How long to write a reply', 'Total time from ticket open to close', 'How fast you type', 'Shift duration'], correct: 1 },
+  { q: "Your team's CSAT drops from 92% to 78% in one month. What is your first step?",
+    opts: ['Fire everyone', 'Review low-scoring tickets to identify patterns', 'Add more agents', 'Change the survey questions'], correct: 1 },
+  { q: "What is the purpose of weekly performance reports?",
+    opts: ['To blame agents for mistakes', 'To identify trends, celebrate wins, address issues proactively', 'To send to customers', 'Required by law'], correct: 1 },
+  { q: "A new agent has 60% CSAT after 2 weeks. What do you do?",
+    opts: ['Fire them immediately', 'Review their tickets, provide coaching, give 2 more weeks', 'Reduce their ticket load forever', 'Ignore, it will improve automatically'], correct: 1 },
 ]
 
-const PRACTICAL_SCENARIO = `A customer emails you: "I ordered your bestselling hoodie in size L two weeks ago for my son's birthday tomorrow. It just arrived in size S. This is completely unacceptable. I want a refund AND a replacement sent TODAY. If you can't do this, I'm going to dispute the charge with my bank."
-
-Write a complete, professional customer service reply that handles this situation appropriately.`
+// ─── Confetti pieces (pre-computed, stable) ───────────────────────────────────
+const CONFETTI_COLORS = ['#8B5CF6','#6366F1','#3B82F6','#10B981','#F59E0B','#EF4444','#EC4899']
+const CONFETTI = Array.from({ length: 30 }, (_, i) => ({
+  left: `${(i * 37 + 11) % 100}%`,
+  delay: `${((i * 7) % 30) * 0.1}s`,
+  color: CONFETTI_COLORS[i % CONFETTI_COLORS.length],
+  size: 6 + (i % 5),
+  duration: `${2.5 + (i % 8) * 0.2}s`,
+  rotate: i % 2 === 0 ? 1 : -1,
+}))
 
 // ─── CSS ──────────────────────────────────────────────────────────────────────
 const CSS = `
   .fe * { box-sizing: border-box; margin: 0; padding: 0; }
-  .fe { font-family: 'Switzer', -apple-system, BlinkMacSystemFont, sans-serif; -webkit-font-smoothing: antialiased; }
-
+  .fe { font-family: 'Switzer', 'Rethink Sans', -apple-system, BlinkMacSystemFont, sans-serif; -webkit-font-smoothing: antialiased; }
   .fe-scroll::-webkit-scrollbar { width: 3px; }
   .fe-scroll::-webkit-scrollbar-track { background: transparent; }
   .fe-scroll::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 2px; }
 
   .fe-option {
-    background: #FFFFFF;
-    border: 1px solid rgba(0,0,0,0.09);
-    border-radius: 12px; padding: 14px 18px;
+    background: #FFFFFF; border: 1px solid rgba(0,0,0,0.09);
+    border-radius: 10px; padding: 14px 18px;
     display: flex; align-items: center; gap: 14px;
     cursor: pointer; transition: all 0.15s ease; margin-bottom: 8px;
   }
-  .fe-option:hover { background: #F9F9FB; border-color: rgba(139,92,246,0.3); }
+  .fe-option:hover { background: rgba(139,92,246,0.02); border-color: rgba(139,92,246,0.35); }
   .fe-option.selected { background: rgba(139,92,246,0.06); border-color: #8B5CF6; }
 
   .fe-radio {
-    width: 20px; height: 20px; border-radius: 50%;
-    border: 2px solid rgba(0,0,0,0.2);
-    flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+    width: 18px; height: 18px; border-radius: 50%;
+    border: 2px solid rgba(0,0,0,0.2); flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
     transition: all 0.15s;
   }
-  .fe-option:hover .fe-radio { border-color: #8B5CF6; }
+  .fe-option:hover .fe-radio { border-color: rgba(139,92,246,0.5); }
   .fe-option.selected .fe-radio { background: #8B5CF6; border-color: #8B5CF6; }
 
   .fe-btn-primary {
-    background: linear-gradient(135deg, #8B5CF6, #6366F1);
-    color: #FFFFFF; border: none; border-radius: 20px;
-    padding: 10px 24px; font-size: 13px; font-weight: 600;
+    background: linear-gradient(135deg, #8B5CF6, #6366F1); color: #FFFFFF;
+    border: none; border-radius: 20px; padding: 10px 24px; font-size: 13px; font-weight: 600;
     cursor: pointer; transition: all 0.15s; font-family: inherit;
     box-shadow: 0 4px 16px rgba(99,102,241,0.3);
   }
   .fe-btn-primary:hover { filter: brightness(1.1); transform: translateY(-1px); }
-  .fe-btn-primary:disabled { opacity: 0.35; cursor: not-allowed; transform: none; filter: none; }
+  .fe-btn-primary:disabled { opacity: 0.35; cursor: not-allowed; transform: none; filter: none; box-shadow: none; }
 
   .fe-btn-secondary {
-    background: rgba(0,0,0,0.04);
-    border: 1px solid rgba(0,0,0,0.09);
-    color: #6B7280; border-radius: 20px;
-    padding: 10px 20px; font-size: 13px; font-weight: 500;
+    background: rgba(0,0,0,0.04); border: 1px solid rgba(0,0,0,0.09);
+    color: #6B7280; border-radius: 20px; padding: 10px 20px; font-size: 13px; font-weight: 500;
     cursor: pointer; transition: all 0.15s; font-family: inherit;
   }
   .fe-btn-secondary:hover { background: rgba(0,0,0,0.07); color: #374151; }
 
   .fe-btn-green {
-    background: linear-gradient(135deg, #10B981, #059669);
-    color: #FFFFFF; border: none; border-radius: 20px;
-    padding: 10px 22px; font-size: 13px; font-weight: 600;
+    background: linear-gradient(135deg, #10B981, #059669); color: #FFFFFF;
+    border: none; border-radius: 20px; padding: 10px 24px; font-size: 13px; font-weight: 600;
     cursor: pointer; transition: all 0.15s; font-family: inherit;
     box-shadow: 0 4px 16px rgba(16,185,129,0.3);
   }
   .fe-btn-green:hover { filter: brightness(1.1); transform: translateY(-1px); }
 
-  .fe-textarea {
-    width: 100%; border: 1px solid rgba(0,0,0,0.1); border-radius: 12px;
-    padding: 18px 20px; font-size: 14px; font-family: inherit; color: #0F0F10;
-    background: #FFFFFF; resize: vertical; line-height: 1.7; outline: none;
-    transition: border-color 0.15s;
-  }
-  .fe-textarea:focus { border-color: #8B5CF6; box-shadow: 0 0 0 3px rgba(139,92,246,0.1); }
-
   @keyframes fe-spin { to { transform: rotate(360deg); } }
+  @keyframes confettiFall {
+    0%   { transform: translateY(-20px) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(100vh)  rotate(720deg); opacity: 0; }
+  }
 `
 
-// ─── Score calculation ────────────────────────────────────────────────────────
-
-function calcCasesScore(answers) {
-  let total = 0, correct = 0
-  CASE_STUDIES.forEach((cs, ci) => {
-    cs.questions.forEach((q, qi) => {
-      const key = `${ci}-${qi}`
-      total++
-      if (answers[key] === q.correct) correct++
-    })
-  })
-  return total === 0 ? 0 : Math.round((correct / total) * 100)
-}
-
-function calcKnowledgeScore(answers) {
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+function sectionScore(sIdx, answers) {
+  const start = sIdx * 10, end = start + 10
   let correct = 0
-  KNOWLEDGE_QUESTIONS.forEach((q, i) => {
-    if (answers[i] === q.correct) correct++
-  })
-  return Math.round((correct / KNOWLEDGE_QUESTIONS.length) * 100)
+  for (let i = start; i < end; i++) {
+    if (answers[i] === ALL_Q[i].correct) correct++
+  }
+  return Math.round((correct / 10) * 100)
 }
 
-function calcPracticalScore(text) {
-  if (!text || text.length < 100) return 60
-  const lower = text.toLowerCase()
-  const keywords = ['sorry', 'apologize', 'refund', 'replacement', 'send', 'resolve', 'understand', 'help', 'right away', 'immediately']
-  const matched = keywords.filter(k => lower.includes(k)).length
-  return matched >= 2 ? 100 : 60
+function totalScore(answers) {
+  const scores = [0,1,2,3,4].map(s => sectionScore(s, answers))
+  return Math.round(scores.reduce((a,b) => a+b, 0) / 5)
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
-
 function Spinner() {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', minHeight: 300 }}>
-      <div style={{ textAlign: 'center' }}>
-        <div style={{ width: 36, height: 36, border: '3px solid rgba(0,0,0,0.08)', borderTop: '3px solid #8B5CF6', borderRadius: '50%', animation: 'fe-spin 0.7s linear infinite', margin: '0 auto 12px' }} />
-        <div style={{ fontSize: 13, color: '#9CA3AF' }}>Loading…</div>
+    <div style={{ display:'flex', alignItems:'center', justifyContent:'center', height:'100%', minHeight:300 }}>
+      <div style={{ textAlign:'center' }}>
+        <div style={{ width:36, height:36, border:'3px solid rgba(0,0,0,0.08)', borderTop:'3px solid #8B5CF6', borderRadius:'50%', animation:'fe-spin 0.7s linear infinite', margin:'0 auto 12px' }} />
+        <div style={{ fontSize:13, color:'#9CA3AF' }}>Loading…</div>
       </div>
     </div>
   )
 }
 
-function CheckIcon({ size = 14, color = '#10B981' }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-      <polyline points="20 6 9 17 4 12" />
-    </svg>
-  )
+function CheckIcon({ size=14, color='#10B981' }) {
+  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
 }
-
-function XIcon({ size = 14, color = '#EF4444' }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-      <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-    </svg>
-  )
+function XIcon({ size=14, color='#EF4444' }) {
+  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
 }
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
-
 export default function FinalExamPage() {
-  const [view,           setView]           = useState('loading')
-  const [section,        setSection]        = useState(0)
-  const [passedModules,  setPassedModules]  = useState([])
-  const [caseAnswers,    setCaseAnswers]     = useState({})
-  const [knowledgeAnswers, setKnowledgeAnswers] = useState({})
-  const [practicalText,  setPracticalText]  = useState('')
-  const [submitted,      setSubmitted]      = useState(false)
-  const [scores,         setScores]         = useState(null)
-  const [session,        setSession]        = useState(null)
-  const [saving,         setSaving]         = useState(false)
-
-  // Case study navigation state
-  const [caseIdx,      setCaseIdx]      = useState(0)
-  const [caseQuestion, setCaseQuestion] = useState(0)
-
-  // Knowledge question navigation
-  const [knowIdx, setKnowIdx] = useState(0)
+  const [view,          setView]          = useState('loading')
+  const [session,       setSession]       = useState(null)
+  const [passedModules, setPassedModules] = useState([])
+  const [currentQ,      setCurrentQ]      = useState(0)
+  const [answers,       setAnswers]       = useState({})
+  const [scores,        setScores]        = useState(null)
+  const [saving,        setSaving]        = useState(false)
 
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data: { session: s } }) => {
       if (!s) { window.location.href = '/login'; return }
       setSession(s)
-
+      const isAdmin = s.user.email === 'info@lynqagency.com'
+      if (isAdmin) { setView('intro'); return }
       try {
-        const { data, error } = await supabase
-          .from('exam_submissions')
-          .select('module_id, passed')
-          .eq('user_id', s.user.id)
-          .eq('passed', true)
-
-        if (!error && data) {
-          const passed = data.map(r => r.module_id).filter(id => ALL_MODULE_IDS.includes(id))
-          setPassedModules(passed)
-          const allPassed = ALL_MODULE_IDS.every(id => passed.includes(id))
-          setView(allPassed ? 'intro' : 'locked')
-        } else {
-          setView('locked')
-        }
-      } catch (_) {
-        setView('locked')
-      }
+        const { data } = await supabase
+          .from('exam_submissions').select('module_id, passed').eq('user_id', s.user.id).eq('passed', true)
+        const passed = (data || []).map(r => r.module_id).filter(id => ALL_MODULE_IDS.includes(id))
+        setPassedModules(passed)
+        setView(ALL_MODULE_IDS.every(id => passed.includes(id)) ? 'intro' : 'locked')
+      } catch (_) { setView('locked') }
     })
   }, [])
 
-  async function handleSubmitExam() {
+  async function handleSubmit() {
     setSaving(true)
-    const casesScore    = calcCasesScore(caseAnswers)
-    const knowledgeScore = calcKnowledgeScore(knowledgeAnswers)
-    const practicalScore = calcPracticalScore(practicalText)
-    const totalScore    = Math.round((casesScore + knowledgeScore + practicalScore) / 3)
-
-    const result = { cases: casesScore, knowledge: knowledgeScore, practical: practicalScore, total: totalScore }
-    setScores(result)
-
+    const sectionScores = [0,1,2,3,4].map(s => sectionScore(s, answers))
+    const total = Math.round(sectionScores.reduce((a,b) => a+b, 0) / 5)
+    setScores({ sections: sectionScores, total })
+    const passed = total >= 80
     try {
       if (session?.user?.id) {
-        await supabase.from('exam_submissions').upsert({
-          user_id: session.user.id,
-          module_id: 'final',
-          score: totalScore,
-          passed: totalScore >= 80,
-          completed_at: new Date().toISOString(),
-        }, { onConflict: 'user_id,module_id' })
+        await supabase.from('exam_submissions').upsert(
+          { user_id: session.user.id, module_id: 'final', score: total, passed, completed_at: new Date().toISOString() },
+          { onConflict: 'user_id,module_id' }
+        )
+        if (passed) {
+          await supabase.from('certificates').upsert(
+            { user_id: session.user.id, issued_at: new Date().toISOString(), exam_score: total, modules_completed: 6 },
+            { onConflict: 'user_id' }
+          )
+        }
       }
     } catch (_) {}
-
     setSaving(false)
     setView('results')
   }
 
-  // ── Locked view ──────────────────────────────────────────────────────────────
-  if (view === 'loading') {
-    return (
-      <div className="fe" style={{ display: 'flex', height: '100vh', background: '#F9F9FB' }}>
-        <style>{CSS}</style>
-        <Sidebar />
-        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <Spinner />
-        </div>
-      </div>
-    )
-  }
+  // ── Loading ───────────────────────────────────────────────────────────────
+  if (view === 'loading') return (
+    <div className="fe" style={{ display:'flex', height:'100vh', background:'#F9F9FB' }}>
+      <style>{CSS}</style><Sidebar />
+      <div style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center' }}><Spinner /></div>
+    </div>
+  )
 
-  if (view === 'locked') {
-    return (
-      <div className="fe" style={{ display: 'flex', height: '100vh', background: '#F9F9FB' }}>
-        <style>{CSS}</style>
-        <Sidebar />
-        <div className="fe-scroll" style={{ flex: 1, overflowY: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 24px' }}>
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease: EASE }}
-            style={{ maxWidth: 560, width: '100%' }}>
-            <div style={{ textAlign: 'center', marginBottom: 32 }}>
-              <div style={{ width: 64, height: 64, borderRadius: '50%', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#EF4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-                </svg>
-              </div>
-              <h1 style={{ fontSize: 28, fontWeight: 800, color: '#0F0F10', letterSpacing: '-0.025em', marginBottom: 10 }}>Final Exam Locked</h1>
-              <p style={{ fontSize: 15, color: '#6B7280', lineHeight: 1.65, maxWidth: 420, margin: '0 auto' }}>
-                Complete all 6 module quizzes with 70%+ before taking the final exam.
-              </p>
+  // ── Locked ────────────────────────────────────────────────────────────────
+  if (view === 'locked') return (
+    <div className="fe" style={{ display:'flex', height:'100vh', background:'#F9F9FB' }}>
+      <style>{CSS}</style><Sidebar />
+      <div className="fe-scroll" style={{ flex:1, overflowY:'auto', display:'flex', alignItems:'center', justifyContent:'center', padding:'40px 24px' }}>
+        <motion.div initial={{ opacity:0, y:20 }} animate={{ opacity:1, y:0 }} transition={{ duration:0.5, ease:EASE }} style={{ maxWidth:560, width:'100%' }}>
+          <div style={{ textAlign:'center', marginBottom:32 }}>
+            <div style={{ width:64, height:64, borderRadius:'50%', background:'rgba(239,68,68,0.1)', border:'1px solid rgba(239,68,68,0.2)', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 20px' }}>
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#EF4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
             </div>
-
-            <div style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.07)', borderRadius: 14, padding: '20px 24px', marginBottom: 24 }}>
-              {ALL_MODULE_IDS.map(id => {
-                const done = passedModules.includes(id)
-                return (
-                  <div key={id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
-                    <div style={{ width: 28, height: 28, borderRadius: '50%', background: done ? 'rgba(16,185,129,0.12)' : 'rgba(0,0,0,0.05)', border: `1px solid ${done ? 'rgba(16,185,129,0.3)' : 'rgba(0,0,0,0.1)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                      {done ? <CheckIcon size={13} /> : <XIcon size={13} color="#D1D5DB" />}
-                    </div>
-                    <span style={{ fontSize: 14, color: done ? '#374151' : '#9CA3AF', fontWeight: done ? 500 : 400 }}>{MODULE_LABELS[id]}</span>
-                    {done && <span style={{ marginLeft: 'auto', fontSize: 11, fontWeight: 600, color: '#10B981' }}>Passed</span>}
-                    {!done && <span style={{ marginLeft: 'auto', fontSize: 11, color: '#D1D5DB' }}>Not yet</span>}
+            <h1 style={{ fontSize:28, fontWeight:800, color:'#0F0F10', letterSpacing:'-0.025em', marginBottom:10 }}>Final Exam Locked</h1>
+            <p style={{ fontSize:15, color:'#6B7280', lineHeight:1.65, maxWidth:420, margin:'0 auto' }}>Complete all 6 module quizzes with 70%+ before taking the final exam.</p>
+          </div>
+          <div style={{ background:'#FFFFFF', border:'1px solid rgba(0,0,0,0.07)', borderRadius:14, padding:'20px 24px', marginBottom:24 }}>
+            {ALL_MODULE_IDS.map(id => {
+              const done = passedModules.includes(id)
+              return (
+                <div key={id} style={{ display:'flex', alignItems:'center', gap:12, padding:'10px 0', borderBottom:'1px solid rgba(0,0,0,0.05)' }}>
+                  <div style={{ width:28, height:28, borderRadius:'50%', background:done ? 'rgba(16,185,129,0.12)' : 'rgba(0,0,0,0.05)', border:`1px solid ${done ? 'rgba(16,185,129,0.3)' : 'rgba(0,0,0,0.1)'}`, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                    {done ? <CheckIcon size={13} /> : <XIcon size={13} color="#D1D5DB" />}
                   </div>
-                )
-              })}
-            </div>
-
-            <div style={{ textAlign: 'center' }}>
-              <button className="fe-btn-secondary" onClick={() => window.location.href = '/academy'}>← Return to Academy</button>
-            </div>
-          </motion.div>
-        </div>
-      </div>
-    )
-  }
-
-  // ── Intro view ───────────────────────────────────────────────────────────────
-  if (view === 'intro') {
-    return (
-      <div className="fe" style={{ display: 'flex', height: '100vh', background: '#F9F9FB' }}>
-        <style>{CSS}</style>
-        <Sidebar />
-        <div className="fe-scroll" style={{ flex: 1, overflowY: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 24px' }}>
-          <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease: EASE }}
-            style={{ maxWidth: 640, width: '100%' }}>
-
-            {/* Header */}
-            <div style={{ textAlign: 'center', marginBottom: 40 }}>
-              <div style={{ width: 72, height: 72, borderRadius: '50%', background: 'linear-gradient(135deg,#8B5CF6,#6366F1)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px', boxShadow: '0 8px 32px rgba(139,92,246,0.4)' }}>
-                <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/>
-                </svg>
-              </div>
-              <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em', color: '#8B5CF6', marginBottom: 12 }}>Lynq Academy</div>
-              <h1 style={{ fontSize: 32, fontWeight: 800, color: '#0F0F10', letterSpacing: '-0.025em', marginBottom: 12 }}>Final Certification Exam</h1>
-              <p style={{ fontSize: 15, color: '#6B7280', lineHeight: 1.65, maxWidth: 460, margin: '0 auto' }}>
-                Complete all three sections to earn your Lynq Academy certificate.
-              </p>
-            </div>
-
-            {/* Stats */}
-            <div style={{ display: 'flex', gap: 12, justifyContent: 'center', marginBottom: 36, flexWrap: 'wrap' }}>
-              {[
-                { icon: <><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></>, text: '~45 minutes' },
-                { icon: <><polyline points="20 6 9 17 4 12"/></>, text: '80% to pass' },
-                { icon: <><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></>, text: '3 sections' },
-              ].map(({ icon, text }, i) => (
-                <div key={i} style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 20, padding: '8px 18px', display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">{icon}</svg>
-                  <span style={{ fontSize: 13, fontWeight: 500, color: '#555' }}>{text}</span>
+                  <span style={{ fontSize:14, color:done ? '#374151' : '#9CA3AF', fontWeight:done ? 500 : 400 }}>{MODULE_LABELS[id]}</span>
+                  <span style={{ marginLeft:'auto', fontSize:11, fontWeight:600, color:done ? '#10B981' : '#D1D5DB' }}>{done ? 'Passed' : 'Not yet'}</span>
                 </div>
-              ))}
-            </div>
-
-            {/* Section cards */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 36 }}>
-              {[
-                { num: '01', title: 'Case Studies', desc: '3 real-world customer scenarios — 5 questions each (15 total)', color: '#6366F1', icon: <><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></> },
-                { num: '02', title: 'Knowledge Test', desc: '20 multiple choice questions covering all 6 modules', color: '#3B82F6', icon: <><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></> },
-                { num: '03', title: 'Practical Assignment', desc: 'Write a professional customer service reply to a real scenario', color: '#10B981', icon: <><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></> },
-              ].map(({ num, title, desc, color, icon }) => (
-                <div key={num} style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.07)', borderRadius: 12, padding: '18px 20px', display: 'flex', alignItems: 'flex-start', gap: 16 }}>
-                  <div style={{ width: 40, height: 40, borderRadius: 10, background: `${color}15`, border: `1px solid ${color}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">{icon}</svg>
-                  </div>
-                  <div>
-                    <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: color, marginBottom: 4 }}>Section {num}</div>
-                    <div style={{ fontSize: 15, fontWeight: 600, color: '#0F0F10', marginBottom: 4 }}>{title}</div>
-                    <div style={{ fontSize: 13, color: '#6B7280' }}>{desc}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <div style={{ textAlign: 'center', display: 'flex', gap: 12, justifyContent: 'center' }}>
-              <button className="fe-btn-secondary" onClick={() => window.location.href = '/academy'}>← Back to Academy</button>
-              <button className="fe-btn-primary" onClick={() => { setSection(0); setCaseIdx(0); setCaseQuestion(0); setKnowIdx(0); setView('exam') }}>
-                Start Exam →
-              </button>
-            </div>
-          </motion.div>
-        </div>
+              )
+            })}
+          </div>
+          <div style={{ textAlign:'center' }}>
+            <button className="fe-btn-secondary" onClick={() => window.location.href = '/academy'}>← Return to Academy</button>
+          </div>
+        </motion.div>
       </div>
-    )
-  }
+    </div>
+  )
 
-  // ── Results view ─────────────────────────────────────────────────────────────
+  // ── Intro ─────────────────────────────────────────────────────────────────
+  if (view === 'intro') return (
+    <div className="fe" style={{ display:'flex', height:'100vh', background:'#F9F9FB' }}>
+      <style>{CSS}</style><Sidebar />
+      <div className="fe-scroll" style={{ flex:1, overflowY:'auto', display:'flex', alignItems:'center', justifyContent:'center', padding:'40px 24px' }}>
+        <motion.div initial={{ opacity:0, y:24 }} animate={{ opacity:1, y:0 }} transition={{ duration:0.5, ease:EASE }} style={{ maxWidth:640, width:'100%' }}>
+          <div style={{ textAlign:'center', marginBottom:40 }}>
+            <div style={{ width:72, height:72, borderRadius:'50%', background:'linear-gradient(135deg,#8B5CF6,#6366F1)', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 20px', boxShadow:'0 8px 32px rgba(139,92,246,0.4)' }}>
+              <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/></svg>
+            </div>
+            <div style={{ fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.12em', color:'#8B5CF6', marginBottom:12 }}>Lynq Academy</div>
+            <h1 style={{ fontSize:32, fontWeight:800, color:'#0F0F10', letterSpacing:'-0.025em', marginBottom:12 }}>Final Certification Exam</h1>
+            <p style={{ fontSize:15, color:'#6B7280', lineHeight:1.65, maxWidth:460, margin:'0 auto' }}>Complete all 50 questions to earn your certificate.</p>
+          </div>
+
+          <div style={{ display:'flex', gap:10, justifyContent:'center', marginBottom:36, flexWrap:'wrap' }}>
+            {[['50 Questions','<polyline points="20 6 9 17 4 12"/>'],['5 Sections','<line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/>'],['~45 minutes','<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>'],['80% to pass','<circle cx="12" cy="12" r="10"/>']].map(([text], i) => (
+              <div key={i} style={{ background:'#FFFFFF', border:'1px solid rgba(0,0,0,0.08)', borderRadius:20, padding:'8px 18px', display:'flex', alignItems:'center', gap:7 }}>
+                <span style={{ fontSize:13, fontWeight:500, color:'#555' }}>{text}</span>
+              </div>
+            ))}
+          </div>
+
+          <div style={{ display:'flex', flexDirection:'column', gap:10, marginBottom:36 }}>
+            {SECTION_META.map(({ label, color }, i) => (
+              <div key={i} style={{ background:'#FFFFFF', border:'1px solid rgba(0,0,0,0.07)', borderRadius:12, padding:'16px 20px', display:'flex', alignItems:'center', gap:16 }}>
+                <div style={{ width:40, height:40, borderRadius:10, background:`${color}18`, border:`1px solid ${color}35`, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                  <span style={{ fontSize:13, fontWeight:800, color }}>{String(i+1).padStart(2,'0')}</span>
+                </div>
+                <div>
+                  <div style={{ fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em', color, marginBottom:3 }}>Section {i+1}</div>
+                  <div style={{ fontSize:15, fontWeight:600, color:'#0F0F10' }}>{label}</div>
+                  <div style={{ fontSize:12, color:'#6B7280', marginTop:2 }}>10 questions</div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div style={{ display:'flex', gap:12, justifyContent:'center' }}>
+            <button className="fe-btn-secondary" onClick={() => window.location.href = '/academy'}>← Back to Academy</button>
+            <button className="fe-btn-primary" onClick={() => { setCurrentQ(0); setAnswers({}); setView('exam') }}>Start Exam →</button>
+          </div>
+        </motion.div>
+      </div>
+    </div>
+  )
+
+  // ── Results ───────────────────────────────────────────────────────────────
   if (view === 'results' && scores) {
     const passed = scores.total >= 80
     const ringR = 70, rStroke = 8, rCirc = 2 * Math.PI * ringR
-
     return (
-      <div className="fe" style={{ display: 'flex', height: '100vh', background: '#F9F9FB' }}>
-        <style>{CSS}</style>
-        <Sidebar />
-        <div className="fe-scroll" style={{ flex: 1, overflowY: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 24px' }}>
-          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.5, ease: EASE }}
-            style={{ maxWidth: 600, width: '100%', textAlign: 'center' }}>
-
-            {/* Score ring */}
-            <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', marginBottom: 24 }}>
-              <svg width="158" height="158" viewBox="0 0 158 158" style={{ transform: 'rotate(-90deg)' }}>
-                <circle cx="79" cy="79" r={ringR} fill="none" stroke="rgba(0,0,0,0.08)" strokeWidth={rStroke} />
+      <div className="fe" style={{ display:'flex', height:'100vh', background:'#F9F9FB', position:'relative', overflow:'hidden' }}>
+        <style>{CSS}</style><Sidebar />
+        {passed && CONFETTI.map((p, i) => (
+          <div key={i} style={{ position:'fixed', top:0, left:p.left, width:p.size, height:p.size * 1.5, background:p.color, borderRadius:2, animation:`confettiFall ${p.duration} ${p.delay} ease-in forwards`, pointerEvents:'none', zIndex:999 }} />
+        ))}
+        <div className="fe-scroll" style={{ flex:1, overflowY:'auto', display:'flex', alignItems:'center', justifyContent:'center', padding:'40px 24px' }}>
+          <motion.div initial={{ opacity:0, scale:0.95 }} animate={{ opacity:1, scale:1 }} transition={{ duration:0.5, ease:EASE }} style={{ maxWidth:600, width:'100%', textAlign:'center' }}>
+            <div style={{ position:'relative', display:'inline-flex', alignItems:'center', justifyContent:'center', marginBottom:24 }}>
+              <svg width="158" height="158" viewBox="0 0 158 158" style={{ transform:'rotate(-90deg)' }}>
+                <circle cx="79" cy="79" r={ringR} fill="none" stroke="rgba(0,0,0,0.08)" strokeWidth={rStroke}/>
                 <motion.circle cx="79" cy="79" r={ringR} fill="none"
                   stroke={passed ? '#10B981' : '#EF4444'} strokeWidth={rStroke}
                   strokeLinecap="round" strokeDasharray={rCirc}
                   initial={{ strokeDashoffset: rCirc }}
                   animate={{ strokeDashoffset: rCirc - (scores.total / 100) * rCirc }}
-                  transition={{ duration: 1.5, ease: 'easeOut', delay: 0.3 }}
-                />
+                  transition={{ duration:1.5, ease:'easeOut', delay:0.3 }}/>
               </svg>
-              <div style={{ position: 'absolute', textAlign: 'center' }}>
-                <div style={{ fontSize: 36, fontWeight: 800, color: '#0F0F10' }}>{scores.total}%</div>
-                <div style={{ fontSize: 11, color: '#9CA3AF' }}>total score</div>
+              <div style={{ position:'absolute', textAlign:'center' }}>
+                <div style={{ fontSize:36, fontWeight:800, color:'#0F0F10' }}>{scores.total}%</div>
+                <div style={{ fontSize:11, color:'#9CA3AF' }}>total score</div>
               </div>
             </div>
 
-            <h2 style={{ fontSize: 26, fontWeight: 800, color: '#0F0F10', letterSpacing: '-0.025em', marginBottom: 10 }}>
-              {passed ? 'Congratulations! You passed!' : 'Keep going — you\'re close!'}
+            <h2 style={{ fontSize:26, fontWeight:800, color:'#0F0F10', letterSpacing:'-0.025em', marginBottom:10 }}>
+              {passed ? 'Congratulations!' : 'Almost there!'}
             </h2>
-            <p style={{ fontSize: 15, color: '#6B7280', lineHeight: 1.65, marginBottom: 32, maxWidth: 440, margin: '0 auto 32px' }}>
+            <p style={{ fontSize:15, color:'#6B7280', lineHeight:1.65, maxWidth:440, margin:'0 auto 32px' }}>
               {passed
                 ? "You've earned your Lynq Academy certificate. Outstanding work!"
-                : `You scored ${scores.total}%. You need 80% to pass. Review the weaker areas and retake when ready.`}
+                : `You scored ${scores.total}%. You need 80% to pass. Review sections below 80% and retake when ready.`}
             </p>
 
-            {/* Section breakdown */}
-            <div style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.07)', borderRadius: 14, padding: '20px 24px', marginBottom: 28, textAlign: 'left' }}>
-              <div style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#9CA3AF', marginBottom: 16 }}>Section Scores</div>
-              {[
-                { label: 'Case Studies', score: scores.cases, color: '#6366F1' },
-                { label: 'Knowledge Test', score: scores.knowledge, color: '#3B82F6' },
-                { label: 'Practical Assignment', score: scores.practical, color: '#10B981' },
-              ].map(({ label, score, color }) => (
-                <div key={label} style={{ marginBottom: 14 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                    <span style={{ fontSize: 13, fontWeight: 500, color: '#374151' }}>{label}</span>
-                    <span style={{ fontSize: 13, fontWeight: 700, color: score >= 80 ? '#10B981' : score >= 60 ? '#F59E0B' : '#EF4444' }}>{score}%</span>
+            <div style={{ background:'#FFFFFF', border:'1px solid rgba(0,0,0,0.07)', borderRadius:14, padding:'20px 24px', marginBottom:28, textAlign:'left' }}>
+              <div style={{ fontSize:12, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em', color:'#9CA3AF', marginBottom:16 }}>Section Scores</div>
+              {SECTION_META.map(({ label, color }, i) => {
+                const s = scores.sections[i]
+                return (
+                  <div key={i} style={{ marginBottom:14 }}>
+                    <div style={{ display:'flex', justifyContent:'space-between', marginBottom:5 }}>
+                      <span style={{ fontSize:13, fontWeight:500, color:'#374151' }}>{label}</span>
+                      <span style={{ fontSize:13, fontWeight:700, color: s >= 80 ? '#10B981' : s >= 60 ? '#F59E0B' : '#EF4444' }}>{s}%</span>
+                    </div>
+                    <div style={{ height:4, borderRadius:10, background:'rgba(0,0,0,0.07)', overflow:'hidden' }}>
+                      <motion.div initial={{ width:0 }} animate={{ width:`${s}%` }} transition={{ duration:1, ease:'easeOut', delay:0.5 + i*0.1 }}
+                        style={{ height:'100%', borderRadius:10, background:color }} />
+                    </div>
                   </div>
-                  <div style={{ height: 4, borderRadius: 10, background: 'rgba(0,0,0,0.07)', overflow: 'hidden' }}>
-                    <motion.div
-                      initial={{ width: 0 }}
-                      animate={{ width: `${score}%` }}
-                      transition={{ duration: 1, ease: 'easeOut', delay: 0.5 }}
-                      style={{ height: '100%', borderRadius: 10, background: color }}
-                    />
-                  </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
 
-            <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
+            <div style={{ display:'flex', gap:10, justifyContent:'center', flexWrap:'wrap' }}>
               {passed ? (
                 <>
-                  <button className="fe-btn-green" onClick={() => window.location.href = '/academy'}>View Certificate →</button>
+                  <button className="fe-btn-green" onClick={() => window.location.href = '/academy/certificate'}>Claim Your Certificate →</button>
                   <button className="fe-btn-secondary" onClick={() => window.location.href = '/academy'}>Back to Academy</button>
                 </>
               ) : (
                 <>
                   <button className="fe-btn-secondary" onClick={() => window.location.href = '/academy'}>Back to Academy</button>
-                  <button className="fe-btn-primary" onClick={() => {
-                    setCaseAnswers({})
-                    setKnowledgeAnswers({})
-                    setPracticalText('')
-                    setScores(null)
-                    setSection(0)
-                    setCaseIdx(0)
-                    setCaseQuestion(0)
-                    setKnowIdx(0)
-                    setView('intro')
-                  }}>Retake Exam</button>
+                  <button className="fe-btn-primary" onClick={() => { setAnswers({}); setCurrentQ(0); setScores(null); setView('intro') }}>Retake Exam</button>
                 </>
               )}
             </div>
@@ -512,225 +473,119 @@ export default function FinalExamPage() {
     )
   }
 
-  // ── Exam view ─────────────────────────────────────────────────────────────────
-  const totalCaseQuestions = CASE_STUDIES.reduce((s, cs) => s + cs.questions.length, 0)
-  const answeredCaseQuestions = Object.keys(caseAnswers).length
-  const answeredKnowledge = Object.keys(knowledgeAnswers).length
-
-  // Global question index for case studies
-  const globalCaseIdx = CASE_STUDIES.slice(0, caseIdx).reduce((s, cs) => s + cs.questions.length, 0) + caseQuestion
-
-  const currentCase = CASE_STUDIES[caseIdx]
-  const currentCaseQ = currentCase?.questions[caseQuestion]
-  const currentKnowQ = KNOWLEDGE_QUESTIONS[knowIdx]
-
-  function nextCaseQuestion() {
-    const caseQLen = currentCase.questions.length
-    if (caseQuestion < caseQLen - 1) {
-      setCaseQuestion(q => q + 1)
-    } else if (caseIdx < CASE_STUDIES.length - 1) {
-      setCaseIdx(i => i + 1)
-      setCaseQuestion(0)
-    }
-  }
-
-  function prevCaseQuestion() {
-    if (caseQuestion > 0) {
-      setCaseQuestion(q => q - 1)
-    } else if (caseIdx > 0) {
-      const prevCase = CASE_STUDIES[caseIdx - 1]
-      setCaseIdx(i => i - 1)
-      setCaseQuestion(prevCase.questions.length - 1)
-    }
-  }
-
-  const isLastCaseQuestion = caseIdx === CASE_STUDIES.length - 1 && caseQuestion === currentCase.questions.length - 1
-  const isLastKnowQuestion = knowIdx === KNOWLEDGE_QUESTIONS.length - 1
-  const currentCaseAnswerKey = `${caseIdx}-${caseQuestion}`
+  // ── Exam ──────────────────────────────────────────────────────────────────
+  const q             = ALL_Q[currentQ]
+  const currentSection = Math.floor(currentQ / 10)
+  const meta           = SECTION_META[currentSection]
+  const isLastQ        = currentQ === 49
+  const isFirstQ       = currentQ === 0
+  const prevQ          = ALL_Q[currentQ - 1]
+  const showContext    = q?.showContext || (q?.caseTitle && prevQ?.caseTitle !== q?.caseTitle)
+  const answeredTotal  = Object.keys(answers).length
+  const qInSection     = currentQ % 10
 
   return (
-    <div className="fe" style={{ display: 'flex', height: '100vh', background: '#F9F9FB' }}>
-      <style>{CSS}</style>
-      <Sidebar />
+    <div className="fe" style={{ display:'flex', height:'100vh', background:'#F9F9FB' }}>
+      <style>{CSS}</style><Sidebar />
+      <div style={{ flex:1, display:'flex', flexDirection:'column', overflow:'hidden' }}>
 
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-        {/* Top progress bar */}
-        <div style={{ height: 52, background: '#FFFFFF', borderBottom: '1px solid rgba(0,0,0,0.07)', display: 'flex', alignItems: 'center', padding: '0 24px', gap: 16, flexShrink: 0 }}>
-          <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 12 }}>
-            {['Case Studies', 'Knowledge Test', 'Practical'].map((label, i) => (
-              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <div style={{ width: 20, height: 20, borderRadius: '50%', background: section === i ? '#8B5CF6' : section > i ? '#10B981' : 'rgba(0,0,0,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700, color: section >= i ? '#FFF' : '#9CA3AF', transition: 'all 0.2s' }}>
-                  {section > i ? '✓' : i + 1}
+        {/* Progress header */}
+        <div style={{ height:52, background:'#FFFFFF', borderBottom:'1px solid rgba(0,0,0,0.07)', display:'flex', alignItems:'center', padding:'0 24px', gap:16, flexShrink:0 }}>
+          <div style={{ flex:1, display:'flex', alignItems:'center', gap:6 }}>
+            {SECTION_META.map(({ label, color }, i) => (
+              <div key={i} style={{ display:'flex', alignItems:'center', gap:5 }}>
+                <div style={{ width:22, height:22, borderRadius:'50%', background: currentSection === i ? meta.color : currentSection > i ? '#10B981' : 'rgba(0,0,0,0.08)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:9, fontWeight:700, color: currentSection >= i ? '#FFF' : '#9CA3AF', transition:'all 0.3s', flexShrink:0 }}>
+                  {currentSection > i ? '✓' : i+1}
                 </div>
-                <span style={{ fontSize: 12, fontWeight: section === i ? 600 : 400, color: section === i ? '#0F0F10' : '#9CA3AF' }}>{label}</span>
-                {i < 2 && <div style={{ width: 24, height: 1, background: 'rgba(0,0,0,0.12)', margin: '0 4px' }} />}
+                <span style={{ fontSize:11, fontWeight:currentSection === i ? 600 : 400, color:currentSection === i ? '#0F0F10' : '#C4C4C4', whiteSpace:'nowrap' }}>{label}</span>
+                {i < 4 && <div style={{ width:16, height:1, background:'rgba(0,0,0,0.1)', margin:'0 2px' }} />}
               </div>
             ))}
           </div>
-          <button className="fe-btn-secondary" style={{ padding: '6px 14px', fontSize: 12 }} onClick={() => setView('intro')}>Exit Exam</button>
+          <span style={{ fontSize:12, color:'#9CA3AF', flexShrink:0 }}>Q{currentQ+1}/50</span>
+          <button className="fe-btn-secondary" style={{ padding:'6px 14px', fontSize:12 }} onClick={() => setView('intro')}>Exit</button>
         </div>
 
-        <div className="fe-scroll" style={{ flex: 1, overflowY: 'auto' }}>
-          <div style={{ maxWidth: 720, margin: '0 auto', padding: '32px 24px' }}>
+        {/* Total progress bar */}
+        <div style={{ height:3, background:'rgba(0,0,0,0.06)' }}>
+          <motion.div style={{ height:'100%', background:`linear-gradient(90deg,${meta.color},#8B5CF6)` }}
+            animate={{ width:`${((currentQ+1)/50)*100}%` }} transition={{ duration:0.3 }} />
+        </div>
+
+        <div className="fe-scroll" style={{ flex:1, overflowY:'auto' }}>
+          <div style={{ maxWidth:720, margin:'0 auto', padding:'32px 24px' }}>
             <AnimatePresence mode="wait">
+              <motion.div key={currentQ} initial={{ opacity:0, x:20 }} animate={{ opacity:1, x:0 }} exit={{ opacity:0, x:-20 }} transition={{ duration:0.22, ease:EASE }}>
 
-              {/* ── Section 0: Case Studies ── */}
-              {section === 0 && (
-                <motion.div key={`case-${caseIdx}-${caseQuestion}`} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.25, ease: EASE }}>
-                  {/* Progress */}
-                  <div style={{ marginBottom: 20 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-                      <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#9CA3AF' }}>
-                        Case {caseIdx + 1} of {CASE_STUDIES.length} — Q{caseQuestion + 1}/{currentCase.questions.length}
-                      </span>
-                      <span style={{ fontSize: 11, color: '#9CA3AF' }}>{answeredCaseQuestions}/{totalCaseQuestions} answered</span>
-                    </div>
-                    <div style={{ height: 3, borderRadius: 10, background: 'rgba(0,0,0,0.08)', overflow: 'hidden' }}>
-                      <motion.div style={{ height: '100%', borderRadius: 10, background: 'linear-gradient(90deg,#6366F1,#8B5CF6)' }}
-                        animate={{ width: `${((globalCaseIdx + 1) / totalCaseQuestions) * 100}%` }} transition={{ duration: 0.3 }} />
-                    </div>
+                {/* Section label + progress */}
+                <div style={{ marginBottom:20 }}>
+                  <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:8 }}>
+                    <span style={{ fontSize:10, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.1em', color:meta.color }}>
+                      {meta.label} — Question {qInSection+1} of 10
+                    </span>
+                    <span style={{ fontSize:11, color:'#9CA3AF' }}>{answeredTotal}/50 answered</span>
                   </div>
-
-                  {/* Case context (show on first question of each case) */}
-                  {caseQuestion === 0 && (
-                    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}
-                      style={{ background: 'rgba(99,102,241,0.05)', border: '1px solid rgba(99,102,241,0.15)', borderRadius: 12, padding: '20px 24px', marginBottom: 20 }}>
-                      <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#6366F1', marginBottom: 8 }}>Case Study: {currentCase.title}</div>
-                      <p style={{ fontSize: 14, color: '#374151', lineHeight: 1.7 }}>{currentCase.context}</p>
-                    </motion.div>
-                  )}
-
-                  {caseQuestion > 0 && (
-                    <div style={{ background: 'rgba(0,0,0,0.02)', border: '1px solid rgba(0,0,0,0.06)', borderRadius: 8, padding: '10px 14px', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <span style={{ fontSize: 11, fontWeight: 600, color: '#6366F1' }}>Case: {currentCase.title}</span>
-                    </div>
-                  )}
-
-                  {/* Question */}
-                  <div style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.07)', borderRadius: 12, padding: '24px 28px', marginBottom: 14 }}>
-                    <h3 style={{ fontSize: 17, fontWeight: 600, color: '#0F0F10', lineHeight: 1.5 }}>{currentCaseQ?.q}</h3>
+                  <div style={{ height:3, borderRadius:10, background:'rgba(0,0,0,0.07)', overflow:'hidden' }}>
+                    <div style={{ height:'100%', borderRadius:10, background:meta.color, width:`${((qInSection+1)/10)*100}%`, transition:'width 0.3s ease' }} />
                   </div>
+                </div>
 
-                  {currentCaseQ?.opts.map((opt, idx) => {
-                    const sel = caseAnswers[currentCaseAnswerKey] === idx
-                    return (
-                      <div key={idx} className={`fe-option ${sel ? 'selected' : ''}`}
-                        onClick={() => setCaseAnswers(prev => ({ ...prev, [currentCaseAnswerKey]: idx }))}>
-                        <div className="fe-radio">
-                          {sel && <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#FFFFFF' }} />}
-                        </div>
-                        <span style={{ fontSize: 14, color: '#0F0F10', flex: 1 }}>{opt}</span>
+                {/* Case context */}
+                {showContext && q.caseContext && (
+                  <motion.div initial={{ opacity:0, y:8 }} animate={{ opacity:1, y:0 }} transition={{ duration:0.3 }}
+                    style={{ background:'#F9F8FF', border:'1px solid rgba(139,92,246,0.12)', borderLeft:'3px solid #8B5CF6', borderRadius:8, padding:'16px 20px', marginBottom:20 }}>
+                    <div style={{ fontSize:10, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.1em', color:'#8B5CF6', marginBottom:8 }}>Case Study: {q.caseTitle}</div>
+                    <p style={{ fontSize:14, color:'#374151', lineHeight:1.75 }}>{q.caseContext}</p>
+                  </motion.div>
+                )}
+
+                {/* Case badge (not first question) */}
+                {q?.caseTitle && !showContext && (
+                  <div style={{ background:'rgba(139,92,246,0.05)', border:'1px solid rgba(139,92,246,0.12)', borderRadius:6, padding:'6px 12px', marginBottom:14, display:'inline-block' }}>
+                    <span style={{ fontSize:11, fontWeight:600, color:'#8B5CF6' }}>{q.caseTitle}</span>
+                  </div>
+                )}
+
+                {/* Question */}
+                <div style={{ background:'#FFFFFF', border:'1px solid rgba(0,0,0,0.07)', borderRadius:12, padding:'24px 28px', marginBottom:14 }}>
+                  <h3 style={{ fontSize:18, fontWeight:600, color:'#0F0F10', lineHeight:1.5 }}>{q.q}</h3>
+                </div>
+
+                {/* Options */}
+                {q.opts.map((opt, idx) => {
+                  const sel = answers[currentQ] === idx
+                  return (
+                    <div key={idx} className={`fe-option ${sel ? 'selected' : ''}`}
+                      onClick={() => setAnswers(prev => ({ ...prev, [currentQ]: idx }))}>
+                      <div className="fe-radio">
+                        {sel && <div style={{ width:8, height:8, borderRadius:'50%', background:'#FFFFFF' }} />}
                       </div>
-                    )
-                  })}
-
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 20 }}>
-                    <button className="fe-btn-secondary"
-                      onClick={prevCaseQuestion}
-                      disabled={caseIdx === 0 && caseQuestion === 0}
-                      style={{ opacity: (caseIdx === 0 && caseQuestion === 0) ? 0.35 : 1 }}>← Previous</button>
-                    {!isLastCaseQuestion
-                      ? <button className="fe-btn-primary" onClick={nextCaseQuestion}>Next →</button>
-                      : <button className="fe-btn-primary"
-                          disabled={answeredCaseQuestions < totalCaseQuestions}
-                          style={{ opacity: answeredCaseQuestions >= totalCaseQuestions ? 1 : 0.5 }}
-                          onClick={() => { setSection(1); setKnowIdx(0) }}>
-                          Submit Section 1 →
-                        </button>
-                    }
-                  </div>
-                </motion.div>
-              )}
-
-              {/* ── Section 1: Knowledge Test ── */}
-              {section === 1 && (
-                <motion.div key={`know-${knowIdx}`} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.25, ease: EASE }}>
-                  <div style={{ marginBottom: 20 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-                      <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#9CA3AF' }}>Question {knowIdx + 1} of {KNOWLEDGE_QUESTIONS.length}</span>
-                      <span style={{ fontSize: 11, color: '#9CA3AF' }}>{answeredKnowledge}/{KNOWLEDGE_QUESTIONS.length} answered</span>
+                      <span style={{ fontSize:14, color:'#0F0F10', flex:1 }}>{opt}</span>
                     </div>
-                    <div style={{ height: 3, borderRadius: 10, background: 'rgba(0,0,0,0.08)', overflow: 'hidden' }}>
-                      <motion.div style={{ height: '100%', borderRadius: 10, background: 'linear-gradient(90deg,#3B82F6,#6366F1)' }}
-                        animate={{ width: `${((knowIdx + 1) / KNOWLEDGE_QUESTIONS.length) * 100}%` }} transition={{ duration: 0.3 }} />
-                    </div>
-                  </div>
+                  )
+                })}
 
-                  <div style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.07)', borderRadius: 12, padding: '24px 28px', marginBottom: 14 }}>
-                    <h3 style={{ fontSize: 17, fontWeight: 600, color: '#0F0F10', lineHeight: 1.5 }}>{currentKnowQ?.q}</h3>
-                  </div>
+                {/* Navigation */}
+                <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginTop:20 }}>
+                  <button className="fe-btn-secondary" onClick={() => setCurrentQ(q => q - 1)}
+                    disabled={isFirstQ} style={{ opacity:isFirstQ ? 0.35 : 1 }}>← Previous</button>
+                  {!isLastQ
+                    ? <button className="fe-btn-primary" onClick={() => setCurrentQ(q => q + 1)}>Next →</button>
+                    : <button className="fe-btn-primary"
+                        disabled={answeredTotal < 50 || saving}
+                        style={{ opacity:answeredTotal >= 50 ? 1 : 0.5 }}
+                        onClick={handleSubmit}>
+                        {saving ? 'Submitting…' : 'Submit Exam →'}
+                      </button>
+                  }
+                </div>
+                {isLastQ && answeredTotal < 50 && (
+                  <p style={{ fontSize:12, color:'#F59E0B', textAlign:'center', marginTop:10 }}>
+                    {50 - answeredTotal} question{50 - answeredTotal !== 1 ? 's' : ''} still unanswered
+                  </p>
+                )}
 
-                  {currentKnowQ?.opts.map((opt, idx) => {
-                    const sel = knowledgeAnswers[knowIdx] === idx
-                    return (
-                      <div key={idx} className={`fe-option ${sel ? 'selected' : ''}`}
-                        onClick={() => setKnowledgeAnswers(prev => ({ ...prev, [knowIdx]: idx }))}>
-                        <div className="fe-radio">
-                          {sel && <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#FFFFFF' }} />}
-                        </div>
-                        <span style={{ fontSize: 14, color: '#0F0F10', flex: 1 }}>{opt}</span>
-                      </div>
-                    )
-                  })}
-
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 20 }}>
-                    <button className="fe-btn-secondary"
-                      onClick={() => setKnowIdx(i => Math.max(0, i - 1))}
-                      disabled={knowIdx === 0}
-                      style={{ opacity: knowIdx === 0 ? 0.35 : 1 }}>← Previous</button>
-                    {!isLastKnowQuestion
-                      ? <button className="fe-btn-primary" onClick={() => setKnowIdx(i => i + 1)}>Next →</button>
-                      : <button className="fe-btn-primary"
-                          disabled={answeredKnowledge < KNOWLEDGE_QUESTIONS.length}
-                          style={{ opacity: answeredKnowledge >= KNOWLEDGE_QUESTIONS.length ? 1 : 0.5 }}
-                          onClick={() => setSection(2)}>
-                          Submit Section 2 →
-                        </button>
-                    }
-                  </div>
-                </motion.div>
-              )}
-
-              {/* ── Section 2: Practical ── */}
-              {section === 2 && (
-                <motion.div key="practical" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.25, ease: EASE }}>
-                  <div style={{ marginBottom: 8 }}>
-                    <div style={{ fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#10B981', marginBottom: 6 }}>Section 3 — Practical Assignment</div>
-                    <h2 style={{ fontSize: 22, fontWeight: 700, color: '#0F0F10', letterSpacing: '-0.02em', marginBottom: 8 }}>Write Your Response</h2>
-                    <p style={{ fontSize: 13, color: '#6B7280', marginBottom: 20 }}>Read the scenario below and write a complete, professional customer service reply.</p>
-                  </div>
-
-                  <div style={{ background: 'rgba(16,185,129,0.05)', border: '1px solid rgba(16,185,129,0.15)', borderRadius: 12, padding: '20px 24px', marginBottom: 20 }}>
-                    <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#10B981', marginBottom: 10 }}>Customer Scenario</div>
-                    <p style={{ fontSize: 14, color: '#374151', lineHeight: 1.75, whiteSpace: 'pre-line' }}>{PRACTICAL_SCENARIO}</p>
-                  </div>
-
-                  <div style={{ marginBottom: 8 }}>
-                    <label style={{ fontSize: 13, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 10 }}>Your reply</label>
-                    <textarea
-                      className="fe-textarea"
-                      rows={10}
-                      placeholder="Hi [Customer name], I'm so sorry to hear about..."
-                      value={practicalText}
-                      onChange={e => setPracticalText(e.target.value)}
-                    />
-                    <div style={{ fontSize: 11, color: practicalText.length >= 100 ? '#10B981' : '#9CA3AF', marginTop: 6, textAlign: 'right' }}>
-                      {practicalText.length} characters {practicalText.length < 100 ? `(minimum 100 — ${100 - practicalText.length} more needed)` : '✓'}
-                    </div>
-                  </div>
-
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 24 }}>
-                    <button className="fe-btn-secondary" onClick={() => setSection(1)}>← Back to Section 2</button>
-                    <button className="fe-btn-primary"
-                      disabled={practicalText.length < 50 || saving}
-                      style={{ opacity: practicalText.length >= 50 ? 1 : 0.5 }}
-                      onClick={handleSubmitExam}>
-                      {saving ? 'Submitting…' : 'Submit Exam →'}
-                    </button>
-                  </div>
-                </motion.div>
-              )}
-
+              </motion.div>
             </AnimatePresence>
           </div>
         </div>

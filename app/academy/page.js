@@ -1348,6 +1348,35 @@ export default function AcademyPage() {
             )
           })}
         </div>
+
+        {/* Final Exam CTA */}
+        <div style={{ padding:'12px 8px 14px', borderTop:'1px solid rgba(0,0,0,0.07)', flexShrink:0 }}>
+          {(allDone || isAdmin) ? (
+            <button
+              onClick={() => window.location.href = '/academy/final-exam'}
+              style={{ width:'100%', height:44, background:'linear-gradient(135deg,#8B5CF6,#6366F1)', color:'#FFFFFF', border:'none', borderRadius:10, fontSize:13, fontWeight:600, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:8, fontFamily:'inherit', boxShadow:'0 4px 12px rgba(139,92,246,0.3)', transition:'filter 0.15s' }}
+              onMouseEnter={e=>e.currentTarget.style.filter='brightness(1.1)'}
+              onMouseLeave={e=>e.currentTarget.style.filter='none'}>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/></svg>
+              Take Final Exam
+            </button>
+          ) : (
+            <div>
+              <button disabled style={{ width:'100%', height:44, background:'rgba(0,0,0,0.05)', color:'#9CA3AF', border:'1px solid rgba(0,0,0,0.08)', borderRadius:10, fontSize:13, fontWeight:600, cursor:'not-allowed', display:'flex', alignItems:'center', justifyContent:'center', gap:8, fontFamily:'inherit' }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                Complete all modules first
+              </button>
+              <div style={{ marginTop:8 }}>
+                {MODULES.filter(m => !passedTypes.includes(m.examType)).map(m => (
+                  <div key={m.id} style={{ fontSize:10, color:'#9CA3AF', display:'flex', alignItems:'center', gap:5, padding:'2px 4px' }}>
+                    <div style={{ width:4, height:4, borderRadius:'50%', background:'rgba(0,0,0,0.18)', flexShrink:0 }} />
+                    {m.label}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Main area */}

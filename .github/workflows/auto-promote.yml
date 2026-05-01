@@ -6,15 +6,31 @@ jobs:
   promote:
     runs-on: ubuntu-latest
     steps:
-      - name: Wait for Vercel deployment
-        run: sleep 60
-      - name: Promote to Production
+      - name: Wait for Vercel build
+        run: sleep 90
+
+      - name: Promote latest deployment
         run: |
-          DEPLOYMENT=$(curl -s \
-            "https://api.vercel.com/v6/deployments?projectId=${{ secrets.VERCEL_PROJECT_ID }}&limit=1&sort=createdAt" \
-            -H "Authorization: Bearer ${{ secrets.VERCEL_TOKEN }}" | \
-            python3 -c "import sys,json; d=json.load(sys.stdin); print(d['deployments'][0]['uid'])")
-          echo "Promoting: $DEPLOYMENT"
+          RESPONSE=$(curl -s \
+            "https://api.vercel.com/v6/deployments?projectId=${{ secrets.VERCEL_PROJECT_ID }}&limit=5&target=preview" \
+            -H "Authorization: Bearer ${{ secrets.VERCEL_TOKEN }}")
+          echo "API Response: $RESPONSE"
+          DEPLOYMENT=$(echo $RESPONSE | python3 -c "
+          import sys, json
+          data = json.load(sys.stdin)
+          print(data)
+          deployments = data.get('deployments', [])
+          if deployments:
+              print(deployments[0]['uid'])
+          else:
+              print('NO_DEPLOYMENT')
+              exit(1)
+          " 2>&1)
+          echo "Deployment UID: $DEPLOYMENT"
+          if [ "$DEPLOYMENT" = "NO_DEPLOYMENT" ]; then
+            echo "No deployment found"
+            exit 1
+          fi
           curl -X PATCH \
             "https://api.vercel.com/v10/deployments/$DEPLOYMENT/promote" \
             -H "Authorization: Bearer ${{ secrets.VERCEL_TOKEN }}" \

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
+import { motion } from 'framer-motion'
 import { supabase } from '../../lib/supabase'
 import Sidebar from '../components/Sidebar'
 import { DEMO_REFUNDS, DEMO_KPIS, DEMO_TREND, DEMO_INSIGHTS } from '../../lib/demoData'
@@ -184,6 +185,27 @@ function useCountUp(target, loaded) {
   return val
 }
 
+// ─── Animated Number ──────────────────────────────────────────────────────────
+
+function AnimatedNumber({ value, prefix = '', suffix = '', decimals = 0 }) {
+  const [display, setDisplay] = useState(0)
+  useEffect(() => {
+    let start = 0
+    const end = parseFloat(value) || 0
+    if (end === 0) { setDisplay(0); return }
+    const duration = 1200
+    const step = end / (duration / 16)
+    const timer = setInterval(() => {
+      start += step
+      if (start >= end) { setDisplay(end); clearInterval(timer) }
+      else setDisplay(start)
+    }, 16)
+    return () => clearInterval(timer)
+  }, [value])
+  const formatted = decimals > 0 ? display.toFixed(decimals) : Math.round(display).toLocaleString()
+  return <span>{prefix}{formatted}{suffix}</span>
+}
+
 // ─── CSS ──────────────────────────────────────────────────────────────────────
 
 const CSS = `
@@ -212,7 +234,7 @@ const CSS = `
     transition:border-color .2s ease,box-shadow .2s ease;
     cursor:default;
   }
-  .kpi-card:hover{border-color:rgba(0,0,0,0.12);box-shadow:0 4px 16px rgba(0,0,0,0.04)}
+  .kpi-card:hover{border-color:rgba(0,0,0,0.12);box-shadow:0 4px 16px rgba(0,0,0,0.04);transform:translateY(-1px)}
 
   .panel{
     background:#FFFFFF;
@@ -224,8 +246,8 @@ const CSS = `
   }
   .panel:hover{box-shadow:0 4px 20px rgba(0,0,0,0.04)}
 
-  .action-card{border-radius:8px;background:#FFFFFF;border:1px solid rgba(0,0,0,0.07);padding:12px 14px;margin-bottom:6px;cursor:default;transition:border-color .15s}
-  .action-card:hover{border-color:rgba(0,0,0,0.12)}
+  .action-card{border-radius:8px;background:#FFFFFF;border:1px solid rgba(0,0,0,0.07);padding:12px 14px;margin-bottom:6px;cursor:pointer;transition:all 0.15s ease}
+  .action-card:hover{border-color:rgba(0,0,0,0.12);box-shadow:0 2px 12px rgba(0,0,0,0.05);transform:translateY(-1px)}
   .action-card.done-card{opacity:.45}
 
   .tab-btn{padding:4px 14px;border-radius:100px;font-size:11.5px;font-weight:600;cursor:pointer;border:1px solid transparent;font-family:inherit;transition:all .15s ease}
@@ -313,10 +335,6 @@ function KpiRow({ kpis, prevKpis, refunds, loaded }) {
   const prevCount= prevKpis.totalRefunds||0
   const prevAvg  = prevCount>0?prevRef/prevCount:0
 
-  const aTotal = useCountUp(totalRef, loaded.refunds)
-  const aCount = useCountUp(count, loaded.refunds)
-  const aRate  = useCountUp(rate, loaded.kpis)
-  const aAvg   = useCountUp(avg, loaded.refunds)
   const isHealthy = rate===0&&loaded.kpis&&loaded.refunds
 
   if(!loaded.kpis&&!loaded.refunds) return (
@@ -326,16 +344,28 @@ function KpiRow({ kpis, prevKpis, refunds, loaded }) {
   )
 
   const cards = [
-    { label:'REFUNDS THIS PERIOD', value:fmtEur(aTotal),         sub:`${count} refunded order${count!==1?'s':''}`, delta:computeDelta(totalRef, prevRef), lowerBetter:true, accent:'#EF4444', accentBg:'rgba(239,68,68,0.08)', icon:<><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></> },
-    { label:'TOTAL REFUNDS',       value:Math.floor(aCount),     sub:'fully or partially refunded',               delta:computeDelta(count, prevCount),   lowerBetter:true, accent:'#F59E0B', accentBg:'rgba(245,158,11,0.08)', icon:<><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></> },
-    { label:'REFUND RATE',         value:`${aRate.toFixed(1)}%`, sub:isHealthy?'Below average':rate>5?`${(rate/2.5).toFixed(1)}× above avg`:'Industry avg: 2–5%', delta:computeDelta(rate, prevRate), lowerBetter:true, accent:'#8B5CF6', accentBg:'rgba(139,92,246,0.08)', icon:<><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></> },
-    { label:'AVG REFUND',          value:fmtEur(aAvg),           sub:'per refunded order',                        delta:computeDelta(avg, prevAvg),       lowerBetter:true, accent:'#10B981', accentBg:'rgba(16,185,129,0.08)', icon:<><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></> },
+    { label:'REFUNDS THIS PERIOD', display:<AnimatedNumber value={totalRef} prefix="€" decimals={2}/>, sub:`${count} refunded order${count!==1?'s':''}`, delta:computeDelta(totalRef, prevRef), lowerBetter:true, accent:'#EF4444', accentBg:'rgba(239,68,68,0.08)', icon:<><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></> },
+    { label:'TOTAL REFUNDS',       display:<AnimatedNumber value={count}/>,                           sub:'fully or partially refunded',               delta:computeDelta(count, prevCount),   lowerBetter:true, accent:'#F59E0B', accentBg:'rgba(245,158,11,0.08)', icon:<><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></> },
+    { label:'REFUND RATE',         display:<AnimatedNumber value={rate} decimals={1} suffix="%"/>,    sub:isHealthy?'Below average':rate>5?`${(rate/2.5).toFixed(1)}× above avg`:'Industry avg: 2–5%', delta:computeDelta(rate, prevRate), lowerBetter:true, accent:'#8B5CF6', accentBg:'rgba(139,92,246,0.08)', icon:<><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></> },
+    { label:'AVG REFUND',          display:<AnimatedNumber value={avg} prefix="€" decimals={2}/>,     sub:'per refunded order',                        delta:computeDelta(avg, prevAvg),       lowerBetter:true, accent:'#10B981', accentBg:'rgba(16,185,129,0.08)', icon:<><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></> },
   ]
 
   return (
-    <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:16, marginBottom:24 }}>
+    <motion.div
+      initial={{ opacity:0, y:12 }}
+      animate={{ opacity:1, y:0 }}
+      transition={{ duration:0.4, ease:[0.16,1,0.3,1] }}
+      style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:16, marginBottom:24 }}
+    >
       {cards.map((c,i)=>(
-        <div key={c.label} className="kpi-card" style={{ animation:'fadeIn .3s ease-out both', overflow:'hidden', borderRadius:10 }}>
+        <motion.div
+          key={c.label}
+          className="kpi-card"
+          initial={{ opacity:0, y:12 }}
+          animate={{ opacity:1, y:0 }}
+          transition={{ duration:0.4, delay:i*0.08, ease:[0.16,1,0.3,1] }}
+          style={{ overflow:'hidden', borderRadius:10, transition:'all 0.15s ease', cursor:'default' }}
+        >
           <div style={{ position:'absolute', top:0, left:0, right:0, height:3, background:c.accent }}/>
           <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:14 }}>
             <div style={{ fontSize:11, fontWeight:600, textTransform:'uppercase', letterSpacing:'.06em', color:'#BDBDBD' }}>{c.label}</div>
@@ -343,14 +373,14 @@ function KpiRow({ kpis, prevKpis, refunds, loaded }) {
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={c.accent} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">{c.icon}</svg>
             </div>
           </div>
-          <div style={{ fontSize:24, fontWeight:700, color:'#111111', lineHeight:1, marginBottom:8, fontVariantNumeric:'tabular-nums' }}>{c.value}</div>
+          <div style={{ fontSize:24, fontWeight:700, color:'#111111', lineHeight:1, marginBottom:8, fontVariantNumeric:'tabular-nums' }}>{c.display}</div>
           <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:8 }}>
             <div style={{ fontSize:11, color:'#888888' }}>{c.sub}</div>
             <DeltaBadge delta={loaded.prevKpis?c.delta:null} lowerIsBetter={c.lowerBetter}/>
           </div>
-        </div>
+        </motion.div>
       ))}
-    </div>
+    </motion.div>
   )
 }
 
@@ -380,8 +410,8 @@ function RevenueTrendChart({ trend, loaded, rangeLabel }) {
         <polygon points={area} fill="url(#tg)"/>
         <polyline points={line} fill="none" stroke="#10B981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
         {pts.filter(p=>p.revenue>0).map((p,i)=><circle key={i} cx={p.x} cy={p.y} r="2.5" fill="#10B981"/>)}
-        {xlbls.map((p,i)=><text key={i} x={p.x} y={H} textAnchor="middle" fontSize="9" fill="#BDBDBD" fontFamily="sans-serif">{new Date(p.date+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'})}</text>)}
-        {[0,mx/2,mx].map((v,i)=>{ const y=pT+(1-v/mx)*(H-pT-pB); const lbl=v>=1000?`€${(v/1000).toFixed(1)}k`:`€${Math.round(v)}`; return <text key={i} x={pL-6} y={y+3} textAnchor="end" fontSize="9" fill="#BDBDBD" fontFamily="sans-serif">{lbl}</text> })}
+        {xlbls.map((p,i)=><text key={i} x={p.x} y={H} textAnchor="middle" fontSize="9" fill="#BDBDBD" fontFamily="'Switzer', sans-serif">{new Date(p.date+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'})}</text>)}
+        {[0,mx/2,mx].map((v,i)=>{ const y=pT+(1-v/mx)*(H-pT-pB); const lbl=v>=1000?`€${(v/1000).toFixed(1)}k`:`€${Math.round(v)}`; return <text key={i} x={pL-6} y={y+3} textAnchor="end" fontSize="9" fill="#BDBDBD" fontFamily="'Switzer', sans-serif">{lbl}</text> })}
       </svg>
     </div>
   )
@@ -887,7 +917,7 @@ export default function AnalyticsPage() {
     <div className="an-root" style={{ display:'flex', minHeight:'100vh', background:'var(--bg-page)' }}>
       <style>{CSS}</style>
       <Sidebar/>
-      <main className="an-scroll" style={{ flex:1, overflowY:'auto', padding:'24px', background:'#F9F9FB', position:'relative' }}>
+      <main className="an-scroll" style={{ flex:1, overflowY:'auto', padding:'24px', background:'#F9F9FB', position:'relative', scrollbarWidth:'thin' }}>
         <PageBackground/>
         <div style={{ position:'relative', zIndex:1, maxWidth:1200, margin:'0 auto' }}>
 

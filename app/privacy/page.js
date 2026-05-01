@@ -9,7 +9,7 @@ export default function PrivacyPage() {
       minHeight: '100vh',
       background: '#1C0F36',
       color: '#ffffff',
-      fontFamily: "'Inter', sans-serif",
+      fontFamily: "'Switzer', -apple-system, BlinkMacSystemFont, sans-serif",
       padding: '60px 24px',
     }}>
       <div style={{ maxWidth: '720px', margin: '0 auto' }}>

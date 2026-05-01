@@ -486,7 +486,7 @@ export default function HomePage() {
       <style>{CSS}</style>
       <Sidebar />
 
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', position: 'relative', overflow: 'hidden', minWidth: 0 }}>
+      <div style={{ marginLeft: 208, flex: 1, display: 'flex', flexDirection: 'column', position: 'relative', overflow: 'hidden', minHeight: '100vh', background: 'transparent', minWidth: 0 }}>
 
         {/* ── 5-layer aurora ── */}
         <div aria-hidden style={{ position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: 'none', zIndex: 0 }}>
@@ -525,7 +525,7 @@ export default function HomePage() {
               </div>
 
               {/* Heading */}
-              <h1 style={{ fontSize: 'clamp(36px,5.2vw,60px)', fontWeight: 800, letterSpacing: '-0.036em', lineHeight: 1.07, color: 'var(--text-1)', marginBottom: 14, animation: 'revealUp .58s cubic-bezier(.16,1,.3,1) .07s both' }}>
+              <h1 style={{ fontSize: 'clamp(36px,5.2vw,60px)', fontWeight: 800, letterSpacing: '-0.025em', lineHeight: 1.07, color: 'var(--text-1)', marginBottom: 14, animation: 'revealUp .58s cubic-bezier(.16,1,.3,1) .07s both' }}>
                 Welcome back,{' '}
                 <span style={{
                   background: 'linear-gradient(120deg,#A175FC 0%,#9B6FFF 40%,#7C3AED 100%)',

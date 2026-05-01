@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import url('https://api.fontshare.com/v2/css?f[]=switzer@400,500,600,700,800&display=swap');
 
 /* ── Theme tokens — light is default ────────────────────────────────────────── */
 :root {
@@ -135,7 +136,7 @@ html, body {
   height: 100%;
   background: var(--bg-page);
   color: var(--text-1);
-  font-family: 'Switzer', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: 'Switzer', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
   font-size: 14px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
@@ -143,7 +144,7 @@ html, body {
   font-feature-settings: 'kern' 1, 'liga' 1, 'calt' 1;
 }
 
-* { font-family: inherit; }
+* { font-family: 'Switzer', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important; }
 
 /* ── Scrollbar ───────────────────────────────────────────────────────────── */
 ::-webkit-scrollbar         { width: 4px; height: 4px }

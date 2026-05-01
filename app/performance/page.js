@@ -185,8 +185,8 @@ function WorkloadKPIs({ data, loaded }) {
   if (!loaded) return (
     <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:12, marginBottom:12 }}>
       {[0,1,2,3].map(i=>(
-        <div key={i} className="kpi-card">
-          <div style={{position:'absolute',top:0,left:0,right:0,height:3,background:'#F3F4F6',borderRadius:'10px 10px 0 0'}}/>
+        <div key={i} className="kpi-card" style={{ position:'relative', overflow:'hidden' }}>
+          <div style={{position:'absolute',top:0,left:0,right:0,height:2,background:'#F3F4F6'}}/>
           <div className="sk" style={{ height:11, width:'55%', marginBottom:14, marginTop:4 }}/>
           <div className="sk" style={{ height:28, width:'65%', marginBottom:8 }}/>
           <div className="sk" style={{ height:9, width:'80%' }}/>
@@ -198,8 +198,8 @@ function WorkloadKPIs({ data, loaded }) {
   return (
     <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:12, marginBottom:12 }}>
       {cards.map(c=>(
-        <div key={c.label} className="kpi-card" style={{ animation:'fadeIn .3s ease-out both' }}>
-          <div style={{ position:'absolute', top:0, left:0, right:0, height:3, background:c.topGradient, borderRadius:'10px 10px 0 0' }}/>
+        <div key={c.label} className="kpi-card" style={{ animation:'fadeIn .3s ease-out both', position:'relative', overflow:'hidden' }}>
+          <div style={{ position:'absolute', top:0, left:0, right:0, height:2, background:c.topGradient }}/>
           <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:14, marginTop:4 }}>
             <div style={{ width:30, height:30, borderRadius:8, background:c.iconBg, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>{c.icon(c.iconColor)}</div>
             {c.badge&&<span style={{ fontSize:11, fontWeight:600, color:'#059669', background:'rgba(16,185,129,0.08)', border:'1px solid rgba(16,185,129,0.15)', borderRadius:5, padding:'2px 7px', fontVariantNumeric:'tabular-nums' }}>{c.badge.value}</span>}
@@ -284,8 +284,8 @@ function ResponseTimesSection({ data, loaded }) {
   if (!loaded) return (
     <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12, marginBottom:12 }}>
       {[0,1].map(i=>(
-        <div key={i} className="kpi-card" style={{ padding:20 }}>
-          <div style={{position:'absolute',top:0,left:0,right:0,height:3,background:'#F3F4F6',borderRadius:'10px 10px 0 0'}}/>
+        <div key={i} className="kpi-card" style={{ padding:20, position:'relative', overflow:'hidden' }}>
+          <div style={{position:'absolute',top:0,left:0,right:0,height:3,background:'#F3F4F6'}}/>
           <div className="sk" style={{ height:11, width:'45%', marginBottom:20, marginTop:4 }}/>
           <div className="sk" style={{ height:36, width:'48%', marginBottom:10 }}/>
           <div className="sk" style={{ height:1, marginBottom:14 }}/>
@@ -317,8 +317,8 @@ function ResponseTimesSection({ data, loaded }) {
   return (
     <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12, marginBottom:12, animation:'fadeIn .3s ease-out both' }}>
       {cards.map(c=>(
-        <div key={c.label} className="kpi-card" style={{ padding:20 }}>
-          <div style={{ position:'absolute', top:0, left:0, right:0, height:3, background:c.topGradient, borderRadius:'10px 10px 0 0' }}/>
+        <div key={c.label} className="kpi-card" style={{ padding:20, position:'relative', overflow:'hidden' }}>
+          <div style={{ position:'absolute', top:0, left:0, right:0, height:3, background:c.topGradient }}/>
           <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:14, marginTop:4 }}>
             <div style={{ width:30, height:30, borderRadius:8, background:c.iconBg, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>{c.icon(c.iconColor)}</div>
             {c.rtLabel&&<span style={{ fontSize:10, fontWeight:700, color:c.rtLabel.color, background:c.rtLabel.bg, border:`1px solid ${c.rtLabel.border}`, borderRadius:5, padding:'2px 8px' }}>{c.rtLabel.label}</span>}
@@ -373,8 +373,8 @@ function ProductivityKPIs({ data, loaded }) {
   if (!loaded) return (
     <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:12, marginBottom:12 }}>
       {[0,1,2,3].map(i=>(
-        <div key={i} className="kpi-card">
-          <div style={{position:'absolute',top:0,left:0,right:0,height:3,background:'#F3F4F6',borderRadius:'10px 10px 0 0'}}/>
+        <div key={i} className="kpi-card" style={{ position:'relative', overflow:'hidden' }}>
+          <div style={{position:'absolute',top:0,left:0,right:0,height:3,background:'#F3F4F6'}}/>
           <div className="sk" style={{ height:11, width:'55%', marginBottom:14, marginTop:4 }}/>
           <div className="sk" style={{ height:28, width:'65%', marginBottom:8 }}/>
           <div className="sk" style={{ height:9, width:'80%' }}/>
@@ -386,8 +386,8 @@ function ProductivityKPIs({ data, loaded }) {
   return (
     <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:12, marginBottom:12 }}>
       {cards.map(c=>(
-        <div key={c.label} className="kpi-card" style={{ animation:'fadeIn .3s ease-out both' }}>
-          <div style={{ position:'absolute', top:0, left:0, right:0, height:3, background:c.topGradient, borderRadius:'10px 10px 0 0' }}/>
+        <div key={c.label} className="kpi-card" style={{ animation:'fadeIn .3s ease-out both', position:'relative', overflow:'hidden' }}>
+          <div style={{ position:'absolute', top:0, left:0, right:0, height:3, background:c.topGradient }}/>
           <div style={{ marginBottom:14, marginTop:4 }}>
             <div style={{ width:30, height:30, borderRadius:8, background:c.iconBg, display:'flex', alignItems:'center', justifyContent:'center' }}>{c.icon(c.iconColor)}</div>
           </div>
@@ -544,9 +544,9 @@ export default function PerformancePage() {
             </div>
             <div style={{ height:'1px', background:'rgba(0,0,0,0.06)', margin:'16px 0 12px' }}/>
             <div style={{ display:'flex', alignItems:'center', gap:12, flexWrap:'wrap' }}>
-              <div style={{ display:'flex', background:'#FFFFFF', border:'1px solid rgba(0,0,0,0.07)', borderRadius:8, padding:3 }}>
+              <div style={{ display:'inline-flex', gap:2, background:'#FFFFFF', border:'1px solid rgba(0,0,0,0.08)', borderRadius:8, padding:3 }}>
                 {RANGES.map(r=>(
-                  <button key={r.id} onClick={()=>selectRange(r.id)} className="filter-pill" style={{ background:dateRange===r.id?'#0F0F10':'transparent', color:dateRange===r.id?'#FFFFFF':'#6B7280' }}>{r.label}</button>
+                  <button key={r.id} onClick={()=>selectRange(r.id)} className="filter-pill" style={{ background:dateRange===r.id?'#111111':'transparent', color:dateRange===r.id?'#FFFFFF':'#6B7280' }}>{r.label}</button>
                 ))}
               </div>
               {dateRange==='custom'&&(

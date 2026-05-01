@@ -344,7 +344,7 @@ export default function ValueFeedPage() {
   const feedPosts = visible.filter(p => !p.is_pinned)
 
   return (
-    <div className="vf-root" style={{ display:'flex', minHeight:'100vh', background:'#FAFAFA' }}>
+    <div className="vf-root" style={{ display:'flex', minHeight:'100vh', background:'#F9F9FB' }}>
       <style>{CSS}</style>
       <Sidebar />
 

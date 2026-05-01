@@ -85,7 +85,7 @@ const CSS = `
 
   .sb-icon {
     display:flex; align-items:center; justify-content:center;
-    width:16px; flex-shrink:0; opacity:0.6;
+    width:16px; flex-shrink:0;
   }
 
   .sb-label { flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
@@ -154,7 +154,7 @@ const CSS = `
     display:flex; align-items:center; justify-content:center;
     transition:color .12s, background .12s;
   }
-  .sb-icon-btn:hover { color:rgba(255,255,255,0.55); background:rgba(255,255,255,0.06); }
+  .sb-icon-btn:hover { color:rgba(255,255,255,0.5); background:rgba(255,255,255,0.06); }
 `
 
 // ── Icons (16×16, strokeWidth 1.75) ──────────────────────────────────────────

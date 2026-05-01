@@ -3,7 +3,7 @@
 /* ── Theme tokens — light is default ────────────────────────────────────────── */
 :root {
   /* Backgrounds */
-  --bg-page:      #FAFAFA;
+  --bg-page:      #F9F9FB;
   --bg-surface:   #FFFFFF;
   --bg-surface-2: #F5F5F5;
   --bg-row:       #FFFFFF;

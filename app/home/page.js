@@ -271,7 +271,7 @@ export default function HomePage() {
       <style>{CSS}</style>
       <Sidebar />
 
-      <div style={{ marginLeft: 208, flex: 1, minHeight: '100vh', background: '#F5F4FF', position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+      <div style={{ flex: 1, minHeight: '100vh', background: '#F5F4FF', position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
 
         {/* ── 4 CSS orbs ── */}
         <div style={{ position: 'absolute', top: -200, right: -100, width: 800, height: 800, borderRadius: '50%', background: 'radial-gradient(circle, rgba(139,92,246,0.35), transparent 70%)', filter: 'blur(60px)', pointerEvents: 'none', zIndex: 0, animation: 'orbFloat1 18s ease-in-out infinite' }} />

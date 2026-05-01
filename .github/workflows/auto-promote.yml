@@ -1,0 +1,22 @@
+name: Auto Promote to Production
+on:
+  push:
+    branches: [main]
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wait for Vercel deployment
+        run: sleep 60
+      - name: Promote to Production
+        run: |
+          DEPLOYMENT=$(curl -s \
+            "https://api.vercel.com/v6/deployments?projectId=${{ secrets.VERCEL_PROJECT_ID }}&limit=1&sort=createdAt" \
+            -H "Authorization: Bearer ${{ secrets.VERCEL_TOKEN }}" | \
+            python3 -c "import sys,json; d=json.load(sys.stdin); print(d['deployments'][0]['uid'])")
+          echo "Promoting: $DEPLOYMENT"
+          curl -X PATCH \
+            "https://api.vercel.com/v10/deployments/$DEPLOYMENT/promote" \
+            -H "Authorization: Bearer ${{ secrets.VERCEL_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d "{}"

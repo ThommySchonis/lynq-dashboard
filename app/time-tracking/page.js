@@ -16,7 +16,7 @@ const CSS = `
   }
 
   .tt-root *{box-sizing:border-box;margin:0;padding:0}
-  .tt-root{font-family:var(--font-rethink),-apple-system,BlinkMacSystemFont,sans-serif;-webkit-font-smoothing:antialiased}
+  .tt-root{font-family:'Switzer',-apple-system,BlinkMacSystemFont,sans-serif;-webkit-font-smoothing:antialiased}
   .tt-scroll::-webkit-scrollbar{width:3px}
   .tt-scroll::-webkit-scrollbar-track{background:transparent}
   .tt-scroll::-webkit-scrollbar-thumb{background:var(--scrollbar);border-radius:2px}

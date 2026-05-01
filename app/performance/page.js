@@ -40,7 +40,7 @@ const CSS = `
   }
 
   .pf-root *{box-sizing:border-box;margin:0;padding:0}
-  .pf-root{font-family:var(--font-rethink),-apple-system,BlinkMacSystemFont,sans-serif;-webkit-font-smoothing:antialiased}
+  .pf-root{font-family:'Switzer',-apple-system,BlinkMacSystemFont,sans-serif;-webkit-font-smoothing:antialiased}
   .pf-scroll::-webkit-scrollbar{width:3px}
   .pf-scroll::-webkit-scrollbar-track{background:transparent}
   .pf-scroll::-webkit-scrollbar-thumb{background:var(--scrollbar);border-radius:2px}

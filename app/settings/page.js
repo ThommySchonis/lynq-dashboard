@@ -23,7 +23,7 @@ const CSS = `
 
   .settings-root * { box-sizing:border-box; margin:0; padding:0; }
   .settings-root {
-    font-family:var(--font-rethink), -apple-system, BlinkMacSystemFont, sans-serif;
+    font-family:'Switzer', -apple-system, BlinkMacSystemFont, sans-serif;
     -webkit-font-smoothing:antialiased;
   }
 
@@ -36,7 +36,7 @@ const CSS = `
     width:100%;
     outline:none;
     font-size:14px;
-    font-family:var(--font-rethink), -apple-system, BlinkMacSystemFont, sans-serif;
+    font-family:'Switzer', -apple-system, BlinkMacSystemFont, sans-serif;
     transition:all 0.2s ease;
   }
   .settings-input:focus {

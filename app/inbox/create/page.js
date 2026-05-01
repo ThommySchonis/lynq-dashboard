@@ -85,7 +85,7 @@ const CSS = `
   @keyframes auroraD { 0%,100%{transform:translate(0,0) scale(1);opacity:.5} 45%{transform:translate(-55px,-50px) scale(1.3);opacity:.7} }
 
   .ct-wrap * { box-sizing:border-box; margin:0; padding:0; }
-  .ct-wrap   { font-family:var(--font-rethink),-apple-system,BlinkMacSystemFont,'Inter',sans-serif; -webkit-font-smoothing:antialiased; background:var(--bg-page); }
+  .ct-wrap   { font-family:'Switzer',-apple-system,BlinkMacSystemFont,sans-serif; -webkit-font-smoothing:antialiased; background:var(--bg-page); }
   button     { border:none; background:none; cursor:pointer; }
   input, select { font-family:inherit; }
 

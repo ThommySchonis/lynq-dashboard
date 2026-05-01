@@ -140,7 +140,7 @@ const CSS = `
     *, *::before, *::after { animation-duration:.01ms !important; transition-duration:.01ms !important; }
   }
 
-  .h-root { font-family:var(--font-rethink),-apple-system,BlinkMacSystemFont,sans-serif; -webkit-font-smoothing:antialiased; }
+  .h-root { font-family:'Switzer',-apple-system,BlinkMacSystemFont,sans-serif; -webkit-font-smoothing:antialiased; }
   .h-root * { box-sizing:border-box; margin:0; padding:0; }
 
   /* ── Chip ── */

@@ -121,7 +121,7 @@ const CSS = `
   }
 
   .ir * { box-sizing:border-box; margin:0; padding:0; }
-  .ir { font-family:var(--font-rethink),-apple-system,BlinkMacSystemFont,'Inter',sans-serif; -webkit-font-smoothing:antialiased; }
+  .ir { font-family:'Switzer',-apple-system,BlinkMacSystemFont,sans-serif; -webkit-font-smoothing:antialiased; }
   button { border:none; background:none; }
   input,textarea,select { font-family:inherit; }
 

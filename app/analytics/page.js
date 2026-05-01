@@ -194,7 +194,7 @@ const CSS = `
   @keyframes barGrow{from{transform:scaleY(0)}to{transform:scaleY(1)}}
 
   .an-root *{box-sizing:border-box;margin:0;padding:0}
-  .an-root{font-family:var(--font-rethink),-apple-system,BlinkMacSystemFont,sans-serif;-webkit-font-smoothing:antialiased}
+  .an-root{font-family:'Switzer',-apple-system,BlinkMacSystemFont,sans-serif;-webkit-font-smoothing:antialiased}
   .an-scroll::-webkit-scrollbar{width:3px}
   .an-scroll::-webkit-scrollbar-track{background:transparent}
   .an-scroll::-webkit-scrollbar-thumb{background:var(--scrollbar);border-radius:2px}

@@ -15,7 +15,7 @@ const CSS = `
   @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
 
   .sv-root *  { box-sizing:border-box;margin:0;padding:0 }
-  .sv-root    { font-family:var(--font-rethink),-apple-system,BlinkMacSystemFont,sans-serif;-webkit-font-smoothing:antialiased }
+  .sv-root    { font-family:'Switzer',-apple-system,BlinkMacSystemFont,sans-serif;-webkit-font-smoothing:antialiased }
   .sv-scroll::-webkit-scrollbar       { width:3px }
   .sv-scroll::-webkit-scrollbar-track { background:transparent }
   .sv-scroll::-webkit-scrollbar-thumb { background:rgba(0,0,0,0.12);border-radius:2px }

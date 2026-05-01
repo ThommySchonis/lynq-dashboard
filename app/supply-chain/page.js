@@ -105,7 +105,7 @@ const CSS = `
   @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
 
   .sc-root * { box-sizing:border-box;margin:0;padding:0 }
-  .sc-root { font-family:var(--font-rethink),-apple-system,BlinkMacSystemFont,sans-serif;-webkit-font-smoothing:antialiased }
+  .sc-root { font-family:'Switzer',-apple-system,BlinkMacSystemFont,sans-serif;-webkit-font-smoothing:antialiased }
   .sc-scroll::-webkit-scrollbar       { width:3px }
   .sc-scroll::-webkit-scrollbar-track { background:transparent }
   .sc-scroll::-webkit-scrollbar-thumb { background:var(--scrollbar);border-radius:2px }

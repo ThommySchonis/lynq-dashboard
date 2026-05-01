@@ -84,6 +84,35 @@ Het dashboard gebruikt `@supabase/supabase-js` via CDN. Bij laden:
 2. Kopieer naar `/Users/thommy.schonisziggo.nl/lynq-dashboard/public/dashboard.html`
 3. Commit + push naar GitHub → Vercel deployt automatisch
 
+## Workspace Scoping — mandatory rule
+
+Every Supabase query on workspace-owned tables **must** include a `workspace_id` filter. Omitting it leaks data across workspaces.
+
+**Workspace-owned tables:** `workspace_members`, `workspace_invites`, `tickets`, `agents`, `macros`, `ai_settings`, and any future resource table.
+
+**Correct:**
+```js
+// Option A — explicit filter
+supabaseAdmin.from('tickets').select('*').eq('workspace_id', ctx.workspaceId)
+
+// Option B — scoped() helper from lib/db.js
+import { scoped } from '../../../lib/db'
+const { data } = await scoped(supabaseAdmin.from('tickets').select('*'), ctx.workspaceId)
+```
+
+**Wrong — never do this:**
+```js
+supabaseAdmin.from('tickets').select('*')  // ← missing workspace_id filter
+```
+
+Use `getAuthContext(request)` from `lib/auth.js` in every API route handler — it returns `{ user, workspace, workspaceId, role, memberId }`.
+
+## Roles
+
+Four roles in `workspace_members.role`: `owner`, `admin`, `agent`, `observer`.
+Invite roles (cannot invite as owner): `admin`, `agent`, `observer`.
+See `lib/permissions.js` for `can.*` capability checks.
+
 ## Volgende fases
 - Fase 3: Refunds tabel live koppelen in dashboard
 - Fase 4: Eigen domein (dashboard.lynqagency.com)

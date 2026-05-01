@@ -2,7 +2,6 @@ import { redirect } from 'next/navigation'
 import { Clock } from 'lucide-react'
 
 const VALID = new Set([
-  'workspace/members',
   'workspace/billing',
   'integrations/shopify',
   'personal/profile',

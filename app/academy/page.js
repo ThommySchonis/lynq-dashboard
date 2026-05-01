@@ -1077,7 +1077,7 @@ export default function AcademyPage() {
   const progressPct  = Math.round((completedCnt / MODULES.length) * 100)
 
   return (
-    <div className="ac" style={{ display:'flex', height:'100vh', background:'#F9F9FB', marginLeft:SIDEBAR_W, overflow:'hidden' }}>
+    <div className="ac" style={{ display:'flex', height:'100vh', background:'#F9F9FB', overflow:'hidden' }}>
       <style>{CSS}</style>
       <Sidebar />
 

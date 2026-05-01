@@ -13,7 +13,7 @@ export async function POST(request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const { name, email, password, role = 'developer' } = await request.json()
+  const { name, email, password, role = 'developer', client_id } = await request.json()
   if (!name || !email || !password) {
     return NextResponse.json({ error: 'Name, email and password are required' }, { status: 400 })
   }
@@ -38,6 +38,7 @@ export async function POST(request) {
     name,
     email,
     role,
+    client_id: client_id || null,
   })
 
   if (dbError) {

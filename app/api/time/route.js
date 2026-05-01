@@ -54,7 +54,81 @@ export async function GET(request) {
   const customTo   = searchParams.get('to')
   const { from, to } = getDateRange(filter, customFrom, customTo)
 
-  const isAdmin = user.email === ADMIN_EMAIL
+  const isLynqAdmin = user.email === ADMIN_EMAIL
+
+  // Check if this user is a client (can see their assigned team's data)
+  let clientRecord = null
+  if (!isLynqAdmin) {
+    const { data } = await supabaseAdmin
+      .from('clients')
+      .select('id, company_name')
+      .eq('email', user.email)
+      .maybeSingle()
+    clientRecord = data
+  }
+  const isClientAdmin = !!clientRecord
+
+  // ── Client admin view (client sees only their own team) ─────────────────────
+  if (isClientAdmin) {
+    const { data: members } = await supabaseAdmin
+      .from('team_members')
+      .select('id, name, email, role')
+      .eq('client_id', clientRecord.id)
+      .order('created_at')
+
+    const memberIds = (members || []).map(m => m.id)
+    const idFilter = memberIds.length > 0 ? memberIds : ['00000000-0000-0000-0000-000000000000']
+
+    const { data: sessions } = await supabaseAdmin
+      .from('time_sessions')
+      .select('*')
+      .in('agent_id', idFilter)
+      .gte('clocked_in_at', from.toISOString())
+      .lte('clocked_in_at', to.toISOString())
+      .order('clocked_in_at', { ascending: false })
+
+    const { data: activeSessions } = await supabaseAdmin
+      .from('time_sessions')
+      .select('agent_id, clocked_in_at, status')
+      .in('agent_id', idFilter)
+      .is('clocked_out_at', null)
+
+    const memberMap = {}
+    ;(members || []).forEach(m => {
+      memberMap[m.id] = { ...m, worked_seconds: 0, paused_seconds: 0, sessions_count: 0, is_active: false, is_paused: false }
+    })
+    ;(activeSessions || []).forEach(s => {
+      if (memberMap[s.agent_id]) {
+        memberMap[s.agent_id].is_active = true
+        memberMap[s.agent_id].is_paused = s.status === 'paused'
+      }
+    })
+    ;(sessions || []).forEach(s => {
+      if (memberMap[s.agent_id]) {
+        memberMap[s.agent_id].worked_seconds  += workedSec(s)
+        memberMap[s.agent_id].paused_seconds  += (s.paused_seconds || 0)
+        memberMap[s.agent_id].sessions_count++
+      }
+    })
+
+    return NextResponse.json({
+      sessions: (sessions || []).map(s => ({
+        ...s,
+        member_name:  memberMap[s.agent_id]?.name  || 'Unknown',
+        member_email: memberMap[s.agent_id]?.email || '',
+      })),
+      members:      Object.values(memberMap),
+      active_count: (activeSessions || []).filter(s => s.status !== 'paused').length,
+      paused_count: (activeSessions || []).filter(s => s.status === 'paused').length,
+      client:       clientRecord,
+      from: from.toISOString(),
+      to:   to.toISOString(),
+      is_client_admin: true,
+    })
+  }
+
+  // ── Lynq admin view (sees all team members across all clients) ───────────────
+  const isAdmin = isLynqAdmin
 
   if (isAdmin) {
     const { data: members } = await supabaseAdmin
@@ -169,7 +243,7 @@ export async function POST(request) {
 
   const { data: member } = await supabaseAdmin
     .from('team_members')
-    .select('id, name')
+    .select('id, name, client_id')
     .eq('email', user.email)
     .maybeSingle()
 
@@ -188,7 +262,7 @@ export async function POST(request) {
 
     const { data: session, error } = await supabaseAdmin
       .from('time_sessions')
-      .insert({ agent_id: member.id, status: 'active', active_seconds: 0, idle_seconds: 0, paused_seconds: 0 })
+      .insert({ agent_id: member.id, client_id: member.client_id || null, status: 'active', active_seconds: 0, idle_seconds: 0, paused_seconds: 0 })
       .select()
       .single()
 

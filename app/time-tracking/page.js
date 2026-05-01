@@ -159,6 +159,136 @@ function ClockOutModal({ session, elapsedSec, pausedSeconds, onConfirm, onCancel
   )
 }
 
+// ─── Team View (admin / client admin) ────────────────────────────────────────
+
+const ADMIN_LOG_GRID = '140px 130px 60px 60px 76px 1fr'
+
+function MemberRow({ member: m }) {
+  const statusColor = m.is_paused ? '#D97706' : m.is_active ? '#16A34A' : '#BDBDBD'
+  const statusBg    = m.is_paused ? '#FFFBEB' : m.is_active ? '#F0FDF4' : '#F5F5F5'
+  const statusLabel = m.is_paused ? 'Paused'   : m.is_active ? 'Active'  : 'Offline'
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+        <div style={{ width: 32, height: 32, borderRadius: '50%', background: '#F5F5F5', border: '1px solid rgba(0,0,0,0.07)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, color: '#555555', flexShrink: 0 }}>
+          {m.name?.charAt(0).toUpperCase() || '?'}
+        </div>
+        <div>
+          <div style={{ fontSize: 13, fontWeight: 600, color: '#111111' }}>{m.name}</div>
+          <div style={{ fontSize: 11, color: '#888888' }}>{m.role}</div>
+        </div>
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+        <div style={{ textAlign: 'right' }}>
+          <div style={{ fontSize: 14, fontWeight: 700, color: '#111111', fontVariantNumeric: 'tabular-nums' }}>{fmtDur(m.worked_seconds)}</div>
+          <div style={{ fontSize: 11, color: '#888888' }}>{m.sessions_count} session{m.sessions_count !== 1 ? 's' : ''}</div>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '4px 10px', borderRadius: 6, background: statusBg, border: `1px solid ${statusColor}22`, flexShrink: 0 }}>
+          <div style={{ width: 6, height: 6, borderRadius: '50%', background: statusColor }} />
+          <span style={{ fontSize: 11, fontWeight: 600, color: statusColor }}>{statusLabel}</span>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function AdminLogRow({ session: s }) {
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: ADMIN_LOG_GRID, gap: 12, alignItems: 'start', padding: '9px 12px', borderRadius: 6, transition: 'background .15s', cursor: 'default' }}
+      onMouseEnter={e => e.currentTarget.style.background = '#FAFAFA'}
+      onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+      <div style={{ fontSize: 12.5, fontWeight: 600, color: '#111111', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.member_name}</div>
+      <div style={{ fontSize: 12.5, color: '#555555' }}>{fmtDate(s.clocked_in_at)}</div>
+      <div style={{ fontSize: 12.5, color: '#555555', fontVariantNumeric: 'tabular-nums' }}>{fmtTime(s.clocked_in_at)}</div>
+      <div style={{ fontSize: 12.5, fontVariantNumeric: 'tabular-nums', color: s.clocked_out_at ? '#555555' : '#16A34A' }}>{s.clocked_out_at ? fmtTime(s.clocked_out_at) : 'Active'}</div>
+      <div style={{ fontSize: 13, fontWeight: 700, color: '#111111' }}>{fmtDur(durSec(s))}</div>
+      <div style={{ fontSize: 12.5, color: '#555555', lineHeight: 1.45, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+        {s.eod_report || <span style={{ color: '#BDBDBD', fontStyle: 'italic' }}>No report</span>}
+      </div>
+    </div>
+  )
+}
+
+function TeamView({ data, filter, onFilterChange }) {
+  const { members = [], sessions = [], active_count = 0, paused_count = 0, client } = data
+  const totalSec = members.reduce((sum, m) => sum + (m.worked_seconds || 0), 0)
+
+  return (
+    <div className="tt-root" style={{ display: 'flex', minHeight: '100vh', background: '#FAFAFA' }}>
+      <style>{CSS}</style>
+      <Sidebar />
+      <main className="tt-scroll" style={{ flex: 1, overflowY: 'auto', padding: '24px' }}>
+        <div style={{ maxWidth: 1100, margin: '0 auto' }}>
+
+          {/* Header */}
+          <div style={{ animation: 'fadeIn .4s ease both', marginBottom: 24 }}>
+            <h1 style={{ fontSize: 20, fontWeight: 700, color: '#111111', marginBottom: 4 }}>Team Time Tracking</h1>
+            <div style={{ fontSize: 13, color: '#888888', marginBottom: 14 }}>
+              {client ? client.company_name : 'All clients'} · {active_count + paused_count} active now
+            </div>
+            <div style={{ height: 1, background: 'rgba(0,0,0,0.06)', marginBottom: 12 }} />
+            <div style={{ display: 'flex', gap: 6 }}>
+              {FILTERS.map(f => (
+                <button key={f.id} className="range-pill" onClick={() => onFilterChange(f.id)} style={{
+                  background: filter === f.id ? '#111111' : 'transparent',
+                  color: filter === f.id ? '#fff' : '#888888',
+                  border: filter === f.id ? 'none' : '1px solid rgba(0,0,0,0.08)',
+                }}>
+                  {f.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* KPI row */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, marginBottom: 16, animation: 'fadeIn .4s ease .05s both' }}>
+            {[
+              { label: 'ACTIVE NOW',  value: String(active_count),    sub: 'clocked in' },
+              { label: 'ON BREAK',    value: String(paused_count),     sub: 'paused' },
+              { label: 'TOTAL HOURS', value: fmtDur(totalSec),         sub: `${sessions.length} sessions` },
+              { label: 'TEAM SIZE',   value: String(members.length),   sub: 'members' },
+            ].map(({ label, value, sub }) => (
+              <div key={label} className="kpi-card">
+                <div style={{ fontSize: 11, fontWeight: 600, color: '#BDBDBD', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 10 }}>{label}</div>
+                <div style={{ fontSize: 22, fontWeight: 700, color: '#111111', lineHeight: 1.1, marginBottom: 6, fontVariantNumeric: 'tabular-nums' }}>{value || '—'}</div>
+                <div style={{ fontSize: 12, color: '#888888' }}>{sub}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* Members */}
+          <div className="panel" style={{ marginBottom: 16, animation: 'fadeIn .4s ease .1s both' }}>
+            <div style={{ fontSize: 14, fontWeight: 600, color: '#111111', marginBottom: 4 }}>Team Members</div>
+            <div style={{ fontSize: 13, color: '#888888', marginBottom: 16 }}>Status and hours per member this period</div>
+            {members.length === 0
+              ? <div style={{ textAlign: 'center', padding: '36px 0', color: '#888888', fontSize: 13 }}>No team members found.</div>
+              : members.map(m => <MemberRow key={m.id} member={m} />)
+            }
+          </div>
+
+          {/* Sessions log */}
+          <div className="panel" style={{ animation: 'fadeIn .4s ease .15s both' }}>
+            <div style={{ fontSize: 14, fontWeight: 600, color: '#111111', marginBottom: 4 }}>Sessions</div>
+            <div style={{ fontSize: 13, color: '#888888', marginBottom: 16 }}>All sessions with end-of-day reports</div>
+            {sessions.length === 0
+              ? <div style={{ textAlign: 'center', padding: '36px 0', color: '#888888', fontSize: 13 }}>No sessions in this period.</div>
+              : <>
+                  <div style={{ display: 'grid', gridTemplateColumns: ADMIN_LOG_GRID, gap: 12, padding: '0 12px 10px', borderBottom: '1px solid rgba(0,0,0,0.06)', marginBottom: 2 }}>
+                    {['Member', 'Date', 'In', 'Out', 'Hours', 'Report'].map(h => (
+                      <div key={h} style={{ fontSize: 11, fontWeight: 600, color: '#BDBDBD', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{h}</div>
+                    ))}
+                  </div>
+                  {sessions.map(s => <AdminLogRow key={s.id} session={s} />)}
+                </>
+            }
+          </div>
+
+        </div>
+      </main>
+    </div>
+  )
+}
+
 // ─── Main Page ───────────────────────────────────────────────────────────────
 
 const FILTERS = [
@@ -170,6 +300,8 @@ const FILTERS = [
 export default function TimeTrackingPage() {
   const [loading, setLoading]             = useState(true)
   const [isAdmin, setIsAdmin]             = useState(false)
+  const [isClientAdmin, setIsClientAdmin] = useState(false)
+  const [teamData, setTeamData]           = useState(null)
   const [adminData, setAdminData]         = useState(null)
   const [accessError, setAccessError]     = useState(false)
   const [member, setMember]               = useState(null)
@@ -212,7 +344,8 @@ export default function TimeTrackingPage() {
     if (res.status === 403) { setAccessError(true); setLoading(false); return }
     if (!res.ok) { setLoading(false); return }
     const d = await res.json()
-    if (d.is_admin) { setIsAdmin(true); setAdminData(d); setLoading(false); return }
+    if (d.is_admin) { setIsAdmin(true); setTeamData(d); setAdminData(d); setLoading(false); return }
+    if (d.is_client_admin) { setIsClientAdmin(true); setTeamData(d); setLoading(false); return }
     setMember(d.member)
     setSessions(d.sessions || [])
     setTodaySeconds(d.today_seconds || 0)
@@ -366,6 +499,10 @@ export default function TimeTrackingPage() {
       </main>
     </div>
   )
+
+  if ((isAdmin || isClientAdmin) && teamData) {
+    return <TeamView data={teamData} filter={filter} onFilterChange={setFilter} />
+  }
 
   const isActive = !!activeSession
   const filterLabel = FILTERS.find(f => f.id === filter)?.label || ''

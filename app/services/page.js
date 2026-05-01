@@ -23,21 +23,27 @@ const CSS = `
   .svc-card {
     background:#FFFFFF;
     border:1px solid rgba(0,0,0,0.07);
-    border-radius:10px;
+    border-radius:12px;
     padding:24px;
     display:flex;flex-direction:column;
     position:relative;overflow:hidden;
+    transition:all 0.2s ease;
+  }
+  .svc-card:hover {
+    transform:translateY(-2px);
+    box-shadow:0 8px 24px rgba(0,0,0,0.08);
+    border-color:rgba(0,0,0,0.12);
   }
 
   .req-btn {
-    width:100%;height:40px;padding:0 20px;border-radius:8px;
-    font-size:13px;font-weight:600;cursor:pointer;
+    width:100%;height:42px;padding:0 20px;border-radius:8px;
+    font-size:13px;font-weight:600;letter-spacing:-0.01em;cursor:pointer;
     font-family:inherit;
-    transition:background .15s;
-    background:#111111;color:#fff;border:none;
+    transition:all 0.15s ease;
+    background:#0F0F10;color:#fff;border:none;
     margin-top:16px;
   }
-  .req-btn:hover { background:#333333 }
+  .req-btn:hover { background:#1a1a1a;box-shadow:0 4px 12px rgba(0,0,0,0.15) }
 
   .modal-overlay {
     position:fixed;inset:0;z-index:100;
@@ -104,48 +110,22 @@ const CSS = `
   .send-btn:disabled { opacity:.55;cursor:not-allowed }
 `
 
-// ── Icon ──────────────────────────────────────────────────────────────────────
+// ── Icons (20px, strokeWidth 1.75, dynamic color) ─────────────────────────────
 
-const ICON_COLOR = '#555555'
-const ICON_SIZE  = 18
+function mkIcon(paths) {
+  return (color) => (
+    <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+      {paths}
+    </svg>
+  )
+}
 
 const Icons = {
-  headset: (
-    <svg width={ICON_SIZE} height={ICON_SIZE} viewBox="0 0 24 24" fill="none" stroke={ICON_COLOR} strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M3 18v-6a9 9 0 0 1 18 0v6"/>
-      <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3z"/>
-      <path d="M3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/>
-    </svg>
-  ),
-  shield: (
-    <svg width={ICON_SIZE} height={ICON_SIZE} viewBox="0 0 24 24" fill="none" stroke={ICON_COLOR} strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-    </svg>
-  ),
-  truck: (
-    <svg width={ICON_SIZE} height={ICON_SIZE} viewBox="0 0 24 24" fill="none" stroke={ICON_COLOR} strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="1" y="3" width="15" height="13"/>
-      <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/>
-      <circle cx="5.5" cy="18.5" r="2.5"/>
-      <circle cx="18.5" cy="18.5" r="2.5"/>
-    </svg>
-  ),
-  sliders: (
-    <svg width={ICON_SIZE} height={ICON_SIZE} viewBox="0 0 24 24" fill="none" stroke={ICON_COLOR} strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
-      <line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/>
-      <line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/>
-      <line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/>
-      <line x1="1" y1="14" x2="7" y2="14"/>
-      <line x1="9" y1="8" x2="15" y2="8"/>
-      <line x1="17" y1="16" x2="23" y2="16"/>
-    </svg>
-  ),
-  graduation: (
-    <svg width={ICON_SIZE} height={ICON_SIZE} viewBox="0 0 24 24" fill="none" stroke={ICON_COLOR} strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
-      <path d="M6 12v5c3 3 9 3 12 0v-5"/>
-    </svg>
-  ),
+  headset:    mkIcon(<><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3z"/><path d="M3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></>),
+  shield:     mkIcon(<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>),
+  package:    mkIcon(<><line x1="16.5" y1="9.4" x2="7.5" y2="4.21"/><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></>),
+  barchart2:  mkIcon(<><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/><line x1="2" y1="20" x2="22" y2="20"/></>),
+  graduation: mkIcon(<><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></>),
 }
 
 // ── Service data ──────────────────────────────────────────────────────────────
@@ -154,38 +134,54 @@ const SERVICES = [
   {
     id: 'customer_service_agent',
     title: 'Customer Service Agent',
-    badge: { label: 'Most Popular', color: '#FFFFFF', bg: '#111111', borderRadius: 4 },
+    badge: { label: 'Most Popular', color: '#FFFFFF', bg: '#0F0F10' },
+    topGradient: 'linear-gradient(90deg, #6366F1, #8B5CF6)',
+    iconBg: 'rgba(99,102,241,0.1)',
+    iconColor: '#6366F1',
+    icon: Icons.headset,
     description: 'A trained specialist who handles all incoming customer inquiries — tracking, refunds, returns, and general support. Fully onboarded to your brand voice and policies.',
     features: ['100+ tickets handled daily', 'Trained on your brand voice & policies', 'Gorgias, Zendesk & Re:amaze certified'],
-    icon: Icons.headset,
   },
   {
     id: 'dispute_manager',
     title: 'Dispute Manager',
+    topGradient: 'linear-gradient(90deg, #EF4444, #F87171)',
+    iconBg: 'rgba(239,68,68,0.1)',
+    iconColor: '#EF4444',
+    icon: Icons.shield,
     description: 'An expert in handling chargebacks, payment disputes, and escalated cases. Protects your revenue and keeps your chargeback rate under control.',
     features: ['Chargeback & dispute resolution', 'Revenue protection strategy', 'Stripe, PayPal & Klarna specialist'],
-    icon: Icons.shield,
   },
   {
     id: 'supply_chain_manager',
     title: 'Supply Chain Manager',
+    topGradient: 'linear-gradient(90deg, #10B981, #34D399)',
+    iconBg: 'rgba(16,185,129,0.1)',
+    iconColor: '#10B981',
+    icon: Icons.package,
     description: 'Oversees supplier relationships, order fulfillment, stock management, and shipping performance. Keeps your operations running without bottlenecks.',
     features: ['Supplier & vendor management', 'Inventory & stock optimization', 'Fulfillment & shipping oversight'],
-    icon: Icons.truck,
   },
   {
     id: 'senior_backend_manager',
     title: 'Senior Backend Manager',
+    topGradient: 'linear-gradient(90deg, #F59E0B, #FCD34D)',
+    iconBg: 'rgba(245,158,11,0.1)',
+    iconColor: '#F59E0B',
+    icon: Icons.barchart2,
     description: 'Manages your entire CS operation end-to-end. Sets up systems, leads the team, handles escalations, and reports directly to you.',
     features: ['Full CS operation ownership', 'Team setup, lead & escalation mgmt', 'Weekly direct-to-you reporting'],
-    icon: Icons.sliders,
   },
 ]
 
 const TRAIN_SERVICE = {
   id: 'train_existing_team',
   title: 'Train Your Existing Team',
-  badge: { label: 'New', color: '#555555', bg: '#F5F5F5', border: 'rgba(0,0,0,0.08)', borderRadius: 4 },
+  badge: { label: 'New', color: '#2563EB', bg: '#EFF6FF', border: 'rgba(59,130,246,0.2)' },
+  topGradient: 'linear-gradient(90deg, #3B82F6, #60A5FA)',
+  iconBg: 'rgba(59,130,246,0.1)',
+  iconColor: '#3B82F6',
+  icon: Icons.graduation,
   description: "Upskill your in-house team with Lynq & Flow's proven e-commerce CS frameworks. We deliver structured training sessions, battle-tested playbooks, and ongoing coaching to bring your team to agency-level performance.",
   features: [
     'Custom training program built for your brand',
@@ -193,7 +189,6 @@ const TRAIN_SERVICE = {
     'Live training sessions with your team',
     'Ongoing coaching & performance tracking',
   ],
-  icon: Icons.graduation,
 }
 
 const GUARANTEE_ITEMS = [
@@ -204,7 +199,7 @@ const GUARANTEE_ITEMS = [
 
 // ── Sub-components ────────────────────────────────────────────────────────────
 
-function CheckIcon({ size = 14, color = '#16A34A' }) {
+function CheckIcon({ size = 14, color = '#10B981' }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
       <polyline points="20 6 9 17 4 12"/>
@@ -212,42 +207,27 @@ function CheckIcon({ size = 14, color = '#16A34A' }) {
   )
 }
 
-function GuaranteeBlock() {
+function ShieldSmIcon({ color }) {
   return (
-    <div style={{ background: '#FAFAFA', border: '1px solid rgba(0,0,0,0.06)', borderRadius: 8, padding: '12px 14px', margin: '16px 0' }}>
-      <div style={{ fontSize: 10, fontWeight: 700, color: '#BDBDBD', textTransform: 'uppercase', letterSpacing: '.07em', marginBottom: 8 }}>
-        Our Guarantee
+    <svg width={12} height={12} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+    </svg>
+  )
+}
+
+function GuaranteeBlock({ iconColor = '#10B981' }) {
+  return (
+    <div style={{ background: '#F9F9FB', border: '1px solid rgba(0,0,0,0.06)', borderRadius: 8, padding: '14px 16px', margin: '16px 0' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
+        <ShieldSmIcon color={iconColor} />
+        <span style={{ fontSize: 9, fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '.1em' }}>Our Guarantee</span>
       </div>
       {GUARANTEE_ITEMS.map(item => (
         <div key={item} style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
-          <CheckIcon size={13} />
-          <span style={{ fontSize: 12, color: '#555555' }}>{item}</span>
+          <CheckIcon size={13} color="#10B981" />
+          <span style={{ fontSize: 12, color: '#374151' }}>{item}</span>
         </div>
       ))}
-    </div>
-  )
-}
-
-function Badge({ badge }) {
-  if (!badge) return null
-  return (
-    <span style={{
-      display: 'inline-flex', alignItems: 'center',
-      padding: '3px 8px',
-      borderRadius: badge.borderRadius ?? 100,
-      fontSize: 10, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase',
-      color: badge.color, background: badge.bg,
-      border: badge.border ? `1px solid ${badge.border}` : 'none',
-    }}>
-      {badge.label}
-    </span>
-  )
-}
-
-function IconBox({ icon }) {
-  return (
-    <div style={{ width: 36, height: 36, borderRadius: 8, background: '#F5F5F5', border: '1px solid rgba(0,0,0,0.07)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-      {icon}
     </div>
   )
 }
@@ -255,31 +235,43 @@ function IconBox({ icon }) {
 function ServiceCard({ svc, i, onRequest }) {
   return (
     <div className="svc-card" style={{ animation: `fadeUp .45s ease ${i * 75}ms both` }}>
+      {/* Colored top border */}
+      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: svc.topGradient }} />
+
       {/* Badge top-right */}
       {svc.badge && (
-        <div style={{ position: 'absolute', top: 18, right: 18 }}>
-          <Badge badge={svc.badge} />
-        </div>
+        <span style={{
+          position: 'absolute', top: 20, right: 20,
+          display: 'inline-flex', alignItems: 'center',
+          padding: '3px 10px', borderRadius: 20,
+          fontSize: 10, fontWeight: 700, letterSpacing: '.04em', textTransform: 'uppercase',
+          color: svc.badge.color, background: svc.badge.bg,
+          border: svc.badge.border ? `1px solid ${svc.badge.border}` : 'none',
+        }}>{svc.badge.label}</span>
       )}
 
       {/* Icon */}
-      <IconBox icon={svc.icon} />
+      <div style={{ width: 40, height: 40, borderRadius: 10, background: svc.iconBg, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
+        {svc.icon(svc.iconColor)}
+      </div>
 
-      {/* Content */}
-      <h2 style={{ fontSize: 16, fontWeight: 700, color: '#111111', marginTop: 14, marginBottom: 8 }}>{svc.title}</h2>
-      <p style={{ fontSize: 13, color: '#555555', lineHeight: 1.6, marginBottom: 16, flex: 1 }}>{svc.description}</p>
+      {/* Title */}
+      <h2 style={{ fontSize: 17, fontWeight: 700, color: '#0F0F10', letterSpacing: '-0.01em', marginBottom: 8 }}>{svc.title}</h2>
+
+      {/* Description */}
+      <p style={{ fontSize: 13, color: '#6B7280', lineHeight: 1.6, marginBottom: 16, flex: 1 }}>{svc.description}</p>
 
       {/* Feature list */}
-      <div style={{ display: 'flex', flexDirection: 'column', marginBottom: 0 }}>
+      <div style={{ display: 'flex', flexDirection: 'column' }}>
         {svc.features.map(f => (
           <div key={f} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-            <CheckIcon size={14} />
-            <span style={{ fontSize: 13, color: '#555555' }}>{f}</span>
+            <CheckIcon size={14} color={svc.iconColor} />
+            <span style={{ fontSize: 13, color: '#374151' }}>{f}</span>
           </div>
         ))}
       </div>
 
-      <GuaranteeBlock />
+      <GuaranteeBlock iconColor={svc.iconColor} />
 
       <button className="req-btn" onClick={onRequest}>
         Request More Info
@@ -288,44 +280,12 @@ function ServiceCard({ svc, i, onRequest }) {
   )
 }
 
-function TrainCard({ svc, onRequest }) {
-  return (
-    <div className="svc-card" style={{ animation: 'fadeUp .5s ease .32s both' }}>
-      {/* Badge top-right */}
-      {svc.badge && (
-        <div style={{ position: 'absolute', top: 18, right: 18 }}>
-          <Badge badge={svc.badge} />
-        </div>
-      )}
-
-      {/* Icon */}
-      <IconBox icon={svc.icon} />
-
-      {/* Content */}
-      <h2 style={{ fontSize: 16, fontWeight: 700, color: '#111111', marginTop: 14, marginBottom: 8 }}>{svc.title}</h2>
-      <p style={{ fontSize: 13, color: '#555555', lineHeight: 1.6, marginBottom: 16, flex: 1 }}>{svc.description}</p>
-
-      {/* Feature list */}
-      <div style={{ display: 'flex', flexDirection: 'column', marginBottom: 0 }}>
-        {svc.features.map(f => (
-          <div key={f} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-            <CheckIcon size={14} />
-            <span style={{ fontSize: 13, color: '#555555' }}>{f}</span>
-          </div>
-        ))}
-      </div>
-
-      <GuaranteeBlock />
-
-      <button className="req-btn" onClick={onRequest}>
-        Request More Info
-      </button>
-    </div>
-  )
-}
+// ── Modal components ──────────────────────────────────────────────────────────
 
 function InquiryForm({ service, phone, setPhone, message, setMessage, onSubmit, submitting, error, onClose }) {
   const isGeneral = service.id === 'general'
+  const iconBg    = service.iconBg || 'var(--bg-surface-2)'
+  const iconColor = service.iconColor || '#555555'
   return (
     <>
       <button className="close-btn" onClick={onClose} aria-label="Close">
@@ -334,9 +294,9 @@ function InquiryForm({ service, phone, setPhone, message, setMessage, onSubmit, 
 
       <div style={{ marginBottom: 24 }}>
         {!isGeneral && service.icon ? (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 13, marginBottom: 0 }}>
-            <div style={{ width: 44, height: 44, borderRadius: 12, background: 'var(--bg-surface-2)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              {service.icon}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 13 }}>
+            <div style={{ width: 44, height: 44, borderRadius: 12, background: iconBg, border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              {typeof service.icon === 'function' ? service.icon(iconColor) : service.icon}
             </div>
             <div>
               <div style={{ fontSize: 10.5, fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '.07em', marginBottom: 3 }}>Service Inquiry</div>
@@ -360,25 +320,13 @@ function InquiryForm({ service, phone, setPhone, message, setMessage, onSubmit, 
         <label style={{ display: 'block', fontSize: 10.5, fontWeight: 700, color: 'var(--text-2)', textTransform: 'uppercase', letterSpacing: '.07em', marginBottom: 7 }}>
           WhatsApp number <span style={{ color: '#f87171', fontWeight: 800 }}>*</span>
         </label>
-        <input
-          type="tel"
-          className="tel-input"
-          required
-          value={phone}
-          onChange={e => setPhone(e.target.value)}
-          placeholder="+31 6 12345678"
-          style={{ marginBottom: 18 }}
-        />
+        <input type="tel" className="tel-input" required value={phone} onChange={e => setPhone(e.target.value)} placeholder="+31 6 12345678" style={{ marginBottom: 18 }} />
 
         <label style={{ display: 'block', fontSize: 10.5, fontWeight: 700, color: 'var(--text-2)', textTransform: 'uppercase', letterSpacing: '.07em', marginBottom: 7 }}>
           Your question <span style={{ fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>(optional)</span>
         </label>
-        <textarea
-          className="msg-input"
-          value={message}
-          onChange={e => setMessage(e.target.value)}
-          placeholder={isGeneral ? "What are you looking for? Any specific roles or challenges you're facing…" : "What would you like to know about this service?"}
-        />
+        <textarea className="msg-input" value={message} onChange={e => setMessage(e.target.value)}
+          placeholder={isGeneral ? "What are you looking for? Any specific roles or challenges you're facing…" : "What would you like to know about this service?"} />
 
         {error && (
           <div style={{ fontSize: 12.5, color: '#f87171', marginTop: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -407,7 +355,7 @@ function SuccessState({ onClose, serviceName }) {
           {serviceName}
         </div>
       )}
-      <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.62)', lineHeight: 1.7, marginBottom: 30, maxWidth: 320, margin: '0 auto 30px' }}>
+      <p style={{ fontSize: 14, color: 'var(--text-2)', lineHeight: 1.7, maxWidth: 320, margin: '0 auto 30px' }}>
         Your inquiry is with the Lynq & Flow team. We'll reach out within <strong style={{ color: 'var(--text-2)' }}>24 hours</strong>.
       </p>
       <button
@@ -471,21 +419,20 @@ export default function ServicesPage() {
   }
 
   return (
-    <div className="sv-root" style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg-page)', color: 'var(--text-1)' }}>
+    <div className="sv-root" style={{ display: 'flex', minHeight: '100vh', background: '#F9F9FB', color: 'var(--text-1)' }}>
       <style>{CSS}</style>
       <Sidebar />
 
-      <main className="sv-scroll" style={{ flex: 1, overflowY: 'auto', padding: 24, background: '#FAFAFA', position: 'relative' }}>
-
+      <main className="sv-scroll" style={{ flex: 1, overflowY: 'auto', padding: 24, background: '#F9F9FB', position: 'relative', scrollbarWidth: 'thin' }}>
         <div style={{ maxWidth: 840, margin: '0 auto' }}>
 
           {/* ── Header ── */}
-          <div style={{ animation: 'fadeUp .4s ease both', marginBottom: 28 }}>
-            <div style={{ fontSize: 10, fontWeight: 700, color: '#BDBDBD', textTransform: 'uppercase', letterSpacing: '.07em', marginBottom: 10 }}>
+          <div style={{ animation: 'fadeUp .4s ease both', marginBottom: 32 }}>
+            <div style={{ fontSize: 10, fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '.1em', marginBottom: 10 }}>
               Services
             </div>
-            <h1 style={{ fontSize: 24, fontWeight: 700, color: '#111111', marginBottom: 8 }}>Grow Your Team</h1>
-            <p style={{ fontSize: 14, color: '#888888', maxWidth: 480, lineHeight: 1.6 }}>
+            <h1 style={{ fontSize: 28, fontWeight: 800, color: '#0F0F10', letterSpacing: '-0.025em', marginBottom: 8 }}>Grow Your Team</h1>
+            <p style={{ fontSize: 14, color: '#6B7280', maxWidth: 480, lineHeight: 1.6 }}>
               World-class e-commerce specialists, trained to your brand standards and ready to perform from day one.
             </p>
           </div>
@@ -499,25 +446,25 @@ export default function ServicesPage() {
 
           {/* ── Train Your Team — full-width ── */}
           <div style={{ marginBottom: 16 }}>
-            <TrainCard svc={TRAIN_SERVICE} onRequest={() => openModal(TRAIN_SERVICE)} />
+            <ServiceCard svc={TRAIN_SERVICE} i={4} onRequest={() => openModal(TRAIN_SERVICE)} />
           </div>
 
           {/* ── Bottom CTA ── */}
           <div style={{ animation: 'fadeUp .5s ease .42s both', marginBottom: 40 }}>
             <div style={{
               display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16,
-              padding: '20px 24px', borderRadius: 10,
+              padding: '20px 24px', borderRadius: 12,
               background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.07)',
             }}>
               <div>
-                <p style={{ fontSize: 14, fontWeight: 600, color: '#111111', marginBottom: 4 }}>Not sure which role you need?</p>
-                <p style={{ fontSize: 13, color: '#888888' }}>We'll help you figure out the perfect fit for your brand and team size.</p>
+                <p style={{ fontSize: 15, fontWeight: 600, color: '#0F0F10', marginBottom: 4 }}>Not sure which role you need?</p>
+                <p style={{ fontSize: 13, color: '#6B7280' }}>We'll help you figure out the perfect fit.</p>
               </div>
               <button
                 onClick={() => openModal({ id: 'general', title: 'General Inquiry', icon: null })}
-                style={{ padding: '0 20px', height: 38, borderRadius: 8, background: '#111111', color: '#fff', border: 'none', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap', transition: 'background .15s' }}
-                onMouseEnter={e => { e.currentTarget.style.background = '#333333' }}
-                onMouseLeave={e => { e.currentTarget.style.background = '#111111' }}>
+                style={{ padding: '0 20px', height: 40, borderRadius: 8, background: '#0F0F10', color: '#fff', border: 'none', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap', transition: 'all .15s ease' }}
+                onMouseEnter={e => { e.currentTarget.style.background = '#1a1a1a' }}
+                onMouseLeave={e => { e.currentTarget.style.background = '#0F0F10' }}>
                 Talk to Us →
               </button>
             </div>

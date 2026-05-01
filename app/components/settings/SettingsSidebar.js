@@ -7,50 +7,19 @@ import { Search } from 'lucide-react'
 
 const NAV_GROUPS = [
   { label: 'WORKSPACE', items: [
-    { label: 'General',             href: '/settings/workspace/general' },
-    { label: 'Members',             href: '/settings/workspace/members' },
-    { label: 'Teams',               href: '/settings/workspace/teams' },
-    { label: 'Roles & permissions', href: '/settings/workspace/roles' },
-    { label: 'Billing & plans',     href: '/settings/workspace/billing' },
-    { label: 'Usage',               href: '/settings/workspace/usage' },
+    { label: 'General', href: '/settings/workspace/general' },
+    { label: 'Members', href: '/settings/workspace/members' },
+    { label: 'Billing', href: '/settings/workspace/billing' },
   ]},
   { label: 'EMAIL', items: [
-    { label: 'Inbox addresses',   href: '/settings/email/inbox' },
-    { label: 'Forwarding',        href: '/settings/email/forwarding' },
-    { label: 'Signature',         href: '/settings/email/signature' },
-    { label: 'Templates',         href: '/settings/email/templates' },
-    { label: 'Auto-responders',   href: '/settings/email/auto-responders' },
-    { label: 'Out-of-office',     href: '/settings/email/out-of-office' },
+    { label: 'Email',   href: '/settings/email' },
   ]},
   { label: 'INTEGRATIONS', items: [
-    { label: 'Shopify',  href: '/settings/integrations/shopify' },
-    { label: 'Klaviyo',  href: '/settings/integrations/klaviyo' },
-    { label: 'Recharge', href: '/settings/integrations/recharge' },
-    { label: 'Loop',     href: '/settings/integrations/loop' },
-  ]},
-  { label: 'AUTOMATION', items: [
-    { label: 'Macros',          href: '/settings/automation/macros' },
-    { label: 'Rules',           href: '/settings/automation/rules' },
-    { label: 'Ticket routing',  href: '/settings/automation/routing' },
-    { label: 'Auto-merge',      href: '/settings/automation/auto-merge' },
-    { label: 'Business hours',  href: '/settings/automation/business-hours' },
-    { label: 'SLA policies',    href: '/settings/automation/sla' },
-  ]},
-  { label: 'TICKET SETUP', items: [
-    { label: 'Statuses',         href: '/settings/ticket-setup/statuses' },
-    { label: 'Priorities',       href: '/settings/ticket-setup/priorities' },
-    { label: 'Tags',             href: '/settings/ticket-setup/tags' },
-    { label: 'Custom fields',    href: '/settings/ticket-setup/custom-fields' },
-    { label: 'Customer fields',  href: '/settings/ticket-setup/customer-fields' },
-    { label: 'Default views',    href: '/settings/ticket-setup/views' },
-    { label: 'CSAT survey',      href: '/settings/ticket-setup/csat' },
+    { label: 'Shopify', href: '/settings/integrations/shopify' },
   ]},
   { label: 'PERSONAL', items: [
-    { label: 'Profile',              href: '/settings/personal/profile' },
-    { label: 'Notifications',        href: '/settings/personal/notifications' },
-    { label: 'Keyboard shortcuts',   href: '/settings/personal/shortcuts' },
-    { label: 'Sessions',             href: '/settings/personal/sessions' },
-    { label: 'Password & 2FA',       href: '/settings/personal/security' },
+    { label: 'Profile',        href: '/settings/personal/profile' },
+    { label: 'Password & 2FA', href: '/settings/personal/security' },
   ]},
 ]
 

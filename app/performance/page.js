@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import { motion } from 'framer-motion'
 import { supabase } from '../../lib/supabase'
 import Sidebar from '../components/Sidebar'
 
@@ -31,7 +32,6 @@ const DEMO_PERF = {
 
 // ─── CSS ──────────────────────────────────────────────────────────────────────
 const CSS = `
-  @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
   @keyframes shimmer{from{background-position:-400% 0}to{background-position:400% 0}}
   @keyframes spin{to{transform:rotate(360deg)}}
 
@@ -45,7 +45,7 @@ const CSS = `
   .pf-scroll::-webkit-scrollbar-track{background:transparent}
   .pf-scroll::-webkit-scrollbar-thumb{background:rgba(0,0,0,0.12);border-radius:2px}
 
-  .date-inp{background:#F5F5F5;border:1px solid rgba(0,0,0,0.08);border-radius:7px;color:#0F0F10;padding:4px 10px;font-size:11.5px;font-family:inherit;cursor:pointer;outline:none;transition:border-color .15s}
+  .date-inp{background:#F5F5F5;border:1px solid rgba(0,0,0,0.08);border-radius:7px;color:#0F0F10;padding:4px 10px;font-size:11.5px;font-family:'Switzer',sans-serif;cursor:pointer;outline:none;transition:border-color .15s}
   .date-inp:focus{border-color:rgba(0,0,0,0.18)}
   .date-inp::-webkit-calendar-picker-indicator{cursor:pointer}
 
@@ -55,7 +55,7 @@ const CSS = `
     border-radius:10px;
     padding:18px 20px;
     position:relative;overflow:hidden;
-    transition:border-color .2s ease;
+    transition:border-color 0.15s ease;
     cursor:default;
   }
   .kpi-card:hover{border-color:rgba(0,0,0,0.12)}
@@ -81,7 +81,7 @@ const CSS = `
   .filter-pill{
     padding:4px 12px;border-radius:6px;
     font-size:12px;font-weight:600;
-    cursor:pointer;font-family:inherit;
+    cursor:pointer;font-family:'Switzer',sans-serif;
     border:none;outline:none;
     transition:all .15s ease;
     background:transparent;
@@ -93,6 +93,37 @@ const CSS = `
   .ch-row:hover{background:#F9F9FB}
 `
 
+// ─── AnimatedNumber ───────────────────────────────────────────────────────────
+function AnimatedNumber({ value, suffix = '', decimals = 0 }) {
+  const [display, setDisplay] = useState(0)
+
+  useEffect(() => {
+    let start = 0
+    const end = parseFloat(String(value).replace(/[^0-9.]/g, ''))
+    if (isNaN(end) || end === 0) { setDisplay(0); return }
+    const duration = 1200
+    const step = end / (duration / 16)
+
+    const timer = setInterval(() => {
+      start += step
+      if (start >= end) {
+        setDisplay(end)
+        clearInterval(timer)
+      } else {
+        setDisplay(start)
+      }
+    }, 16)
+
+    return () => clearInterval(timer)
+  }, [value])
+
+  const formatted = suffix === '%' || decimals > 0
+    ? display.toFixed(decimals || 1)
+    : Math.round(display).toLocaleString()
+
+  return <span>{formatted}{suffix}</span>
+}
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function fmtNum(n) { return Math.round(n).toLocaleString('en-US') }
 
@@ -102,17 +133,6 @@ function fmtMinutes(mins) {
   if (mins < 24*60) { const h=Math.floor(mins/60),m=Math.round(mins%60); return m>0?`${h}h ${m}m`:`${h}h` }
   const d=Math.floor(mins/(24*60)),h=Math.round((mins%(24*60))/60)
   return h>0?`${d}d ${h}h`:`${d}d`
-}
-
-function useCountUp(target, active) {
-  const [val, setVal] = useState(0)
-  useEffect(() => {
-    if (!active) { setVal(0); return }
-    const dur=900, start=Date.now()
-    const run=()=>{ const t=Math.min((Date.now()-start)/dur,1); setVal(target*(1-Math.pow(1-t,3))); if(t<1)requestAnimationFrame(run); else setVal(target) }
-    requestAnimationFrame(run)
-  }, [target, active])
-  return val
 }
 
 function Spinner({ size=18 }) {
@@ -140,7 +160,7 @@ function getDateRange(id) {
 // ─── Section divider ──────────────────────────────────────────────────────────
 function SectionHeader({ title }) {
   return (
-    <div className="section-divider" style={{ animation:'fadeIn .3s ease-out both' }}>
+    <div className="section-divider">
       <span style={{ fontSize:10, fontWeight:700, letterSpacing:'.1em', color:'#9CA3AF', textTransform:'uppercase', whiteSpace:'nowrap' }}>{title}</span>
     </div>
   )
@@ -148,36 +168,36 @@ function SectionHeader({ title }) {
 
 // ─── Workload KPIs ────────────────────────────────────────────────────────────
 function WorkloadKPIs({ data, loaded }) {
-  const aCreated  = useCountUp(data.created          ||0, loaded)
-  const aClosed   = useCountUp(data.closed           ||0, loaded)
-  const aOpen     = useCountUp(data.open             ||0, loaded)
-  const aMessages = useCountUp(data.messagesReceived ||0, loaded)
   const closeRate = data.created>0 ? ((data.closed/data.created)*100).toFixed(0) : null
 
   const cards = [
     {
-      label:'CREATED', value:fmtNum(aCreated), sub:'new tickets this period',
+      label:'CREATED', sub:'new tickets this period',
       topGradient:'linear-gradient(90deg, #6366F1, #8B5CF6)',
       iconBg:'rgba(99,102,241,0.08)', iconColor:'#6366F1',
+      valueNode: <AnimatedNumber value={data.created||0} />,
       icon: c => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>,
     },
     {
-      label:'CLOSED', value:fmtNum(aClosed), sub:closeRate?`${closeRate}% close rate`:'resolved this period',
+      label:'CLOSED', sub:closeRate?`${closeRate}% close rate`:'resolved this period',
       badge:closeRate?{value:`${closeRate}%`}:null,
       topGradient:'linear-gradient(90deg, #10B981, #34D399)',
       iconBg:'rgba(16,185,129,0.08)', iconColor:'#10B981',
+      valueNode: <AnimatedNumber value={data.closed||0} />,
       icon: c => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>,
     },
     {
-      label:'OPEN', value:fmtNum(aOpen), sub:'currently awaiting reply',
+      label:'OPEN', sub:'currently awaiting reply',
       topGradient:'linear-gradient(90deg, #F59E0B, #FCD34D)',
       iconBg:'rgba(245,158,11,0.08)', iconColor:'#F59E0B',
+      valueNode: <AnimatedNumber value={data.open||0} />,
       icon: c => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>,
     },
     {
-      label:'MESSAGES', value:fmtNum(aMessages), sub:'total messages received',
+      label:'MESSAGES', sub:'total messages received',
       topGradient:'linear-gradient(90deg, #3B82F6, #60A5FA)',
       iconBg:'rgba(59,130,246,0.08)', iconColor:'#3B82F6',
+      valueNode: <AnimatedNumber value={data.messagesReceived||0} />,
       icon: c => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>,
     },
   ]
@@ -197,17 +217,25 @@ function WorkloadKPIs({ data, loaded }) {
 
   return (
     <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:12, marginBottom:12 }}>
-      {cards.map(c=>(
-        <div key={c.label} className="kpi-card" style={{ animation:'fadeIn .3s ease-out both', position:'relative', overflow:'hidden' }}>
+      {cards.map((c, index) => (
+        <motion.div
+          key={c.label}
+          className="kpi-card"
+          style={{ position:'relative', overflow:'hidden' }}
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: index * 0.08, ease: [0.16, 1, 0.3, 1] }}
+          whileHover={{ y: -1, boxShadow: '0 4px 12px rgba(0,0,0,0.06)', transition: { duration: 0.15, ease: 'easeOut' } }}
+        >
           <div style={{ position:'absolute', top:0, left:0, right:0, height:2, background:c.topGradient }}/>
           <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:14, marginTop:4 }}>
             <div style={{ width:30, height:30, borderRadius:8, background:c.iconBg, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>{c.icon(c.iconColor)}</div>
             {c.badge&&<span style={{ fontSize:11, fontWeight:600, color:'#059669', background:'rgba(16,185,129,0.08)', border:'1px solid rgba(16,185,129,0.15)', borderRadius:5, padding:'2px 7px', fontVariantNumeric:'tabular-nums' }}>{c.badge.value}</span>}
           </div>
-          <div style={{ fontSize:26, fontWeight:700, color:'#0F0F10', lineHeight:1, marginBottom:6, letterSpacing:'-0.025em', fontVariantNumeric:'tabular-nums' }}>{c.value}</div>
+          <div style={{ fontSize:26, fontWeight:700, color:'#0F0F10', lineHeight:1, marginBottom:6, letterSpacing:'-0.025em', fontVariantNumeric:'tabular-nums' }}>{c.valueNode}</div>
           <div style={{ fontSize:11, fontWeight:600, letterSpacing:'.06em', color:'#9CA3AF', textTransform:'uppercase', marginBottom:2 }}>{c.label}</div>
           <div style={{ fontSize:12, color:'#6B7280', lineHeight:1.4 }}>{c.sub}</div>
-        </div>
+        </motion.div>
       ))}
     </div>
   )
@@ -231,7 +259,7 @@ function WeeklyChart({ weekly, loaded }) {
   const barY=v=>PAD_TOP+BAR_H-(v/maxVal)*BAR_H, barH=v=>(v/maxVal)*BAR_H
 
   return (
-    <div className="panel" style={{ animation:'fadeIn .3s ease-out both' }}>
+    <div className="panel">
       <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:18 }}>
         <div>
           <div style={{ fontSize:14, fontWeight:600, color:'#0F0F10', marginBottom:3 }}>Weekly ticket volume</div>
@@ -262,7 +290,7 @@ function WeeklyChart({ weekly, loaded }) {
                     <text x={x+27} y={PAD_TOP-13} textAnchor="middle" fill="#9CA3AF" fontSize={10}>{w.closed} closed</text>
                   </g>
                 )}
-                <text x={x+barW+barGap/2} y={PAD_TOP+BAR_H+16} textAnchor="middle" fill="#9CA3AF" fontSize={9} fontFamily="sans-serif">{w.label}</text>
+                <text x={x+barW+barGap/2} y={PAD_TOP+BAR_H+16} textAnchor="middle" fill="#9CA3AF" fontSize={9} fontFamily="'Switzer', sans-serif">{w.label}</text>
               </g>
             )
           })}
@@ -315,9 +343,17 @@ function ResponseTimesSection({ data, loaded }) {
   ]
 
   return (
-    <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12, marginBottom:12, animation:'fadeIn .3s ease-out both' }}>
-      {cards.map(c=>(
-        <div key={c.label} className="kpi-card" style={{ padding:20, position:'relative', overflow:'hidden' }}>
+    <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12, marginBottom:12 }}>
+      {cards.map((c, index) => (
+        <motion.div
+          key={c.label}
+          className="kpi-card"
+          style={{ padding:20, position:'relative', overflow:'hidden' }}
+          initial={{ opacity: 0, x: -8 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.4, delay: 0.2 + index * 0.06, ease: [0.16, 1, 0.3, 1] }}
+          whileHover={{ y: -1, boxShadow: '0 4px 12px rgba(0,0,0,0.06)', transition: { duration: 0.15, ease: 'easeOut' } }}
+        >
           <div style={{ position:'absolute', top:0, left:0, right:0, height:3, background:c.topGradient }}/>
           <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:14, marginTop:4 }}>
             <div style={{ width:30, height:30, borderRadius:8, background:c.iconBg, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>{c.icon(c.iconColor)}</div>
@@ -330,7 +366,7 @@ function ResponseTimesSection({ data, loaded }) {
             <div style={{ fontSize:12, color:'#6B7280', lineHeight:1.4 }}>{c.sub}</div>
             <span style={{ fontSize:11, color:'#6B7280', background:'#F3F4F6', borderRadius:4, padding:'2px 8px', flexShrink:0, whiteSpace:'nowrap' }}>{c.benchmark}</span>
           </div>
-        </div>
+        </motion.div>
       ))}
     </div>
   )
@@ -338,34 +374,35 @@ function ResponseTimesSection({ data, loaded }) {
 
 // ─── Productivity KPIs ────────────────────────────────────────────────────────
 function ProductivityKPIs({ data, loaded }) {
-  const aReplied = useCountUp(data.ticketsReplied||0, loaded)
-  const aSent    = useCountUp(data.messagesSent  ||0, loaded)
-  const aOT      = useCountUp(parseFloat(data.oneTouchPct||0), loaded)
-  const aOTN     = useCountUp(data.oneTouchCount ||0, loaded)
+  const oneTouchCount = data.oneTouchCount||0
 
   const cards = [
     {
-      label:'TICKETS REPLIED', value:fmtNum(aReplied), sub:'agents sent at least 1 reply',
+      label:'TICKETS REPLIED', sub:'agents sent at least 1 reply',
       topGradient:'linear-gradient(90deg, #8B5CF6, #A78BFA)',
       iconBg:'rgba(139,92,246,0.08)', iconColor:'#8B5CF6',
+      valueNode: <AnimatedNumber value={data.ticketsReplied||0} />,
       icon: c => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 0 0-4-4H4"/></svg>,
     },
     {
-      label:'MESSAGES SENT', value:fmtNum(aSent), sub:'outbound agent messages',
+      label:'MESSAGES SENT', sub:'outbound agent messages',
       topGradient:'linear-gradient(90deg, #3B82F6, #60A5FA)',
       iconBg:'rgba(59,130,246,0.08)', iconColor:'#3B82F6',
+      valueNode: <AnimatedNumber value={data.messagesSent||0} />,
       icon: c => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>,
     },
     {
-      label:'ONE-TOUCH', value:`${aOT.toFixed(1)}%`, sub:`${fmtNum(aOTN)} tickets closed in one reply`,
+      label:'ONE-TOUCH', sub:`${fmtNum(oneTouchCount)} tickets closed in one reply`,
       topGradient:'linear-gradient(90deg, #10B981, #34D399)',
       iconBg:'rgba(16,185,129,0.08)', iconColor:'#10B981',
+      valueNode: <AnimatedNumber value={parseFloat(data.oneTouchPct||0)} suffix="%" />,
       icon: c => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z"/><path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>,
     },
     {
-      label:'AVG MESSAGES', value:data.avgMessages||'—', sub:'per ticket on average',
+      label:'AVG MESSAGES', sub:'per ticket on average',
       topGradient:'linear-gradient(90deg, #F59E0B, #FCD34D)',
       iconBg:'rgba(245,158,11,0.08)', iconColor:'#F59E0B',
+      valueNode: <AnimatedNumber value={parseFloat(data.avgMessages||0)} decimals={1} />,
       icon: c => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><line x1="9" y1="10" x2="15" y2="10"/></svg>,
     },
   ]
@@ -385,16 +422,24 @@ function ProductivityKPIs({ data, loaded }) {
 
   return (
     <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:12, marginBottom:12 }}>
-      {cards.map(c=>(
-        <div key={c.label} className="kpi-card" style={{ animation:'fadeIn .3s ease-out both', position:'relative', overflow:'hidden' }}>
+      {cards.map((c, index) => (
+        <motion.div
+          key={c.label}
+          className="kpi-card"
+          style={{ position:'relative', overflow:'hidden' }}
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.3 + index * 0.08, ease: [0.16, 1, 0.3, 1] }}
+          whileHover={{ y: -1, boxShadow: '0 4px 12px rgba(0,0,0,0.06)', transition: { duration: 0.15, ease: 'easeOut' } }}
+        >
           <div style={{ position:'absolute', top:0, left:0, right:0, height:3, background:c.topGradient }}/>
           <div style={{ marginBottom:14, marginTop:4 }}>
             <div style={{ width:30, height:30, borderRadius:8, background:c.iconBg, display:'flex', alignItems:'center', justifyContent:'center' }}>{c.icon(c.iconColor)}</div>
           </div>
-          <div style={{ fontSize:24, fontWeight:700, color:'#0F0F10', lineHeight:1, marginBottom:6, letterSpacing:'-0.02em', fontVariantNumeric:'tabular-nums' }}>{c.value}</div>
+          <div style={{ fontSize:24, fontWeight:700, color:'#0F0F10', lineHeight:1, marginBottom:6, letterSpacing:'-0.02em', fontVariantNumeric:'tabular-nums' }}>{c.valueNode}</div>
           <div style={{ fontSize:11, fontWeight:600, letterSpacing:'.06em', color:'#9CA3AF', textTransform:'uppercase', marginBottom:4 }}>{c.label}</div>
           <div style={{ fontSize:12, color:'#6B7280', lineHeight:1.4 }}>{c.sub}</div>
-        </div>
+        </motion.div>
       ))}
     </div>
   )
@@ -411,6 +456,15 @@ const CH_COLORS = {
 }
 
 function ChannelBreakdown({ channels, loaded }) {
+  const [barMounted, setBarMounted] = useState(false)
+
+  useEffect(() => {
+    if (loaded && channels && channels.length > 0) {
+      const t = setTimeout(() => setBarMounted(true), 80)
+      return () => clearTimeout(t)
+    }
+  }, [loaded, channels])
+
   if (!loaded) return (
     <div className="panel">
       <div className="sk" style={{ height:13, width:'25%', marginBottom:6 }}/><div className="sk" style={{ height:10, width:'18%', marginBottom:18 }}/>
@@ -422,7 +476,7 @@ function ChannelBreakdown({ channels, loaded }) {
   const total = channels.reduce((s,c)=>s+c.count, 0)
 
   return (
-    <div className="panel" style={{ animation:'fadeIn .3s ease-out both' }}>
+    <div className="panel">
       <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:16 }}>
         <div>
           <div style={{ fontSize:14, fontWeight:600, color:'#0F0F10', marginBottom:3 }}>Tickets by channel</div>
@@ -433,10 +487,16 @@ function ChannelBreakdown({ channels, loaded }) {
         {channels.map(ch=>{ const color=CH_COLORS[ch.name.toLowerCase()]||'#9CA3AF'; return <div key={ch.name} style={{ flex:ch.pct, background:color, minWidth:2 }}/> })}
       </div>
       <div style={{ display:'flex', flexDirection:'column', gap:2 }}>
-        {channels.map((ch,i)=>{
+        {channels.map((ch, i)=>{
           const color=CH_COLORS[ch.name.toLowerCase()]||'#9CA3AF'
           return (
-            <div key={ch.name} className="ch-row" style={{ animation:`fadeIn .3s ease-out ${i*60}ms both` }}>
+            <motion.div
+              key={ch.name}
+              className="ch-row"
+              initial={{ opacity: 0, x: -6 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.3, delay: i * 0.06, ease: [0.16, 1, 0.3, 1] }}
+            >
               <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:7, paddingLeft:2, paddingRight:2 }}>
                 <div style={{ display:'flex', alignItems:'center', gap:9 }}>
                   <div style={{ width:8, height:8, borderRadius:'50%', background:color, flexShrink:0 }}/>
@@ -448,9 +508,9 @@ function ChannelBreakdown({ channels, loaded }) {
                 </div>
               </div>
               <div style={{ height:6, borderRadius:10, background:'#F3F4F6', overflow:'hidden', marginLeft:2, marginRight:2 }}>
-                <div style={{ height:'100%', borderRadius:10, background:color, width:`${ch.pct}%`, transition:'width .9s cubic-bezier(0.34,1.56,0.64,1)' }}/>
+                <div style={{ height:'100%', borderRadius:10, background:color, width: barMounted ? `${ch.pct}%` : '0%', transition:'width 1s cubic-bezier(0.16, 1, 0.3, 1)' }}/>
               </div>
-            </div>
+            </motion.div>
           )
         })}
       </div>
@@ -519,10 +579,15 @@ export default function PerformancePage() {
       <Sidebar/>
 
       <main className="pf-scroll" style={{ flex:1, overflowY:'auto', padding:'24px', position:'relative' }}>
-        <div style={{ position:'relative', zIndex:1, maxWidth:1200, margin:'0 auto' }}>
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.3 }}
+          style={{ position:'relative', zIndex:1, maxWidth:1200, margin:'0 auto' }}
+        >
 
           {/* Header */}
-          <div style={{ marginBottom:24, animation:'fadeIn .5s ease-out both' }}>
+          <div style={{ marginBottom:24 }}>
             <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
               <div>
                 <h1 style={{ fontSize:20, fontWeight:700, color:'#0F0F10', lineHeight:1.2, marginBottom:4, letterSpacing:'-0.02em' }}>Performance</h1>
@@ -533,8 +598,8 @@ export default function PerformancePage() {
                   <span style={{ fontSize:10, fontWeight:700, background:'#F5F5F5', color:'#6B7280', border:'1px solid rgba(0,0,0,0.08)', borderRadius:4, padding:'2px 7px', letterSpacing:'.05em', textTransform:'uppercase' }}>DEMO</span>
                 )}
                 {demoMode
-                  ? <button onClick={exitDemo} style={{ padding:'5px 12px', borderRadius:7, background:'#F5F5F5', border:'1px solid rgba(0,0,0,0.09)', color:'#6B7280', fontSize:12, fontWeight:600, cursor:'pointer', fontFamily:'inherit' }}>Exit Demo</button>
-                  : <button onClick={loadDemo} style={{ padding:'5px 12px', borderRadius:7, background:'#F5F5F5', border:'1px solid rgba(0,0,0,0.09)', color:'#6B7280', fontSize:12, fontWeight:600, cursor:'pointer', fontFamily:'inherit' }}>Preview Demo</button>
+                  ? <button onClick={exitDemo} style={{ padding:'5px 12px', borderRadius:7, background:'#F5F5F5', border:'1px solid rgba(0,0,0,0.09)', color:'#6B7280', fontSize:12, fontWeight:600, cursor:'pointer', fontFamily:"'Switzer', sans-serif" }}>Exit Demo</button>
+                  : <button onClick={loadDemo} style={{ padding:'5px 12px', borderRadius:7, background:'#F5F5F5', border:'1px solid rgba(0,0,0,0.09)', color:'#6B7280', fontSize:12, fontWeight:600, cursor:'pointer', fontFamily:"'Switzer', sans-serif" }}>Preview Demo</button>
                 }
                 <div style={{ display:'flex', alignItems:'center', gap:6, padding:'5px 12px', borderRadius:7, background:allLoaded&&!demoMode&&gorgiasOk?'rgba(16,185,129,0.06)':'#F5F5F5', border:allLoaded&&!demoMode&&gorgiasOk?'1px solid rgba(16,185,129,0.15)':'1px solid rgba(0,0,0,0.08)' }}>
                   {!allLoaded?<Spinner size={12}/>:<div style={{ width:6, height:6, borderRadius:'50%', background:demoMode?'#F59E0B':gorgiasOk?'#10B981':'#EF4444', flexShrink:0 }}/>}
@@ -561,22 +626,22 @@ export default function PerformancePage() {
 
           {/* Demo banner */}
           {demoMode&&(
-            <div style={{ display:'flex', alignItems:'center', gap:10, background:'linear-gradient(135deg, #FFFBEB, #FFFDF0)', border:'1px solid rgba(245,158,11,0.2)', borderLeft:'3px solid #F59E0B', borderRadius:8, padding:'10px 16px', marginBottom:16, animation:'fadeIn .4s ease-out both' }}>
+            <div style={{ display:'flex', alignItems:'center', gap:10, background:'linear-gradient(135deg, #FFFBEB, #FFFDF0)', border:'1px solid rgba(245,158,11,0.2)', borderLeft:'3px solid #F59E0B', borderRadius:8, padding:'10px 16px', marginBottom:16 }}>
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink:0 }}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
               <div style={{ flex:1 }}>
                 <span style={{ fontSize:12, fontWeight:600, color:'#92400E', marginRight:6 }}>Demo mode</span>
                 <span style={{ fontSize:12, color:'#92400E' }}>Showing example data — connect Gorgias in Settings to see live metrics.</span>
               </div>
-              <button onClick={exitDemo} style={{ fontSize:12, fontWeight:600, color:'#92400E', background:'transparent', border:'none', cursor:'pointer', fontFamily:'inherit', whiteSpace:'nowrap' }}>Exit demo →</button>
+              <button onClick={exitDemo} style={{ fontSize:12, fontWeight:600, color:'#92400E', background:'transparent', border:'none', cursor:'pointer', fontFamily:"'Switzer', sans-serif", whiteSpace:'nowrap' }}>Exit demo →</button>
             </div>
           )}
 
           {/* Gorgias not connected */}
           {!demoMode&&allLoaded&&!gorgiasOk&&(
-            <div style={{ display:'flex', alignItems:'center', gap:10, background:'#FAFAFA', border:'1px solid rgba(0,0,0,0.07)', borderRadius:8, padding:'10px 16px', marginBottom:16, animation:'fadeIn .4s ease-out both' }}>
+            <div style={{ display:'flex', alignItems:'center', gap:10, background:'#FAFAFA', border:'1px solid rgba(0,0,0,0.07)', borderRadius:8, padding:'10px 16px', marginBottom:16 }}>
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink:0 }}><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
               <div style={{ flex:1 }}><span style={{ fontSize:12, fontWeight:600, color:'#374151', marginRight:6 }}>Gorgias not connected</span><span style={{ fontSize:12, color:'#6B7280' }}>Go to Settings → Integrations to connect your Gorgias account.</span></div>
-              <button onClick={loadDemo} style={{ fontSize:12, fontWeight:600, color:'#6B7280', background:'#F3F4F6', border:'1px solid rgba(0,0,0,0.08)', borderRadius:6, padding:'4px 10px', cursor:'pointer', fontFamily:'inherit', whiteSpace:'nowrap' }}>Preview demo</button>
+              <button onClick={loadDemo} style={{ fontSize:12, fontWeight:600, color:'#6B7280', background:'#F3F4F6', border:'1px solid rgba(0,0,0,0.08)', borderRadius:6, padding:'4px 10px', cursor:'pointer', fontFamily:"'Switzer', sans-serif", whiteSpace:'nowrap' }}>Preview demo</button>
             </div>
           )}
 
@@ -594,7 +659,7 @@ export default function PerformancePage() {
           <div style={{ marginTop:16, textAlign:'center', fontSize:10.5, color:'#9CA3AF', letterSpacing:'.04em' }}>
             Lynq Analytics · Gorgias data · Refreshed on load
           </div>
-        </div>
+        </motion.div>
       </main>
     </div>
   )

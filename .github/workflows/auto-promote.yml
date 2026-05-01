@@ -9,30 +9,14 @@ jobs:
       - name: Wait for Vercel build
         run: sleep 90
 
-      - name: Promote latest deployment
+      - name: Find team and project
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
         run: |
-          RESPONSE=$(curl -s \
-            "https://api.vercel.com/v6/deployments?projectId=$VERCEL_PROJECT_ID&limit=5&teamId=lynqflow" \
-            -H "Authorization: Bearer $VERCEL_TOKEN")
-          echo "API Response: $RESPONSE"
+          echo "=== TEAMS ==="
+          curl -s "https://api.vercel.com/v2/teams" \
+            -H "Authorization: Bearer $VERCEL_TOKEN"
 
-          DEPLOYMENT=$(echo $RESPONSE | python3 -c "
-          import sys, json
-          data = json.load(sys.stdin)
-          deployments = data.get('deployments', [])
-          if deployments:
-              print(deployments[0]['uid'])
-          else:
-              print('NO_DEPLOYMENT')
-              exit(1)
-          ")
-
-          echo "Promoting: $DEPLOYMENT"
-          curl -X PATCH \
-            "https://api.vercel.com/v10/deployments/$DEPLOYMENT/promote?teamId=lynqflow" \
-            -H "Authorization: Bearer $VERCEL_TOKEN" \
-            -H "Content-Type: application/json" \
-            -d "{}"
+          echo "=== PROJECTS ==="
+          curl -s "https://api.vercel.com/v9/projects" \
+            -H "Authorization: Bearer $VERCEL_TOKEN"

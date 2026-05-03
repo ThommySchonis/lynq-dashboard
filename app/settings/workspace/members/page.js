@@ -246,6 +246,7 @@ export default function UsersPage() {
   const [repairedOnce, setRepairedOnce] = useState(false)
   const [myId, setMyId]             = useState(null)
   const [myRole, setMyRole]         = useState(null)
+  const [isOwner, setIsOwner]       = useState(false)
 
   const [search, setSearch]         = useState('')
   const debouncedSearch             = useDebounce(search, 250)
@@ -295,6 +296,9 @@ export default function UsersPage() {
     setUsers(data.members || [])
     setInvites(data.invites || [])
     setSeatsUsed(data.seatsUsed || 0)
+    setMyRole(data.currentUserRole || null)
+    setIsOwner(data.isOwner === true)
+    console.log('[users page] role from server:', data.currentUserRole, '| isOwner:', data.isOwner)
   }, [getToken])
 
   const runRepair = useCallback(async () => {
@@ -339,12 +343,6 @@ export default function UsersPage() {
     }
   }, [loading, users.length, apiError, repairedOnce, debouncedSearch, runRepair])
 
-  useEffect(() => {
-    if (!myId || !users.length) return
-    const me = users.find(m => m.user_id === myId)
-    if (me) setMyRole(me.role)
-  }, [myId, users])
-
   // Close dropdown on outside click
   useEffect(() => {
     const handler = (e) => {
@@ -354,7 +352,9 @@ export default function UsersPage() {
     return () => document.removeEventListener('mousedown', handler)
   }, [])
 
-  const canManage = ['owner', 'admin'].includes(myRole)
+  // Server-sourced role is primary; isOwner is a safety net so the actual
+  // workspace owner can never be locked out, even if the role lookup fails.
+  const canManage = ['owner', 'admin'].includes(myRole) || isOwner
 
   async function handleChangeRole(memberId, newRole) {
     setOpenMenu(null)

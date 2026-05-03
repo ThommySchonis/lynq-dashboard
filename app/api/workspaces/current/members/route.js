@@ -80,12 +80,32 @@ export async function GET(request) {
     inviteLink: siteUrl ? `${siteUrl}/invites/${i.token}` : null,
   }))
 
+  const isOwner = ctx.workspace?.owner_id === ctx.user.id
+
+  if (!ctx.role) {
+    console.warn('[members GET] ctx.role missing!', {
+      userId:      ctx.user?.id,
+      workspaceId: ctx.workspaceId,
+      memberId:    ctx.memberId,
+    })
+  }
+
+  console.log('[members GET]', {
+    workspaceId: ctx.workspaceId,
+    userId:      ctx.user.id,
+    role:        ctx.role,
+    isOwner,
+    memberCount: members.length,
+  })
+
   return NextResponse.json({
     members,
-    invites:      invitesWithLinks,
-    seatsUsed:    members.length,
-    seatLimit:    null,
-    pendingCount: inviteCount ?? 0,
+    invites:         invitesWithLinks,
+    currentUserRole: ctx.role ?? null,
+    isOwner,
+    seatsUsed:       members.length,
+    seatLimit:       null,
+    pendingCount:    inviteCount ?? 0,
     nextCursor,
   })
 }

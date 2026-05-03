@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, useCallback } from 'react'
 import { createClient } from '@supabase/supabase-js'
 import {
   UserPlus, Search, MoreHorizontal, Mail,
-  X, Check, AlertCircle, Loader2, Users,
+  X, Check, AlertCircle, Loader2, Users, Copy, Link2,
 } from 'lucide-react'
 
 const supabase = createClient(
@@ -257,7 +257,9 @@ export default function UsersPage() {
   const [inviteEmail, setInviteEmail] = useState('')
   const [inviteRole, setInviteRole]   = useState('agent')
   const [inviting, setInviting]       = useState(false)
+  const [inviteResult, setInviteResult] = useState(null)  // { invite, inviteLink, emailStatus, emailError }
   const [removing, setRemoving]       = useState(false)
+  const [linkCopied, setLinkCopied]   = useState(false)
 
   const [toast, setToast] = useState(null)
   const menuRef = useRef(null)
@@ -409,15 +411,36 @@ export default function UsersPage() {
     const data = await res.json()
     setInviting(false)
     if (!res.ok) { showToast(data.error || 'Failed to send invite', 'err'); return }
-    if (data.emailError) {
-      showToast(`Invite created but email failed: ${data.emailError}`, 'err')
-    } else {
-      showToast(`Invite sent to ${inviteEmail.trim()}`)
-    }
+    setInviteResult(data)
+    fetchUsers(debouncedSearch)
+  }
+
+  function closeInviteModal() {
+    setShowInvite(false)
     setInviteEmail('')
     setInviteRole('agent')
-    setShowInvite(false)
-    fetchUsers(debouncedSearch)
+    setInviteResult(null)
+    setLinkCopied(false)
+  }
+
+  async function copyToClipboard(text) {
+    try {
+      await navigator.clipboard.writeText(text)
+      setLinkCopied(true)
+      setTimeout(() => setLinkCopied(false), 2000)
+    } catch (_) {
+      showToast('Failed to copy — please copy manually', 'err')
+    }
+  }
+
+  async function copyInviteLink(link) {
+    try {
+      await navigator.clipboard.writeText(link)
+      showToast('Invite link copied')
+    } catch (_) {
+      showToast('Failed to copy', 'err')
+    }
+    setOpenMenu(null)
   }
 
   const rows = [
@@ -550,6 +573,14 @@ export default function UsersPage() {
                               {openMenu === row.id && (
                                 <div className="up-dropdown">
                                   <div className="up-dd-section">
+                                    {row.inviteLink && (
+                                      <button className="up-dd-item" onClick={() => copyInviteLink(row.inviteLink)}>
+                                        <Link2 size={14} strokeWidth={1.75} /> Copy invite link
+                                      </button>
+                                    )}
+                                  </div>
+                                  <div className="up-dd-divider" />
+                                  <div className="up-dd-section">
                                     <button className="up-dd-item danger" onClick={() => handleRevokeInvite(row.id)}>
                                       <X size={14} strokeWidth={1.75} /> Revoke invite
                                     </button>
@@ -650,59 +681,134 @@ export default function UsersPage() {
 
       {/* Invite Modal */}
       {showInvite && (
-        <div className="up-overlay" onClick={e => e.target === e.currentTarget && setShowInvite(false)}>
+        <div className="up-overlay" onClick={e => e.target === e.currentTarget && closeInviteModal()}>
           <div className="up-modal">
-            <div className="up-modal-hd">
-              <div>
-                <div className="up-modal-title">Invite a new user</div>
-                <div className="up-modal-sub">They'll receive an email with a link to join.</div>
-              </div>
-              <button className="up-modal-close" onClick={() => setShowInvite(false)}>
-                <X size={16} strokeWidth={1.75} />
-              </button>
-            </div>
-            <form onSubmit={handleInvite}>
-              <div className="up-modal-body">
-                <div className="up-field">
-                  <label htmlFor="invite-email">Email address</label>
-                  <input
-                    id="invite-email"
-                    type="email"
-                    placeholder="colleague@example.com"
-                    value={inviteEmail}
-                    onChange={e => setInviteEmail(e.target.value)}
-                    required
-                    autoFocus
-                  />
-                </div>
-                <div className="up-field">
-                  <label>Role</label>
-                  <div className="up-role-cards">
-                    {ROLES.map(r => (
-                      <div
-                        key={r}
-                        className={`up-role-card${inviteRole === r ? ' selected' : ''}`}
-                        onClick={() => setInviteRole(r)}
-                      >
-                        <div className="up-role-card-name">{ROLE_LABELS[r]}</div>
-                        <div className="up-role-card-desc">{ROLE_DESCS[r]}</div>
-                      </div>
-                    ))}
+            {!inviteResult ? (
+              <>
+                <div className="up-modal-hd">
+                  <div>
+                    <div className="up-modal-title">Invite a new user</div>
+                    <div className="up-modal-sub">They'll receive an email with a link to join.</div>
                   </div>
+                  <button className="up-modal-close" onClick={closeInviteModal}>
+                    <X size={16} strokeWidth={1.75} />
+                  </button>
                 </div>
-              </div>
-              <div className="up-modal-ft">
-                <button type="button" className="btn-secondary" onClick={() => setShowInvite(false)}>
-                  Cancel
-                </button>
-                <button type="submit" className="btn-primary" disabled={inviting}>
-                  {inviting
-                    ? <><Loader2 size={14} strokeWidth={1.75} className="spin" /> Sending…</>
-                    : <><Mail size={14} strokeWidth={1.75} /> Send invite</>
-                  }
-                </button>
-              </div>
-            </form>
+                <form onSubmit={handleInvite}>
+                  <div className="up-modal-body">
+                    <div className="up-field">
+                      <label htmlFor="invite-email">Email address</label>
+                      <input
+                        id="invite-email"
+                        type="email"
+                        placeholder="colleague@example.com"
+                        value={inviteEmail}
+                        onChange={e => setInviteEmail(e.target.value)}
+                        required
+                        autoFocus
+                      />
+                    </div>
+                    <div className="up-field">
+                      <label>Role</label>
+                      <div className="up-role-cards">
+                        {ROLES.map(r => (
+                          <div
+                            key={r}
+                            className={`up-role-card${inviteRole === r ? ' selected' : ''}`}
+                            onClick={() => setInviteRole(r)}
+                          >
+                            <div className="up-role-card-name">{ROLE_LABELS[r]}</div>
+                            <div className="up-role-card-desc">{ROLE_DESCS[r]}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="up-modal-ft">
+                    <button type="button" className="btn-secondary" onClick={closeInviteModal}>
+                      Cancel
+                    </button>
+                    <button type="submit" className="btn-primary" disabled={inviting}>
+                      {inviting
+                        ? <><Loader2 size={14} strokeWidth={1.75} className="spin" /> Sending…</>
+                        : <><Mail size={14} strokeWidth={1.75} /> Send invite</>
+                      }
+                    </button>
+                  </div>
+                </form>
+              </>
+            ) : (
+              <>
+                <div className="up-modal-hd">
+                  <div>
+                    <div className="up-modal-title">Invite created</div>
+                    <div className="up-modal-sub">
+                      {inviteResult.emailStatus === 'sent'
+                        ? `Email sent to ${inviteResult.invite?.email}.`
+                        : inviteResult.emailStatus === 'not_configured'
+                          ? 'Email service not configured — copy the link below to share manually.'
+                          : inviteResult.emailStatus === 'failed'
+                            ? `Email failed: ${inviteResult.emailError}. Use the link below instead.`
+                            : 'Share the link below with the user.'}
+                    </div>
+                  </div>
+                  <button className="up-modal-close" onClick={closeInviteModal}>
+                    <X size={16} strokeWidth={1.75} />
+                  </button>
+                </div>
+                <div className="up-modal-body">
+                  {inviteResult.inviteLink ? (
+                    <>
+                      <div className="up-field">
+                        <label>Invite link</label>
+                        <div style={{ display: 'flex', gap: 6 }}>
+                          <input
+                            type="text"
+                            value={inviteResult.inviteLink}
+                            readOnly
+                            onFocus={e => e.target.select()}
+                            style={{ flex: 1, fontSize: 12, fontFamily: 'ui-monospace, monospace' }}
+                          />
+                          <button
+                            type="button"
+                            className="btn-secondary"
+                            onClick={() => copyToClipboard(inviteResult.inviteLink)}
+                          >
+                            {linkCopied
+                              ? <><Check size={14} strokeWidth={2} /> Copied</>
+                              : <><Copy size={14} strokeWidth={1.75} /> Copy</>
+                            }
+                          </button>
+                        </div>
+                      </div>
+                      <p style={{ fontSize: 12, color: '#9B91A8', margin: '0 0 8px' }}>
+                        Link expires in 7 days.
+                      </p>
+                    </>
+                  ) : (
+                    <div className="up-error-bar" style={{ marginBottom: 0 }}>
+                      <AlertCircle size={16} strokeWidth={1.75} style={{ flexShrink: 0, marginTop: 1 }} />
+                      <span>
+                        Could not generate an invite link — set <code>NEXT_PUBLIC_SITE_URL</code> in
+                        Vercel environment variables.
+                      </span>
+                    </div>
+                  )}
+                </div>
+                <div className="up-modal-ft">
+                  <button
+                    type="button"
+                    className="btn-secondary"
+                    onClick={() => { setInviteResult(null); setInviteEmail(''); setInviteRole('agent'); setLinkCopied(false) }}
+                  >
+                    Invite another
+                  </button>
+                  <button type="button" className="btn-primary" onClick={closeInviteModal}>
+                    Done
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}

@@ -115,41 +115,108 @@ export async function PATCH(request, { params }) {
 // for invite revocation. Member removal still routes through here.
 export async function DELETE(request, { params }) {
   const ctx = await getAuthContext(request)
-  if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  if (!can.removeMembers(ctx.role)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  if (!ctx) {
+    return NextResponse.json({ error: 'Unauthorized', code: 'unauthorized' }, { status: 401 })
+  }
 
   const { id } = await params
   const { searchParams } = new URL(request.url)
   const type = searchParams.get('type')
 
+  // Legacy invite-revoke path (no longer called by the UI but kept for safety)
   if (type === 'invite') {
+    if (!can.removeMembers(ctx.role)) {
+      return NextResponse.json({ error: 'Forbidden', code: 'permission_denied' }, { status: 403 })
+    }
     const { error } = await supabaseAdmin
       .from('workspace_invites')
       .delete()
       .eq('id', id)
       .eq('workspace_id', ctx.workspaceId)
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-    return NextResponse.json({ success: true })
+    if (error) return NextResponse.json({ error: error.message, code: 'delete_failed' }, { status: 500 })
+    return NextResponse.json({ ok: true })
   }
 
-  const { data: target } = await supabaseAdmin
+  // ── Member removal ─────────────────────────────────────────────────
+  if (!can.removeMembers(ctx.role)) {
+    return NextResponse.json(
+      { error: 'You do not have permission to remove members.', code: 'permission_denied' },
+      { status: 403 }
+    )
+  }
+
+  const { data: target, error: lookupError } = await supabaseAdmin
     .from('workspace_members')
-    .select('user_id, role')
+    .select('id, user_id, role')
     .eq('id', id)
     .eq('workspace_id', ctx.workspaceId)
-    .single()
+    .maybeSingle()
 
-  if (!target) return NextResponse.json({ error: 'Member not found' }, { status: 404 })
-  if (target.role === 'owner') return NextResponse.json({ error: 'Cannot remove the workspace owner' }, { status: 400 })
-  if (target.user_id === ctx.user.id) return NextResponse.json({ error: 'Cannot remove yourself' }, { status: 400 })
+  if (lookupError) {
+    console.error('[member DELETE] lookup failed:', lookupError.message)
+    return NextResponse.json({ error: lookupError.message, code: 'lookup_failed' }, { status: 500 })
+  }
+  if (!target) {
+    return NextResponse.json({ error: 'Member not found', code: 'not_found' }, { status: 404 })
+  }
 
-  const { error } = await supabaseAdmin
+  // Self-remove is forbidden — owners must transfer ownership first
+  if (target.user_id === ctx.user.id) {
+    const msg = ctx.role === 'owner'
+      ? 'Owners must transfer ownership before leaving the workspace.'
+      : "You can't remove yourself."
+    return NextResponse.json({ error: msg, code: 'self_remove_forbidden' }, { status: 409 })
+  }
+
+  // Admins cannot remove owners or other admins
+  if (ctx.role === 'admin' && (target.role === 'owner' || target.role === 'admin')) {
+    return NextResponse.json(
+      { error: 'Only owners can remove other owners or admins.', code: 'permission_denied' },
+      { status: 403 }
+    )
+  }
+
+  // Last-owner protection: if removing an owner, ≥1 owner must remain
+  if (target.role === 'owner') {
+    const { count, error: countError } = await supabaseAdmin
+      .from('workspace_members')
+      .select('id', { count: 'exact', head: true })
+      .eq('workspace_id', ctx.workspaceId)
+      .eq('role', 'owner')
+      .neq('id', target.id)
+
+    if (countError) {
+      console.error('[member DELETE] owner count failed:', countError.message)
+      return NextResponse.json({ error: countError.message, code: 'lookup_failed' }, { status: 500 })
+    }
+    if ((count ?? 0) === 0) {
+      return NextResponse.json(
+        { error: 'This is the only owner. Promote someone else first.', code: 'last_owner' },
+        { status: 409 }
+      )
+    }
+  }
+
+  const { error: deleteError } = await supabaseAdmin
     .from('workspace_members')
     .delete()
     .eq('id', id)
     .eq('workspace_id', ctx.workspaceId)
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json({ success: true })
+  if (deleteError) {
+    console.error('[member DELETE] delete failed:', deleteError.message)
+    return NextResponse.json({ error: deleteError.message, code: 'delete_failed' }, { status: 500 })
+  }
+
+  console.log('[member DELETE]', {
+    workspaceId: ctx.workspaceId,
+    removed:     target.id,
+    removedRole: target.role,
+    by:          ctx.user.id,
+  })
+
+  // Note: their auth.users row is intentionally NOT deleted — they may
+  // belong to other workspaces or sign up to a new one later.
+  return NextResponse.json({ ok: true, removed_id: target.id })
 }

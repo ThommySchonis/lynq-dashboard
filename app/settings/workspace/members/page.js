@@ -159,7 +159,7 @@ const CSS = `
   .up-dot-btn:focus { outline: none; box-shadow: 0 0 0 3px rgba(161,117,252,0.25); }
 
   .up-dropdown {
-    position: absolute; right: 0; top: calc(100% + 4px); z-index: 50;
+    position: fixed; z-index: 9999;
     background: #fff; border: 1px solid #E5E0EB; border-radius: 10px;
     box-shadow: 0 8px 24px rgba(28,15,54,0.12); min-width: 180px; overflow: hidden;
   }
@@ -314,13 +314,17 @@ export default function UsersPage() {
   const [myId, setMyId]             = useState(null)
   const [myRole, setMyRole]         = useState(null)
   const [isOwner, setIsOwner]       = useState(false)
+  const [workspaceName, setWorkspaceName] = useState('')
 
   const [search, setSearch]         = useState('')
   const debouncedSearch             = useDebounce(search, 250)
 
   const [openMenu, setOpenMenu]     = useState(null)
+  const [dotMenuCoords, setDotMenuCoords] = useState(null) // { top, right } in viewport coords
+  const dotMenuRef = useRef(null)
   const [showInvite, setShowInvite] = useState(false)
   const [removeTarget, setRemoveTarget] = useState(null)
+  const [removeError,  setRemoveError]  = useState(null)
   const [revokeTarget, setRevokeTarget] = useState(null)   // { id, email }
   const [pendingAction, setPendingAction] = useState({})   // { [inviteId]: 'resend' | 'revoke' }
 
@@ -338,7 +342,6 @@ export default function UsersPage() {
   const [linkCopied, setLinkCopied]   = useState(false)
 
   const [toast, setToast] = useState(null)
-  const menuRef = useRef(null)
 
   const showToast = (msg, type = 'ok') => {
     setToast({ msg, type })
@@ -373,6 +376,7 @@ export default function UsersPage() {
     setSeatsUsed(data.seatsUsed || 0)
     setMyRole(data.currentUserRole || null)
     setIsOwner(data.isOwner === true)
+    setWorkspaceName(data.workspaceName || '')
     console.log('[users page] role from server:', data.currentUserRole, '| isOwner:', data.isOwner)
   }, [getToken])
 
@@ -418,14 +422,25 @@ export default function UsersPage() {
     }
   }, [loading, users.length, apiError, repairedOnce, debouncedSearch, runRepair])
 
-  // Close 3-dot dropdown on outside click
+  // Close 3-dot menu on outside click (trigger identified by data-dot-trigger)
   useEffect(() => {
+    if (!openMenu) return
     const handler = (e) => {
-      if (menuRef.current && !menuRef.current.contains(e.target)) setOpenMenu(null)
+      if (dotMenuRef.current?.contains(e.target)) return
+      if (e.target.closest?.(`[data-dot-trigger="${openMenu}"]`)) return
+      setOpenMenu(null)
     }
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
-  }, [])
+  }, [openMenu])
+
+  // Close 3-dot menu on Escape
+  useEffect(() => {
+    if (!openMenu) return
+    const onKey = (e) => { if (e.key === 'Escape') setOpenMenu(null) }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [openMenu])
 
   // Close role panel on outside click — trigger is identified by data-role-trigger
   useEffect(() => {
@@ -549,16 +564,28 @@ export default function UsersPage() {
   async function handleRemove() {
     if (!removeTarget) return
     setRemoving(true)
-    const token = await getToken()
-    const res = await fetch(`/api/workspaces/current/members/${removeTarget.id}`, {
+    setRemoveError(null)
+
+    const target = removeTarget
+    const token  = await getToken()
+    const res = await fetch(`/api/workspaces/current/members/${target.id}`, {
       method: 'DELETE',
       headers: { Authorization: `Bearer ${token}` },
     })
-    const data = await res.json()
+    const data = await res.json().catch(() => ({}))
     setRemoving(false)
+
+    if (!res.ok) {
+      // Modal STAYS OPEN with inline banner — don't trap user, just inform
+      setRemoveError(data.error || 'Could not remove this user. Please try again.')
+      return
+    }
+
+    const removedName = target.display_name || target.email?.split('@')[0] || 'User'
+    setUsers(prev => prev.filter(u => u.id !== target.id))   // optimistic
     setRemoveTarget(null)
-    if (!res.ok) { showToast(data.error || 'Failed to remove user', 'err'); return }
-    showToast('User removed')
+    setRemoveError(null)
+    showToast(`${removedName} removed from workspace`)
     fetchUsers(debouncedSearch)
   }
 
@@ -769,9 +796,13 @@ export default function UsersPage() {
                     )
                   }
 
-                  const isMe    = row.user_id === myId
-                  const isOwner = row.role === 'owner'
-                  const canEdit = canManage && !isMe && !isOwner
+                  const isMe       = row.user_id === myId
+                  const isOwnerRow = row.role === 'owner'
+                  const isAdminRow = row.role === 'admin'
+                  // Owner: can remove anyone except self (last_owner enforced server-side).
+                  // Admin: can remove agents/observers only.
+                  // Anyone else: cannot remove anyone.
+                  const canRemove  = canManage && !isMe && !(myRole === 'admin' && (isOwnerRow || isAdminRow))
 
                   return (
                     <tr key={row.id}>
@@ -852,28 +883,27 @@ export default function UsersPage() {
                           : <span className="up-tfa-no" title="2FA not enabled">—</span>
                         }
                       </td>
-                      <td className="up-actions" ref={openMenu === row.id ? menuRef : null}>
-                        {canEdit && (
-                          <>
-                            <button
-                              className="up-dot-btn"
-                              onClick={() => setOpenMenu(openMenu === row.id ? null : row.id)}
-                            >
-                              <MoreHorizontal size={16} strokeWidth={1.75} />
-                            </button>
-                            {openMenu === row.id && (
-                              <div className="up-dropdown">
-                                <div className="up-dd-section">
-                                  <button
-                                    className="up-dd-item danger"
-                                    onClick={() => { setOpenMenu(null); setRemoveTarget(row) }}
-                                  >
-                                    <X size={14} strokeWidth={1.75} /> Remove user
-                                  </button>
-                                </div>
-                              </div>
-                            )}
-                          </>
+                      <td className="up-actions">
+                        {canRemove && (
+                          <button
+                            type="button"
+                            data-dot-trigger={row.id}
+                            className="up-dot-btn"
+                            aria-haspopup="menu"
+                            aria-expanded={openMenu === row.id}
+                            aria-label="Member actions"
+                            onClick={(e) => {
+                              if (openMenu === row.id) { setOpenMenu(null); return }
+                              const rect = e.currentTarget.getBoundingClientRect()
+                              setDotMenuCoords({
+                                top:   rect.bottom + 6,
+                                right: window.innerWidth - rect.right,
+                              })
+                              setOpenMenu(row.id)
+                            }}
+                          >
+                            <MoreHorizontal size={16} strokeWidth={1.75} />
+                          </button>
                         )}
                       </td>
                     </tr>
@@ -1086,38 +1116,80 @@ export default function UsersPage() {
       )}
 
       {/* Remove Confirm Modal */}
-      {removeTarget && (
-        <div className="up-overlay" onClick={e => e.target === e.currentTarget && setRemoveTarget(null)}>
-          <div className="up-modal">
-            <div className="up-modal-hd">
-              <div>
-                <div className="up-modal-title">Remove user</div>
-                <div className="up-modal-sub">This action cannot be undone.</div>
+      {removeTarget && (() => {
+        const targetName = removeTarget.display_name || removeTarget.email?.split('@')[0] || 'this user'
+        const wsLabel    = workspaceName || 'this workspace'
+        return (
+          <div className="up-overlay" onClick={e => { if (e.target === e.currentTarget && !removing) { setRemoveTarget(null); setRemoveError(null) } }}>
+            <div className="up-modal">
+              <div className="up-modal-hd">
+                <div>
+                  <div className="up-modal-title">Remove {targetName}?</div>
+                </div>
+                <button
+                  className="up-modal-close"
+                  onClick={() => { if (!removing) { setRemoveTarget(null); setRemoveError(null) } }}
+                  disabled={removing}
+                >
+                  <X size={16} strokeWidth={1.75} />
+                </button>
               </div>
-              <button className="up-modal-close" onClick={() => setRemoveTarget(null)}>
-                <X size={16} strokeWidth={1.75} />
-              </button>
-            </div>
-            <div className="up-modal-body">
-              <div style={{ display: 'flex', gap: 10, padding: '12px 14px', background: '#FEF2F2', borderRadius: 8, alignItems: 'flex-start' }}>
-                <AlertCircle size={16} strokeWidth={1.75} style={{ color: '#EF4444', marginTop: 1, flexShrink: 0 }} />
-                <span style={{ fontSize: 14, color: '#1C0F36' }}>
-                  <strong>{removeTarget.display_name || removeTarget.email}</strong> will lose access to this workspace immediately.
-                </span>
+              <div className="up-modal-body">
+                {removeError && (
+                  <div style={{ display: 'flex', gap: 10, padding: '12px 14px', background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 8, marginBottom: 12, alignItems: 'flex-start' }}>
+                    <AlertCircle size={16} strokeWidth={1.75} style={{ color: '#DC2626', marginTop: 1, flexShrink: 0 }} />
+                    <span style={{ fontSize: 13, color: '#B91C1C' }}>{removeError}</span>
+                  </div>
+                )}
+                <p style={{ margin: 0, fontSize: 14, color: '#1C0F36', lineHeight: 1.55 }}>
+                  <strong>{targetName}</strong> will lose access to this workspace immediately.
+                  Their tickets, assignments, and activity history will remain but they won&rsquo;t
+                  be able to sign in to <strong>{wsLabel}</strong> anymore. This cannot be undone.
+                </p>
               </div>
-            </div>
-            <div className="up-modal-ft">
-              <button className="btn-secondary" onClick={() => setRemoveTarget(null)}>Cancel</button>
-              <button className="btn-danger" onClick={handleRemove} disabled={removing}>
-                {removing
-                  ? <><Loader2 size={14} strokeWidth={1.75} className="spin" /> Removing…</>
-                  : 'Remove user'
-                }
-              </button>
+              <div className="up-modal-ft">
+                <button
+                  className="btn-secondary"
+                  onClick={() => { setRemoveTarget(null); setRemoveError(null) }}
+                >
+                  Cancel
+                </button>
+                <button className="btn-danger" onClick={handleRemove} disabled={removing}>
+                  {removing
+                    ? <><Loader2 size={14} strokeWidth={1.75} className="spin" /> Removing…</>
+                    : 'Remove from workspace'
+                  }
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )
+      })()}
+
+      {/* 3-dot member-actions menu — portaled to body */}
+      {openMenu && dotMenuCoords && typeof document !== 'undefined' && (() => {
+        const targetRow = users.find(u => u.id === openMenu)
+        if (!targetRow) return null
+        return createPortal(
+          <div
+            ref={dotMenuRef}
+            className="up-dropdown"
+            role="menu"
+            style={{ top: dotMenuCoords.top, right: dotMenuCoords.right }}
+          >
+            <div className="up-dd-section">
+              <button
+                className="up-dd-item danger"
+                onClick={() => { setOpenMenu(null); setRemoveError(null); setRemoveTarget(targetRow) }}
+                role="menuitem"
+              >
+                <Trash2 size={14} strokeWidth={1.75} /> Remove from workspace
+              </button>
+            </div>
+          </div>,
+          document.body
+        )
+      })()}
 
       {/* Role panel — portaled to body to escape the table's overflow:hidden */}
       {roleMenuOpen && rolePanelCoords && typeof document !== 'undefined' && (() => {

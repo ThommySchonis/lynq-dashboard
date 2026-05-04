@@ -103,6 +103,7 @@ export async function GET(request) {
     invites:         invitesWithLinks,
     currentUserRole: ctx.role ?? null,
     isOwner,
+    workspaceName:   ctx.workspace?.name ?? null,
     seatsUsed:       members.length,
     seatLimit:       null,
     pendingCount:    inviteCount ?? 0,

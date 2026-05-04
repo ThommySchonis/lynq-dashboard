@@ -1,20 +1,17 @@
-import { supabaseAdmin, getUserFromToken } from '../../../../lib/supabaseAdmin'
+import { supabaseAdmin } from '../../../../lib/supabaseAdmin'
+import { getAuthContext } from '../../../../lib/auth'
 import { NextResponse } from 'next/server'
 
 // GET /api/parcelpanel/shipments?status=failed_attempt&page=1
 export async function GET(request) {
-  const authHeader = request.headers.get('authorization')
-  if (!authHeader) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const ctx = await getAuthContext(request)
+  if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const token = authHeader.replace('Bearer ', '')
-  const user = await getUserFromToken(token)
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-  // Get ParcelPanel API key for this tenant
+  // Get ParcelPanel API key for this workspace
   const { data: settings } = await supabaseAdmin
     .from('integrations')
     .select('parcelpanel_api_key')
-    .eq('client_id', user.id)
+    .eq('workspace_id', ctx.workspaceId)
     .maybeSingle()
 
   if (!settings?.parcelpanel_api_key) {

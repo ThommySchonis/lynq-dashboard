@@ -1,15 +1,12 @@
-import { supabaseAdmin, getUserFromToken } from '../../../../../lib/supabaseAdmin'
+import { supabaseAdmin } from '../../../../../lib/supabaseAdmin'
+import { getAuthContext } from '../../../../../lib/auth'
 import { NextResponse } from 'next/server'
 
 const VALID_STATUSES = ['open', 'pending', 'resolved', 'closed']
 
 export async function GET(request, { params }) {
-  const authHeader = request.headers.get('authorization')
-  if (!authHeader) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-  const token = authHeader.replace('Bearer ', '')
-  const user = await getUserFromToken(token)
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const ctx = await getAuthContext(request)
+  if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { id } = await params
 
@@ -17,7 +14,7 @@ export async function GET(request, { params }) {
     .from('email_conversations')
     .select('*')
     .eq('id', id)
-    .eq('client_id', user.id)
+    .eq('workspace_id', ctx.workspaceId)
     .maybeSingle()
 
   if (!conversation) return NextResponse.json({ error: 'Not found' }, { status: 404 })
@@ -32,12 +29,8 @@ export async function GET(request, { params }) {
 }
 
 export async function PATCH(request, { params }) {
-  const authHeader = request.headers.get('authorization')
-  if (!authHeader) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-  const token = authHeader.replace('Bearer ', '')
-  const user = await getUserFromToken(token)
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const ctx = await getAuthContext(request)
+  if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { id } = await params
   const { status } = await request.json()
@@ -49,7 +42,7 @@ export async function PATCH(request, { params }) {
     .from('email_conversations')
     .update({ status })
     .eq('id', id)
-    .eq('client_id', user.id)
+    .eq('workspace_id', ctx.workspaceId)
 
   return NextResponse.json({ success: true })
 }

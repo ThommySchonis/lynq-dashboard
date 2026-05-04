@@ -4,6 +4,9 @@ const PUBLIC_API_PREFIXES = [
   '/api/auth/',
   '/api/webhooks/',
   '/api/whop/webhook',
+  // Invite flow: GET metadata + POST signup are pre-session.
+  // The /accept sub-route still enforces Bearer auth in its own handler.
+  '/api/invites/',
 ]
 
 function isPublicApiPath(pathname) {

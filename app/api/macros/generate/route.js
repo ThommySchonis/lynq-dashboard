@@ -12,7 +12,7 @@ import {
 } from '../../../../lib/aiMacros'
 
 const CLAUDE_MODEL = 'claude-sonnet-4-20250514'
-const MAX_TOKENS   = 8192
+const MAX_TOKENS   = 16000
 
 // POST /api/macros/generate — call Claude, parse, bulk insert
 export async function POST(request) {
@@ -59,10 +59,36 @@ export async function POST(request) {
     ? response.content.filter(b => b.type === 'text').map(b => b.text).join('')
     : ''
 
-  // Parse JSON (with code-fence stripping fallback)
+  // If Claude was cut off mid-response by max_tokens, the JSON will be
+  // syntactically incomplete — surface a specific error before parsing
+  // so the user understands the cause.
+  if (response.stop_reason === 'max_tokens') {
+    console.error(
+      '[macros generate] hit max_tokens — output_tokens=',
+      response.usage?.output_tokens,
+      'response length=', text.length,
+      '\n--- BEGIN TRUNCATED RESPONSE ---\n',
+      text,
+      '\n--- END TRUNCATED RESPONSE ---'
+    )
+    return NextResponse.json(
+      { error: 'AI response was too long. Generating fewer macros, please retry.', code: 'max_tokens' },
+      { status: 502 }
+    )
+  }
+
+  // Parse JSON (with code-fence stripping + preamble extraction fallback)
   const { macros: parsed, parseError, raw } = parseMacroJson(text)
   if (!parsed || parsed.length === 0) {
-    console.error('[macros generate] parse failed:', parseError, '— raw:', raw?.slice(0, 1000))
+    console.error(
+      '[macros generate] parse failed:', parseError,
+      '\n  stop_reason =', response.stop_reason,
+      '\n  output_tokens =', response.usage?.output_tokens,
+      '\n  response length =', text.length,
+      '\n--- BEGIN RAW CLAUDE RESPONSE ---\n',
+      raw,
+      '\n--- END RAW CLAUDE RESPONSE ---'
+    )
     return NextResponse.json(
       { error: "Couldn't parse AI response. Try again.", code: 'parse_failed' },
       { status: 502 }

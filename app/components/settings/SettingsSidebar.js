@@ -10,6 +10,7 @@ const NAV_GROUPS = [
     { label: 'General', href: '/settings/workspace/general' },
     { label: 'Users', href: '/settings/workspace/members' },
     { label: 'Macros', href: '/settings/workspace/macros' },
+    { label: 'Tags', href: '/settings/workspace/tags' },
     { label: 'Billing', href: '/settings/workspace/billing' },
   ]},
   { label: 'EMAIL', items: [

@@ -3,6 +3,7 @@ import { getAuthContext } from '../../../../lib/auth'
 import { can } from '../../../../lib/permissions'
 import { supabaseAdmin } from '../../../../lib/supabaseAdmin'
 import { sanitizeMacroInput, relativeTime } from '../../../../lib/macros'
+import { ensureTagsByName, syncMacroTags } from '../../../../lib/tags'
 
 // GET /api/macros/[id] — single macro detail
 export async function GET(request, { params }) {
@@ -14,7 +15,10 @@ export async function GET(request, { params }) {
 
   const { data: macro, error } = await supabaseAdmin
     .from('macros')
-    .select('id, name, body, language, tags, usage_count, last_used_at, archived_at, created_at, updated_at, created_by')
+    .select(`
+      id, name, body, language, tags, usage_count, last_used_at, archived_at, created_at, updated_at, created_by,
+      tag_links:macro_tags(tag:tags(id, name, color))
+    `)
     .eq('id', id)
     .eq('workspace_id', ctx.workspaceId)
     .maybeSingle()
@@ -25,9 +29,15 @@ export async function GET(request, { params }) {
   }
   if (!macro) return NextResponse.json({ error: 'Macro not found', code: 'not_found' }, { status: 404 })
 
+  const tagObjects = Array.isArray(macro.tag_links)
+    ? macro.tag_links.map(l => l.tag).filter(Boolean)
+    : []
+  const { tag_links, ...rest } = macro
+
   return NextResponse.json({
     macro: {
-      ...macro,
+      ...rest,
+      tagObjects,
       last_updated_relative: relativeTime(macro.updated_at),
       last_used_relative:    relativeTime(macro.last_used_at),
     },
@@ -74,7 +84,26 @@ export async function PATCH(request, { params }) {
     )
   }
 
-  return NextResponse.json({ macro })
+  // Sync macro_tags whenever the caller sent a tags field (even an empty
+  // array, which means "remove all tags"). If tags wasn't in the payload,
+  // leave existing macro_tags untouched.
+  let tagObjects = []
+  if (Array.isArray(payload.tags)) {
+    try {
+      const tagMap = await ensureTagsByName(supabaseAdmin, ctx.workspaceId, payload.tags, ctx.user.id)
+      const tagIds = Array.from(tagMap.values())
+      await syncMacroTags(supabaseAdmin, macro.id, tagIds)
+      const { data: linked } = await supabaseAdmin
+        .from('tags')
+        .select('id, name, color')
+        .in('id', tagIds.length ? tagIds : ['00000000-0000-0000-0000-000000000000'])
+      tagObjects = linked || []
+    } catch (e) {
+      console.error('[macros PATCH] tag sync failed (macro update succeeded):', e.message)
+    }
+  }
+
+  return NextResponse.json({ macro: { ...macro, tagObjects } })
 }
 
 // DELETE /api/macros/[id] — hard delete (UI confirms first)

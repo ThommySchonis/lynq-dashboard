@@ -3,6 +3,7 @@ import { getAuthContext } from '../../../lib/auth'
 import { can } from '../../../lib/permissions'
 import { supabaseAdmin } from '../../../lib/supabaseAdmin'
 import { sanitizeMacroInput, relativeTime } from '../../../lib/macros'
+import { ensureTagsByName, syncMacroTags } from '../../../lib/tags'
 
 // GET /api/macros — list macros for the current workspace
 // Filters: ?archived=true|false (default false), ?search=, ?language=, ?tags=tag1,tag2
@@ -20,7 +21,10 @@ export async function GET(request) {
 
   let q = supabaseAdmin
     .from('macros')
-    .select('id, name, body, language, tags, usage_count, last_used_at, archived_at, created_at, updated_at, created_by')
+    .select(`
+      id, name, body, language, tags, usage_count, last_used_at, archived_at, created_at, updated_at, created_by,
+      tag_links:macro_tags(tag:tags(id, name, color))
+    `)
     .eq('workspace_id', ctx.workspaceId)
     .order('updated_at', { ascending: false })
     .limit(500)
@@ -37,11 +41,18 @@ export async function GET(request) {
     return NextResponse.json({ error: error.message, code: 'lookup_failed' }, { status: 500 })
   }
 
-  const macros = (rows || []).map(m => ({
-    ...m,
-    last_updated_relative: relativeTime(m.updated_at),
-    last_used_relative:    relativeTime(m.last_used_at),
-  }))
+  const macros = (rows || []).map(m => {
+    const tagObjects = Array.isArray(m.tag_links)
+      ? m.tag_links.map(l => l.tag).filter(Boolean)
+      : []
+    const { tag_links, ...rest } = m
+    return {
+      ...rest,
+      tagObjects,
+      last_updated_relative: relativeTime(m.updated_at),
+      last_used_relative:    relativeTime(m.last_used_at),
+    }
+  })
 
   return NextResponse.json({ macros, currentUserRole: ctx.role })
 }
@@ -81,6 +92,26 @@ export async function POST(request) {
     return NextResponse.json({ error: error?.message ?? 'Failed to create macro', code: 'insert_failed' }, { status: 500 })
   }
 
+  // Sync macro_tags (new join table) — ensures the tags exist as rows
+  // in the tags table and links them to this macro. Names that don't
+  // exist yet are auto-created with 'slate' color.
+  let tagObjects = []
+  if (Array.isArray(payload.tags) && payload.tags.length > 0) {
+    try {
+      const tagMap = await ensureTagsByName(supabaseAdmin, ctx.workspaceId, payload.tags, ctx.user.id)
+      const tagIds = Array.from(tagMap.values())
+      await syncMacroTags(supabaseAdmin, macro.id, tagIds)
+      // Fetch the linked tags so the response includes id+color (UI needs it)
+      const { data: linked } = await supabaseAdmin
+        .from('tags')
+        .select('id, name, color')
+        .in('id', tagIds)
+      tagObjects = linked || []
+    } catch (e) {
+      console.error('[macros POST] tag sync failed (macro itself was created):', e.message)
+    }
+  }
+
   console.log('[macros POST] created', macro.id, 'in workspace', ctx.workspaceId)
-  return NextResponse.json({ macro }, { status: 201 })
+  return NextResponse.json({ macro: { ...macro, tagObjects } }, { status: 201 })
 }

@@ -10,6 +10,7 @@ import {
   calculateCost,
   sleep,
 } from '../../../../lib/aiMacros'
+import { ensureTagsByName } from '../../../../lib/tags'
 
 const CLAUDE_MODEL = 'claude-sonnet-4-20250514'
 const MAX_TOKENS   = 16000
@@ -133,6 +134,33 @@ export async function POST(request) {
       { error: 'Saved 0 macros. Try again.', code: 'db_failed' },
       { status: 500 }
     )
+  }
+
+  // Sync macro_tags — ensure each tag string exists in the tags table,
+  // then bulk-insert the (macro_id, tag_id) join rows in one statement.
+  // Failure here doesn't undo the macro insert; tags will be re-synced
+  // on next individual edit. We log and continue.
+  try {
+    const allTagNames = Array.from(
+      new Set(rows.flatMap(r => Array.isArray(r.tags) ? r.tags : []))
+    )
+    if (allTagNames.length > 0 && inserted && inserted.length > 0) {
+      const tagMap = await ensureTagsByName(supabaseAdmin, ctx.workspaceId, allTagNames, ctx.user.id)
+      const links  = []
+      for (const row of inserted) {
+        const macroSourceTags = rows.find(r => r.name === row.name)?.tags || []
+        for (const name of macroSourceTags) {
+          const tagId = tagMap.get(name.toLowerCase())
+          if (tagId) links.push({ macro_id: row.id, tag_id: tagId })
+        }
+      }
+      if (links.length > 0) {
+        const { error: linkError } = await supabaseAdmin.from('macro_tags').insert(links)
+        if (linkError) console.error('[macros generate] macro_tags insert failed:', linkError.message)
+      }
+    }
+  } catch (e) {
+    console.error('[macros generate] tag sync failed (macros themselves were created):', e.message)
   }
 
   // Update onboarding bookkeeping

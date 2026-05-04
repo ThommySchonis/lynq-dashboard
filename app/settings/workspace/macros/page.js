@@ -9,6 +9,7 @@ import {
   Plus, Search, MoreHorizontal, FileText, AlertCircle, Loader2, Check, X,
   Edit2, Copy, Archive, ArchiveRestore, Trash2, Sparkles,
 } from 'lucide-react'
+import { TAG_PALETTE } from '../../../../lib/tags'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -599,10 +600,35 @@ export default function MacrosPage() {
                       </div>
                     </td>
                     <td>
-                      {m.tags?.length ? m.tags.slice(0, 4).map(t => (
-                        <span key={t} className="mp-tag-pill">{t}</span>
-                      )) : <span style={{ color: '#9B91A8', fontSize: 12 }}>—</span>}
-                      {m.tags?.length > 4 && <span style={{ color: '#9B91A8', fontSize: 11, marginLeft: 4 }}>+{m.tags.length - 4}</span>}
+                      {(() => {
+                        // Prefer tagObjects (colored, from join) over legacy string array
+                        const objs = Array.isArray(m.tagObjects) && m.tagObjects.length
+                          ? m.tagObjects
+                          : (m.tags || []).map(name => ({ name, color: 'slate' }))
+                        if (objs.length === 0) {
+                          return <span style={{ color: '#9B91A8', fontSize: 12 }}>—</span>
+                        }
+                        return (
+                          <>
+                            {objs.slice(0, 4).map((t, i) => {
+                              const p = TAG_PALETTE[t.color] || TAG_PALETTE.slate
+                              return (
+                                <span
+                                  key={t.id || `${t.name}-${i}`}
+                                  className="mp-tag-pill"
+                                  style={{ background: p.bg, color: p.text, display: 'inline-flex', alignItems: 'center', gap: 5 }}
+                                >
+                                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: p.dot }} />
+                                  {t.name}
+                                </span>
+                              )
+                            })}
+                            {objs.length > 4 && (
+                              <span style={{ color: '#9B91A8', fontSize: 11, marginLeft: 4 }}>+{objs.length - 4}</span>
+                            )}
+                          </>
+                        )
+                      })()}
                     </td>
                     <td>
                       <span className="mp-lang-pill">{LANG_LABEL[m.language] || m.language}</span>

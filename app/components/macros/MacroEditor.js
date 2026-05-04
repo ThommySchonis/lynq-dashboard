@@ -4,10 +4,11 @@ import { useEffect, useRef, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@supabase/supabase-js'
 import {
-  ArrowLeft, X, Loader2, Check, AlertCircle,
+  ArrowLeft, X, Loader2, Check, AlertCircle, Plus,
   Bold, Italic, Underline, Link2, Image as ImageIcon,
   Code, Heading2, List, ListOrdered, Variable,
 } from 'lucide-react'
+import { TAG_PALETTE } from '../../lib/tags'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -91,6 +92,24 @@ const CSS = `
     border: none; outline: none; background: transparent; flex: 1; min-width: 120px;
     font-family: inherit; font-size: 13px; color: #1C0F36; padding: 4px 4px;
   }
+  .me-tag-picker { position: relative; }
+  .me-tag-dropdown {
+    position: absolute; top: calc(100% + 4px); left: 0; right: 0; z-index: 60;
+    background: #fff; border: 1px solid #E5E0EB; border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(28,15,54,0.12); overflow-y: auto; max-height: 240px;
+    padding: 4px 0;
+  }
+  .me-tag-option {
+    display: flex; align-items: center; gap: 8px; padding: 8px 12px;
+    border: none; background: none; width: 100%; text-align: left;
+    cursor: pointer; font-family: inherit; font-size: 13px; color: #1C0F36;
+    transition: background 0.1s;
+  }
+  .me-tag-option:hover { background: #F8F7FA; }
+  .me-tag-option-name { flex: 1; }
+  .me-tag-option-count { font-size: 11px; color: #9B91A8; flex-shrink: 0; }
+  .me-tag-option-create { color: #A175FC; border-top: 1px solid #F0EDF4; }
+  .me-tag-option-create:hover { background: #F7F3FF; }
 
   /* Editor */
   .me-editor-wrap { border: 1px solid #E5E0EB; border-radius: 8px; overflow: hidden; background: #fff; }
@@ -260,9 +279,18 @@ export default function MacroEditor({ macroId, initialMacro = null, mode }) {
 
   const [name,     setName]     = useState(initialMacro?.name     ?? '')
   const [language, setLanguage] = useState(initialMacro?.language ?? 'auto')
-  const [tags,     setTags]     = useState(initialMacro?.tags     ?? [])
-  const [tagDraft, setTagDraft] = useState('')
+  // selectedTags: array of {id?, name, color} — id missing means
+  // "create new on save". allTags: full workspace tag list for picker.
+  const [selectedTags, setSelectedTags] = useState(
+    Array.isArray(initialMacro?.tagObjects) && initialMacro.tagObjects.length
+      ? initialMacro.tagObjects
+      : (initialMacro?.tags || []).map(name => ({ name, color: 'slate' }))
+  )
+  const [allTags,  setAllTags]   = useState([])
+  const [tagDraft, setTagDraft]  = useState('')
+  const [tagPickerOpen, setTagPickerOpen] = useState(false)
   const [body,     setBody]     = useState(initialMacro?.body     ?? '')
+  const tagPickerRef = useRef(null)
 
   const [loading, setLoading] = useState(!isNew && !initialMacro)
   const [saving,  setSaving]  = useState(false)
@@ -301,12 +329,48 @@ export default function MacroEditor({ macroId, initialMacro = null, mode }) {
       }
       setName(data.macro.name)
       setLanguage(data.macro.language)
-      setTags(data.macro.tags || [])
+      // Prefer tagObjects (id+color) from new join; fall back to legacy strings
+      if (Array.isArray(data.macro.tagObjects) && data.macro.tagObjects.length) {
+        setSelectedTags(data.macro.tagObjects)
+      } else if (Array.isArray(data.macro.tags)) {
+        setSelectedTags(data.macro.tags.map(name => ({ name, color: 'slate' })))
+      }
       setBody(data.macro.body || '')
       setLoading(false)
     })()
     return () => { cancelled = true }
   }, [isNew, macroId, initialMacro, getToken])
+
+  // Fetch workspace tag list for the picker dropdown (one-shot on mount)
+  useEffect(() => {
+    let cancelled = false
+    ;(async () => {
+      const token = await getToken()
+      if (!token) return
+      const res  = await fetch('/api/tags', { headers: { Authorization: `Bearer ${token}` } })
+      if (!res.ok) return
+      const data = await res.json().catch(() => ({}))
+      if (!cancelled && Array.isArray(data.tags)) setAllTags(data.tags)
+    })()
+    return () => { cancelled = true }
+  }, [getToken])
+
+  // Close tag picker on outside click + Escape
+  useEffect(() => {
+    if (!tagPickerOpen) return
+    const handler = (e) => {
+      if (tagPickerRef.current && !tagPickerRef.current.contains(e.target)) {
+        setTagPickerOpen(false)
+      }
+    }
+    const onKey = (e) => { if (e.key === 'Escape') setTagPickerOpen(false) }
+    document.addEventListener('mousedown', handler)
+    document.addEventListener('keydown',   onKey)
+    return () => {
+      document.removeEventListener('mousedown', handler)
+      document.removeEventListener('keydown',   onKey)
+    }
+  }, [tagPickerOpen])
 
   // Keep contentEditable HTML in sync with state on initial load only
   // (subsequent edits flow state ← editor via onInput, never the other way)
@@ -319,21 +383,70 @@ export default function MacroEditor({ macroId, initialMacro = null, mode }) {
     initialBodyApplied.current = true
   }, [loading, body])
 
-  // ── Tag handling ──
-  function addTag(raw) {
-    const t = raw.trim().slice(0, 40)
-    if (!t) return
-    setTags(prev => prev.includes(t) ? prev : [...prev, t].slice(0, 25))
+  // ── Tag picker ──
+  function addExistingTag(tag) {
+    setSelectedTags(prev => {
+      const lc = tag.name.toLowerCase()
+      if (prev.some(t => t.name.toLowerCase() === lc)) return prev
+      return [...prev, { id: tag.id, name: tag.name, color: tag.color }].slice(0, 25)
+    })
     setTagDraft('')
   }
-  function onTagKeyDown(e) {
+
+  // Adds an unsaved tag (will be created on macro save) — used when the
+  // typed name doesn't match any existing tag.
+  function createInlineTag(rawName) {
+    const name = rawName.trim().slice(0, 40)
+    if (!name) return
+    setSelectedTags(prev => {
+      const lc = name.toLowerCase()
+      if (prev.some(t => t.name.toLowerCase() === lc)) return prev
+      // If it actually does match an existing workspace tag (case-insensitive),
+      // attach the existing object so we get the real id + color.
+      const existing = allTags.find(t => t.name.toLowerCase() === lc)
+      if (existing) return [...prev, { id: existing.id, name: existing.name, color: existing.color }].slice(0, 25)
+      return [...prev, { name, color: 'slate' }].slice(0, 25)
+    })
+    setTagDraft('')
+  }
+
+  function removeTag(name) {
+    const lc = name.toLowerCase()
+    setSelectedTags(prev => prev.filter(t => t.name.toLowerCase() !== lc))
+  }
+
+  function onTagDraftKeyDown(e) {
     if (e.key === 'Enter' || e.key === ',') {
       e.preventDefault()
-      addTag(tagDraft)
-    } else if (e.key === 'Backspace' && tagDraft === '' && tags.length > 0) {
-      setTags(prev => prev.slice(0, -1))
+      if (tagDraft.trim()) createInlineTag(tagDraft)
+    } else if (e.key === 'Backspace' && tagDraft === '' && selectedTags.length > 0) {
+      setSelectedTags(prev => prev.slice(0, -1))
+    } else if (e.key === 'ArrowDown') {
+      setTagPickerOpen(true)
+    } else if (e.key === 'Escape') {
+      setTagPickerOpen(false)
     }
   }
+
+  // Available tags = workspace tags not already selected, filtered by draft
+  const availableTags = (() => {
+    const selectedLc = new Set(selectedTags.map(t => t.name.toLowerCase()))
+    const draftLc    = tagDraft.trim().toLowerCase()
+    return allTags
+      .filter(t => !selectedLc.has(t.name.toLowerCase()))
+      .filter(t => !draftLc || t.name.toLowerCase().includes(draftLc))
+      .slice(0, 50)
+  })()
+
+  // Should we show "Create new tag" option? Only if draft has text and
+  // no exact match exists in workspace.
+  const showCreateOption = (() => {
+    const draftLc = tagDraft.trim().toLowerCase()
+    if (!draftLc) return false
+    const allLc      = new Set(allTags.map(t => t.name.toLowerCase()))
+    const selectedLc = new Set(selectedTags.map(t => t.name.toLowerCase()))
+    return !allLc.has(draftLc) && !selectedLc.has(draftLc)
+  })()
 
   // ── Editor toolbar ──
   function exec(cmd, value = null) {
@@ -401,7 +514,9 @@ export default function MacroEditor({ macroId, initialMacro = null, mode }) {
         name: name.trim(),
         body: liveBody,
         language,
-        tags,
+        // Send tag NAMES (existing API contract). Server upserts each name
+        // into public.tags then syncs the macro_tags join.
+        tags: selectedTags.map(t => t.name),
       }),
     })
     const data = await res.json().catch(() => ({}))
@@ -499,32 +614,83 @@ export default function MacroEditor({ macroId, initialMacro = null, mode }) {
 
         <div className="me-field">
           <label className="me-label">Tags</label>
-          <div className="me-tags-wrap" onClick={() => document.getElementById('macro-tag-input')?.focus()}>
-            {tags.map(t => (
-              <span key={t} className="me-tag">
-                {t}
-                <button
-                  type="button"
-                  className="me-tag-remove"
-                  onClick={() => setTags(prev => prev.filter(x => x !== t))}
-                  aria-label={`Remove tag ${t}`}
-                >
-                  <X size={10} strokeWidth={2} />
-                </button>
-              </span>
-            ))}
-            <input
-              id="macro-tag-input"
-              className="me-tag-input"
-              type="text"
-              placeholder={tags.length === 0 ? 'Type a tag and press Enter…' : ''}
-              value={tagDraft}
-              onChange={e => setTagDraft(e.target.value)}
-              onKeyDown={onTagKeyDown}
-              onBlur={() => tagDraft && addTag(tagDraft)}
-            />
+          <div className="me-tag-picker" ref={tagPickerRef}>
+            <div
+              className="me-tags-wrap"
+              onClick={() => {
+                document.getElementById('macro-tag-input')?.focus()
+                setTagPickerOpen(true)
+              }}
+            >
+              {selectedTags.map(t => {
+                const p = TAG_PALETTE[t.color] || TAG_PALETTE.slate
+                return (
+                  <span
+                    key={`${t.name}-${t.id ?? 'new'}`}
+                    className="me-tag"
+                    style={{ background: p.bg, color: p.text }}
+                  >
+                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: p.dot, marginRight: 2 }} />
+                    {t.name}
+                    <button
+                      type="button"
+                      className="me-tag-remove"
+                      onClick={(e) => { e.stopPropagation(); removeTag(t.name) }}
+                      aria-label={`Remove tag ${t.name}`}
+                    >
+                      <X size={10} strokeWidth={2} />
+                    </button>
+                  </span>
+                )
+              })}
+              <input
+                id="macro-tag-input"
+                className="me-tag-input"
+                type="text"
+                placeholder={selectedTags.length === 0 ? 'Search or create a tag…' : ''}
+                value={tagDraft}
+                onChange={e => { setTagDraft(e.target.value); setTagPickerOpen(true) }}
+                onFocus={() => setTagPickerOpen(true)}
+                onKeyDown={onTagDraftKeyDown}
+              />
+            </div>
+
+            {tagPickerOpen && (availableTags.length > 0 || showCreateOption) && (
+              <div className="me-tag-dropdown" role="listbox">
+                {availableTags.map(t => {
+                  const p = TAG_PALETTE[t.color] || TAG_PALETTE.slate
+                  return (
+                    <button
+                      key={t.id}
+                      type="button"
+                      className="me-tag-option"
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => addExistingTag(t)}
+                      role="option"
+                    >
+                      <span style={{ width: 8, height: 8, borderRadius: '50%', background: p.dot, flexShrink: 0 }} />
+                      <span className="me-tag-option-name">{t.name}</span>
+                      {typeof t.macro_count === 'number' && (
+                        <span className="me-tag-option-count">{t.macro_count}</span>
+                      )}
+                    </button>
+                  )
+                })}
+                {showCreateOption && (
+                  <button
+                    type="button"
+                    className="me-tag-option me-tag-option-create"
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => createInlineTag(tagDraft)}
+                  >
+                    <Plus size={12} strokeWidth={2} style={{ flexShrink: 0 }} />
+                    <span>Create new tag <strong>&ldquo;{tagDraft.trim()}&rdquo;</strong></span>
+                  </button>
+                )}
+              </div>
+            )}
           </div>
-          <p className="me-hint">Up to 25 tags, each max 40 characters. Press Enter or comma to add.</p>
+          <p className="me-hint">Up to 25 tags. Pick from existing tags or type a new name and press Enter.</p>
         </div>
 
         <div className="me-field">

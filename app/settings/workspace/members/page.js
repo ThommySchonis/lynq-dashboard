@@ -104,6 +104,7 @@ const CSS = `
   .up-icon-btn:disabled { opacity: 0.5; cursor: not-allowed; }
   .up-icon-btn.danger { color: #B91C1C; border-color: #FECACA; }
   .up-icon-btn.danger:hover:not(:disabled) { background: #FEF2F2; border-color: #F87171; }
+  .up-icon-btn.icon-only { width: 30px; padding: 0; justify-content: center; }
 
   .up-tfa-yes { color: #22C55E; }
   .up-tfa-no  { color: #D1C9DB; }
@@ -620,7 +621,7 @@ export default function UsersPage() {
                             </div>
                             <div>
                               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                                <span className="up-name" style={{ color: '#1C0F36' }}>{row.email}</span>
+                                <span className="up-name" style={{ color: '#6B5E7B' }}>Pending invite</span>
                                 <span className="up-pending-badge">Pending</span>
                               </div>
                               <div className="up-invite-meta">
@@ -640,28 +641,28 @@ export default function UsersPage() {
                           {canManage && (
                             <div className="up-row-actions" style={{ justifyContent: 'flex-end' }}>
                               <button
-                                className="up-icon-btn"
+                                className="up-icon-btn icon-only"
                                 onClick={() => handleResendInvite(row)}
                                 disabled={busy}
-                                title="Resend invite email"
+                                title={isResending ? 'Resending…' : 'Resend invite email'}
+                                aria-label="Resend invite"
                               >
                                 {isResending
-                                  ? <Loader2 size={12} strokeWidth={1.75} className="spin" />
-                                  : <RefreshCw size={12} strokeWidth={1.75} />
+                                  ? <Loader2 size={14} strokeWidth={1.75} className="spin" />
+                                  : <RefreshCw size={14} strokeWidth={1.75} />
                                 }
-                                {isResending ? 'Sending…' : 'Resend'}
                               </button>
                               <button
-                                className="up-icon-btn danger"
+                                className="up-icon-btn icon-only danger"
                                 onClick={() => setRevokeTarget({ id: row.id, email: row.email })}
                                 disabled={busy}
                                 title="Revoke this invite"
+                                aria-label="Revoke invite"
                               >
                                 {isRevoking
-                                  ? <Loader2 size={12} strokeWidth={1.75} className="spin" />
-                                  : <Trash2 size={12} strokeWidth={1.75} />
+                                  ? <Loader2 size={14} strokeWidth={1.75} className="spin" />
+                                  : <Trash2 size={14} strokeWidth={1.75} />
                                 }
-                                Revoke
                               </button>
                             </div>
                           )}

@@ -80,7 +80,7 @@ const CSS = `
   .me-tags-wrap:focus-within { border-color: #A175FC; box-shadow: 0 0 0 3px rgba(161,117,252,0.15); }
   .me-tag {
     display: inline-flex; align-items: center; gap: 4px; padding: 3px 4px 3px 10px;
-    background: #EDE5FE; color: #4B3B6B; border-radius: 20px; font-size: 12px; font-weight: 500;
+    background: #F1F5F9; color: #1E293B; border-radius: 20px; font-size: 12px; font-weight: 500;
   }
   .me-tag-remove {
     width: 18px; height: 18px; border: none; background: transparent; cursor: pointer;
@@ -119,13 +119,14 @@ const CSS = `
     position: absolute; right: 0; top: calc(100% + 4px); z-index: 60;
     background: #fff; border: 1px solid #E5E0EB; border-radius: 10px;
     box-shadow: 0 8px 24px rgba(28,15,54,0.12); min-width: 280px; padding: 4px 0;
+    max-height: 280px; overflow-y: auto;
   }
   .me-var-item {
     display: block; padding: 8px 12px; background: none; border: none; width: 100%;
     text-align: left; font-family: inherit; cursor: pointer; font-size: 13px;
   }
   .me-var-item:hover { background: #F8F7FA; }
-  .me-var-token { color: #7C3AED; font-family: ui-monospace, monospace; font-size: 12px; }
+  .me-var-token { color: #1E293B; font-family: ui-monospace, monospace; font-size: 12px; font-weight: 500; }
   .me-var-label { color: #6B5E7B; font-size: 11px; margin-top: 1px; }
 
   .me-editor {
@@ -140,7 +141,7 @@ const CSS = `
   .me-editor ul, .me-editor ol { margin: 0 0 8px; padding-left: 22px; }
   .me-editor a { color: #A175FC; text-decoration: underline; }
   .me-editor code {
-    background: #F1EEF5; padding: 1px 5px; border-radius: 4px;
+    background: #F1F5F9; color: #1E293B; padding: 1px 5px; border-radius: 4px;
     font-family: ui-monospace, monospace; font-size: 13px;
   }
   .me-editor img { max-width: 100%; border-radius: 6px; }

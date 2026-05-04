@@ -85,9 +85,9 @@ const CSS = `
 
   .mp-name-cell { display: flex; align-items: center; gap: 10px; }
   .mp-name-icon {
-    width: 32px; height: 32px; border-radius: 8px; background: #F1EEF5;
+    width: 32px; height: 32px; border-radius: 8px; background: #F1F5F9;
     display: flex; align-items: center; justify-content: center;
-    color: #A175FC; flex-shrink: 0;
+    color: #6B5E7B; flex-shrink: 0;
   }
   .mp-name {
     font-weight: 500; color: #1C0F36; font-size: 14px; cursor: pointer;
@@ -97,7 +97,7 @@ const CSS = `
 
   .mp-tag-pill {
     display: inline-flex; align-items: center; padding: 1px 8px; margin-right: 4px;
-    background: #F1EEF5; color: #4B3B6B; border-radius: 20px; font-size: 11px; font-weight: 500;
+    background: #F1F5F9; color: #475569; border-radius: 20px; font-size: 11px; font-weight: 500;
   }
   .mp-lang-pill {
     display: inline-flex; align-items: center; padding: 2px 9px;
@@ -105,7 +105,7 @@ const CSS = `
   }
   .mp-usage-pill {
     display: inline-flex; align-items: center; padding: 2px 9px;
-    background: #EDE5FE; color: #7C3AED; border-radius: 20px; font-size: 12px; font-weight: 500;
+    background: #F1F5F9; color: #1E293B; border-radius: 20px; font-size: 12px; font-weight: 500;
   }
   .mp-usage-zero { color: #9B91A8; font-size: 12px; }
 
@@ -141,8 +141,8 @@ const CSS = `
     padding: 64px 24px; text-align: center; gap: 12px;
   }
   .mp-empty-icon {
-    width: 56px; height: 56px; border-radius: 14px; background: #F1EEF5;
-    display: flex; align-items: center; justify-content: center; color: #C4A8FD;
+    width: 56px; height: 56px; border-radius: 14px; background: #F1F5F9;
+    display: flex; align-items: center; justify-content: center; color: #94A3B8;
   }
   .mp-empty-title { font-size: 17px; font-weight: 600; color: #1C0F36; margin: 0; }
   .mp-empty-desc { font-size: 14px; color: #9B91A8; margin: 0; max-width: 320px; }

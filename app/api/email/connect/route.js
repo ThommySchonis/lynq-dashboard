@@ -1,4 +1,5 @@
-import { supabaseAdmin, getUserFromToken } from '../../../../lib/supabaseAdmin'
+import { supabaseAdmin } from '../../../../lib/supabaseAdmin'
+import { getAuthContext } from '../../../../lib/auth'
 import { NextResponse } from 'next/server'
 
 const INBOUND_DOMAIN = process.env.INBOUND_EMAIL_DOMAIN || 'mail.lynqagency.com'
@@ -9,35 +10,33 @@ function normalizeEmail(value) {
 }
 
 export async function POST(request) {
-  const authHeader = request.headers.get('authorization')
-  if (!authHeader) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-  const token = authHeader.replace('Bearer ', '')
-  const user = await getUserFromToken(token)
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const ctx = await getAuthContext(request)
+  if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { realEmail, displayName } = await request.json()
   const normalizedEmail = normalizeEmail(realEmail)
   const normalizedName = String(displayName || '').trim().slice(0, 120)
   if (!normalizedEmail) return NextResponse.json({ error: 'Valid email address is required' }, { status: 400 })
 
-  // Check if already connected
+  // Check if already connected (workspace-level email connection)
   const { data: existing } = await supabaseAdmin
     .from('email_accounts')
     .select('forwarding_address')
-    .eq('client_id', user.id)
+    .eq('workspace_id', ctx.workspaceId)
     .maybeSingle()
 
-  // Reuse existing forwarding address or generate new one
-  const slug = existing?.forwarding_address?.split('@')[0] || `client-${user.id.split('-')[0]}`
+  // Reuse existing forwarding address or generate a new one (workspace-prefixed)
+  const slug = existing?.forwarding_address?.split('@')[0] || `ws-${ctx.workspaceId.split('-')[0]}`
   const forwardingAddress = `${slug}@${INBOUND_DOMAIN}`
 
+  // Transition: dual-write client_id (legacy) + workspace_id, keep onConflict
   await supabaseAdmin.from('email_accounts').upsert({
-    client_id: user.id,
-    real_email: normalizedEmail,
-    display_name: normalizedName || normalizedEmail,
+    client_id:          ctx.user.id,
+    workspace_id:       ctx.workspaceId,
+    real_email:         normalizedEmail,
+    display_name:       normalizedName || normalizedEmail,
     forwarding_address: forwardingAddress,
-    connected_at: new Date().toISOString(),
+    connected_at:       new Date().toISOString(),
   }, { onConflict: 'client_id' })
 
   return NextResponse.json({
@@ -52,17 +51,13 @@ export async function POST(request) {
 }
 
 export async function GET(request) {
-  const authHeader = request.headers.get('authorization')
-  if (!authHeader) return NextResponse.json({ connected: false })
-
-  const token = authHeader.replace('Bearer ', '')
-  const user = await getUserFromToken(token)
-  if (!user) return NextResponse.json({ connected: false })
+  const ctx = await getAuthContext(request)
+  if (!ctx) return NextResponse.json({ connected: false })
 
   const { data } = await supabaseAdmin
     .from('email_accounts')
     .select('real_email, display_name, forwarding_address, connected_at')
-    .eq('client_id', user.id)
+    .eq('workspace_id', ctx.workspaceId)
     .maybeSingle()
 
   if (!data) return NextResponse.json({ connected: false })
@@ -76,13 +71,9 @@ export async function GET(request) {
 }
 
 export async function DELETE(request) {
-  const authHeader = request.headers.get('authorization')
-  if (!authHeader) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const ctx = await getAuthContext(request)
+  if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const token = authHeader.replace('Bearer ', '')
-  const user = await getUserFromToken(token)
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-  await supabaseAdmin.from('email_accounts').delete().eq('client_id', user.id)
+  await supabaseAdmin.from('email_accounts').delete().eq('workspace_id', ctx.workspaceId)
   return NextResponse.json({ success: true })
 }

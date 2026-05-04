@@ -1,13 +1,10 @@
-import { supabaseAdmin, getUserFromToken } from '../../../../lib/supabaseAdmin'
+import { supabaseAdmin } from '../../../../lib/supabaseAdmin'
+import { getAuthContext } from '../../../../lib/auth'
 import { NextResponse } from 'next/server'
 
 export async function POST(request) {
-  const authHeader = request.headers.get('authorization')
-  if (!authHeader) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-  const token = authHeader.replace('Bearer ', '')
-  const user = await getUserFromToken(token)
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const ctx = await getAuthContext(request)
+  if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { shop, accessToken } = await request.json()
   if (!shop || !accessToken) {
@@ -28,9 +25,11 @@ export async function POST(request) {
     return NextResponse.json({ error: 'Invalid token or store domain. Please check your credentials.' }, { status: 400 })
   }
 
+  // Transition: dual-write client_id (legacy) + workspace_id, keep onConflict
   await supabaseAdmin.from('integrations').upsert({
-    client_id: user.id,
-    shopify_domain: shopDomain,
+    client_id:            ctx.user.id,
+    workspace_id:         ctx.workspaceId,
+    shopify_domain:       shopDomain,
     shopify_access_token: accessToken,
     shopify_connected_at: new Date().toISOString(),
   }, { onConflict: 'client_id' })
@@ -39,13 +38,9 @@ export async function POST(request) {
 }
 
 export async function DELETE(request) {
-  const authHeader = request.headers.get('authorization')
-  if (!authHeader) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const ctx = await getAuthContext(request)
+  if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const token = authHeader.replace('Bearer ', '')
-  const user = await getUserFromToken(token)
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-  await supabaseAdmin.from('integrations').delete().eq('client_id', user.id)
+  await supabaseAdmin.from('integrations').delete().eq('workspace_id', ctx.workspaceId)
   return NextResponse.json({ success: true })
 }

@@ -1,4 +1,5 @@
-import { supabaseAdmin, getUserFromToken } from '../../../../lib/supabaseAdmin'
+import { supabaseAdmin } from '../../../../lib/supabaseAdmin'
+import { getAuthContext } from '../../../../lib/auth'
 import { NextResponse } from 'next/server'
 
 function normalizeShopDomain(shop) {
@@ -10,12 +11,8 @@ function normalizeShopDomain(shop) {
 // Called when user confirms linking a pending Shopify token to their account
 // Used when OAuth came from a Custom distribution install link
 export async function POST(request) {
-  const authHeader = request.headers.get('authorization')
-  if (!authHeader) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-  const token = authHeader.replace('Bearer ', '')
-  const user = await getUserFromToken(token)
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const ctx = await getAuthContext(request)
+  if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { shop } = await request.json()
   const shopDomain = normalizeShopDomain(shop)
@@ -31,11 +28,13 @@ export async function POST(request) {
     return NextResponse.json({ error: 'No pending token found or it expired. Please reconnect.' }, { status: 404 })
   }
 
+  // Transition: dual-write client_id (legacy) + workspace_id, keep onConflict
   await supabaseAdmin.from('integrations').upsert({
-    client_id: user.id,
-    shopify_domain: shopDomain,
+    client_id:            ctx.user.id,
+    workspace_id:         ctx.workspaceId,
+    shopify_domain:       shopDomain,
     shopify_access_token: pending.access_token,
-    shopify_scope: pending.scope,
+    shopify_scope:        pending.scope,
     shopify_connected_at: new Date().toISOString(),
   }, { onConflict: 'client_id' })
 

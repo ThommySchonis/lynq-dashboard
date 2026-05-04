@@ -1,13 +1,10 @@
-import { supabaseAdmin, getUserFromToken } from '../../../../lib/supabaseAdmin'
+import { supabaseAdmin } from '../../../../lib/supabaseAdmin'
+import { getAuthContext } from '../../../../lib/auth'
 import { NextResponse } from 'next/server'
 
 export async function POST(request) {
-  const authHeader = request.headers.get('authorization')
-  if (!authHeader) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-  const token = authHeader.replace('Bearer ', '')
-  const user = await getUserFromToken(token)
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const ctx = await getAuthContext(request)
+  if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { domain, email, apiKey } = await request.json()
   if (!domain || !email || !apiKey) {
@@ -26,11 +23,13 @@ export async function POST(request) {
     return NextResponse.json({ error: 'Invalid credentials. Check your domain, email and API key.' }, { status: 400 })
   }
 
+  // Transition: dual-write client_id (legacy) + workspace_id, keep onConflict
   await supabaseAdmin.from('integrations').upsert({
-    client_id: user.id,
-    gorgias_domain: cleanDomain,
-    gorgias_email: email,
-    gorgias_api_key: apiKey,
+    client_id:            ctx.user.id,
+    workspace_id:         ctx.workspaceId,
+    gorgias_domain:       cleanDomain,
+    gorgias_email:        email,
+    gorgias_api_key:      apiKey,
     gorgias_connected_at: new Date().toISOString(),
   }, { onConflict: 'client_id' })
 
@@ -38,19 +37,15 @@ export async function POST(request) {
 }
 
 export async function DELETE(request) {
-  const authHeader = request.headers.get('authorization')
-  if (!authHeader) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-  const token = authHeader.replace('Bearer ', '')
-  const user = await getUserFromToken(token)
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const ctx = await getAuthContext(request)
+  if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   await supabaseAdmin.from('integrations').update({
-    gorgias_domain: null,
-    gorgias_email: null,
-    gorgias_api_key: null,
+    gorgias_domain:       null,
+    gorgias_email:        null,
+    gorgias_api_key:      null,
     gorgias_connected_at: null,
-  }).eq('client_id', user.id)
+  }).eq('workspace_id', ctx.workspaceId)
 
   return NextResponse.json({ success: true })
 }

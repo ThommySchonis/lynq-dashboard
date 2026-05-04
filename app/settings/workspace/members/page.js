@@ -198,6 +198,22 @@ const CSS = `
 
   .up-loading { display: flex; align-items: center; justify-content: center; padding: 56px 24px; gap: 10px; font-size: 14px; color: #9B91A8; }
 
+  /* Skeleton rows on initial load */
+  .up-skel {
+    background: linear-gradient(90deg, #F1EEF5 0%, #E5E0EB 50%, #F1EEF5 100%);
+    background-size: 200% 100%;
+    animation: up-shimmer 1.6s linear infinite;
+    border-radius: 4px;
+    display: inline-block;
+  }
+  .up-skel-avatar { width: 32px; height: 32px; border-radius: 50%; }
+  .up-skel-line   { height: 12px; }
+  .up-skel-badge  { height: 20px; width: 56px; border-radius: 20px; }
+  @keyframes up-shimmer {
+    0%   { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+
   /* Buttons */
   .btn-primary {
     display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px;
@@ -266,13 +282,29 @@ const CSS = `
 
   /* Toast */
   .up-toast {
-    position: fixed; bottom: 24px; right: 24px; z-index: 300;
-    display: flex; align-items: center; gap: 10px; padding: 12px 16px;
+    position: fixed; bottom: 24px; right: 24px; z-index: 9999;
+    display: flex; align-items: center; gap: 10px; padding: 11px 12px 11px 14px;
     border-radius: 10px; font-size: 14px; font-family: inherit; font-weight: 500;
-    box-shadow: 0 8px 24px rgba(28,15,54,0.16); animation: upSlide 0.2s ease; max-width: 360px;
+    box-shadow: 0 8px 24px rgba(28,15,54,0.16); animation: upSlide 0.2s ease; max-width: 420px;
   }
-  .up-toast-ok  { background: #fff; color: #1C0F36; border: 1px solid #E5E0EB; }
-  .up-toast-err { background: #FEF2F2; color: #DC2626; border: 1px solid #FECACA; }
+  .up-toast-ok  { background: #ECFDF5; color: #065F46; border: 1px solid #A7F3D0; }
+  .up-toast-ok  .up-toast-icon { color: #10B981; }
+  .up-toast-err { background: #FEF2F2; color: #B91C1C; border: 1px solid #FECACA; }
+  .up-toast-err .up-toast-icon { color: #DC2626; }
+  .up-toast-msg { flex: 1; min-width: 0; }
+  .up-toast-action {
+    border: none; background: transparent; cursor: pointer;
+    color: inherit; font: inherit; font-weight: 600;
+    padding: 4px 8px; border-radius: 6px; flex-shrink: 0;
+    text-decoration: underline; text-underline-offset: 2px;
+  }
+  .up-toast-action:hover { text-decoration: none; background: rgba(0,0,0,0.04); }
+  .up-toast-close {
+    border: none; background: transparent; cursor: pointer;
+    color: inherit; padding: 4px; border-radius: 6px; flex-shrink: 0;
+    opacity: 0.6; display: flex; align-items: center; justify-content: center;
+  }
+  .up-toast-close:hover { opacity: 1; background: rgba(0,0,0,0.04); }
   @keyframes upSlide { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
 
   .spin { animation: spin 0.8s linear infinite; }
@@ -282,6 +314,13 @@ const CSS = `
 function initials(name, email) {
   const src = name || email || '?'
   return src.slice(0, 2).toUpperCase()
+}
+
+// Reject "abc", "abc@", "@abc", "abc@def" — requires a dot + 2+ char TLD
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/
+
+function isValidEmail(s) {
+  return EMAIL_RE.test((s || '').trim())
 }
 
 function expiryLabel(expiresAt) {
@@ -337,15 +376,28 @@ export default function UsersPage() {
   const [inviteEmail, setInviteEmail] = useState('')
   const [inviteRole, setInviteRole]   = useState('agent')
   const [inviting, setInviting]       = useState(false)
+  const [emailBlurred, setEmailBlurred] = useState(false)
   const [inviteResult, setInviteResult] = useState(null)  // { invite, inviteLink, emailStatus, emailError }
   const [removing, setRemoving]       = useState(false)
   const [linkCopied, setLinkCopied]   = useState(false)
 
   const [toast, setToast] = useState(null)
+  const toastTimerRef     = useRef(null)
 
-  const showToast = (msg, type = 'ok') => {
-    setToast({ msg, type })
-    setTimeout(() => setToast(null), 3500)
+  const dismissToast = useCallback(() => {
+    if (toastTimerRef.current) { clearTimeout(toastTimerRef.current); toastTimerRef.current = null }
+    setToast(null)
+  }, [])
+
+  // type 'ok' auto-dismisses after 4s; 'err' persists until user dismisses
+  // (errors are important — make the user act on them)
+  // optional 3rd arg: { label, onClick } renders an inline action button
+  const showToast = (msg, type = 'ok', action = null) => {
+    if (toastTimerRef.current) { clearTimeout(toastTimerRef.current); toastTimerRef.current = null }
+    setToast({ msg, type, action, key: Date.now() })
+    if (type === 'ok') {
+      toastTimerRef.current = setTimeout(() => setToast(null), 4000)
+    }
   }
 
   const getToken = useCallback(async () => {
@@ -591,17 +643,53 @@ export default function UsersPage() {
 
   async function handleInvite(e) {
     e.preventDefault()
-    if (!inviteEmail.trim()) return
+    const email = inviteEmail.trim()
+    if (!isValidEmail(email)) {
+      setEmailBlurred(true)  // surface the inline error
+      return
+    }
     setInviting(true)
     const token = await getToken()
-    const res = await fetch('/api/workspaces/current/members', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ email: inviteEmail.trim(), role: inviteRole }),
-    })
-    const data = await res.json()
+
+    let res, data
+    try {
+      res = await fetch('/api/workspaces/current/members', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ email, role: inviteRole }),
+      })
+      data = await res.json().catch(() => ({}))
+    } catch (_) {
+      setInviting(false)
+      showToast("Couldn't send invite. Try again.", 'err')
+      return
+    }
     setInviting(false)
-    if (!res.ok) { showToast(data.error || 'Failed to send invite', 'err'); return }
+
+    if (!res.ok) {
+      // Specific edge cases — friendly toasts
+      if (data.code === 'already_invited' && data.invite_id) {
+        const targetEmail = email
+        showToast(
+          `An invite for ${targetEmail} is already pending.`,
+          'err',
+          {
+            label:   'Resend it',
+            onClick: async () => {
+              closeInviteModal()
+              await handleResendInvite({ id: data.invite_id, email: targetEmail })
+            },
+          }
+        )
+        return
+      }
+      if (/already.*member|already in this workspace/i.test(data.error || '')) {
+        showToast(`${email} is already in this workspace`, 'err')
+        return
+      }
+      showToast(data.error || 'Failed to send invite', 'err')
+      return
+    }
     setInviteResult(data)
     fetchUsers(debouncedSearch)
   }
@@ -612,6 +700,7 @@ export default function UsersPage() {
     setInviteRole('agent')
     setInviteResult(null)
     setLinkCopied(false)
+    setEmailBlurred(false)
   }
 
   async function copyToClipboard(text) {
@@ -639,7 +728,6 @@ export default function UsersPage() {
     ...invites.map(i => ({ ...i, _type: 'invite' })),
   ]
 
-  const isLoadingOrRepairing = loading || repairing
 
   return (
     <div className="up-root">
@@ -691,11 +779,42 @@ export default function UsersPage() {
         </div>
 
         <div className="up-table-wrap">
-          {isLoadingOrRepairing ? (
+          {repairing ? (
             <div className="up-loading">
               <Loader2 size={18} strokeWidth={1.75} className="spin" />
-              {repairing ? 'Setting up your workspace…' : 'Loading users…'}
+              Setting up your workspace…
             </div>
+          ) : loading ? (
+            <table>
+              <thead>
+                <tr>
+                  <th>User</th>
+                  <th>Email</th>
+                  <th>Role</th>
+                  <th>2FA</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                {[0, 1, 2].map(i => (
+                  <tr key={`skel-${i}`}>
+                    <td>
+                      <div className="up-user-cell">
+                        <div className="up-skel up-skel-avatar" />
+                        <div>
+                          <div className="up-skel up-skel-line" style={{ width: 120 }} />
+                          <div className="up-skel up-skel-line" style={{ width: 80, height: 10, marginTop: 6 }} />
+                        </div>
+                      </div>
+                    </td>
+                    <td><div className="up-skel up-skel-line" style={{ width: 140 }} /></td>
+                    <td><div className="up-skel up-skel-badge" /></td>
+                    <td><div className="up-skel up-skel-line" style={{ width: 16 }} /></td>
+                    <td className="up-actions"><div className="up-skel up-skel-line" style={{ width: 24 }} /></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           ) : rows.length === 0 ? (
             <div className="up-empty">
               <div className="up-empty-icon">
@@ -931,48 +1050,65 @@ export default function UsersPage() {
                     <X size={16} strokeWidth={1.75} />
                   </button>
                 </div>
-                <form onSubmit={handleInvite}>
-                  <div className="up-modal-body">
-                    <div className="up-field">
-                      <label htmlFor="invite-email">Email address</label>
-                      <input
-                        id="invite-email"
-                        type="email"
-                        placeholder="colleague@example.com"
-                        value={inviteEmail}
-                        onChange={e => setInviteEmail(e.target.value)}
-                        required
-                        autoFocus
-                      />
-                    </div>
-                    <div className="up-field">
-                      <label>Role</label>
-                      <div className="up-role-cards">
-                        {ROLES.map(r => (
-                          <div
-                            key={r}
-                            className={`up-role-card${inviteRole === r ? ' selected' : ''}`}
-                            onClick={() => setInviteRole(r)}
-                          >
-                            <div className="up-role-card-name">{ROLE_LABELS[r]}</div>
-                            <div className="up-role-card-desc">{ROLE_DESCS[r]}</div>
+                {(() => {
+                  const trimmedEmail   = inviteEmail.trim()
+                  const emailValid     = isValidEmail(trimmedEmail)
+                  const showEmailError = emailBlurred && trimmedEmail.length > 0 && !emailValid
+                  const roleValid      = ROLES.includes(inviteRole)
+                  const canSend        = emailValid && roleValid && !inviting
+                  return (
+                    <form onSubmit={handleInvite} noValidate>
+                      <div className="up-modal-body">
+                        <div className="up-field">
+                          <label htmlFor="invite-email">Email address</label>
+                          <input
+                            id="invite-email"
+                            type="email"
+                            placeholder="colleague@example.com"
+                            value={inviteEmail}
+                            onChange={e => setInviteEmail(e.target.value)}
+                            onBlur={() => setEmailBlurred(true)}
+                            required
+                            autoFocus
+                            aria-invalid={showEmailError || undefined}
+                            style={showEmailError ? { borderColor: '#FCA5A5', boxShadow: '0 0 0 3px rgba(239,68,68,0.12)' } : undefined}
+                          />
+                          {showEmailError && (
+                            <div style={{ marginTop: 5, fontSize: 12, color: '#DC2626' }}>
+                              Please enter a valid email address.
+                            </div>
+                          )}
+                        </div>
+                        <div className="up-field">
+                          <label>Role</label>
+                          <div className="up-role-cards">
+                            {ROLES.map(r => (
+                              <div
+                                key={r}
+                                className={`up-role-card${inviteRole === r ? ' selected' : ''}`}
+                                onClick={() => setInviteRole(r)}
+                              >
+                                <div className="up-role-card-name">{ROLE_LABELS[r]}</div>
+                                <div className="up-role-card-desc">{ROLE_DESCS[r]}</div>
+                              </div>
+                            ))}
                           </div>
-                        ))}
+                        </div>
                       </div>
-                    </div>
-                  </div>
-                  <div className="up-modal-ft">
-                    <button type="button" className="btn-secondary" onClick={closeInviteModal}>
-                      Cancel
-                    </button>
-                    <button type="submit" className="btn-primary" disabled={inviting}>
-                      {inviting
-                        ? <><Loader2 size={14} strokeWidth={1.75} className="spin" /> Sending…</>
-                        : <><Mail size={14} strokeWidth={1.75} /> Send invite</>
-                      }
-                    </button>
-                  </div>
-                </form>
+                      <div className="up-modal-ft">
+                        <button type="button" className="btn-secondary" onClick={closeInviteModal}>
+                          Cancel
+                        </button>
+                        <button type="submit" className="btn-primary" disabled={!canSend}>
+                          {inviting
+                            ? <><Loader2 size={14} strokeWidth={1.75} className="spin" /> Sending…</>
+                            : <><Mail size={14} strokeWidth={1.75} /> Send invite</>
+                          }
+                        </button>
+                      </div>
+                    </form>
+                  )
+                })()}
               </>
             ) : (
               <>
@@ -1233,12 +1369,31 @@ export default function UsersPage() {
 
       {/* Toast */}
       {toast && (
-        <div className={`up-toast up-toast-${toast.type}`}>
-          {toast.type === 'err'
-            ? <AlertCircle size={16} strokeWidth={1.75} />
-            : <Check size={16} strokeWidth={2} />
-          }
-          {toast.msg}
+        <div className={`up-toast up-toast-${toast.type}`} role="status" aria-live="polite">
+          <span className="up-toast-icon">
+            {toast.type === 'err'
+              ? <AlertCircle size={16} strokeWidth={1.75} />
+              : <Check size={16} strokeWidth={2} />
+            }
+          </span>
+          <span className="up-toast-msg">{toast.msg}</span>
+          {toast.action && (
+            <button
+              type="button"
+              className="up-toast-action"
+              onClick={() => { const fn = toast.action?.onClick; dismissToast(); fn?.() }}
+            >
+              {toast.action.label}
+            </button>
+          )}
+          <button
+            type="button"
+            className="up-toast-close"
+            onClick={dismissToast}
+            aria-label="Dismiss"
+          >
+            <X size={14} strokeWidth={2} />
+          </button>
         </div>
       )}
     </div>

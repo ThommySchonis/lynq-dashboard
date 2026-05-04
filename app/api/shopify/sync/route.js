@@ -88,10 +88,10 @@ export async function POST(request) {
     }
   })
 
-  // Upsert in batches of 100. onConflict still on legacy (id, client_id)
-  // until Phase 4 swaps to (workspace_id, shopify_order_id).
+  // Upsert in batches of 100. onConflict on (workspace_id, id) — the
+  // unique constraint added in Phase 4. (id is the Shopify-side order id.)
   for (let i = 0; i < rows.length; i += 100) {
-    await supabaseAdmin.from('shopify_orders').upsert(rows.slice(i, i + 100), { onConflict: 'id,client_id' })
+    await supabaseAdmin.from('shopify_orders').upsert(rows.slice(i, i + 100), { onConflict: 'workspace_id,id' })
   }
 
   return NextResponse.json({ success: true, synced: rows.length })

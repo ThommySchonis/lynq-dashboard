@@ -56,8 +56,10 @@ async function syncOrders(userId, workspaceId, shop, accessToken) {
     }
   })
 
+  // onConflict on (workspace_id, id) — the unique constraint added in Phase 4.
+  // (id is the Shopify-side order id, bigint.)
   for (let i = 0; i < rows.length; i += 100) {
-    await supabaseAdmin.from('shopify_orders').upsert(rows.slice(i, i + 100), { onConflict: 'id,client_id' })
+    await supabaseAdmin.from('shopify_orders').upsert(rows.slice(i, i + 100), { onConflict: 'workspace_id,id' })
   }
 }
 

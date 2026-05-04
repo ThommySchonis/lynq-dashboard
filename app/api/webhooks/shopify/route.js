@@ -51,7 +51,8 @@ function upsertOrder(order, clientId, workspaceId) {
     ? `${order.customer.first_name || ''} ${order.customer.last_name || ''}`.trim()
     : null
 
-  // Transition: dual-write client_id (legacy) + workspace_id
+  // Transition: dual-write client_id (legacy) + workspace_id.
+  // onConflict is the new (workspace_id, id) unique key from Phase 4.
   return supabaseAdmin.from('shopify_orders').upsert({
     id:                 order.id,
     client_id:          clientId,
@@ -70,7 +71,7 @@ function upsertOrder(order, clientId, workspaceId) {
     created_at_shopify: order.created_at,
     updated_at_shopify: order.updated_at,
     synced_at:          new Date().toISOString(),
-  }, { onConflict: 'id,client_id' })
+  }, { onConflict: 'workspace_id,id' })
 }
 
 export async function POST(request) {

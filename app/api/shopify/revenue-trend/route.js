@@ -1,17 +1,14 @@
-import { supabaseAdmin, getUserFromToken } from '../../../../lib/supabaseAdmin'
-import { getShopifyCredentials } from '../../../../lib/shopifyCredentials'
+import { supabaseAdmin } from '../../../../lib/supabaseAdmin'
+import { getAuthContext } from '../../../../lib/auth'
+import { getShopifyCredentialsByWorkspace } from '../../../../lib/shopifyCredentials'
 import { DEMO_SHOP, DEMO_TREND } from '../../../../lib/demoData'
 import { NextResponse } from 'next/server'
 
 export async function GET(request) {
-  const authHeader = request.headers.get('authorization')
-  if (!authHeader) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const ctx = await getAuthContext(request)
+  if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const token = authHeader.replace('Bearer ', '')
-  const user = await getUserFromToken(token)
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-  const creds = await getShopifyCredentials(user.id, user.email)
+  const creds = await getShopifyCredentialsByWorkspace(ctx.workspaceId)
   if (creds?.domain === DEMO_SHOP) return NextResponse.json({ trend: DEMO_TREND })
 
   const { searchParams } = new URL(request.url)
@@ -23,7 +20,7 @@ export async function GET(request) {
   const { data, error } = await supabaseAdmin
     .from('shopify_orders')
     .select('processed_at, created_at_shopify, subtotal_price, refund_amount, cancel_reason')
-    .eq('client_id', user.id)
+    .eq('workspace_id', ctx.workspaceId)
     .gte('processed_at', from)
     .lte('processed_at', to + 'T23:59:59.999Z')
 

@@ -1,18 +1,15 @@
-import { supabaseAdmin, getUserFromToken } from '../../../../lib/supabaseAdmin'
+import { supabaseAdmin } from '../../../../lib/supabaseAdmin'
+import { getAuthContext } from '../../../../lib/auth'
 import { NextResponse } from 'next/server'
 
 export async function GET(request) {
-  const authHeader = request.headers.get('authorization')
-  if (!authHeader) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-  const token = authHeader.replace('Bearer ', '')
-  const user = await getUserFromToken(token)
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const ctx = await getAuthContext(request)
+  if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { data: orders, error } = await supabaseAdmin
     .from('shopify_orders')
     .select('id, order_number, source_name, subtotal_price, total_price, total_discounts, refund_amount, financial_status, cancel_reason, processed_at')
-    .eq('client_id', user.id)
+    .eq('workspace_id', ctx.workspaceId)
     .order('processed_at', { ascending: false })
     .limit(500)
 

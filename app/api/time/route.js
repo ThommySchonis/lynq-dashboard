@@ -1,14 +1,8 @@
-import { supabaseAdmin, getUserFromToken } from '../../../lib/supabaseAdmin'
+import { supabaseAdmin } from '../../../lib/supabaseAdmin'
+import { getAuthContext } from '../../../lib/auth'
 import { NextResponse } from 'next/server'
 
 const ADMIN_EMAIL = 'info@lynqagency.com'
-
-async function getUser(request) {
-  const authHeader = request.headers.get('authorization')
-  if (!authHeader) return null
-  const token = authHeader.replace('Bearer ', '')
-  return await getUserFromToken(token)
-}
 
 function getDateRange(filter, customFrom, customTo) {
   const now = new Date()
@@ -45,8 +39,8 @@ function workedSec(s) {
 }
 
 export async function GET(request) {
-  const user = await getUser(request)
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const ctx = await getAuthContext(request)
+  if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { searchParams } = new URL(request.url)
   const filter     = searchParams.get('filter') || 'week'
@@ -54,26 +48,18 @@ export async function GET(request) {
   const customTo   = searchParams.get('to')
   const { from, to } = getDateRange(filter, customFrom, customTo)
 
-  const isLynqAdmin = user.email === ADMIN_EMAIL
+  const isLynqAdmin       = ctx.user.email === ADMIN_EMAIL
+  const isWorkspaceAdmin  = ['owner', 'admin'].includes(ctx.role)
 
-  // Check if this user is a client (can see their assigned team's data)
-  let clientRecord = null
-  if (!isLynqAdmin) {
-    const { data } = await supabaseAdmin
-      .from('clients')
-      .select('id, company_name')
-      .eq('email', user.email)
-      .maybeSingle()
-    clientRecord = data
-  }
-  const isClientAdmin = !!clientRecord
-
-  // ── Client admin view (client sees only their own team) ─────────────────────
-  if (isClientAdmin) {
+  // ── Workspace admin view (owner/admin sees their workspace's team) ──────────
+  // Replaces the legacy "client admin" branch which looked up the clients
+  // table by email. clients table is empty post-migration; role-based check
+  // is the new equivalent.
+  if (!isLynqAdmin && isWorkspaceAdmin) {
     const { data: members } = await supabaseAdmin
       .from('team_members')
       .select('id, name, email, role')
-      .eq('client_id', clientRecord.id)
+      .eq('workspace_id', ctx.workspaceId)
       .order('created_at')
 
     const memberIds = (members || []).map(m => m.id)
@@ -82,6 +68,7 @@ export async function GET(request) {
     const { data: sessions } = await supabaseAdmin
       .from('time_sessions')
       .select('*')
+      .eq('workspace_id', ctx.workspaceId)
       .in('agent_id', idFilter)
       .gte('clocked_in_at', from.toISOString())
       .lte('clocked_in_at', to.toISOString())
@@ -90,6 +77,7 @@ export async function GET(request) {
     const { data: activeSessions } = await supabaseAdmin
       .from('time_sessions')
       .select('agent_id, clocked_in_at, status')
+      .eq('workspace_id', ctx.workspaceId)
       .in('agent_id', idFilter)
       .is('clocked_out_at', null)
 
@@ -120,17 +108,15 @@ export async function GET(request) {
       members:      Object.values(memberMap),
       active_count: (activeSessions || []).filter(s => s.status !== 'paused').length,
       paused_count: (activeSessions || []).filter(s => s.status === 'paused').length,
-      client:       clientRecord,
+      workspace:    ctx.workspace,
       from: from.toISOString(),
       to:   to.toISOString(),
       is_client_admin: true,
     })
   }
 
-  // ── Lynq admin view (sees all team members across all clients) ───────────────
-  const isAdmin = isLynqAdmin
-
-  if (isAdmin) {
+  // ── Lynq admin view (cross-workspace global) ──────────────────────────────
+  if (isLynqAdmin) {
     const { data: members } = await supabaseAdmin
       .from('team_members')
       .select('id, name, email, role')
@@ -183,11 +169,12 @@ export async function GET(request) {
     })
   }
 
-  // ── Employee view ──────────────────────────────────────────────────────────
+  // ── Employee view (workspace-scoped lookup by email) ──────────────────────
   const { data: member } = await supabaseAdmin
     .from('team_members')
     .select('id, name, role')
-    .eq('email', user.email)
+    .eq('email', ctx.user.email)
+    .eq('workspace_id', ctx.workspaceId)
     .maybeSingle()
 
   if (!member) return NextResponse.json({ error: 'Not a team member' }, { status: 403 })
@@ -195,6 +182,7 @@ export async function GET(request) {
   const { data: sessions } = await supabaseAdmin
     .from('time_sessions')
     .select('*')
+    .eq('workspace_id', ctx.workspaceId)
     .eq('agent_id', member.id)
     .gte('clocked_in_at', from.toISOString())
     .lte('clocked_in_at', to.toISOString())
@@ -203,6 +191,7 @@ export async function GET(request) {
   const { data: active } = await supabaseAdmin
     .from('time_sessions')
     .select('*')
+    .eq('workspace_id', ctx.workspaceId)
     .eq('agent_id', member.id)
     .is('clocked_out_at', null)
     .order('clocked_in_at', { ascending: false })
@@ -214,6 +203,7 @@ export async function GET(request) {
   const { data: todaySessions } = await supabaseAdmin
     .from('time_sessions')
     .select('clocked_in_at, clocked_out_at, paused_seconds')
+    .eq('workspace_id', ctx.workspaceId)
     .eq('agent_id', member.id)
     .gte('clocked_in_at', todayStart.toISOString())
     .not('clocked_out_at', 'is', null)
@@ -235,8 +225,8 @@ export async function GET(request) {
 }
 
 export async function POST(request) {
-  const user = await getUser(request)
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const ctx = await getAuthContext(request)
+  if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const body = await request.json()
   const { action } = body
@@ -244,7 +234,8 @@ export async function POST(request) {
   const { data: member } = await supabaseAdmin
     .from('team_members')
     .select('id, name, client_id')
-    .eq('email', user.email)
+    .eq('email', ctx.user.email)
+    .eq('workspace_id', ctx.workspaceId)
     .maybeSingle()
 
   if (!member) return NextResponse.json({ error: 'Not a team member account' }, { status: 403 })
@@ -254,15 +245,25 @@ export async function POST(request) {
     const { data: existing } = await supabaseAdmin
       .from('time_sessions')
       .select('id, clocked_in_at, status, paused_seconds, paused_at')
+      .eq('workspace_id', ctx.workspaceId)
       .eq('agent_id', member.id)
       .is('clocked_out_at', null)
       .maybeSingle()
 
     if (existing) return NextResponse.json({ session: existing, already_active: true })
 
+    // Transition: dual-write client_id (legacy) + workspace_id
     const { data: session, error } = await supabaseAdmin
       .from('time_sessions')
-      .insert({ agent_id: member.id, client_id: member.client_id || null, status: 'active', active_seconds: 0, idle_seconds: 0, paused_seconds: 0 })
+      .insert({
+        agent_id:       member.id,
+        client_id:      member.client_id || null,
+        workspace_id:   ctx.workspaceId,
+        status:         'active',
+        active_seconds: 0,
+        idle_seconds:   0,
+        paused_seconds: 0,
+      })
       .select()
       .single()
 
@@ -279,6 +280,7 @@ export async function POST(request) {
       .from('time_sessions')
       .update({ status: 'paused', paused_at: new Date().toISOString() })
       .eq('id', session_id)
+      .eq('workspace_id', ctx.workspaceId)
       .eq('agent_id', member.id)
       .is('clocked_out_at', null)
 
@@ -295,6 +297,7 @@ export async function POST(request) {
       .from('time_sessions')
       .select('paused_at, paused_seconds')
       .eq('id', session_id)
+      .eq('workspace_id', ctx.workspaceId)
       .eq('agent_id', member.id)
       .is('clocked_out_at', null)
       .maybeSingle()
@@ -310,6 +313,7 @@ export async function POST(request) {
       .from('time_sessions')
       .update({ status: 'active', paused_at: null, paused_seconds: newPaused })
       .eq('id', session_id)
+      .eq('workspace_id', ctx.workspaceId)
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
     return NextResponse.json({ ok: true, paused_seconds: newPaused })
@@ -325,6 +329,7 @@ export async function POST(request) {
       .from('time_sessions')
       .select('paused_at, paused_seconds')
       .eq('id', session_id)
+      .eq('workspace_id', ctx.workspaceId)
       .eq('agent_id', member.id)
       .is('clocked_out_at', null)
       .maybeSingle()
@@ -346,6 +351,7 @@ export async function POST(request) {
         eod_report:     eod_report?.trim() || null,
       })
       .eq('id', session_id)
+      .eq('workspace_id', ctx.workspaceId)
       .eq('agent_id', member.id)
       .is('clocked_out_at', null)
       .select()
@@ -364,6 +370,7 @@ export async function POST(request) {
       .from('time_sessions')
       .select('active_seconds, status')
       .eq('id', session_id)
+      .eq('workspace_id', ctx.workspaceId)
       .eq('agent_id', member.id)
       .is('clocked_out_at', null)
       .maybeSingle()
@@ -376,6 +383,7 @@ export async function POST(request) {
         .from('time_sessions')
         .update({ active_seconds: (current.active_seconds || 0) + 30 })
         .eq('id', session_id)
+        .eq('workspace_id', ctx.workspaceId)
       if (error) return NextResponse.json({ error: error.message }, { status: 500 })
     }
 

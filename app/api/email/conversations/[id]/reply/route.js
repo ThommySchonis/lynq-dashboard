@@ -1,4 +1,5 @@
-import { supabaseAdmin, getUserFromToken } from '../../../../../../lib/supabaseAdmin'
+import { supabaseAdmin } from '../../../../../../lib/supabaseAdmin'
+import { getAuthContext } from '../../../../../../lib/auth'
 import { checkEmailLimit, incrementEmailCount } from '../../../../../../lib/emailUsage'
 import { NextResponse } from 'next/server'
 import { Resend } from 'resend'
@@ -6,21 +7,17 @@ import { Resend } from 'resend'
 const resend = new Resend(process.env.RESEND_API_KEY)
 
 export async function POST(request, { params }) {
-  const authHeader = request.headers.get('authorization')
-  if (!authHeader) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const ctx = await getAuthContext(request)
+  if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const token = authHeader.replace('Bearer ', '')
-  const user = await getUserFromToken(token)
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-  const limitCheck = await checkEmailLimit(user.email)
+  const limitCheck = await checkEmailLimit(ctx.user.email)
   if (!limitCheck.allowed) {
     return NextResponse.json({
       error: 'Email limit reached',
-      code: 'EMAIL_LIMIT_REACHED',
-      used: limitCheck.used,
+      code:  'EMAIL_LIMIT_REACHED',
+      used:  limitCheck.used,
       limit: limitCheck.limit,
-      plan: limitCheck.plan,
+      plan:  limitCheck.plan,
     }, { status: 429 })
   }
 
@@ -28,14 +25,15 @@ export async function POST(request, { params }) {
   const { body } = await request.json()
   if (!body?.trim()) return NextResponse.json({ error: 'Message is required' }, { status: 400 })
 
-  // Get conversation + email account
+  // Get conversation + email account (workspace-scoped). Both lookups
+  // must succeed before we send anything via Resend.
   const [{ data: conversation }, { data: account }] = await Promise.all([
-    supabaseAdmin.from('email_conversations').select('*').eq('id', id).eq('client_id', user.id).maybeSingle(),
-    supabaseAdmin.from('email_accounts').select('*').eq('client_id', user.id).maybeSingle(),
+    supabaseAdmin.from('email_conversations').select('*').eq('id', id).eq('workspace_id', ctx.workspaceId).maybeSingle(),
+    supabaseAdmin.from('email_accounts').select('*').eq('workspace_id', ctx.workspaceId).maybeSingle(),
   ])
 
   if (!conversation) return NextResponse.json({ error: 'Conversation not found' }, { status: 404 })
-  if (!account) return NextResponse.json({ error: 'Email not connected' }, { status: 400 })
+  if (!account)      return NextResponse.json({ error: 'Email not connected' }, { status: 400 })
 
   // Get last inbound message for threading
   const { data: lastMessage } = await supabaseAdmin
@@ -49,10 +47,10 @@ export async function POST(request, { params }) {
 
   // Send via Resend as the client's real email
   const { data: sent, error: sendError } = await resend.emails.send({
-    from: `${account.display_name} <${account.real_email}>`,
-    to: [conversation.customer_email],
+    from:    `${account.display_name} <${account.real_email}>`,
+    to:      [conversation.customer_email],
     subject: conversation.subject.startsWith('Re:') ? conversation.subject : `Re: ${conversation.subject}`,
-    html: body,
+    html:    body,
     headers: lastMessage?.message_id
       ? { 'In-Reply-To': lastMessage.message_id, 'References': lastMessage.message_id }
       : undefined,
@@ -62,24 +60,26 @@ export async function POST(request, { params }) {
     return NextResponse.json({ error: sendError.message }, { status: 502 })
   }
 
-  await incrementEmailCount(user.email)
+  await incrementEmailCount(ctx.user.email)
 
-  // Save to DB
+  // Save outbound message. email_messages has workspace_id (no client_id
+  // column on this table — checked in Phase 0 column inspection).
   await supabaseAdmin.from('email_messages').insert({
     conversation_id: id,
-    from_email: account.real_email,
-    from_name: account.display_name,
-    body_html: body,
-    body_text: body.replace(/<[^>]+>/g, ''),
-    is_outbound: true,
-    message_id: sent?.id,
+    workspace_id:    ctx.workspaceId,
+    from_email:      account.real_email,
+    from_name:       account.display_name,
+    body_html:       body,
+    body_text:       body.replace(/<[^>]+>/g, ''),
+    is_outbound:     true,
+    message_id:      sent?.id,
   })
 
   await supabaseAdmin
     .from('email_conversations')
     .update({ last_message_at: new Date().toISOString() })
     .eq('id', id)
-    .eq('client_id', user.id)
+    .eq('workspace_id', ctx.workspaceId)
 
   return NextResponse.json({ success: true })
 }

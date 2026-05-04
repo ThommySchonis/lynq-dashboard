@@ -3,6 +3,36 @@
 import { useState } from 'react'
 import { supabase } from '../../lib/supabase'
 
+const inputStyle = {
+  width: '100%',
+  boxSizing: 'border-box',
+  padding: '11px 14px',
+  background: '#FFFFFF',
+  color: '#1C0F36',
+  border: '1px solid rgba(255,255,255,0.12)',
+  borderRadius: '8px',
+  fontSize: '14px',
+  fontFamily: 'inherit',
+  outline: 'none',
+  transition: 'border-color 0.15s, box-shadow 0.15s',
+}
+
+const inputCss = `
+  .lynq-login input::placeholder { color: #9B91A8; }
+  .lynq-login input:focus {
+    border-color: #A175FC;
+    box-shadow: 0 0 0 3px rgba(161,117,252,0.25);
+  }
+  /* Override Chrome's autofill yellow with white bg + dark text */
+  .lynq-login input:-webkit-autofill,
+  .lynq-login input:-webkit-autofill:hover,
+  .lynq-login input:-webkit-autofill:focus {
+    -webkit-box-shadow: 0 0 0 1000px #FFFFFF inset !important;
+    -webkit-text-fill-color: #1C0F36 !important;
+    caret-color: #1C0F36;
+  }
+`
+
 export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -26,7 +56,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div style={{
+    <div className="lynq-login" style={{
       minHeight: '100vh',
       background: '#1C0F36',
       display: 'flex',
@@ -34,6 +64,7 @@ export default function LoginPage() {
       justifyContent: 'center',
       padding: '24px',
     }}>
+      <style>{inputCss}</style>
       {/* Background glow */}
       <div style={{
         position: 'fixed',
@@ -87,6 +118,7 @@ export default function LoginPage() {
                 placeholder="you@yourstore.com"
                 required
                 autoComplete="email"
+                style={inputStyle}
               />
             </div>
 
@@ -110,6 +142,7 @@ export default function LoginPage() {
                 placeholder="••••••••"
                 required
                 autoComplete="current-password"
+                style={inputStyle}
               />
             </div>
 

@@ -100,19 +100,27 @@ export async function POST(request) {
   }
 
   // Build rows for bulk insert (single statement = atomic in Postgres)
-  const rows = parsed.map(m => ({
-    workspace_id: ctx.workspaceId,
-    name:         String(m.name).trim().slice(0, 200),
-    body:         String(m.body ?? '').slice(0, 100_000),
-    language:     'en',
-    tags:         Array.isArray(m.tags)
-      ? m.tags
-          .map(t => typeof t === 'string' ? t.trim().toLowerCase().slice(0, 40) : '')
-          .filter(Boolean)
-          .slice(0, 25)
-      : [],
-    created_by:   ctx.user.id,
-  }))
+  // Defensive: prepend "{store_name} | " if Claude forgot the prefix.
+  const storeName = (onboarding.answers?.store_name ?? '').trim()
+  const prefix    = storeName ? `${storeName} | ` : ''
+
+  const rows = parsed.map(m => {
+    let name = String(m.name).trim()
+    if (prefix && !name.startsWith(prefix)) name = prefix + name
+    return {
+      workspace_id: ctx.workspaceId,
+      name:         name.slice(0, 200),
+      body:         String(m.body ?? '').slice(0, 100_000),
+      language:     'en',
+      tags:         Array.isArray(m.tags)
+        ? m.tags
+            .map(t => typeof t === 'string' ? t.trim().toLowerCase().slice(0, 40) : '')
+            .filter(Boolean)
+            .slice(0, 25)
+        : [],
+      created_by:   ctx.user.id,
+    }
+  })
 
   const { data: inserted, error: insertError } = await supabaseAdmin
     .from('macros')

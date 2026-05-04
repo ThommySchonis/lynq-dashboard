@@ -40,6 +40,7 @@ export default function InviteAcceptPage() {
   const [status,    setStatus]    = useState('loading')  // loading | ready | accepting | accepted | error | invalid
   const [errorCode, setErrorCode] = useState(null)
   const [errorMsg,  setErrorMsg]  = useState('')
+  const [mismatchInfo, setMismatchInfo] = useState(null)  // { invite_email, user_email } from server when accept rejected
 
   useEffect(() => {
     if (!token) { setStatus('invalid'); setErrorCode('not_found'); return }
@@ -74,15 +75,28 @@ export default function InviteAcceptPage() {
     if (res.ok) {
       setStatus('accepted')
       setTimeout(() => router.push('/'), 1800)
-    } else {
-      setStatus('error')
-      setErrorMsg(data.error || 'Failed to accept invite.')
+      return
     }
+
+    // Server detected email mismatch — switch to the State C UX with
+    // the authoritative emails from the response.
+    if (data.code === 'email_mismatch') {
+      setMismatchInfo({
+        invite_email: data.invite_email,
+        user_email:   data.user_email,
+      })
+      setStatus('ready')
+      return
+    }
+
+    setStatus('error')
+    setErrorMsg(data.error || 'Failed to accept invite.')
   }
 
   async function handleSignOut() {
     await supabase.auth.signOut()
     setSession(null)
+    setMismatchInfo(null)
     setStatus('ready')
   }
 
@@ -169,8 +183,12 @@ export default function InviteAcceptPage() {
   // ── STATE: ready → choose A / B / C ──
   const userEmail   = session?.user?.email?.toLowerCase()
   const inviteEmail = invite?.invite_email?.toLowerCase()
-  const emailMatch  = session && userEmail && inviteEmail && userEmail === inviteEmail
-  const emailMismatch = session && !emailMatch
+  const clientMatch = session && userEmail && inviteEmail && userEmail === inviteEmail
+  // Server-side mismatch (returned by accept RPC) takes precedence over client comparison
+  const emailMismatch = !!mismatchInfo || (session && !clientMatch)
+  const emailMatch    = !mismatchInfo && clientMatch
+  const mismatchInvite = mismatchInfo?.invite_email || invite?.invite_email
+  const mismatchUser   = mismatchInfo?.user_email   || session?.user?.email
 
   return wrap(
     <div style={{ background: '#fff', border: '1px solid #E5E0EB', borderRadius: 12, overflow: 'hidden' }}>
@@ -277,12 +295,12 @@ export default function InviteAcceptPage() {
             }}>
               <AlertCircle size={16} strokeWidth={1.75} color="#92400E" style={{ flexShrink: 0, marginTop: 1 }} />
               <div style={{ fontSize: 13, color: '#1C0F36', lineHeight: 1.5 }}>
-                This invite is for <strong>{invite.invite_email}</strong>.<br />
-                You&rsquo;re signed in as <strong>{session.user.email}</strong>.
+                This invite is for <strong>{mismatchInvite}</strong>.<br />
+                You&rsquo;re signed in as <strong>{mismatchUser}</strong>.
               </div>
             </div>
             <button onClick={handleSignOut} style={{ ...btnSecondaryStyle, width: '100%' }}>
-              Sign out and use {invite.invite_email}
+              Sign out and use {mismatchInvite}
             </button>
           </div>
         )}

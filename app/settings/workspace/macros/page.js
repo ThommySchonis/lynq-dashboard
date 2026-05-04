@@ -7,7 +7,7 @@ import Link from 'next/link'
 import { createClient } from '@supabase/supabase-js'
 import {
   Plus, Search, MoreHorizontal, FileText, AlertCircle, Loader2, Check, X,
-  Edit2, Copy, Archive, ArchiveRestore, Trash2,
+  Edit2, Copy, Archive, ArchiveRestore, Trash2, Sparkles,
 } from 'lucide-react'
 
 const supabase = createClient(
@@ -264,6 +264,11 @@ export default function MacrosPage() {
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [deleting,     setDeleting]     = useState(false)
 
+  const [hasOnboarding,    setHasOnboarding]    = useState(false)
+  const [showRegenModal,   setShowRegenModal]   = useState(false)
+  const [regenerating,     setRegenerating]     = useState(false)
+  const [regenError,       setRegenError]       = useState(null)
+
   const [toast, setToast] = useState(null)
   const toastTimerRef     = useRef(null)
 
@@ -314,6 +319,34 @@ export default function MacrosPage() {
     setLoading(true)
     fetchMacros()
   }, [fetchMacros])
+
+  // Pull a one-shot toast from sessionStorage (e.g. wizard redirected here)
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem('mp:lastToast')
+      if (raw) {
+        const t = JSON.parse(raw)
+        sessionStorage.removeItem('mp:lastToast')
+        if (t?.msg) showToast(t.msg, t.type === 'err' ? 'err' : 'ok')
+      }
+    } catch (_) { /* ignore */ }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // Check whether onboarding has been completed (to decide CTA destination)
+  useEffect(() => {
+    let cancelled = false
+    ;(async () => {
+      const token = await getToken()
+      if (!token) return
+      const res  = await fetch('/api/macros/onboarding', { headers: { Authorization: `Bearer ${token}` } })
+      if (!res.ok) return
+      const data = await res.json().catch(() => ({}))
+      if (cancelled) return
+      setHasOnboarding(!!data.onboarding?.completed_at)
+    })()
+    return () => { cancelled = true }
+  }, [getToken])
 
   // Close 3-dot menu on outside click + Escape
   useEffect(() => {
@@ -366,6 +399,30 @@ export default function MacrosPage() {
     fetchMacros()
   }
 
+  async function handleRegenerate() {
+    setRegenError(null)
+    setRegenerating(true)
+    const token = await getToken()
+    if (!token) {
+      setRegenerating(false)
+      setRegenError('Not authenticated. Please refresh.')
+      return
+    }
+    const res  = await fetch('/api/macros/generate', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    const data = await res.json().catch(() => ({}))
+    setRegenerating(false)
+    if (!res.ok || !data.ok) {
+      setRegenError(data.error || 'Generation failed. Try again.')
+      return
+    }
+    setShowRegenModal(false)
+    showToast(`${data.count} new macros created`)
+    fetchMacros()
+  }
+
   async function handleDelete() {
     if (!deleteTarget) return
     setDeleting(true)
@@ -394,10 +451,43 @@ export default function MacrosPage() {
             <p className="mp-subtitle">Pre-made responses with variables. Apply to tickets with one click.</p>
           </div>
           {canManage && (
-            <Link href="/settings/workspace/macros/new" className="btn-primary">
-              <Plus size={16} strokeWidth={1.75} />
-              Create macro
-            </Link>
+            <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+              {hasOnboarding ? (
+                <button
+                  type="button"
+                  className="btn-secondary"
+                  onClick={() => { setRegenError(null); setShowRegenModal(true) }}
+                  style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 6,
+                    padding: '8px 16px', borderRadius: 8,
+                    border: '1px solid #E5E0EB', background: '#fff',
+                    color: '#1C0F36', fontSize: 14, fontWeight: 500,
+                    fontFamily: 'inherit', cursor: 'pointer', whiteSpace: 'nowrap',
+                  }}
+                >
+                  <Sparkles size={16} strokeWidth={1.75} />
+                  Regenerate
+                </button>
+              ) : (
+                <Link
+                  href="/settings/workspace/macros/generate"
+                  style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 6,
+                    padding: '8px 16px', borderRadius: 8,
+                    border: '1px solid #E5E0EB', background: '#fff',
+                    color: '#1C0F36', fontSize: 14, fontWeight: 500,
+                    fontFamily: 'inherit', textDecoration: 'none', whiteSpace: 'nowrap',
+                  }}
+                >
+                  <Sparkles size={16} strokeWidth={1.75} />
+                  Generate from your store
+                </Link>
+              )}
+              <Link href="/settings/workspace/macros/new" className="btn-primary">
+                <Plus size={16} strokeWidth={1.75} />
+                Create macro
+              </Link>
+            </div>
           )}
         </div>
 
@@ -601,6 +691,69 @@ export default function MacrosPage() {
           document.body
         )
       })()}
+
+      {/* Regenerate macros modal */}
+      {showRegenModal && (
+        <div className="mp-overlay" onClick={e => { if (e.target === e.currentTarget && !regenerating) setShowRegenModal(false) }}>
+          <div className="mp-modal">
+            <div className="mp-modal-hd">
+              <div className="mp-modal-title">Regenerate macros?</div>
+              <button
+                onClick={() => { if (!regenerating) setShowRegenModal(false) }}
+                style={{ width: 32, height: 32, borderRadius: 6, border: 'none', background: 'transparent', cursor: 'pointer', color: '#9B91A8' }}
+                disabled={regenerating}
+              >
+                <X size={16} strokeWidth={1.75} />
+              </button>
+            </div>
+            <div className="mp-modal-body">
+              {regenError ? (
+                <div style={{ display: 'flex', gap: 10, padding: '12px 14px', background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 8, marginBottom: 12, alignItems: 'flex-start' }}>
+                  <AlertCircle size={16} strokeWidth={1.75} style={{ color: '#DC2626', marginTop: 1, flexShrink: 0 }} />
+                  <span style={{ fontSize: 13, color: '#B91C1C' }}>{regenError}</span>
+                </div>
+              ) : null}
+              {regenerating ? (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', color: '#6B5E7B', fontSize: 14 }}>
+                  <Loader2 size={16} strokeWidth={1.75} className="spin" />
+                  AI is crafting new macros — about 30–60 seconds…
+                </div>
+              ) : (
+                <p style={{ margin: 0 }}>
+                  This will generate ~50 new macros based on your saved store details.
+                  Your existing macros are not deleted — the new ones will be added to the list.
+                </p>
+              )}
+            </div>
+            <div className="mp-modal-ft">
+              <button
+                className="btn-secondary"
+                onClick={() => setShowRegenModal(false)}
+                disabled={regenerating}
+              >
+                Cancel
+              </button>
+              <button
+                className="btn-secondary"
+                onClick={() => router.push('/settings/workspace/macros/generate')}
+                disabled={regenerating}
+              >
+                Edit details
+              </button>
+              <button
+                className="btn-primary"
+                onClick={handleRegenerate}
+                disabled={regenerating}
+              >
+                {regenerating
+                  ? <><Loader2 size={14} strokeWidth={1.75} className="spin" /> Generating…</>
+                  : <><Sparkles size={14} strokeWidth={1.75} /> Generate now</>
+                }
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Delete confirm modal */}
       {deleteTarget && (

@@ -8,7 +8,7 @@ import {
   Bold, Italic, Underline, Link2, Image as ImageIcon,
   Code, Heading2, List, ListOrdered, Variable,
 } from 'lucide-react'
-import { TAG_PALETTE } from '../../lib/tags'
+import { TAG_PALETTE } from '../../../lib/tags'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,

@@ -3,6 +3,7 @@ import { randomBytes } from 'node:crypto'
 import { getAuthContext } from '../../../../../lib/auth'
 import { can } from '../../../../../lib/permissions'
 import { supabaseAdmin } from '../../../../../lib/supabaseAdmin'
+import { sendInviteEmail } from '../../../../../lib/email'
 
 const ROLE_ORDER = { owner: 0, admin: 1, agent: 2, observer: 3 }
 
@@ -52,11 +53,10 @@ export async function GET(request) {
   ] = await Promise.all([
     membersQ,
     supabaseAdmin
-      .from('workspace_invites')
-      .select('id, email, role, token, created_at, expires_at, invited_by', { count: 'exact' })
+      .from('workspace_invite_details')
+      .select('id, email, role, token, created_at, sent_at, expires_at, invited_by, inviter_email, inviter_name', { count: 'exact' })
       .eq('workspace_id', ctx.workspaceId)
       .is('accepted_at', null)
-      .gt('expires_at', new Date().toISOString())
       .order('created_at', { ascending: false }),
   ])
 
@@ -220,42 +220,24 @@ export async function POST(request) {
     console.error('[invite POST] could not determine site URL — invite link unavailable')
   }
 
-  // Send invite email — best-effort, surfaces clear status to the UI
-  let emailStatus = 'skipped'
-  let emailError  = null
+  // Send invite email via shared helper
+  const emailResult = await sendInviteEmail({
+    to:            normalizedEmail,
+    workspaceName: ctx.workspace.name,
+    inviterEmail:  ctx.user.email,
+    role,
+    link:          inviteLink,
+  })
 
-  if (!process.env.RESEND_API_KEY) {
-    emailStatus = 'not_configured'
-    console.warn('[invite POST] RESEND_API_KEY not set — skipping email send')
-  } else if (!inviteLink) {
-    emailStatus = 'no_link'
-  } else {
-    try {
-      const { Resend } = await import('resend')
-      const resend = new Resend(process.env.RESEND_API_KEY)
-      const roleLabel = role === 'admin' ? 'an Admin' : role === 'observer' ? 'an Observer' : 'an Agent'
-      await resend.emails.send({
-        from:    'Lynq & Flow <noreply@lynqflow.com>',
-        to:      normalizedEmail,
-        subject: `You've been invited to ${ctx.workspace.name}`,
-        html: `
-          <p>Hi,</p>
-          <p><strong>${ctx.user.email}</strong> has invited you to join <strong>${ctx.workspace.name}</strong> on Lynq &amp; Flow as ${roleLabel}.</p>
-          <p><a href="${inviteLink}" style="background:#A175FC;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none;display:inline-block;">Accept Invitation</a></p>
-          <p style="color:#9B91A8;font-size:12px;">This link expires in 7 days.</p>
-        `,
-      })
-      emailStatus = 'sent'
-      console.log('[invite POST] email sent via Resend')
-    } catch (err) {
-      emailStatus = 'failed'
-      emailError  = err?.message ?? 'Email send failed'
-      console.error('[invite POST] Resend error:', emailError)
-    }
-  }
+  console.log('[invite POST] email result:', emailResult.status)
 
   return NextResponse.json(
-    { invite, inviteLink, emailStatus, emailError },
+    {
+      invite,
+      inviteLink,
+      emailStatus: emailResult.status,
+      emailError:  emailResult.error ?? null,
+    },
     { status: 201 }
   )
 }

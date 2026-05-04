@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, useCallback } from 'react'
 import { createClient } from '@supabase/supabase-js'
 import {
   UserPlus, Search, MoreHorizontal, Mail,
-  X, Check, AlertCircle, Loader2, Users, Copy, Link2,
+  X, Check, AlertCircle, Loader2, Users, Copy, RefreshCw, Trash2,
 } from 'lucide-react'
 
 const supabase = createClient(
@@ -81,13 +81,29 @@ const CSS = `
   .up-badge-agent    { background: #F1EEF5; color: #4B3B6B; }
   .up-badge-observer { background: #F1EEF5; color: #4B3B6B; }
 
-  .up-invite-row td { background: #FDFCFF; }
-  .up-invite-row:hover td { background: #F9F7FF; }
+  .up-invite-row td { background: #FFFCF7; }
+  .up-invite-row:hover td { background: #FFF8EB; }
   .up-pending-badge {
     display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px;
-    background: #F1EEF5; color: #9B91A8; border-radius: 20px; font-size: 11px;
-    font-weight: 500; border: 1px dashed #E5E0EB;
+    background: #FEF3C7; color: #92400E; border-radius: 20px; font-size: 11px;
+    font-weight: 500;
   }
+  .up-invite-meta { font-size: 12px; color: #9B91A8; margin-top: 2px; line-height: 1.4; }
+  .up-invite-meta .expired { color: #DC2626; font-weight: 500; }
+  .up-invite-meta .today   { color: #B45309; font-weight: 500; }
+
+  .up-row-actions { display: inline-flex; gap: 6px; align-items: center; }
+  .up-icon-btn {
+    height: 30px; padding: 0 10px; border-radius: 6px; border: 1px solid #E5E0EB;
+    background: #fff; color: #6B5E7B; font-size: 12px; font-weight: 500;
+    font-family: inherit; cursor: pointer; display: inline-flex; align-items: center;
+    gap: 5px; transition: background 0.15s, color 0.15s, border-color 0.15s;
+    white-space: nowrap;
+  }
+  .up-icon-btn:hover:not(:disabled) { background: #F8F7FA; color: #1C0F36; border-color: #C8C0D4; }
+  .up-icon-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .up-icon-btn.danger { color: #B91C1C; border-color: #FECACA; }
+  .up-icon-btn.danger:hover:not(:disabled) { background: #FEF2F2; border-color: #F87171; }
 
   .up-tfa-yes { color: #22C55E; }
   .up-tfa-no  { color: #D1C9DB; }
@@ -227,6 +243,16 @@ function initials(name, email) {
   return src.slice(0, 2).toUpperCase()
 }
 
+function expiryLabel(expiresAt) {
+  if (!expiresAt) return null
+  const ms = new Date(expiresAt).getTime() - Date.now()
+  if (ms <= 0) return { text: 'Expired', tone: 'expired' }
+  const days = Math.floor(ms / (24 * 60 * 60 * 1000))
+  if (days === 0) return { text: 'Expires today', tone: 'today' }
+  if (days === 1) return { text: 'Expires tomorrow', tone: 'normal' }
+  return { text: `Expires in ${days} days`, tone: 'normal' }
+}
+
 function useDebounce(value, delay) {
   const [debounced, setDebounced] = useState(value)
   useEffect(() => {
@@ -254,6 +280,8 @@ export default function UsersPage() {
   const [openMenu, setOpenMenu]     = useState(null)
   const [showInvite, setShowInvite] = useState(false)
   const [removeTarget, setRemoveTarget] = useState(null)
+  const [revokeTarget, setRevokeTarget] = useState(null)   // { id, email }
+  const [pendingAction, setPendingAction] = useState({})   // { [inviteId]: 'resend' | 'revoke' }
 
   const [inviteEmail, setInviteEmail] = useState('')
   const [inviteRole, setInviteRole]   = useState('agent')
@@ -370,15 +398,52 @@ export default function UsersPage() {
     fetchUsers(debouncedSearch)
   }
 
-  async function handleRevokeInvite(inviteId) {
-    setOpenMenu(null)
+  async function handleResendInvite(invite) {
+    setPendingAction(prev => ({ ...prev, [invite.id]: 'resend' }))
     const token = await getToken()
-    const res = await fetch(`/api/workspaces/current/members/${inviteId}?type=invite`, {
+    const res = await fetch(`/api/workspaces/current/invites/${invite.id}/resend`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    const data = await res.json().catch(() => ({}))
+    setPendingAction(prev => { const n = { ...prev }; delete n[invite.id]; return n })
+
+    if (!res.ok) {
+      showToast(data.error || 'Failed to resend invite', 'err')
+      return
+    }
+    if (data.emailStatus === 'sent') {
+      showToast(`Invite resent to ${invite.email}`)
+    } else if (data.emailStatus === 'not_configured') {
+      showToast('Invite refreshed — email service not configured', 'err')
+    } else if (data.emailStatus === 'failed') {
+      showToast(`Invite refreshed but email failed: ${data.emailError}`, 'err')
+    } else {
+      showToast('Invite refreshed')
+    }
+    fetchUsers(debouncedSearch)
+  }
+
+  async function confirmRevokeInvite() {
+    if (!revokeTarget) return
+    const target = revokeTarget
+    setPendingAction(prev => ({ ...prev, [target.id]: 'revoke' }))
+
+    const token = await getToken()
+    const res = await fetch(`/api/workspaces/current/invites/${target.id}`, {
       method: 'DELETE',
       headers: { Authorization: `Bearer ${token}` },
     })
-    if (!res.ok) { showToast('Failed to revoke invite', 'err'); return }
-    showToast('Invite revoked')
+    const data = await res.json().catch(() => ({}))
+
+    setPendingAction(prev => { const n = { ...prev }; delete n[target.id]; return n })
+    setRevokeTarget(null)
+
+    if (!res.ok) {
+      showToast(data.error || 'Failed to revoke invite', 'err')
+      return
+    }
+    showToast(`Invite to ${target.email} revoked`)
     fetchUsers(debouncedSearch)
   }
 
@@ -540,19 +605,29 @@ export default function UsersPage() {
               <tbody>
                 {rows.map(row => {
                   if (row._type === 'invite') {
+                    const exp        = expiryLabel(row.expires_at)
+                    const inviter    = row.inviter_name || row.inviter_email
+                    const action     = pendingAction[row.id]
+                    const isResending = action === 'resend'
+                    const isRevoking  = action === 'revoke'
+                    const busy        = !!action
                     return (
                       <tr key={`invite-${row.id}`} className="up-invite-row">
                         <td>
                           <div className="up-user-cell">
-                            <div className="up-avatar" style={{ background: '#F1EEF5', color: '#9B91A8' }}>
+                            <div className="up-avatar" style={{ background: '#FEF3C7', color: '#92400E' }}>
                               <Mail size={14} strokeWidth={1.75} />
                             </div>
                             <div>
-                              <div className="up-name" style={{ color: '#9B91A8' }}>Pending invite</div>
-                              <span className="up-pending-badge">
-                                <Mail size={10} strokeWidth={1.75} />
-                                Awaiting acceptance
-                              </span>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                <span className="up-name" style={{ color: '#1C0F36' }}>{row.email}</span>
+                                <span className="up-pending-badge">Pending</span>
+                              </div>
+                              <div className="up-invite-meta">
+                                {inviter ? <>Invited by {inviter}</> : null}
+                                {inviter && exp ? ' · ' : null}
+                                {exp ? <span className={exp.tone === 'expired' ? 'expired' : exp.tone === 'today' ? 'today' : ''}>{exp.text}</span> : null}
+                              </div>
                             </div>
                           </div>
                         </td>
@@ -561,33 +636,34 @@ export default function UsersPage() {
                           <span className={`up-badge up-badge-${row.role}`}>{ROLE_LABELS[row.role]}</span>
                         </td>
                         <td className="up-tfa-no">—</td>
-                        <td className="up-actions" ref={openMenu === row.id ? menuRef : null}>
+                        <td className="up-actions">
                           {canManage && (
-                            <>
+                            <div className="up-row-actions" style={{ justifyContent: 'flex-end' }}>
                               <button
-                                className="up-dot-btn"
-                                onClick={() => setOpenMenu(openMenu === row.id ? null : row.id)}
+                                className="up-icon-btn"
+                                onClick={() => handleResendInvite(row)}
+                                disabled={busy}
+                                title="Resend invite email"
                               >
-                                <MoreHorizontal size={16} strokeWidth={1.75} />
+                                {isResending
+                                  ? <Loader2 size={12} strokeWidth={1.75} className="spin" />
+                                  : <RefreshCw size={12} strokeWidth={1.75} />
+                                }
+                                {isResending ? 'Sending…' : 'Resend'}
                               </button>
-                              {openMenu === row.id && (
-                                <div className="up-dropdown">
-                                  <div className="up-dd-section">
-                                    {row.inviteLink && (
-                                      <button className="up-dd-item" onClick={() => copyInviteLink(row.inviteLink)}>
-                                        <Link2 size={14} strokeWidth={1.75} /> Copy invite link
-                                      </button>
-                                    )}
-                                  </div>
-                                  <div className="up-dd-divider" />
-                                  <div className="up-dd-section">
-                                    <button className="up-dd-item danger" onClick={() => handleRevokeInvite(row.id)}>
-                                      <X size={14} strokeWidth={1.75} /> Revoke invite
-                                    </button>
-                                  </div>
-                                </div>
-                              )}
-                            </>
+                              <button
+                                className="up-icon-btn danger"
+                                onClick={() => setRevokeTarget({ id: row.id, email: row.email })}
+                                disabled={busy}
+                                title="Revoke this invite"
+                              >
+                                {isRevoking
+                                  ? <Loader2 size={12} strokeWidth={1.75} className="spin" />
+                                  : <Trash2 size={12} strokeWidth={1.75} />
+                                }
+                                Revoke
+                              </button>
+                            </div>
                           )}
                         </td>
                       </tr>
@@ -809,6 +885,44 @@ export default function UsersPage() {
                 </div>
               </>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Revoke Invite Confirm Modal */}
+      {revokeTarget && (
+        <div className="up-overlay" onClick={e => e.target === e.currentTarget && setRevokeTarget(null)}>
+          <div className="up-modal">
+            <div className="up-modal-hd">
+              <div>
+                <div className="up-modal-title">Revoke invite</div>
+                <div className="up-modal-sub">The invite link will stop working.</div>
+              </div>
+              <button className="up-modal-close" onClick={() => setRevokeTarget(null)}>
+                <X size={16} strokeWidth={1.75} />
+              </button>
+            </div>
+            <div className="up-modal-body">
+              <div style={{ display: 'flex', gap: 10, padding: '12px 14px', background: '#FFFCF7', border: '1px solid #FCD34D', borderRadius: 8, alignItems: 'flex-start' }}>
+                <AlertCircle size={16} strokeWidth={1.75} style={{ color: '#B45309', marginTop: 1, flexShrink: 0 }} />
+                <span style={{ fontSize: 14, color: '#1C0F36' }}>
+                  Revoke invite for <strong>{revokeTarget.email}</strong>? They won't be able to use the link anymore.
+                </span>
+              </div>
+            </div>
+            <div className="up-modal-ft">
+              <button className="btn-secondary" onClick={() => setRevokeTarget(null)}>Cancel</button>
+              <button
+                className="btn-danger"
+                onClick={confirmRevokeInvite}
+                disabled={pendingAction[revokeTarget.id] === 'revoke'}
+              >
+                {pendingAction[revokeTarget.id] === 'revoke'
+                  ? <><Loader2 size={14} strokeWidth={1.75} className="spin" /> Revoking…</>
+                  : 'Revoke invite'
+                }
+              </button>
+            </div>
           </div>
         </div>
       )}

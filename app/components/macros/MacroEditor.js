@@ -294,7 +294,13 @@ export default function MacroEditor({ macroId, initialMacro = null, mode }) {
     if (editorRef.current) setBody(editorRef.current.innerHTML)
   }
   function insertVariable(token) {
-    insertHtml(token)
+    // Defensive: even though onMouseDown preventDefault should keep focus
+    // in the editor, re-focus + restore the saved range before executing
+    // so the cursor is guaranteed to be inside the editable region.
+    if (editorRef.current) editorRef.current.focus()
+    sel.restore()
+    document.execCommand('insertText', false, token)
+    if (editorRef.current) setBody(editorRef.current.innerHTML)
     setVarsOpen(false)
   }
   function insertLink() {
@@ -487,15 +493,27 @@ export default function MacroEditor({ macroId, initialMacro = null, mode }) {
                 <button
                   type="button"
                   className="me-tb-vars-btn"
-                  onClick={() => { sel.save(); setVarsOpen(v => !v) }}
+                  // Save selection on mousedown — BEFORE focus could shift to the button.
+                  // preventDefault stops the focus shift; sel.save captures the live cursor.
+                  onMouseDown={(e) => { e.preventDefault(); sel.save() }}
+                  onClick={() => setVarsOpen(v => !v)}
                 >
                   <Variable size={13} strokeWidth={1.75} />
                   Insert variable
                 </button>
                 {varsOpen && (
-                  <div className="me-vars-panel" onMouseDown={(e) => e.preventDefault()}>
+                  <div className="me-vars-panel">
                     {VARIABLES.map(v => (
-                      <button key={v.token} type="button" className="me-var-item" onClick={() => insertVariable(v.token)}>
+                      <button
+                        key={v.token}
+                        type="button"
+                        className="me-var-item"
+                        // preventDefault on each button (not just the panel) keeps focus
+                        // in the editor — bubble-phase preventDefault on the panel is too
+                        // late once the button has already received focus.
+                        onMouseDown={(e) => e.preventDefault()}
+                        onClick={() => insertVariable(v.token)}
+                      >
                         <div className="me-var-token">{v.token}</div>
                         <div className="me-var-label">{v.label}</div>
                       </button>

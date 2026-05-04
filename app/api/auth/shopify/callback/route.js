@@ -8,7 +8,7 @@ function timingSafeCompare(a, b) {
   return left.length === right.length && crypto.timingSafeEqual(left, right)
 }
 
-async function syncOrders(userId, shop, accessToken) {
+async function syncOrders(userId, workspaceId, shop, accessToken) {
   const since = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString()
   let orders = []
   let url = `https://${shop}/admin/api/2025-04/orders.json?status=any&limit=250&processed_at_min=${since}`
@@ -31,26 +31,28 @@ async function syncOrders(userId, shop, accessToken) {
       sum + (r.transactions || []).reduce((ts, t) =>
         ts + parseFloat(t.amount_set?.presentment_money?.amount || t.amount || 0), 0), 0)
 
+    // Transition: dual-write client_id (legacy) + workspace_id
     return {
-      id: order.id,
-      client_id: userId,
-      order_number: order.name,
-      financial_status: order.financial_status,
-      cancel_reason: order.cancel_reason || null,
-      subtotal_price: subtotal,
-      total_price: totalPrice,
-      total_discounts: totalDiscounts,
-      refund_amount: refundAmount,
+      id:                   order.id,
+      client_id:            userId,
+      workspace_id:         workspaceId,
+      order_number:         order.name,
+      financial_status:     order.financial_status,
+      cancel_reason:        order.cancel_reason || null,
+      subtotal_price:       subtotal,
+      total_price:          totalPrice,
+      total_discounts:      totalDiscounts,
+      refund_amount:        refundAmount,
       presentment_currency: order.presentment_currency || order.currency || null,
-      source_name: order.source_name || null,
-      customer_email: order.customer?.email || order.email || null,
-      customer_name: order.customer
+      source_name:          order.source_name || null,
+      customer_email:       order.customer?.email || order.email || null,
+      customer_name:        order.customer
         ? `${order.customer.first_name || ''} ${order.customer.last_name || ''}`.trim()
         : null,
-      processed_at: order.processed_at,
-      created_at_shopify: order.created_at,
-      updated_at_shopify: order.updated_at,
-      synced_at: new Date().toISOString(),
+      processed_at:         order.processed_at,
+      created_at_shopify:   order.created_at,
+      updated_at_shopify:   order.updated_at,
+      synced_at:            new Date().toISOString(),
     }
   })
 
@@ -99,13 +101,30 @@ export async function GET(request) {
     return NextResponse.redirect(`${appUrl}/settings?error=token_exchange_failed`)
   }
 
+  // Resolve workspace_id from the user who initiated OAuth. If the user
+  // somehow has no workspace at this point, fail loudly — the OAuth flow
+  // shouldn't be reachable without a logged-in user who already has one.
+  const { data: membership } = await supabaseAdmin
+    .from('workspace_members')
+    .select('workspace_id')
+    .eq('user_id', oauthState.user_id)
+    .maybeSingle()
+
+  const workspaceId = membership?.workspace_id
+  if (!workspaceId) {
+    console.error('[shopify oauth callback] no workspace found for user', oauthState.user_id)
+    return NextResponse.redirect(`${appUrl}/settings?error=no_workspace`)
+  }
+
+  // Transition: dual-write client_id (legacy) + workspace_id
   const { error: upsertError } = await supabaseAdmin.from('integrations').upsert({
-    client_id: oauthState.user_id,
-    shopify_domain: shop,
-    shopify_access_token: tokenData.access_token,
-    shopify_scope: tokenData.scope,
+    client_id:             oauthState.user_id,
+    workspace_id:          workspaceId,
+    shopify_domain:        shop,
+    shopify_access_token:  tokenData.access_token,
+    shopify_scope:         tokenData.scope,
     shopify_client_secret: clientSecret,
-    shopify_connected_at: new Date().toISOString(),
+    shopify_connected_at:  new Date().toISOString(),
   }, { onConflict: 'client_id' })
 
   if (upsertError) {
@@ -113,7 +132,9 @@ export async function GET(request) {
     return NextResponse.redirect(`${appUrl}/settings?error=save_failed`)
   }
 
-  // Register webhooks
+  // Register webhooks. ?cid is now workspace_id (Block C Phase 3 Batch 5).
+  // Webhook handler resolves the integration row by workspace_id and falls
+  // back to legacy client_id lookup for any pre-migration subscriptions.
   const webhookBase = process.env.NEXT_PUBLIC_APP_URL
   const webhookTopics = ['orders/create', 'orders/updated', 'orders/cancelled', 'refunds/create']
   await Promise.all(webhookTopics.map(topic =>
@@ -121,7 +142,7 @@ export async function GET(request) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-Shopify-Access-Token': tokenData.access_token },
       body: JSON.stringify({
-        webhook: { topic, address: `${webhookBase}/api/webhooks/shopify?cid=${oauthState.user_id}`, format: 'json' },
+        webhook: { topic, address: `${webhookBase}/api/webhooks/shopify?cid=${workspaceId}`, format: 'json' },
       }),
     })
   ))
@@ -130,7 +151,7 @@ export async function GET(request) {
 
   // Sync last 90 days of orders immediately after connecting
   try {
-    await syncOrders(oauthState.user_id, shop, tokenData.access_token)
+    await syncOrders(oauthState.user_id, workspaceId, shop, tokenData.access_token)
   } catch (e) {
     console.error('Initial sync failed:', e)
   }

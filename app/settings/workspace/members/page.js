@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, useCallback } from 'react'
 import { createClient } from '@supabase/supabase-js'
 import {
   UserPlus, Search, MoreHorizontal, Mail,
-  X, Check, AlertCircle, Loader2, Users, Copy, RefreshCw, Trash2,
+  X, Check, AlertCircle, Loader2, Users, Copy, RefreshCw, Trash2, ChevronDown,
 } from 'lucide-react'
 
 const supabase = createClient(
@@ -12,7 +12,9 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 )
 
-const ROLES = ['admin', 'agent', 'observer']
+const ROLES        = ['admin', 'agent', 'observer']               // selectable in invite modal
+const ROLES_FOR_OWNER = ['owner', 'admin', 'agent', 'observer']    // owner can pick any
+const ROLES_FOR_ADMIN = ['admin', 'agent', 'observer']             // admin cannot promote to owner
 
 const ROLE_LABELS = {
   owner:    'Owner',
@@ -24,6 +26,13 @@ const ROLE_LABELS = {
 const ROLE_DESCS = {
   admin:    'Manage workspace & users',
   agent:    'Handle tickets & Shopify',
+  observer: 'View-only access',
+}
+
+const ROLE_DESCS_FULL = {
+  owner:    'Full access including billing',
+  admin:    'Manage workspace and members',
+  agent:    'Handle tickets and customers',
   observer: 'View-only access',
 }
 
@@ -80,6 +89,36 @@ const CSS = `
   .up-badge-admin    { background: #F1EEF5; color: #4B3B6B; }
   .up-badge-agent    { background: #F1EEF5; color: #4B3B6B; }
   .up-badge-observer { background: #F1EEF5; color: #4B3B6B; }
+
+  /* Interactive role trigger (clickable badge) */
+  .up-role-trigger {
+    border: 1px solid transparent; cursor: pointer; font-family: inherit;
+    transition: border-color 0.15s, background 0.15s;
+    position: relative;
+  }
+  .up-role-trigger:hover  { border-color: #C8C0D4; }
+  .up-role-trigger:focus  { outline: none; border-color: #A175FC; box-shadow: 0 0 0 3px rgba(161,117,252,0.15); }
+  .up-role-trigger:disabled { cursor: wait; opacity: 0.7; }
+  .up-role-chev { margin-left: 4px; opacity: 0.7; }
+  .up-role-cell { position: relative; display: inline-block; }
+
+  .up-role-panel {
+    position: absolute; top: calc(100% + 4px); left: 0; z-index: 60;
+    background: #fff; border: 1px solid #E5E0EB; border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(28,15,54,0.12); min-width: 240px; overflow: hidden;
+    padding: 4px 0;
+  }
+  .up-role-option {
+    display: flex; align-items: flex-start; gap: 10px; padding: 9px 12px;
+    background: none; border: none; width: 100%; text-align: left;
+    font-family: inherit; cursor: pointer; transition: background 0.1s;
+  }
+  .up-role-option:hover { background: #F8F7FA; }
+  .up-role-option .check { width: 14px; flex-shrink: 0; color: #A175FC; margin-top: 2px; }
+  .up-role-option-text  { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+  .up-role-option-name  { font-size: 13px; font-weight: 500; color: #1C0F36; }
+  .up-role-option.active .up-role-option-name { color: #A175FC; }
+  .up-role-option-desc  { font-size: 11px; color: #9B91A8; line-height: 1.4; }
 
   .up-invite-row td { background: #FFFCF7; }
   .up-invite-row:hover td { background: #FFF8EB; }
@@ -284,6 +323,11 @@ export default function UsersPage() {
   const [revokeTarget, setRevokeTarget] = useState(null)   // { id, email }
   const [pendingAction, setPendingAction] = useState({})   // { [inviteId]: 'resend' | 'revoke' }
 
+  const [roleMenuOpen,   setRoleMenuOpen]   = useState(null)  // member id whose role panel is open
+  const [roleUpdating,   setRoleUpdating]   = useState({})    // { [memberId]: true }
+  const [promoteTarget,  setPromoteTarget]  = useState(null)  // { member, name } awaiting confirmation
+  const roleMenuRef = useRef(null)
+
   const [inviteEmail, setInviteEmail] = useState('')
   const [inviteRole, setInviteRole]   = useState('agent')
   const [inviting, setInviting]       = useState(false)
@@ -372,31 +416,72 @@ export default function UsersPage() {
     }
   }, [loading, users.length, apiError, repairedOnce, debouncedSearch, runRepair])
 
-  // Close dropdown on outside click
+  // Close dropdowns on outside click
   useEffect(() => {
     const handler = (e) => {
       if (menuRef.current && !menuRef.current.contains(e.target)) setOpenMenu(null)
+      if (roleMenuRef.current && !roleMenuRef.current.contains(e.target)) setRoleMenuOpen(null)
     }
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
   }, [])
 
+  // Close role menu on Escape
+  useEffect(() => {
+    if (!roleMenuOpen) return
+    const onKey = (e) => { if (e.key === 'Escape') setRoleMenuOpen(null) }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [roleMenuOpen])
+
   // Server-sourced role is primary; isOwner is a safety net so the actual
   // workspace owner can never be locked out, even if the role lookup fails.
   const canManage = ['owner', 'admin'].includes(myRole) || isOwner
 
-  async function handleChangeRole(memberId, newRole) {
-    setOpenMenu(null)
+  // Optimistic role change: flip the badge in place, fire PATCH, rollback on error.
+  async function changeRole(member, newRole) {
+    if (member.role === newRole) { setRoleMenuOpen(null); return }
+
+    const previousRole = member.role
+    const displayName  = member.display_name || member.email?.split('@')[0] || 'Member'
+
+    setRoleMenuOpen(null)
+    setRoleUpdating(prev => ({ ...prev, [member.id]: true }))
+    setUsers(prev => prev.map(u => u.id === member.id ? { ...u, role: newRole } : u))
+
     const token = await getToken()
-    const res = await fetch(`/api/workspaces/current/members/${memberId}`, {
+    const res = await fetch(`/api/workspaces/current/members/${member.id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       body: JSON.stringify({ role: newRole }),
     })
-    const data = await res.json()
-    if (!res.ok) { showToast(data.error || 'Failed to update role', 'err'); return }
-    showToast('Role updated')
-    fetchUsers(debouncedSearch)
+    const data = await res.json().catch(() => ({}))
+
+    setRoleUpdating(prev => { const n = { ...prev }; delete n[member.id]; return n })
+
+    if (!res.ok) {
+      // Rollback
+      setUsers(prev => prev.map(u => u.id === member.id ? { ...u, role: previousRole } : u))
+      showToast(data.error || 'Failed to update role', 'err')
+      return
+    }
+    showToast(`${displayName} is now ${newRole === 'admin' ? 'an' : 'a'} ${ROLE_LABELS[newRole]}`)
+  }
+
+  function handleRoleSelect(member, newRole) {
+    if (newRole === 'owner' && member.role !== 'owner') {
+      setRoleMenuOpen(null)
+      setPromoteTarget(member)
+      return
+    }
+    changeRole(member, newRole)
+  }
+
+  function confirmPromoteToOwner() {
+    if (!promoteTarget) return
+    const target = promoteTarget
+    setPromoteTarget(null)
+    changeRole(target, 'owner')
   }
 
   async function handleResendInvite(invite) {
@@ -695,9 +780,73 @@ export default function UsersPage() {
                       </td>
                       <td className="up-email">{row.email || '—'}</td>
                       <td>
-                        <span className={`up-badge up-badge-${row.role}`}>
-                          {ROLE_LABELS[row.role] || row.role}
-                        </span>
+                        {(() => {
+                          const isMeRow       = row.user_id === myId
+                          const targetIsOwner = row.role === 'owner'
+                          // Permission: owner can change anyone except self; admin can change non-owner non-self
+                          const editable = canManage && !isMeRow && !(targetIsOwner && myRole !== 'owner')
+                          const updating = roleUpdating[row.id]
+                          const tooltip  = isMeRow
+                            ? "You can't change your own role"
+                            : (targetIsOwner && myRole !== 'owner')
+                              ? "Only owners can change another owner's role"
+                              : undefined
+
+                          if (!editable) {
+                            return (
+                              <span className={`up-badge up-badge-${row.role}`} title={tooltip}>
+                                {ROLE_LABELS[row.role] || row.role}
+                              </span>
+                            )
+                          }
+
+                          const options = myRole === 'owner' ? ROLES_FOR_OWNER : ROLES_FOR_ADMIN
+                          const isOpen  = roleMenuOpen === row.id
+
+                          return (
+                            <span className="up-role-cell" ref={isOpen ? roleMenuRef : null}>
+                              <button
+                                type="button"
+                                className={`up-badge up-badge-${row.role} up-role-trigger`}
+                                onClick={() => setRoleMenuOpen(isOpen ? null : row.id)}
+                                disabled={updating}
+                                aria-haspopup="menu"
+                                aria-expanded={isOpen}
+                              >
+                                {updating
+                                  ? <Loader2 size={11} strokeWidth={1.75} className="spin" />
+                                  : null
+                                }
+                                {ROLE_LABELS[row.role] || row.role}
+                                {!updating && <ChevronDown size={11} strokeWidth={2} className="up-role-chev" />}
+                              </button>
+
+                              {isOpen && (
+                                <div className="up-role-panel" role="menu">
+                                  {options.map(r => {
+                                    const active = row.role === r
+                                    return (
+                                      <button
+                                        key={r}
+                                        className={`up-role-option${active ? ' active' : ''}`}
+                                        onClick={() => handleRoleSelect(row, r)}
+                                        role="menuitem"
+                                      >
+                                        <span className="check">
+                                          {active && <Check size={14} strokeWidth={2} />}
+                                        </span>
+                                        <span className="up-role-option-text">
+                                          <span className="up-role-option-name">{ROLE_LABELS[r]}</span>
+                                          <span className="up-role-option-desc">{ROLE_DESCS_FULL[r]}</span>
+                                        </span>
+                                      </button>
+                                    )
+                                  })}
+                                </div>
+                              )}
+                            </span>
+                          )
+                        })()}
                       </td>
                       <td>
                         {row.two_factor_enabled
@@ -716,23 +865,6 @@ export default function UsersPage() {
                             </button>
                             {openMenu === row.id && (
                               <div className="up-dropdown">
-                                <div className="up-dd-section">
-                                  <div className="up-dd-label">Change role</div>
-                                  {ROLES.map(r => (
-                                    <button
-                                      key={r}
-                                      className={`up-dd-item${row.role === r ? ' active' : ''}`}
-                                      onClick={() => handleChangeRole(row.id, r)}
-                                    >
-                                      {row.role === r
-                                        ? <Check size={13} strokeWidth={2} />
-                                        : <span style={{ display: 'inline-block', width: 13 }} />
-                                      }
-                                      {ROLE_LABELS[r]}
-                                    </button>
-                                  ))}
-                                </div>
-                                <div className="up-dd-divider" />
                                 <div className="up-dd-section">
                                   <button
                                     className="up-dd-item danger"
@@ -886,6 +1018,33 @@ export default function UsersPage() {
                 </div>
               </>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Promote-to-Owner Confirm Modal */}
+      {promoteTarget && (
+        <div className="up-overlay" onClick={e => e.target === e.currentTarget && setPromoteTarget(null)}>
+          <div className="up-modal">
+            <div className="up-modal-hd">
+              <div>
+                <div className="up-modal-title">
+                  Make {promoteTarget.display_name || promoteTarget.email?.split('@')[0] || 'this user'} an owner?
+                </div>
+                <div className="up-modal-sub">
+                  Owners have full control of this workspace, including billing and the ability to remove other members. This cannot be undone except by another owner.
+                </div>
+              </div>
+              <button className="up-modal-close" onClick={() => setPromoteTarget(null)}>
+                <X size={16} strokeWidth={1.75} />
+              </button>
+            </div>
+            <div className="up-modal-ft" style={{ paddingTop: 20 }}>
+              <button className="btn-secondary" onClick={() => setPromoteTarget(null)}>Cancel</button>
+              <button className="btn-primary" onClick={confirmPromoteToOwner}>
+                Make owner
+              </button>
+            </div>
           </div>
         </div>
       )}

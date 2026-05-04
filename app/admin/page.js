@@ -186,7 +186,6 @@ export default function AdminPage() {
   const [notifForm, setNotifForm]         = useState({ title: '', body: '', type: 'info' })
   const [form, setForm] = useState({
     company_name: '', email: '', password: '',
-    gorgias_domain: '', gorgias_api_key: '',
     shopify_domain: '', shopify_api_key: '',
     parcel_panel_api_key: '',
   })
@@ -323,13 +322,12 @@ export default function AdminPage() {
     if (authError) { alert('Error: ' + authError.message); setLoading(false); return }
     const { error: dbError } = await supabase.from('clients').insert({
       company_name: form.company_name, email: form.email,
-      gorgias_domain: form.gorgias_domain, gorgias_api_key: form.gorgias_api_key,
       shopify_domain: form.shopify_domain, shopify_api_key: form.shopify_api_key,
       parcel_panel_api_key: form.parcel_panel_api_key, status: 'active',
     })
     if (dbError) { alert('DB Error: ' + dbError.message); setLoading(false); return }
     setSuccess(`Client ${form.company_name} created!`)
-    setForm({ company_name:'', email:'', password:'', gorgias_domain:'', gorgias_api_key:'', shopify_domain:'', shopify_api_key:'', parcel_panel_api_key:'' })
+    setForm({ company_name:'', email:'', password:'', shopify_domain:'', shopify_api_key:'', parcel_panel_api_key:'' })
     fetchClients(); setLoading(false)
   }
 
@@ -491,7 +489,6 @@ export default function AdminPage() {
                   <div style={{ flex:1, minWidth:0 }}>
                     <div style={{ fontSize:13, fontWeight:500, color:'#0F0F10' }}>{c.company_name}</div>
                     <div style={{ fontSize:12, color:'#6B7280' }}>{c.email}</div>
-                    {c.gorgias_domain && <div style={{ fontSize:11, color:'#9CA3AF', marginTop:1 }}>Gorgias: {c.gorgias_domain}</div>}
                   </div>
                   <span style={{ fontSize:11, fontWeight:600, padding:'3px 9px', borderRadius:100, background: c.status==='active' ? 'rgba(16,185,129,0.08)' : '#F5F5F5', color: c.status==='active' ? '#059669' : '#9CA3AF', border:`1px solid ${c.status==='active' ? 'rgba(16,185,129,0.15)' : 'rgba(0,0,0,0.06)'}` }}>
                     {c.status}
@@ -522,10 +519,6 @@ export default function AdminPage() {
                     <div className="ap-section-divider">
                       <div style={{ fontSize:10, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.07em', color:'#9CA3AF', marginBottom:8 }}>INTEGRATIONS</div>
                     </div>
-                    <label className="ap-label">Gorgias Domain</label>
-                    <input className="ap-input" value={form.gorgias_domain} onChange={e => setForm({...form, gorgias_domain:e.target.value})} placeholder="store.gorgias.com" />
-                    <label className="ap-label">Gorgias API Key</label>
-                    <input className="ap-input" value={form.gorgias_api_key} onChange={e => setForm({...form, gorgias_api_key:e.target.value})} placeholder="API key" />
                     <label className="ap-label">Shopify Domain</label>
                     <input className="ap-input" value={form.shopify_domain} onChange={e => setForm({...form, shopify_domain:e.target.value})} placeholder="store.myshopify.com" />
                     <label className="ap-label">Shopify API Key</label>

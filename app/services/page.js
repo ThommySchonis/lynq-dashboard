@@ -141,7 +141,7 @@ const SERVICES = [
     iconColor: '#6366F1',
     icon: Icons.headset,
     description: 'A trained specialist who handles all incoming customer inquiries — tracking, refunds, returns, and general support. Fully onboarded to your brand voice and policies.',
-    features: ['100+ tickets handled daily', 'Trained on your brand voice & policies', 'Gorgias, Zendesk & Re:amaze certified'],
+    features: ['100+ tickets handled daily', 'Trained on your brand voice & policies', 'Zendesk & Re:amaze certified'],
   },
   {
     id: 'dispute_manager',

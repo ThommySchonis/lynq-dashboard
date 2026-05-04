@@ -19,7 +19,7 @@ const QUIZ_QUESTIONS = {
     { q: 'What is the first step when handling a customer complaint?', opts: ['Offer a refund immediately', 'Listen and acknowledge the issue', 'Transfer to manager', 'Close the ticket'], correct: 1 },
     { q: 'What does CSAT stand for?', opts: ['Customer Satisfaction Score', 'Customer Service Agent Training', 'Case Status And Tracking', 'Client Support Action Team'], correct: 0 },
     { q: 'What is the ideal first response time for support tickets?', opts: ['24 hours', '12 hours', '4 hours', '1 hour'], correct: 2 },
-    { q: 'Which tool is used for helpdesk management at Lynq?', opts: ['Shopify', 'Klaviyo', 'Gorgias', 'Meta Ads'], correct: 2 },
+    { q: 'Which tool is used for helpdesk management at Lynq?', opts: ['Shopify', 'Klaviyo', 'Lynq Inbox', 'Meta Ads'], correct: 2 },
     { q: 'What should you always do before closing a ticket?', opts: ['Ask for payment', 'Confirm the issue is resolved', 'Send a survey', 'Escalate to manager'], correct: 1 },
   ],
   'refund-handling': [
@@ -139,7 +139,7 @@ const MODULES = [
       },
       {
         title: 'Shopify Tools for Support Teams', mins: 4,
-        body: `Support teams spend most of their time in Shopify's admin. Speed comes from knowing the shortcuts.\n\nMust-know tools: Customer timeline view (see all orders + history), Order notes (internal communication), Refund flow, Address edit, and the Risk analysis tab for fraud detection.\n\nGorgias integrates directly with Shopify so you can trigger refunds, tag orders, and view customer order history without leaving the helpdesk.`,
+        body: `Support teams spend most of their time in Shopify's admin. Speed comes from knowing the shortcuts.\n\nMust-know tools: Customer timeline view (see all orders + history), Order notes (internal communication), Refund flow, Address edit, and the Risk analysis tab for fraud detection.\n\nA good helpdesk integrates directly with Shopify so you can trigger refunds, tag orders, and view customer order history without leaving the inbox.`,
         takeaways: ['The Shopify customer timeline is the fastest way to understand a customer\'s entire history.', 'Always leave internal notes on orders when taking support actions.', 'High-risk scores in Shopify\'s fraud analysis should flag the order for manual review before fulfillment.'],
       },
     ],
@@ -210,7 +210,7 @@ const MODULES = [
       },
       {
         title: 'Setting Up Reporting and Dashboards', mins: 4,
-        body: `Data is useless without visibility. A good reporting setup gives you real-time access to ticket volume, resolution rates, and team performance.\n\nGorgias dashboards provide most of the CS metrics you need: response time, resolution time, CSAT, ticket volume by tag. Supplement with Shopify's analytics for refund rates and order data.\n\nWeekly report template:\n— Tickets received vs last week (+/-%)\n— FCR rate\n— CSAT average\n— Average response time\n— Top 3 ticket categories\n— Open tickets aging >72h`,
+        body: `Data is useless without visibility. A good reporting setup gives you real-time access to ticket volume, resolution rates, and team performance.\n\nYour helpdesk dashboard should provide the core CS metrics: response time, resolution time, CSAT, ticket volume by tag. Supplement with Shopify's analytics for refund rates and order data.\n\nWeekly report template:\n— Tickets received vs last week (+/-%)\n— FCR rate\n— CSAT average\n— Average response time\n— Top 3 ticket categories\n— Open tickets aging >72h`,
         takeaways: ['Ticket volume spikes often predict refund spikes 48–72 hours later.', 'Aging tickets (open >72h) are your biggest CSAT risk — review them daily.', 'Tag consistency is essential — garbage tags produce garbage data.'],
       },
       {

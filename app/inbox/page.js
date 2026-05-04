@@ -394,7 +394,7 @@ const CSS = `
 
   @media (prefers-reduced-motion:reduce) { *,*::before,*::after { animation-duration:.01ms !important; transition-duration:.01ms !important; } }
 
-  /* ── Right Panel — Gorgias style ── */
+  /* ── Right Panel ── */
   .rp-search { width:100%; padding:7px 12px 7px 32px; background:var(--bg-surface-2); border:1px solid var(--border); border-radius:8px; color:var(--text-1); font-size:12px; outline:none; transition:border-color .2s; font-family:inherit; }
   .rp-search:focus { border-color:var(--border-hover); }
   .rp-search::placeholder { color:var(--text-3); }
@@ -2375,7 +2375,7 @@ function InboxPage() {
                 />
               )}
 
-              {/* Composer — Gorgias style */}
+              {/* Composer */}
               {!showMacros&&(
                 <>
                   {/* Tab strip */}
@@ -2512,7 +2512,7 @@ function InboxPage() {
         )}
       </div>
 
-      {/* ═══════════════ RIGHT: Customer panel — Gorgias style ═══════════════ */}
+      {/* ═══════════════ RIGHT: Customer panel ═══════════════ */}
       {selected&&(
         <div className="sscroll" style={{width:280,borderLeft:'1px solid var(--border)',display:'flex',flexDirection:'column',flexShrink:0,overflowY:'auto',background:'var(--bg-surface)'}}>
 
@@ -2662,7 +2662,7 @@ function InboxPage() {
               {!loadingCust&&!customer?.customer&&<div style={{padding:'24px 0',textAlign:'center',fontSize:12,color:'var(--text-3)'}}>No Shopify data found</div>}
               {!loadingCust&&customer?.customer&&(customer.orders||[]).length===0&&<div style={{padding:'24px 0',textAlign:'center',fontSize:12,color:'var(--text-3)'}}>No orders</div>}
 
-              {/* Order sections — Gorgias style */}
+              {/* Order sections */}
               {(customer?.orders||[]).map((order,oi)=>{
                 const isOpen       = expandedOrders[order.id]===undefined ? oi===0 : expandedOrders[order.id]
                 const shippingOpen = expandedSubs[`${order.id}_shipping`]===undefined ? true : !!expandedSubs[`${order.id}_shipping`]

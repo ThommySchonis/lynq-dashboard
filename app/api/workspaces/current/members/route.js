@@ -162,10 +162,11 @@ export async function POST(request) {
     return NextResponse.json({ error: 'This person is already a member' }, { status: 400 })
   }
 
-  // Existing pending invite check — refuse with 409 so the UI can offer
-  // a "Resend" action on the existing invite instead of silently churning
-  // tokens. Accepted-then-removed cycles aren't blocked since we filter
-  // by accepted_at IS NULL.
+  // Look for an existing pending invite (accepted_at IS NULL). If one
+  // exists we refresh it in place — new token, fresh expiry, new sent_at,
+  // and invited_by/role updated to the current admin. Avoids the unique
+  // constraint conflict on (workspace_id, email) for re-invites and gives
+  // the user a fresh email instead of a stale 409.
   const { data: existingInvite, error: existingInviteError } = await supabaseAdmin
     .from('workspace_invites')
     .select('id')
@@ -179,37 +180,58 @@ export async function POST(request) {
     return NextResponse.json({ error: existingInviteError.message, code: 'lookup_failed' }, { status: 500 })
   }
 
-  if (existingInvite) {
-    return NextResponse.json(
-      {
-        error:      `An invite for ${normalizedEmail} is already pending. Resend it instead?`,
-        code:       'already_invited',
-        invite_id:  existingInvite.id,
-      },
-      { status: 409 }
-    )
-  }
-
   const newToken  = randomBytes(32).toString('hex')
   const newExpiry = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+  const nowIso    = new Date().toISOString()
 
-  console.log('[invite POST] creating new invite')
-  const { data: invite, error: inviteError } = await supabaseAdmin
-    .from('workspace_invites')
-    .insert({
-      workspace_id: ctx.workspaceId,
-      email:        normalizedEmail,
-      role,
-      invited_by:   ctx.user.id,
-      token:        newToken,
-      expires_at:   newExpiry,
-    })
-    .select()
-    .single()
+  let invite
+  if (existingInvite) {
+    console.log('[invite POST] refreshing pending invite', existingInvite.id)
+    const { data: updated, error: updateError } = await supabaseAdmin
+      .from('workspace_invites')
+      .update({
+        role,
+        token:      newToken,
+        expires_at: newExpiry,
+        sent_at:    nowIso,
+        invited_by: ctx.user.id,
+      })
+      .eq('id', existingInvite.id)
+      .select()
+      .single()
 
-  if (inviteError || !invite) {
-    console.error('[invite POST] insert/update failed:', inviteError?.message)
-    return NextResponse.json({ error: inviteError?.message ?? 'Failed to create invite' }, { status: 500 })
+    if (updateError || !updated) {
+      console.error('[invite POST] update failed:', updateError?.message)
+      return NextResponse.json({ error: updateError?.message ?? 'Failed to refresh invite' }, { status: 500 })
+    }
+    invite = updated
+  } else {
+    // No pending invite — INSERT. Covers two cases:
+    //   (a) brand-new email never invited
+    //   (b) previously accepted user who was removed from workspace_members
+    //       (the partial unique index `workspace_invites_active_unique` only
+    //       blocks duplicates among rows where accepted_at IS NULL, so an
+    //       old accepted row doesn't conflict)
+    console.log('[invite POST] creating new invite')
+    const { data: inserted, error: insertError } = await supabaseAdmin
+      .from('workspace_invites')
+      .insert({
+        workspace_id: ctx.workspaceId,
+        email:        normalizedEmail,
+        role,
+        invited_by:   ctx.user.id,
+        token:        newToken,
+        expires_at:   newExpiry,
+        sent_at:      nowIso,
+      })
+      .select()
+      .single()
+
+    if (insertError || !inserted) {
+      console.error('[invite POST] insert failed:', insertError?.message)
+      return NextResponse.json({ error: insertError?.message ?? 'Failed to create invite' }, { status: 500 })
+    }
+    invite = inserted
   }
 
   console.log('[invite POST] invite saved, id:', invite.id, 'token length:', invite.token?.length)

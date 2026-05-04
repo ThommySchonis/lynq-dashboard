@@ -190,14 +190,26 @@ function useSavedSelection() {
   return {
     save: () => {
       const sel = window.getSelection()
-      if (sel && sel.rangeCount > 0) ref.current = sel.getRangeAt(0).cloneRange()
+      const range = sel && sel.rangeCount > 0 ? sel.getRangeAt(0).cloneRange() : null
+      ref.current = range
+      console.log('[macros][sel.save]', range ? {
+        startContainer: range.startContainer?.nodeName,
+        startOffset:    range.startOffset,
+        collapsed:      range.collapsed,
+      } : 'no range — selection was empty')
     },
     restore: () => {
-      if (!ref.current) return
+      if (!ref.current) {
+        console.log('[macros][sel.restore] NO saved range — restore is a no-op')
+        return false
+      }
       const sel = window.getSelection()
       sel.removeAllRanges()
       sel.addRange(ref.current)
+      console.log('[macros][sel.restore] applied saved range')
+      return true
     },
+    hasRange: () => !!ref.current,
   }
 }
 
@@ -294,12 +306,25 @@ export default function MacroEditor({ macroId, initialMacro = null, mode }) {
     if (editorRef.current) setBody(editorRef.current.innerHTML)
   }
   function insertVariable(token) {
-    // Defensive: even though onMouseDown preventDefault should keep focus
-    // in the editor, re-focus + restore the saved range before executing
-    // so the cursor is guaranteed to be inside the editable region.
-    if (editorRef.current) editorRef.current.focus()
-    sel.restore()
-    document.execCommand('insertText', false, token)
+    console.log('[macros][insertVariable] CLICK FIRED, token =', token)
+    console.log('[macros][insertVariable] editorRef =', editorRef.current ? 'present' : 'MISSING')
+    console.log('[macros][insertVariable] activeElement before focus =', document.activeElement?.tagName, document.activeElement?.className)
+
+    if (editorRef.current) {
+      editorRef.current.focus()
+      console.log('[macros][insertVariable] called editor.focus(), activeElement now =', document.activeElement?.tagName, document.activeElement?.className)
+    }
+
+    const restored = sel.restore()
+    console.log('[macros][insertVariable] sel.restore returned =', restored)
+
+    const before = editorRef.current?.innerHTML
+    const result = document.execCommand('insertText', false, token)
+    console.log('[macros][insertVariable] execCommand returned =', result)
+
+    const after  = editorRef.current?.innerHTML
+    console.log('[macros][insertVariable] body changed?', before !== after, 'len before =', before?.length, 'after =', after?.length)
+
     if (editorRef.current) setBody(editorRef.current.innerHTML)
     setVarsOpen(false)
   }
@@ -495,8 +520,15 @@ export default function MacroEditor({ macroId, initialMacro = null, mode }) {
                   className="me-tb-vars-btn"
                   // Save selection on mousedown — BEFORE focus could shift to the button.
                   // preventDefault stops the focus shift; sel.save captures the live cursor.
-                  onMouseDown={(e) => { e.preventDefault(); sel.save() }}
-                  onClick={() => setVarsOpen(v => !v)}
+                  onMouseDown={(e) => {
+                    console.log('[macros][trigger.onMouseDown] firing, target =', e.target?.tagName)
+                    e.preventDefault()
+                    sel.save()
+                  }}
+                  onClick={() => {
+                    console.log('[macros][trigger.onClick] firing, hasRange =', sel.hasRange())
+                    setVarsOpen(v => !v)
+                  }}
                 >
                   <Variable size={13} strokeWidth={1.75} />
                   Insert variable
@@ -511,8 +543,14 @@ export default function MacroEditor({ macroId, initialMacro = null, mode }) {
                         // preventDefault on each button (not just the panel) keeps focus
                         // in the editor — bubble-phase preventDefault on the panel is too
                         // late once the button has already received focus.
-                        onMouseDown={(e) => e.preventDefault()}
-                        onClick={() => insertVariable(v.token)}
+                        onMouseDown={(e) => {
+                          console.log('[macros][var-item.onMouseDown]', v.token)
+                          e.preventDefault()
+                        }}
+                        onClick={() => {
+                          console.log('[macros][var-item.onClick]', v.token)
+                          insertVariable(v.token)
+                        }}
                       >
                         <div className="me-var-token">{v.token}</div>
                         <div className="me-var-label">{v.label}</div>

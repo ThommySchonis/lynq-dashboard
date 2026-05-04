@@ -7,6 +7,9 @@ const PUBLIC_API_PREFIXES = [
   // Invite flow: GET metadata + POST signup are pre-session.
   // The /accept sub-route still enforces Bearer auth in its own handler.
   '/api/invites/',
+  // Temporary sanity-check endpoint — REMOVE alongside the route file
+  // when Phase 2 starts.
+  '/api/test-anthropic',
 ]
 
 function isPublicApiPath(pathname) {

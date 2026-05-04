@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import { createClient } from '@supabase/supabase-js'
 import {
   UserPlus, Search, MoreHorizontal, Mail,
@@ -103,7 +104,7 @@ const CSS = `
   .up-role-cell { position: relative; display: inline-block; }
 
   .up-role-panel {
-    position: absolute; top: calc(100% + 4px); left: 0; z-index: 60;
+    position: fixed; z-index: 9999;
     background: #fff; border: 1px solid #E5E0EB; border-radius: 10px;
     box-shadow: 0 8px 24px rgba(28,15,54,0.12); min-width: 240px; overflow: hidden;
     padding: 4px 0;
@@ -326,7 +327,8 @@ export default function UsersPage() {
   const [roleMenuOpen,   setRoleMenuOpen]   = useState(null)  // member id whose role panel is open
   const [roleUpdating,   setRoleUpdating]   = useState({})    // { [memberId]: true }
   const [promoteTarget,  setPromoteTarget]  = useState(null)  // { member, name } awaiting confirmation
-  const roleMenuRef = useRef(null)
+  const [rolePanelCoords, setRolePanelCoords] = useState(null) // { top, left, minWidth } in viewport coords
+  const rolePanelRef = useRef(null)
 
   const [inviteEmail, setInviteEmail] = useState('')
   const [inviteRole, setInviteRole]   = useState('agent')
@@ -416,15 +418,26 @@ export default function UsersPage() {
     }
   }, [loading, users.length, apiError, repairedOnce, debouncedSearch, runRepair])
 
-  // Close dropdowns on outside click
+  // Close 3-dot dropdown on outside click
   useEffect(() => {
     const handler = (e) => {
       if (menuRef.current && !menuRef.current.contains(e.target)) setOpenMenu(null)
-      if (roleMenuRef.current && !roleMenuRef.current.contains(e.target)) setRoleMenuOpen(null)
     }
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
   }, [])
+
+  // Close role panel on outside click — trigger is identified by data-role-trigger
+  useEffect(() => {
+    if (!roleMenuOpen) return
+    const handler = (e) => {
+      if (rolePanelRef.current?.contains(e.target)) return
+      if (e.target.closest?.(`[data-role-trigger="${roleMenuOpen}"]`)) return
+      setRoleMenuOpen(null)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [roleMenuOpen])
 
   // Close role menu on Escape
   useEffect(() => {
@@ -800,15 +813,24 @@ export default function UsersPage() {
                             )
                           }
 
-                          const options = myRole === 'owner' ? ROLES_FOR_OWNER : ROLES_FOR_ADMIN
-                          const isOpen  = roleMenuOpen === row.id
+                          const isOpen = roleMenuOpen === row.id
 
                           return (
-                            <span className="up-role-cell" ref={isOpen ? roleMenuRef : null}>
+                            <span className="up-role-cell">
                               <button
                                 type="button"
+                                data-role-trigger={row.id}
                                 className={`up-badge up-badge-${row.role} up-role-trigger`}
-                                onClick={() => setRoleMenuOpen(isOpen ? null : row.id)}
+                                onClick={(e) => {
+                                  if (isOpen) { setRoleMenuOpen(null); return }
+                                  const rect = e.currentTarget.getBoundingClientRect()
+                                  setRolePanelCoords({
+                                    top:  rect.bottom + 6,
+                                    left: rect.left,
+                                    minWidth: Math.max(rect.width, 240),
+                                  })
+                                  setRoleMenuOpen(row.id)
+                                }}
                                 disabled={updating}
                                 aria-haspopup="menu"
                                 aria-expanded={isOpen}
@@ -820,30 +842,6 @@ export default function UsersPage() {
                                 {ROLE_LABELS[row.role] || row.role}
                                 {!updating && <ChevronDown size={11} strokeWidth={2} className="up-role-chev" />}
                               </button>
-
-                              {isOpen && (
-                                <div className="up-role-panel" role="menu">
-                                  {options.map(r => {
-                                    const active = row.role === r
-                                    return (
-                                      <button
-                                        key={r}
-                                        className={`up-role-option${active ? ' active' : ''}`}
-                                        onClick={() => handleRoleSelect(row, r)}
-                                        role="menuitem"
-                                      >
-                                        <span className="check">
-                                          {active && <Check size={14} strokeWidth={2} />}
-                                        </span>
-                                        <span className="up-role-option-text">
-                                          <span className="up-role-option-name">{ROLE_LABELS[r]}</span>
-                                          <span className="up-role-option-desc">{ROLE_DESCS_FULL[r]}</span>
-                                        </span>
-                                      </button>
-                                    )
-                                  })}
-                                </div>
-                              )}
                             </span>
                           )
                         })()}
@@ -1120,6 +1118,46 @@ export default function UsersPage() {
           </div>
         </div>
       )}
+
+      {/* Role panel — portaled to body to escape the table's overflow:hidden */}
+      {roleMenuOpen && rolePanelCoords && typeof document !== 'undefined' && (() => {
+        const targetRow = users.find(u => u.id === roleMenuOpen)
+        if (!targetRow) return null
+        const options = myRole === 'owner' ? ROLES_FOR_OWNER : ROLES_FOR_ADMIN
+        return createPortal(
+          <div
+            ref={rolePanelRef}
+            className="up-role-panel"
+            role="menu"
+            style={{
+              top:      rolePanelCoords.top,
+              left:     rolePanelCoords.left,
+              minWidth: rolePanelCoords.minWidth,
+            }}
+          >
+            {options.map(r => {
+              const active = targetRow.role === r
+              return (
+                <button
+                  key={r}
+                  className={`up-role-option${active ? ' active' : ''}`}
+                  onClick={() => handleRoleSelect(targetRow, r)}
+                  role="menuitem"
+                >
+                  <span className="check">
+                    {active && <Check size={14} strokeWidth={2} />}
+                  </span>
+                  <span className="up-role-option-text">
+                    <span className="up-role-option-name">{ROLE_LABELS[r]}</span>
+                    <span className="up-role-option-desc">{ROLE_DESCS_FULL[r]}</span>
+                  </span>
+                </button>
+              )
+            })}
+          </div>,
+          document.body
+        )
+      })()}
 
       {/* Toast */}
       {toast && (

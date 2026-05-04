@@ -183,34 +183,75 @@ const CSS = `
   @keyframes spin { to { transform: rotate(360deg); } }
 `
 
-// Save selection in the editor so toolbar buttons can apply formatting at
-// the right place even after the toolbar button steals focus.
-function useSavedSelection() {
+// Save selection in the editor body so toolbar buttons can apply
+// formatting at the right place even after the toolbar steals focus.
+//
+// Crucially: only saves a range when the active element is INSIDE the
+// editor — otherwise we'd capture a selection in the name input or a
+// tag pill, and "restore" would point to the wrong element.
+function useSavedSelection(editorRef) {
   const ref = useRef(null)
   return {
     save: () => {
+      const editor = editorRef.current
+      if (!editor) return
+      const active = document.activeElement
+      // Bail out if the user wasn't editing inside the body
+      if (!active || !editor.contains(active)) {
+        ref.current = null
+        return
+      }
       const sel = window.getSelection()
-      const range = sel && sel.rangeCount > 0 ? sel.getRangeAt(0).cloneRange() : null
-      ref.current = range
-      console.log('[macros][sel.save]', range ? {
-        startContainer: range.startContainer?.nodeName,
-        startOffset:    range.startOffset,
-        collapsed:      range.collapsed,
-      } : 'no range — selection was empty')
+      ref.current = sel && sel.rangeCount > 0 ? sel.getRangeAt(0).cloneRange() : null
     },
     restore: () => {
-      if (!ref.current) {
-        console.log('[macros][sel.restore] NO saved range — restore is a no-op')
-        return false
-      }
+      if (!ref.current) return false
       const sel = window.getSelection()
       sel.removeAllRanges()
       sel.addRange(ref.current)
-      console.log('[macros][sel.restore] applied saved range')
       return true
     },
-    hasRange: () => !!ref.current,
   }
+}
+
+// Place the cursor at the end of the editor's contents.
+function placeCursorAtEnd(editorEl) {
+  const range = document.createRange()
+  range.selectNodeContents(editorEl)
+  range.collapse(false)  // collapse to end
+  const sel = window.getSelection()
+  sel.removeAllRanges()
+  sel.addRange(range)
+  return range
+}
+
+// Insert plain text at the current selection inside the editor.
+// Uses the Range API directly (more reliable than execCommand on empty
+// contentEditable / collapsed selections / Firefox edge cases).
+// Returns true if insertion happened.
+function insertTextAtCursor(editorEl, text) {
+  editorEl.focus()
+  const sel = window.getSelection()
+
+  // Ensure there's a valid range INSIDE the editor; if not, jump to end
+  let range = sel && sel.rangeCount > 0 ? sel.getRangeAt(0) : null
+  const inEditor = range && editorEl.contains(range.commonAncestorContainer)
+  if (!inEditor) {
+    range = placeCursorAtEnd(editorEl)
+  }
+
+  range.deleteContents()
+  const node = document.createTextNode(text)
+  range.insertNode(node)
+  range.setStartAfter(node)
+  range.setEndAfter(node)
+  sel.removeAllRanges()
+  sel.addRange(range)
+
+  // contentEditable input events don't fire for programmatic mutations,
+  // so fire one manually so the React onInput handler updates state.
+  editorEl.dispatchEvent(new InputEvent('input', { bubbles: true, cancelable: false }))
+  return true
 }
 
 export default function MacroEditor({ macroId, initialMacro = null, mode }) {
@@ -231,7 +272,7 @@ export default function MacroEditor({ macroId, initialMacro = null, mode }) {
   const [toast, setToast] = useState(null)
 
   const editorRef = useRef(null)
-  const sel       = useSavedSelection()
+  const sel       = useSavedSelection(editorRef)
 
   const showToast = (msg, type = 'ok') => {
     setToast({ msg, type })
@@ -306,26 +347,14 @@ export default function MacroEditor({ macroId, initialMacro = null, mode }) {
     if (editorRef.current) setBody(editorRef.current.innerHTML)
   }
   function insertVariable(token) {
-    console.log('[macros][insertVariable] CLICK FIRED, token =', token)
-    console.log('[macros][insertVariable] editorRef =', editorRef.current ? 'present' : 'MISSING')
-    console.log('[macros][insertVariable] activeElement before focus =', document.activeElement?.tagName, document.activeElement?.className)
+    const editor = editorRef.current
+    if (!editor) { setVarsOpen(false); return }
 
-    if (editorRef.current) {
-      editorRef.current.focus()
-      console.log('[macros][insertVariable] called editor.focus(), activeElement now =', document.activeElement?.tagName, document.activeElement?.className)
-    }
-
-    const restored = sel.restore()
-    console.log('[macros][insertVariable] sel.restore returned =', restored)
-
-    const before = editorRef.current?.innerHTML
-    const result = document.execCommand('insertText', false, token)
-    console.log('[macros][insertVariable] execCommand returned =', result)
-
-    const after  = editorRef.current?.innerHTML
-    console.log('[macros][insertVariable] body changed?', before !== after, 'len before =', before?.length, 'after =', after?.length)
-
-    if (editorRef.current) setBody(editorRef.current.innerHTML)
+    // Restore the saved range if it exists (and is inside the editor —
+    // useSavedSelection enforces that). If not, insertTextAtCursor will
+    // place the cursor at the end of the body as a fallback.
+    sel.restore()
+    insertTextAtCursor(editor, token)
     setVarsOpen(false)
   }
   function insertLink() {
@@ -520,15 +549,9 @@ export default function MacroEditor({ macroId, initialMacro = null, mode }) {
                   className="me-tb-vars-btn"
                   // Save selection on mousedown — BEFORE focus could shift to the button.
                   // preventDefault stops the focus shift; sel.save captures the live cursor.
-                  onMouseDown={(e) => {
-                    console.log('[macros][trigger.onMouseDown] firing, target =', e.target?.tagName)
-                    e.preventDefault()
-                    sel.save()
-                  }}
-                  onClick={() => {
-                    console.log('[macros][trigger.onClick] firing, hasRange =', sel.hasRange())
-                    setVarsOpen(v => !v)
-                  }}
+                  // sel.save itself only commits the range if focus was inside the editor.
+                  onMouseDown={(e) => { e.preventDefault(); sel.save() }}
+                  onClick={() => setVarsOpen(v => !v)}
                 >
                   <Variable size={13} strokeWidth={1.75} />
                   Insert variable
@@ -543,14 +566,8 @@ export default function MacroEditor({ macroId, initialMacro = null, mode }) {
                         // preventDefault on each button (not just the panel) keeps focus
                         // in the editor — bubble-phase preventDefault on the panel is too
                         // late once the button has already received focus.
-                        onMouseDown={(e) => {
-                          console.log('[macros][var-item.onMouseDown]', v.token)
-                          e.preventDefault()
-                        }}
-                        onClick={() => {
-                          console.log('[macros][var-item.onClick]', v.token)
-                          insertVariable(v.token)
-                        }}
+                        onMouseDown={(e) => e.preventDefault()}
+                        onClick={() => insertVariable(v.token)}
                       >
                         <div className="me-var-token">{v.token}</div>
                         <div className="me-var-label">{v.label}</div>

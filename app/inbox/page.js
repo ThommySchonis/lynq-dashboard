@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { supabase } from '../../lib/supabase'
 import Sidebar from '../components/Sidebar'
+import EmptyState from '../components/EmptyState'
 
 // ─── Status configs ───────────────────────────────────────────
 const STATUS = {
@@ -2811,7 +2812,49 @@ function InboxPage() {
   )
 }
 
+// Wrapper checks email-connection status before rendering the inbox.
+// If no email account is connected for this workspace, render the
+// onboarding empty state instead (ONBOARDING_SPEC v1.1 §4.2).
 export default function InboxPageWrapper() {
+  // null = checking, true = connected, false = not connected
+  const [emailConnected, setEmailConnected] = useState(null)
+
+  useEffect(() => {
+    let cancelled = false
+    async function check() {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) { window.location.href = '/login'; return }
+      try {
+        const res = await fetch('/api/email/connect', {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+          cache:   'no-store',
+        })
+        const data = await res.json().catch(() => ({}))
+        if (!cancelled) setEmailConnected(Boolean(data?.connected))
+      } catch {
+        if (!cancelled) setEmailConnected(false)
+      }
+    }
+    check()
+    return () => { cancelled = true }
+  }, [])
+
+  if (emailConnected === null) return null  // brief loading flash, no spinner
+
+  if (!emailConnected) {
+    return (
+      <EmptyState
+        icon="📬"
+        title="Your inbox is empty"
+        description="Connect your email to start receiving customer support tickets."
+        actions={[
+          { label: 'Connect Gmail',   href: '/settings/email', variant: 'primary' },
+          { label: 'Connect Outlook', href: '/settings/email', variant: 'primary' },
+        ]}
+      />
+    )
+  }
+
   return (
     <Suspense fallback={null}>
       <InboxPage />

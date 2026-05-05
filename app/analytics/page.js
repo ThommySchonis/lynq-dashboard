@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { supabase } from '../../lib/supabase'
 import Sidebar from '../components/Sidebar'
+import EmptyState from '../components/EmptyState'
 import { DEMO_REFUNDS, DEMO_KPIS, DEMO_TREND, DEMO_INSIGHTS } from '../../lib/demoData'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -845,7 +846,7 @@ function WeeklyReport({ allRefunds, loaded }) {
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
-export default function AnalyticsPage() {
+function AnalyticsContent() {
   const [kpis,setKpis]=useState({})
   const [prevKpis,setPrevKpis]=useState({})
   const [refunds,setRefunds]=useState([])
@@ -1036,4 +1037,51 @@ export default function AnalyticsPage() {
       </main>
     </div>
   )
+}
+
+
+// ─── Wrapper: gate Analytics behind Shopify-connected check ─────────────
+// Per ONBOARDING_SPEC v1.1 §4.2: /analytics zonder Shopify renders the
+// "No analytics data yet" empty state. AnalyticsContent (the existing
+// page implementation) only loads when integrations.shopify_domain
+// is populated for the current workspace.
+export default function AnalyticsPage() {
+  const [shopifyConnected, setShopifyConnected] = useState(null)
+
+  useEffect(() => {
+    let cancelled = false
+    async function check() {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) { window.location.href = "/login"; return }
+      try {
+        const res = await fetch("/api/settings/integrations", {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+          cache:   "no-store",
+        })
+        const data = await res.json().catch(() => ({}))
+        if (!cancelled) setShopifyConnected(Boolean(data?.shopify))
+      } catch {
+        if (!cancelled) setShopifyConnected(false)
+      }
+    }
+    check()
+    return () => { cancelled = true }
+  }, [])
+
+  if (shopifyConnected === null) return null
+
+  if (!shopifyConnected) {
+    return (
+      <EmptyState
+        icon="📊"
+        title="No analytics data yet"
+        description="Connect your Shopify store to see revenue, order metrics, and customer insights."
+        actions={[
+          { label: "Connect Shopify", href: "/settings", variant: "primary" },
+        ]}
+      />
+    )
+  }
+
+  return <AnalyticsContent />
 }

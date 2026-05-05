@@ -1,6 +1,6 @@
 # Lynq & Flow Helpdesk — Onboarding Specification
 
-**Version:** 1.0
+**Version:** 1.1
 **Status:** Approved for implementation
 **Last updated:** 2026-05-05
 
@@ -8,13 +8,13 @@
 
 ## 1. Overview
 
-Light-touch, self-service onboarding inspired by Gorgias' approach. New users get immediate access to a fully-functional dashboard pre-populated with demo data, allowing them to explore the product before connecting their own Shopify store and email accounts.
+Light-touch, self-service onboarding inspired by Gorgias' approach. New users get immediate access to a fully-functional dashboard. Each page has a clear empty state that guides the user to the integration or action they need.
 
 **Core principles:**
 
 - No forced setup wizards
-- Demo data shows the product working from minute one
-- Real data replaces demo data automatically once Shopify + email are connected
+- New workspaces start 100% empty — no default content, no demo data
+- Each page tells the user what to do next via clear empty-state CTAs
 - Premium UX at every emotionally important moment (trial expiry, payment success)
 
 **Trial structure:** 7 days, no credit card required at signup. Card required at trial end if user wants to continue.
@@ -66,68 +66,61 @@ Optional:
 2. Create `workspace` record with `trial_ends_at = now() + 7 days`
 3. Create `workspace_member` record (user as owner)
 4. Create `user_profile` record
-5. **Seed demo data** (see section 4)
-6. Send verification email (non-blocking — user can use product without verifying)
-7. Send "Day 1" welcome email (see section 8)
-8. Redirect to `/dashboard` (or `/home`)
+5. Send verification email (non-blocking — user can use product without verifying)
+6. Send "Day 1" welcome email (see section 7)
+7. Redirect to `/dashboard` (or `/home`)
+
+No demo data is seeded. The workspace is empty until the user takes action.
 
 ---
 
-## 4. Demo data seeding
+## 4. Empty states
 
-Triggered once at workspace creation. All demo records have `is_demo = true` flag.
+Klanten beginnen met een 100% lege workspace. Elke pagina heeft een duidelijke empty state die de klant naar de juiste integratie/actie stuurt.
 
-### 4.1 Demo tickets (10 records)
+### 4.1 Feature matrix
 
-Inserted into `email_conversations` (or appropriate ticket table) with mixed statuses:
+Welke koppeling unlock welke feature:
 
-| # | Subject | Status | Has reply |
+| Feature | Email | Shopify | Empty state CTA |
 |---|---|---|---|
-| 1 | Where is my order #12345? | open | no |
-| 2 | Can I exchange the medium for a large? | open | yes |
-| 3 | My package arrived damaged | open | no |
-| 4 | When will item X be back in stock? | closed | yes |
-| 5 | I want to cancel my order | closed | yes |
-| 6 | How long does shipping take to Germany? | open | no |
-| 7 | I haven't received my refund yet | open | no |
-| 8 | Wrong size sent | open | yes |
-| 9 | Discount code not working | closed | yes |
-| 10 | Can I change shipping address? | closed | yes |
+| Macros | nee | nee | Generate via AI Macro Generator |
+| Inbox | ja | nee | Connect Email |
+| Analytics | nee | ja | Connect Shopify |
+| Performance | ja | nee | Connect Email |
+| Tags | nee | nee | Direct werkbaar, geen empty state CTA |
 
-Customer names: realistic-sounding fake names (e.g., "Sarah Johnson", "Marco Bianchi", "Lisa Chen").
+### 4.2 Page-level empty states
 
-### 4.2 Default macros (8 records)
+**`/inbox` zonder email:**
+- "📬 Your inbox is empty"
+- "Connect your email to start receiving customer support tickets."
+- [Connect Gmail] [Connect Outlook]
 
-Inserted into `macros` table with `is_demo = true`:
+**`/inbox` met email maar zonder Shopify:**
+- Inbox werkt normaal, tickets zijn zichtbaar
+- Subtiele banner in ticket detail view: "ℹ️ Connect Shopify to see order details for this customer." [Connect Shopify]
 
-1. **WISMO Reply** — "Hi {customer_name}, thanks for reaching out! Your order is currently {status}..."
-2. **Exchange Approval** — "Hi {customer_name}, we'd be happy to help with your exchange..."
-3. **Refund Confirmation** — "Hi {customer_name}, your refund of {amount} has been processed..."
-4. **Out of Stock Notification** — "Hi {customer_name}, unfortunately {product} is currently out of stock..."
-5. **Shipping Delay Apology** — "Hi {customer_name}, we sincerely apologize for the delay..."
-6. **Damaged Item Resolution** — "Hi {customer_name}, we're sorry your item arrived damaged..."
-7. **Cancellation Confirmation** — "Hi {customer_name}, your order has been successfully cancelled..."
-8. **Address Change Confirmation** — "Hi {customer_name}, we've updated the shipping address..."
+**`/macros` leeg:**
+- "✨ Generate your macro library with AI"
+- "Answer a few questions about your store and policies, and we'll create a tailored macro library for you in 2 minutes."
+- [Generate macros] (primary CTA → AI Macro Generator flow)
+- "Or [create your first macro manually]" (secondary CTA)
 
-### 4.3 Default tags (6 records)
+**`/analytics` zonder Shopify:**
+- "📊 No analytics data yet"
+- "Connect your Shopify store to see revenue, order metrics, and customer insights."
+- [Connect Shopify]
 
-Inserted into `tags` table with `is_demo = true`:
-- Order Status (color: blue)
-- Refund (color: red)
-- Exchange (color: orange)
-- Shipping (color: green)
-- Product (color: purple)
-- General (color: gray)
+**`/performance` zonder email:**
+- "👥 No performance data yet"
+- "Connect your email to start tracking response time, ticket volume, and agent activity."
+- [Connect Gmail] [Connect Outlook]
 
-### 4.4 Sample analytics (30 days)
-
-Inserted into `analytics_actions` (or relevant analytics table) with `is_demo = true`. Generated to show:
-- 5–25 tickets per day (random distribution)
-- Average response time: 2–6 hours
-- Macro usage spread across the 8 default macros
-- Realistic peaks (more on weekdays, fewer on weekends)
-
-Watermark: All analytics charts in dashboard show subtle "DEMO DATA" overlay until cleanup happens.
+**`/tags` leeg:**
+- "🏷️ No tags yet"
+- "Create tags to organize and filter your tickets."
+- [Create your first tag]
 
 ---
 
@@ -138,26 +131,16 @@ Watermark: All analytics charts in dashboard show subtle "DEMO DATA" overlay unt
 Shown on first login. Dismissable. Stored in `user_profiles.welcome_dismissed_at`.
 
 ```
-👋 Welcome to Lynq & Flow, [First Name]
-You're on a 7-day free trial. We've added some demo data to help you
-explore — connect Shopify and email when you're ready to use your own.
+👋 Welcome to Lynq & Flow, [Name]
+You're on a 7-day free trial. Connect your email and Shopify
+below to start handling customer support.
 
-[Connect Shopify]  [Connect Email]  [Dismiss]
+[Connect Gmail]  [Connect Outlook]  [Connect Shopify]  [Dismiss]
 ```
 
 Banner styling: subtle gradient background, not too in-your-face. Auto-hides after first dismiss.
 
-### 5.2 DEMO badges
-
-Every demo record displays a yellow/orange pill with text "DEMO" in the corner of:
-- Ticket cards in inbox
-- Macro entries in macros library
-- Tag chips
-- Analytics charts (full-overlay watermark)
-
-Tooltip on hover: "Demo data — replaced automatically when you connect Shopify and email."
-
-### 5.3 Setup checklist widget
+### 5.2 Setup checklist widget
 
 Persistent (until completed or dismissed) widget in the sidebar or settings menu. Clickable.
 
@@ -165,11 +148,13 @@ Persistent (until completed or dismissed) widget in the sidebar or settings menu
 Setup checklist (2/6)
 ✓ Account created
 ✓ Workspace ready
-○ Connect Shopify
+○ Generate AI macro library  (optional, no integration required)
 ○ Connect email account
-○ Generate AI macro library
+○ Connect Shopify
 ○ Invite first team member
 ```
+
+Generate AI macros zit hoog in de lijst omdat het geen koppeling vereist — een directe quick-win die de klant meteen waarde laat zien.
 
 Each unchecked item links to the relevant settings page or feature.
 
@@ -235,39 +220,7 @@ Settings should follow Lynq & Flow brand styling. Each integration section shows
 
 ---
 
-## 7. Demo data cleanup
-
-### 7.1 Trigger conditions
-
-Demo data is **automatically removed** when **both** conditions are met:
-1. Shopify integration `status = 'connected'`
-2. At least one email account has `status = 'connected'`
-
-This is a hard rule — partial connections (only Shopify, only email) keep demo data so user still has something to explore.
-
-### 7.2 Cleanup actions
-
-Triggered server-side via background job or webhook handler:
-
-1. Delete all records where `is_demo = true` from:
-   - `email_conversations`
-   - `email_messages`
-   - `macros`
-   - `tags`
-   - `analytics_actions`
-2. Update `workspaces.demo_data_removed_at = now()`
-3. Send notification email: "Your real data is now syncing — demo content has been removed."
-
-### 7.3 Edge case: cleanup mid-edit
-
-If user is currently editing a demo macro and connects Shopify+email at that moment:
-- Save their edits, but flip `is_demo = false`
-- That macro becomes a permanent custom macro
-- Other demo macros are deleted as planned
-
----
-
-## 8. Trial reminder emails
+## 7. Trial reminder emails
 
 Sent via email provider (Resend or similar). Templates managed in code.
 
@@ -283,11 +236,11 @@ Each email is sent only if user has not yet upgraded. Tracking via `workspaces.s
 
 ---
 
-## 9. Trial expiry — premium UX (Day 7)
+## 8. Trial expiry — premium UX (Day 7)
 
 This is the highest-stakes UX moment in the entire onboarding. Must feel premium and respectful, not punitive.
 
-### 9.1 Day 6 — Soft warning
+### 8.1 Day 6 — Soft warning
 
 Top-of-dashboard banner (dismissable but reappears next session):
 
@@ -298,7 +251,7 @@ Pick a plan to continue using Lynq & Flow
 [See plans] [Remind me tomorrow]
 ```
 
-### 9.2 Day 7 — Full-screen modal
+### 8.2 Day 7 — Full-screen modal
 
 When user logs in on day 7 (or trial actively expires during session), show a full-screen modal that **cannot be dismissed**.
 
@@ -338,7 +291,7 @@ Footer: "Your data is safe with us. We'll keep everything for 60 days
 
 Each plan card CTA → Whop checkout for that plan → success returns to `/welcome-back`.
 
-### 9.3 Toggle for monthly/annual
+### 8.3 Toggle for monthly/annual
 
 In the modal, prominent toggle: **Monthly** / **Annual (save 20%)**
 
@@ -346,7 +299,7 @@ When toggled, prices update to annual figures with strikethrough monthly price s
 
 ---
 
-## 10. Post-payment success
+## 9. Post-payment success
 
 Whop checkout success → redirect to `/welcome-back`:
 
@@ -372,18 +325,18 @@ Server-side actions on payment success webhook:
 
 ---
 
-## 11. Post-trial blocked state (no upgrade)
+## 10. Post-trial blocked state (no upgrade)
 
 If user does not pay by trial end, account enters **blocked state** (option C from spec discussions).
 
-### 11.1 Blocked state behavior
+### 10.1 Blocked state behavior
 
 - Login still works (account preserved)
 - Every page request → middleware checks `workspaces.subscription_status`
 - If `expired` or `null` and trial has ended → redirect to `/pricing-required`
 - The only accessible pages: `/pricing-required`, `/settings/billing`, `/logout`
 
-### 11.2 `/pricing-required` page
+### 10.2 `/pricing-required` page
 
 Same modal as Day 7 modal, but:
 - Headline: "Welcome back, [First Name]"
@@ -391,7 +344,7 @@ Same modal as Day 7 modal, but:
 - [N] dynamically calculated: 60 days minus days since expiry
 - Same 4 plan cards, same Whop checkout links
 
-### 11.3 Data retention
+### 10.3 Data retention
 
 - `workspaces.subscription_status = 'expired'` for 60 days post-trial-end
 - Day 60: scheduled job marks `workspaces.scheduled_for_deletion_at = now() + 7 days`
@@ -402,7 +355,7 @@ If user pays during the 60-day window: status flips to `paying`, account immedia
 
 ---
 
-## 12. Database schema changes required
+## 11. Database schema changes required
 
 New columns on existing tables:
 
@@ -420,13 +373,6 @@ alter table public.workspaces add column if not exists
   whop_membership_id text,
   whop_user_id text;
 
--- demo flag on relevant tables
-alter table public.email_conversations add column if not exists is_demo boolean default false;
-alter table public.email_messages add column if not exists is_demo boolean default false;
-alter table public.macros add column if not exists is_demo boolean default false;
-alter table public.tags add column if not exists is_demo boolean default false;
-alter table public.analytics_actions add column if not exists is_demo boolean default false;
-
 -- user_profiles for UI state
 alter table public.user_profiles add column if not exists
   welcome_dismissed_at timestamptz,
@@ -438,34 +384,32 @@ Indexes:
 ```sql
 create index if not exists idx_workspaces_subscription_status on public.workspaces(subscription_status);
 create index if not exists idx_workspaces_trial_ends_at on public.workspaces(trial_ends_at) where subscription_status = 'trial';
-create index if not exists idx_email_conversations_is_demo on public.email_conversations(workspace_id, is_demo);
-create index if not exists idx_macros_is_demo on public.macros(workspace_id, is_demo);
 ```
+
+> **Note:** v1.0 specced `is_demo` columns on `email_conversations`, `email_messages`, `macros`, `tags`, and `analytics_actions`. Those columns are dropped in v1.1 — see migration `20260505_drop_is_demo_columns.sql`. The `demo_data_removed_at` column on `workspaces` remains as a historical timestamp marker (no longer the trigger for cleanup; new workspaces never have demo data to remove).
 
 ---
 
-## 13. Build order (recommended)
+## 12. Build order (recommended)
 
 For implementation, work in this sequence to enable progressive testing:
 
 1. **Database schema migration** — add the new columns and indexes
-2. **Demo data seed function** — `seedDemoData(workspaceId)` server function that inserts all demo records
-3. **Signup flow** — wire up `seedDemoData` to fire post-workspace-creation
-4. **DEMO badges in UI** — show pill on every demo record
-5. **Welcome banner + setup checklist widget**
-6. **Connect Shopify + Connect Email settings pages** (UI only, no working integration)
-7. **Demo cleanup logic** — server-side check on integration connect events
-8. **Trial countdown logic** — middleware + day 6 banner
-9. **Day 7 premium modal** — design first, then build (separate sprint)
-10. **Whop integration** — checkout, webhooks, subscription state sync
-11. **Post-payment success page**
-12. **Blocked state middleware + `/pricing-required` page**
-13. **Trial reminder emails** — Resend integration + 5 templates
-14. **Data retention cleanup job** — scheduled function for 60+7 day deletion
+2. **Empty state components per pagina** — inbox, macros, analytics, performance, tags
+3. **Welcome banner + setup checklist widget**
+4. **Signup flow** — wire workspace + member + user_profile creation (no demo seeding)
+5. **Connect Shopify + Connect Email settings pages** (UI only, no working integration)
+6. **Trial countdown logic** — middleware + day 6 banner
+7. **Day 7 premium modal** — design first, then build (separate sprint)
+8. **Whop integration** — checkout, webhooks, subscription state sync
+9. **Post-payment success page**
+10. **Blocked state middleware + `/pricing-required` page**
+11. **Trial reminder emails** — Resend integration + 5 templates
+12. **Data retention cleanup job** — scheduled function for 60+7 day deletion
 
 ---
 
-## 14. Open items / future iterations
+## 13. Open items / future iterations
 
 Parked for later:
 - A/B test trial length (7 vs 14 days)
@@ -476,3 +420,10 @@ Parked for later:
 - Refund flow UI (Whop handles backend)
 - Re-activation flow for users in 60-day grace window
 - Custom enterprise contracts and pricing display
+
+---
+
+## Changelog
+
+- **v1.1** (2026-05-05) — switched from demo data seeding to empty states. `is_demo` columns dropped via migration `20260505_drop_is_demo_columns.sql`. Sections 4 (Demo data seeding), 5.2 (DEMO badges), and 7 (Demo data cleanup) removed. New section 4 (Empty states) replaces them. Build order updated. Welcome banner + setup checklist text rewritten.
+- **v1.0** (2026-05-05) — initial spec.

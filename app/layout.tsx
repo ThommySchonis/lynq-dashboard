@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import ThemeProvider from "./components/ThemeProvider";
 import PageTransition from "./components/PageTransition";
+import BlockedStateGuard from "./components/BlockedStateGuard";
 
 export const metadata: Metadata = {
   title: "Lynq — Customer Support Dashboard",
@@ -27,7 +28,9 @@ export default function RootLayout({
       </head>
       <body>
         <ThemeProvider>
-          <PageTransition>{children}</PageTransition>
+          <BlockedStateGuard>
+            <PageTransition>{children}</PageTransition>
+          </BlockedStateGuard>
         </ThemeProvider>
       </body>
     </html>

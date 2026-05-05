@@ -26,7 +26,7 @@ export async function GET(request) {
   ] = await Promise.all([
     supabaseAdmin
       .from('workspaces')
-      .select('id, name, subscription_status')
+      .select('id, name, subscription_status, trial_ends_at')
       .eq('id', ctx.workspaceId)
       .maybeSingle(),
     supabaseAdmin
@@ -74,6 +74,7 @@ export async function GET(request) {
 
     // Meta for trial-only gating + UI copy
     subscription_status: workspaceRes.data?.subscription_status ?? null,
+    trial_ends_at:       workspaceRes.data?.trial_ends_at ?? null,
     workspace_name:      workspaceRes.data?.name ?? null,
     user: {
       first_name:                   firstName,

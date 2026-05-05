@@ -4,6 +4,8 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { supabase } from '../../lib/supabase'
 import Sidebar from '../components/Sidebar'
 import WelcomeBanner from '../components/WelcomeBanner'
+import TrialEndingBanner from '../components/TrialEndingBanner'
+import { isTrialEndingSoon } from '../../lib/trialStatus'
 
 function getGreeting() {
   const h = new Date().getHours()
@@ -219,7 +221,16 @@ export default function HomePage() {
     return () => clearTimeout(t)
   }, [])
 
+  // TrialEndingBanner heeft prioriteit boven WelcomeBanner als beide
+  // condities matchen. Day 6 urgentie wint van Day 1 welkomst.
+  const trialEndingShouldShow =
+    onboarding && isTrialEndingSoon({
+      subscription_status: onboarding.subscription_status,
+      trial_ends_at:       onboarding.trial_ends_at,
+    })
+
   const welcomeShouldShow =
+    !trialEndingShouldShow &&
     !welcomeHidden &&
     onboarding?.subscription_status === 'trial' &&
     !onboarding?.user?.welcome_dismissed_at
@@ -290,7 +301,11 @@ export default function HomePage() {
 
       <div style={{ flex: 1, minHeight: '100vh', background: '#F5F4FF', position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
 
-        {/* ── Welcome banner (trial users, not yet dismissed) ── */}
+        {/* ── Trial-ending banner (Day 6, prioriteit boven welcome) ── */}
+        {trialEndingShouldShow && <TrialEndingBanner />}
+
+        {/* ── Welcome banner (trial users, not yet dismissed, niet
+            wanneer trial-ending al toont) ── */}
         {welcomeShouldShow && (
           <WelcomeBanner
             firstName={onboarding?.user?.first_name || userName}

@@ -14,7 +14,7 @@ const NAV_GROUPS = [
     { label: 'Billing', href: '/settings/workspace/billing' },
   ]},
   { label: 'EMAIL', items: [
-    { label: 'Email',   href: '/settings/email' },
+    { label: 'Email integration', href: '/settings/integrations/email' },
   ]},
   { label: 'INTEGRATIONS', items: [
     { label: 'Shopify', href: '/settings/integrations/shopify' },

@@ -73,9 +73,9 @@ export default function WelcomeBanner({ firstName, onDismissed }) {
           flexWrap:  'wrap',
         }}
       >
-        <CtaLink href="/settings/email">Connect Gmail</CtaLink>
-        <CtaLink href="/settings/email">Connect Outlook</CtaLink>
-        <CtaLink href="/settings">Connect Shopify</CtaLink>
+        <CtaLink href="/settings/integrations/email">Connect Gmail</CtaLink>
+        <CtaLink href="/settings/integrations/email">Connect Outlook</CtaLink>
+        <CtaLink href="/settings/integrations/shopify">Connect Shopify</CtaLink>
         <button
           type="button"
           onClick={handleDismiss}

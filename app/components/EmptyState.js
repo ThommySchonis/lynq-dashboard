@@ -14,8 +14,8 @@ import Sidebar from './Sidebar'
 //     title="Your inbox is empty"
 //     description="Connect your email to start receiving customer support tickets."
 //     actions={[
-//       { label: 'Connect Gmail',   href: '/settings/email', variant: 'primary' },
-//       { label: 'Connect Outlook', href: '/settings/email', variant: 'primary' },
+//       { label: 'Connect Gmail',   href: '/settings/integrations/email', variant: 'primary' },
+//       { label: 'Connect Outlook', href: '/settings/integrations/email', variant: 'primary' },
 //     ]}
 //   />
 //

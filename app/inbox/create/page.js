@@ -481,7 +481,7 @@ export default function CreateTicketPage() {
           {!emailProvider && (
             <div className="ct-demo-bar">
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#d97706" strokeWidth="2.2" style={{ flexShrink:0 }}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-              <span style={{ fontSize:11.5, color:'#d97706' }}>Demo mode — <a href="/settings" style={{ color:'var(--text-1)', textDecoration:'none', fontWeight:600 }}>connect Gmail or Outlook</a> in Settings to send real emails</span>
+              <span style={{ fontSize:11.5, color:'#d97706' }}>Demo mode — <a href="/settings/integrations/email" style={{ color:'var(--text-1)', textDecoration:'none', fontWeight:600 }}>connect Gmail or Outlook</a> in Settings to send real emails</span>
             </div>
           )}
 

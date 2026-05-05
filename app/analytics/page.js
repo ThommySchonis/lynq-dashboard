@@ -1077,7 +1077,7 @@ export default function AnalyticsPage() {
         title="No analytics data yet"
         description="Connect your Shopify store to see revenue, order metrics, and customer insights."
         actions={[
-          { label: "Connect Shopify", href: "/settings", variant: "primary" },
+          { label: "Connect Shopify", href: "/settings/integrations/shopify", variant: "primary" },
         ]}
       />
     )

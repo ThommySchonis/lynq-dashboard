@@ -2208,7 +2208,7 @@ function InboxPage() {
           {demoMode&&(
             <div style={{margin:'8px 12px',padding:'6px 12px',background:'#FAFAFA',border:'1px solid rgba(0,0,0,0.07)',borderRadius:6,display:'flex',alignItems:'center',justifyContent:'space-between',gap:8}}>
               <span style={{fontSize:12,fontWeight:600,color:'#555555'}}>Demo mode</span>
-              <a href="/settings" style={{fontSize:10.5,fontWeight:700,color:'var(--text-1)',textDecoration:'none',flexShrink:0}}>Connect →</a>
+              <a href="/settings/integrations/email" style={{fontSize:10.5,fontWeight:700,color:'var(--text-1)',textDecoration:'none',flexShrink:0}}>Connect →</a>
             </div>
           )}
           {loadingThreads&&[0,1,2,3,4].map(i=>(
@@ -2848,8 +2848,8 @@ export default function InboxPageWrapper() {
         title="Your inbox is empty"
         description="Connect your email to start receiving customer support tickets."
         actions={[
-          { label: 'Connect Gmail',   href: '/settings/email', variant: 'primary' },
-          { label: 'Connect Outlook', href: '/settings/email', variant: 'primary' },
+          { label: 'Connect Gmail',   href: '/settings/integrations/email', variant: 'primary' },
+          { label: 'Connect Outlook', href: '/settings/integrations/email', variant: 'primary' },
         ]}
       />
     )

@@ -27,8 +27,8 @@ export default function PerformancePage() {
       title="No performance data yet"
       description="Connect your email to start tracking response time, ticket volume, and agent activity."
       actions={[
-        { label: 'Connect Gmail',   href: '/settings/email', variant: 'primary' },
-        { label: 'Connect Outlook', href: '/settings/email', variant: 'primary' },
+        { label: 'Connect Gmail',   href: '/settings/integrations/email', variant: 'primary' },
+        { label: 'Connect Outlook', href: '/settings/integrations/email', variant: 'primary' },
       ]}
     />
   )

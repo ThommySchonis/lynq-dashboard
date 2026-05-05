@@ -41,11 +41,12 @@ export async function GET(request) {
       .is('archived_at', null),
     supabaseAdmin
       .from('email_accounts')
-      .select('id', { count: 'exact', head: true })
-      .eq('workspace_id', ctx.workspaceId),
+      .select('status')
+      .eq('workspace_id', ctx.workspaceId)
+      .maybeSingle(),
     supabaseAdmin
       .from('integrations')
-      .select('shopify_domain')
+      .select('shopify_domain, status')
       .eq('workspace_id', ctx.workspaceId)
       .maybeSingle(),
     supabaseAdmin
@@ -62,10 +63,13 @@ export async function GET(request) {
   const firstName = fullName.split(/\s+/)[0]
 
   return NextResponse.json({
-    // Spec-required counts/flags
+    // Spec-required counts/flags. status === 'connected' is the new
+    // truth signal — pending intents (typed shop URL / picked Gmail
+    // but no OAuth yet) blijven 'pending' en tellen niet als done.
     macros_count:      macrosRes.count ?? 0,
-    email_connected:   (emailRes.count ?? 0) > 0,
-    shopify_connected: !!integrationRes.data?.shopify_domain,
+    email_connected:   emailRes.data?.status === 'connected',
+    shopify_connected: integrationRes.data?.status === 'connected'
+                       && !!integrationRes.data?.shopify_domain,
     team_member_count: membersRes.count ?? 0,
 
     // Meta for trial-only gating + UI copy

@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { supabase } from '../../lib/supabase'
 import Sidebar from '../components/Sidebar'
+import WelcomeBanner from '../components/WelcomeBanner'
 
 function getGreeting() {
   const h = new Date().getHours()
@@ -188,6 +189,8 @@ export default function HomePage() {
   const [contextLoaded, setContextLoaded] = useState(false)
   const [mounted, setMounted]             = useState(false)
   const [showToast, setShowToast]         = useState(false)
+  const [onboarding, setOnboarding]       = useState(null)   // /api/onboarding/status response
+  const [welcomeHidden, setWelcomeHidden] = useState(false)  // local override for instant hide on dismiss
   const messagesEndRef = useRef(null)
   const heroInputRef   = useRef(null)
   const bottomInputRef = useRef(null)
@@ -202,10 +205,24 @@ export default function HomePage() {
       const raw  = (session.user.email || '').split('@')[0]
       setUserName(meta.full_name || meta.name || (raw.charAt(0).toUpperCase() + raw.slice(1)))
       loadContext(session.access_token)
+      // Fetch onboarding status for the welcome banner. Best-effort —
+      // any failure just leaves the banner hidden (welcomeShouldShow stays false).
+      fetch('/api/onboarding/status', {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+        cache:   'no-store',
+      })
+        .then(r => (r.ok ? r.json() : null))
+        .then(d => { if (d) setOnboarding(d) })
+        .catch(() => {})
     })
     const t = setTimeout(() => setShowToast(true), 1800)
     return () => clearTimeout(t)
   }, [])
+
+  const welcomeShouldShow =
+    !welcomeHidden &&
+    onboarding?.subscription_status === 'trial' &&
+    !onboarding?.user?.welcome_dismissed_at
 
   useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [messages])
 
@@ -272,6 +289,14 @@ export default function HomePage() {
       <Sidebar />
 
       <div style={{ flex: 1, minHeight: '100vh', background: '#F5F4FF', position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+
+        {/* ── Welcome banner (trial users, not yet dismissed) ── */}
+        {welcomeShouldShow && (
+          <WelcomeBanner
+            firstName={onboarding?.user?.first_name || userName}
+            onDismissed={() => setWelcomeHidden(true)}
+          />
+        )}
 
         {/* ── 4 CSS orbs ── */}
         <div style={{ position: 'absolute', top: -200, right: -100, width: 800, height: 800, borderRadius: '50%', background: 'radial-gradient(circle, rgba(139,92,246,0.35), transparent 70%)', filter: 'blur(60px)', pointerEvents: 'none', zIndex: 0, animation: 'orbFloat1 18s ease-in-out infinite' }} />

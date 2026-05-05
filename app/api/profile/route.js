@@ -21,7 +21,7 @@ export async function GET(request) {
 
   const { data: row, error } = await supabaseAdmin
     .from('user_profiles')
-    .select('display_name, bio, avatar_url, theme, created_at, updated_at')
+    .select('display_name, bio, avatar_url, theme, welcome_dismissed_at, setup_checklist_dismissed_at, created_at, updated_at')
     .eq('user_id', user.id)
     .maybeSingle()
 
@@ -35,11 +35,13 @@ export async function GET(request) {
   // so the first PATCH will sync both layers and they stay aligned.
   const meta = user.user_metadata || {}
   const profile = {
-    email:        user.email,
-    display_name: row?.display_name ?? meta.name ?? null,
-    bio:          row?.bio ?? null,
-    avatar_url:   row?.avatar_url ?? meta.avatar_url ?? null,
-    theme:        row?.theme ?? 'system',
+    email:                          user.email,
+    display_name:                   row?.display_name ?? meta.name ?? null,
+    bio:                            row?.bio ?? null,
+    avatar_url:                     row?.avatar_url ?? meta.avatar_url ?? null,
+    theme:                          row?.theme ?? 'system',
+    welcome_dismissed_at:           row?.welcome_dismissed_at ?? null,
+    setup_checklist_dismissed_at:   row?.setup_checklist_dismissed_at ?? null,
   }
 
   return NextResponse.json({ profile })
@@ -70,6 +72,19 @@ export async function PATCH(request) {
     update.theme = body.theme
   }
 
+  // Onboarding UI dismissals — server stamps the timestamp so we don't
+  // trust client clock skew. Pass true to dismiss; pass null to revive.
+  if (body.dismiss_welcome === true) {
+    update.welcome_dismissed_at = new Date().toISOString()
+  } else if (body.welcome_dismissed_at === null) {
+    update.welcome_dismissed_at = null
+  }
+  if (body.dismiss_setup_checklist === true) {
+    update.setup_checklist_dismissed_at = new Date().toISOString()
+  } else if (body.setup_checklist_dismissed_at === null) {
+    update.setup_checklist_dismissed_at = null
+  }
+
   if (Object.keys(update).length === 0) {
     return NextResponse.json({ error: 'Nothing to update', code: 'no_changes' }, { status: 400 })
   }
@@ -78,7 +93,7 @@ export async function PATCH(request) {
   const { data: row, error: upsertError } = await supabaseAdmin
     .from('user_profiles')
     .upsert({ user_id: user.id, ...update }, { onConflict: 'user_id' })
-    .select('display_name, bio, avatar_url, theme, updated_at')
+    .select('display_name, bio, avatar_url, theme, welcome_dismissed_at, setup_checklist_dismissed_at, updated_at')
     .single()
 
   if (upsertError || !row) {
@@ -105,11 +120,13 @@ export async function PATCH(request) {
 
   return NextResponse.json({
     profile: {
-      email:        user.email,
-      display_name: row.display_name,
-      bio:          row.bio,
-      avatar_url:   row.avatar_url,
-      theme:        row.theme,
+      email:                        user.email,
+      display_name:                 row.display_name,
+      bio:                          row.bio,
+      avatar_url:                   row.avatar_url,
+      theme:                        row.theme,
+      welcome_dismissed_at:         row.welcome_dismissed_at,
+      setup_checklist_dismissed_at: row.setup_checklist_dismissed_at,
     },
   })
 }

@@ -6,6 +6,7 @@ import { motion } from 'framer-motion'
 import { useState, useEffect, Suspense } from 'react'
 import { supabase } from '../../lib/supabase'
 import { useTheme } from './ThemeProvider'
+import SetupChecklist from './SetupChecklist'
 
 const SIDEBAR_W = 208
 
@@ -210,15 +211,24 @@ function SidebarContent() {
   const { theme, toggle } = useTheme()
   const [email, setEmail]     = useState('')
   const [isAdmin, setIsAdmin] = useState(false)
+  const [onboarding, setOnboarding]           = useState(null)
+  const [checklistHidden, setChecklistHidden] = useState(false)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        setEmail(session.user.email || '')
-        setIsAdmin(session.user.email === 'info@lynqagency.com')
-      }
+      if (!session?.user) return
+      setEmail(session.user.email || '')
+      setIsAdmin(session.user.email === 'info@lynqagency.com')
+      // Onboarding status — best-effort. Failure leaves checklist hidden.
+      fetch('/api/onboarding/status', {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+        cache:   'no-store',
+      })
+        .then(r => (r.ok ? r.json() : null))
+        .then(d => { if (d) setOnboarding(d) })
+        .catch(() => {})
     })
-  }, [])
+  }, [pathname])  // re-fetch on route change so completed items refresh
 
   async function logout() {
     await supabase.auth.signOut()
@@ -305,6 +315,17 @@ function SidebarContent() {
             {isAdmin && renderItem({ href: '/admin', label: 'Admin Panel', icon: Icons.shield })}
           </div>
         </nav>
+
+        {/* Setup checklist — trial users only, dismissable. Auto-hides
+            wanneer alle 6 items af zijn (handled inside the component). */}
+        {!checklistHidden &&
+          onboarding?.subscription_status === 'trial' &&
+          !onboarding?.user?.setup_checklist_dismissed_at && (
+            <SetupChecklist
+              status={onboarding}
+              onDismissed={() => setChecklistHidden(true)}
+            />
+          )}
 
         {/* User row */}
         <div className="sb-user">

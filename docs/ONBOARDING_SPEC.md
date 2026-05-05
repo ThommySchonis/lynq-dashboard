@@ -1,6 +1,6 @@
 # Lynq & Flow Helpdesk — Onboarding Specification
 
-**Version:** 1.1
+**Version:** 1.2
 **Status:** Approved for implementation
 **Last updated:** 2026-05-05
 
@@ -66,9 +66,9 @@ Optional:
 2. Create `workspace` record with `trial_ends_at = now() + 7 days`
 3. Create `workspace_member` record (user as owner)
 4. Create `user_profile` record
-5. Send verification email (non-blocking — user can use product without verifying)
+5. Send verification email (blocking — user must verify email before accessing the app)
 6. Send "Day 1" welcome email (see section 7)
-7. Redirect to `/dashboard` (or `/home`)
+7. After signup form submit: show 'Check your email' confirmation page. After user clicks email confirmation link: redirect to `/home`.
 
 No demo data is seeded. The workspace is empty until the user takes action.
 
@@ -425,5 +425,6 @@ Parked for later:
 
 ## Changelog
 
+- **v1.2** (2026-05-05) — email verification is now blocking. Klant moet email verifiëren voordat hij toegang krijgt tot de app.
 - **v1.1** (2026-05-05) — switched from demo data seeding to empty states. `is_demo` columns dropped via migration `20260505_drop_is_demo_columns.sql`. Sections 4 (Demo data seeding), 5.2 (DEMO badges), and 7 (Demo data cleanup) removed. New section 4 (Empty states) replaces them. Build order updated. Welcome banner + setup checklist text rewritten.
 - **v1.0** (2026-05-05) — initial spec.

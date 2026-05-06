@@ -47,20 +47,34 @@ export default function PostCard({
     setOverflows(el.scrollHeight > el.clientHeight + 2)
   }, [body, expanded])
 
+  // Light-theme frosted glass: gradient white-on-white voor dimensionaliteit,
+  // backdrop-filter laat de orbs door de card heen schemeren, dubbele
+  // box-shadow (subtle paarse glow + dark drop) plus inset highlight.
+  const baseShadow =
+    '0 1px 0 0 rgba(255, 255, 255, 0.8) inset, ' +
+    '0 4px 16px rgba(127, 119, 221, 0.06), ' +
+    '0 1px 3px rgba(10, 6, 18, 0.04)'
+  const hoverShadow =
+    '0 1px 0 0 rgba(255, 255, 255, 0.8) inset, ' +
+    '0 8px 32px rgba(127, 119, 221, 0.10), ' +
+    '0 2px 6px rgba(10, 6, 18, 0.05)'
+
   return (
     <article
       style={{
-        position:     'relative',
-        background:   '#FFFFFF',
-        border:       '1px solid rgba(10, 6, 18, 0.08)',
-        borderRadius: 16,
-        padding:      isMasterclass ? 40 : 32,
-        boxShadow:    '0 1px 2px rgba(10, 6, 18, 0.03)',
-        overflow:     'hidden',
-        transition:   'box-shadow 200ms ease',
+        position:             'relative',
+        background:           'linear-gradient(145deg, rgba(255, 255, 255, 0.85) 0%, rgba(255, 255, 255, 0.65) 100%)',
+        backdropFilter:       'blur(20px) saturate(180%)',
+        WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+        border:               '1px solid rgba(255, 255, 255, 0.6)',
+        borderRadius:         16,
+        padding:              isMasterclass ? 40 : 32,
+        boxShadow:            baseShadow,
+        overflow:             'hidden',
+        transition:           'box-shadow 200ms ease',
       }}
-      onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 4px 20px rgba(10, 6, 18, 0.06)' }}
-      onMouseLeave={e => { e.currentTarget.style.boxShadow = '0 1px 2px rgba(10, 6, 18, 0.03)' }}
+      onMouseEnter={e => { e.currentTarget.style.boxShadow = hoverShadow }}
+      onMouseLeave={e => { e.currentTarget.style.boxShadow = baseShadow }}
     >
       {/* Masterclass-only: 1px gradient line bovenaan als visuele upgrade */}
       {isMasterclass && (

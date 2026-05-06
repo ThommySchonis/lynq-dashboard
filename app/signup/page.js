@@ -4,12 +4,24 @@ import { useState } from 'react'
 import { Instrument_Serif, DM_Sans } from 'next/font/google'
 import { supabase } from '../../lib/supabase'
 
-// Display + body fonts — scoped to deze pagina via next/font.
-// Instrument Serif heeft alleen weight 400 + italic; DM Sans 400/500/600.
-const display = Instrument_Serif({ subsets: ['latin'], weight: '400', style: ['normal', 'italic'], display: 'swap' })
-const body    = DM_Sans({ subsets: ['latin'], weight: ['400', '500', '600'], display: 'swap' })
+// Display + body fonts via next/font, scoped per-page.
+// `style: ['normal','italic']` zodat <em> in de headline een echte
+// italic glyph krijgt (geen synthetic-italic fake).
+const display = Instrument_Serif({
+  subsets:  ['latin'],
+  weight:   '400',
+  style:    ['normal', 'italic'],
+  display:  'swap',
+  fallback: ['Cormorant Garamond', 'Georgia', 'Cambria', 'serif'],
+})
+const body = DM_Sans({
+  subsets:  ['latin'],
+  weight:   ['400', '500', '600'],
+  display:  'swap',
+  fallback: ['-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'sans-serif'],
+})
 
-// SVG noise texture als data-URL — depth-overlay zonder externe asset
+// SVG noise texture as data-URL for depth
 const NOISE_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240"><filter id="n"><feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" stitchTiles="stitch"/><feColorMatrix values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.6 0"/></filter><rect width="100%" height="100%" filter="url(#n)"/></svg>`
 const NOISE_URL = `url("data:image/svg+xml;utf8,${encodeURIComponent(NOISE_SVG)}")`
 
@@ -18,44 +30,39 @@ const COMPANY_MIN  = 2
 const COMPANY_MAX  = 100
 const PASSWORD_MIN = 8
 
-// Heuristische password strength score 0-4. Length-tier + class diversity.
+// 0-4 strength heuristic: length tier + char-class diversity
 function passwordStrength(pw) {
   if (!pw) return 0
   let score = 0
-  if (pw.length >= PASSWORD_MIN) score++
-  if (pw.length >= 12)           score++
+  if (pw.length >= PASSWORD_MIN)            score++
+  if (pw.length >= 12)                      score++
   if (/[a-z]/.test(pw) && /[A-Z]/.test(pw)) score++
-  if (/[0-9]/.test(pw))          score++
-  if (/[^a-zA-Z0-9]/.test(pw))   score++
+  if (/[0-9]/.test(pw))                     score++
+  if (/[^a-zA-Z0-9]/.test(pw))              score++
   return Math.min(score, 4)
 }
 
 const STRENGTH_META = [
-  { label: '',         color: 'rgba(255,255,255,0.10)' },
-  { label: 'Weak',     color: '#EF4444' },
-  { label: 'Fair',     color: '#F59E0B' },
-  { label: 'Good',     color: '#FBBF24' },
-  { label: 'Strong',   color: '#22C55E' },
+  { label: '',       color: 'rgba(255,255,255,0.10)' },
+  { label: 'Weak',   color: '#EF4444' },
+  { label: 'Fair',   color: '#F59E0B' },
+  { label: 'Good',   color: '#FBBF24' },
+  { label: 'Strong', color: '#22C55E' },
 ]
 
 const CSS = `
-  /* ─── Background orbs (langzaam ademend) ─── */
+  /* ─── Orbs: groot, sterk, ademend met grote translate ─── */
   @keyframes orbDriftA {
-    0%,100% { transform: translate(0,0)        scale(1);    }
-    33%     { transform: translate(80px,-40px) scale(1.08); }
-    66%     { transform: translate(-50px,60px) scale(0.95); }
+    0%,100% { transform: translate(0, 0)        scale(1);    }
+    50%     { transform: translate(240px, 180px) scale(1.12); }
   }
   @keyframes orbDriftB {
-    0%,100% { transform: translate(0,0)        scale(1);    }
-    50%     { transform: translate(-90px,80px) scale(1.12); }
+    0%,100% { transform: translate(0, 0)         scale(1);    }
+    50%     { transform: translate(-280px, 140px) scale(1.08); }
   }
   @keyframes orbDriftC {
-    0%,100% { transform: translate(0,0)        scale(1);    }
-    50%     { transform: translate(60px,-70px) scale(0.92); }
-  }
-  @keyframes orbDriftD {
-    0%,100% { transform: translate(0,0)        scale(1);    }
-    50%     { transform: translate(-40px,-50px) scale(1.06); }
+    0%,100% { transform: translate(0, 0)         scale(1);    }
+    50%     { transform: translate(-200px, -220px) scale(1.10); }
   }
 
   /* ─── Page-load stagger ─── */
@@ -74,16 +81,17 @@ const CSS = `
   .signup-d-7 { animation-delay:  560ms; }
   .signup-d-8 { animation-delay:  640ms; }
   .signup-d-9 { animation-delay:  720ms; }
+  .signup-d-10 { animation-delay: 800ms; }
 
-  /* ─── Floating labels via :placeholder-shown trick ─── */
+  /* ─── Floating labels via :placeholder-shown ─── */
   .field-wrap   { position: relative; }
   .field-input  {
     width: 100%;
-    height: 52px;
+    height: 54px;
     box-sizing: border-box;
     padding: 22px 16px 8px;
     background: rgba(255,255,255,0.04);
-    border: 1px solid rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.10);
     border-radius: 12px;
     color: #FFFFFF;
     font-size: 15px;
@@ -92,18 +100,18 @@ const CSS = `
     transition: border-color 200ms ease, box-shadow 200ms ease, background-color 200ms ease;
   }
   .field-input::placeholder { color: transparent; }
-  .field-input:hover { background: rgba(255,255,255,0.05); }
+  .field-input:hover { background: rgba(255,255,255,0.055); }
   .field-input:focus {
     border-color: #7F77DD;
-    box-shadow: 0 0 0 4px rgba(127, 119, 221, 0.14);
-    background: rgba(255,255,255,0.06);
+    box-shadow: 0 0 0 4px rgba(127, 119, 221, 0.16);
+    background: rgba(255,255,255,0.07);
   }
   .field-input:focus + .field-label,
   .field-input:not(:placeholder-shown) + .field-label {
     top: 8px;
     font-size: 11px;
     letter-spacing: 0.05em;
-    color: rgba(255,255,255,0.55);
+    color: rgba(255,255,255,0.6);
   }
   .field-input:focus + .field-label { color: #C4B0FF; }
   .field-label {
@@ -111,10 +119,9 @@ const CSS = `
     left: 16px;
     top: 16px;
     font-size: 14px;
-    color: rgba(255,255,255,0.35);
+    color: rgba(255,255,255,0.4);
     pointer-events: none;
     transition: top 180ms ease, font-size 180ms ease, color 180ms ease, letter-spacing 180ms ease;
-    text-transform: none;
   }
 
   /* Password show/hide button */
@@ -125,7 +132,7 @@ const CSS = `
     transform: translateY(-50%);
     background: transparent;
     border: none;
-    color: rgba(255,255,255,0.45);
+    color: rgba(255,255,255,0.5);
     cursor: pointer;
     padding: 6px;
     border-radius: 6px;
@@ -133,7 +140,7 @@ const CSS = `
     align-items: center;
     transition: color 150ms ease, background 150ms ease;
   }
-  .pw-toggle:hover { color: rgba(255,255,255,0.75); background: rgba(255,255,255,0.05); }
+  .pw-toggle:hover { color: #FFFFFF; background: rgba(255,255,255,0.06); }
   .pw-toggle:focus-visible { outline: 2px solid #7F77DD; outline-offset: 2px; }
 
   /* CTA button */
@@ -148,12 +155,12 @@ const CSS = `
     font-weight: 500;
     font-family: inherit;
     cursor: pointer;
-    box-shadow: 0 8px 24px rgba(127, 119, 221, 0.25);
+    box-shadow: 0 8px 28px rgba(127, 119, 221, 0.35);
     transition: transform 200ms ease, box-shadow 200ms ease, opacity 200ms ease;
   }
   .cta-btn:hover:not(:disabled) {
     transform: scale(1.01);
-    box-shadow: 0 10px 32px rgba(127, 119, 221, 0.40);
+    box-shadow: 0 12px 36px rgba(127, 119, 221, 0.50);
   }
   .cta-btn:active:not(:disabled) { transform: scale(0.99); }
   .cta-btn:disabled { opacity: 0.65; cursor: wait; }
@@ -169,12 +176,13 @@ const CSS = `
 
   /* Mobile responsive */
   @media (max-width: 640px) {
-    .signup-headline   { font-size: clamp(36px, 9vw, 48px) !important; }
+    .signup-headline   { font-size: clamp(34px, 9vw, 44px) !important; }
     .signup-card       { padding: 32px 24px !important; }
     .signup-name-row   { grid-template-columns: 1fr !important; }
+    .signup-wordmark   { margin-bottom: 16px !important; }
   }
 
-  /* Reduced motion: disable orbs + page-load fade */
+  /* Reduced motion: orbs static + page-load fade off */
   @media (prefers-reduced-motion: reduce) {
     .signup-orb { animation: none !important; }
     .signup-fade {
@@ -193,7 +201,7 @@ export default function SignupPage() {
   const [password,    setPassword]    = useState('')
   const [showPw,      setShowPw]      = useState(false)
   const [error,       setError]       = useState('')
-  const [pending,     setPending]     = useState(null)  // null | 'verify'
+  const [pending,     setPending]     = useState(null)
   const [loading,     setLoading]     = useState(false)
 
   function validate() {
@@ -236,9 +244,6 @@ export default function SignupPage() {
       return
     }
 
-    // Non-blocking flow: direct redirect zodra Supabase een session
-    // teruggeeft. Als email-confirmation blocking is (geen session in
-    // response), valt 'verify' UX in.
     if (data?.session) {
       window.location.href = '/home'
       return
@@ -254,70 +259,55 @@ export default function SignupPage() {
     <div
       className={body.className}
       style={{
-        position:   'relative',
-        minHeight:  '100vh',
-        background: '#0A0612',
-        color:      '#FFFFFF',
-        overflow:   'hidden',
-        display:    'flex',
-        alignItems: 'center',
+        position:       'relative',
+        minHeight:      '100vh',
+        background:     '#0A0612',
+        color:          '#FFFFFF',
+        overflow:       'hidden',
+        display:        'flex',
+        alignItems:     'center',
         justifyContent: 'center',
-        padding:    '48px 24px',
+        padding:        '40px 24px',
       }}
     >
       <style>{CSS}</style>
 
-      {/* ─── Animated gradient orbs ─── */}
+      {/* ─── Animated orbs (3, strong, framing center) ─── */}
       <Orb
-        cls="signup-orb"
         style={{
-          top:        '-15%',
+          top:        '-12%',
           left:       '-10%',
+          width:      800,
+          height:     800,
+          background: 'radial-gradient(circle, rgba(127, 119, 221, 0.75) 0%, rgba(127, 119, 221, 0.15) 45%, transparent 75%)',
+          filter:     'blur(80px)',
+          animation:  'orbDriftA 60s ease-in-out infinite',
+        }}
+      />
+      <Orb
+        style={{
+          top:        '-8%',
+          right:      '-12%',
           width:      720,
           height:     720,
-          background: 'radial-gradient(circle, rgba(127, 119, 221, 0.50) 0%, transparent 70%)',
-          filter:     'blur(120px)',
-          animation:  'orbDriftA 75s ease-in-out infinite',
+          background: 'radial-gradient(circle, rgba(99, 102, 241, 0.70) 0%, rgba(99, 102, 241, 0.12) 45%, transparent 75%)',
+          filter:     'blur(75px)',
+          animation:  'orbDriftB 70s ease-in-out infinite',
         }}
       />
       <Orb
-        cls="signup-orb"
         style={{
-          top:        '20%',
-          right:      '-15%',
-          width:      640,
-          height:     640,
-          background: 'radial-gradient(circle, rgba(99, 102, 241, 0.42) 0%, transparent 70%)',
-          filter:     'blur(110px)',
-          animation:  'orbDriftB 90s ease-in-out infinite',
-        }}
-      />
-      <Orb
-        cls="signup-orb"
-        style={{
-          bottom:     '-20%',
+          bottom:     '-25%',
           left:       '20%',
-          width:      560,
-          height:     560,
-          background: 'radial-gradient(circle, rgba(6, 182, 212, 0.32) 0%, transparent 70%)',
-          filter:     'blur(100px)',
+          width:      760,
+          height:     760,
+          background: 'radial-gradient(circle, rgba(6, 182, 212, 0.55) 0%, rgba(6, 182, 212, 0.10) 45%, transparent 75%)',
+          filter:     'blur(85px)',
           animation:  'orbDriftC 80s ease-in-out infinite',
         }}
       />
-      <Orb
-        cls="signup-orb"
-        style={{
-          top:        '50%',
-          left:       '40%',
-          width:      400,
-          height:     400,
-          background: 'radial-gradient(circle, rgba(127, 119, 221, 0.25) 0%, transparent 70%)',
-          filter:     'blur(80px)',
-          animation:  'orbDriftD 65s ease-in-out infinite',
-        }}
-      />
 
-      {/* ─── Noise texture overlay ─── */}
+      {/* ─── Noise overlay ─── */}
       <div
         aria-hidden="true"
         style={{
@@ -331,7 +321,7 @@ export default function SignupPage() {
         }}
       />
 
-      {/* ─── Main content ─── */}
+      {/* ─── Content stack ─── */}
       <div
         style={{
           position: 'relative',
@@ -345,25 +335,57 @@ export default function SignupPage() {
           <VerifyPanel email={email} />
         ) : (
           <>
-            <h1
-              className={`signup-headline signup-fade signup-d-0 ${display.className}`}
+            {/* Wordmark */}
+            <div
+              className="signup-wordmark signup-fade signup-d-0"
               style={{
-                fontSize:      'clamp(48px, 5vw, 72px)',
-                fontWeight:    400,
-                lineHeight:    1.05,
-                letterSpacing: '-0.025em',
-                marginBottom:  16,
+                fontSize:      11,
+                fontWeight:    600,
+                letterSpacing: '0.28em',
+                textTransform: 'uppercase',
+                color:         'rgba(255,255,255,0.55)',
+                marginBottom:  20,
               }}
             >
-              Start your 7-day<br />free trial
+              Lynq &amp; Flow
+            </div>
+
+            {/* Headline */}
+            <h1
+              className={`signup-headline signup-fade signup-d-1 ${display.className}`}
+              style={{
+                fontSize:      'clamp(46px, 5.6vw, 68px)',
+                fontWeight:    400,
+                lineHeight:    1.05,
+                letterSpacing: '-0.02em',
+                margin:        0,
+              }}
+            >
+              Start your <span style={{ whiteSpace: 'nowrap' }}>7-day</span>
+              <br />
+              <em style={{ fontStyle: 'italic' }}>free</em> trial
             </h1>
 
-            <p
-              className="signup-fade signup-d-1"
+            {/* Gradient divider */}
+            <div
+              className="signup-fade signup-d-2"
+              aria-hidden="true"
               style={{
-                fontSize:    16,
-                color:       'rgba(255,255,255,0.55)',
-                marginBottom: 36,
+                width:        140,
+                height:       1,
+                margin:       '20px auto 16px',
+                background:   'linear-gradient(90deg, transparent 0%, rgba(127,119,221,0.45) 50%, transparent 100%)',
+              }}
+            />
+
+            {/* Subhead */}
+            <p
+              className="signup-fade signup-d-3"
+              style={{
+                fontSize:    15,
+                color:       'rgba(255,255,255,0.6)',
+                marginBottom: 28,
+                marginTop:   0,
               }}
             >
               No credit card required. Set up in 5 minutes.
@@ -371,21 +393,26 @@ export default function SignupPage() {
 
             {/* Glassmorphism card */}
             <div
-              className="signup-card signup-fade signup-d-2"
+              className="signup-card signup-fade signup-d-4"
               style={{
-                background:        'rgba(255, 255, 255, 0.035)',
-                backdropFilter:    'blur(20px) saturate(180%)',
-                WebkitBackdropFilter: 'blur(20px) saturate(180%)',
-                border:            '1px solid rgba(255, 255, 255, 0.10)',
-                borderRadius:      24,
-                padding:           '48px 40px',
-                boxShadow:         '0 0 80px rgba(127, 119, 221, 0.15), 0 8px 32px rgba(0,0,0,0.35)',
-                textAlign:         'left',
+                background:           'rgba(255, 255, 255, 0.06)',
+                backdropFilter:       'blur(24px) saturate(180%)',
+                WebkitBackdropFilter: 'blur(24px) saturate(180%)',
+                border:               '1px solid rgba(255, 255, 255, 0.15)',
+                borderRadius:         24,
+                padding:              '40px 36px',
+                boxShadow: [
+                  '0 0 100px rgba(127, 119, 221, 0.25)',
+                  '0 0 60px rgba(99, 102, 241, 0.15)',
+                  '0 8px 32px rgba(0, 0, 0, 0.45)',
+                  'inset 0 1px 0 rgba(255, 255, 255, 0.10)',
+                ].join(', '),
+                textAlign:            'left',
               }}
             >
               <form onSubmit={handleSignup} autoComplete="on" noValidate>
                 <FloatField
-                  className="signup-fade signup-d-3"
+                  className="signup-fade signup-d-5"
                   id="email" label="Email" type="email" value={email} onChange={setEmail}
                   required autoComplete="email"
                 />
@@ -395,30 +422,29 @@ export default function SignupPage() {
                   style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginTop: 12 }}
                 >
                   <FloatField
-                    className="signup-fade signup-d-4"
+                    className="signup-fade signup-d-6"
                     id="first_name" label="First name" value={firstName} onChange={setFirstName}
                     maxLength={NAME_MAX} required autoComplete="given-name"
                   />
                   <FloatField
-                    className="signup-fade signup-d-4"
+                    className="signup-fade signup-d-6"
                     id="last_name" label="Last name" value={lastName} onChange={setLastName}
                     maxLength={NAME_MAX} required autoComplete="family-name"
                   />
                 </div>
 
-                <div className="signup-fade signup-d-5" style={{ marginTop: 12 }}>
+                <div className="signup-fade signup-d-7" style={{ marginTop: 12 }}>
                   <FloatField
                     id="company_name" label="Company name" value={companyName} onChange={setCompanyName}
                     maxLength={COMPANY_MAX} required autoComplete="organization"
                   />
                 </div>
 
-                <div className="signup-fade signup-d-6" style={{ marginTop: 12 }}>
+                <div className="signup-fade signup-d-8" style={{ marginTop: 12 }}>
                   <PasswordField
                     value={password} onChange={setPassword}
                     show={showPw} onToggleShow={() => setShowPw(s => !s)}
                   />
-                  {/* Strength indicator (always reserve height to avoid layout shift) */}
                   <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
                     <div style={{ display: 'flex', gap: 4, flex: 1 }}>
                       {[0, 1, 2, 3].map(i => (
@@ -428,14 +454,14 @@ export default function SignupPage() {
                             flex:         1,
                             height:       3,
                             borderRadius: 2,
-                            background:   i < pwScore ? pwMeta.color : 'rgba(255,255,255,0.08)',
+                            background:   i < pwScore ? pwMeta.color : 'rgba(255,255,255,0.10)',
                             transition:   'background-color 200ms ease',
                           }}
                         />
                       ))}
                     </div>
-                    <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', minWidth: 42 }}>
-                      {pwMeta.label || (password ? ' ' : ' ')}
+                    <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.55)', minWidth: 42 }}>
+                      {pwMeta.label || ' '}
                     </span>
                   </div>
                 </div>
@@ -444,20 +470,20 @@ export default function SignupPage() {
                   <div
                     role="alert"
                     style={{
-                      marginTop:  16,
-                      padding:    '10px 14px',
-                      background: 'rgba(248,113,113,0.10)',
-                      border:     '1px solid rgba(248,113,113,0.25)',
+                      marginTop:    16,
+                      padding:      '10px 14px',
+                      background:   'rgba(248,113,113,0.10)',
+                      border:       '1px solid rgba(248,113,113,0.30)',
                       borderRadius: 10,
-                      color:      '#FCA5A5',
-                      fontSize:   13,
+                      color:        '#FCA5A5',
+                      fontSize:     13,
                     }}
                   >
                     {error}
                   </div>
                 )}
 
-                <div className="signup-fade signup-d-7" style={{ marginTop: 24 }}>
+                <div className="signup-fade signup-d-9" style={{ marginTop: 24 }}>
                   <button type="submit" className="cta-btn" disabled={loading}>
                     {loading ? 'Creating account…' : 'Start free trial →'}
                   </button>
@@ -466,15 +492,15 @@ export default function SignupPage() {
 
               {/* Trust row */}
               <div
-                className="signup-fade signup-d-8"
+                className="signup-fade signup-d-10"
                 style={{
-                  display:    'flex',
-                  flexWrap:   'wrap',
-                  gap:        '8px 20px',
+                  display:        'flex',
+                  flexWrap:       'wrap',
+                  gap:            '8px 20px',
                   justifyContent: 'center',
-                  marginTop:  24,
-                  fontSize:   13,
-                  color:      'rgba(255,255,255,0.5)',
+                  marginTop:      24,
+                  fontSize:       13,
+                  color:          'rgba(255,255,255,0.5)',
                 }}
               >
                 <TrustItem>No credit card</TrustItem>
@@ -485,11 +511,11 @@ export default function SignupPage() {
 
             {/* Footer */}
             <p
-              className="signup-fade signup-d-9"
+              className="signup-fade signup-d-10"
               style={{
-                marginTop: 24,
+                marginTop: 20,
                 fontSize:  14,
-                color:     'rgba(255,255,255,0.5)',
+                color:     'rgba(255,255,255,0.55)',
               }}
             >
               Already have an account?{' '}
@@ -504,11 +530,11 @@ export default function SignupPage() {
 
 // ─── Sub-components ─────────────────────────────────────────────────────────
 
-function Orb({ cls, style }) {
+function Orb({ style }) {
   return (
     <div
       aria-hidden="true"
-      className={cls}
+      className="signup-orb"
       style={{
         position:      'absolute',
         borderRadius:  '50%',
@@ -581,19 +607,23 @@ function VerifyPanel({ email }) {
     <div
       className="signup-fade signup-d-0"
       style={{
-        background:     'rgba(255, 255, 255, 0.035)',
-        backdropFilter: 'blur(20px) saturate(180%)',
-        WebkitBackdropFilter: 'blur(20px) saturate(180%)',
-        border:         '1px solid rgba(255, 255, 255, 0.10)',
-        borderRadius:   24,
-        padding:        '48px 40px',
-        boxShadow:      '0 0 80px rgba(127, 119, 221, 0.15)',
-        textAlign:      'center',
+        background:           'rgba(255, 255, 255, 0.06)',
+        backdropFilter:       'blur(24px) saturate(180%)',
+        WebkitBackdropFilter: 'blur(24px) saturate(180%)',
+        border:               '1px solid rgba(255, 255, 255, 0.15)',
+        borderRadius:         24,
+        padding:              '48px 40px',
+        boxShadow: [
+          '0 0 100px rgba(127, 119, 221, 0.25)',
+          '0 8px 32px rgba(0, 0, 0, 0.45)',
+          'inset 0 1px 0 rgba(255, 255, 255, 0.10)',
+        ].join(', '),
+        textAlign:            'center',
       }}
     >
       <div style={{ fontSize: 36, marginBottom: 12 }}>✉️</div>
       <div style={{ fontSize: 18, fontWeight: 500, marginBottom: 8 }}>Check your email</div>
-      <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.55)', lineHeight: 1.6 }}>
+      <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.6)', lineHeight: 1.6 }}>
         We sent a confirmation link to <strong style={{ color: '#FFFFFF' }}>{email}</strong>.
         Click it to activate your account.
       </p>
@@ -601,7 +631,7 @@ function VerifyPanel({ email }) {
   )
 }
 
-// ─── Icons (inline SVG, geen externe assets) ────────────────────────────────
+// ─── Inline icons ──────────────────────────────────────────────────────────
 
 function Eye() {
   return (

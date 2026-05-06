@@ -1,18 +1,14 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { Instrument_Serif, DM_Sans } from 'next/font/google'
 import { supabase } from '../../lib/supabase'
 import Sidebar from '../components/Sidebar'
-import EventPostCard from './components/EventPostCard'
-import TipPostCard from './components/TipPostCard'
-import UpdatePostCard from './components/UpdatePostCard'
+import PostCard from './components/PostCard'
 
-// Editorial light feed — same brand DNA als /signup en /login (Instrument
-// Serif + DM Sans, word-stagger headline, paars/indigo gamma) maar
-// vertaald naar warm off-white. Drie post-treatments per spec v1.2:
-// EventPostCard (masterclass / Q&A), TipPostCard (tip / industry / video),
-// UpdatePostCard (changelog).
+// /value-feed — editorial light feed met /login brand DNA. Eén
+// consistent card pattern, type alleen via subtle tracked-out caps
+// label. Strikt palette, ademend ritme.
 
 const display = Instrument_Serif({
   subsets:  ['latin'],
@@ -27,98 +23,140 @@ const body = DM_Sans({
   fallback: ['-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'sans-serif'],
 })
 
-const TYPE_FILTERS = [
-  { id: 'all',    label: 'All'     },
-  { id: 'tip',    label: 'Tips'    },
-  { id: 'update', label: 'Updates' },
+const FILTERS = [
+  { id: 'all',         label: 'All'           },
+  { id: 'tip',         label: 'Tips'          },
+  { id: 'masterclass', label: 'Masterclasses' },
+  { id: 'update',      label: 'Updates'       },
 ]
 
-// type='tip' / 'industry' / 'video' krijgen TIP-treatment, type='update' UPDATE
-function isTipLike(post) { return post && post.type !== 'update' }
+// ─── Helpers ────────────────────────────────────────────────
+
+function fmtDate(iso) {
+  return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+}
+
+function fmtEventDate(iso) {
+  const d = new Date(iso)
+  return d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }) +
+    ' · ' + d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+}
+
+function timeUntil(iso) {
+  const diff = new Date(iso) - Date.now()
+  if (diff <= 0) return null
+  const days  = Math.floor(diff / 86400000)
+  const hours = Math.floor((diff % 86400000) / 3600000)
+  if (days === 0 && hours < 2) return 'Starting soon'
+  if (days === 0) return `Today in ${hours}h`
+  if (days === 1) return 'Tomorrow'
+  if (days < 7)  return `In ${days} days`
+  if (days < 30) return `In ${Math.floor(days / 7)} week${Math.floor(days / 7) > 1 ? 's' : ''}`
+  return `In ${Math.floor(days / 30)} month${Math.floor(days / 30) > 1 ? 's' : ''}`
+}
+
+function googleCalUrl(mc) {
+  const start = new Date(mc.scheduled_at)
+  const end   = new Date(start.getTime() + 3600000)
+  const fmt   = d => d.toISOString().replace(/[-:.]/g, '').slice(0, 15) + 'Z'
+  const p     = new URLSearchParams({
+    action:   'TEMPLATE',
+    text:     mc.title,
+    details:  mc.description || '',
+    dates:    `${fmt(start)}/${fmt(end)}`,
+    location: mc.zoom_url || '',
+  })
+  return `https://calendar.google.com/calendar/render?${p}`
+}
+
+function initialsOf(name) {
+  if (!name) return ''
+  const parts = name.trim().split(/\s+/).slice(0, 2)
+  return parts.map(p => p[0]).join('').toUpperCase()
+}
+
+// type='tip' / 'industry' / 'video' → kind 'tip'; type='update' → kind 'update'
+function classifyBroadcast(post) {
+  return post.type === 'update' ? 'update' : 'tip'
+}
+
+// ─── Page styles ────────────────────────────────────────────
 
 const CSS = `
-  /* ─── Word reveal (matched aan /signup) ─── */
+  /* Orbs (matched aan /login, lichter qua opacity) */
+  @keyframes orbDriftA {
+    0%,100% { transform: translate(0, 0)        scale(1);    }
+    50%     { transform: translate(240px, 180px) scale(1.10); }
+  }
+  @keyframes orbDriftB {
+    0%,100% { transform: translate(0, 0)         scale(1);    }
+    50%     { transform: translate(-280px, 140px) scale(1.08); }
+  }
+  @keyframes orbDriftC {
+    0%,100% { transform: translate(0, 0)         scale(1);    }
+    50%     { transform: translate(-200px, -220px) scale(1.10); }
+  }
+
+  /* Word reveal — same pattern als /login */
   @keyframes wordReveal {
-    from {
-      opacity: 0;
-      transform: translateY(20px);
-      filter: blur(10px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-      filter: blur(0);
-    }
+    from { opacity: 0; transform: translateY(20px); filter: blur(10px); }
+    to   { opacity: 1; transform: translateY(0);    filter: blur(0);    }
   }
   .word-reveal {
-    display: inline-block;
-    opacity: 0;
-    animation: wordReveal 800ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    display:    inline-block;
+    opacity:    0;
+    animation:  wordReveal 800ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
     will-change: opacity, transform, filter;
   }
 
-  /* ─── Generic stagger fade ─── */
+  /* Generic stagger fade */
   @keyframes fadeUp {
     from { opacity: 0; transform: translateY(12px); }
     to   { opacity: 1; transform: translateY(0);    }
   }
-  .vf-fade { opacity: 0; animation: fadeUp 400ms cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+  .vf-fade { opacity: 0; animation: fadeUp 500ms cubic-bezier(0.16, 1, 0.3, 1) forwards; }
 
-  /* ─── Filter tabs (underline-style, Linear/Attio) ─── */
+  /* Filter tabs (Linear underline-style) */
   .vf-tab {
     background:    transparent;
     border:        none;
     padding:       8px 0;
     font-size:     14px;
-    font-weight:   500;
+    font-weight:   400;
     color:         #6B6B66;
     cursor:        pointer;
     font-family:   inherit;
     border-bottom: 1px solid transparent;
-    transition:    color 150ms ease, border-color 150ms ease, opacity 150ms ease;
-    opacity:       0.6;
+    transition:    color 150ms ease, border-color 150ms ease, opacity 150ms ease, font-weight 150ms ease;
+    opacity:       0.5;
     display:       inline-flex;
     align-items:   center;
     gap:           6px;
   }
-  .vf-tab:hover    { opacity: 1; color: #0A0612; }
-  .vf-tab.active   {
+  .vf-tab:hover  { opacity: 1; color: #0A0612; }
+  .vf-tab.active {
     opacity:       1;
     color:         #0A0612;
-    font-weight:   600;
+    font-weight:   500;
     border-bottom-color: #0A0612;
   }
   .vf-tab-count {
     font-size:    11px;
-    font-weight:  500;
     color:        #999893;
     font-variant-numeric: tabular-nums;
   }
   .vf-tab.active .vf-tab-count { color: #6B6B66; }
 
-  .vf-topic-tab {
-    background:    transparent;
-    border:        none;
-    padding:       4px 8px;
-    font-size:     12px;
-    font-weight:   500;
-    color:         #999893;
-    cursor:        pointer;
-    font-family:   inherit;
-    border-radius: 6px;
-    transition:    color 150ms ease, background-color 150ms ease;
-  }
-  .vf-topic-tab:hover                  { color: #2A2825; background: #F5F4F0; }
-  .vf-topic-tab.active                 { color: #0A0612; background: #F5F4F0; font-weight: 600; }
-
-  /* Mobile: smaller hero, tighter spacing */
+  /* Mobile */
   @media (max-width: 640px) {
-    .vf-headline { font-size: clamp(32px, 8vw, 44px) !important; }
-    .vf-hero     { margin-bottom: 48px !important; }
+    .vf-headline { font-size: clamp(36px, 9vw, 48px) !important; }
+    .vf-hero     { margin-bottom: 56px !important; }
+    .vf-tabs     { margin-bottom: 32px !important; }
   }
 
   /* Reduced motion */
   @media (prefers-reduced-motion: reduce) {
+    .vf-orb { animation: none !important; }
     .word-reveal, .vf-fade {
       opacity: 1 !important;
       animation: none !important;
@@ -128,12 +166,13 @@ const CSS = `
   }
 `
 
+// ─── Main page ──────────────────────────────────────────────
+
 export default function ValueFeedPage() {
   const [posts, setPosts]                 = useState([])
   const [masterclasses, setMasterclasses] = useState([])
   const [loading, setLoading]             = useState(true)
-  const [typeFilter, setTypeFilter]       = useState('all')
-  const [topicFilter, setTopicFilter]     = useState('all')
+  const [filter, setFilter]               = useState('all')
 
   useEffect(() => {
     Promise.all([
@@ -146,35 +185,59 @@ export default function ValueFeedPage() {
     })
   }, [])
 
-  // Pinned post: highest priority, sticky top
-  const pinnedPost   = posts.find(p => p.is_pinned) || null
-  const activeTopics = [...new Set(posts.map(p => p.topic).filter(Boolean))]
+  // Normalize naar één unified item shape
+  const items = [
+    ...masterclasses.map(mc => ({
+      id:        'm-' + mc.id,
+      kind:      'masterclass',
+      title:     mc.title,
+      dateText:  timeUntil(mc.scheduled_at) || fmtDate(mc.scheduled_at),
+      body:      mc.description || null,
+      author: {
+        initials:       initialsOf(mc.speaker) || 'L',
+        name:           mc.speaker || 'Lynq & Flow',
+        scheduledText:  fmtEventDate(mc.scheduled_at),
+      },
+      zoomUrl:    mc.zoom_url || null,  // null is "Zoom link coming soon" placeholder
+      calUrl:     googleCalUrl(mc),
+      youtubeUrl: null,
+      sortKey:    new Date(mc.scheduled_at).getTime(),
+      isPinned:   false,
+    })),
+    ...posts.map(p => ({
+      id:         'b-' + p.id,
+      kind:       classifyBroadcast(p),
+      title:      p.title,
+      dateText:   fmtDate(p.created_at),
+      body:       p.body || null,
+      author:     null,
+      zoomUrl:    undefined,  // undefined = geen CTA section, vs null = "coming soon"
+      calUrl:     null,
+      youtubeUrl: p.youtube_url || null,
+      sortKey:    new Date(p.created_at).getTime(),
+      isPinned:   !!p.is_pinned,
+    })),
+  ]
 
-  // Visible posts after filters
-  const visible = posts.filter(p => {
-    if (typeFilter === 'tip'    && p.type === 'update') return false
-    if (typeFilter === 'update' && p.type !== 'update') return false
-    if (topicFilter !== 'all' && p.topic !== topicFilter) return false
-    return true
+  // Sort: masterclasses always first (chronological), dan pinned posts,
+  // dan recent posts. Filter applied later.
+  const sorted = items.sort((a, b) => {
+    if (a.kind === 'masterclass' && b.kind !== 'masterclass') return -1
+    if (b.kind === 'masterclass' && a.kind !== 'masterclass') return 1
+    if (a.kind === 'masterclass' && b.kind === 'masterclass') return a.sortKey - b.sortKey
+    if (a.isPinned && !b.isPinned) return -1
+    if (b.isPinned && !a.isPinned) return 1
+    return b.sortKey - a.sortKey
   })
-  const feedPosts = visible.filter(p => !p.is_pinned)
 
-  // Tip-numbering: "Tip N of M" indexes ALL tip-like posts chronologically
-  // (oldest = 1) zodat het label niet meebeweegt met filters.
-  const allTipsAsc = posts
-    .filter(p => isTipLike(p))
-    .slice()
-    .sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
-  const tipIndexById = new Map(allTipsAsc.map((p, idx) => [p.id, idx + 1]))
-  const totalTips    = allTipsAsc.length
+  const filtered = filter === 'all' ? sorted : sorted.filter(it => it.kind === filter)
 
-  function tipIndexLabel(post) {
-    const n = tipIndexById.get(post.id)
-    if (!n || totalTips === 0) return null
-    return `Tip ${n} of ${totalTips}`
+  const counts = {
+    all:         items.length,
+    tip:         items.filter(it => it.kind === 'tip').length,
+    masterclass: items.filter(it => it.kind === 'masterclass').length,
+    update:      items.filter(it => it.kind === 'update').length,
   }
-
-  const totalPostCount = posts.length + masterclasses.length
 
   return (
     <div
@@ -190,203 +253,157 @@ export default function ValueFeedPage() {
       <Sidebar />
 
       <main style={{ flex: 1, overflowY: 'auto', padding: '24px', position: 'relative' }}>
-        {/* Subtle hero orb — visuele heritage van /signup, lichter */}
-        <div
-          aria-hidden="true"
+
+        {/* ─── Background orbs (visible, light versie van /login) ─── */}
+        <Orb
           style={{
-            position:     'absolute',
-            top:          -120,
-            right:        -80,
-            width:        500,
-            height:       500,
-            borderRadius: '50%',
-            background:   'radial-gradient(circle, rgba(127, 119, 221, 0.08) 0%, transparent 65%)',
-            filter:       'blur(100px)',
-            pointerEvents:'none',
-            zIndex:       0,
+            top:        '-10%',
+            left:       '-12%',
+            width:      800,
+            height:     800,
+            background: 'radial-gradient(circle, rgba(127, 119, 221, 0.18) 0%, rgba(127, 119, 221, 0.06) 45%, transparent 75%)',
+            filter:     'blur(200px)',
+            animation:  'orbDriftA 75s ease-in-out infinite',
+          }}
+        />
+        <Orb
+          style={{
+            top:        '-6%',
+            right:      '-14%',
+            width:      700,
+            height:     700,
+            background: 'radial-gradient(circle, rgba(99, 102, 241, 0.14) 0%, rgba(99, 102, 241, 0.05) 45%, transparent 75%)',
+            filter:     'blur(220px)',
+            animation:  'orbDriftB 90s ease-in-out infinite',
+          }}
+        />
+        <Orb
+          style={{
+            bottom:     '-25%',
+            left:       '15%',
+            width:      750,
+            height:     750,
+            background: 'radial-gradient(circle, rgba(6, 182, 212, 0.10) 0%, rgba(6, 182, 212, 0.04) 45%, transparent 75%)',
+            filter:     'blur(240px)',
+            animation:  'orbDriftC 80s ease-in-out infinite',
           }}
         />
 
-        <div style={{ position: 'relative', zIndex: 1, maxWidth: 760, margin: '0 auto' }}>
+        <div style={{ position: 'relative', zIndex: 1, maxWidth: 720, margin: '0 auto' }}>
 
           {/* ─── HERO ─── */}
-          <header className="vf-hero" style={{ marginBottom: 72, paddingTop: 8 }}>
-            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginBottom: 16, flexWrap: 'wrap' }}>
-              <h1
-                className={`vf-headline ${display.className}`}
-                style={{
-                  fontSize:      'clamp(40px, 5vw, 56px)',
-                  fontWeight:    400,
-                  lineHeight:    1.05,
-                  letterSpacing: '-0.02em',
-                  color:         '#0A0612',
-                  margin:        0,
-                }}
-              >
-                <span className="word-reveal" style={{ animationDelay: '0ms' }}>Value</span>{' '}
-                <span className="word-reveal" style={{ animationDelay: '100ms' }}>Feed</span>
-              </h1>
-
-              {!loading && totalPostCount > 0 && (
-                <span
-                  className="vf-fade"
-                  style={{
-                    animationDelay: '300ms',
-                    flexShrink:     0,
-                    marginTop:      12,
-                    padding:        '4px 10px',
-                    borderRadius:   100,
-                    background:     '#F5F4F0',
-                    color:          '#6B6B66',
-                    fontSize:       12,
-                    fontWeight:     500,
-                  }}
-                >
-                  {totalPostCount} {totalPostCount === 1 ? 'post' : 'posts'}
-                </span>
-              )}
+          <header className="vf-hero" style={{ marginBottom: 80, paddingTop: 8, textAlign: 'center' }}>
+            <div
+              className="vf-fade"
+              style={{
+                animationDelay: '0ms',
+                fontSize:       12,
+                fontWeight:     600,
+                letterSpacing:  '0.20em',
+                textTransform:  'uppercase',
+                color:          'rgba(107, 107, 102, 0.55)',
+                marginBottom:   24,
+              }}
+            >
+              Value Feed
             </div>
+
+            <h1
+              className={`vf-headline ${display.className}`}
+              style={{
+                fontSize:      'clamp(48px, 5.5vw, 68px)',
+                fontWeight:    400,
+                lineHeight:    1.05,
+                letterSpacing: '-0.02em',
+                color:         '#0A0612',
+                margin:        0,
+              }}
+            >
+              <span className="word-reveal" style={{ animationDelay: '0ms'   }}>Value,</span>{' '}
+              <span className="word-reveal" style={{ animationDelay: '100ms' }}>weekly.</span>
+            </h1>
+
+            <div
+              className="vf-fade"
+              aria-hidden="true"
+              style={{
+                animationDelay: '320ms',
+                width:          140,
+                height:         1,
+                margin:         '24px auto 18px',
+                background:     'linear-gradient(90deg, transparent 0%, rgba(127, 119, 221, 0.45) 50%, transparent 100%)',
+              }}
+            />
 
             <p
               className="vf-fade"
               style={{
-                animationDelay: '300ms',
+                animationDelay: '420ms',
                 fontSize:       16,
                 color:          '#6B6B66',
-                lineHeight:     1.55,
-                maxWidth:       560,
-                margin:         0,
+                lineHeight:     1.7,
+                margin:         '0 auto',
+                maxWidth:       480,
               }}
             >
-              Exclusive tips, strategies and videos from the Lynq &amp; Flow team.
+              Tips, masterclasses, and updates from Lynq &amp; Flow.
             </p>
           </header>
 
-          {/* ─── FILTER TABS (underline-style) ─── */}
+          {/* ─── FILTER TABS ─── */}
           <div
-            className="vf-fade"
+            className="vf-fade vf-tabs"
             style={{
-              animationDelay: '450ms',
-              borderBottom:   '1px solid #EFEDE8',
-              marginBottom:   activeTopics.length > 0 ? 16 : 32,
+              animationDelay: '540ms',
               display:        'flex',
-              gap:            24,
+              gap:            32,
               flexWrap:       'wrap',
+              borderBottom:   '1px solid #EFEDE8',
+              marginBottom:   48,
             }}
           >
-            {TYPE_FILTERS.map(f => {
-              const count = f.id === 'all'
-                ? posts.length
-                : f.id === 'tip'
-                  ? posts.filter(p => isTipLike(p)).length
-                  : posts.filter(p => p.type === 'update').length
-              return (
-                <button
-                  key={f.id}
-                  className={`vf-tab${typeFilter === f.id ? ' active' : ''}`}
-                  onClick={() => setTypeFilter(f.id)}
-                >
-                  {f.label}
-                  <span className="vf-tab-count">{count}</span>
-                </button>
-              )
-            })}
-          </div>
-
-          {/* Topic filter (secondary, smaller) */}
-          {activeTopics.length > 0 && (
-            <div
-              className="vf-fade"
-              style={{
-                animationDelay: '530ms',
-                display:        'flex',
-                alignItems:     'center',
-                gap:            6,
-                flexWrap:       'wrap',
-                marginBottom:   32,
-              }}
-            >
-              <span style={{ fontSize: 11, color: '#999893', letterSpacing: '0.06em', textTransform: 'uppercase', marginRight: 4 }}>Topic</span>
-              {['all', ...activeTopics].map(t => (
-                <button
-                  key={t}
-                  className={`vf-topic-tab${topicFilter === t ? ' active' : ''}`}
-                  onClick={() => setTopicFilter(t)}
-                >
-                  {t === 'all' ? 'All' : t}
-                </button>
-              ))}
-            </div>
-          )}
-
-          {/* ─── PINNED POST ─── */}
-          {!loading && pinnedPost && (
-            <div className="vf-fade" style={{ animationDelay: '600ms', marginBottom: 24 }}>
-              <div
-                style={{
-                  fontSize:      10,
-                  fontWeight:    600,
-                  color:         '#999893',
-                  letterSpacing: '0.10em',
-                  textTransform: 'uppercase',
-                  marginBottom:  10,
-                  display:       'flex',
-                  alignItems:    'center',
-                  gap:           6,
-                }}
+            {FILTERS.map(f => (
+              <button
+                key={f.id}
+                className={`vf-tab${filter === f.id ? ' active' : ''}`}
+                onClick={() => setFilter(f.id)}
               >
-                <svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor" stroke="none">
-                  <path d="M16 9V4l1-1V2H7v1l1 1v5l-2 3h4v7l1 1 1-1v-7h4l-2-3z"/>
-                </svg>
-                Pinned
-              </div>
-              {pinnedPost.type === 'update'
-                ? <UpdatePostCard post={pinnedPost} />
-                : <TipPostCard post={pinnedPost} indexLabel={tipIndexLabel(pinnedPost)} />}
-            </div>
-          )}
-
-          {/* ─── UPCOMING MASTERCLASSES ─── */}
-          {!loading && masterclasses.length > 0 && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 24, marginBottom: 24 }}>
-              {masterclasses.map((mc, i) => (
-                <div
-                  key={mc.id}
-                  className="vf-fade"
-                  style={{ animationDelay: `${680 + i * 100}ms` }}
-                >
-                  <EventPostCard event={mc} />
-                </div>
-              ))}
-            </div>
-          )}
+                {f.label}
+                <span className="vf-tab-count">{counts[f.id] ?? 0}</span>
+              </button>
+            ))}
+          </div>
 
           {/* ─── FEED ─── */}
           {loading ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-              {[0, 1, 2].map(i => <SkeletonCard key={i} delay={i * 80} />)}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              {[0, 1, 2].map(i => <Skeleton key={i} delay={i * 60} />)}
             </div>
-          ) : feedPosts.length === 0 && !pinnedPost && masterclasses.length === 0 ? (
+          ) : filtered.length === 0 ? (
             <EmptyState
-              hasFilter={typeFilter !== 'all' || topicFilter !== 'all'}
-              onClear={() => { setTypeFilter('all'); setTopicFilter('all') }}
+              hasFilter={filter !== 'all'}
+              onClear={() => setFilter('all')}
             />
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-              {feedPosts.map((post, i) => {
-                const baseDelay = 680 + masterclasses.length * 100
-                return (
-                  <div
-                    key={post.id}
-                    className="vf-fade"
-                    style={{ animationDelay: `${baseDelay + i * 100}ms` }}
-                  >
-                    {post.type === 'update'
-                      ? <UpdatePostCard post={post} />
-                      : <TipPostCard post={post} indexLabel={tipIndexLabel(post)} />}
-                  </div>
-                )
-              })}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              {filtered.map((item, i) => (
+                <div
+                  key={item.id}
+                  className="vf-fade"
+                  style={{ animationDelay: `${640 + i * 60}ms` }}
+                >
+                  <PostCard
+                    kind={item.kind}
+                    title={item.title}
+                    dateText={item.dateText}
+                    body={item.body}
+                    author={item.author}
+                    zoomUrl={item.zoomUrl}
+                    calUrl={item.calUrl}
+                    youtubeUrl={item.youtubeUrl}
+                  />
+                </div>
+              ))}
             </div>
           )}
 
@@ -396,26 +413,45 @@ export default function ValueFeedPage() {
   )
 }
 
-function SkeletonCard({ delay = 0 }) {
+// ─── Sub-components ─────────────────────────────────────────
+
+function Orb({ style }) {
+  return (
+    <div
+      aria-hidden="true"
+      className="vf-orb"
+      style={{
+        position:      'absolute',
+        borderRadius:  '50%',
+        pointerEvents: 'none',
+        zIndex:        0,
+        ...style,
+      }}
+    />
+  )
+}
+
+function Skeleton({ delay = 0 }) {
   return (
     <div
       className="vf-fade"
       style={{
         animationDelay: `${delay}ms`,
         background:     '#FFFFFF',
-        border:         '1px solid #EFEDE8',
-        borderRadius:   12,
-        padding:        24,
+        border:         '1px solid rgba(10, 6, 18, 0.08)',
+        borderRadius:   16,
+        padding:        32,
+        boxShadow:      '0 1px 2px rgba(10, 6, 18, 0.03)',
         display:        'flex',
         flexDirection:  'column',
-        gap:            12,
+        gap:            14,
       }}
     >
-      <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-        <div style={{ height: 16, width: 50, background: '#F5F4F0', borderRadius: 100 }}/>
-        <div style={{ height: 12, width: 80, background: '#F5F4F0', borderRadius: 4, marginLeft: 'auto' }}/>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ height: 12, width: 60, background: '#F5F4F0', borderRadius: 4 }}/>
+        <div style={{ height: 12, width: 80, background: '#F5F4F0', borderRadius: 4 }}/>
       </div>
-      <div style={{ height: 22, width: '70%', background: '#F5F4F0', borderRadius: 4 }}/>
+      <div style={{ height: 26, width: '70%', background: '#F5F4F0', borderRadius: 4 }}/>
       <div style={{ height: 14, width: '100%', background: '#F5F4F0', borderRadius: 4 }}/>
       <div style={{ height: 14, width: '60%', background: '#F5F4F0', borderRadius: 4 }}/>
     </div>
@@ -424,21 +460,7 @@ function SkeletonCard({ delay = 0 }) {
 
 function EmptyState({ hasFilter, onClear }) {
   return (
-    <div className="vf-fade" style={{ animationDelay: '700ms', textAlign: 'center', padding: '64px 24px' }}>
-      <div style={{
-        width:          48,
-        height:         48,
-        margin:         '0 auto 16px',
-        borderRadius:   '50%',
-        background:     '#F5F4F0',
-        display:        'flex',
-        alignItems:     'center',
-        justifyContent: 'center',
-      }}>
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#999893" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-        </svg>
-      </div>
+    <div className="vf-fade" style={{ animationDelay: '700ms', textAlign: 'center', padding: '72px 24px' }}>
       <div style={{ fontSize: 16, fontWeight: 600, color: '#0A0612', marginBottom: 6 }}>
         Nothing here yet
       </div>
@@ -453,7 +475,7 @@ function EmptyState({ hasFilter, onClear }) {
           style={{
             marginTop:    20,
             padding:      '8px 16px',
-            borderRadius: 8,
+            borderRadius: 10,
             border:       '1px solid #EFEDE8',
             background:   '#FFFFFF',
             color:        '#2A2825',

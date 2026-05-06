@@ -254,37 +254,42 @@ export default function ValueFeedPage() {
 
       <main style={{ flex: 1, overflowY: 'auto', padding: '24px', position: 'relative' }}>
 
-        {/* ─── Background orbs (visible, light versie van /login) ─── */}
+        {/* ─── Background orbs — position:fixed zodat ze niet door
+            main's overflow-y:auto (=auto x-clip) worden afgesneden,
+            en ze blijven zichtbaar tijdens scrollen. Opacity centers
+            verhoogd naar 0.22-0.28 en blur verlaagd naar 130-160px
+            zodat ze als zachte kleurvelden registreren op het warm
+            off-white bg, niet onzichtbaar worden. ─── */}
         <Orb
           style={{
-            top:        '-10%',
-            left:       '-12%',
+            top:        '-12%',
+            left:       '-8%',
             width:      800,
             height:     800,
-            background: 'radial-gradient(circle, rgba(127, 119, 221, 0.18) 0%, rgba(127, 119, 221, 0.06) 45%, transparent 75%)',
-            filter:     'blur(200px)',
+            background: 'radial-gradient(circle, rgba(127, 119, 221, 0.28) 0%, rgba(127, 119, 221, 0.10) 40%, transparent 75%)',
+            filter:     'blur(140px)',
             animation:  'orbDriftA 75s ease-in-out infinite',
           }}
         />
         <Orb
           style={{
-            top:        '-6%',
-            right:      '-14%',
+            top:        '-8%',
+            right:      '-10%',
             width:      700,
             height:     700,
-            background: 'radial-gradient(circle, rgba(99, 102, 241, 0.14) 0%, rgba(99, 102, 241, 0.05) 45%, transparent 75%)',
-            filter:     'blur(220px)',
+            background: 'radial-gradient(circle, rgba(99, 102, 241, 0.24) 0%, rgba(99, 102, 241, 0.08) 40%, transparent 75%)',
+            filter:     'blur(150px)',
             animation:  'orbDriftB 90s ease-in-out infinite',
           }}
         />
         <Orb
           style={{
-            bottom:     '-25%',
-            left:       '15%',
+            bottom:     '-22%',
+            left:       '18%',
             width:      750,
             height:     750,
-            background: 'radial-gradient(circle, rgba(6, 182, 212, 0.10) 0%, rgba(6, 182, 212, 0.04) 45%, transparent 75%)',
-            filter:     'blur(240px)',
+            background: 'radial-gradient(circle, rgba(6, 182, 212, 0.18) 0%, rgba(6, 182, 212, 0.06) 40%, transparent 75%)',
+            filter:     'blur(160px)',
             animation:  'orbDriftC 80s ease-in-out infinite',
           }}
         />
@@ -311,6 +316,7 @@ export default function ValueFeedPage() {
             <h1
               className={`vf-headline ${display.className}`}
               style={{
+                fontFamily:    display.style.fontFamily,
                 fontSize:      'clamp(48px, 5.5vw, 68px)',
                 fontWeight:    400,
                 lineHeight:    1.05,
@@ -421,7 +427,7 @@ function Orb({ style }) {
       aria-hidden="true"
       className="vf-orb"
       style={{
-        position:      'absolute',
+        position:      'fixed',          // viewport-relative — geen clip door main's overflow
         borderRadius:  '50%',
         pointerEvents: 'none',
         zIndex:        0,

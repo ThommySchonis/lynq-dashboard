@@ -97,10 +97,13 @@ export default function PostCard({
         )}
       </div>
 
-      {/* Title */}
+      {/* Title — Instrument Serif. Inline fontFamily forceert de
+          serif (className alone werd in productie soms door body's
+          DM Sans cascade overgenomen — inline = highest specificity). */}
       <h3
         className={display.className}
         style={{
+          fontFamily:    display.style.fontFamily,
           fontSize:      isMasterclass ? 28 : 24,
           fontWeight:    400,
           lineHeight:    1.3,

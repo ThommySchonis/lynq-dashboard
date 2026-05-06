@@ -10,8 +10,6 @@ const PASSWORD_MIN = 8
 export default function ResetPasswordPage() {
   const [password,  setPassword]  = useState('')
   const [confirm,   setConfirm]   = useState('')
-  const [showPw1,   setShowPw1]   = useState(false)
-  const [showPw2,   setShowPw2]   = useState(false)
   const [error,     setError]     = useState('')
   const [loading,   setLoading]   = useState(false)
   const [success,   setSuccess]   = useState(false)
@@ -170,8 +168,6 @@ export default function ResetPasswordPage() {
           label="New password"
           value={password}
           onChange={setPassword}
-          show={showPw1}
-          onToggleShow={() => setShowPw1(s => !s)}
           autoComplete="new-password"
           minLength={PASSWORD_MIN}
         />
@@ -182,8 +178,6 @@ export default function ResetPasswordPage() {
             label="Confirm new password"
             value={confirm}
             onChange={setConfirm}
-            show={showPw2}
-            onToggleShow={() => setShowPw2(s => !s)}
             autoComplete="new-password"
             minLength={PASSWORD_MIN}
           />

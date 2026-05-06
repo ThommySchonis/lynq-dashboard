@@ -19,6 +19,7 @@
 //
 // Exports also: FloatField, PasswordField — drop-in vorm-elementen.
 
+import { Fragment, useState } from 'react'
 import { Instrument_Serif, DM_Sans } from 'next/font/google'
 
 const display = Instrument_Serif({
@@ -280,14 +281,20 @@ export default function AuthShell({
               margin:        0,
             }}
           >
+            {/* Spatie als text-node TUSSEN de spans, niet binnen.
+                Inline-block collapses trailing whitespace dus
+                'Set <span>a</span><span>new</span>' rendert als
+                'Setanew' als de spatie binnen de span zit. */}
             {words.map((word, i) => (
-              <span
-                key={i}
-                className="word-reveal"
-                style={{ animationDelay: `${i * 100}ms` }}
-              >
-                {word}{i < words.length - 1 ? ' ' : ''}
-              </span>
+              <Fragment key={i}>
+                {i > 0 ? ' ' : null}
+                <span
+                  className="word-reveal"
+                  style={{ animationDelay: `${i * 100}ms` }}
+                >
+                  {word}
+                </span>
+              </Fragment>
             ))}
           </h1>
         )}
@@ -399,7 +406,11 @@ export function FloatField({ id, label, type = 'text', value, onChange, classNam
   )
 }
 
-export function PasswordField({ id = 'password', label = 'Password', value, onChange, show, onToggleShow, autoComplete = 'new-password', minLength, className }) {
+// Self-managing show/hide state — geen show / onToggleShow props meer
+// nodig vanuit caller. Elke instance heeft onafhankelijke internal
+// state, dus 2 PasswordFields op één page togglen los van elkaar.
+export function PasswordField({ id = 'password', label = 'Password', value, onChange, autoComplete = 'new-password', minLength, className }) {
+  const [show, setShow] = useState(false)
   return (
     <div className={`as-field-wrap ${className || ''}`}>
       <input
@@ -419,7 +430,7 @@ export function PasswordField({ id = 'password', label = 'Password', value, onCh
       <button
         type="button"
         className="as-pw-toggle"
-        onClick={onToggleShow}
+        onClick={() => setShow(s => !s)}
         aria-label={show ? 'Hide password' : 'Show password'}
       >
         {show ? <EyeOff /> : <Eye />}

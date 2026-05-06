@@ -71,6 +71,26 @@ const CSS = `
     to   { opacity: 1; transform: translateY(0);    }
   }
   .signup-fade { opacity: 0; animation: fadeInUp 700ms cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+
+  /* ─── Headline word-by-word reveal (one-shot op mount) ─── */
+  @keyframes wordReveal {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+      filter: blur(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+      filter: blur(0);
+    }
+  }
+  .word-reveal {
+    display: inline-block;
+    opacity: 0;
+    animation: wordReveal 800ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    will-change: opacity, transform, filter;
+  }
   .signup-d-0 { animation-delay:    0ms; }
   .signup-d-1 { animation-delay:   80ms; }
   .signup-d-2 { animation-delay:  160ms; }
@@ -90,21 +110,23 @@ const CSS = `
     height: 54px;
     box-sizing: border-box;
     padding: 22px 16px 8px;
-    background: rgba(255,255,255,0.04);
-    border: 1px solid rgba(255,255,255,0.10);
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: 12px;
-    color: #FFFFFF;
+    color: rgba(255, 255, 255, 0.95);
     font-size: 15px;
     font-family: inherit;
     outline: none;
     transition: border-color 200ms ease, box-shadow 200ms ease, background-color 200ms ease;
   }
-  .field-input::placeholder { color: transparent; }
-  .field-input:hover { background: rgba(255,255,255,0.055); }
+  .field-input::placeholder { color: rgba(255, 255, 255, 0.4); }
+  .field-input:hover { background: rgba(255, 255, 255, 0.075); }
   .field-input:focus {
     border-color: #7F77DD;
-    box-shadow: 0 0 0 4px rgba(127, 119, 221, 0.16);
-    background: rgba(255,255,255,0.07);
+    box-shadow:
+      0 0 0 4px rgba(127, 119, 221, 0.15),
+      0 0 20px rgba(127, 119, 221, 0.20);
+    background: rgba(255, 255, 255, 0.10);
   }
   .field-input:focus + .field-label,
   .field-input:not(:placeholder-shown) + .field-label {
@@ -182,13 +204,15 @@ const CSS = `
     .signup-wordmark   { margin-bottom: 16px !important; }
   }
 
-  /* Reduced motion: orbs static + page-load fade off */
+  /* Reduced motion: orbs static + page-load fade off + headline static */
   @media (prefers-reduced-motion: reduce) {
     .signup-orb { animation: none !important; }
-    .signup-fade {
+    .signup-fade,
+    .word-reveal {
       opacity: 1 !important;
       animation: none !important;
       transform: none !important;
+      filter: none !important;
     }
   }
 `
@@ -350,9 +374,9 @@ export default function SignupPage() {
               Lynq &amp; Flow
             </div>
 
-            {/* Headline */}
+            {/* Headline — word-by-word stagger reveal */}
             <h1
-              className={`signup-headline signup-fade signup-d-1 ${display.className}`}
+              className={`signup-headline ${display.className}`}
               style={{
                 fontSize:      'clamp(46px, 5.6vw, 68px)',
                 fontWeight:    400,
@@ -361,9 +385,14 @@ export default function SignupPage() {
                 margin:        0,
               }}
             >
-              Start your <span style={{ whiteSpace: 'nowrap' }}>7-day</span>
+              <span className="word-reveal" style={{ animationDelay: '0ms' }}>Start</span>{' '}
+              <span className="word-reveal" style={{ animationDelay: '100ms' }}>your</span>{' '}
+              <span className="word-reveal" style={{ animationDelay: '200ms', whiteSpace: 'nowrap' }}>7-day</span>
               <br />
-              <em style={{ fontStyle: 'italic' }}>free</em> trial
+              <span className="word-reveal" style={{ animationDelay: '300ms' }}>
+                <em style={{ fontStyle: 'italic' }}>free</em>
+              </span>{' '}
+              <span className="word-reveal" style={{ animationDelay: '400ms' }}>trial</span>
             </h1>
 
             {/* Gradient divider */}
@@ -395,10 +424,10 @@ export default function SignupPage() {
             <div
               className="signup-card signup-fade signup-d-4"
               style={{
-                background:           'rgba(255, 255, 255, 0.06)',
-                backdropFilter:       'blur(24px) saturate(180%)',
-                WebkitBackdropFilter: 'blur(24px) saturate(180%)',
-                border:               '1px solid rgba(255, 255, 255, 0.15)',
+                background: 'linear-gradient(145deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.04) 100%)',
+                backdropFilter:       'blur(24px) saturate(200%)',
+                WebkitBackdropFilter: 'blur(24px) saturate(200%)',
+                border:               '1px solid rgba(255, 255, 255, 0.18)',
                 borderRadius:         24,
                 padding:              '40px 36px',
                 boxShadow: [
@@ -607,10 +636,10 @@ function VerifyPanel({ email }) {
     <div
       className="signup-fade signup-d-0"
       style={{
-        background:           'rgba(255, 255, 255, 0.06)',
-        backdropFilter:       'blur(24px) saturate(180%)',
-        WebkitBackdropFilter: 'blur(24px) saturate(180%)',
-        border:               '1px solid rgba(255, 255, 255, 0.15)',
+        background: 'linear-gradient(145deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.04) 100%)',
+        backdropFilter:       'blur(24px) saturate(200%)',
+        WebkitBackdropFilter: 'blur(24px) saturate(200%)',
+        border:               '1px solid rgba(255, 255, 255, 0.18)',
         borderRadius:         24,
         padding:              '48px 40px',
         boxShadow: [

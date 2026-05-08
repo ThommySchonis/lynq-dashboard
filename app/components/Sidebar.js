@@ -4,7 +4,7 @@ import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { useState, useEffect, Suspense } from 'react'
-import { MessageSquareWarning, Inbox as InboxIcon } from 'lucide-react'
+import { MessageSquareWarning } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { useTheme } from './ThemeProvider'
 import SetupChecklist from './SetupChecklist'
@@ -182,64 +182,6 @@ const CSS = `
   }
   .sb-feedback .sb-icon { color:inherit; }
 
-  /* Collapsible Admin Panel section: toggle row + chevron + sub-items */
-  .sb-admin-toggle {
-    display:flex; align-items:center; gap:9px;
-    padding:7px 8px; border-radius:6px;
-    margin:0 4px 1px;
-    background:transparent; border:none;
-    width:calc(100% - 8px); text-align:left;
-    cursor:pointer; user-select:none; white-space:nowrap;
-    font-family:'Switzer',-apple-system,BlinkMacSystemFont,sans-serif;
-    font-size:12.5px; font-weight:400;
-    color:rgba(255,255,255,0.35);
-    transition:background .12s, color .12s;
-  }
-  .sb-admin-toggle:hover {
-    background:rgba(255,255,255,0.05);
-    color:rgba(255,255,255,0.7);
-  }
-  .sb-admin-toggle.sb-admin-open {
-    color:rgba(255,255,255,0.7);
-  }
-
-  .sb-chevron {
-    width:14px; height:14px; flex-shrink:0;
-    color:inherit; opacity:0.7;
-    transition:transform .15s ease;
-  }
-  .sb-admin-open .sb-chevron { transform:rotate(90deg); }
-
-  /* Sub-item: same shape as sb-item, but inset 24px from left */
-  .sb-sub {
-    display:flex; align-items:center;
-    padding:6px 8px 6px 32px; gap:9px;
-    border-radius:6px; margin:0 4px 1px;
-    text-decoration:none; cursor:pointer;
-    position:relative; user-select:none; white-space:nowrap;
-    transition:background .12s, color .12s;
-    font-size:12.5px; font-weight:400;
-    color:rgba(255,255,255,0.32);
-  }
-  .sb-sub:hover:not(.sb-active) {
-    background:rgba(255,255,255,0.04);
-    color:rgba(255,255,255,0.65);
-  }
-  .sb-sub.sb-active {
-    background:rgba(139,92,246,0.14);
-    color:#C4B5FD;
-    font-weight:500;
-  }
-  .sb-sub.sb-active .sb-icon { opacity:1; color:#A175FC; }
-
-  /* Badge on the admin Feedback sub-item */
-  .sb-admin-badge {
-    background:#A175FC; color:#FFFFFF;
-    font-size:11px; font-weight:500;
-    padding:2px 6px; border-radius:6px;
-    margin-left:auto; flex-shrink:0;
-    line-height:1.2;
-  }
 `
 
 // ── Icons (16×16, strokeWidth 1.75) ──────────────────────────────────────────
@@ -298,22 +240,13 @@ function SidebarContent() {
   const [onboarding, setOnboarding]           = useState(null)
   const [checklistHidden, setChecklistHidden] = useState(false)
   const [feedbackOpen, setFeedbackOpen] = useState(false)
-  const [feedbackBadge, setFeedbackBadge] = useState(0)
-  const isOnAdminRoute = pathname.startsWith('/admin') || pathname.startsWith('/lynq-admin')
-  const [adminExpanded, setAdminExpanded] = useState(isOnAdminRoute)
   const { toasts, addToast, removeToast } = useToast()
-
-  // Auto-expand the Admin Panel section whenever the user lands on an admin route.
-  useEffect(() => {
-    if (isOnAdminRoute) setAdminExpanded(true)
-  }, [isOnAdminRoute])
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!session?.user) return
       setEmail(session.user.email || '')
-      const admin = session.user.email === 'info@lynqagency.com'
-      setIsAdmin(admin)
+      setIsAdmin(session.user.email === 'info@lynqagency.com')
       // Onboarding status — best-effort. Failure leaves checklist hidden.
       fetch('/api/onboarding/status', {
         headers: { Authorization: `Bearer ${session.access_token}` },
@@ -322,17 +255,6 @@ function SidebarContent() {
         .then(r => (r.ok ? r.json() : null))
         .then(d => { if (d) setOnboarding(d) })
         .catch(() => {})
-
-      // Lynq-admin: 7-day feedback count for the sidebar badge.
-      if (admin) {
-        fetch('/api/lynq-admin/feedback/count', {
-          headers: { Authorization: `Bearer ${session.access_token}` },
-          cache: 'no-store',
-        })
-          .then(r => (r.ok ? r.json() : null))
-          .then(d => { if (d?.count != null) setFeedbackBadge(d.count) })
-          .catch(() => {})
-      }
     })
   }, [pathname])  // re-fetch on route change so completed items refresh
 
@@ -431,51 +353,7 @@ function SidebarContent() {
 
             <div className="sb-divider" />
             {BOTTOM_ITEMS.map(item => renderItem(item))}
-
-            {/* Admin Panel — collapsible, only for info@lynqagency.com */}
-            {isAdmin && (() => {
-              const overviewActive = pathname === '/admin' || (pathname.startsWith('/admin/') && !pathname.startsWith('/admin/login'))
-              const feedbackActive = pathname.startsWith('/lynq-admin/feedback')
-              return (
-                <>
-                  <button
-                    type="button"
-                    className={`sb-admin-toggle${adminExpanded ? ' sb-admin-open' : ''}`}
-                    onClick={() => setAdminExpanded(v => !v)}
-                    aria-expanded={adminExpanded}
-                  >
-                    <span className="sb-icon">{Icons.shield}</span>
-                    <span className="sb-label">Admin Panel</span>
-                    <svg className="sb-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                      strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-                      <polyline points="9 18 15 12 9 6" />
-                    </svg>
-                  </button>
-                  {adminExpanded && (
-                    <>
-                      <Link
-                        href="/admin"
-                        className={`sb-sub${overviewActive ? ' sb-active' : ''}`}
-                      >
-                        <span className="sb-label">Overview</span>
-                      </Link>
-                      <Link
-                        href="/lynq-admin/feedback"
-                        className={`sb-sub${feedbackActive ? ' sb-active' : ''}`}
-                      >
-                        <span className="sb-icon">
-                          <InboxIcon size={16} strokeWidth={1.75} />
-                        </span>
-                        <span className="sb-label">Feedback</span>
-                        {feedbackBadge > 0 && (
-                          <span className="sb-admin-badge">{feedbackBadge}</span>
-                        )}
-                      </Link>
-                    </>
-                  )}
-                </>
-              )
-            })()}
+            {isAdmin && renderItem({ href: '/admin', label: 'Admin Panel', icon: Icons.shield })}
           </div>
         </nav>
 

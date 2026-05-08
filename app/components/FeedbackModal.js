@@ -83,7 +83,10 @@ export default function FeedbackModal({ open, onClose, onSuccess, onError }) {
       })
       if (!res.ok) {
         const err = await res.json().catch(() => ({}))
-        onError?.(err.error || 'Something went wrong. Please try again.')
+        // Dev/non-prod responses include code/details — surface them so
+        // the toast tells you exactly what to fix.
+        const detail = err.code ? ` (${err.code})` : ''
+        onError?.((err.error || 'Something went wrong. Please try again.') + detail)
         setSubmitting(false)
         return
       }

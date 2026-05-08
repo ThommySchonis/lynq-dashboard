@@ -1,10 +1,11 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Link from 'next/link'
 import { supabase } from '../../lib/supabase'
 import {
   LayoutDashboard, Users, UserPlus, Radio, Bell, MessageSquare,
-  UserCheck, Clock, BarChart2, Calendar, ArrowLeft,
+  UserCheck, Clock, BarChart2, Calendar, ArrowLeft, Inbox,
 } from 'lucide-react'
 
 const ADMIN_EMAIL = 'info@lynqagency.com'
@@ -168,6 +169,7 @@ export default function AdminPage() {
   const [teamError, setTeamError]         = useState('')
   const [authorized, setAuthorized]       = useState(false)
   const [activeTab, setActiveTab]         = useState('dashboard')
+  const [feedbackCount, setFeedbackCount] = useState(0)
   const [teamForm, setTeamForm]           = useState({ name: '', email: '', password: '', role: 'developer' })
   const [finance, setFinance]             = useState(null)
   const [financeLoading, setFinanceLoading] = useState(false)
@@ -197,9 +199,25 @@ export default function AdminPage() {
       setAuthorized(true)
       fetchClients(); fetchBroadcasts(); fetchNotifications()
       fetchTeamMembers(); fetchMasterclasses(); fetchBroadcastReactions(); fetchInquiries()
+      fetchFeedbackCount()
     }
     checkAuth()
   }, [])
+
+  async function fetchFeedbackCount() {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) return
+    try {
+      const res = await fetch('/api/lynq-admin/feedback/count', {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+        cache: 'no-store',
+      })
+      if (res.ok) {
+        const d = await res.json()
+        if (typeof d.count === 'number') setFeedbackCount(d.count)
+      }
+    } catch {}
+  }
 
   async function fetchInquiries() {
     const { data } = await supabase.from('service_inquiries').select('*').order('created_at', { ascending: false })
@@ -397,6 +415,24 @@ export default function AdminPage() {
               })}
             </div>
           ))}
+
+          {/* SUPPORT — links out to the standalone /lynq-admin/feedback page */}
+          <div>
+            <div style={{ fontSize:9, textTransform:'uppercase', letterSpacing:'0.1em', color:'rgba(255,255,255,0.2)', padding:'12px 8px 4px' }}>SUPPORT</div>
+            <Link
+              href="/lynq-admin/feedback"
+              className="ap-nav-item"
+              style={{ textDecoration:'none' }}
+            >
+              <Inbox size={15} strokeWidth={1.75} style={{ opacity:0.5, flexShrink:0 }} />
+              <span style={{ flex:1 }}>Feedback</span>
+              {feedbackCount > 0 && (
+                <span style={{ fontSize:10, fontWeight:700, background:'#A175FC', color:'#FFFFFF', borderRadius:100, padding:'1px 6px', lineHeight:1.5 }}>
+                  {feedbackCount}
+                </span>
+              )}
+            </Link>
+          </div>
         </div>
 
         {/* Footer */}

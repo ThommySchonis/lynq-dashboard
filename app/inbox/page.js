@@ -59,41 +59,7 @@ function loadMacros() {
 }
 function saveMacrosToStorage(m) { try{localStorage.setItem('lynq_macros',JSON.stringify(m))}catch{} }
 
-// ─── Demo data ───────────────────────────────────────────────
-const DEMO_THREADS = [
-  { id:'demo-1', from:'Sophie de Vries <sophie@example.com>', subject:'Where is my package?', snippet:'Hi, I placed an order 2 weeks ago but haven\'t received anything yet...', date:new Date(Date.now()-3600000*2).toISOString(), unread:true },
-  { id:'demo-2', from:'Mark Jansen <mark.jansen@example.com>', subject:'Received wrong product', snippet:'Hi, I received my order but there is a wrong item inside...', date:new Date(Date.now()-3600000*5).toISOString(), unread:true },
-  { id:'demo-3', from:'Lisa Bakker <lisa@example.com>', subject:'Refund request for order #1042', snippet:'Hi, I would like to request a refund for order #1042...', date:new Date(Date.now()-86400000).toISOString(), unread:false },
-  { id:'demo-4', from:'Tom Hendricks <t.hendricks@example.com>', subject:'Re: Delivery time question', snippet:'Thanks so much for the quick reply! Great to know.', date:new Date(Date.now()-86400000*2).toISOString(), unread:false },
-  { id:'demo-5', from:'Anna Smit <anna.smit@example.com>', subject:'Exchange size — order #1045', snippet:'Hi, I ordered a size M but would like to exchange it for a L, is that possible?', date:new Date(Date.now()-86400000*3).toISOString(), unread:false },
-]
-const DEMO_MESSAGES = {
-  'demo-1': [
-    { id:'dm1a', from:'Sophie de Vries <sophie@example.com>', date:new Date(Date.now()-3600000*2).toISOString(), body:'Hi,\n\nI placed an order 2 weeks ago (order #1038) but still haven\'t received anything. Could you look into this for me?\n\nBest regards,\nSophie' },
-    { id:'dm1b', from:'Support <info@example.com>', date:new Date(Date.now()-3600000*1).toISOString(), body:'Hi Sophie,\n\nThank you for reaching out! I\'ll look into this right away. Could you confirm the email address you used when placing the order?\n\nBest regards,\nCustomer Support' },
-  ],
-  'demo-2': [
-    { id:'dm2a', from:'Mark Jansen <mark.jansen@example.com>', date:new Date(Date.now()-3600000*5).toISOString(), body:'Hi,\n\nI received my order #1041 yesterday but there\'s a wrong item inside. I ordered a black shirt but received a blue one. Could you help resolve this?\n\nBest regards,\nMark Jansen' },
-  ],
-  'demo-3': [
-    { id:'dm3a', from:'Lisa Bakker <lisa@example.com>', date:new Date(Date.now()-86400000).toISOString(), body:'Hi,\n\nI\'d like to request a refund for order #1042. Unfortunately the product didn\'t meet my expectations.\n\nCould you let me know how to proceed?\n\nBest regards,\nLisa Bakker' },
-  ],
-  'demo-4': [
-    { id:'dm4a', from:'Tom Hendricks <t.hendricks@example.com>', date:new Date(Date.now()-86400000*2-3600000).toISOString(), body:'Hi,\n\nI\'d like to place an order but first wanted to know the delivery time to Belgium?\n\nThanks,\nTom' },
-    { id:'dm4b', from:'Support <info@example.com>', date:new Date(Date.now()-86400000*2).toISOString(), body:'Hi Tom,\n\nThanks for your question! Deliveries to Belgium typically take 3–5 business days.\n\nBest regards,\nCustomer Support' },
-    { id:'dm4c', from:'Tom Hendricks <t.hendricks@example.com>', date:new Date(Date.now()-86400000*2+3600000).toISOString(), body:'Thanks so much for the quick reply! Great to know.' },
-  ],
-  'demo-5': [
-    { id:'dm5a', from:'Anna Smit <anna.smit@example.com>', date:new Date(Date.now()-86400000*3).toISOString(), body:'Hi,\n\nI ordered a size M (order #1045) but would like to exchange it for a size L. Is that possible and if so, how does it work?\n\nKind regards,\nAnna' },
-  ],
-}
-const DEMO_CUSTOMER = {
-  'demo-1': { customer:{ id:1001, firstName:'Sophie', lastName:'de Vries', email:'sophie@example.com', phone:'+31 6 12345678', city:'Amsterdam', country:'Netherlands', countryCode:'NL', ordersCount:3, totalSpent:'127.50', currency:'EUR', tags:'vip,repeat', note:'', createdAt:'2024-03-15T10:00:00Z' }, orders:[{ id:9001, name:'#1038', createdAt:'2025-04-10T14:30:00Z', financialStatus:'paid', fulfillmentStatus:'unfulfilled', totalPrice:'49.95', currency:'EUR', lineItems:[{ id:801, title:'Premium Cotton T-shirt', variantTitle:'Black / L', sku:'TSH-BLK-L', quantity:1, price:'49.95' }], fulfillments:[], hasRefund:false, shippingAddress:{ firstName:'Sophie', lastName:'de Vries', address1:'Keizersgracht 123', address2:'', city:'Amsterdam', zip:'1015 CJ', country:'Netherlands', countryCode:'NL', phone:'+31 6 12345678' } },{ id:9002, name:'#1031', createdAt:'2025-02-28T09:00:00Z', financialStatus:'paid', fulfillmentStatus:'fulfilled', totalPrice:'77.55', currency:'EUR', lineItems:[{ id:802, title:'Hoodie Classic', variantTitle:'Grey / M', sku:'HOD-GRY-M', quantity:1, price:'59.95' },{ id:803, title:'Socks 3-pack', variantTitle:'White', sku:'SOK-WHT', quantity:1, price:'17.60' }], fulfillments:[{ trackingNumber:'3SBME123456789', trackingUrl:'https://tracking.example.com/3SBME123456789', trackingCompany:'PostNL', status:'success' }], hasRefund:false, shippingAddress:{ firstName:'Sophie', lastName:'de Vries', address1:'Keizersgracht 123', address2:'', city:'Amsterdam', zip:'1015 CJ', country:'Netherlands', countryCode:'NL', phone:'+31 6 12345678' } }] },
-  'demo-2': { customer:{ id:1002, firstName:'Mark', lastName:'Jansen', email:'mark.jansen@example.com', phone:'+31 6 87654321', city:'Rotterdam', country:'Netherlands', countryCode:'NL', ordersCount:1, totalSpent:'64.90', currency:'EUR', tags:'', note:'', createdAt:'2025-01-20T08:00:00Z' }, orders:[{ id:9003, name:'#1041', createdAt:'2025-04-22T11:00:00Z', financialStatus:'paid', fulfillmentStatus:'fulfilled', totalPrice:'64.90', currency:'EUR', lineItems:[{ id:804, title:'Slim Fit Shirt', variantTitle:'Blue / M', sku:'SHT-BLU-M', quantity:1, price:'44.95' },{ id:805, title:'Leather Belt', variantTitle:'Brown', sku:'RMN-BRN', quantity:1, price:'19.95' }], fulfillments:[{ trackingNumber:'3SBME987654321', trackingUrl:'https://tracking.example.com/3SBME987654321', trackingCompany:'DHL', status:'success' }], hasRefund:false, shippingAddress:{ firstName:'Mark', lastName:'Jansen', address1:'Coolsingel 45', address2:'', city:'Rotterdam', zip:'3011 AD', country:'Netherlands', countryCode:'NL', phone:'+31 6 87654321' } }] },
-  'demo-3': { customer:{ id:1003, firstName:'Lisa', lastName:'Bakker', email:'lisa@example.com', phone:'', city:'Utrecht', country:'Netherlands', countryCode:'NL', ordersCount:2, totalSpent:'89.90', currency:'EUR', tags:'', note:'', createdAt:'2024-11-05T12:00:00Z' }, orders:[{ id:9004, name:'#1042', createdAt:'2025-04-18T16:00:00Z', financialStatus:'paid', fulfillmentStatus:'fulfilled', totalPrice:'44.95', currency:'EUR', lineItems:[{ id:806, title:'Yoga Leggings', variantTitle:'Black / S', sku:'YLG-BLK-S', quantity:1, price:'44.95' }], fulfillments:[{ trackingNumber:'3SBME555444333', trackingUrl:'', trackingCompany:'PostNL', status:'success' }], hasRefund:false, shippingAddress:{ firstName:'Lisa', lastName:'Bakker', address1:'Oudegracht 78', address2:'', city:'Utrecht', zip:'3511 AV', country:'Netherlands', countryCode:'NL', phone:'' } }] },
-  'demo-4': { customer:{ id:1004, firstName:'Tom', lastName:'Hendricks', email:'t.hendricks@example.com', phone:'+32 476 123456', city:'Antwerp', country:'Belgium', countryCode:'BE', ordersCount:1, totalSpent:'54.95', currency:'EUR', tags:'', note:'', createdAt:'2025-03-01T10:00:00Z' }, orders:[{ id:9005, name:'#1039', createdAt:'2025-04-12T13:00:00Z', financialStatus:'paid', fulfillmentStatus:'fulfilled', totalPrice:'54.95', currency:'EUR', lineItems:[{ id:807, title:'Cargo Pants', variantTitle:'Khaki / 32', sku:'CRG-KHK-32', quantity:1, price:'54.95' }], fulfillments:[{ trackingNumber:'BE123456789', trackingUrl:'', trackingCompany:'bpost', status:'success' }], hasRefund:false, shippingAddress:{ firstName:'Tom', lastName:'Hendricks', address1:'Meir 22', address2:'', city:'Antwerp', zip:'2000', country:'Belgium', countryCode:'BE', phone:'+32 476 123456' } }] },
-  'demo-5': { customer:{ id:1005, firstName:'Anna', lastName:'Smit', email:'anna.smit@example.com', phone:'+31 6 11223344', city:'Den Haag', country:'Netherlands', countryCode:'NL', ordersCount:4, totalSpent:'212.80', currency:'EUR', tags:'vip', note:'Prefer no promotional emails', createdAt:'2023-09-10T09:00:00Z' }, orders:[{ id:9006, name:'#1045', createdAt:'2025-04-24T10:00:00Z', financialStatus:'paid', fulfillmentStatus:'unfulfilled', totalPrice:'39.95', currency:'EUR', lineItems:[{ id:808, title:"Women's Sports Shirt", variantTitle:'Pink / M', sku:'SPT-PNK-M', quantity:1, price:'39.95' }], fulfillments:[], hasRefund:false, shippingAddress:{ firstName:'Anna', lastName:'Smit', address1:'Binnenhof 1', address2:'', city:'Den Haag', zip:'2513 AA', country:'Netherlands', countryCode:'NL', phone:'+31 6 11223344' } }] },
-}
+// ─── Demo data removed — unified inbox API is the sole data source ───
 
 // ─── CSS ─────────────────────────────────────────────────────
 const CSS = `
@@ -625,7 +591,7 @@ function ModalBase({ title, onClose, children, footer }) {
 
 // ─── Compose View (full-screen inline, no backdrop) ──────────
 // ─── Create Ticket (full-screen inline view) ──────────────────
-function CreateTicketView({ token, emailProvider, connectedEmail, onClose, onSuccess, macros=[] }) {
+function CreateTicketView({ token, connectedEmail, onClose, onSuccess, macros=[] }) {
   const [to, setTo]               = useState('')
   const [subject, setSubject]     = useState('')
   const [body, setBody]           = useState('')
@@ -661,16 +627,11 @@ function CreateTicketView({ token, emailProvider, connectedEmail, onClose, onSuc
   async function doSend() {
     if(!to.trim()) { onSuccess('Please enter a recipient','error'); return }
     setSending(true)
-    if(!emailProvider) {
-      await new Promise(r=>setTimeout(r,700))
-      setSending(false); onSuccess('Message sent!'); onClose(); return
-    }
     const safeBody = sanitizeHtml(bodyRef.current?.innerHTML || '')
-    const sendPath = emailProvider==='outlook' ? '/api/outlook/send' : emailProvider==='custom' ? '/api/custom-email/send' : '/api/gmail/send'
-    const res = await authFetch(sendPath, { method:'POST', body:JSON.stringify({ to:to.trim(), subject:subject.trim(), body:safeBody, cc:cc.trim()||undefined, bcc:bcc.trim()||undefined }) }, token)
+    const res = await authFetch('/api/inbox/compose', { method:'POST', body:JSON.stringify({ to:to.trim(), subject:subject.trim(), bodyHtml:safeBody, bodyText:bodyRef.current?.textContent||'', cc:cc.trim()||undefined, bcc:bcc.trim()||undefined }) }, token)
     const data = await res.json()
     setSending(false)
-    if(data.success||data.id) { onSuccess('Message sent!'); onClose() }
+    if(data.success||data.id||data.conversationId) { onSuccess('Message sent!'); onClose() }
     else onSuccess(data.error||'Failed to send','error')
   }
 
@@ -1765,9 +1726,10 @@ function InboxPage() {
   const [session, setSession]         = useState(null)
   const [threads, setThreads]         = useState([])
   const searchParams                  = useSearchParams()
-  const [view, setView]               = useState(searchParams.get('view') || 'all')
+  const [activeFolder, setActiveFolder] = useState(searchParams.get('view') || 'open')
   const [selected, setSelected]       = useState(null)
   const [messages, setMessages]       = useState([])
+  const [notes, setNotes]             = useState([])
   const [loadingThreads, setLT]       = useState(true)
   const [loadingMsgs, setLM]          = useState(false)
   const [reply, setReply]             = useState('')
@@ -1776,18 +1738,17 @@ function InboxPage() {
   const [aiLoading, setAiLoading]     = useState(false)
   const [toast, setToast]             = useState(null)
   const [search, setSearch]           = useState('')
-  const [gmailOk, setGmailOk]         = useState(true)
-  const [emailProvider, setEmailProvider] = useState(null) // 'gmail' | 'outlook' | 'custom' | null
+  const [syncing, setSyncing]         = useState(false)
+  const [counts, setCounts]           = useState({ open:0, pending:0, resolved:0, unlinked:0, trash:0 })
   const [connectedEmail, setConnectedEmail] = useState(null)
-  const [sentThreads, setSentThreads]   = useState([])
-  const [loadingSent, setLoadingSent]   = useState(false)
-  const [demoMode, setDemoMode]       = useState(false)
+  const [noteInput, setNoteInput]     = useState('')
+  const [addingNote, setAddingNote]   = useState(false)
+  const [showNotes, setShowNotes]     = useState(true)
   const [customer, setCustomer]       = useState(null)
   const [loadingCust, setLoadingCust] = useState(false)
   const [custSearch, setCustSearch]   = useState('')
   const [rightTab, setRightTab]       = useState('shopify')
   const [statusMenu, setStatusMenu]   = useState(false)
-  const [statuses, setStatuses]       = useState(()=>{ try{return JSON.parse(localStorage.getItem('lynq_statuses')||'{}')}catch{return{}} })
   // Macros
   const [macros, setMacros]           = useState(loadMacros)
   const [aiMacros, setAiMacros]       = useState([])
@@ -1839,7 +1800,9 @@ function InboxPage() {
     supabase.auth.getSession().then(async ({data:{session}})=>{
       if(!session){window.location.href='/login';return}
       setSession(session)
-      const detectedProvider = await loadThreads(session.access_token)
+      triggerSync(session.access_token)
+      await loadConversations(session.access_token, 'open')
+      fetchCounts(session.access_token)
       fetchMacros(session.access_token)
     })
   },[])
@@ -1856,11 +1819,22 @@ function InboxPage() {
       if(e.key==='r'&&selected) setTimeout(()=>replyRef.current?.focus(),10)
     }
     document.addEventListener('keydown',h); return ()=>document.removeEventListener('keydown',h)
-  },[threads,selected,view,search,analyses])
+  },[threads,selected,activeFolder,search,analyses])
 
   // ── Status helpers ──
-  function saveStatus(id,s){ const u={...statuses,[id]:s}; setStatuses(u); localStorage.setItem('lynq_statuses',JSON.stringify(u)) }
-  const getStatus = id => statuses[id]||'open'
+  async function saveStatus(id,s){
+    // Update locally immediately
+    setThreads(p=>p.map(t=>t.id===id?{...t,status:s}:t))
+    // Persist via API
+    if(session) {
+      await authFetch(`/api/inbox/conversations/${id}`,{method:'PATCH',body:JSON.stringify({status:s})},session.access_token)
+      fetchCounts(session.access_token)
+    }
+  }
+  const getStatus = id => {
+    const thread = threads.find(t=>t.id===id)
+    return thread?.status || 'open'
+  }
   const getTicketMeta = id => ticketMeta[id] || { tags:[], assignee:'Unassigned', contactReason:'', product:'', resolution:'' }
   function updateTicketMeta(id, patch) {
     const current = getTicketMeta(id)
@@ -1886,88 +1860,64 @@ function InboxPage() {
   }
 
   // ── Filtered + priority-sorted threads ──
+  // Conversations are already filtered by folder via the API; apply local search filter only
   const URGENCY_SCORE = { critical:4, high:3, medium:2, low:1 }
-  const filtered = threads.filter(t=>{
-    const s=getStatus(t.id)
-    if(view==='open')     return s==='open'
-    if(view==='pending')  return s==='pending'
-    if(view==='resolved') return s==='resolved'
-    return true
-  }).filter(t=>!search||t.subject?.toLowerCase().includes(search.toLowerCase())||t.from?.toLowerCase().includes(search.toLowerCase()))
+  const filtered = threads.filter(t=>!search||t.subject?.toLowerCase().includes(search.toLowerCase())||(t.customer_name||t.customer_email||t.from||'').toLowerCase().includes(search.toLowerCase()))
 
   const sortedFiltered = [...filtered].sort((a,b)=>{
     const sa = URGENCY_SCORE[analyses[a.id]?.urgency]||0
     const sb = URGENCY_SCORE[analyses[b.id]?.urgency]||0
     if(sb!==sa) return sb-sa
-    return new Date(b.date)-new Date(a.date)
+    return new Date(b.last_message_at||b.date)-new Date(a.last_message_at||a.date)
   })
 
-  const counts = { all:threads.length, open:threads.filter(t=>getStatus(t.id)==='open').length, pending:threads.filter(t=>getStatus(t.id)==='pending').length, resolved:threads.filter(t=>getStatus(t.id)==='resolved').length }
-
-  // ── API calls ──
+  // ── API calls (unified inbox) ──
   async function fetchMacros(token) {
     const res = await authFetch('/api/macros',{},token)
     const data = await res.json()
     if(data.macros?.length) setMacros(data.macros)
   }
 
-  async function loadThreads(token) {
-    setLT(true)
-    // Try Gmail first, then Outlook, then custom email
-    const gmailRes  = await authFetch('/api/gmail/threads',{},token)
-    const gmailData = await gmailRes.json()
-    if(gmailData.connected!==false){
-      setGmailOk(true); setDemoMode(false); setEmailProvider('gmail')
-      setConnectedEmail(gmailData.email||null)
-      const thr = gmailData.threads||[]
-      setThreads(thr); setLT(false)
-      analyzeThreads(thr, token)
-      return 'gmail'
-    }
-
-    const outlookRes  = await authFetch('/api/outlook/threads',{},token)
-    const outlookData = await outlookRes.json()
-    if(outlookData.connected!==false && outlookData.threads?.length){
-      setGmailOk(false); setDemoMode(false); setEmailProvider('outlook')
-      setConnectedEmail(outlookData.email||null)
-      const thr = outlookData.threads||[]
-      setThreads(thr); setLT(false)
-      analyzeThreads(thr, token)
-      return 'outlook'
-    }
-
-    const customRes  = await authFetch('/api/custom-email/threads',{},token)
-    const customData = await customRes.json()
-    if(customData.connected!==false && customData.threads?.length){
-      setGmailOk(false); setDemoMode(false); setEmailProvider('custom')
-      setConnectedEmail(customData.email||null)
-      const thr = customData.threads||[]
-      setThreads(thr); setLT(false)
-      analyzeThreads(thr, token)
-      return 'custom'
-    }
-
-    // No provider connected — demo mode
-    setGmailOk(false); setDemoMode(true); setEmailProvider(null)
-    setThreads(DEMO_THREADS); setLT(false)
-    analyzeThreads(DEMO_THREADS, token)
-    return null
+  async function fetchCounts(token) {
+    try {
+      const res = await authFetch('/api/inbox/counts',{},token)
+      const data = await res.json()
+      setCounts({ open:data.open||0, pending:data.pending||0, resolved:data.resolved||0, unlinked:data.unlinked||0, trash:data.trash||0 })
+    } catch {}
   }
 
-  async function loadSentThreads(token, provider) {
-    setLoadingSent(true)
-    setSentThreads([])
+  async function triggerSync(token) {
+    setSyncing(true)
+    try { await authFetch('/api/inbox/sync',{method:'POST'},token) } catch {}
+    setSyncing(false)
+  }
+
+  async function loadConversations(token, folder) {
+    setLT(true)
+    const folderParam = folder || activeFolder
+    const params = new URLSearchParams()
+    if(folderParam==='unlinked') params.set('unlinked','true')
+    else if(folderParam==='trash') params.set('status','closed')
+    else params.set('status', folderParam)
+    if(search) params.set('search', search)
     try {
-      const p = provider || emailProvider
-      // Only Gmail has a dedicated sent route; Outlook/custom fallback to gmail if not connected
-      const path = p==='outlook' ? '/api/outlook/sent-threads'
-                 : p==='custom'  ? '/api/custom-email/sent-threads'
-                 : '/api/gmail/sent-threads'
-      const res  = await authFetch(path, {}, token)
+      const res = await authFetch(`/api/inbox/conversations?${params}`,{},token)
       const data = await res.json()
-      setSentThreads(data.threads||[])
-    } catch {}
-    setLoadingSent(false)
+      const convs = (data.conversations||[]).map(c=>({
+        ...c,
+        // Map unified fields to the shape the UI expects
+        from: c.customer_name ? `${c.customer_name} <${c.customer_email||''}>` : (c.customer_email||'Unknown'),
+        subject: c.subject || '(no subject)',
+        snippet: c.snippet || c.preview || '',
+        date: c.last_message_at || c.created_at,
+        unread: c.is_unread || false,
+      }))
+      setThreads(convs)
+      analyzeThreads(convs, token)
+    } catch {
+      setThreads([])
+    }
+    setLT(false)
   }
 
   async function analyzeThreads(threadList, token) {
@@ -1983,20 +1933,26 @@ function InboxPage() {
   }
 
   async function openThread(thread) {
-    setSelected(thread); setMessages([]); setReply(''); setCustomer(null); setLM(true); setShowMacros(false)
+    setSelected(thread); setMessages([]); setNotes([]); setReply(''); setCustomer(null); setLM(true); setShowMacros(false)
     setCustomerLang(null); setAutoTranslate(false); setMsgTranslations({}); setShowEmoji(false); setAttachments([])
+    setNoteInput(''); setShowNotes(true)
     if(replyRef.current) replyRef.current.innerHTML = ''
-    if(demoMode || thread.id?.startsWith('demo-')) {
-      setTimeout(()=>{ setMessages(DEMO_MESSAGES[thread.id]||[]); setLM(false); setCustomer(DEMO_CUSTOMER[thread.id]||null); setThreads(p=>p.map(t=>t.id===thread.id?{...t,unread:false}:t)) }, 400)
-      return
-    }
-    const providerPath = emailProvider==='outlook' ? 'outlook' : emailProvider==='custom' ? 'custom-email' : 'gmail'
-    const res  = await authFetch(`/api/${providerPath}/thread/${thread.id}`,{},session.access_token)
+    // Fetch conversation, messages, and notes via unified API
+    const res  = await authFetch(`/api/inbox/conversations/${thread.id}`,{},session.access_token)
     const data = await res.json()
-    setMessages(data.messages||[])
+    const msgs = (data.messages||[]).map(m=>({
+      ...m,
+      from: m.from_name ? `${m.from_name} <${m.from_email||''}>` : (m.from_email||m.from||''),
+      date: m.sent_at || m.created_at || m.date,
+      body: m.body_html || m.body_text || m.body || '',
+    }))
+    setMessages(msgs)
+    setNotes(data.notes||[])
     setLM(false)
-    if(thread.unread){ authFetch(`/api/${providerPath}/thread/${thread.id}`,{method:'PATCH'},session.access_token); setThreads(p=>p.map(t=>t.id===thread.id?{...t,unread:false}:t)) }
-    const email=extractEmail(thread.from)
+    // Mark read locally
+    if(thread.unread) setThreads(p=>p.map(t=>t.id===thread.id?{...t,unread:false,is_unread:false}:t))
+    // Fetch Shopify customer data
+    const email=extractEmail(thread.from)||(data.conversation?.customer_email)
     if(email){
       setLoadingCust(true)
       const cr=await authFetch(`/api/shopify/customer?email=${encodeURIComponent(email)}`,{},session.access_token)
@@ -2014,6 +1970,18 @@ function InboxPage() {
     }
   }
 
+  async function addNote() {
+    if(!noteInput.trim()||!selected||!session) return
+    setAddingNote(true)
+    try {
+      const res = await authFetch(`/api/inbox/conversations/${selected.id}/notes`,{method:'POST',body:JSON.stringify({body:noteInput.trim()})},session.access_token)
+      const data = await res.json()
+      if(data.note) setNotes(p=>[...p, data.note])
+      setNoteInput('')
+    } catch { showT('Failed to add note','error') }
+    setAddingNote(false)
+  }
+
   async function handleAiReply() {
     if(!messages.length) return
     setAiLoading(true)
@@ -2029,33 +1997,25 @@ function InboxPage() {
   async function handleSend() {
     const textContent = replyRef.current?.textContent || reply
     if(!textContent.trim()||!selected) return false
-    if(demoMode||!emailProvider){ showT('Demo mode — connect an email provider to send messages','error'); return false }
     setSending(true)
-    let bodyToSend = sanitizeHtml(replyRef.current?.innerHTML || reply)
+    let bodyHtml = sanitizeHtml(replyRef.current?.innerHTML || reply)
+    let bodyText = textContent
     // Auto-translate outgoing message to customer's language
     if(autoTranslate && customerLang && customerLang.code !== 'en') {
       try {
         const tres = await authFetch('/api/ai/translate',{method:'POST',body:JSON.stringify({text:textContent,targetLang:customerLang.name})},session.access_token)
         const td = await tres.json()
-        if(td.translated) bodyToSend = plainTextToSafeHtml(td.translated)
+        if(td.translated) { bodyHtml = plainTextToSafeHtml(td.translated); bodyText = td.translated }
       } catch {}
     }
-    const last=messages[messages.length-1]
-    const sendPath = emailProvider==='outlook' ? '/api/outlook/send' : emailProvider==='custom' ? '/api/custom-email/send' : '/api/gmail/send'
-    const sendPayload = {
-      to: extractEmail(last?.from||selected.from),
-      subject: `Re: ${selected.subject}`,
-      body: bodyToSend,
-      replyToMessageId: last?.id,
-    }
-    if(emailProvider==='gmail') sendPayload.threadId = selected.id
-    const res=await authFetch(sendPath,{method:'POST',body:JSON.stringify(sendPayload)},session.access_token)
+    const res=await authFetch(`/api/inbox/conversations/${selected.id}/reply`,{method:'POST',body:JSON.stringify({bodyHtml,bodyText})},session.access_token)
     const data=await res.json()
-    if(data.success){
+    if(data.success||data.messageId||data.id){
       showT('Message sent!','success')
       if(replyRef.current) replyRef.current.innerHTML=''
       setReply(''); setAttachments([])
-      loadThreads(session.access_token)
+      loadConversations(session.access_token)
+      fetchCounts(session.access_token)
       setSending(false)
       return true
     }
@@ -2071,7 +2031,7 @@ function InboxPage() {
     const nextThread = sortedFiltered.find((t, i) => i !== currentIdx)
     const ok = await handleSend()
     if(ok) {
-      saveStatus(currentId, 'resolved')
+      await saveStatus(currentId, 'resolved')
       showT('Resolved & closed','success')
       if(nextThread) openThread(nextThread)
       else setSelected(null)
@@ -2142,14 +2102,26 @@ function InboxPage() {
     setModal(null)
     showT(msg,type)
     if(customer&&session) {
-      const email=extractEmail(selected?.from||'')
+      const email=extractEmail(selected?.from||'')||(selected?.customer_email)
       if(email){ authFetch(`/api/shopify/customer?email=${encodeURIComponent(email)}`,{},session.access_token).then(r=>r.json()).then(d=>setCustomer(d)).catch(()=>{}) }
     }
   }
 
   if(!session) return null
 
-  const VIEWS = [{id:'all',label:'All'},{id:'open',label:'Open'},{id:'pending',label:'Pending'},{id:'resolved',label:'Resolved'}]
+  const FOLDERS = [
+    { key:'open',     label:'Open',     count:counts.open },
+    { key:'pending',  label:'Pending',  count:counts.pending },
+    { key:'resolved', label:'Resolved', count:counts.resolved },
+    { key:'unlinked', label:'Unlinked', count:counts.unlinked },
+    { key:'trash',    label:'Trash',    count:counts.trash },
+  ]
+
+  function switchFolder(key) {
+    setActiveFolder(key)
+    setSelected(null)
+    if(session) loadConversations(session.access_token, key)
+  }
 
   // ── Render ──
   return (
@@ -2178,7 +2150,7 @@ function InboxPage() {
               <span title="Shortcuts: j/k navigate · r reply" style={{fontSize:9.5,color:'var(--text-3)',background:'var(--bg-surface-2)',padding:'2px 6px',borderRadius:4,cursor:'default'}}>j/k/r</span>
             </div>
             <div style={{display:'flex',alignItems:'center',gap:4}}>
-              <button onClick={()=>loadThreads(session.access_token)} style={{background:'transparent',color:'var(--text-3)',cursor:'pointer',display:'flex',padding:5,borderRadius:7,transition:'all .15s'}} onMouseEnter={e=>{e.currentTarget.style.color='var(--text-2)';e.currentTarget.style.background='var(--bg-input)'}} onMouseLeave={e=>{e.currentTarget.style.color='var(--text-3)';e.currentTarget.style.background='transparent'}} title="Refresh">{I.refresh}</button>
+              <button onClick={async()=>{await triggerSync(session.access_token);loadConversations(session.access_token);fetchCounts(session.access_token)}} style={{background:'transparent',color:syncing?'var(--text-2)':'var(--text-3)',cursor:'pointer',display:'flex',padding:5,borderRadius:7,transition:'all .15s'}} onMouseEnter={e=>{e.currentTarget.style.color='var(--text-2)';e.currentTarget.style.background='var(--bg-input)'}} onMouseLeave={e=>{e.currentTarget.style.color=syncing?'var(--text-2)':'var(--text-3)';e.currentTarget.style.background='transparent'}} title="Sync & Refresh"><span style={syncing?{animation:'spin .7s linear infinite',display:'flex'}:{display:'flex'}}>{I.refresh}</span></button>
               <button onClick={()=>router.push('/inbox/create')} style={{display:'flex',alignItems:'center',gap:5,padding:'5px 11px',borderRadius:8,background:'#111111',border:'none',color:'#fff',cursor:'pointer',fontSize:11.5,fontWeight:600,fontFamily:'inherit',transition:'all .18s',letterSpacing:'.01em'}} onMouseEnter={e=>{e.currentTarget.style.background='#333333'}} onMouseLeave={e=>{e.currentTarget.style.background='#111111'}} title="Create Ticket">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                 Create Ticket
@@ -2192,12 +2164,12 @@ function InboxPage() {
             <input className="isearch" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search threads…" />
           </div>
 
-          {/* View tabs */}
+          {/* Folder tabs */}
           <div style={{display:'flex',borderBottom:'1px solid var(--border)',overflowX:'auto'}} className="sscroll">
-            {VIEWS.map(v=>(
-              <button key={v.id} className={`vtab${view===v.id?' on':''}`} onClick={()=>setView(v.id)}>
-                {v.label}
-                {counts[v.id]>0&&<span style={{marginLeft:4,background:view===v.id?'#111111':'var(--bg-surface-2)',color:view===v.id?'#ffffff':'var(--text-3)',fontSize:9,fontWeight:700,padding:'1px 5px',borderRadius:100,border:'1px solid var(--border)'}}>{counts[v.id]}</span>}
+            {FOLDERS.map(f=>(
+              <button key={f.key} className={`vtab${activeFolder===f.key?' on':''}`} onClick={()=>switchFolder(f.key)}>
+                {f.label}
+                {f.count>0&&<span style={{marginLeft:4,background:activeFolder===f.key?'#111111':'var(--bg-surface-2)',color:activeFolder===f.key?'#ffffff':'var(--text-3)',fontSize:9,fontWeight:700,padding:'1px 5px',borderRadius:100,border:'1px solid var(--border)'}}>{f.count}</span>}
               </button>
             ))}
           </div>
@@ -2207,7 +2179,7 @@ function InboxPage() {
         <div className="sscroll" style={{flex:1,overflowY:'auto'}}>
           {/* Select all bar */}
           {(()=>{
-            const listIds=(view==='sent'?sentThreads:sortedFiltered).map(t=>t.id)
+            const listIds=sortedFiltered.map(t=>t.id)
             const allChecked=listIds.length>0&&listIds.every(id=>checkedThreads[id])
             const anyChecked=listIds.some(id=>checkedThreads[id])
             const checkedCount=listIds.filter(id=>checkedThreads[id]).length
@@ -2240,12 +2212,7 @@ function InboxPage() {
               </div>
             )
           })()}
-          {demoMode&&(
-            <div style={{margin:'8px 12px',padding:'6px 12px',background:'#FAFAFA',border:'1px solid rgba(0,0,0,0.07)',borderRadius:6,display:'flex',alignItems:'center',justifyContent:'space-between',gap:8}}>
-              <span style={{fontSize:12,fontWeight:600,color:'#555555'}}>Demo mode</span>
-              <a href="/settings/integrations/email" style={{fontSize:10.5,fontWeight:700,color:'var(--text-1)',textDecoration:'none',flexShrink:0}}>Connect →</a>
-            </div>
-          )}
+          {/* Demo mode removed — unified inbox API is the sole data source */}
           {loadingThreads&&[0,1,2,3,4].map(i=>(
             <div key={i} style={{padding:'11px 14px 11px 12px',borderBottom:'1px solid var(--border)',display:'flex',gap:9,opacity:1-i*.16}}>
               <div className="skel" style={{width:16,height:16,borderRadius:4,flexShrink:0,marginTop:2}} />
@@ -2256,7 +2223,7 @@ function InboxPage() {
               </div>
             </div>
           ))}
-          {!loadingThreads&&sortedFiltered.length===0&&gmailOk&&<div style={{padding:'40px 20px',textAlign:'center',color:'var(--text-3)',fontSize:12.5}}>No threads in this view</div>}
+          {!loadingThreads&&sortedFiltered.length===0&&<div style={{padding:'40px 20px',textAlign:'center',color:'var(--text-3)',fontSize:12.5}}>No conversations in this folder</div>}
           {sortedFiltered.map(thread=>{
             const active=selected?.id===thread.id
             const name = extractName(thread.from)
@@ -2282,7 +2249,7 @@ function InboxPage() {
                   {/* Row 1: name + email icon + time + unread dot */}
                   <div style={{display:'flex',alignItems:'center',gap:5,marginBottom:2}}>
                     <span style={{fontSize:12.5,fontWeight:thread.unread?700:600,color:'var(--text-1)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',flex:1}}>
-                      {name}
+                      {thread.customer_name || name}
                     </span>
                     <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{color:'var(--text-1)',flexShrink:0}}><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
                     <span style={{fontSize:10.5,color:'var(--text-1)',flexShrink:0,whiteSpace:'nowrap'}}>{formatDate(thread.date)}</span>
@@ -2385,6 +2352,41 @@ function InboxPage() {
                   </div>
                 )
               })}
+              {/* ── Internal Notes Section ── */}
+              {notes.length>0&&(
+                <div style={{marginTop:8}}>
+                  <button onClick={()=>setShowNotes(v=>!v)} style={{display:'flex',alignItems:'center',gap:6,background:'none',border:'none',cursor:'pointer',color:'var(--text-3)',fontSize:11,fontWeight:700,letterSpacing:'.06em',textTransform:'uppercase',padding:'6px 0',fontFamily:'inherit'}}>
+                    <span style={{display:'flex'}}>{I.note}</span>
+                    Internal Notes ({notes.length})
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{transform:showNotes?'rotate(180deg)':'rotate(0)',transition:'transform .2s'}}><polyline points="6 9 12 15 18 9"/></svg>
+                  </button>
+                  {showNotes&&notes.map((note,ni)=>(
+                    <div key={note.id||ni} style={{marginBottom:12,animation:'msgIn .3s cubic-bezier(.16,1,.3,1) both'}}>
+                      <div style={{fontSize:12,marginBottom:5}}>
+                        <span className="msg-sender" style={{color:'rgba(251,191,36,0.75)'}}>Note</span>
+                        <span className="msg-time">{formatDate(note.created_at)}</span>
+                      </div>
+                      <div className="msg-note">
+                        <div style={{fontSize:10,fontWeight:700,color:'rgba(251,191,36,0.75)',letterSpacing:'.07em',textTransform:'uppercase',marginBottom:7}}>Internal note</div>
+                        {note.body}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {/* Add note inline */}
+              <div style={{marginTop:8,display:'flex',gap:8,alignItems:'flex-start'}}>
+                <input
+                  value={noteInput}
+                  onChange={e=>setNoteInput(e.target.value)}
+                  onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey)addNote()}}
+                  placeholder="Add an internal note..."
+                  style={{flex:1,padding:'8px 12px',border:'1px solid #FDE68A',borderRadius:8,fontSize:12.5,color:'var(--text-1)',background:'rgba(251,191,36,0.04)',fontFamily:'inherit',outline:'none',transition:'border-color .2s'}}
+                />
+                <button onClick={addNote} disabled={addingNote||!noteInput.trim()} style={{padding:'8px 14px',borderRadius:8,border:'1px solid #FDE68A',background:'rgba(251,191,36,0.08)',color:'#F59E0B',fontSize:12,fontWeight:600,cursor:addingNote||!noteInput.trim()?'not-allowed':'pointer',fontFamily:'inherit',opacity:addingNote||!noteInput.trim()?0.5:1,transition:'all .15s',flexShrink:0,whiteSpace:'nowrap'}}>
+                  {addingNote?'Adding...':'Add Note'}
+                </button>
+              </div>
               <div ref={msgEnd} />
             </div>
 
@@ -2866,7 +2868,7 @@ function InboxPage() {
 
 // Wrapper checks email-connection status before rendering the inbox.
 // If no email account is connected for this workspace, render the
-// onboarding empty state instead (ONBOARDING_SPEC v1.1 §4.2).
+// onboarding empty state instead.
 export default function InboxPageWrapper() {
   // null = checking, true = connected, false = not connected
   const [emailConnected, setEmailConnected] = useState(null)
@@ -2877,12 +2879,12 @@ export default function InboxPageWrapper() {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) { window.location.href = '/login'; return }
       try {
-        const res = await fetch('/api/email/connect', {
+        const res = await fetch('/api/inbox/accounts', {
           headers: { Authorization: `Bearer ${session.access_token}` },
           cache:   'no-store',
         })
         const data = await res.json().catch(() => ({}))
-        if (!cancelled) setEmailConnected(Boolean(data?.connected))
+        if (!cancelled) setEmailConnected(Boolean(data?.accounts?.length > 0))
       } catch {
         if (!cancelled) setEmailConnected(false)
       }
@@ -2897,11 +2899,10 @@ export default function InboxPageWrapper() {
     return (
       <EmptyState
         icon="📬"
-        title="Your inbox is empty"
-        description="Connect your email to start receiving customer support tickets."
+        title="Connect your email to get started"
+        description="Connect your email account to start receiving and managing customer support tickets."
         actions={[
-          { label: 'Connect Gmail',   href: '/settings/integrations/email', variant: 'primary' },
-          { label: 'Connect Outlook', href: '/settings/integrations/email', variant: 'primary' },
+          { label: 'Connect Email', href: '/settings/integrations/email', variant: 'primary' },
         ]}
       />
     )

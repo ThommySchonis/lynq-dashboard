@@ -182,17 +182,57 @@ const CSS = `
   }
   .sb-feedback .sb-icon { color:inherit; }
 
-  /* Admin section header (overline-style label) */
-  .sb-admin-label {
-    font-size:11px; font-weight:600; letter-spacing:.10em;
-    text-transform:uppercase; color:rgba(255,255,255,0.35);
-    padding:12px 12px 4px;
-    border-top:1px solid rgba(255,255,255,0.05);
-    margin-top:8px;
-    user-select:none; white-space:nowrap;
+  /* Collapsible Admin Panel section: toggle row + chevron + sub-items */
+  .sb-admin-toggle {
+    display:flex; align-items:center; gap:9px;
+    padding:7px 8px; border-radius:6px;
+    margin:0 4px 1px;
+    background:transparent; border:none;
+    width:calc(100% - 8px); text-align:left;
+    cursor:pointer; user-select:none; white-space:nowrap;
+    font-family:'Switzer',-apple-system,BlinkMacSystemFont,sans-serif;
+    font-size:12.5px; font-weight:400;
+    color:rgba(255,255,255,0.35);
+    transition:background .12s, color .12s;
+  }
+  .sb-admin-toggle:hover {
+    background:rgba(255,255,255,0.05);
+    color:rgba(255,255,255,0.7);
+  }
+  .sb-admin-toggle.sb-admin-open {
+    color:rgba(255,255,255,0.7);
   }
 
-  /* Badge on the admin Feedback nav item */
+  .sb-chevron {
+    width:14px; height:14px; flex-shrink:0;
+    color:inherit; opacity:0.7;
+    transition:transform .15s ease;
+  }
+  .sb-admin-open .sb-chevron { transform:rotate(90deg); }
+
+  /* Sub-item: same shape as sb-item, but inset 24px from left */
+  .sb-sub {
+    display:flex; align-items:center;
+    padding:6px 8px 6px 32px; gap:9px;
+    border-radius:6px; margin:0 4px 1px;
+    text-decoration:none; cursor:pointer;
+    position:relative; user-select:none; white-space:nowrap;
+    transition:background .12s, color .12s;
+    font-size:12.5px; font-weight:400;
+    color:rgba(255,255,255,0.32);
+  }
+  .sb-sub:hover:not(.sb-active) {
+    background:rgba(255,255,255,0.04);
+    color:rgba(255,255,255,0.65);
+  }
+  .sb-sub.sb-active {
+    background:rgba(139,92,246,0.14);
+    color:#C4B5FD;
+    font-weight:500;
+  }
+  .sb-sub.sb-active .sb-icon { opacity:1; color:#A175FC; }
+
+  /* Badge on the admin Feedback sub-item */
   .sb-admin-badge {
     background:#A175FC; color:#FFFFFF;
     font-size:11px; font-weight:500;
@@ -259,7 +299,14 @@ function SidebarContent() {
   const [checklistHidden, setChecklistHidden] = useState(false)
   const [feedbackOpen, setFeedbackOpen] = useState(false)
   const [feedbackBadge, setFeedbackBadge] = useState(0)
+  const isOnAdminRoute = pathname.startsWith('/admin') || pathname.startsWith('/lynq-admin')
+  const [adminExpanded, setAdminExpanded] = useState(isOnAdminRoute)
   const { toasts, addToast, removeToast } = useToast()
+
+  // Auto-expand the Admin Panel section whenever the user lands on an admin route.
+  useEffect(() => {
+    if (isOnAdminRoute) setAdminExpanded(true)
+  }, [isOnAdminRoute])
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -384,33 +431,51 @@ function SidebarContent() {
 
             <div className="sb-divider" />
             {BOTTOM_ITEMS.map(item => renderItem(item))}
-            {isAdmin && renderItem({ href: '/admin', label: 'Admin Panel', icon: Icons.shield })}
 
-            {/* Lynq-admin section — only for is_lynq_admin users */}
-            {isAdmin && (
-              <>
-                <div className="sb-admin-label">Admin</div>
-                {(() => {
-                  const href = '/lynq-admin/feedback'
-                  const active = pathname.startsWith('/lynq-admin/feedback')
-                  return (
-                    <Link
-                      href={href}
-                      className={`sb-item${active ? ' sb-active' : ''}`}
-                    >
-                      {active && <span className="sb-pill" />}
-                      <span className="sb-icon">
-                        <InboxIcon size={16} strokeWidth={1.75} />
-                      </span>
-                      <span className="sb-label">Feedback</span>
-                      {feedbackBadge > 0 && (
-                        <span className="sb-admin-badge">{feedbackBadge}</span>
-                      )}
-                    </Link>
-                  )
-                })()}
-              </>
-            )}
+            {/* Admin Panel — collapsible, only for info@lynqagency.com */}
+            {isAdmin && (() => {
+              const overviewActive = pathname === '/admin' || (pathname.startsWith('/admin/') && !pathname.startsWith('/admin/login'))
+              const feedbackActive = pathname.startsWith('/lynq-admin/feedback')
+              return (
+                <>
+                  <button
+                    type="button"
+                    className={`sb-admin-toggle${adminExpanded ? ' sb-admin-open' : ''}`}
+                    onClick={() => setAdminExpanded(v => !v)}
+                    aria-expanded={adminExpanded}
+                  >
+                    <span className="sb-icon">{Icons.shield}</span>
+                    <span className="sb-label">Admin Panel</span>
+                    <svg className="sb-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                      strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="9 18 15 12 9 6" />
+                    </svg>
+                  </button>
+                  {adminExpanded && (
+                    <>
+                      <Link
+                        href="/admin"
+                        className={`sb-sub${overviewActive ? ' sb-active' : ''}`}
+                      >
+                        <span className="sb-label">Overview</span>
+                      </Link>
+                      <Link
+                        href="/lynq-admin/feedback"
+                        className={`sb-sub${feedbackActive ? ' sb-active' : ''}`}
+                      >
+                        <span className="sb-icon">
+                          <InboxIcon size={16} strokeWidth={1.75} />
+                        </span>
+                        <span className="sb-label">Feedback</span>
+                        {feedbackBadge > 0 && (
+                          <span className="sb-admin-badge">{feedbackBadge}</span>
+                        )}
+                      </Link>
+                    </>
+                  )}
+                </>
+              )
+            })()}
           </div>
         </nav>
 

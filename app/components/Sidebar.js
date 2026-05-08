@@ -4,9 +4,13 @@ import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { useState, useEffect, Suspense } from 'react'
+import { MessageSquareWarning, Inbox as InboxIcon } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { useTheme } from './ThemeProvider'
 import SetupChecklist from './SetupChecklist'
+import FeedbackModal from './FeedbackModal'
+import { ToastContainer } from './Toast'
+import { useToast } from '../hooks/useToast'
 
 const SIDEBAR_W = 208
 
@@ -156,6 +160,46 @@ const CSS = `
     transition:color .12s, background .12s;
   }
   .sb-icon-btn:hover { color:rgba(255,255,255,0.5); background:rgba(255,255,255,0.06); }
+
+  /* Feedback trigger — same shape as nav items, but a button (no route) */
+  .sb-feedback {
+    display:flex; align-items:center; gap:9px;
+    padding:7px 8px; margin:8px 4px 0;
+    border-radius:6px; border:none; background:transparent;
+    width:calc(100% - 8px);
+    color:rgba(255,255,255,0.35);
+    font-size:12.5px; font-weight:400;
+    font-family:'Switzer',-apple-system,BlinkMacSystemFont,sans-serif;
+    cursor:pointer; user-select:none; white-space:nowrap;
+    border-top:1px solid rgba(255,255,255,0.05);
+    padding-top:10px; margin-top:8px;
+    transition:background .12s, color .12s;
+    text-align:left;
+  }
+  .sb-feedback:hover {
+    background:rgba(255,255,255,0.05);
+    color:rgba(255,255,255,0.7);
+  }
+  .sb-feedback .sb-icon { color:inherit; }
+
+  /* Admin section header (overline-style label) */
+  .sb-admin-label {
+    font-size:11px; font-weight:600; letter-spacing:.10em;
+    text-transform:uppercase; color:rgba(255,255,255,0.35);
+    padding:12px 12px 4px;
+    border-top:1px solid rgba(255,255,255,0.05);
+    margin-top:8px;
+    user-select:none; white-space:nowrap;
+  }
+
+  /* Badge on the admin Feedback nav item */
+  .sb-admin-badge {
+    background:#A175FC; color:#FFFFFF;
+    font-size:11px; font-weight:500;
+    padding:2px 6px; border-radius:6px;
+    margin-left:auto; flex-shrink:0;
+    line-height:1.2;
+  }
 `
 
 // ── Icons (16×16, strokeWidth 1.75) ──────────────────────────────────────────
@@ -213,12 +257,16 @@ function SidebarContent() {
   const [isAdmin, setIsAdmin] = useState(false)
   const [onboarding, setOnboarding]           = useState(null)
   const [checklistHidden, setChecklistHidden] = useState(false)
+  const [feedbackOpen, setFeedbackOpen] = useState(false)
+  const [feedbackBadge, setFeedbackBadge] = useState(0)
+  const { toasts, addToast, removeToast } = useToast()
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!session?.user) return
       setEmail(session.user.email || '')
-      setIsAdmin(session.user.email === 'info@lynqagency.com')
+      const admin = session.user.email === 'info@lynqagency.com'
+      setIsAdmin(admin)
       // Onboarding status — best-effort. Failure leaves checklist hidden.
       fetch('/api/onboarding/status', {
         headers: { Authorization: `Bearer ${session.access_token}` },
@@ -227,6 +275,17 @@ function SidebarContent() {
         .then(r => (r.ok ? r.json() : null))
         .then(d => { if (d) setOnboarding(d) })
         .catch(() => {})
+
+      // Lynq-admin: 7-day feedback count for the sidebar badge.
+      if (admin) {
+        fetch('/api/lynq-admin/feedback/count', {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+          cache: 'no-store',
+        })
+          .then(r => (r.ok ? r.json() : null))
+          .then(d => { if (d?.count != null) setFeedbackBadge(d.count) })
+          .catch(() => {})
+      }
     })
   }, [pathname])  // re-fetch on route change so completed items refresh
 
@@ -310,9 +369,48 @@ function SidebarContent() {
           </div>
 
           <div>
+            {/* Feedback trigger — visible to all logged-in users, opens modal */}
+            <button
+              type="button"
+              className="sb-feedback"
+              onClick={() => setFeedbackOpen(true)}
+              aria-label="Send feedback"
+            >
+              <span className="sb-icon">
+                <MessageSquareWarning size={16} strokeWidth={1.75} />
+              </span>
+              <span className="sb-label">Feedback</span>
+            </button>
+
             <div className="sb-divider" />
             {BOTTOM_ITEMS.map(item => renderItem(item))}
             {isAdmin && renderItem({ href: '/admin', label: 'Admin Panel', icon: Icons.shield })}
+
+            {/* Lynq-admin section — only for is_lynq_admin users */}
+            {isAdmin && (
+              <>
+                <div className="sb-admin-label">Admin</div>
+                {(() => {
+                  const href = '/lynq-admin/feedback'
+                  const active = pathname.startsWith('/lynq-admin/feedback')
+                  return (
+                    <Link
+                      href={href}
+                      className={`sb-item${active ? ' sb-active' : ''}`}
+                    >
+                      {active && <span className="sb-pill" />}
+                      <span className="sb-icon">
+                        <InboxIcon size={16} strokeWidth={1.75} />
+                      </span>
+                      <span className="sb-label">Feedback</span>
+                      {feedbackBadge > 0 && (
+                        <span className="sb-admin-badge">{feedbackBadge}</span>
+                      )}
+                    </Link>
+                  )
+                })()}
+              </>
+            )}
           </div>
         </nav>
 
@@ -349,6 +447,14 @@ function SidebarContent() {
           </button>
         </div>
       </aside>
+
+      <FeedbackModal
+        open={feedbackOpen}
+        onClose={() => setFeedbackOpen(false)}
+        onSuccess={() => addToast('Thanks — we got your feedback!', 'success')}
+        onError={(msg) => addToast(msg || 'Something went wrong. Please try again.', 'error')}
+      />
+      <ToastContainer toasts={toasts} removeToast={removeToast} />
     </>
   )
 }

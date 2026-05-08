@@ -32,6 +32,16 @@ const CANCEL_REASONS = [
   { value:'declined',  label:'Payment declined'    },
   { value:'other',     label:'Other'               },
 ]
+const REFUND_REASONS = [
+  { value: 'customer',   label: 'Customer changed mind' },
+  { value: 'fraud',      label: 'Fraudulent order' },
+  { value: 'inventory',  label: 'Item out of stock' },
+  { value: 'declined',   label: 'Payment declined' },
+  { value: 'quality',    label: 'Product quality issue' },
+  { value: 'shipping',   label: 'Shipping problem' },
+  { value: 'wrong_item', label: 'Wrong item received' },
+  { value: 'other',      label: 'Other' },
+]
 const NOW = new Date().toISOString()
 const FALLBACK_MACROS = [
   { id:'greeting', name:'Greeting',        tags:['support'],   language:'English', usageCount:0, updatedAt:NOW, archived:false, body:'Hi {{name}},\n\nThank you for reaching out! I\'m happy to help you.\n\n' },
@@ -879,7 +889,7 @@ function RefundModal({ order, token, onClose, onSuccess }) {
 
   const itemsTotal = (order.lineItems||[]).reduce((s,li)=>s+(qtys[li.id]||0)*Number(li.price),0)
   const totalRefund = mode==='custom' ? (Number(customAmount)||0) : itemsTotal
-  const canSubmit = mode==='custom' ? Number(customAmount)>0 : totalRefund>0
+  const canSubmit = reason && (mode==='custom' ? Number(customAmount)>0 : totalRefund>0)
 
   async function handleRefund() {
     setLoading(true)
@@ -966,8 +976,13 @@ function RefundModal({ order, token, onClose, onSuccess }) {
       </div>
 
       <div style={{marginBottom:16}}>
-        <label className="modal-label">Reason (optional)</label>
-        <input className="modal-input" value={reason} onChange={e=>setReason(e.target.value)} placeholder="Reason for refund…" />
+        <label className="modal-label">Reason</label>
+        <select className="modal-select" value={reason} onChange={e=>setReason(e.target.value)} required>
+          <option value="" disabled>Select a reason…</option>
+          {REFUND_REASONS.map(r=>(
+            <option key={r.value} value={r.value}>{r.label}</option>
+          ))}
+        </select>
       </div>
 
       <div style={{background:'var(--bg-surface-2)',border:'1px solid var(--border)',borderRadius:12,padding:'13px 15px'}}>
@@ -1769,6 +1784,7 @@ function InboxPage() {
   const [demoMode, setDemoMode]       = useState(false)
   const [customer, setCustomer]       = useState(null)
   const [loadingCust, setLoadingCust] = useState(false)
+  const [custSearch, setCustSearch]   = useState('')
   const [rightTab, setRightTab]       = useState('shopify')
   const [statusMenu, setStatusMenu]   = useState(false)
   const [statuses, setStatuses]       = useState(()=>{ try{return JSON.parse(localStorage.getItem('lynq_statuses')||'{}')}catch{return{}} })
@@ -2102,6 +2118,25 @@ function InboxPage() {
   const EMOJIS = ['😊','😀','🙏','👍','❤️','✅','⚠️','📦','🚚','💰','🔄','❌','✨','💬','🎉','😅','🤔','😢','😡','🥺','🙌','💪','🤝','⏰','🌍','🔔','⭐','📧','👋','😮','🫡','🙌']
 
   function showT(msg,type='success'){ setToast({msg,type}) }
+
+  async function handleCustSearch(query) {
+    if (!query.trim() || !session) return
+    setLoadingCust(true)
+    setCustomer(null)
+    const isOrder = /^#?\d+$/.test(query.trim())
+    const param = isOrder
+      ? `order=${encodeURIComponent(query.trim().replace(/^#/, ''))}`
+      : `email=${encodeURIComponent(query.trim())}`
+    try {
+      const res = await authFetch(`/api/shopify/customer?${param}`, {}, session.access_token)
+      const data = await res.json()
+      setCustomer(data)
+    } catch {
+      setCustomer(null)
+    } finally {
+      setLoadingCust(false)
+    }
+  }
 
   function handleModalSuccess(msg,type='success'){
     setModal(null)
@@ -2521,7 +2556,13 @@ function InboxPage() {
           <div style={{padding:'10px 12px',borderBottom:'1px solid var(--border)',flexShrink:0}}>
             <div style={{position:'relative'}}>
               <span style={{position:'absolute',left:9,top:'50%',transform:'translateY(-50%)',color:'var(--text-3)',display:'flex',pointerEvents:'none'}}>{I.search}</span>
-              <input className="rp-search" placeholder="Search for customers by email, order number..." />
+              <input
+                className="rp-search"
+                placeholder="Search by email or #order number..."
+                value={custSearch}
+                onChange={e => setCustSearch(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') handleCustSearch(custSearch) }}
+              />
             </div>
           </div>
 
@@ -2562,18 +2603,29 @@ function InboxPage() {
           </div>
 
           {/* Stats bar */}
-          {customer?.customer&&!loadingCust&&(
-            <div style={{display:'flex',borderBottom:'1px solid var(--border)',flexShrink:0}}>
-              <div style={{flex:1,padding:'10px 0',textAlign:'center',borderRight:'1px solid var(--border)'}}>
-                <div style={{fontSize:14,fontWeight:800,color:'var(--text-1)',letterSpacing:'-0.02em'}}>{fmtPrice(customer.customer.totalSpent,customer.customer.currency)}</div>
-                <div style={{fontSize:9.5,color:'var(--text-3)',marginTop:2,textTransform:'uppercase',letterSpacing:'.06em'}}>Spent</div>
+          {customer?.customer&&!loadingCust&&(()=>{
+            const orders = customer.orders || []
+            const withRefund = orders.filter(o => o.refunds && o.refunds.length > 0)
+            const refundPct = orders.length > 0 ? Math.round((withRefund.length / orders.length) * 100) : 0
+            const approx = customer.customer.ordersCount > 50
+            const badgeColor = refundPct > 30 ? '#f87171' : refundPct > 10 ? '#fbbf24' : null
+            return (
+              <div style={{display:'flex',borderBottom:'1px solid var(--border)',flexShrink:0}}>
+                <div style={{flex:1,padding:'10px 0',textAlign:'center',borderRight:'1px solid var(--border)'}}>
+                  <div style={{fontSize:14,fontWeight:800,color:'var(--text-1)',letterSpacing:'-0.02em'}}>{fmtPrice(customer.customer.totalSpent,customer.customer.currency)}</div>
+                  <div style={{fontSize:9.5,color:'var(--text-3)',marginTop:2,textTransform:'uppercase',letterSpacing:'.06em'}}>Spent</div>
+                </div>
+                <div style={{flex:1,padding:'10px 0',textAlign:'center',borderRight:'1px solid var(--border)'}}>
+                  <div style={{fontSize:14,fontWeight:800,color:'var(--text-1)',letterSpacing:'-0.02em'}}>{customer.customer.ordersCount??'—'}</div>
+                  <div style={{fontSize:9.5,color:'var(--text-3)',marginTop:2,textTransform:'uppercase',letterSpacing:'.06em'}}>Orders</div>
+                </div>
+                <div style={{flex:1,padding:'10px 0',textAlign:'center'}}>
+                  <div style={{fontSize:14,fontWeight:800,color:badgeColor||'var(--text-1)',letterSpacing:'-0.02em'}}>{approx?'~':''}{refundPct}%</div>
+                  <div style={{fontSize:9.5,color:'var(--text-3)',marginTop:2,textTransform:'uppercase',letterSpacing:'.06em'}}>Refund</div>
+                </div>
               </div>
-              <div style={{flex:1,padding:'10px 0',textAlign:'center'}}>
-                <div style={{fontSize:14,fontWeight:800,color:'var(--text-1)',letterSpacing:'-0.02em'}}>{customer.customer.ordersCount??'—'}</div>
-                <div style={{fontSize:9.5,color:'var(--text-3)',marginTop:2,textTransform:'uppercase',letterSpacing:'.06em'}}>Orders</div>
-              </div>
-            </div>
-          )}
+            )
+          })()}
 
           {/* Tags */}
           {customer?.customer?.tags&&(
@@ -2690,7 +2742,7 @@ function InboxPage() {
                         <div style={{display:'flex',gap:4,marginBottom:8,flexWrap:'wrap'}}>
                           {finS&&<span style={{fontSize:10,fontWeight:700,padding:'2px 7px',borderRadius:4,background:finS.bg,color:finS.color,letterSpacing:'.05em',textTransform:'uppercase',border:`1px solid ${finS.color}22`}}>{finS.label}</span>}
                           {fulS&&<span style={{fontSize:10,fontWeight:700,padding:'2px 7px',borderRadius:4,background:fulS.bg,color:fulS.color,letterSpacing:'.05em',textTransform:'uppercase',border:`1px solid ${fulS.color}22`}}>{fulS.label}</span>}
-                          {order.hasRefund&&<span style={{fontSize:10,fontWeight:700,padding:'2px 7px',borderRadius:4,background:'rgba(248,113,133,0.12)',color:'#fb7185',letterSpacing:'.05em',textTransform:'uppercase',border:'1px solid rgba(248,113,133,0.22)'}}>Partial refund</span>}
+                          {(order.refunds?.length>0)&&order.financialStatus!=='refunded'&&<span style={{fontSize:10,fontWeight:700,padding:'2px 7px',borderRadius:4,background:'rgba(248,113,133,0.12)',color:'#fb7185',letterSpacing:'.05em',textTransform:'uppercase',border:'1px solid rgba(248,113,133,0.22)'}}>Partial refund</span>}
                         </div>
                         {/* Row 3: action buttons */}
                         <div style={{display:'flex',gap:4,flexWrap:'wrap',marginBottom:10}}>

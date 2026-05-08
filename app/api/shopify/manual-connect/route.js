@@ -41,6 +41,10 @@ export async function DELETE(request) {
   const ctx = await getAuthContext(request)
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  await supabaseAdmin.from('integrations').delete().eq('workspace_id', ctx.workspaceId)
+  await supabaseAdmin.from('integrations').update({
+    shopify_domain: null,
+    shopify_access_token: null,
+    shopify_connected_at: null,
+  }).eq('workspace_id', ctx.workspaceId)
   return NextResponse.json({ success: true })
 }

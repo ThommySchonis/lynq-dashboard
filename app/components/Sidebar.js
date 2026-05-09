@@ -4,9 +4,13 @@ import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { useState, useEffect, Suspense } from 'react'
+import { MessageSquareWarning } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { useTheme } from './ThemeProvider'
 import SetupChecklist from './SetupChecklist'
+import FeedbackModal from './FeedbackModal'
+import { ToastContainer } from './Toast'
+import { useToast } from '../hooks/useToast'
 
 const SIDEBAR_W = 208
 
@@ -156,6 +160,28 @@ const CSS = `
     transition:color .12s, background .12s;
   }
   .sb-icon-btn:hover { color:rgba(255,255,255,0.5); background:rgba(255,255,255,0.06); }
+
+  /* Feedback trigger — same shape as nav items, but a button (no route) */
+  .sb-feedback {
+    display:flex; align-items:center; gap:9px;
+    padding:7px 8px; margin:8px 4px 0;
+    border-radius:6px; border:none; background:transparent;
+    width:calc(100% - 8px);
+    color:rgba(255,255,255,0.35);
+    font-size:12.5px; font-weight:400;
+    font-family:'Switzer',-apple-system,BlinkMacSystemFont,sans-serif;
+    cursor:pointer; user-select:none; white-space:nowrap;
+    border-top:1px solid rgba(255,255,255,0.05);
+    padding-top:10px; margin-top:8px;
+    transition:background .12s, color .12s;
+    text-align:left;
+  }
+  .sb-feedback:hover {
+    background:rgba(255,255,255,0.05);
+    color:rgba(255,255,255,0.7);
+  }
+  .sb-feedback .sb-icon { color:inherit; }
+
 `
 
 // ── Icons (16×16, strokeWidth 1.75) ──────────────────────────────────────────
@@ -214,6 +240,8 @@ function SidebarContent() {
   const [onboarding, setOnboarding]           = useState(null)
   const [checklistHidden, setChecklistHidden] = useState(false)
   const [inboxUnread, setInboxUnread] = useState(0)
+  const [feedbackOpen, setFeedbackOpen] = useState(false)
+  const { toasts, addToast, removeToast } = useToast()
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -319,6 +347,19 @@ function SidebarContent() {
           </div>
 
           <div>
+            {/* Feedback trigger — visible to all logged-in users, opens modal */}
+            <button
+              type="button"
+              className="sb-feedback"
+              onClick={() => setFeedbackOpen(true)}
+              aria-label="Send feedback"
+            >
+              <span className="sb-icon">
+                <MessageSquareWarning size={16} strokeWidth={1.75} />
+              </span>
+              <span className="sb-label">Feedback</span>
+            </button>
+
             <div className="sb-divider" />
             {BOTTOM_ITEMS.map(item => renderItem(item))}
             {isAdmin && renderItem({ href: '/admin', label: 'Admin Panel', icon: Icons.shield })}
@@ -358,6 +399,14 @@ function SidebarContent() {
           </button>
         </div>
       </aside>
+
+      <FeedbackModal
+        open={feedbackOpen}
+        onClose={() => setFeedbackOpen(false)}
+        onSuccess={() => addToast('Thanks — we got your feedback!', 'success')}
+        onError={(msg) => addToast(msg || 'Something went wrong. Please try again.', 'error')}
+      />
+      <ToastContainer toasts={toasts} removeToast={removeToast} />
     </>
   )
 }

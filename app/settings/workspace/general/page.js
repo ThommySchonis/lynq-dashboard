@@ -206,10 +206,6 @@ const CSS = `
     from { opacity: 0; transform: translateY(8px); }
     to   { opacity: 1; transform: translateY(0); }
   }
-  @keyframes sg-toast-out {
-    from { opacity: 1; }
-    to   { opacity: 0; }
-  }
   .sg-toast {
     position: fixed;
     bottom: 32px;
@@ -230,39 +226,33 @@ const CSS = `
     gap: 10px;
     max-width: 320px;
   }
-  .sg-toast.error {
-    border-color: rgba(239,68,68,0.3);
-  }
+  .sg-toast.error { border-color: rgba(239,68,68,0.3); }
 
-  @keyframes sg-overlay-in {
-    from { opacity: 0; }
-    to   { opacity: 1; }
-  }
+  @keyframes sg-overlay-in { from { opacity: 0; } to { opacity: 1; } }
   @keyframes sg-dialog-in {
     from { opacity: 0; transform: translateY(12px) scale(0.97); }
     to   { opacity: 1; transform: translateY(0) scale(1); }
   }
+
+  .sg-skeleton {
+    background: linear-gradient(90deg, #F0EDF4 25%, #E8E3EE 50%, #F0EDF4 75%);
+    background-size: 200% 100%;
+    animation: sg-shimmer 1.4s infinite;
+    border-radius: 6px;
+  }
+  @keyframes sg-shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
 `
 
 /* ─────────────────────────────────────────────
-   Helper: SettingsHeader
+   Sub-components
 ───────────────────────────────────────────── */
 function SettingsHeader({ breadcrumb, title, subtitle }) {
   return (
-    <div style={{
-      borderBottom: '1px solid #F0EDF4',
-      paddingBottom: 24,
-      marginBottom: 32,
-    }}>
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 6,
-        fontSize: 12,
-        color: '#9B91A8',
-        marginBottom: 6,
-        flexWrap: 'wrap',
-      }}>
+    <div style={{ borderBottom: '1px solid #F0EDF4', paddingBottom: 24, marginBottom: 32 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#9B91A8', marginBottom: 6, flexWrap: 'wrap' }}>
         {breadcrumb.map((crumb, i) => (
           <span key={i} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             {i > 0 && <ChevronRight size={12} strokeWidth={1.75} />}
@@ -270,66 +260,30 @@ function SettingsHeader({ breadcrumb, title, subtitle }) {
           </span>
         ))}
       </div>
-      <h1 style={{ fontSize: 28, fontWeight: 600, color: '#1C0F36', margin: '0 0 4px 0', lineHeight: 1.2 }}>
-        {title}
-      </h1>
-      {subtitle && (
-        <p style={{ fontSize: 14, color: '#6B5E7B', margin: 0, lineHeight: 1.6 }}>
-          {subtitle}
-        </p>
-      )}
+      <h1 style={{ fontSize: 28, fontWeight: 600, color: '#1C0F36', margin: '0 0 4px 0', lineHeight: 1.2 }}>{title}</h1>
+      {subtitle && <p style={{ fontSize: 14, color: '#6B5E7B', margin: 0, lineHeight: 1.6 }}>{subtitle}</p>}
     </div>
   )
 }
 
-/* ─────────────────────────────────────────────
-   Helper: SettingsSection
-───────────────────────────────────────────── */
 function SettingsSection({ title, description, children }) {
   return (
     <div>
-      <h3 style={{
-        fontSize: 18,
-        fontWeight: 500,
-        color: '#1C0F36',
-        margin: `0 0 ${description ? '4px' : '16px'} 0`,
-        lineHeight: 1.3,
-      }}>
+      <h3 style={{ fontSize: 18, fontWeight: 500, color: '#1C0F36', margin: `0 0 ${description ? '4px' : '16px'} 0`, lineHeight: 1.3 }}>
         {title}
       </h3>
-      {description && (
-        <p style={{ fontSize: 14, color: '#6B5E7B', margin: '0 0 16px 0', lineHeight: 1.6 }}>
-          {description}
-        </p>
-      )}
+      {description && <p style={{ fontSize: 14, color: '#6B5E7B', margin: '0 0 16px 0', lineHeight: 1.6 }}>{description}</p>}
       {children}
     </div>
   )
 }
 
-/* ─────────────────────────────────────────────
-   Helper: SettingsCard
-───────────────────────────────────────────── */
 function SettingsCard({ children, footer, style }) {
   return (
-    <div style={{
-      background: '#FFFFFF',
-      border: '1px solid #E5E0EB',
-      borderRadius: 12,
-      overflow: 'hidden',
-      ...style,
-    }}>
-      <div style={{ padding: 24 }}>
-        {children}
-      </div>
+    <div style={{ background: '#FFFFFF', border: '1px solid #E5E0EB', borderRadius: 12, overflow: 'hidden', ...style }}>
+      <div style={{ padding: 24 }}>{children}</div>
       {footer && (
-        <div style={{
-          borderTop: '1px solid #F0EDF4',
-          padding: '16px 24px',
-          display: 'flex',
-          justifyContent: 'flex-end',
-          gap: 10,
-        }}>
+        <div style={{ borderTop: '1px solid #F0EDF4', padding: '16px 24px', display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
           {footer}
         </div>
       )}
@@ -337,108 +291,64 @@ function SettingsCard({ children, footer, style }) {
   )
 }
 
-/* ─────────────────────────────────────────────
-   Helper: SettingsField
-───────────────────────────────────────────── */
 function SettingsField({ label, helpText, error, children }) {
   return (
     <div>
-      {label && (
-        <div style={{ fontSize: 13, fontWeight: 500, color: '#374151', marginBottom: 6 }}>
-          {label}
-        </div>
-      )}
+      {label && <div style={{ fontSize: 13, fontWeight: 500, color: '#374151', marginBottom: 6 }}>{label}</div>}
       {children}
-      {helpText && !error && (
-        <div style={{ fontSize: 12, color: '#9B91A8', marginTop: 4 }}>{helpText}</div>
-      )}
-      {error && (
-        <div style={{ fontSize: 12, color: '#EF4444', marginTop: 4 }}>{error}</div>
-      )}
+      {helpText && !error && <div style={{ fontSize: 12, color: '#9B91A8', marginTop: 4 }}>{helpText}</div>}
+      {error && <div style={{ fontSize: 12, color: '#EF4444', marginTop: 4 }}>{error}</div>}
     </div>
   )
 }
 
-/* ─────────────────────────────────────────────
-   Helper: Toggle
-───────────────────────────────────────────── */
-function Toggle({ on, onChange }) {
+function Toggle({ on, onChange, disabled }) {
   return (
     <button
       className="sg-toggle-track"
-      onClick={() => onChange(!on)}
-      style={{ background: on ? '#A175FC' : '#E5E0EB' }}
+      onClick={() => !disabled && onChange(!on)}
+      style={{ background: on ? '#A175FC' : '#E5E0EB', opacity: disabled ? 0.5 : 1, cursor: disabled ? 'not-allowed' : 'pointer' }}
       aria-checked={on}
       role="switch"
       type="button"
+      disabled={disabled}
     >
       <div className="sg-toggle-thumb" style={{ left: on ? '23px' : '3px' }} />
     </button>
   )
 }
 
-/* ─────────────────────────────────────────────
-   Helper: RadioGroup
-───────────────────────────────────────────── */
 function RadioGroup({ options, value, onChange }) {
   return (
     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16 }}>
       {options.map(opt => (
         <label key={opt.value} className="sg-radio-option" onClick={() => onChange(opt.value)}>
           <span className={`sg-radio-circle${value === opt.value ? ' checked' : ''}`} />
-          <span style={{ fontSize: 14, color: value === opt.value ? '#1C0F36' : '#6B5E7B' }}>
-            {opt.label}
-          </span>
+          <span style={{ fontSize: 14, color: value === opt.value ? '#1C0F36' : '#6B5E7B' }}>{opt.label}</span>
         </label>
       ))}
     </div>
   )
 }
 
-/* ─────────────────────────────────────────────
-   Helper: ConfirmDialog
-───────────────────────────────────────────── */
 function ConfirmDialog({ open, title, message, confirmText, typeToConfirm, onConfirm, onCancel }) {
   const [typed, setTyped] = useState('')
-
+  useEffect(() => { if (!open) setTyped('') }, [open])
   useEffect(() => {
-    if (!open) setTyped('')
-  }, [open])
-
-  useEffect(() => {
-    function onKey(e) {
-      if (e.key === 'Escape' && open) onCancel()
-    }
+    function onKey(e) { if (e.key === 'Escape' && open) onCancel() }
     document.addEventListener('keydown', onKey)
     return () => document.removeEventListener('keydown', onKey)
   }, [open, onCancel])
 
   if (!open) return null
-
   const canConfirm = typeToConfirm ? typed === typeToConfirm : true
 
   return (
     <div
-      style={{
-        position: 'fixed', inset: 0,
-        background: 'rgba(0,0,0,0.4)',
-        zIndex: 200,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        animation: 'sg-overlay-in 0.15s ease-out',
-      }}
+      style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'sg-overlay-in 0.15s ease-out' }}
       onClick={e => e.target === e.currentTarget && onCancel()}
     >
-      <div style={{
-        background: '#FFFFFF',
-        border: '1px solid #E5E0EB',
-        borderRadius: 12,
-        padding: 28,
-        maxWidth: 420,
-        width: '90%',
-        animation: 'sg-dialog-in 0.2s ease-out',
-      }}>
+      <div style={{ background: '#FFFFFF', border: '1px solid #E5E0EB', borderRadius: 12, padding: 28, maxWidth: 420, width: '90%', animation: 'sg-dialog-in 0.2s ease-out' }}>
         <h3 style={{ fontSize: 16, fontWeight: 600, color: '#1C0F36', margin: '0 0 8px 0' }}>{title}</h3>
         <p style={{ fontSize: 14, color: '#6B5E7B', margin: '0 0 20px 0', lineHeight: 1.6 }}>{message}</p>
         {typeToConfirm && (
@@ -446,14 +356,7 @@ function ConfirmDialog({ open, title, message, confirmText, typeToConfirm, onCon
             <div style={{ fontSize: 13, color: '#6B5E7B', marginBottom: 6 }}>
               Type <strong style={{ color: '#1C0F36' }}>{typeToConfirm}</strong> to confirm:
             </div>
-            <input
-              className="sg-input"
-              type="text"
-              value={typed}
-              onChange={e => setTyped(e.target.value)}
-              placeholder={typeToConfirm}
-              autoFocus
-            />
+            <input className="sg-input" type="text" value={typed} onChange={e => setTyped(e.target.value)} placeholder={typeToConfirm} autoFocus />
           </div>
         )}
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
@@ -473,27 +376,15 @@ function ConfirmDialog({ open, title, message, confirmText, typeToConfirm, onCon
   )
 }
 
-/* ─────────────────────────────────────────────
-   Helper: Toast
-───────────────────────────────────────────── */
 function Toast({ message, type, onClose }) {
   useEffect(() => {
     const t = setTimeout(onClose, 3200)
     return () => clearTimeout(t)
   }, [onClose])
-
   return (
     <div className={`sg-toast${type === 'error' ? ' error' : ''}`}>
       {type !== 'error' && (
-        <span style={{
-          width: 20, height: 20, borderRadius: '50%',
-          background: 'rgba(74,222,128,0.15)',
-          border: '1px solid rgba(74,222,128,0.4)',
-          display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-          color: '#4ade80', flexShrink: 0, fontSize: 11, fontWeight: 700,
-        }}>
-          ✓
-        </span>
+        <span style={{ width: 20, height: 20, borderRadius: '50%', background: 'rgba(74,222,128,0.15)', border: '1px solid rgba(74,222,128,0.4)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: '#4ade80', flexShrink: 0, fontSize: 11, fontWeight: 700 }}>✓</span>
       )}
       {message}
     </div>
@@ -503,93 +394,225 @@ function Toast({ message, type, onClose }) {
 /* ─────────────────────────────────────────────
    MAIN PAGE
 ───────────────────────────────────────────── */
+const TIMEZONES = [
+  'Europe/Amsterdam', 'Europe/London', 'Europe/Berlin', 'Europe/Paris',
+  'Europe/Madrid', 'America/New_York', 'America/Chicago', 'America/Denver',
+  'America/Los_Angeles', 'America/Sao_Paulo', 'Asia/Tokyo', 'Asia/Singapore',
+  'Asia/Shanghai', 'Australia/Sydney', 'Pacific/Auckland',
+]
+
+const DEFAULTS = {
+  name: '', slug: '', logo_url: null,
+  timezone: 'Europe/Amsterdam', locale: 'en',
+  date_format: 'DD/MM/YYYY', time_format: '24h', first_day_of_week: 'Monday',
+  show_order_data: true, auto_translate: false, allow_deletion: false,
+}
+
 export default function WorkspaceGeneralPage() {
-  const [session, setSession] = useState(null)
-  const [toast, setToast] = useState(null)
+  const [session, setSession]   = useState(null)
+  const [loading, setLoading]   = useState(true)
+  const [toast, setToast]       = useState(null)
+  const [role, setRole]         = useState(null)
 
-  // Section 1: Workspace identity
-  const [name, setName] = useState('Lynq & Flow')
-  const [url, setUrl] = useState('lynqflow')
-  const [logoPreview, setLogoPreview] = useState(null)
+  // Identity
+  const [name, setName]           = useState('')
+  const [slug, setSlug]           = useState('')
+  const [logoUrl, setLogoUrl]     = useState(null)
+  const [logoPreview, setLogoPreview] = useState(null) // base64 for local preview
+  const [logoFile, setLogoFile]   = useState(null)
+  const [slugError, setSlugError] = useState('')
+  const [savingIdentity, setSavingIdentity] = useState(false)
+  const [initIdentity, setInitIdentity] = useState({ name: '', slug: '', logo_url: null })
   const fileInputRef = useRef(null)
-  const [initIdentity, setInitIdentity] = useState({ name: 'Lynq & Flow', url: 'lynqflow', logo: null })
 
-  // Section 2: Regional settings
-  const [timezone, setTimezone] = useState('Europe/Amsterdam')
-  const [language, setLanguage] = useState('en')
-  const [dateFormat, setDateFormat] = useState('DD/MM/YYYY')
-  const [timeFormat, setTimeFormat] = useState('24h')
-  const [firstDay, setFirstDay] = useState('Monday')
-  const [initRegional, setInitRegional] = useState({ timezone: 'Europe/Amsterdam', language: 'en', dateFormat: 'DD/MM/YYYY', timeFormat: '24h', firstDay: 'Monday' })
+  // Regional
+  const [timezone, setTimezone]     = useState(DEFAULTS.timezone)
+  const [locale, setLocale]         = useState(DEFAULTS.locale)
+  const [dateFormat, setDateFormat] = useState(DEFAULTS.date_format)
+  const [timeFormat, setTimeFormat] = useState(DEFAULTS.time_format)
+  const [firstDay, setFirstDay]     = useState(DEFAULTS.first_day_of_week)
+  const [savingRegional, setSavingRegional] = useState(false)
+  const [initRegional, setInitRegional] = useState({
+    timezone: DEFAULTS.timezone, locale: DEFAULTS.locale,
+    date_format: DEFAULTS.date_format, time_format: DEFAULTS.time_format,
+    first_day_of_week: DEFAULTS.first_day_of_week,
+  })
 
-  // Section 3: Preferences toggles
+  // Preferences
   const [toggles, setToggles] = useState({
-    showOrderData: true,
-    autoTranslate: false,
-    allowDelete: false,
+    show_order_data: DEFAULTS.show_order_data,
+    auto_translate: DEFAULTS.auto_translate,
+    allow_deletion: DEFAULTS.allow_deletion,
   })
-  const [initToggles, setInitToggles] = useState({
-    showOrderData: true,
-    autoTranslate: false,
-    allowDelete: false,
-  })
+  const [savingToggles, setSavingToggles] = useState(false)
+  const [initToggles, setInitToggles] = useState({ ...DEFAULTS })
 
-  // Danger zone dialogs
+  // Danger zone
   const [transferOpen, setTransferOpen] = useState(false)
-  const [deleteOpen, setDeleteOpen] = useState(false)
+  const [deleteOpen, setDeleteOpen]     = useState(false)
 
-  const showToast = useCallback((message, type = 'success') => {
-    setToast({ message, type })
-  }, [])
+  const showToast = useCallback((message, type = 'success') => setToast({ message, type }), [])
 
+  // Auth + load
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session) { window.location.href = '/login'; return }
-      setSession(session)
+    supabase.auth.getSession().then(async ({ data: { session: s } }) => {
+      if (!s) { window.location.href = '/login'; return }
+      setSession(s)
+      try {
+        const res = await fetch('/api/workspaces/current', {
+          headers: { Authorization: `Bearer ${s.access_token}` },
+        })
+        if (!res.ok) throw new Error('Failed to load workspace')
+        const { workspace: ws, role: r } = await res.json()
+        setRole(r)
+        // Identity
+        setName(ws.name ?? '')
+        setSlug(ws.slug ?? '')
+        setLogoUrl(ws.logo_url ?? null)
+        setInitIdentity({ name: ws.name ?? '', slug: ws.slug ?? '', logo_url: ws.logo_url ?? null })
+        // Regional
+        const reg = {
+          timezone: ws.timezone ?? DEFAULTS.timezone,
+          locale: ws.locale ?? DEFAULTS.locale,
+          date_format: ws.date_format ?? DEFAULTS.date_format,
+          time_format: ws.time_format ?? DEFAULTS.time_format,
+          first_day_of_week: ws.first_day_of_week ?? DEFAULTS.first_day_of_week,
+        }
+        setTimezone(reg.timezone); setLocale(reg.locale)
+        setDateFormat(reg.date_format); setTimeFormat(reg.time_format)
+        setFirstDay(reg.first_day_of_week)
+        setInitRegional(reg)
+        // Toggles
+        const tog = {
+          show_order_data: ws.show_order_data ?? DEFAULTS.show_order_data,
+          auto_translate:  ws.auto_translate  ?? DEFAULTS.auto_translate,
+          allow_deletion:  ws.allow_deletion  ?? DEFAULTS.allow_deletion,
+        }
+        setToggles(tog)
+        setInitToggles(tog)
+      } catch (err) {
+        showToast('Could not load workspace settings', 'error')
+      } finally {
+        setLoading(false)
+      }
     })
-  }, [])
+  }, [showToast])
 
   // Dirty checks
   const identityDirty = (
     name !== initIdentity.name ||
-    url !== initIdentity.url ||
-    logoPreview !== initIdentity.logo
+    slug !== initIdentity.slug ||
+    logoFile !== null ||
+    (logoPreview === null && initIdentity.logo_url !== null)
   )
   const regionalDirty = (
-    timezone !== initRegional.timezone ||
-    language !== initRegional.language ||
-    dateFormat !== initRegional.dateFormat ||
-    timeFormat !== initRegional.timeFormat ||
-    firstDay !== initRegional.firstDay
+    timezone  !== initRegional.timezone ||
+    locale    !== initRegional.locale ||
+    dateFormat !== initRegional.date_format ||
+    timeFormat !== initRegional.time_format ||
+    firstDay  !== initRegional.first_day_of_week
   )
   const togglesDirty = (
-    toggles.showOrderData !== initToggles.showOrderData ||
-    toggles.autoTranslate !== initToggles.autoTranslate ||
-    toggles.allowDelete !== initToggles.allowDelete
+    toggles.show_order_data !== initToggles.show_order_data ||
+    toggles.auto_translate  !== initToggles.auto_translate ||
+    toggles.allow_deletion  !== initToggles.allow_deletion
   )
 
-  function handleSaveIdentity() {
-    setInitIdentity({ name, url, logo: logoPreview })
-    showToast('Workspace identity saved')
+  const canEdit = role === 'owner' || role === 'admin'
+
+  async function handleSaveIdentity() {
+    if (!canEdit) return
+    setSavingIdentity(true)
+    setSlugError('')
+    try {
+      // Upload logo first if a new file was selected
+      let newLogoUrl = logoUrl
+      if (logoFile) {
+        const fd = new FormData()
+        fd.append('file', logoFile)
+        const r = await fetch('/api/workspaces/current/logo', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${session.access_token}` },
+          body: fd,
+        })
+        const json = await r.json()
+        if (!r.ok) throw new Error(json.error ?? 'Logo upload failed')
+        newLogoUrl = json.logo_url
+        setLogoUrl(newLogoUrl)
+        setLogoFile(null)
+      }
+      // Remove logo if explicitly cleared
+      if (logoPreview === null && initIdentity.logo_url !== null && !logoFile) {
+        await fetch('/api/workspaces/current/logo', {
+          method: 'DELETE',
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        })
+        newLogoUrl = null
+        setLogoUrl(null)
+      }
+
+      const res = await fetch('/api/workspaces/current', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
+        body: JSON.stringify({ name, slug }),
+      })
+      const json = await res.json()
+      if (!res.ok) {
+        if (json.error?.includes('taken')) { setSlugError('This URL is already taken'); return }
+        throw new Error(json.error ?? 'Save failed')
+      }
+      setInitIdentity({ name, slug, logo_url: newLogoUrl })
+      showToast('Workspace identity saved')
+    } catch (err) {
+      showToast(err.message, 'error')
+    } finally {
+      setSavingIdentity(false)
+    }
   }
 
-  function handleSaveRegional() {
-    setInitRegional({ timezone, language, dateFormat, timeFormat, firstDay })
-    showToast('Regional settings saved')
+  async function handleSaveRegional() {
+    if (!canEdit) return
+    setSavingRegional(true)
+    try {
+      const res = await fetch('/api/workspaces/current', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
+        body: JSON.stringify({ timezone, locale, date_format: dateFormat, time_format: timeFormat, first_day_of_week: firstDay }),
+      })
+      if (!res.ok) { const j = await res.json(); throw new Error(j.error ?? 'Save failed') }
+      setInitRegional({ timezone, locale, date_format: dateFormat, time_format: timeFormat, first_day_of_week: firstDay })
+      showToast('Regional settings saved')
+    } catch (err) {
+      showToast(err.message, 'error')
+    } finally {
+      setSavingRegional(false)
+    }
   }
 
-  function handleSaveToggles() {
-    setInitToggles({ ...toggles })
-    showToast('Preferences saved')
+  async function handleSaveToggles() {
+    if (!canEdit) return
+    setSavingToggles(true)
+    try {
+      const res = await fetch('/api/workspaces/current', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
+        body: JSON.stringify(toggles),
+      })
+      if (!res.ok) { const j = await res.json(); throw new Error(j.error ?? 'Save failed') }
+      setInitToggles({ ...toggles })
+      showToast('Preferences saved')
+    } catch (err) {
+      showToast(err.message, 'error')
+    } finally {
+      setSavingToggles(false)
+    }
   }
 
   function handleLogoFile(e) {
     const file = e.target.files?.[0]
     if (!file) return
-    if (file.size > 2 * 1024 * 1024) {
-      showToast('Image must be under 2MB', 'error')
-      return
-    }
+    if (file.size > 2 * 1024 * 1024) { showToast('Image must be under 2 MB', 'error'); return }
+    setLogoFile(file)
     const reader = new FileReader()
     reader.onload = ev => setLogoPreview(ev.target.result)
     reader.readAsDataURL(file)
@@ -597,28 +620,31 @@ export default function WorkspaceGeneralPage() {
 
   function handleRemoveLogo() {
     setLogoPreview(null)
+    setLogoFile(null)
     if (fileInputRef.current) fileInputRef.current.value = ''
   }
 
-  if (!session) return null
+  // Displayed logo: local preview > saved URL
+  const displayLogo = logoPreview ?? logoUrl
 
-  const TIMEZONES = [
-    'Europe/Amsterdam', 'Europe/London', 'Europe/Berlin', 'Europe/Paris',
-    'Europe/Madrid', 'America/New_York', 'America/Chicago', 'America/Denver',
-    'America/Los_Angeles', 'America/Sao_Paulo', 'Asia/Tokyo', 'Asia/Singapore',
-    'Asia/Shanghai', 'Australia/Sydney', 'Pacific/Auckland',
-  ]
+  if (!session || loading) {
+    return (
+      <div className="sg-root">
+        <style>{CSS}</style>
+        <div style={{ maxWidth: 768, margin: '0 auto', padding: '48px 48px' }}>
+          <div className="sg-skeleton" style={{ width: 120, height: 14, marginBottom: 16 }} />
+          <div className="sg-skeleton" style={{ width: 200, height: 32, marginBottom: 8 }} />
+          <div className="sg-skeleton" style={{ width: 340, height: 14, marginBottom: 40 }} />
+          <div className="sg-skeleton" style={{ width: '100%', height: 220, borderRadius: 12 }} />
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="sg-root">
       <style>{CSS}</style>
-      {toast && (
-        <Toast
-          message={toast.message}
-          type={toast.type}
-          onClose={() => setToast(null)}
-        />
-      )}
+      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
 
       <ConfirmDialog
         open={transferOpen}
@@ -654,13 +680,11 @@ export default function WorkspaceGeneralPage() {
             description="Your workspace name, URL, and logo are shown to all members."
           >
             <SettingsCard footer={
-              <button
-                className="sg-btn-primary"
-                onClick={handleSaveIdentity}
-                disabled={!identityDirty}
-              >
-                Save changes
-              </button>
+              canEdit && (
+                <button className="sg-btn-primary" onClick={handleSaveIdentity} disabled={!identityDirty || savingIdentity}>
+                  {savingIdentity ? 'Saving…' : 'Save changes'}
+                </button>
+              )
             }>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
                 <SettingsField label="Workspace name">
@@ -670,49 +694,32 @@ export default function WorkspaceGeneralPage() {
                     value={name}
                     onChange={e => setName(e.target.value)}
                     placeholder="Your workspace name"
+                    disabled={!canEdit}
                   />
                 </SettingsField>
 
-                <SettingsField label="Workspace URL" helpText="Your unique workspace URL on lynqflow.app">
+                <SettingsField label="Workspace URL" helpText="lynqflow.app/your-workspace" error={slugError}>
                   <div style={{ display: 'flex' }}>
-                    <span style={{
-                      display: 'inline-flex', alignItems: 'center',
-                      padding: '9px 12px',
-                      fontSize: 14, color: '#9B91A8',
-                      background: '#F8F7FA',
-                      border: '1px solid #E5E0EB',
-                      borderRight: 'none',
-                      borderRadius: '8px 0 0 8px',
-                      whiteSpace: 'nowrap',
-                      lineHeight: 1.5,
-                    }}>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', padding: '9px 12px', fontSize: 14, color: '#9B91A8', background: '#F8F7FA', border: '1px solid #E5E0EB', borderRight: 'none', borderRadius: '8px 0 0 8px', whiteSpace: 'nowrap', lineHeight: 1.5 }}>
                       lynqflow.app/
                     </span>
                     <input
                       className="sg-input"
                       type="text"
-                      value={url}
-                      onChange={e => setUrl(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
+                      value={slug}
+                      onChange={e => { setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '')); setSlugError('') }}
                       placeholder="your-workspace"
                       style={{ borderRadius: '0 8px 8px 0' }}
+                      disabled={!canEdit}
                     />
                   </div>
                 </SettingsField>
 
-                <SettingsField label="Workspace logo" helpText="PNG or JPG, max 2MB, square recommended">
+                <SettingsField label="Workspace logo" helpText="PNG or JPG, max 2 MB, square recommended">
                   <div style={{ display: 'flex', alignItems: 'center', gap: 20, marginTop: 4 }}>
-                    {/* Preview */}
-                    <div style={{
-                      width: 80, height: 80,
-                      borderRadius: 10,
-                      border: '1px solid #E5E0EB',
-                      overflow: 'hidden',
-                      flexShrink: 0,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      background: logoPreview ? 'transparent' : '#F0EDF4',
-                    }}>
-                      {logoPreview
-                        ? <img src={logoPreview} alt="Logo preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    <div style={{ width: 80, height: 80, borderRadius: 10, border: '1px solid #E5E0EB', overflow: 'hidden', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: displayLogo ? 'transparent' : '#F0EDF4' }}>
+                      {displayLogo
+                        ? <img src={displayLogo} alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                         : (
                           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#C4B5FD" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                             <rect x="3" y="3" width="18" height="18" rx="3" />
@@ -722,28 +729,13 @@ export default function WorkspaceGeneralPage() {
                         )
                       }
                     </div>
-                    {/* Buttons */}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                      <input
-                        ref={fileInputRef}
-                        type="file"
-                        accept="image/png,image/jpeg"
-                        style={{ display: 'none' }}
-                        onChange={handleLogoFile}
-                      />
-                      <button
-                        className="sg-btn-secondary"
-                        onClick={() => fileInputRef.current?.click()}
-                        type="button"
-                      >
-                        Upload image
-                      </button>
-                      {logoPreview && (
-                        <button className="sg-btn-ghost-red" onClick={handleRemoveLogo} type="button">
-                          Remove
-                        </button>
-                      )}
-                    </div>
+                    {canEdit && (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                        <input ref={fileInputRef} type="file" accept="image/png,image/jpeg,image/webp" style={{ display: 'none' }} onChange={handleLogoFile} />
+                        <button className="sg-btn-secondary" onClick={() => fileInputRef.current?.click()} type="button">Upload image</button>
+                        {displayLogo && <button className="sg-btn-ghost-red" onClick={handleRemoveLogo} type="button">Remove</button>}
+                      </div>
+                    )}
                   </div>
                 </SettingsField>
               </div>
@@ -756,33 +748,21 @@ export default function WorkspaceGeneralPage() {
             description="Control how dates, times, and languages appear across your workspace."
           >
             <SettingsCard footer={
-              <button
-                className="sg-btn-primary"
-                onClick={handleSaveRegional}
-                disabled={!regionalDirty}
-              >
-                Save changes
-              </button>
+              canEdit && (
+                <button className="sg-btn-primary" onClick={handleSaveRegional} disabled={!regionalDirty || savingRegional}>
+                  {savingRegional ? 'Saving…' : 'Save changes'}
+                </button>
+              )
             }>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
                 <SettingsField label="Timezone">
-                  <select
-                    className="sg-select"
-                    value={timezone}
-                    onChange={e => setTimezone(e.target.value)}
-                  >
-                    {TIMEZONES.map(tz => (
-                      <option key={tz} value={tz}>{tz.replace('_', ' ')}</option>
-                    ))}
+                  <select className="sg-select" value={timezone} onChange={e => setTimezone(e.target.value)} disabled={!canEdit}>
+                    {TIMEZONES.map(tz => <option key={tz} value={tz}>{tz.replace(/_/g, ' ')}</option>)}
                   </select>
                 </SettingsField>
 
                 <SettingsField label="Default language">
-                  <select
-                    className="sg-select"
-                    value={language}
-                    onChange={e => setLanguage(e.target.value)}
-                  >
+                  <select className="sg-select" value={locale} onChange={e => setLocale(e.target.value)} disabled={!canEdit}>
                     <option value="en">English</option>
                     <option value="nl">Nederlands</option>
                     <option value="de">Deutsch</option>
@@ -799,29 +779,23 @@ export default function WorkspaceGeneralPage() {
                       { value: 'YYYY-MM-DD', label: 'YYYY-MM-DD' },
                     ]}
                     value={dateFormat}
-                    onChange={setDateFormat}
+                    onChange={canEdit ? setDateFormat : () => {}}
                   />
                 </SettingsField>
 
                 <SettingsField label="Time format">
                   <RadioGroup
-                    options={[
-                      { value: '12h', label: '12-hour' },
-                      { value: '24h', label: '24-hour' },
-                    ]}
+                    options={[{ value: '12h', label: '12-hour' }, { value: '24h', label: '24-hour' }]}
                     value={timeFormat}
-                    onChange={setTimeFormat}
+                    onChange={canEdit ? setTimeFormat : () => {}}
                   />
                 </SettingsField>
 
                 <SettingsField label="First day of week">
                   <RadioGroup
-                    options={[
-                      { value: 'Sunday', label: 'Sunday' },
-                      { value: 'Monday', label: 'Monday' },
-                    ]}
+                    options={[{ value: 'Sunday', label: 'Sunday' }, { value: 'Monday', label: 'Monday' }]}
                     value={firstDay}
-                    onChange={setFirstDay}
+                    onChange={canEdit ? setFirstDay : () => {}}
                   />
                 </SettingsField>
               </div>
@@ -834,53 +808,26 @@ export default function WorkspaceGeneralPage() {
             description="Global feature toggles that apply to all agents in this workspace."
           >
             <SettingsCard footer={
-              <button
-                className="sg-btn-primary"
-                onClick={handleSaveToggles}
-                disabled={!togglesDirty}
-              >
-                Save changes
-              </button>
+              canEdit && (
+                <button className="sg-btn-primary" onClick={handleSaveToggles} disabled={!togglesDirty || savingToggles}>
+                  {savingToggles ? 'Saving…' : 'Save changes'}
+                </button>
+              )
             }>
               {[
-                {
-                  key: 'showOrderData',
-                  title: 'Show order data inline in tickets',
-                  desc: 'Display Shopify order details directly inside ticket view',
-                },
-                {
-                  key: 'autoTranslate',
-                  title: 'Auto-translate customer messages',
-                  desc: 'Automatically translate non-English messages using AI',
-                },
-                {
-                  key: 'allowDelete',
-                  title: 'Allow agents to delete tickets',
-                  desc: 'Agents can permanently delete tickets (cannot be undone)',
-                },
+                { key: 'show_order_data', title: 'Show order data inline in tickets', desc: 'Display Shopify order details directly inside ticket view' },
+                { key: 'auto_translate',  title: 'Auto-translate customer messages',  desc: 'Automatically translate non-English messages using AI' },
+                { key: 'allow_deletion',  title: 'Allow agents to delete tickets',    desc: 'Agents can permanently delete tickets (cannot be undone)' },
               ].map((row, i, arr) => (
-                <div
-                  key={row.key}
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    paddingTop: i === 0 ? 0 : 16,
-                    paddingBottom: i === arr.length - 1 ? 0 : 16,
-                    borderBottom: i === arr.length - 1 ? 'none' : '1px solid #F0EDF4',
-                  }}
-                >
+                <div key={row.key} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: i === 0 ? 0 : 16, paddingBottom: i === arr.length - 1 ? 0 : 16, borderBottom: i === arr.length - 1 ? 'none' : '1px solid #F0EDF4' }}>
                   <div style={{ flex: 1, paddingRight: 24 }}>
-                    <div style={{ fontSize: 14, fontWeight: 500, color: '#1C0F36', marginBottom: 2 }}>
-                      {row.title}
-                    </div>
-                    <div style={{ fontSize: 13, color: '#9B91A8', lineHeight: 1.5 }}>
-                      {row.desc}
-                    </div>
+                    <div style={{ fontSize: 14, fontWeight: 500, color: '#1C0F36', marginBottom: 2 }}>{row.title}</div>
+                    <div style={{ fontSize: 13, color: '#9B91A8', lineHeight: 1.5 }}>{row.desc}</div>
                   </div>
                   <Toggle
                     on={toggles[row.key]}
                     onChange={val => setToggles(prev => ({ ...prev, [row.key]: val }))}
+                    disabled={!canEdit}
                   />
                 </div>
               ))}
@@ -889,75 +836,29 @@ export default function WorkspaceGeneralPage() {
 
           {/* ── Section 4: Danger zone ── */}
           <SettingsSection title="Danger zone">
-            <div style={{
-              border: '1px solid rgba(239,68,68,0.25)',
-              borderRadius: 12,
-              overflow: 'hidden',
-            }}>
-              {/* Danger header */}
-              <div style={{
-                padding: '20px 24px',
-                borderBottom: '1px solid rgba(239,68,68,0.12)',
-                background: 'rgba(239,68,68,0.02)',
-              }}>
-                <h3 style={{ fontSize: 18, fontWeight: 500, color: '#EF4444', margin: '0 0 4px 0' }}>
-                  Danger zone
-                </h3>
-                <p style={{ fontSize: 13, color: '#9B91A8', margin: 0 }}>
-                  These actions are irreversible. Please proceed with caution.
-                </p>
+            <div style={{ border: '1px solid rgba(239,68,68,0.25)', borderRadius: 12, overflow: 'hidden' }}>
+              <div style={{ padding: '20px 24px', borderBottom: '1px solid rgba(239,68,68,0.12)', background: 'rgba(239,68,68,0.02)' }}>
+                <h3 style={{ fontSize: 18, fontWeight: 500, color: '#EF4444', margin: '0 0 4px 0' }}>Danger zone</h3>
+                <p style={{ fontSize: 13, color: '#9B91A8', margin: 0 }}>These actions are irreversible. Please proceed with caution.</p>
               </div>
 
-              {/* Row 1: Transfer */}
-              <div style={{
-                padding: '18px 24px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                borderBottom: '1px solid rgba(239,68,68,0.08)',
-                gap: 24,
-              }}>
+              <div style={{ padding: '18px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(239,68,68,0.08)', gap: 24 }}>
                 <div>
-                  <div style={{ fontSize: 14, fontWeight: 500, color: '#1C0F36', marginBottom: 2 }}>
-                    Transfer ownership
-                  </div>
-                  <div style={{ fontSize: 13, color: '#9B91A8' }}>
-                    Transfer this workspace to another member
-                  </div>
+                  <div style={{ fontSize: 14, fontWeight: 500, color: '#1C0F36', marginBottom: 2 }}>Transfer ownership</div>
+                  <div style={{ fontSize: 13, color: '#9B91A8' }}>Transfer this workspace to another member</div>
                 </div>
-                <button
-                  className="sg-btn-secondary"
-                  onClick={() => setTransferOpen(true)}
-                  type="button"
-                  style={{ flexShrink: 0 }}
-                >
-                  Transfer...
+                <button className="sg-btn-secondary" onClick={() => setTransferOpen(true)} type="button" style={{ flexShrink: 0 }} disabled={role !== 'owner'}>
+                  Transfer…
                 </button>
               </div>
 
-              {/* Row 2: Delete */}
-              <div style={{
-                padding: '18px 24px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                gap: 24,
-              }}>
+              <div style={{ padding: '18px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 24 }}>
                 <div>
-                  <div style={{ fontSize: 14, fontWeight: 500, color: '#EF4444', marginBottom: 2 }}>
-                    Delete workspace
-                  </div>
-                  <div style={{ fontSize: 13, color: '#9B91A8' }}>
-                    Permanently delete this workspace and all data
-                  </div>
+                  <div style={{ fontSize: 14, fontWeight: 500, color: '#EF4444', marginBottom: 2 }}>Delete workspace</div>
+                  <div style={{ fontSize: 13, color: '#9B91A8' }}>Permanently delete this workspace and all data</div>
                 </div>
-                <button
-                  className="sg-btn-destructive"
-                  onClick={() => setDeleteOpen(true)}
-                  type="button"
-                  style={{ flexShrink: 0 }}
-                >
-                  Delete workspace...
+                <button className="sg-btn-destructive" onClick={() => setDeleteOpen(true)} type="button" style={{ flexShrink: 0 }} disabled={role !== 'owner'}>
+                  Delete workspace…
                 </button>
               </div>
             </div>

@@ -1,12 +1,10 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
 import { supabase } from '../../lib/supabase'
-import {
-  LayoutDashboard, Users, UserPlus, Radio, Bell, MessageSquare,
-  UserCheck, Clock, BarChart2, Calendar, ArrowLeft, Inbox,
-} from 'lucide-react'
+import { Users, UserCheck, Radio, Bell } from 'lucide-react'
+import AdminSidebar from '../components/AdminSidebar'
 
 const ADMIN_EMAIL = 'info@lynqagency.com'
 
@@ -14,22 +12,6 @@ const CSS = `
   @import url('https://api.fontshare.com/v2/css?f[]=switzer@400,500,600,700,800&display=swap');
   .ap-root { font-family:'Switzer',-apple-system,BlinkMacSystemFont,sans-serif; -webkit-font-smoothing:antialiased; box-sizing:border-box; }
   .ap-root *, .ap-root *::before, .ap-root *::after { box-sizing:border-box; margin:0; padding:0; }
-
-  .ap-nav-item {
-    display:flex; align-items:center; gap:8px;
-    padding:7px 8px; border-radius:6px;
-    font-size:12.5px; color:rgba(255,255,255,0.4);
-    cursor:pointer; margin-bottom:1px;
-    transition:all 0.12s; border:none; background:none;
-    width:100%; text-align:left; font-family:'Switzer',-apple-system,BlinkMacSystemFont,sans-serif;
-    border-left:2.5px solid transparent;
-  }
-  .ap-nav-item:hover { background:rgba(255,255,255,0.06); color:rgba(255,255,255,0.7); }
-  .ap-nav-item.active {
-    background:rgba(139,92,246,0.14); color:#C4B5FD; font-weight:500;
-    border-left-color:#8B5CF6; padding-left:5.5px;
-  }
-  .ap-nav-item.active svg { opacity:1; color:#A175FC; }
 
   .ap-input {
     height:38px; width:100%;
@@ -129,31 +111,10 @@ const CSS = `
   .ap-error   { background:rgba(239,68,68,0.06);  border:1px solid rgba(239,68,68,0.2);  border-radius:8px; padding:10px 14px; color:#DC2626; font-size:13px; margin-bottom:16px; }
 `
 
-// ─── Nav config ──────────────────────────────────────────────────────────────
-const NAV = [
-  { group: 'OVERVIEW', items: [
-    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  ]},
-  { group: 'CLIENTS', items: [
-    { id: 'clients',       label: 'Clients',       icon: Users,    badge: 'clientCount' },
-    { id: 'create-client', label: 'Create Client',  icon: UserPlus },
-  ]},
-  { group: 'COMMUNICATION', items: [
-    { id: 'broadcasts',    label: 'Broadcasts',     icon: Radio },
-    { id: 'notifications', label: 'Notifications',  icon: Bell },
-    { id: 'inquiries',     label: 'Inquiries',      icon: MessageSquare, badge: 'newInquiries' },
-  ]},
-  { group: 'TEAM', items: [
-    { id: 'team', label: 'Team Members', icon: UserCheck },
-    { id: 'time', label: 'Time Tracking', icon: Clock },
-  ]},
-  { group: 'FINANCE', items: [
-    { id: 'finance', label: 'Finance',  icon: BarChart2 },
-    { id: 'events',  label: 'Events',   icon: Calendar },
-  ]},
-]
+// NAV config moved to app/components/AdminSidebar.js (single source of truth).
 
 export default function AdminPage() {
+  const searchParams = useSearchParams()
   const [clients, setClients]             = useState([])
   const [broadcasts, setBroadcasts]       = useState([])
   const [notifications, setNotifications] = useState([])
@@ -169,7 +130,6 @@ export default function AdminPage() {
   const [teamError, setTeamError]         = useState('')
   const [authorized, setAuthorized]       = useState(false)
   const [activeTab, setActiveTab]         = useState('dashboard')
-  const [feedbackCount, setFeedbackCount] = useState(0)
   const [teamForm, setTeamForm]           = useState({ name: '', email: '', password: '', role: 'developer' })
   const [finance, setFinance]             = useState(null)
   const [financeLoading, setFinanceLoading] = useState(false)
@@ -199,25 +159,20 @@ export default function AdminPage() {
       setAuthorized(true)
       fetchClients(); fetchBroadcasts(); fetchNotifications()
       fetchTeamMembers(); fetchMasterclasses(); fetchBroadcastReactions(); fetchInquiries()
-      fetchFeedbackCount()
     }
     checkAuth()
   }, [])
 
-  async function fetchFeedbackCount() {
-    const { data: { session } } = await supabase.auth.getSession()
-    if (!session) return
-    try {
-      const res = await fetch('/api/lynq-admin/feedback/count', {
-        headers: { Authorization: `Bearer ${session.access_token}` },
-        cache: 'no-store',
-      })
-      if (res.ok) {
-        const d = await res.json()
-        if (typeof d.count === 'number') setFeedbackCount(d.count)
-      }
-    } catch {}
-  }
+  // Open the right tab when navigating in via /admin?tab=<id> (used by the
+  // shared AdminSidebar in link-mode from /lynq-admin/* routes).
+  useEffect(() => {
+    const tab = searchParams?.get('tab')
+    if (!tab) return
+    setActiveTab(tab)
+    if (tab === 'finance' && !finance) fetchFinance()
+    if (tab === 'time') fetchTimeData(timeFilter)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams])
 
   async function fetchInquiries() {
     const { data } = await supabase.from('service_inquiries').select('*').order('created_at', { ascending: false })
@@ -377,74 +332,16 @@ export default function AdminPage() {
     <div className="ap-root" style={{ display:'flex', height:'100vh', background:'#F9F9FB', overflow:'hidden' }}>
       <style>{CSS}</style>
 
-      {/* ── Admin Sidebar ── */}
-      <div style={{ width:220, background:'#0D0F14', display:'flex', flexDirection:'column', flexShrink:0, height:'100vh' }}>
-
-        {/* Header */}
-        <div style={{ padding:'18px 16px', borderBottom:'1px solid rgba(255,255,255,0.06)' }}>
-          <div style={{ fontSize:9, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.12em', color:'rgba(255,255,255,0.25)', marginBottom:2 }}>ADMIN</div>
-          <div style={{ fontSize:13, fontWeight:600, color:'#FFFFFF' }}>Lynq &amp; Flow</div>
-        </div>
-
-        {/* Nav */}
-        <div style={{ padding:'8px 8px', flex:1, overflowY:'auto' }}>
-          {NAV.map(({ group, items }) => (
-            <div key={group}>
-              <div style={{ fontSize:9, textTransform:'uppercase', letterSpacing:'0.1em', color:'rgba(255,255,255,0.2)', padding:'12px 8px 4px' }}>{group}</div>
-              {items.map(({ id, label, icon: Icon, badge }) => {
-                const badgeCount = badge === 'clientCount' ? clients.length : badge === 'newInquiries' ? newInquiriesCount : 0
-                return (
-                  <button
-                    key={id}
-                    className={`ap-nav-item${activeTab === id ? ' active' : ''}`}
-                    onClick={() => {
-                      setActiveTab(id)
-                      if (id === 'finance' && !finance) fetchFinance()
-                      if (id === 'time') fetchTimeData(timeFilter)
-                    }}
-                  >
-                    <Icon size={15} strokeWidth={1.75} style={{ opacity: activeTab === id ? 1 : 0.5, flexShrink:0 }} />
-                    <span style={{ flex:1 }}>{label}</span>
-                    {badgeCount > 0 && (
-                      <span style={{ fontSize:10, fontWeight:700, background: badge === 'newInquiries' ? '#f87171' : 'rgba(255,255,255,0.1)', color: badge === 'newInquiries' ? '#fff' : 'rgba(255,255,255,0.5)', borderRadius:100, padding:'1px 6px', lineHeight:1.5 }}>
-                        {badgeCount}
-                      </span>
-                    )}
-                  </button>
-                )
-              })}
-            </div>
-          ))}
-
-          {/* SUPPORT — links out to the standalone /lynq-admin/feedback page */}
-          <div>
-            <div style={{ fontSize:9, textTransform:'uppercase', letterSpacing:'0.1em', color:'rgba(255,255,255,0.2)', padding:'12px 8px 4px' }}>SUPPORT</div>
-            <Link
-              href="/lynq-admin/feedback"
-              className="ap-nav-item"
-              style={{ textDecoration:'none' }}
-            >
-              <Inbox size={15} strokeWidth={1.75} style={{ opacity:0.5, flexShrink:0 }} />
-              <span style={{ flex:1 }}>Feedback</span>
-              {feedbackCount > 0 && (
-                <span style={{ fontSize:10, fontWeight:700, background:'#A175FC', color:'#FFFFFF', borderRadius:100, padding:'1px 6px', lineHeight:1.5 }}>
-                  {feedbackCount}
-                </span>
-              )}
-            </Link>
-          </div>
-        </div>
-
-        {/* Footer */}
-        <div style={{ padding:'12px 10px', borderTop:'1px solid rgba(255,255,255,0.06)' }}>
-          <a href="/home" style={{ display:'flex', alignItems:'center', gap:6, textDecoration:'none', color:'rgba(255,255,255,0.35)', fontSize:12, transition:'color .15s' }}
-            onMouseEnter={e => e.currentTarget.style.color='rgba(255,255,255,0.6)'}
-            onMouseLeave={e => e.currentTarget.style.color='rgba(255,255,255,0.35)'}>
-            <ArrowLeft size={13} strokeWidth={1.75} />
-            Back to Dashboard
-          </a>
-        </div>
-      </div>
+      <AdminSidebar
+        activeTab={activeTab}
+        onTabChange={(id) => {
+          setActiveTab(id)
+          if (id === 'finance' && !finance) fetchFinance()
+          if (id === 'time') fetchTimeData(timeFilter)
+        }}
+        clientCount={clients.length}
+        newInquiriesCount={newInquiriesCount}
+      />
 
       {/* ── Main Content ── */}
       <div style={{ flex:1, display:'flex', flexDirection:'column', overflow:'hidden' }}>

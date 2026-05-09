@@ -445,7 +445,7 @@ function CreateTicketView({ token, connectedEmail, onClose, onSuccess, macros = 
           onKeyDown={(e) => {
             if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) doSend();
           }}
-          className="compose-ta min-h-[130px] px-4 py-3 text-[13.5px] leading-[1.75] overflow-y-auto"
+          className="compose-ta w-full resize-none outline-none bg-transparent px-4 py-3 text-sm text-(--text-1) leading-relaxed min-h-[90px] tracking-[.005em] min-h-[130px] px-4 py-3 text-[13.5px] leading-[1.75] overflow-y-auto"
         />
 
         {/* Suggested macros */}
@@ -467,14 +467,14 @@ function CreateTicketView({ token, connectedEmail, onClose, onSuccess, macros = 
 
         {/* Toolbar + Send buttons */}
         <div className="flex items-center px-3 py-[7px] border-t border-border gap-[3px]">
-          <button className="rtbar-btn font-bold min-w-[26px] text-xs" onMouseDown={(e) => e.preventDefault()} onClick={() => fmt("bold")} title="Bold">
+          <button className="min-w-[30px] h-[30px] flex items-center justify-center rounded-[7px] cursor-pointer text-xs font-bold text-(--text-3) transition-all hover:bg-(--bg-surface-2) hover:text-(--text-1) font-bold min-w-[26px] text-xs" onMouseDown={(e) => e.preventDefault()} onClick={() => fmt("bold")} title="Bold">
             B
           </button>
-          <button className="rtbar-btn italic min-w-[26px] text-xs" onMouseDown={(e) => e.preventDefault()} onClick={() => fmt("italic")} title="Italic">
+          <button className="min-w-[30px] h-[30px] flex items-center justify-center rounded-[7px] cursor-pointer text-xs font-bold text-(--text-3) transition-all hover:bg-(--bg-surface-2) hover:text-(--text-1) italic min-w-[26px] text-xs" onMouseDown={(e) => e.preventDefault()} onClick={() => fmt("italic")} title="Italic">
             I
           </button>
           <button
-            className="rtbar-btn underline min-w-[26px] text-xs"
+            className="min-w-[30px] h-[30px] flex items-center justify-center rounded-[7px] cursor-pointer text-xs font-bold text-(--text-3) transition-all hover:bg-(--bg-surface-2) hover:text-(--text-1) underline min-w-[26px] text-xs"
             onMouseDown={(e) => e.preventDefault()}
             onClick={() => fmt("underline")}
             title="Underline"
@@ -482,10 +482,10 @@ function CreateTicketView({ token, connectedEmail, onClose, onSuccess, macros = 
             U
           </button>
           <div className="w-px h-3.5 bg-(--border) mx-[3px]" />
-          <button className="rtbar-btn" onMouseDown={(e) => e.preventDefault()} onClick={insertLink} title="Link">
+          <button className="min-w-[30px] h-[30px] flex items-center justify-center rounded-[7px] cursor-pointer text-xs font-bold text-(--text-3) transition-all hover:bg-(--bg-surface-2) hover:text-(--text-1)" onMouseDown={(e) => e.preventDefault()} onClick={insertLink} title="Link">
             <Link2 size={12} />
           </button>
-          <button className="rtbar-btn" onMouseDown={(e) => e.preventDefault()} onClick={() => fmt("insertUnorderedList")} title="Bullet list">
+          <button className="min-w-[30px] h-[30px] flex items-center justify-center rounded-[7px] cursor-pointer text-xs font-bold text-(--text-3) transition-all hover:bg-(--bg-surface-2) hover:text-(--text-1)" onMouseDown={(e) => e.preventDefault()} onClick={() => fmt("insertUnorderedList")} title="Bullet list">
             <List size={12} />
           </button>
           <div className="flex-1" />
@@ -589,12 +589,12 @@ function RefundModal({ order, token, onClose, onSuccess }) {
         {/* Custom amount input */}
         {mode === "custom" && (
           <div className="mb-[18px]">
-            <label className="modal-label">Refund amount</label>
+            <label className="text-[10.5px] font-bold tracking-[.07em] uppercase text-(--text-3) mb-[7px] block">Refund amount</label>
             <div className="relative">
               <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm font-bold text-(--text-3) pointer-events-none">€</span>
-              <input
+              <Input
                 type="number"
-                className="modal-input pl-7"
+                className="w-full bg-(--bg-surface-2) border border-(--border) rounded-xl px-3.5 py-[11px] text-[13.5px] text-(--text-1) outline-none pl-7"
                 value={customAmount}
                 onChange={(e) => setCustomAmount(e.target.value)}
                 placeholder="0.00"
@@ -616,13 +616,13 @@ function RefundModal({ order, token, onClose, onSuccess }) {
         {mode !== "custom" && (
           <div className="mb-4">
             <div className="grid grid-cols-[1fr_auto_auto_auto] gap-x-3 items-center pb-2 mb-1.5 border-b border-white/[0.07]">
-              <span className="info-label">Product</span>
-              <span className="info-label">Price</span>
-              <span className="info-label text-center min-w-20">Qty</span>
-              <span className="info-label text-right">Total</span>
+              <span className="text-[10px] font-bold text-(--text-3) tracking-[.07em] uppercase">Product</span>
+              <span className="text-[10px] font-bold text-(--text-3) tracking-[.07em] uppercase">Price</span>
+              <span className="text-[10px] font-bold text-(--text-3) tracking-[.07em] uppercase text-center min-w-20">Qty</span>
+              <span className="text-[10px] font-bold text-(--text-3) tracking-[.07em] uppercase text-right">Total</span>
             </div>
             {(order.lineItems || []).map((li) => (
-              <div key={li.id} className="li-row">
+              <div key={li.id} className="flex items-center gap-3 py-[11px] border-b border-(--border) last:border-b-0">
                 <div className="flex-1">
                   <div className="text-[13px] font-semibold text-(--text-1)">{li.title}</div>
                   {li.variantTitle && <div className="text-[11.5px] text-(--text-3)">{li.variantTitle}</div>}
@@ -630,7 +630,7 @@ function RefundModal({ order, token, onClose, onSuccess }) {
                 <span className="text-[12.5px] text-(--text-2) min-w-[60px] text-right">{fmtPrice(li.price, order.currency)}</span>
                 <div className="flex items-center gap-1.5 min-w-20 justify-center">
                   <button
-                    className="qty-btn"
+                    className="w-7 h-7 rounded-[7px] bg-(--bg-surface-2) border border-(--border) text-(--text-2) text-[15px] cursor-pointer flex items-center justify-center transition-all hover:border-(--border-hover) hover:text-(--text-1) disabled:opacity-[.28] disabled:cursor-not-allowed"
                     onClick={() =>
                       setQtys((q) => ({
                         ...q,
@@ -643,7 +643,7 @@ function RefundModal({ order, token, onClose, onSuccess }) {
                   </button>
                   <span className="text-[13px] font-semibold text-(--text-1) min-w-5 text-center">{qtys[li.id]}</span>
                   <button
-                    className="qty-btn"
+                    className="w-7 h-7 rounded-[7px] bg-(--bg-surface-2) border border-(--border) text-(--text-2) text-[15px] cursor-pointer flex items-center justify-center transition-all hover:border-(--border-hover) hover:text-(--text-1) disabled:opacity-[.28] disabled:cursor-not-allowed"
                     onClick={() =>
                       setQtys((q) => ({
                         ...q,
@@ -684,8 +684,8 @@ function RefundModal({ order, token, onClose, onSuccess }) {
         </div>
 
         <div className="mb-4">
-          <label className="modal-label">Reason</label>
-          <select className="modal-select" value={reason} onChange={(e) => setReason(e.target.value)} required>
+          <label className="text-[10.5px] font-bold tracking-[.07em] uppercase text-(--text-3) mb-[7px] block">Reason</label>
+          <select className="w-full bg-(--bg-surface-2) border border-(--border) rounded-xl px-3.5 py-[11px] text-[13.5px] text-(--text-1) outline-none cursor-pointer" value={reason} onChange={(e) => setReason(e.target.value)} required>
             <option value="" disabled>
               Select a reason…
             </option>
@@ -706,12 +706,12 @@ function RefundModal({ order, token, onClose, onSuccess }) {
           </div>
         </div>
         <DialogFooter>
-          <button className="btn-ghost" onClick={onClose}>
+          <Button variant="outline" className="" onClick={onClose}>
             Cancel
-          </button>
-          <button className="btn-danger" onClick={handleRefund} disabled={loading || !canSubmit}>
+          </Button>
+          <Button variant="destructive" onClick={handleRefund} disabled={loading || !canSubmit}>
             {loading ? <Loader2 size={13} className="animate-spin text-white" /> : "Process refund"}
-          </button>
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -754,8 +754,8 @@ function CancelModal({ order, token, onClose, onSuccess }) {
           <DialogTitle>{`Cancel order — ${order.name}`}</DialogTitle>
         </DialogHeader>
         <div className="mb-4">
-          <label className="modal-label">Reason for cancellation</label>
-          <select className="modal-select" value={reason} onChange={(e) => setReason(e.target.value)}>
+          <label className="text-[10.5px] font-bold tracking-[.07em] uppercase text-(--text-3) mb-[7px] block">Reason for cancellation</label>
+          <select className="w-full bg-(--bg-surface-2) border border-(--border) rounded-xl px-3.5 py-[11px] text-[13.5px] text-(--text-1) outline-none cursor-pointer" value={reason} onChange={(e) => setReason(e.target.value)}>
             {CANCEL_REASONS.map((r) => (
               <option key={r.value} value={r.value}>
                 {r.label}
@@ -778,12 +778,12 @@ function CancelModal({ order, token, onClose, onSuccess }) {
           </label>
         </div>
         <DialogFooter>
-          <button className="btn-ghost" onClick={onClose}>
+          <Button variant="outline" className="" onClick={onClose}>
             Keep order
-          </button>
-          <button className="btn-danger" onClick={handleCancel} disabled={loading}>
+          </Button>
+          <Button variant="destructive" onClick={handleCancel} disabled={loading}>
             {loading ? <Loader2 size={13} className="animate-spin text-white" /> : "Cancel order"}
-          </button>
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -859,7 +859,7 @@ function DuplicateModal({ order, token, onClose, onSuccess }) {
 
         {/* Discount section */}
         <div className="mb-3.5">
-          <label className="modal-label">Discount</label>
+          <label className="text-[10.5px] font-bold tracking-[.07em] uppercase text-(--text-3) mb-[7px] block">Discount</label>
           <div className={`flex gap-1.5 ${discountType !== "none" ? "mb-2.5" : "mb-0"}`}>
             {[
               { v: "none", l: "None" },
@@ -880,9 +880,9 @@ function DuplicateModal({ order, token, onClose, onSuccess }) {
           </div>
           {discountType !== "none" && (
             <div className="flex items-center gap-2.5">
-              <input
+              <Input
                 type="number"
-                className="modal-input flex-1"
+                className="w-full bg-(--bg-surface-2) border border-(--border) rounded-xl px-3.5 py-[11px] text-[13.5px] text-(--text-1) outline-none flex-1"
                 value={discountValue}
                 onChange={(e) => setDiscountValue(e.target.value)}
                 placeholder={discountType === "percentage" ? "e.g. 10" : "e.g. 5.00"}
@@ -909,18 +909,18 @@ function DuplicateModal({ order, token, onClose, onSuccess }) {
         )}
 
         <div className="mb-3.5">
-          <label className="modal-label">Note</label>
-          <input className="modal-input" value={note} onChange={(e) => setNote(e.target.value)} />
+          <label className="text-[10.5px] font-bold tracking-[.07em] uppercase text-(--text-3) mb-[7px] block">Note</label>
+          <Input className="w-full bg-(--bg-surface-2) border border-(--border) rounded-xl px-3.5 py-[11px] text-[13.5px] text-(--text-1) outline-none" value={note} onChange={(e) => setNote(e.target.value)} />
         </div>
         <label className="flex items-center gap-2.5 cursor-pointer select-none">
           <Checkbox checked={keepAddress} onCheckedChange={() => setKeepAddress((v) => !v)} />
           <span className="text-[13px] text-(--text-2)">Copy shipping address</span>
         </label>
         <DialogFooter>
-          <button className="btn-ghost" onClick={onClose}>
+          <Button variant="outline" className="" onClick={onClose}>
             Cancel
-          </button>
-          <button className="btn-send flex items-center gap-[7px]" onClick={handleDuplicate} disabled={loading}>
+          </Button>
+          <Button className="flex items-center gap-[7px]" onClick={handleDuplicate} disabled={loading}>
             {loading ? (
               <Loader2 size={13} className="animate-spin text-white" />
             ) : (
@@ -929,7 +929,7 @@ function DuplicateModal({ order, token, onClose, onSuccess }) {
               </span>
             )}
             Create draft
-          </button>
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -974,52 +974,52 @@ function EditAddressModal({ order, token, onClose, onSuccess }) {
           <DialogTitle>{`Edit address — ${order.name}`}</DialogTitle>
         </DialogHeader>
         <div className="flex flex-col gap-3">
-          <div className="modal-row">
+          <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="modal-label">First name</label>
-              <input className="modal-input" value={form.firstName} onChange={(e) => set("firstName", e.target.value)} />
+              <label className="text-[10.5px] font-bold tracking-[.07em] uppercase text-(--text-3) mb-[7px] block">First name</label>
+              <Input className="w-full bg-(--bg-surface-2) border border-(--border) rounded-xl px-3.5 py-[11px] text-[13.5px] text-(--text-1) outline-none" value={form.firstName} onChange={(e) => set("firstName", e.target.value)} />
             </div>
             <div>
-              <label className="modal-label">Last name</label>
-              <input className="modal-input" value={form.lastName} onChange={(e) => set("lastName", e.target.value)} />
+              <label className="text-[10.5px] font-bold tracking-[.07em] uppercase text-(--text-3) mb-[7px] block">Last name</label>
+              <Input className="w-full bg-(--bg-surface-2) border border-(--border) rounded-xl px-3.5 py-[11px] text-[13.5px] text-(--text-1) outline-none" value={form.lastName} onChange={(e) => set("lastName", e.target.value)} />
             </div>
           </div>
           <div>
-            <label className="modal-label">Address line 1</label>
-            <input className="modal-input" value={form.address1} onChange={(e) => set("address1", e.target.value)} />
+            <label className="text-[10.5px] font-bold tracking-[.07em] uppercase text-(--text-3) mb-[7px] block">Address line 1</label>
+            <Input className="w-full bg-(--bg-surface-2) border border-(--border) rounded-xl px-3.5 py-[11px] text-[13.5px] text-(--text-1) outline-none" value={form.address1} onChange={(e) => set("address1", e.target.value)} />
           </div>
           <div>
-            <label className="modal-label">Address line 2 (optional)</label>
-            <input className="modal-input" value={form.address2} onChange={(e) => set("address2", e.target.value)} />
+            <label className="text-[10.5px] font-bold tracking-[.07em] uppercase text-(--text-3) mb-[7px] block">Address line 2 (optional)</label>
+            <Input className="w-full bg-(--bg-surface-2) border border-(--border) rounded-xl px-3.5 py-[11px] text-[13.5px] text-(--text-1) outline-none" value={form.address2} onChange={(e) => set("address2", e.target.value)} />
           </div>
-          <div className="modal-row">
+          <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="modal-label">City</label>
-              <input className="modal-input" value={form.city} onChange={(e) => set("city", e.target.value)} />
+              <label className="text-[10.5px] font-bold tracking-[.07em] uppercase text-(--text-3) mb-[7px] block">City</label>
+              <Input className="w-full bg-(--bg-surface-2) border border-(--border) rounded-xl px-3.5 py-[11px] text-[13.5px] text-(--text-1) outline-none" value={form.city} onChange={(e) => set("city", e.target.value)} />
             </div>
             <div>
-              <label className="modal-label">Zip code</label>
-              <input className="modal-input" value={form.zip} onChange={(e) => set("zip", e.target.value)} />
+              <label className="text-[10.5px] font-bold tracking-[.07em] uppercase text-(--text-3) mb-[7px] block">Zip code</label>
+              <Input className="w-full bg-(--bg-surface-2) border border-(--border) rounded-xl px-3.5 py-[11px] text-[13.5px] text-(--text-1) outline-none" value={form.zip} onChange={(e) => set("zip", e.target.value)} />
             </div>
           </div>
-          <div className="modal-row">
+          <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="modal-label">Country</label>
-              <input className="modal-input" value={form.country} onChange={(e) => set("country", e.target.value)} />
+              <label className="text-[10.5px] font-bold tracking-[.07em] uppercase text-(--text-3) mb-[7px] block">Country</label>
+              <Input className="w-full bg-(--bg-surface-2) border border-(--border) rounded-xl px-3.5 py-[11px] text-[13.5px] text-(--text-1) outline-none" value={form.country} onChange={(e) => set("country", e.target.value)} />
             </div>
             <div>
-              <label className="modal-label">Phone</label>
-              <input className="modal-input" value={form.phone} onChange={(e) => set("phone", e.target.value)} />
+              <label className="text-[10.5px] font-bold tracking-[.07em] uppercase text-(--text-3) mb-[7px] block">Phone</label>
+              <Input className="w-full bg-(--bg-surface-2) border border-(--border) rounded-xl px-3.5 py-[11px] text-[13.5px] text-(--text-1) outline-none" value={form.phone} onChange={(e) => set("phone", e.target.value)} />
             </div>
           </div>
         </div>
         <DialogFooter>
-          <button className="btn-ghost" onClick={onClose}>
+          <Button variant="outline" className="" onClick={onClose}>
             Cancel
-          </button>
-          <button className="btn-send" onClick={handleSave} disabled={loading}>
+          </Button>
+          <Button className="" onClick={handleSave} disabled={loading}>
             {loading ? <Loader2 size={13} className="animate-spin text-white" /> : "Save"}
-          </button>
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -1065,12 +1065,12 @@ function FulfillModal({ order, token, onClose, onSuccess }) {
             All items will be marked as fulfilled.
           </div>
           <div>
-            <label className="modal-label">Tracking number (optional)</label>
-            <input className="modal-input" value={trackingNumber} onChange={(e) => setTrackingNumber(e.target.value)} placeholder="e.g. 3SBME123456789" />
+            <label className="text-[10.5px] font-bold tracking-[.07em] uppercase text-(--text-3) mb-[7px] block">Tracking number (optional)</label>
+            <Input className="w-full bg-(--bg-surface-2) border border-(--border) rounded-xl px-3.5 py-[11px] text-[13.5px] text-(--text-1) outline-none" value={trackingNumber} onChange={(e) => setTrackingNumber(e.target.value)} placeholder="e.g. 3SBME123456789" />
           </div>
           <div>
-            <label className="modal-label">Carrier (optional)</label>
-            <input className="modal-input" value={trackingCompany} onChange={(e) => setTrackingCompany(e.target.value)} placeholder="e.g. PostNL, DHL, UPS…" />
+            <label className="text-[10.5px] font-bold tracking-[.07em] uppercase text-(--text-3) mb-[7px] block">Carrier (optional)</label>
+            <Input className="w-full bg-(--bg-surface-2) border border-(--border) rounded-xl px-3.5 py-[11px] text-[13.5px] text-(--text-1) outline-none" value={trackingCompany} onChange={(e) => setTrackingCompany(e.target.value)} placeholder="e.g. PostNL, DHL, UPS…" />
           </div>
           <label className="flex items-center gap-2.5 cursor-pointer select-none">
             <Checkbox checked={notify} onCheckedChange={() => setNotify((v) => !v)} />
@@ -1078,10 +1078,10 @@ function FulfillModal({ order, token, onClose, onSuccess }) {
           </label>
         </div>
         <DialogFooter>
-          <button className="btn-ghost" onClick={onClose}>
+          <Button variant="outline" className="" onClick={onClose}>
             Cancel
-          </button>
-          <button className="btn-send flex items-center gap-[7px]" onClick={handleFulfill} disabled={loading}>
+          </Button>
+          <Button className="flex items-center gap-[7px]" onClick={handleFulfill} disabled={loading}>
             {loading ? (
               <Loader2 size={13} className="animate-spin text-white" />
             ) : (
@@ -1090,7 +1090,7 @@ function FulfillModal({ order, token, onClose, onSuccess }) {
               </span>
             )}
             Mark as fulfilled
-          </button>
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -1123,9 +1123,8 @@ function NoteModal({ order, token, onClose, onSuccess }) {
           <DialogTitle>{`Note — ${order.name}`}</DialogTitle>
         </DialogHeader>
         <div>
-          <label className="modal-label">Internal note (visible in Shopify)</label>
-          <textarea
-            className="modal-input resize-y min-h-[100px]"
+          <label className="text-[10.5px] font-bold tracking-[.07em] uppercase text-(--text-3) mb-[7px] block">Internal note (visible in Shopify)</label>
+          <textarea className="w-full bg-(--bg-surface-2) border border-(--border) rounded-xl px-3.5 py-[11px] text-[13.5px] text-(--text-1) outline-none resize-y min-h-[100px]"
             value={note}
             onChange={(e) => setNote(e.target.value)}
             rows={5}
@@ -1133,12 +1132,12 @@ function NoteModal({ order, token, onClose, onSuccess }) {
           />
         </div>
         <DialogFooter>
-          <button className="btn-ghost" onClick={onClose}>
+          <Button variant="outline" className="" onClick={onClose}>
             Cancel
-          </button>
-          <button className="btn-send" onClick={handleSave} disabled={loading}>
+          </Button>
+          <Button className="" onClick={handleSave} disabled={loading}>
             {loading ? <Loader2 size={13} className="animate-spin text-white" /> : "Save"}
-          </button>
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -1390,7 +1389,7 @@ function MacroPanel({ macros, aiMacros, onInsert, onClose, customerName, onManag
       {/* Two-panel — fills remaining height */}
       <div className="flex-1 flex overflow-hidden">
         {/* List */}
-        <div className="macro-list sscroll border-r border-(--border)">
+        <div className="w-[230px] border-r border-(--border) overflow-y-auto shrink-0 sscroll border-r border-(--border)">
           {aiMacros?.length > 0 && (
             <>
               <div className="macro-suggest">AI suggestions ✦</div>
@@ -1431,7 +1430,7 @@ function MacroPanel({ macros, aiMacros, onInsert, onClose, customerName, onManag
                       <div className="text-[12.5px] font-semibold text-(--text-1) mb-[3px]">{m.name}</div>
                       <div className="flex gap-1 flex-wrap">
                         {(m.tags || []).map((t) => (
-                          <span key={t} className="macro-tag">
+                          <span key={t} className="text-[10px] font-semibold px-1.5 py-[1px] rounded bg-(--bg-surface-2) text-(--text-3)">
                             {t}
                           </span>
                         ))}
@@ -1462,7 +1461,7 @@ function MacroPanel({ macros, aiMacros, onInsert, onClose, customerName, onManag
                       <div className="text-[12.5px] font-semibold text-(--text-1) mb-[3px]">{m.name}</div>
                       <div className="flex gap-1 flex-wrap">
                         {(m.tags || []).map((t) => (
-                          <span key={t} className="macro-tag">
+                          <span key={t} className="text-[10px] font-semibold px-1.5 py-[1px] rounded bg-(--bg-surface-2) text-(--text-3)">
                             {t}
                           </span>
                         ))}
@@ -1480,7 +1479,7 @@ function MacroPanel({ macros, aiMacros, onInsert, onClose, customerName, onManag
 
         {/* Preview — no buttons here */}
         {active ? (
-          <div className="macro-preview sscroll flex-1">{renderPreview(active.body)}</div>
+          <div className="flex-1 px-4 py-3.5 overflow-y-auto text-[13px] leading-[1.75] text-(--text-2) whitespace-pre-wrap sscroll flex-1">{renderPreview(active.body)}</div>
         ) : (
           <div className="flex-1 flex items-center justify-center text-(--text-3) text-[12.5px]">Select a macro to preview</div>
         )}
@@ -1488,9 +1487,9 @@ function MacroPanel({ macros, aiMacros, onInsert, onClose, customerName, onManag
 
       {/* Full-width footer — always visible, connected to bottom of panel */}
       <div className="border-t border-(--border) py-2 px-3.5 flex items-center justify-end gap-2 shrink-0 bg-(--bg-surface)">
-        <button className="btn-ghost text-[11.5px] py-1.5 px-3.5" onClick={onClose}>
+        <Button variant="outline" className="text-[11.5px] py-1.5 px-3.5" onClick={onClose}>
           Close
-        </button>
+        </Button>
         <button
           className="btn-send text-[11.5px] py-1.5 px-4"
           style={{
@@ -2517,7 +2516,7 @@ function InboxPage() {
             <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-(--text-3) pointer-events-none flex">
               <Search size={14} />
             </span>
-            <input className="isearch" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search threads…" />
+            <input className="w-full py-[9px] pl-[34px] pr-3 bg-(--bg-input) border border-(--border) rounded-xl text-(--text-1) text-[12.5px] outline-none transition-all focus:border-(--border-hover)" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search threads…" />
           </div>
 
           {/* Folder tabs */}
@@ -2621,11 +2620,11 @@ function InboxPage() {
           {loadingThreads &&
             [0, 1, 2, 3, 4].map((i) => (
               <div key={i} className="py-[11px] pr-3.5 pl-3 border-b border-border flex gap-[9px]" style={{ opacity: 1 - i * 0.16 }}>
-                <div className="skel w-4 h-4 rounded shrink-0 mt-0.5" />
+                <div className="bg-gradient-to-r from-(--skeleton-from) via-(--skeleton-to) to-(--skeleton-from) bg-[length:400%_100%] animate-[shimmer_1.8s_linear_infinite] rounded-md w-4 h-4 rounded shrink-0 mt-0.5" />
                 <div className="flex-1 flex flex-col gap-1.5">
-                  <div className="skel h-3 w-[55%]" />
-                  <div className="skel h-[11px] w-[80%]" />
-                  <div className="skel h-2.5 w-[70%]" />
+                  <div className="bg-gradient-to-r from-(--skeleton-from) via-(--skeleton-to) to-(--skeleton-from) bg-[length:400%_100%] animate-[shimmer_1.8s_linear_infinite] rounded-md h-3 w-[55%]" />
+                  <div className="bg-gradient-to-r from-(--skeleton-from) via-(--skeleton-to) to-(--skeleton-from) bg-[length:400%_100%] animate-[shimmer_1.8s_linear_infinite] rounded-md h-[11px] w-[80%]" />
+                  <div className="bg-gradient-to-r from-(--skeleton-from) via-(--skeleton-to) to-(--skeleton-from) bg-[length:400%_100%] animate-[shimmer_1.8s_linear_infinite] rounded-md h-2.5 w-[70%]" />
                 </div>
               </div>
             ))}
@@ -2791,8 +2790,8 @@ function InboxPage() {
                       className={`flex gap-3 ${i % 2 === 0 ? "flex-row" : "flex-row-reverse"} mb-5`}
                       style={{ animation: `fadeUp .3s ease ${i * 0.1}s both` }}
                     >
-                      <div className="skel w-[34px] h-[34px] rounded-full shrink-0" />
-                      <div className="skel h-20 w-[60%] rounded-[18px]" />
+                      <div className="bg-gradient-to-r from-(--skeleton-from) via-(--skeleton-to) to-(--skeleton-from) bg-[length:400%_100%] animate-[shimmer_1.8s_linear_infinite] rounded-md w-[34px] h-[34px] rounded-full shrink-0" />
+                      <div className="bg-gradient-to-r from-(--skeleton-from) via-(--skeleton-to) to-(--skeleton-from) bg-[length:400%_100%] animate-[shimmer_1.8s_linear_infinite] rounded-md h-20 w-[60%] rounded-[18px]" />
                     </div>
                   ))}
                 {messages.map((msg, idx) => {
@@ -2808,8 +2807,8 @@ function InboxPage() {
                       {!isNote && <InboxAvatar name={name} size={26} agent={isAgent} />}
                       <div className="max-w-[72%]">
                         <div className={`text-xs mb-[5px] ${isAgent ? "text-right" : "text-left"}`}>
-                          <span className="msg-sender">{name}</span>
-                          <span className="msg-time">{formatDate(msg.date)}</span>
+                          <span className="text-[10.5px] text-(--text-2) font-bold tracking-[.01em]">{name}</span>
+                          <span className="text-[10px] text-(--text-3) ml-[7px] font-normal">{formatDate(msg.date)}</span>
                         </div>
                         <div className={isNote ? "msg-note" : isAgent ? "msg-out" : "msg-in"}>
                           {isNote && (
@@ -2845,11 +2844,11 @@ function InboxPage() {
                             {msgTranslations[msg.id] === "__loading__" ? (
                               <span className="text-[10px] text-(--text-3)">Translating…</span>
                             ) : msgTranslations[msg.id] ? (
-                              <button className="msg-xlate-btn" onClick={() => _setTranslation(msg.id, undefined)}>
+                              <button className="text-[10px] font-semibold text-(--text-3) bg-transparent cursor-pointer px-[7px] py-[2px] rounded-[5px] transition-all hover:text-(--text-1) hover:bg-(--bg-surface-2)" onClick={() => _setTranslation(msg.id, undefined)}>
                                 Show original
                               </button>
                             ) : (
-                              <button className="msg-xlate-btn" onClick={() => translateMessage(msg.id, msg.body || msg.snippet || "")}>
+                              <button className="text-[10px] font-semibold text-(--text-3) bg-transparent cursor-pointer px-[7px] py-[2px] rounded-[5px] transition-all hover:text-(--text-1) hover:bg-(--bg-surface-2)" onClick={() => translateMessage(msg.id, msg.body || msg.snippet || "")}>
                                 Translate
                               </button>
                             )}
@@ -2877,8 +2876,8 @@ function InboxPage() {
                       notes.map((note, ni) => (
                         <div key={note.id || ni} className="mb-3" style={{ animation: "msgIn .3s cubic-bezier(.16,1,.3,1) both" }}>
                           <div className="text-xs mb-[5px]">
-                            <span className="msg-sender text-[rgba(251,191,36,0.75)]">Note</span>
-                            <span className="msg-time">{formatDate(note.created_at)}</span>
+                            <span className="text-[10.5px] text-(--text-2) font-bold tracking-[.01em] text-[rgba(251,191,36,0.75)]">Note</span>
+                            <span className="text-[10px] text-(--text-3) ml-[7px] font-normal">{formatDate(note.created_at)}</span>
                           </div>
                           <div className="msg-note">
                             <div className="text-[10px] font-bold text-[rgba(251,191,36,0.75)] tracking-[.07em] uppercase mb-[7px]">Internal note</div>
@@ -2993,10 +2992,10 @@ function InboxPage() {
                     <input ref={fileUploadRef} type="file" multiple className="hidden" onChange={handleFileAttach} />
 
                     {/* Flat compose area */}
-                    <div className="compose-box" onClick={() => showEmoji && setShowEmoji(false)}>
+                    <div className="compose-box bg-(--bg-surface)" onClick={() => showEmoji && setShowEmoji(false)}>
                       {/* Auto-translate banner */}
                       {autoTranslate && customerLang && customerLang.code !== "en" && (
-                        <div className="xlate-bar">
+                        <div className="flex items-center gap-2 px-3.5 py-1.5 bg-(--bg-surface-2) border-b border-(--border) text-[11.5px] text-(--text-2)">
                           <span className="flex">
                             <Globe size={13} />
                           </span>
@@ -3013,7 +3012,7 @@ function InboxPage() {
                       {attachments.length > 0 && (
                         <div className="flex flex-wrap gap-[5px] pt-2 px-3.5 pb-0">
                           {attachments.map((a, i) => (
-                            <span key={i} className="attach-chip">
+                            <span key={i} className="inline-flex items-center gap-[5px] px-2.5 py-1 bg-(--bg-surface-2) border border-(--border) rounded-lg text-[11px] text-(--text-2)">
                               <Paperclip size={13} /> {a.name}
                               <Button
                                 variant="ghost"
@@ -3038,7 +3037,7 @@ function InboxPage() {
                         onKeyDown={(e) => {
                           if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) handleSend();
                         }}
-                        className={`compose-ta min-h-[150px] ${composerTab === "note" ? "bg-[rgba(251,191,36,0.03)]" : "bg-transparent"}`}
+                        className={`compose-ta w-full resize-none outline-none bg-transparent px-4 py-3 text-sm text-(--text-1) leading-relaxed min-h-[90px] tracking-[.005em] min-h-[150px] ${composerTab === "note" ? "bg-[rgba(251,191,36,0.03)]" : "bg-transparent"}`}
                       />
 
                       {/* AI generating dots */}
@@ -3065,7 +3064,7 @@ function InboxPage() {
                             return (
                               <button
                                 key={m.id}
-                                className="macro-chip-suggest"
+                                className="inline-flex items-center text-xs font-medium px-2.5 py-[3px] rounded-[5px] border border-black/[0.08] bg-(--bg-surface-2) text-(--text-2) cursor-pointer transition-all hover:border-(--border-hover) hover:text-(--text-1)"
                                 onClick={() => {
                                   if (replyRef.current) {
                                     replyRef.current.innerHTML = body.replace(/\n/g, "<br>");
@@ -3083,21 +3082,21 @@ function InboxPage() {
 
                       {/* Toolbar + Send buttons — single bottom row */}
                       <div className="flex items-center gap-px px-2.5 py-[7px] border-t border-border">
-                        <button className="rtbar-btn" title="Bold (⌘B)" onClick={() => formatDoc("bold")} onMouseDown={(e) => e.preventDefault()}>
+                        <button className="min-w-[30px] h-[30px] flex items-center justify-center rounded-[7px] cursor-pointer text-xs font-bold text-(--text-3) transition-all hover:bg-(--bg-surface-2) hover:text-(--text-1)" title="Bold (⌘B)" onClick={() => formatDoc("bold")} onMouseDown={(e) => e.preventDefault()}>
                           <span className="font-extrabold text-[13px]">B</span>
                         </button>
-                        <button className="rtbar-btn" title="Italic (⌘I)" onClick={() => formatDoc("italic")} onMouseDown={(e) => e.preventDefault()}>
+                        <button className="min-w-[30px] h-[30px] flex items-center justify-center rounded-[7px] cursor-pointer text-xs font-bold text-(--text-3) transition-all hover:bg-(--bg-surface-2) hover:text-(--text-1)" title="Italic (⌘I)" onClick={() => formatDoc("italic")} onMouseDown={(e) => e.preventDefault()}>
                           <span className="italic text-[13px]">I</span>
                         </button>
-                        <button className="rtbar-btn" title="Underline (⌘U)" onClick={() => formatDoc("underline")} onMouseDown={(e) => e.preventDefault()}>
+                        <button className="min-w-[30px] h-[30px] flex items-center justify-center rounded-[7px] cursor-pointer text-xs font-bold text-(--text-3) transition-all hover:bg-(--bg-surface-2) hover:text-(--text-1)" title="Underline (⌘U)" onClick={() => formatDoc("underline")} onMouseDown={(e) => e.preventDefault()}>
                           <span className="underline text-[13px]">U</span>
                         </button>
                         <div className="rtbar-sep" />
-                        <button className="rtbar-btn" title="Insert link" onClick={insertLink} onMouseDown={(e) => e.preventDefault()}>
+                        <button className="min-w-[30px] h-[30px] flex items-center justify-center rounded-[7px] cursor-pointer text-xs font-bold text-(--text-3) transition-all hover:bg-(--bg-surface-2) hover:text-(--text-1)" title="Insert link" onClick={insertLink} onMouseDown={(e) => e.preventDefault()}>
                           <Link2 size={13} />
                         </button>
                         <button
-                          className="rtbar-btn"
+                          className="min-w-[30px] h-[30px] flex items-center justify-center rounded-[7px] cursor-pointer text-xs font-bold text-(--text-3) transition-all hover:bg-(--bg-surface-2) hover:text-(--text-1)"
                           title="Insert image"
                           onClick={() => imgUploadRef.current?.click()}
                           onMouseDown={(e) => e.preventDefault()}
@@ -3106,7 +3105,7 @@ function InboxPage() {
                         </button>
                         <div className="relative">
                           <button
-                            className={`rtbar-btn${showEmoji ? " rton" : ""}`}
+                            className={`min-w-[30px] h-[30px] flex items-center justify-center rounded-[7px] cursor-pointer text-xs font-bold text-(--text-3) transition-all hover:bg-(--bg-surface-2) hover:text-(--text-1)${showEmoji ? " rton" : ""}`}
                             title="Emoji"
                             onClick={() => setShowEmoji((v) => !v)}
                             onMouseDown={(e) => e.preventDefault()}
@@ -3114,12 +3113,12 @@ function InboxPage() {
                             <Smile size={13} />
                           </button>
                           {showEmoji && (
-                            <div className="emoji-pop" onClick={(e) => e.stopPropagation()}>
-                              <div className="emoji-grid">
+                            <div className="absolute bottom-[calc(100%+8px)] left-[-8px] bg-(--bg-surface) backdrop-blur-[28px] border border-(--border) rounded-2xl p-2.5 z-[200] shadow-[0_24px_80px_rgba(0,0,0,0.2)] animate-[fadeUp_.16s_ease_both]" onClick={(e) => e.stopPropagation()}>
+                              <div className="grid grid-cols-7 gap-[2px]">
                                 {EMOJIS.map((em) => (
                                   <button
                                     key={em}
-                                    className="emoji-btn"
+                                    className="w-8 h-8 flex items-center justify-center rounded-lg text-[17px] cursor-pointer bg-transparent transition-colors hover:bg-(--bg-surface-2)"
                                     onMouseDown={(e) => {
                                       e.preventDefault();
                                       replyRef.current?.focus();
@@ -3136,7 +3135,7 @@ function InboxPage() {
                           )}
                         </div>
                         <button
-                          className="rtbar-btn"
+                          className="min-w-[30px] h-[30px] flex items-center justify-center rounded-[7px] cursor-pointer text-xs font-bold text-(--text-3) transition-all hover:bg-(--bg-surface-2) hover:text-(--text-1)"
                           title="Attach file"
                           onClick={() => fileUploadRef.current?.click()}
                           onMouseDown={(e) => e.preventDefault()}
@@ -3145,7 +3144,7 @@ function InboxPage() {
                         </button>
                         <div className="rtbar-sep" />
                         <button
-                          className={`rtbar-btn${autoTranslate ? " rton" : ""} gap-1 pl-1.5 pr-2 text-[11px] font-semibold min-w-auto`}
+                          className={`min-w-[30px] h-[30px] flex items-center justify-center rounded-[7px] cursor-pointer text-xs font-bold text-(--text-3) transition-all hover:bg-(--bg-surface-2) hover:text-(--text-1)${autoTranslate ? " rton" : ""} gap-1 pl-1.5 pr-2 text-[11px] font-semibold min-w-auto`}
                           title={customerLang ? `Auto-translate to ${customerLang.name}` : "Detect language"}
                           onClick={() => (customerLang ? _setAutoTranslate(!autoTranslate) : null)}
                         >
@@ -3153,22 +3152,21 @@ function InboxPage() {
                           <span>{customerLang ? customerLang.name : "Translate"}</span>
                         </button>
                         <div className="flex-1" />
-                        <button
-                          className="btn-iris flex items-center gap-1.5 px-[13px] py-[7px]"
+                        <Button variant="outline" className="h-8 px-3 text-[12.5px] font-semibold bg-(--bg-surface-2) border border-(--border) text-(--text-1) rounded-[7px] transition-all hover:bg-(--bg-input) hover:border-(--border-hover) hover:text-(--text-1) flex items-center gap-1.5 px-[13px] py-[7px]"
                           onClick={handleAiReply}
                           disabled={aiLoading || !messages.length}
                         >
                           {aiLoading ? <Loader2 size={13} className="animate-spin" /> : <span className="text-primary text-[13px] leading-none">✦</span>}
                           {aiLoading ? "Generating…" : "AI Reply"}
-                        </button>
-                        <button className="btn-close ml-1.5" onClick={handleSendResolve} disabled={!reply.trim() || sending}>
+                        </Button>
+                        <Button className="px-[9px] py-[9px] text-[12.5px] font-semibold bg-[rgba(74,222,128,0.07)] border border-[rgba(74,222,128,0.2)] text-[rgba(74,222,128,0.75)] rounded-xl flex items-center gap-[5px] transition-all hover:bg-[rgba(74,222,128,0.13)] hover:border-[rgba(74,222,128,0.38)] hover:text-[#4ade80] ml-1.5" onClick={handleSendResolve} disabled={!reply.trim() || sending}>
                           <Check size={11} />
                           Send & Close
-                        </button>
-                        <button className="btn-send flex items-center gap-1.5 ml-1.5" onClick={handleSend} disabled={!reply.trim() || sending}>
+                        </Button>
+                        <Button className="flex items-center gap-1.5 ml-1.5" onClick={handleSend} disabled={!reply.trim() || sending}>
                           {sending ? <Loader2 size={13} className="animate-spin text-white" /> : <Send size={13} />}
                           {sending ? "Sending…" : "Send"}
-                        </button>
+                        </Button>
                       </div>
                     </div>
                   </>
@@ -3188,7 +3186,7 @@ function InboxPage() {
                   <Search size={14} />
                 </span>
                 <input
-                  className="rp-search"
+                  className="w-full py-[7px] px-3 pl-[32px] bg-(--bg-surface-2) border border-(--border) rounded-lg text-(--text-1) text-xs outline-none transition-[border-color] duration-200 focus:border-(--border-hover)"
                   placeholder="Search by email or #order number..."
                   value={custSearch}
                   onChange={(e) => setCustSearch(e.target.value)}
@@ -3230,35 +3228,35 @@ function InboxPage() {
 
             {/* Customer Fields — collapsible */}
             <div className="border-b border-border shrink-0">
-              <button className="rp-section" onClick={() => setCustFieldsOpen((v) => !v)}>
+              <button className="w-full flex items-center gap-1.5 py-[9px] px-3.5 bg-transparent cursor-pointer text-left transition-[background] duration-[120ms] hover:bg-(--bg-surface-2)" onClick={() => setCustFieldsOpen((v) => !v)}>
                 <span className="text-[10px] font-bold text-(--text-3) flex-1 tracking-[.07em] uppercase">Customer Fields</span>
                 <ChevronDown size={10} className={`transition-transform duration-200 text-(--text-3) shrink-0 ${custFieldsOpen ? "rotate-180" : "rotate-0"}`} />
               </button>
               {custFieldsOpen && (
                 <div className="px-3.5 pb-2.5 pt-0 flex flex-col">
-                  <div className="rp-kv">
-                    <span className="rp-kv-l">Email</span>
-                    <span className="rp-kv-v text-[11px] break-all">{extractEmail(selected.from)}</span>
+                  <div className="flex items-baseline justify-between gap-4 px-3.5">
+                    <span className="text-xs text-(--text-3) shrink-0 min-w-[72px]">Email</span>
+                    <span className="text-xs font-medium text-(--text-1) text-right break-words text-[11px] break-all">{extractEmail(selected.from)}</span>
                   </div>
-                  {loadingCust && [0, 1].map((i) => <div key={i} className="skel h-[18px] rounded-[5px] my-1" />)}
+                  {loadingCust && [0, 1].map((i) => <div key={i} className="bg-gradient-to-r from-(--skeleton-from) via-(--skeleton-to) to-(--skeleton-from) bg-[length:400%_100%] animate-[shimmer_1.8s_linear_infinite] rounded-md h-[18px] rounded-[5px] my-1" />)}
                   {customer?.customer && !loadingCust && (
                     <>
                       {customer.customer.phone && (
-                        <div className="rp-kv">
-                          <span className="rp-kv-l">Phone</span>
-                          <span className="rp-kv-v">{customer.customer.phone}</span>
+                        <div className="flex items-baseline justify-between gap-4 px-3.5">
+                          <span className="text-xs text-(--text-3) shrink-0 min-w-[72px]">Phone</span>
+                          <span className="text-xs font-medium text-(--text-1) text-right break-words">{customer.customer.phone}</span>
                         </div>
                       )}
                       {(customer.customer.city || customer.customer.country) && (
-                        <div className="rp-kv">
-                          <span className="rp-kv-l">Location</span>
-                          <span className="rp-kv-v">{[customer.customer.city, customer.customer.country].filter(Boolean).join(", ")}</span>
+                        <div className="flex items-baseline justify-between gap-4 px-3.5">
+                          <span className="text-xs text-(--text-3) shrink-0 min-w-[72px]">Location</span>
+                          <span className="text-xs font-medium text-(--text-1) text-right break-words">{[customer.customer.city, customer.customer.country].filter(Boolean).join(", ")}</span>
                         </div>
                       )}
                       {customer.customer.createdAt && (
-                        <div className="rp-kv">
-                          <span className="rp-kv-l">Customer since</span>
-                          <span className="rp-kv-v">
+                        <div className="flex items-baseline justify-between gap-4 px-3.5">
+                          <span className="text-xs text-(--text-3) shrink-0 min-w-[72px]">Customer since</span>
+                          <span className="text-xs font-medium text-(--text-1) text-right break-words">
                             {new Date(customer.customer.createdAt).toLocaleDateString("en-US", {
                               year: "numeric",
                               month: "short",
@@ -3317,7 +3315,7 @@ function InboxPage() {
                   .split(",")
                   .filter(Boolean)
                   .map((tag) => (
-                    <span key={tag} className="rp-tag">
+                    <span key={tag} className="text-[10px] font-medium py-0.5 px-[7px] rounded bg-(--bg-surface-2) text-(--text-1) border border-(--border)">
                       {tag.trim()}
                     </span>
                   ))}
@@ -3326,10 +3324,10 @@ function InboxPage() {
 
             {/* Tabs */}
             <div className="flex border-b border-border shrink-0">
-              <button className={`rp-tab${rightTab === "info" ? " on" : ""}`} onClick={() => setRightTab("info")}>
+              <button className={`flex-1 py-2 px-1.5 bg-transparent cursor-pointer text-[11.5px] font-medium text-(--text-2) border-b-2 border-transparent transition-all whitespace-nowrap text-center${rightTab === "info" ? " on" : ""}`} onClick={() => setRightTab("info")}>
                 Customer
               </button>
-              <button className={`rp-tab${rightTab === "shopify" ? " on" : ""}`} onClick={() => setRightTab("shopify")}>
+              <button className={`flex-1 py-2 px-1.5 bg-transparent cursor-pointer text-[11.5px] font-medium text-(--text-2) border-b-2 border-transparent transition-all whitespace-nowrap text-center${rightTab === "shopify" ? " on" : ""}`} onClick={() => setRightTab("shopify")}>
                 Orders
                 {(customer?.orders || []).length > 0 ? ` (${customer.orders.length})` : ""}
               </button>
@@ -3341,7 +3339,7 @@ function InboxPage() {
                 {loadingCust && (
                   <div className="px-3.5 py-3">
                     {[0, 1, 2].map((i) => (
-                      <div key={i} className="skel h-5 rounded-[5px] mb-2" />
+                      <div key={i} className="bg-gradient-to-r from-(--skeleton-from) via-(--skeleton-to) to-(--skeleton-from) bg-[length:400%_100%] animate-[shimmer_1.8s_linear_infinite] rounded-md h-5 rounded-[5px] mb-2" />
                     ))}
                   </div>
                 )}
@@ -3393,15 +3391,15 @@ function InboxPage() {
                     {custShowMore && customer?.customer && (
                       <div className="flex flex-col pt-1 border-t border-border">
                         {(customer.customer.city || customer.customer.country) && (
-                          <div className="rp-kv">
-                            <span className="rp-kv-l">Location</span>
-                            <span className="rp-kv-v">{[customer.customer.city, customer.customer.country].filter(Boolean).join(", ")}</span>
+                          <div className="flex items-baseline justify-between gap-4 px-3.5">
+                            <span className="text-xs text-(--text-3) shrink-0 min-w-[72px]">Location</span>
+                            <span className="text-xs font-medium text-(--text-1) text-right break-words">{[customer.customer.city, customer.customer.country].filter(Boolean).join(", ")}</span>
                           </div>
                         )}
                         {customer.customer.createdAt && (
-                          <div className="rp-kv">
-                            <span className="rp-kv-l">Customer since</span>
-                            <span className="rp-kv-v">
+                          <div className="flex items-baseline justify-between gap-4 px-3.5">
+                            <span className="text-xs text-(--text-3) shrink-0 min-w-[72px]">Customer since</span>
+                            <span className="text-xs font-medium text-(--text-1) text-right break-words">
                               {new Date(customer.customer.createdAt).toLocaleDateString("en-US", {
                                 year: "numeric",
                                 month: "short",
@@ -3409,13 +3407,13 @@ function InboxPage() {
                             </span>
                           </div>
                         )}
-                        <div className="rp-kv">
-                          <span className="rp-kv-l">Orders</span>
-                          <span className="rp-kv-v">{customer.customer.ordersCount ?? "—"}</span>
+                        <div className="flex items-baseline justify-between gap-4 px-3.5">
+                          <span className="text-xs text-(--text-3) shrink-0 min-w-[72px]">Orders</span>
+                          <span className="text-xs font-medium text-(--text-1) text-right break-words">{customer.customer.ordersCount ?? "—"}</span>
                         </div>
-                        <div className="rp-kv">
-                          <span className="rp-kv-l">Total spent</span>
-                          <span className="rp-kv-v font-bold text-(--text-1)">{fmtPrice(customer.customer.totalSpent, customer.customer.currency)}</span>
+                        <div className="flex items-baseline justify-between gap-4 px-3.5">
+                          <span className="text-xs text-(--text-3) shrink-0 min-w-[72px]">Total spent</span>
+                          <span className="text-xs font-medium text-(--text-1) text-right break-words font-bold text-(--text-1)">{fmtPrice(customer.customer.totalSpent, customer.customer.currency)}</span>
                         </div>
                       </div>
                     )}
@@ -3453,9 +3451,9 @@ function InboxPage() {
                 {loadingCust &&
                   [0, 1].map((i) => (
                     <div key={i} className="border-b border-border px-3.5 py-2.5">
-                      <div className="skel h-4 rounded-[5px] mb-2 w-[60%]" />
-                      <div className="skel h-3 rounded-[5px] mb-[5px] w-[80%]" />
-                      <div className="skel h-3 rounded-[5px] w-[50%]" />
+                      <div className="bg-gradient-to-r from-(--skeleton-from) via-(--skeleton-to) to-(--skeleton-from) bg-[length:400%_100%] animate-[shimmer_1.8s_linear_infinite] rounded-md h-4 rounded-[5px] mb-2 w-[60%]" />
+                      <div className="bg-gradient-to-r from-(--skeleton-from) via-(--skeleton-to) to-(--skeleton-from) bg-[length:400%_100%] animate-[shimmer_1.8s_linear_infinite] rounded-md h-3 rounded-[5px] mb-[5px] w-[80%]" />
+                      <div className="bg-gradient-to-r from-(--skeleton-from) via-(--skeleton-to) to-(--skeleton-from) bg-[length:400%_100%] animate-[shimmer_1.8s_linear_infinite] rounded-md h-3 rounded-[5px] w-[50%]" />
                     </div>
                   ))}
                 {!loadingCust && !customer?.customer && <div className="py-6 text-center text-xs text-(--text-3)">No Shopify data found</div>}
@@ -3479,7 +3477,7 @@ function InboxPage() {
                     <div key={order.id} className="border-b border-border">
                       {/* ── Order header: row 1 = name + chevron ── */}
                       <button
-                        className="rp-order-hdr"
+                        className="w-full flex items-center gap-1.5 py-2.5 px-3.5 bg-transparent cursor-pointer text-left transition-[background] duration-[120ms] hover:bg-(--bg-surface-2)"
                         onClick={() =>
                           setExpandedOrders((v) => ({
                             ...v,
@@ -3527,33 +3525,33 @@ function InboxPage() {
                           </div>
                           {/* Row 3: action buttons */}
                           <div className="flex gap-1 flex-wrap mb-2.5">
-                            <button className="rp-action" onClick={() => setModal({ type: "duplicate", order })}>
+                            <button className="inline-flex items-center gap-1 text-[11px] font-medium px-[9px] py-1 rounded-md border border-(--border) bg-(--bg-surface) text-(--text-1) cursor-pointer transition-all hover:border-(--border-hover) hover:bg-(--bg-surface-2)" onClick={() => setModal({ type: "duplicate", order })}>
                               <span className="flex">
                                 <Copy size={12} />
                               </span>
                               Duplicate
                             </button>
                             {canRefund && (
-                              <button className="rp-action" onClick={() => setModal({ type: "refund", order })}>
+                              <button className="inline-flex items-center gap-1 text-[11px] font-medium px-[9px] py-1 rounded-md border border-(--border) bg-(--bg-surface) text-(--text-1) cursor-pointer transition-all hover:border-(--border-hover) hover:bg-(--bg-surface-2)" onClick={() => setModal({ type: "refund", order })}>
                                 <RotateCcw size={11} />$ Refund
                               </button>
                             )}
                             {canCancel && (
-                              <button className="rp-action danger" onClick={() => setModal({ type: "cancel", order })}>
+                              <button className="inline-flex items-center gap-1 text-[11px] font-medium px-[9px] py-1 rounded-md border border-(--border) bg-(--bg-surface) text-(--text-1) cursor-pointer transition-all hover:border-[rgba(220,38,38,0.35)] hover:text-[#dc2626] hover:bg-[rgba(220,38,38,0.05)]" onClick={() => setModal({ type: "cancel", order })}>
                                 <XCircle size={11} />
                                 Cancel
                               </button>
                             )}
-                            <button className="rp-action px-[7px] py-1" onClick={() => setModal({ type: "note", order })}>
+                            <button className="inline-flex items-center gap-1 text-[11px] font-medium px-[9px] py-1 rounded-md border border-(--border) bg-(--bg-surface) text-(--text-1) cursor-pointer transition-all hover:border-(--border-hover) hover:bg-(--bg-surface-2) px-[7px] py-1" onClick={() => setModal({ type: "note", order })}>
                               <MoreHorizontal size={13} />
                             </button>
                           </div>
 
                           {/* Key-value rows */}
                           <div className="mb-1">
-                            <div className="rp-kv">
-                              <span className="rp-kv-l">Created</span>
-                              <span className="rp-kv-v">
+                            <div className="flex items-baseline justify-between gap-4 px-3.5">
+                              <span className="text-xs text-(--text-3) shrink-0 min-w-[72px]">Created</span>
+                              <span className="text-xs font-medium text-(--text-1) text-right break-words">
                                 {new Date(order.createdAt).toLocaleDateString("en-US", {
                                   month: "short",
                                   day: "numeric",
@@ -3561,9 +3559,9 @@ function InboxPage() {
                                 })}
                               </span>
                             </div>
-                            <div className="rp-kv">
-                              <span className="rp-kv-l">Total</span>
-                              <span className="rp-kv-v font-bold text-(--text-1)">{fmtPrice(order.totalPrice, order.currency)}</span>
+                            <div className="flex items-baseline justify-between gap-4 px-3.5">
+                              <span className="text-xs text-(--text-3) shrink-0 min-w-[72px]">Total</span>
+                              <span className="text-xs font-medium text-(--text-1) text-right break-words font-bold text-(--text-1)">{fmtPrice(order.totalPrice, order.currency)}</span>
                             </div>
                           </div>
 
@@ -3571,7 +3569,7 @@ function InboxPage() {
                           {(order.fulfillments || []).length > 0 && (
                             <>
                               <button
-                                className="rp-subsec"
+                                className="w-full flex items-center gap-1.5 py-[7px] bg-transparent cursor-pointer text-[11.5px] font-semibold text-(--text-1) text-left transition-opacity border-t border-(--border) mt-1.5 hover:opacity-75"
                                 onClick={() =>
                                   setExpandedSubs((v) => ({
                                     ...v,
@@ -3591,18 +3589,18 @@ function InboxPage() {
                               {trackOpen &&
                                 order.fulfillments.slice(0, 1).map((f, fi) => (
                                   <div key={fi} className="pb-1.5">
-                                    <div className="rp-kv">
-                                      <span className="rp-kv-l">Carrier</span>
-                                      <span className="rp-kv-v">{f.trackingCompany || "—"}</span>
+                                    <div className="flex items-baseline justify-between gap-4 px-3.5">
+                                      <span className="text-xs text-(--text-3) shrink-0 min-w-[72px]">Carrier</span>
+                                      <span className="text-xs font-medium text-(--text-1) text-right break-words">{f.trackingCompany || "—"}</span>
                                     </div>
                                     {f.trackingNumber && (
-                                      <div className="rp-kv">
-                                        <span className="rp-kv-l">Tracking #</span>
-                                        <span className="rp-kv-v font-mono text-[10.5px]">{f.trackingNumber}</span>
+                                      <div className="flex items-baseline justify-between gap-4 px-3.5">
+                                        <span className="text-xs text-(--text-3) shrink-0 min-w-[72px]">Tracking #</span>
+                                        <span className="text-xs font-medium text-(--text-1) text-right break-words font-mono text-[10.5px]">{f.trackingNumber}</span>
                                       </div>
                                     )}
-                                    <div className="rp-kv">
-                                      <span className="rp-kv-l">Status</span>
+                                    <div className="flex items-baseline justify-between gap-4 px-3.5">
+                                      <span className="text-xs text-(--text-3) shrink-0 min-w-[72px]">Status</span>
                                       <span className="text-[10px] font-bold px-1.5 py-px rounded bg-[rgba(74,222,128,0.12)] text-[#16a34a] border border-[rgba(74,222,128,0.25)] tracking-[.04em] uppercase">
                                         Delivered
                                       </span>
@@ -3631,7 +3629,7 @@ function InboxPage() {
                           {sa && (
                             <>
                               <button
-                                className="rp-subsec"
+                                className="w-full flex items-center gap-1.5 py-[7px] bg-transparent cursor-pointer text-[11.5px] font-semibold text-(--text-1) text-left transition-opacity border-t border-(--border) mt-1.5 hover:opacity-75"
                                 onClick={() =>
                                   setExpandedSubs((v) => ({
                                     ...v,
@@ -3679,9 +3677,9 @@ function InboxPage() {
                                   ]
                                     .filter(Boolean)
                                     .map((row) => (
-                                      <div key={row.l} className="rp-kv">
-                                        <span className="rp-kv-l">{row.l}</span>
-                                        <span className="rp-kv-v">{row.v}</span>
+                                      <div key={row.l} className="flex items-baseline justify-between gap-4 px-3.5">
+                                        <span className="text-xs text-(--text-3) shrink-0 min-w-[72px]">{row.l}</span>
+                                        <span className="text-xs font-medium text-(--text-1) text-right break-words">{row.v}</span>
                                       </div>
                                     ))}
                                 </div>
@@ -3696,7 +3694,7 @@ function InboxPage() {
                             return (
                               <div key={item.id}>
                                 <button
-                                  className="rp-subsec"
+                                  className="w-full flex items-center gap-1.5 py-[7px] bg-transparent cursor-pointer text-[11.5px] font-semibold text-(--text-1) text-left transition-opacity border-t border-(--border) mt-1.5 hover:opacity-75"
                                   onClick={() =>
                                     setExpandedSubs((v) => ({
                                       ...v,
@@ -3716,20 +3714,20 @@ function InboxPage() {
                                 </button>
                                 {itemOpen && (
                                   <div className="pb-1">
-                                    <div className="rp-kv">
-                                      <span className="rp-kv-l">Amount</span>
-                                      <span className="rp-kv-v">{fmtPrice(Number(item.price) * item.quantity, order.currency)}</span>
+                                    <div className="flex items-baseline justify-between gap-4 px-3.5">
+                                      <span className="text-xs text-(--text-3) shrink-0 min-w-[72px]">Amount</span>
+                                      <span className="text-xs font-medium text-(--text-1) text-right break-words">{fmtPrice(Number(item.price) * item.quantity, order.currency)}</span>
                                     </div>
                                     {item.sku && (
-                                      <div className="rp-kv">
-                                        <span className="rp-kv-l">Sku</span>
-                                        <span className="rp-kv-v font-mono text-[10.5px]">{item.sku}</span>
+                                      <div className="flex items-baseline justify-between gap-4 px-3.5">
+                                        <span className="text-xs text-(--text-3) shrink-0 min-w-[72px]">Sku</span>
+                                        <span className="text-xs font-medium text-(--text-1) text-right break-words font-mono text-[10.5px]">{item.sku}</span>
                                       </div>
                                     )}
                                     {item.variantTitle && (
-                                      <div className="rp-kv">
-                                        <span className="rp-kv-l">Variant</span>
-                                        <span className="rp-kv-v">{item.variantTitle}</span>
+                                      <div className="flex items-baseline justify-between gap-4 px-3.5">
+                                        <span className="text-xs text-(--text-3) shrink-0 min-w-[72px]">Variant</span>
+                                        <span className="text-xs font-medium text-(--text-1) text-right break-words">{item.variantTitle}</span>
                                       </div>
                                     )}
                                   </div>

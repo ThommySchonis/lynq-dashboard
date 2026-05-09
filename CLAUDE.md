@@ -32,17 +32,29 @@ app/
   login/
     page.js          — Client login → redirect naar /dashboard.html
   api/
-    shopify/
-      kpis/route.js      — Live KPIs ophalen via Shopify API
-      orders/route.js    — Live orders ophalen via Shopify API
-      refunds/route.js   — Live refunds ophalen via Shopify API
+    shopify/         — Thin API route wrappers (auth + service call + JSON response)
   page.tsx           — Root redirect
 lib/
+  services/
+    shopify.js       — All Shopify business logic (KPIs, orders, refunds, sync, etc.)
+    refunds.js       — Refund classification and aggregation
+    inbox.js         — Unified inbox operations (Gmail/Outlook/custom)
+  utils/
+    request.js       — Shared request helpers (parseDateRange)
+  providers/         — Email provider adapters (Gmail, Outlook, custom SMTP)
+  auth.js            — getAuthContext() — workspace-scoped auth for all API routes
   supabase.js        — Supabase client (use client, public key)
   supabaseAdmin.js   — Supabase admin client (secret key, server-only)
+  shopifyCredentials.js — getShopifyCredentialsByWorkspace()
+  db.js              — scoped() helper for workspace-scoped queries
+  permissions.js     — Role-based access control (can.* checks)
+supabase/
+  migrations/        — PostgreSQL migrations (stored functions, schema changes)
+  functions/
+    shopify-webhook/ — Edge Function: receives Shopify webhook events
+    shopify-sync/    — Edge Function: cron-based order sync (every 30 min)
 public/
   dashboard.html     — Het volledige client dashboard (statische HTML)
-  logo.png           — Lynq & Flow logo
 middleware.js        — Passthrough (geen auth check op middleware niveau)
 ```
 
@@ -68,11 +80,13 @@ Staan lokaal in .env.local en in Vercel onder Settings → Environment Variables
 
 ## Hoe de Shopify koppeling werkt
 
-1. Admin voert per klant `shopify_domain` (bijv. `jouw-shop.myshopify.com`) + `shopify_api_key` in via het admin panel
-2. Bij inloggen haalt dashboard.html een Supabase session op
-3. Met dat session token roept dashboard.html de Next.js API routes aan (`/api/shopify/kpis` etc.)
-4. API routes halen de Shopify credentials op uit de `clients` tabel via de admin Supabase client
-5. Data wordt live opgehaald van Shopify en teruggestuurd naar het dashboard
+1. Client connects Shopify via OAuth (`/api/auth/shopify`) or manual API key (`/api/shopify/manual-connect`)
+2. Credentials are stored in the `integrations` table, scoped to `workspace_id`
+3. Frontend sends Bearer token → API route calls `getAuthContext()` → resolves workspace
+4. Route calls `getShopifyCredentialsByWorkspace(workspaceId)` → gets `{ domain, accessToken }`
+5. Route delegates to service function in `lib/services/shopify.js` → data returned as JSON
+6. Orders are synced to `shopify_orders` table via `/api/shopify/sync` or the `shopify-sync` Edge Function (cron)
+7. KPIs and revenue trends are computed from `shopify_orders` via PostgreSQL stored functions (`get_kpis`, `get_revenue_trend`)
 
 ## Live data in dashboard.html
 
@@ -123,6 +137,64 @@ Examples: `feature/refunds-table`, `fix/login-redirect`, `chore/update-deps`
 1. Pas `dashboard_prototype.html` aan in `/Users/thommy.schonisziggo.nl/agency-dashboard/`
 2. Kopieer naar `/Users/thommy.schonisziggo.nl/lynq-dashboard/public/dashboard.html`
 3. Commit + push naar GitHub → Vercel deployt automatisch
+
+## Backend Service Layer — mandatory rule
+
+All backend business logic lives in `lib/services/`. API routes are **thin wrappers only** — they handle auth, call a service function, and return JSON. Never put business logic, Shopify API calls, or data transformations directly in a route handler.
+
+### API route pattern
+
+Every Shopify API route must follow this exact pattern:
+
+```js
+import { getAuthContext } from '../../../../lib/auth'
+import { getShopifyCredentialsByWorkspace } from '../../../../lib/shopifyCredentials'
+import { someServiceFn, ShopifyApiError } from '../../../../lib/services/shopify'
+import { NextResponse } from 'next/server'
+
+export async function GET(request) {
+  const ctx = await getAuthContext(request)
+  if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const credentials = await getShopifyCredentialsByWorkspace(ctx.workspaceId)
+  if (!credentials) return NextResponse.json({ error: 'Shopify not configured' }, { status: 400 })
+
+  try {
+    const result = await someServiceFn(credentials, ...)
+    return NextResponse.json(result)
+  } catch (err) {
+    if (err instanceof ShopifyApiError) {
+      return NextResponse.json({ error: err.message }, { status: err.statusCode })
+    }
+    return NextResponse.json({ error: 'Internal error' }, { status: 500 })
+  }
+}
+```
+
+### Rules
+
+- **Always** use `getAuthContext(request)` for auth — never `getUserFromToken()` directly in routes.
+- **Never** call the Shopify API from a route handler. Use functions from `lib/services/shopify.js`.
+- **Never** import `lib/shopify.js` — it has been deleted. Use `lib/services/shopify.js` instead.
+- Service functions are **pure** — they accept data (credentials, workspaceId, params) and return data. No `request`/`response` objects.
+- Service functions **throw** on errors. Routes catch and map to HTTP responses.
+- Use `ShopifyApiError` for Shopify API failures (exported from `lib/services/shopify.js`).
+- Demo data is handled in the **route**, not the service: check `credentials.domain === DEMO_SHOP` before calling the service function.
+- Credential shape is `{ domain: string, accessToken: string }` from `getShopifyCredentialsByWorkspace()`.
+
+### Adding new Shopify functionality
+
+1. Add the service function to `lib/services/shopify.js`
+2. Create a thin API route that calls it
+3. Use `shopifyFetchJSON()` (internal helper in shopify.js) for Shopify REST API calls
+4. For heavy aggregations on `shopify_orders`, prefer PostgreSQL stored functions (see `supabase/migrations/`)
+
+### Supabase Edge Functions
+
+- Located in `supabase/functions/` — these run on Supabase's Deno runtime, not Next.js
+- `shopify-webhook`: receives real-time order events from Shopify, upserts into `shopify_orders`
+- `shopify-sync`: cron job that bulk-syncs orders for all workspaces (last 90 days)
+- Edge Functions are excluded from `tsconfig.json` (Deno TS is incompatible with Next.js TS)
 
 ## Workspace Scoping — mandatory rule
 

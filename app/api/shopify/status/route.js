@@ -1,17 +1,14 @@
-import { getUserFromToken } from '../../../../lib/supabaseAdmin'
-import { getShopifyCredentials } from '../../../../lib/shopifyCredentials'
+import { getAuthContext } from '../../../../lib/auth'
+import { checkConnectionStatus } from '../../../../lib/services/shopify'
 import { NextResponse } from 'next/server'
 
 export async function GET(request) {
-  const authHeader = request.headers.get('authorization')
-  if (!authHeader) return NextResponse.json({ connected: false })
+  const ctx = await getAuthContext(request)
+  if (!ctx) return NextResponse.json({ connected: false })
 
-  const token = authHeader.replace('Bearer ', '')
-  const user = await getUserFromToken(token)
-  if (!user) return NextResponse.json({ connected: false })
-
-  const client = await getShopifyCredentials(user.id, user.email)
-  if (!client) return NextResponse.json({ connected: false })
-
-  return NextResponse.json({ connected: true, shop: client.domain })
+  try {
+    return NextResponse.json(await checkConnectionStatus(ctx.workspaceId))
+  } catch {
+    return NextResponse.json({ connected: false })
+  }
 }

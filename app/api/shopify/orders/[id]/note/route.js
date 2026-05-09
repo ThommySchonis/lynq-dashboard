@@ -1,32 +1,25 @@
-import { getUserFromToken } from '../../../../../../lib/supabaseAdmin'
-import { getShopifyClient, shopifyFetch } from '../../../../../../lib/shopify'
+import { getAuthContext } from '../../../../../../lib/auth'
+import { getShopifyCredentialsByWorkspace } from '../../../../../../lib/shopifyCredentials'
+import { updateOrderNote, ShopifyApiError } from '../../../../../../lib/services/shopify'
 import { NextResponse } from 'next/server'
 
 export async function PUT(request, { params }) {
-  const authHeader = request.headers.get('authorization')
-  if (!authHeader) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const ctx = await getAuthContext(request)
+  if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const token = authHeader.replace('Bearer ', '')
-  const user = await getUserFromToken(token)
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-  const client = await getShopifyClient(user.id, user.email)
-  if (!client) return NextResponse.json({ error: 'Shopify not configured' }, { status: 400 })
+  const credentials = await getShopifyCredentialsByWorkspace(ctx.workspaceId)
+  if (!credentials) return NextResponse.json({ error: 'Shopify not configured' }, { status: 400 })
 
   const { id } = await params
-  const { note, tags } = await request.json()
+  const body = await request.json()
 
-  const body = { order: { id: Number(id) } }
-  if (note !== undefined) body.order.note = note
-  if (tags !== undefined) body.order.tags = tags
-
-  const res = await shopifyFetch(client, `/orders/${id}.json`, {
-    method: 'PUT',
-    body: JSON.stringify(body),
-  })
-
-  const data = await res.json()
-  if (!res.ok) return NextResponse.json({ error: data.errors || 'Save failed' }, { status: 502 })
-
-  return NextResponse.json({ success: true })
+  try {
+    await updateOrderNote(credentials, id, body)
+    return NextResponse.json({ success: true })
+  } catch (err) {
+    if (err instanceof ShopifyApiError) {
+      return NextResponse.json({ error: err.message }, { status: err.statusCode })
+    }
+    return NextResponse.json({ error: 'Save failed' }, { status: 500 })
+  }
 }

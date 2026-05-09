@@ -1,4 +1,5 @@
 import { supabaseAdmin } from '../../../../../lib/supabaseAdmin'
+import { encrypt } from '../../../../../lib/encryption'
 import { NextResponse } from 'next/server'
 import { verifyOAuthState } from '../../../../../lib/oauthState'
 
@@ -11,8 +12,10 @@ export async function GET(request) {
   const verifiedState = verifyOAuthState(state, 'gmail')
 
   if (!code || !verifiedState) {
-    return NextResponse.redirect(`${appUrl}/onboarding?error=gmail_failed`)
+    return NextResponse.redirect(`${appUrl}/settings?provider=gmail&status=error`)
   }
+
+  const { userId, workspaceId } = verifiedState
 
   const clientId = process.env.GOOGLE_CLIENT_ID?.trim()
   const clientSecret = process.env.GOOGLE_CLIENT_SECRET?.trim()
@@ -27,7 +30,7 @@ export async function GET(request) {
 
   const tokens = await tokenRes.json()
   if (!tokens.access_token) {
-    return NextResponse.redirect(`${appUrl}/onboarding?error=gmail_token_failed`)
+    return NextResponse.redirect(`${appUrl}/settings?provider=gmail&status=error&reason=token_failed`)
   }
 
   // Get Gmail address
@@ -35,20 +38,61 @@ export async function GET(request) {
     headers: { Authorization: `Bearer ${tokens.access_token}` },
   })
   const profile = await profileRes.json()
+  const emailAddress = profile.email
 
-  // Save tokens
-  const { error } = await supabaseAdmin.from('gmail_tokens').upsert({
-    user_id: verifiedState.userId,
-    email: profile.email,
-    gmail_address: profile.email,
+  // Encrypt tokens
+  const encryptedAccessToken = encrypt(tokens.access_token)
+  const encryptedRefreshToken = tokens.refresh_token ? encrypt(tokens.refresh_token) : null
+
+  // Check if this is the first email account for the workspace (to set is_default)
+  let isDefault = false
+  if (workspaceId) {
+    const { count } = await supabaseAdmin
+      .from('email_accounts')
+      .select('id', { count: 'exact', head: true })
+      .eq('workspace_id', workspaceId)
+    isDefault = count === 0
+  }
+
+  // NEW: write to unified email_accounts table
+  const emailAccountRecord = {
+    client_id: userId,
+    workspace_id: workspaceId,
+    provider: 'gmail',
+    email_address: emailAddress,
+    display_name: emailAddress,
+    access_token: encryptedAccessToken,
+    refresh_token: encryptedRefreshToken,
+    expires_at: new Date(Date.now() + tokens.expires_in * 1000).toISOString(),
+    status: 'active',
+    is_default: isDefault,
+  }
+
+  const { error: emailAccountError } = await supabaseAdmin
+    .from('email_accounts')
+    .upsert(emailAccountRecord, { onConflict: 'workspace_id,provider,email_address' })
+
+  if (emailAccountError) {
+    console.error('[gmail/callback] email_accounts upsert error:', emailAccountError.message)
+  }
+
+  // LEGACY dual-write: keep writing to gmail_tokens for backwards compatibility
+  const { error: legacyError } = await supabaseAdmin.from('gmail_tokens').upsert({
+    user_id: userId,
+    email: emailAddress,
+    gmail_address: emailAddress,
     access_token: tokens.access_token,
     refresh_token: tokens.refresh_token,
     expires_at: new Date(Date.now() + tokens.expires_in * 1000).toISOString(),
   }, { onConflict: 'user_id' })
 
-  if (error) {
-    return NextResponse.redirect(`${appUrl}/onboarding?error=gmail_save_failed`)
+  if (legacyError) {
+    console.error('[gmail/callback] gmail_tokens legacy upsert error:', legacyError.message)
   }
 
-  return NextResponse.redirect(`${appUrl}/onboarding?step=3&gmail=connected`)
+  if (emailAccountError && legacyError) {
+    return NextResponse.redirect(`${appUrl}/settings?provider=gmail&status=error&reason=save_failed`)
+  }
+
+  return NextResponse.redirect(`${appUrl}/settings?provider=gmail&status=connected`)
 }

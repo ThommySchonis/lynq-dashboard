@@ -1,4 +1,5 @@
 import { supabaseAdmin } from '../../../../../lib/supabaseAdmin'
+import { processInboundMessage } from '../../../../../lib/conversationEngine'
 import { NextResponse } from 'next/server'
 import crypto from 'crypto'
 
@@ -71,58 +72,30 @@ export async function POST(request) {
 
   if (!to) return NextResponse.json({ ok: true })
 
-  // Find client by forwarding address
+  // Look up email account by forwarding address
   const { data: account } = await supabaseAdmin
     .from('email_accounts')
-    .select('client_id, real_email, display_name')
+    .select('*')
     .eq('forwarding_address', to)
     .maybeSingle()
 
   if (!account) return NextResponse.json({ ok: true })
 
-  // Find or create conversation by in-reply-to or subject + customer
-  let conversationId = null
-
-  if (inReplyTo) {
-    const { data: existing } = await supabaseAdmin
-      .from('email_messages')
-      .select('conversation_id')
-      .eq('message_id', inReplyTo)
-      .maybeSingle()
-    if (existing) conversationId = existing.conversation_id
+  // Normalize the inbound email into a NormalizedMessage shape
+  const normalizedMessage = {
+    providerMessageId: messageId || `inbound_${Date.now()}`,
+    messageId: inReplyTo || messageId || null,
+    from: { email: fromEmail, name: fromName },
+    to: [{ email: to, name: '' }],
+    cc: [],
+    subject,
+    bodyHtml,
+    bodyText,
+    date: new Date().toISOString(),
+    isOutbound: false,
   }
 
-  if (!conversationId) {
-    const { data: conv } = await supabaseAdmin
-      .from('email_conversations')
-      .insert({
-        client_id: account.client_id,
-        subject,
-        customer_email: fromEmail,
-        customer_name: fromName,
-        status: 'open',
-        last_message_at: new Date().toISOString(),
-      })
-      .select('id')
-      .single()
-    conversationId = conv.id
-  } else {
-    await supabaseAdmin
-      .from('email_conversations')
-      .update({ status: 'open', last_message_at: new Date().toISOString() })
-      .eq('id', conversationId)
-  }
-
-  await supabaseAdmin.from('email_messages').insert({
-    conversation_id: conversationId,
-    from_email: fromEmail,
-    from_name: fromName,
-    body_html: bodyHtml,
-    body_text: bodyText,
-    is_outbound: false,
-    message_id: messageId,
-    in_reply_to: inReplyTo,
-  })
+  await processInboundMessage(account, normalizedMessage)
 
   return NextResponse.json({ ok: true })
 }

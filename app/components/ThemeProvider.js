@@ -1,3 +1,4 @@
+// @deprecated — Use stores/theme.ts + useThemeStore() instead. Will be removed during page refactors.
 'use client'
 
 import { createContext, useContext, useEffect, useState } from 'react'

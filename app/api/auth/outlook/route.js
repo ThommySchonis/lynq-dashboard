@@ -1,4 +1,4 @@
-import { getUserFromToken } from '../../../../lib/supabaseAdmin'
+import { getUserFromToken, supabaseAdmin } from '../../../../lib/supabaseAdmin'
 import { createOAuthState } from '../../../../lib/oauthState'
 import { NextResponse } from 'next/server'
 
@@ -7,13 +7,22 @@ export async function GET(request) {
   const userToken = searchParams.get('t')
 
   if (!userToken) {
-    return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/settings?outlook=error`)
+    return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/settings?provider=outlook&status=error`)
   }
 
   const user = await getUserFromToken(userToken)
   if (!user) {
-    return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/settings?outlook=error`)
+    return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/settings?provider=outlook&status=error`)
   }
+
+  // Look up the user's workspace so we can embed workspaceId in the state
+  const { data: membership } = await supabaseAdmin
+    .from('workspace_members')
+    .select('workspace_id')
+    .eq('user_id', user.id)
+    .maybeSingle()
+
+  const workspaceId = membership?.workspace_id ?? null
 
   const clientId = process.env.MICROSOFT_CLIENT_ID
   const redirectUri = `${process.env.NEXT_PUBLIC_APP_URL}/api/auth/outlook/callback`
@@ -33,7 +42,7 @@ export async function GET(request) {
   url.searchParams.set('response_type', 'code')
   url.searchParams.set('scope', scope)
   url.searchParams.set('response_mode', 'query')
-  url.searchParams.set('state', createOAuthState({ userId: user.id, provider: 'outlook' }))
+  url.searchParams.set('state', createOAuthState({ userId: user.id, workspaceId, provider: 'outlook' }))
 
   return NextResponse.redirect(url.toString())
 }

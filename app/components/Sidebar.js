@@ -189,7 +189,7 @@ const LOCK_SVG = (
 
 const TOP_ITEMS = [
   { section: null,         href: '/home',          label: 'Home',          icon: Icons.home      },
-  { section: 'Support',   href: '/inbox',         label: 'Inbox',         icon: Icons.inbox,  unread: 2 },
+  { section: 'Support',   href: '/inbox',         label: 'Inbox',         icon: Icons.inbox,  unreadKey: 'inbox' },
   { section: null,         href: '/analytics',     label: 'Analytics',     icon: Icons.analytics },
   { section: null,         href: '/performance',   label: 'Performance',   icon: Icons.perf      },
   { section: 'Operations', href: '/time-tracking', label: 'Time Tracking', icon: Icons.clock     },
@@ -213,6 +213,7 @@ function SidebarContent() {
   const [isAdmin, setIsAdmin] = useState(false)
   const [onboarding, setOnboarding]           = useState(null)
   const [checklistHidden, setChecklistHidden] = useState(false)
+  const [inboxUnread, setInboxUnread] = useState(0)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -226,6 +227,14 @@ function SidebarContent() {
       })
         .then(r => (r.ok ? r.json() : null))
         .then(d => { if (d) setOnboarding(d) })
+        .catch(() => {})
+      // Inbox unread count
+      fetch('/api/inbox/counts', {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+        cache:   'no-store',
+      })
+        .then(r => (r.ok ? r.json() : null))
+        .then(d => { if (d) setInboxUnread(d.open || 0) })
         .catch(() => {})
     })
   }, [pathname])  // re-fetch on route change so completed items refresh
@@ -253,7 +262,7 @@ function SidebarContent() {
         {active && <span className="sb-pill" />}
         <span className="sb-icon">{item.icon}</span>
         <span className="sb-label">{item.label}</span>
-        {item.unread > 0 && !active && <span className="sb-unread">{item.unread}</span>}
+        {item.unreadKey === 'inbox' && inboxUnread > 0 && !active && <span className="sb-unread">{inboxUnread}</span>}
         {item.locked && <span className="sb-lock">{LOCK_SVG}</span>}
       </>
     )

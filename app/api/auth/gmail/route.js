@@ -1,4 +1,4 @@
-import { getUserFromToken } from '../../../../lib/supabaseAdmin'
+import { getUserFromToken, supabaseAdmin } from '../../../../lib/supabaseAdmin'
 import { createOAuthState } from '../../../../lib/oauthState'
 import { NextResponse } from 'next/server'
 
@@ -15,13 +15,22 @@ export async function GET(request) {
   }
 
   if (!userToken) {
-    return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/settings?gmail=error`)
+    return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/settings?provider=gmail&status=error`)
   }
 
   const user = await getUserFromToken(userToken)
   if (!user) {
-    return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/settings?gmail=error`)
+    return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/settings?provider=gmail&status=error`)
   }
+
+  // Look up the user's workspace so we can embed workspaceId in the state
+  const { data: membership } = await supabaseAdmin
+    .from('workspace_members')
+    .select('workspace_id')
+    .eq('user_id', user.id)
+    .maybeSingle()
+
+  const workspaceId = membership?.workspace_id ?? null
 
   const clientId = process.env.GOOGLE_CLIENT_ID?.trim()
   const redirectUri = `${process.env.NEXT_PUBLIC_APP_URL}/api/auth/gmail/callback`
@@ -40,7 +49,7 @@ export async function GET(request) {
   url.searchParams.set('scope', scope)
   url.searchParams.set('access_type', 'offline')
   url.searchParams.set('prompt', 'consent')
-  url.searchParams.set('state', createOAuthState({ userId: user.id, provider: 'gmail' }))
+  url.searchParams.set('state', createOAuthState({ userId: user.id, workspaceId, provider: 'gmail' }))
 
   return NextResponse.redirect(url.toString())
 }

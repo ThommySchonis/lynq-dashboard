@@ -207,16 +207,11 @@ export default function CreateTicketPage() {
         .then(d => { if (d.macros?.length) setMacros(d.macros) })
         .catch(() => {})
 
-      for (const [path, key] of [
-        ['/api/gmail/threads',        'gmail'  ],
-        ['/api/outlook/threads',      'outlook'],
-        ['/api/custom-email/threads', 'custom' ],
-      ]) {
-        try {
-          const data = await authFetch(path, {}, s.access_token).then(r => r.json())
-          if (data.connected !== false) { setEmailProvider(key); setConnectedEmail(data.email || null); break }
-        } catch {}
-      }
+      try {
+        const acctData = await authFetch('/api/inbox/accounts', {}, s.access_token).then(r => r.json())
+        const active = (acctData.accounts || []).find(a => a.status === 'active')
+        if (active) { setEmailProvider(active.provider); setConnectedEmail(active.email_address || null) }
+      } catch {}
       setReady(true)
     })
   }, [])
@@ -261,17 +256,14 @@ export default function CreateTicketPage() {
     }
 
     const safeBody = sanitizeHtml(bodyRef.current?.innerHTML || '')
-    const sendPath = emailProvider === 'outlook' ? '/api/outlook/send'
-                   : emailProvider === 'custom'  ? '/api/custom-email/send'
-                   : '/api/gmail/send'
     try {
-      const res  = await authFetch(sendPath, {
+      const res  = await authFetch('/api/inbox/compose', {
         method:'POST',
-        body: JSON.stringify({ to:to.trim(), subject:subject.trim()||'(no subject)', body:safeBody, cc:cc.trim()||undefined, bcc:bcc.trim()||undefined })
+        body: JSON.stringify({ to:[{email:to.trim(),name:''}], subject:subject.trim()||'(no subject)', bodyHtml:safeBody, bodyText:bodyRef.current?.innerText||'', cc:cc.trim()?[{email:cc.trim(),name:''}]:undefined, bcc:bcc.trim()?[{email:bcc.trim(),name:''}]:undefined })
       }, session.access_token)
       const data = await res.json()
       setSending(false)
-      if (data.success || data.id) { setToast({ msg:'Message sent!', type:'success' }); setTimeout(() => router.push('/inbox'), 700) }
+      if (data.success || data.conversationId) { setToast({ msg:'Message sent!', type:'success' }); setTimeout(() => router.push('/inbox'), 700) }
       else setToast({ msg:data.error || 'Failed to send', type:'error' })
     } catch { setSending(false); setToast({ msg:'Failed to send', type:'error' }) }
   }

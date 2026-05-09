@@ -38,14 +38,15 @@ ${threads.slice(0, 25).map(t => `ID: ${t.id}\nSubject: ${t.subject || '(no subje
     maxTokens: 1200,
   })
 
-  await supabaseAdmin.from('ai_usage').insert({
+  const { error: usageErr } = await supabaseAdmin.from('ai_usage').insert({
     route: 'analyze',
     model: 'claude-haiku-4-5-20251001',
     input_tokens: usage.promptTokens,
     output_tokens: usage.completionTokens,
     cost_usd: (usage.promptTokens * 0.0000008) + (usage.completionTokens * 0.000004),
     user_email: user.email,
-  }).catch(() => {})
+  })
+  if (usageErr) console.error('[ai/analyze] usage log failed:', usageErr.message)
 
   try {
     const jsonMatch = text.match(/\{[\s\S]*\}/)

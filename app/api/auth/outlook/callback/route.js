@@ -61,7 +61,6 @@ export async function GET(request) {
   const emailAccountRecord = {
     client_id: userId,
     workspace_id: workspaceId,
-    user_id: userId,
     provider: 'outlook',
     email_address: emailAddress,
     display_name: emailAddress,

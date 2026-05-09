@@ -604,11 +604,11 @@ export default function ConnectEmailPage() {
   }, [fetchAccounts])
 
   function connectGmail() {
-    window.location.href = '/api/auth/gmail'
+    window.location.href = `/api/auth/gmail?t=${token}`
   }
 
   function connectOutlook() {
-    window.location.href = '/api/auth/outlook'
+    window.location.href = `/api/auth/outlook?t=${token}`
   }
 
   function handleAccountDisconnected(id) {

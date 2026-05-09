@@ -1800,7 +1800,7 @@ function InboxPage() {
     supabase.auth.getSession().then(async ({data:{session}})=>{
       if(!session){window.location.href='/login';return}
       setSession(session)
-      triggerSync(session.access_token)
+      await triggerSync(session.access_token)
       await loadConversations(session.access_token, 'open')
       fetchCounts(session.access_token)
       fetchMacros(session.access_token)
@@ -2334,9 +2334,20 @@ function InboxPage() {
                       </div>
                       <div className={isNote?'msg-note':isAgent?'msg-out':'msg-in'}>
                         {isNote&&<div style={{fontSize:10,fontWeight:700,color:'rgba(251,191,36,0.75)',letterSpacing:'.07em',textTransform:'uppercase',marginBottom:7}}>Internal note</div>}
-                        {msgTranslations[msg.id]&&msgTranslations[msg.id]!=='__loading__'
-                          ? msgTranslations[msg.id]
-                          : (msg.body||msg.snippet)}
+                        {(()=>{
+                          const content = msgTranslations[msg.id]&&msgTranslations[msg.id]!=='__loading__'
+                            ? msgTranslations[msg.id]
+                            : (msg.body||msg.snippet||'')
+                          const isHtml = /<[a-z][\s\S]*>/i.test(content)
+                          if (!isHtml) return <span>{content}</span>
+                          return <iframe
+                            sandbox="allow-same-origin"
+                            srcDoc={'<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>body{margin:0;padding:8px;font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',Roboto,sans-serif;font-size:14px;color:#1a1a1a;word-wrap:break-word;overflow-wrap:break-word}img{max-width:100%;height:auto}a{color:#6d28d9}blockquote{margin:8px 0;padding-left:12px;border-left:3px solid #ddd;color:#666}pre{white-space:pre-wrap;overflow-x:auto}</style></head><body>' + content + '</body></html>'}
+                            style={{width:'100%',border:'none',minHeight:60,borderRadius:6,background:'white'}}
+                            title="Email content"
+                            onLoad={e=>{try{const h=e.target.contentDocument.body.scrollHeight;e.target.style.height=h+16+'px'}catch{}}}
+                          />
+                        })()}
                       </div>
                       {!isAgent&&!isNote&&(
                         <div style={{textAlign:'left',marginTop:4}}>

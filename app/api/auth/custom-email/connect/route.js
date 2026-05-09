@@ -66,7 +66,6 @@ export async function POST(request) {
   const emailAccountRecord = {
     client_id: user.id,
     workspace_id: workspaceId,
-    user_id: user.id,
     provider: 'custom',
     email_address: email,
     display_name: email,

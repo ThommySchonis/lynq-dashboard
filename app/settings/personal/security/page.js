@@ -607,6 +607,9 @@ export default function SecurityPage() {
   async function loadFactors() {
     setLoadingFactors(true)
     const { data, error } = await supabase.auth.mfa.listFactors()
+    if (error) {
+      console.error('[2fa] loadFactors failed', { message: error.message, code: error.code })
+    }
     if (!error && data) setFactors(data.totp ?? [])
     setLoadingFactors(false)
   }
@@ -655,13 +658,84 @@ export default function SecurityPage() {
     setRecoveryConfirmed(false)
     setEnrolling(true)
 
-    // Clean up any leftover unverified factors first
-    const unverified = factors.filter(f => f.status === 'unverified')
-    for (const f of unverified) await supabase.auth.mfa.unenroll({ factorId: f.id })
+    // 1) Re-fetch factors from the server, not from cached React state.
+    //    A factor created in another tab or in a previous wizard run that
+    //    crashed must be visible before we cleanup.
+    const { data: live, error: listErr } = await supabase.auth.mfa.listFactors()
+    if (listErr) {
+      console.error('[2fa] listFactors failed', listErr)
+      showToast(listErr.message || 'Could not read 2FA factors', 'error')
+      setEnrolling(false)
+      setWizardOpen(false)
+      return
+    }
 
-    const { data, error } = await supabase.auth.mfa.enroll({ factorType: 'totp' })
+    const liveFactors = live?.totp ?? []
+    const verified   = liveFactors.find(f => f.status === 'verified')
+    const unverified = liveFactors.filter(f => f.status === 'unverified')
+
+    // 2) If a verified factor already exists, refuse to re-enroll.
+    if (verified) {
+      setFactors(liveFactors)
+      setEnrolling(false)
+      setWizardOpen(false)
+      showToast('2FA is already enabled on this account', 'error')
+      return
+    }
+
+    // 3) Cleanup orphans: try the user-scoped unenroll first; if that
+    //    fails (common at AAL1 for unverified factors), fall back to the
+    //    server-side admin DELETE which always succeeds with service-role.
+    let needsServerCleanup = false
+    for (const f of unverified) {
+      const { error: unenrollErr } = await supabase.auth.mfa.unenroll({ factorId: f.id })
+      if (unenrollErr) {
+        console.warn('[2fa] client unenroll failed, will fall back', {
+          factorId: f.id, message: unenrollErr.message, code: unenrollErr.code,
+        })
+        needsServerCleanup = true
+      }
+    }
+
+    if (needsServerCleanup) {
+      try {
+        const res = await fetch('/api/auth/mfa/cleanup', {
+          method: 'DELETE',
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        })
+        const json = await res.json().catch(() => ({}))
+        if (!res.ok) {
+          console.error('[2fa] server cleanup failed', json)
+          showToast(json.error || 'Could not clean up orphaned 2FA factors', 'error')
+          setEnrolling(false)
+          setWizardOpen(false)
+          return
+        }
+      } catch (e) {
+        console.error('[2fa] server cleanup network error', e)
+        showToast('Could not clean up orphaned 2FA factors', 'error')
+        setEnrolling(false)
+        setWizardOpen(false)
+        return
+      }
+    }
+
+    // 4) Enroll. friendlyName must be non-empty: Supabase's UNIQUE
+    //    constraint on (user_id, friendly_name) blocks two factors that
+    //    share the same name (including ''). 'Authenticator' is what the
+    //    user sees in the Manage UI — kept stable across re-enrolls
+    //    because cleanup above guarantees no collision.
+    const { data, error } = await supabase.auth.mfa.enroll({
+      factorType: 'totp',
+      friendlyName: 'Authenticator',
+    })
     setEnrolling(false)
-    if (error) { showToast(error.message, 'error'); setWizardOpen(false); return }
+    if (error) {
+      console.error('[2fa] enroll failed', error)
+      showToast(error.message || 'Could not start 2FA enrollment', 'error')
+      setWizardOpen(false)
+      return
+    }
     setEnrollFactorId(data.id)
     setEnrollQrCode(data.totp.qr_code)
     setEnrollSecret(data.totp.secret)
@@ -673,7 +747,11 @@ export default function SecurityPage() {
     setVerifyError('')
     const { error } = await supabase.auth.mfa.challengeAndVerify({ factorId: enrollFactorId, code: verifyCode })
     setVerifying(false)
-    if (error) { setVerifyError('Invalid code, try again'); return }
+    if (error) {
+      console.error('[2fa] challengeAndVerify failed', { message: error.message, code: error.code })
+      setVerifyError('Invalid code, try again')
+      return
+    }
 
     // Generate recovery codes server-side
     const res = await fetch('/api/auth/recovery-codes', {
@@ -696,7 +774,12 @@ export default function SecurityPage() {
   async function handleDisable() {
     setDisabling(true)
     const { error } = await supabase.auth.mfa.unenroll({ factorId: verifiedFactor.id })
-    if (error) { showToast(error.message, 'error'); setDisabling(false); return }
+    if (error) {
+      console.error('[2fa] disable unenroll failed', { message: error.message, code: error.code })
+      showToast(error.message || 'Could not disable 2FA', 'error')
+      setDisabling(false)
+      return
+    }
 
     await fetch('/api/auth/recovery-codes', {
       method: 'POST',

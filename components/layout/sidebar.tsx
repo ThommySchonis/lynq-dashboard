@@ -36,19 +36,19 @@ export function Sidebar() {
   return (
     <aside
       className={cn(
-        'fixed inset-y-0 left-0 z-50 flex flex-col border-r border-[var(--sidebar-border)] bg-[var(--sidebar-bg)] transition-[width] duration-200',
+        'fixed inset-y-0 left-0 z-50 flex flex-col border-r border-white/5 bg-[#0D0F14] transition-[width] duration-200',
         collapsed ? 'w-[60px]' : 'w-[208px]',
       )}
     >
       <div
         className={cn(
-          'flex h-14 items-center border-b border-[var(--sidebar-border)]',
+          'flex h-14 items-center border-b border-white/5',
           collapsed ? 'justify-center px-2' : 'gap-2.5 px-4',
         )}
       >
         <Image src="/logo.png" alt="Lynq" width={28} height={28} className="shrink-0" />
         {!collapsed && (
-          <span className="text-sm font-semibold text-[var(--sidebar-label-active)]">
+          <span className="text-sm font-semibold text-white">
             Lynq & Flow
           </span>
         )}
@@ -56,7 +56,7 @@ export function Sidebar() {
           variant="ghost"
           size="icon"
           onClick={toggleSidebar}
-          className={cn('ml-auto h-7 w-7 shrink-0', collapsed && 'ml-0')}
+          className={cn('ml-auto h-7 w-7 shrink-0 text-white/40 hover:text-white/60 hover:bg-white/[0.04]', collapsed && 'ml-0')}
         >
           {collapsed ? <PanelLeft size={16} /> : <PanelLeftClose size={16} />}
         </Button>
@@ -69,12 +69,12 @@ export function Sidebar() {
       </nav>
 
       <div className="space-y-0.5 px-2 pb-2">
-        <Separator className="mb-2" />
+        <Separator className="mb-2 bg-white/10" />
         {BOTTOM_ITEMS.map((item) => {
           if (item.href === '/admin' && role !== 'owner' && role !== 'admin') return null
           return <SidebarItem key={item.href} {...item} collapsed={collapsed} />
         })}
-        <Separator className="my-2" />
+        <Separator className="my-2 bg-white/10" />
         <SidebarUser collapsed={collapsed} />
       </div>
     </aside>

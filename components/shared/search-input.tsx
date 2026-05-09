@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import { Search, X } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
@@ -21,15 +21,23 @@ export function SearchInput({
   className,
 }: SearchInputProps) {
   const [internal, setInternal] = useState(controlledValue ?? '')
+  const isFirstRender = useRef(true)
+  const onChangeRef = useRef(onChange)
+  onChangeRef.current = onChange
 
   useEffect(() => {
     if (controlledValue !== undefined) setInternal(controlledValue)
   }, [controlledValue])
 
   useEffect(() => {
-    const timer = setTimeout(() => onChange(internal), debounceMs)
+    // Skip firing onChange on initial mount
+    if (isFirstRender.current) {
+      isFirstRender.current = false
+      return
+    }
+    const timer = setTimeout(() => onChangeRef.current(internal), debounceMs)
     return () => clearTimeout(timer)
-  }, [internal, debounceMs, onChange])
+  }, [internal, debounceMs])
 
   return (
     <div className={cn('relative', className)}>

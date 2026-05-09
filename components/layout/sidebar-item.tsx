@@ -24,8 +24,8 @@ export function SidebarItem({ href, icon: Icon, label, badge, collapsed }: Sideb
       className={cn(
         'flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
         isActive
-          ? 'bg-[var(--sidebar-active-bg)] text-[var(--sidebar-label-active)]'
-          : 'text-[var(--sidebar-label-inactive)] hover:bg-[var(--sidebar-hover)]',
+          ? 'bg-[rgba(139,92,246,0.14)] text-[#C4B5FD]'
+          : 'text-white/60 hover:bg-white/[0.04]',
         collapsed && 'justify-center px-2',
       )}
     >
@@ -33,8 +33,8 @@ export function SidebarItem({ href, icon: Icon, label, badge, collapsed }: Sideb
         size={18}
         className={cn(
           isActive
-            ? 'text-[var(--sidebar-icon-active)]'
-            : 'text-[var(--sidebar-icon-inactive)]',
+            ? 'text-[#C4B5FD]'
+            : 'text-white/40',
         )}
       />
       {!collapsed && (

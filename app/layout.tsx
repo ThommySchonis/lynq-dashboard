@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import './globals.css'
 import { AuthHydrator } from '@/components/providers/auth-hydrator'
 import { ThemeSync } from '@/components/providers/theme-sync'
+import { QueryProvider } from '@/components/providers/query-provider'
 import PageTransition from './components/PageTransition'
 import BlockedStateGuard from './components/BlockedStateGuard'
 import SentryUserSync from './components/SentryUserSync'
@@ -32,9 +33,11 @@ export default function RootLayout({
         <SentryUserSync />
         <AuthHydrator />
         <ThemeSync />
-        <BlockedStateGuard>
-          <PageTransition>{children}</PageTransition>
-        </BlockedStateGuard>
+        <QueryProvider>
+          <BlockedStateGuard>
+            <PageTransition>{children}</PageTransition>
+          </BlockedStateGuard>
+        </QueryProvider>
       </body>
     </html>
   )

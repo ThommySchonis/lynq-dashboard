@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation'
 import {
   Bug, Lightbulb, MessageSquare, Inbox, Search, X, Send, ExternalLink,
 } from 'lucide-react'
-import Sidebar from '../../components/Sidebar'
 import { ToastContainer } from '../../components/Toast'
 import { useToast } from '../../hooks/useToast'
 import { supabase } from '../../../lib/supabase'
@@ -104,14 +103,11 @@ export default function LynqAdminFeedbackPage() {
 
   return (
     <div style={{
-      display: 'flex', minHeight: '100vh',
+      flex: 1, minHeight: '100vh', overflow: 'auto',
       background: '#F8F7FA',
-      fontFamily: "'Switzer',-apple-system,BlinkMacSystemFont,sans-serif",
       color: '#1C0F36',
     }}>
-      <Sidebar />
-
-      <div style={{ flex: 1, minHeight: '100vh', overflow: 'hidden' }}>
+      <div style={{ minHeight: '100vh' }}>
         <main style={{ maxWidth: 1200, margin: '0 auto', padding: 32 }}>
           {/* Header */}
           <div style={{ borderBottom: '1px solid #F0EDF4', paddingBottom: 20, marginBottom: 24 }}>

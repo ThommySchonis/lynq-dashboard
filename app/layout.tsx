@@ -3,6 +3,7 @@ import "./globals.css";
 import ThemeProvider from "./components/ThemeProvider";
 import PageTransition from "./components/PageTransition";
 import BlockedStateGuard from "./components/BlockedStateGuard";
+import SentryUserSync from "./components/SentryUserSync";
 
 export const metadata: Metadata = {
   title: "Lynq — Customer Support Dashboard",
@@ -27,6 +28,7 @@ export default function RootLayout({
         />
       </head>
       <body>
+        <SentryUserSync />
         <ThemeProvider>
           <BlockedStateGuard>
             <PageTransition>{children}</PageTransition>

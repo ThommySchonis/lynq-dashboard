@@ -3,6 +3,7 @@ import './globals.css'
 import { AuthHydrator } from '@/components/providers/auth-hydrator'
 import { ThemeSync } from '@/components/providers/theme-sync'
 import { QueryProvider } from '@/components/providers/query-provider'
+import { Toaster } from '@/components/ui/sonner'
 import PageTransition from './components/PageTransition'
 import BlockedStateGuard from './components/BlockedStateGuard'
 import SentryUserSync from './components/SentryUserSync'
@@ -38,6 +39,7 @@ export default function RootLayout({
             <PageTransition>{children}</PageTransition>
           </BlockedStateGuard>
         </QueryProvider>
+        <Toaster />
       </body>
     </html>
   )

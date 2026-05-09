@@ -1,7 +1,12 @@
 "use client";
 
+import { Avatar as ShadAvatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
+import { toast as sonnerToast } from "sonner";
 import {
   Archive,
   Calendar,
@@ -40,7 +45,7 @@ import {
   User,
   X,
   XCircle,
-  Zap
+  Zap,
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useRef, useState } from "react";
@@ -54,7 +59,7 @@ import {
   relTime as formatDate,
   plainTextToSafeHtml,
   REFUND_REASONS,
-  sanitizeHtml
+  sanitizeHtml,
 } from "../../lib/inbox-utils";
 import { supabase } from "../../lib/supabase";
 import { useAIStore } from "../../stores/ai";
@@ -126,11 +131,10 @@ const ORDER_STATUS = {
 
 // ─── Demo data removed — unified inbox API is the sole data source ───
 
-
 // ─── Helpers (imported from lib/inbox-utils) ─────────────────
 
 // ─── Base components ─────────────────────────────────────────
-function Avatar({ name = "?", size = 32, agent = false }) {
+function InboxAvatar({ name = "?", size = 32, agent = false }) {
   const ini = (name || "?")
     .split(" ")
     .map((w) => w[0])
@@ -138,130 +142,11 @@ function Avatar({ name = "?", size = 32, agent = false }) {
     .slice(0, 2)
     .toUpperCase();
   return (
-    <div
-      className={`flex items-center justify-center rounded-full shrink-0 font-bold tracking-tight ${agent ? "bg-(--text-1) text-white" : "bg-[#F0F0F0] text-(--text-2)"}`}
-      style={{ width: size, height: size, fontSize: size * 0.34 }}
-    >
-      {ini}
-    </div>
-  );
-}
-
-function OrderBadge({ status }) {
-  if (!status) return null;
-  const s = ORDER_STATUS[status?.toLowerCase()] || {
-    bg: "var(--bg-input)",
-    color: "var(--text-3)",
-    label: status,
-  };
-  return (
-    <span
-      className="text-[10px] font-bold px-[9px] py-[2px] rounded-full tracking-[.01em]"
-      style={{ background: s.bg, color: s.color, border: `1px solid ${s.color}22` }}
-    >
-      {s.label || status}
-    </span>
-  );
-}
-
-function TicketBadge({ status }) {
-  const s = STATUS[status] || STATUS.open;
-  return (
-    <span className="text-[10px] font-bold px-[9px] py-[2px] rounded-full" style={{ background: s.bg, color: s.color, border: `1px solid ${s.border}` }}>
-      {s.label}
-    </span>
-  );
-}
-
-function Toast({ msg, type, onDone }) {
-  useEffect(() => {
-    const t = setTimeout(onDone, 3200);
-    return () => clearTimeout(t);
-  }, [onDone]);
-  const ok = type === "success";
-  return (
-    <div
-      className={`fixed bottom-6 right-6 px-[18px] py-[11px] flex items-center gap-2.5 rounded-[11px] text-[13px] font-medium z-[9999] animate-[toastIn_.28s_ease_both] shadow-[0_8px_32px_rgba(0,0,0,0.35)] ${ok ? "bg-green-400/10 border border-green-400/[0.28] text-green-400" : "bg-rose-400/10 border border-rose-400/[0.28] text-rose-400"}`}
-    >
-      <span className={`w-[7px] h-[7px] rounded-full shrink-0 ${ok ? "bg-green-400 shadow-[0_0_8px_#4ade80]" : "bg-rose-400 shadow-[0_0_8px_#fb7185]"}`} />
-      {msg}
-    </div>
-  );
-}
-
-function StatusMenu({ current, onChange, onClose }) {
-  const ref = useRef(null);
-  useEffect(() => {
-    function h(e) {
-      if (ref.current && !ref.current.contains(e.target)) onClose();
-    }
-    document.addEventListener("mousedown", h);
-    return () => document.removeEventListener("mousedown", h);
-  }, [onClose]);
-  return (
-    <div ref={ref} className="sdrop">
-      {Object.entries(STATUS).map(([k, s]) => (
-        <button
-          key={k}
-          className="sopt"
-          onClick={() => {
-            onChange(k);
-            onClose();
-          }}
-          style={{ color: s.color }}
-        >
-          <span className="w-2 h-2 rounded-full shrink-0" style={{ background: s.color }} />
-          {s.label}
-          {current === k && <span className="ml-auto text-[10px] text-(--text-3)">✓</span>}
-        </button>
-      ))}
-    </div>
-  );
-}
-
-// ─── Checkbox helper ──────────────────────────────────────────
-function Chk({ checked, onChange, label }) {
-  return (
-    <label className="chk-row">
-      <div className={`chk-box${checked ? " chk-on" : ""}`} onClick={onChange}>
-        {checked && (
-          <span className="flex text-white">
-            <Check size={10} />
-          </span>
-        )}
-      </div>
-      <span className="text-[13px] text-(--text-2)">{label}</span>
-    </label>
-  );
-}
-
-// ─── Modal base ───────────────────────────────────────────────
-function ModalBase({ title, onClose, children, footer }) {
-  useEffect(() => {
-    function h(e) {
-      if (e.key === "Escape") onClose();
-    }
-    document.addEventListener("keydown", h);
-    return () => document.removeEventListener("keydown", h);
-  }, [onClose]);
-  return (
-    <div
-      className="modal-backdrop"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
-    >
-      <div className="modal-box">
-        <div className="flex items-center justify-between mb-5 shrink-0">
-          <span className="text-[17px] font-bold text-(--text-1) tracking-tight">{title}</span>
-          <button onClick={onClose} className="text-(--text-3) cursor-pointer flex p-1 rounded-md transition-colors hover:text-(--text-2)">
-            <X size={14} />
-          </button>
-        </div>
-        <div className="modal-body">{children}</div>
-        {footer && <div className="pt-5 border-t border-white/[0.07] flex gap-2.5 justify-end shrink-0 mt-5">{footer}</div>}
-      </div>
-    </div>
+    <ShadAvatar className="shrink-0" style={{ width: size, height: size }}>
+      <AvatarFallback className={agent ? "bg-(--text-1) text-white" : "bg-[#F0F0F0] text-(--text-2)"} style={{ fontSize: size * 0.34 }}>
+        {ini}
+      </AvatarFallback>
+    </ShadAvatar>
   );
 }
 
@@ -678,140 +563,158 @@ function RefundModal({ order, token, onClose, onSuccess }) {
   ];
 
   return (
-    <ModalBase
-      title={`Refund — ${order.name}`}
-      onClose={onClose}
-      footer={
-        <>
+    <Dialog
+      open={true}
+      onOpenChange={(open) => {
+        if (!open) onClose();
+      }}
+    >
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{`Refund — ${order.name}`}</DialogTitle>
+        </DialogHeader>
+        {/* 3-way mode toggle */}
+        <div className="flex gap-[5px] mb-[18px] p-1 bg-(--bg-input) rounded-[11px] border border-border">
+          {MODES.map((o) => (
+            <button
+              key={o.v}
+              onClick={() => setMode(o.v)}
+              className={`flex-1 px-2.5 py-2 rounded-lg text-xs font-semibold font-[inherit] cursor-pointer transition-all border border-transparent ${mode === o.v ? "bg-(--text-1) text-white" : "bg-transparent text-(--text-3)"}`}
+            >
+              {o.l}
+            </button>
+          ))}
+        </div>
+
+        {/* Custom amount input */}
+        {mode === "custom" && (
+          <div className="mb-[18px]">
+            <label className="modal-label">Refund amount</label>
+            <div className="relative">
+              <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm font-bold text-(--text-3) pointer-events-none">€</span>
+              <input
+                type="number"
+                className="modal-input pl-7"
+                value={customAmount}
+                onChange={(e) => setCustomAmount(e.target.value)}
+                placeholder="0.00"
+                min="0"
+                step="0.01"
+                max={order.totalPrice}
+                autoFocus
+              />
+            </div>
+            {Number(customAmount) > 0 && (
+              <div className="mt-2 text-xs text-(--text-3)">
+                Max: <span className="text-(--text-2) font-semibold">{fmtPrice(order.totalPrice, order.currency)}</span>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Line items table (items + full mode) */}
+        {mode !== "custom" && (
+          <div className="mb-4">
+            <div className="grid grid-cols-[1fr_auto_auto_auto] gap-x-3 items-center pb-2 mb-1.5 border-b border-white/[0.07]">
+              <span className="info-label">Product</span>
+              <span className="info-label">Price</span>
+              <span className="info-label text-center min-w-20">Qty</span>
+              <span className="info-label text-right">Total</span>
+            </div>
+            {(order.lineItems || []).map((li) => (
+              <div key={li.id} className="li-row">
+                <div className="flex-1">
+                  <div className="text-[13px] font-semibold text-(--text-1)">{li.title}</div>
+                  {li.variantTitle && <div className="text-[11.5px] text-(--text-3)">{li.variantTitle}</div>}
+                </div>
+                <span className="text-[12.5px] text-(--text-2) min-w-[60px] text-right">{fmtPrice(li.price, order.currency)}</span>
+                <div className="flex items-center gap-1.5 min-w-20 justify-center">
+                  <button
+                    className="qty-btn"
+                    onClick={() =>
+                      setQtys((q) => ({
+                        ...q,
+                        [li.id]: Math.max(0, q[li.id] - 1),
+                      }))
+                    }
+                    disabled={!qtys[li.id] || mode === "full"}
+                  >
+                    −
+                  </button>
+                  <span className="text-[13px] font-semibold text-(--text-1) min-w-5 text-center">{qtys[li.id]}</span>
+                  <button
+                    className="qty-btn"
+                    onClick={() =>
+                      setQtys((q) => ({
+                        ...q,
+                        [li.id]: Math.min(li.quantity, q[li.id] + 1),
+                      }))
+                    }
+                    disabled={qtys[li.id] >= li.quantity || mode === "full"}
+                  >
+                    +
+                  </button>
+                  <span className="text-[11px] text-(--text-3)">/{li.quantity}</span>
+                </div>
+                <span className="text-[13px] font-bold text-(--text-1) min-w-[60px] text-right">
+                  {fmtPrice((qtys[li.id] || 0) * Number(li.price), order.currency)}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <div className="flex flex-col gap-3 mb-4">
+          {mode !== "custom" && (
+            <label className="flex items-center gap-2.5 cursor-pointer select-none">
+              <Checkbox checked={restock} onCheckedChange={() => setRestock((v) => !v)} />
+              <span className="text-[13px] text-(--text-2)">Restock items</span>
+            </label>
+          )}
+          <label className="flex items-center gap-2.5 cursor-pointer select-none">
+            <Checkbox checked={notify} onCheckedChange={() => setNotify((v) => !v)} />
+            <span className="text-[13px] text-(--text-2)">Notify customer</span>
+          </label>
+          {mode !== "custom" && (
+            <label className="flex items-center gap-2.5 cursor-pointer select-none">
+              <Checkbox checked={shipping} onCheckedChange={() => setShipping((v) => !v)} />
+              <span className="text-[13px] text-(--text-2)">Refund shipping costs</span>
+            </label>
+          )}
+        </div>
+
+        <div className="mb-4">
+          <label className="modal-label">Reason</label>
+          <select className="modal-select" value={reason} onChange={(e) => setReason(e.target.value)} required>
+            <option value="" disabled>
+              Select a reason…
+            </option>
+            {REFUND_REASONS.map((r) => (
+              <option key={r.value} value={r.value}>
+                {r.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="bg-(--bg-surface-2) border border-border rounded-xl px-[15px] py-[13px]">
+          <div className="flex justify-between">
+            <span className="text-sm font-bold text-(--text-1)">Refund total</span>
+            <span className={`text-[15px] font-extrabold ${totalRefund > 0 ? "text-green-400" : "text-(--text-3)"}`}>
+              {fmtPrice(totalRefund, order.currency)}
+            </span>
+          </div>
+        </div>
+        <DialogFooter>
           <button className="btn-ghost" onClick={onClose}>
             Cancel
           </button>
           <button className="btn-danger" onClick={handleRefund} disabled={loading || !canSubmit}>
             {loading ? <Loader2 size={13} className="animate-spin text-white" /> : "Process refund"}
           </button>
-        </>
-      }
-    >
-      {/* 3-way mode toggle */}
-      <div className="flex gap-[5px] mb-[18px] p-1 bg-(--bg-input) rounded-[11px] border border-border">
-        {MODES.map((o) => (
-          <button
-            key={o.v}
-            onClick={() => setMode(o.v)}
-            className={`flex-1 px-2.5 py-2 rounded-lg text-xs font-semibold font-[inherit] cursor-pointer transition-all border border-transparent ${mode === o.v ? "bg-(--text-1) text-white" : "bg-transparent text-(--text-3)"}`}
-          >
-            {o.l}
-          </button>
-        ))}
-      </div>
-
-      {/* Custom amount input */}
-      {mode === "custom" && (
-        <div className="mb-[18px]">
-          <label className="modal-label">Refund amount</label>
-          <div className="relative">
-            <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm font-bold text-(--text-3) pointer-events-none">€</span>
-            <input
-              type="number"
-              className="modal-input pl-7"
-              value={customAmount}
-              onChange={(e) => setCustomAmount(e.target.value)}
-              placeholder="0.00"
-              min="0"
-              step="0.01"
-              max={order.totalPrice}
-              autoFocus
-            />
-          </div>
-          {Number(customAmount) > 0 && (
-            <div className="mt-2 text-xs text-(--text-3)">
-              Max: <span className="text-(--text-2) font-semibold">{fmtPrice(order.totalPrice, order.currency)}</span>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Line items table (items + full mode) */}
-      {mode !== "custom" && (
-        <div className="mb-4">
-          <div className="grid grid-cols-[1fr_auto_auto_auto] gap-x-3 items-center pb-2 mb-1.5 border-b border-white/[0.07]">
-            <span className="info-label">Product</span>
-            <span className="info-label">Price</span>
-            <span className="info-label text-center min-w-20">Qty</span>
-            <span className="info-label text-right">Total</span>
-          </div>
-          {(order.lineItems || []).map((li) => (
-            <div key={li.id} className="li-row">
-              <div className="flex-1">
-                <div className="text-[13px] font-semibold text-(--text-1)">{li.title}</div>
-                {li.variantTitle && <div className="text-[11.5px] text-(--text-3)">{li.variantTitle}</div>}
-              </div>
-              <span className="text-[12.5px] text-(--text-2) min-w-[60px] text-right">{fmtPrice(li.price, order.currency)}</span>
-              <div className="flex items-center gap-1.5 min-w-20 justify-center">
-                <button
-                  className="qty-btn"
-                  onClick={() =>
-                    setQtys((q) => ({
-                      ...q,
-                      [li.id]: Math.max(0, q[li.id] - 1),
-                    }))
-                  }
-                  disabled={!qtys[li.id] || mode === "full"}
-                >
-                  −
-                </button>
-                <span className="text-[13px] font-semibold text-(--text-1) min-w-5 text-center">{qtys[li.id]}</span>
-                <button
-                  className="qty-btn"
-                  onClick={() =>
-                    setQtys((q) => ({
-                      ...q,
-                      [li.id]: Math.min(li.quantity, q[li.id] + 1),
-                    }))
-                  }
-                  disabled={qtys[li.id] >= li.quantity || mode === "full"}
-                >
-                  +
-                </button>
-                <span className="text-[11px] text-(--text-3)">/{li.quantity}</span>
-              </div>
-              <span className="text-[13px] font-bold text-(--text-1) min-w-[60px] text-right">
-                {fmtPrice((qtys[li.id] || 0) * Number(li.price), order.currency)}
-              </span>
-            </div>
-          ))}
-        </div>
-      )}
-
-      <div className="flex flex-col gap-3 mb-4">
-        {mode !== "custom" && <Chk checked={restock} onChange={() => setRestock((v) => !v)} label="Restock items" />}
-        <Chk checked={notify} onChange={() => setNotify((v) => !v)} label="Notify customer" />
-        {mode !== "custom" && <Chk checked={shipping} onChange={() => setShipping((v) => !v)} label="Refund shipping costs" />}
-      </div>
-
-      <div className="mb-4">
-        <label className="modal-label">Reason</label>
-        <select className="modal-select" value={reason} onChange={(e) => setReason(e.target.value)} required>
-          <option value="" disabled>
-            Select a reason…
-          </option>
-          {REFUND_REASONS.map((r) => (
-            <option key={r.value} value={r.value}>
-              {r.label}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      <div className="bg-(--bg-surface-2) border border-border rounded-xl px-[15px] py-[13px]">
-        <div className="flex justify-between">
-          <span className="text-sm font-bold text-(--text-1)">Refund total</span>
-          <span className={`text-[15px] font-extrabold ${totalRefund > 0 ? "text-green-400" : "text-(--text-3)"}`}>
-            {fmtPrice(totalRefund, order.currency)}
-          </span>
-        </div>
-      </div>
-    </ModalBase>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -840,36 +743,50 @@ function CancelModal({ order, token, onClose, onSuccess }) {
   }
 
   return (
-    <ModalBase
-      title={`Cancel order — ${order.name}`}
-      onClose={onClose}
-      footer={
-        <>
+    <Dialog
+      open={true}
+      onOpenChange={(open) => {
+        if (!open) onClose();
+      }}
+    >
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{`Cancel order — ${order.name}`}</DialogTitle>
+        </DialogHeader>
+        <div className="mb-4">
+          <label className="modal-label">Reason for cancellation</label>
+          <select className="modal-select" value={reason} onChange={(e) => setReason(e.target.value)}>
+            {CANCEL_REASONS.map((r) => (
+              <option key={r.value} value={r.value}>
+                {r.label}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="flex flex-col gap-3 mb-2">
+          <label className="flex items-center gap-2.5 cursor-pointer select-none">
+            <Checkbox checked={restock} onCheckedChange={() => setRestock((v) => !v)} />
+            <span className="text-[13px] text-(--text-2)">Restock items</span>
+          </label>
+          <label className="flex items-center gap-2.5 cursor-pointer select-none">
+            <Checkbox checked={notify} onCheckedChange={() => setNotify((v) => !v)} />
+            <span className="text-[13px] text-(--text-2)">Notify customer</span>
+          </label>
+          <label className="flex items-center gap-2.5 cursor-pointer select-none">
+            <Checkbox checked={refund} onCheckedChange={() => setRefund((v) => !v)} />
+            <span className="text-[13px] text-(--text-2)">Refund payment</span>
+          </label>
+        </div>
+        <DialogFooter>
           <button className="btn-ghost" onClick={onClose}>
             Keep order
           </button>
           <button className="btn-danger" onClick={handleCancel} disabled={loading}>
             {loading ? <Loader2 size={13} className="animate-spin text-white" /> : "Cancel order"}
           </button>
-        </>
-      }
-    >
-      <div className="mb-4">
-        <label className="modal-label">Reason for cancellation</label>
-        <select className="modal-select" value={reason} onChange={(e) => setReason(e.target.value)}>
-          {CANCEL_REASONS.map((r) => (
-            <option key={r.value} value={r.value}>
-              {r.label}
-            </option>
-          ))}
-        </select>
-      </div>
-      <div className="flex flex-col gap-3 mb-2">
-        <Chk checked={restock} onChange={() => setRestock((v) => !v)} label="Restock items" />
-        <Chk checked={notify} onChange={() => setNotify((v) => !v)} label="Notify customer" />
-        <Chk checked={refund} onChange={() => setRefund((v) => !v)} label="Refund payment" />
-      </div>
-    </ModalBase>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -913,11 +830,93 @@ function DuplicateModal({ order, token, onClose, onSuccess }) {
   }
 
   return (
-    <ModalBase
-      title={`Duplicate — ${order.name}`}
-      onClose={onClose}
-      footer={
-        <>
+    <Dialog
+      open={true}
+      onOpenChange={(open) => {
+        if (!open) onClose();
+      }}
+    >
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{`Duplicate — ${order.name}`}</DialogTitle>
+        </DialogHeader>
+        {/* Products */}
+        <div className="bg-(--bg-surface-2) border border-border rounded-xl px-3.5 py-2.5 mb-3.5">
+          {(order.lineItems || []).map((li) => (
+            <div key={li.id} className="flex justify-between py-[5px] border-b border-white/5">
+              <span className="text-[12.5px] text-(--text-2)">
+                {li.quantity}× {li.title}
+                {li.variantTitle ? ` · ${li.variantTitle}` : ""}
+              </span>
+              <span className="text-[12.5px] text-(--text-2)">{fmtPrice(Number(li.price) * li.quantity, order.currency)}</span>
+            </div>
+          ))}
+          <div className="flex justify-between pt-2 mt-1">
+            <span className="text-[12.5px] text-(--text-2)">Original</span>
+            <span className="text-[13px] font-bold text-(--text-1)">{fmtPrice(originalTotal, order.currency)}</span>
+          </div>
+        </div>
+
+        {/* Discount section */}
+        <div className="mb-3.5">
+          <label className="modal-label">Discount</label>
+          <div className={`flex gap-1.5 ${discountType !== "none" ? "mb-2.5" : "mb-0"}`}>
+            {[
+              { v: "none", l: "None" },
+              { v: "percentage", l: "Percentage %" },
+              { v: "fixed", l: "Fixed amount" },
+            ].map((o) => (
+              <button
+                key={o.v}
+                onClick={() => {
+                  setDiscountType(o.v);
+                  setDiscountValue("");
+                }}
+                className={`flex-1 px-2 py-[7px] rounded-lg text-[11.5px] font-semibold font-[inherit] cursor-pointer transition-all border border-transparent ${discountType === o.v ? "bg-(--text-1) text-white" : "bg-(--bg-input) text-(--text-3)"}`}
+              >
+                {o.l}
+              </button>
+            ))}
+          </div>
+          {discountType !== "none" && (
+            <div className="flex items-center gap-2.5">
+              <input
+                type="number"
+                className="modal-input flex-1"
+                value={discountValue}
+                onChange={(e) => setDiscountValue(e.target.value)}
+                placeholder={discountType === "percentage" ? "e.g. 10" : "e.g. 5.00"}
+                min="0"
+                max={discountType === "percentage" ? 100 : undefined}
+              />
+              <span className="text-[12.5px] font-bold text-(--text-2) shrink-0">{discountType === "percentage" ? "%" : "€"}</span>
+            </div>
+          )}
+        </div>
+
+        {/* New total preview */}
+        {discountType !== "none" && Number(discountValue) > 0 && (
+          <div className="bg-(--bg-surface-2) border border-border rounded-xl px-3.5 py-2.5 mb-3.5 flex justify-between items-center">
+            <div>
+              <div className="text-[11px] text-(--text-3) mb-[2px]">Discount</div>
+              <div className="text-[12.5px] font-bold text-rose-400">− {fmtPrice(discountAmount, order.currency)}</div>
+            </div>
+            <div className="text-right">
+              <div className="text-[11px] text-(--text-3) mb-[2px]">New total</div>
+              <div className="text-[15px] font-extrabold text-green-400">{fmtPrice(newTotal, order.currency)}</div>
+            </div>
+          </div>
+        )}
+
+        <div className="mb-3.5">
+          <label className="modal-label">Note</label>
+          <input className="modal-input" value={note} onChange={(e) => setNote(e.target.value)} />
+        </div>
+        <label className="flex items-center gap-2.5 cursor-pointer select-none">
+          <Checkbox checked={keepAddress} onCheckedChange={() => setKeepAddress((v) => !v)} />
+          <span className="text-[13px] text-(--text-2)">Copy shipping address</span>
+        </label>
+        <DialogFooter>
           <button className="btn-ghost" onClick={onClose}>
             Cancel
           </button>
@@ -931,83 +930,9 @@ function DuplicateModal({ order, token, onClose, onSuccess }) {
             )}
             Create draft
           </button>
-        </>
-      }
-    >
-      {/* Products */}
-      <div className="bg-(--bg-surface-2) border border-border rounded-xl px-3.5 py-2.5 mb-3.5">
-        {(order.lineItems || []).map((li) => (
-          <div key={li.id} className="flex justify-between py-[5px] border-b border-white/5">
-            <span className="text-[12.5px] text-(--text-2)">
-              {li.quantity}× {li.title}
-              {li.variantTitle ? ` · ${li.variantTitle}` : ""}
-            </span>
-            <span className="text-[12.5px] text-(--text-2)">{fmtPrice(Number(li.price) * li.quantity, order.currency)}</span>
-          </div>
-        ))}
-        <div className="flex justify-between pt-2 mt-1">
-          <span className="text-[12.5px] text-(--text-2)">Original</span>
-          <span className="text-[13px] font-bold text-(--text-1)">{fmtPrice(originalTotal, order.currency)}</span>
-        </div>
-      </div>
-
-      {/* Discount section */}
-      <div className="mb-3.5">
-        <label className="modal-label">Discount</label>
-        <div className={`flex gap-1.5 ${discountType !== "none" ? "mb-2.5" : "mb-0"}`}>
-          {[
-            { v: "none", l: "None" },
-            { v: "percentage", l: "Percentage %" },
-            { v: "fixed", l: "Fixed amount" },
-          ].map((o) => (
-            <button
-              key={o.v}
-              onClick={() => {
-                setDiscountType(o.v);
-                setDiscountValue("");
-              }}
-              className={`flex-1 px-2 py-[7px] rounded-lg text-[11.5px] font-semibold font-[inherit] cursor-pointer transition-all border border-transparent ${discountType === o.v ? "bg-(--text-1) text-white" : "bg-(--bg-input) text-(--text-3)"}`}
-            >
-              {o.l}
-            </button>
-          ))}
-        </div>
-        {discountType !== "none" && (
-          <div className="flex items-center gap-2.5">
-            <input
-              type="number"
-              className="modal-input flex-1"
-              value={discountValue}
-              onChange={(e) => setDiscountValue(e.target.value)}
-              placeholder={discountType === "percentage" ? "e.g. 10" : "e.g. 5.00"}
-              min="0"
-              max={discountType === "percentage" ? 100 : undefined}
-            />
-            <span className="text-[12.5px] font-bold text-(--text-2) shrink-0">{discountType === "percentage" ? "%" : "€"}</span>
-          </div>
-        )}
-      </div>
-
-      {/* New total preview */}
-      {discountType !== "none" && Number(discountValue) > 0 && (
-        <div className="bg-(--bg-surface-2) border border-border rounded-xl px-3.5 py-2.5 mb-3.5 flex justify-between items-center">
-          <div>
-            <div className="text-[11px] text-(--text-3) mb-[2px]">Discount</div>
-            <div className="text-[12.5px] font-bold text-rose-400">− {fmtPrice(discountAmount, order.currency)}</div>
-          </div>
-          <div className="text-right">
-            <div className="text-[11px] text-(--text-3) mb-[2px]">New total</div>
-            <div className="text-[15px] font-extrabold text-green-400">{fmtPrice(newTotal, order.currency)}</div>
-          </div>
-        </div>
-      )}
-
-      <div className="mb-3.5">
-        <label className="modal-label">Note</label>
-        <input className="modal-input" value={note} onChange={(e) => setNote(e.target.value)} />
-      </div>
-      <Chk checked={keepAddress} onChange={() => setKeepAddress((v) => !v)} label="Copy shipping address" />
-    </ModalBase>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -1038,61 +963,66 @@ function EditAddressModal({ order, token, onClose, onSuccess }) {
   }
 
   return (
-    <ModalBase
-      title={`Edit address — ${order.name}`}
-      onClose={onClose}
-      footer={
-        <>
+    <Dialog
+      open={true}
+      onOpenChange={(open) => {
+        if (!open) onClose();
+      }}
+    >
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{`Edit address — ${order.name}`}</DialogTitle>
+        </DialogHeader>
+        <div className="flex flex-col gap-3">
+          <div className="modal-row">
+            <div>
+              <label className="modal-label">First name</label>
+              <input className="modal-input" value={form.firstName} onChange={(e) => set("firstName", e.target.value)} />
+            </div>
+            <div>
+              <label className="modal-label">Last name</label>
+              <input className="modal-input" value={form.lastName} onChange={(e) => set("lastName", e.target.value)} />
+            </div>
+          </div>
+          <div>
+            <label className="modal-label">Address line 1</label>
+            <input className="modal-input" value={form.address1} onChange={(e) => set("address1", e.target.value)} />
+          </div>
+          <div>
+            <label className="modal-label">Address line 2 (optional)</label>
+            <input className="modal-input" value={form.address2} onChange={(e) => set("address2", e.target.value)} />
+          </div>
+          <div className="modal-row">
+            <div>
+              <label className="modal-label">City</label>
+              <input className="modal-input" value={form.city} onChange={(e) => set("city", e.target.value)} />
+            </div>
+            <div>
+              <label className="modal-label">Zip code</label>
+              <input className="modal-input" value={form.zip} onChange={(e) => set("zip", e.target.value)} />
+            </div>
+          </div>
+          <div className="modal-row">
+            <div>
+              <label className="modal-label">Country</label>
+              <input className="modal-input" value={form.country} onChange={(e) => set("country", e.target.value)} />
+            </div>
+            <div>
+              <label className="modal-label">Phone</label>
+              <input className="modal-input" value={form.phone} onChange={(e) => set("phone", e.target.value)} />
+            </div>
+          </div>
+        </div>
+        <DialogFooter>
           <button className="btn-ghost" onClick={onClose}>
             Cancel
           </button>
           <button className="btn-send" onClick={handleSave} disabled={loading}>
             {loading ? <Loader2 size={13} className="animate-spin text-white" /> : "Save"}
           </button>
-        </>
-      }
-    >
-      <div className="flex flex-col gap-3">
-        <div className="modal-row">
-          <div>
-            <label className="modal-label">First name</label>
-            <input className="modal-input" value={form.firstName} onChange={(e) => set("firstName", e.target.value)} />
-          </div>
-          <div>
-            <label className="modal-label">Last name</label>
-            <input className="modal-input" value={form.lastName} onChange={(e) => set("lastName", e.target.value)} />
-          </div>
-        </div>
-        <div>
-          <label className="modal-label">Address line 1</label>
-          <input className="modal-input" value={form.address1} onChange={(e) => set("address1", e.target.value)} />
-        </div>
-        <div>
-          <label className="modal-label">Address line 2 (optional)</label>
-          <input className="modal-input" value={form.address2} onChange={(e) => set("address2", e.target.value)} />
-        </div>
-        <div className="modal-row">
-          <div>
-            <label className="modal-label">City</label>
-            <input className="modal-input" value={form.city} onChange={(e) => set("city", e.target.value)} />
-          </div>
-          <div>
-            <label className="modal-label">Zip code</label>
-            <input className="modal-input" value={form.zip} onChange={(e) => set("zip", e.target.value)} />
-          </div>
-        </div>
-        <div className="modal-row">
-          <div>
-            <label className="modal-label">Country</label>
-            <input className="modal-input" value={form.country} onChange={(e) => set("country", e.target.value)} />
-          </div>
-          <div>
-            <label className="modal-label">Phone</label>
-            <input className="modal-input" value={form.phone} onChange={(e) => set("phone", e.target.value)} />
-          </div>
-        </div>
-      </div>
-    </ModalBase>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -1120,11 +1050,34 @@ function FulfillModal({ order, token, onClose, onSuccess }) {
   }
 
   return (
-    <ModalBase
-      title={`Fulfill order — ${order.name}`}
-      onClose={onClose}
-      footer={
-        <>
+    <Dialog
+      open={true}
+      onOpenChange={(open) => {
+        if (!open) onClose();
+      }}
+    >
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{`Fulfill order — ${order.name}`}</DialogTitle>
+        </DialogHeader>
+        <div className="flex flex-col gap-3">
+          <div className="bg-green-400/5 border border-green-400/15 rounded-xl px-3.5 py-2.5 text-[12.5px] text-green-400/80">
+            All items will be marked as fulfilled.
+          </div>
+          <div>
+            <label className="modal-label">Tracking number (optional)</label>
+            <input className="modal-input" value={trackingNumber} onChange={(e) => setTrackingNumber(e.target.value)} placeholder="e.g. 3SBME123456789" />
+          </div>
+          <div>
+            <label className="modal-label">Carrier (optional)</label>
+            <input className="modal-input" value={trackingCompany} onChange={(e) => setTrackingCompany(e.target.value)} placeholder="e.g. PostNL, DHL, UPS…" />
+          </div>
+          <label className="flex items-center gap-2.5 cursor-pointer select-none">
+            <Checkbox checked={notify} onCheckedChange={() => setNotify((v) => !v)} />
+            <span className="text-[13px] text-(--text-2)">Send shipping confirmation to customer</span>
+          </label>
+        </div>
+        <DialogFooter>
           <button className="btn-ghost" onClick={onClose}>
             Cancel
           </button>
@@ -1138,24 +1091,9 @@ function FulfillModal({ order, token, onClose, onSuccess }) {
             )}
             Mark as fulfilled
           </button>
-        </>
-      }
-    >
-      <div className="flex flex-col gap-3">
-        <div className="bg-green-400/5 border border-green-400/15 rounded-xl px-3.5 py-2.5 text-[12.5px] text-green-400/80">
-          All items will be marked as fulfilled.
-        </div>
-        <div>
-          <label className="modal-label">Tracking number (optional)</label>
-          <input className="modal-input" value={trackingNumber} onChange={(e) => setTrackingNumber(e.target.value)} placeholder="e.g. 3SBME123456789" />
-        </div>
-        <div>
-          <label className="modal-label">Carrier (optional)</label>
-          <input className="modal-input" value={trackingCompany} onChange={(e) => setTrackingCompany(e.target.value)} placeholder="e.g. PostNL, DHL, UPS…" />
-        </div>
-        <Chk checked={notify} onChange={() => setNotify((v) => !v)} label="Send shipping confirmation to customer" />
-      </div>
-    </ModalBase>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -1174,31 +1112,36 @@ function NoteModal({ order, token, onClose, onSuccess }) {
   }
 
   return (
-    <ModalBase
-      title={`Note — ${order.name}`}
-      onClose={onClose}
-      footer={
-        <>
+    <Dialog
+      open={true}
+      onOpenChange={(open) => {
+        if (!open) onClose();
+      }}
+    >
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{`Note — ${order.name}`}</DialogTitle>
+        </DialogHeader>
+        <div>
+          <label className="modal-label">Internal note (visible in Shopify)</label>
+          <textarea
+            className="modal-input resize-y min-h-[100px]"
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            rows={5}
+            placeholder="Add a note to this order…"
+          />
+        </div>
+        <DialogFooter>
           <button className="btn-ghost" onClick={onClose}>
             Cancel
           </button>
           <button className="btn-send" onClick={handleSave} disabled={loading}>
             {loading ? <Loader2 size={13} className="animate-spin text-white" /> : "Save"}
           </button>
-        </>
-      }
-    >
-      <div>
-        <label className="modal-label">Internal note (visible in Shopify)</label>
-        <textarea
-          className="modal-input resize-y min-h-[100px]"
-          value={note}
-          onChange={(e) => setNote(e.target.value)}
-          rows={5}
-          placeholder="Add a note to this order…"
-        />
-      </div>
-    </ModalBase>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -2056,7 +1999,6 @@ function InboxPage() {
   const _generateReply = useAIStore((s) => s.generateReply);
   const _translateMessage = useAIStore((s) => s.translateMessage);
   const _detectLanguage = useAIStore((s) => s.detectLanguage);
-  const [toast, setToast] = useState(null);
   const [search, setSearch] = useState("");
   const [syncing, setSyncing] = useState(false);
   const [counts, setCounts] = useState({
@@ -2074,7 +2016,6 @@ function InboxPage() {
   const [loadingCust, setLoadingCust] = useState(false);
   const [custSearch, setCustSearch] = useState("");
   const [rightTab, setRightTab] = useState("shopify");
-  const [statusMenu, setStatusMenu] = useState(false);
   // Macros — powered by Zustand store
   const macros = useMacrosStore((s) => s.macros);
   const aiMacros = useMacrosStore((s) => s.aiMacros);
@@ -2469,7 +2410,7 @@ function InboxPage() {
   // EMOJIS imported from lib/inbox-utils
 
   function showT(msg, type = "success") {
-    setToast({ msg, type });
+    type === "success" ? sonnerToast.success(msg) : sonnerToast.error(msg);
   }
 
   async function handleCustSearch(query) {
@@ -2791,15 +2732,18 @@ function InboxPage() {
                   </div>
                   <div className="flex gap-1.5 items-center shrink-0">
                     {/* Status dropdown */}
-                    <div className="relative">
-                      <button
-                        onClick={() => setStatusMenu((s) => !s)}
-                        className="flex items-center gap-1.5 px-[11px] py-[5px] rounded-[20px] cursor-pointer text-xs font-semibold font-inherit transition-all duration-150"
-                        style={{
-                          background: STATUS[getStatus(selected.id)]?.bg,
-                          border: `1px solid ${STATUS[getStatus(selected.id)]?.border}`,
-                          color: STATUS[getStatus(selected.id)]?.color,
-                        }}
+                    <DropdownMenu>
+                      <DropdownMenuTrigger
+                        render={
+                          <button
+                            className="flex items-center gap-1.5 px-[11px] py-[5px] rounded-[20px] cursor-pointer text-xs font-semibold font-inherit transition-all duration-150"
+                            style={{
+                              background: STATUS[getStatus(selected.id)]?.bg,
+                              border: `1px solid ${STATUS[getStatus(selected.id)]?.border}`,
+                              color: STATUS[getStatus(selected.id)]?.color,
+                            }}
+                          />
+                        }
                       >
                         <span
                           className="w-1.5 h-1.5 rounded-full shrink-0"
@@ -2809,11 +2753,17 @@ function InboxPage() {
                         />
                         {STATUS[getStatus(selected.id)]?.label}
                         <ChevronDown size={11} />
-                      </button>
-                      {statusMenu && (
-                        <StatusMenu current={getStatus(selected.id)} onChange={(s) => saveStatus(selected.id, s)} onClose={() => setStatusMenu(false)} />
-                      )}
-                    </div>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        {Object.entries(STATUS).map(([k, s]) => (
+                          <DropdownMenuItem key={k} onClick={() => saveStatus(selected.id, k)} style={{ color: s.color }}>
+                            <span className="w-2 h-2 rounded-full shrink-0" style={{ background: s.color }} />
+                            {s.label}
+                            {getStatus(selected.id) === k && <span className="ml-auto text-[10px] text-(--text-3)">&#10003;</span>}
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
                 </div>
                 <TicketActionBar
@@ -2855,7 +2805,7 @@ function InboxPage() {
                       className={`mb-5 flex gap-3 ${isAgent ? "flex-row-reverse" : "flex-row"}`}
                       style={{ animation: "msgIn .3s cubic-bezier(.16,1,.3,1) both" }}
                     >
-                      {!isNote && <Avatar name={name} size={26} agent={isAgent} />}
+                      {!isNote && <InboxAvatar name={name} size={26} agent={isAgent} />}
                       <div className="max-w-[72%]">
                         <div className={`text-xs mb-[5px] ${isAgent ? "text-right" : "text-left"}`}>
                           <span className="msg-sender">{name}</span>
@@ -3252,7 +3202,7 @@ function InboxPage() {
             {/* Customer header */}
             <div className="px-3.5 py-4 border-b border-border shrink-0">
               <div className="flex items-center gap-2.5">
-                <Avatar
+                <InboxAvatar
                   name={
                     customer?.customer
                       ? `${customer.customer.firstName || ""} ${customer.customer.lastName || ""}`.trim() || extractName(selected.from)
@@ -3816,8 +3766,6 @@ function InboxPage() {
       )}
       {modal?.type === "note" && <NoteModal order={modal.order} token={session.access_token} onClose={() => setModal(null)} onSuccess={handleModalSuccess} />}
 
-      {toast && <Toast msg={toast.msg} type={toast.type} onDone={() => setToast(null)} />}
-
       {/* Macro Manager overlay */}
       {showMacroManager && (
         <MacroManager
@@ -3826,11 +3774,11 @@ function InboxPage() {
           onClose={() => setShowMacroManager(false)}
           onSaveMacro={(m) => {
             saveMacro(m);
-            setToast({ msg: "Macro saved", type: "success" });
+            sonnerToast.success("Macro saved");
           }}
           onDeleteMacro={(id) => {
             deleteMacro(id);
-            setToast({ msg: "Macro deleted", type: "info" });
+            sonnerToast("Macro deleted");
           }}
           onToggleFav={toggleMacroFav}
         />

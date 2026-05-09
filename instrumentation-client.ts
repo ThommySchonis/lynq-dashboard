@@ -10,6 +10,20 @@ Sentry.init({
   // Enable sending user PII (Personally Identifiable Information)
   // https://docs.sentry.io/platforms/javascript/guides/nextjs/configuration/options/#sendDefaultPii
   sendDefaultPii: true,
+
+  // Drop the noise that isn't actionable for us:
+  //   - ResizeObserver loop messages: benign browser warnings
+  //   - Network/Abort errors: client offline or user-cancelled requests
+  //   - ChunkLoadError: stale client cache after a deploy (already self-heals on reload)
+  ignoreErrors: [
+    'ResizeObserver loop limit exceeded',
+    'ResizeObserver loop completed with undelivered notifications',
+    'Network request failed',
+    'NetworkError',
+    'ChunkLoadError',
+    'Loading chunk',
+    'AbortError',
+  ],
 });
 
 export const onRouterTransitionStart = Sentry.captureRouterTransitionStart;

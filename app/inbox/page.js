@@ -1,20 +1,22 @@
 "use client";
 
-import { Avatar as ShadAvatar, AvatarFallback } from "@/components/ui/avatar";
+import { MacroManager } from "@/components/features/inbox/macro-manager";
+import { MacroPanel } from "@/components/features/inbox/macro-panel";
+import { TicketActionBar } from "@/components/features/inbox/ticket-action-bar";
+import { CancelModal } from "@/components/shared/modals/cancel-modal";
+import { DuplicateModal } from "@/components/shared/modals/duplicate-modal";
+import { EditAddressModal } from "@/components/shared/modals/edit-address-modal";
+import { FulfillModal } from "@/components/shared/modals/fulfill-modal";
+import { NoteModal } from "@/components/shared/modals/note-modal";
+import { RefundModal } from "@/components/shared/modals/refund-modal";
+import { AvatarFallback, Avatar as ShadAvatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import { toast as sonnerToast } from "sonner";
 import {
-  Archive,
   Calendar,
   Check,
   ChevronDown,
-  ChevronLeft,
-  ChevronRight,
-  Clock,
   Copy,
   ExternalLink,
   FileText,
@@ -22,7 +24,6 @@ import {
   ImageIcon,
   LayoutGrid,
   Link2,
-  List,
   Loader2,
   Mail,
   MapPin,
@@ -36,11 +37,8 @@ import {
   RotateCcw,
   Search,
   Send,
-  Settings,
   Smile,
   SquarePen,
-  Star,
-  Trash2,
   Truck,
   User,
   X,
@@ -49,16 +47,16 @@ import {
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useRef, useState } from "react";
+import { toast as sonnerToast } from "sonner";
 import {
   authFetch,
-  CANCEL_REASONS,
   EMOJIS,
   extractEmail,
   extractName,
   fmtPrice,
   relTime as formatDate,
+  normalizeSafeUrl,
   plainTextToSafeHtml,
-  REFUND_REASONS,
   sanitizeHtml,
 } from "../../lib/inbox-utils";
 import { supabase } from "../../lib/supabase";
@@ -150,1825 +148,6 @@ function InboxAvatar({ name = "?", size = 32, agent = false }) {
   );
 }
 
-// ─── Compose View (full-screen inline, no backdrop) ──────────
-// ─── Create Ticket (full-screen inline view) ──────────────────
-function CreateTicketView({ token, connectedEmail, onClose, onSuccess, macros = [] }) {
-  const [to, setTo] = useState("");
-  const [subject, setSubject] = useState("");
-  const [body, setBody] = useState("");
-  const [sending, setSending] = useState(false);
-  const [showCC, setShowCC] = useState(false);
-  const [cc, setCC] = useState("");
-  const [bcc, setBcc] = useState("");
-  const [tags, setTags] = useState([]);
-  const [tagInput, setTagInput] = useState("");
-  const [showTagInput, setShowTagInput] = useState(false);
-  const [macroSearch, setMacroSearch] = useState("");
-  const [showMacroDD, setShowMacroDD] = useState(false);
-  const bodyRef = useRef(null);
-  const macroRef = useRef(null);
-
-  useEffect(() => {
-    function h(e) {
-      if (e.key === "Escape") onClose();
-    }
-    document.addEventListener("keydown", h);
-    return () => document.removeEventListener("keydown", h);
-  }, [onClose]);
-  useEffect(() => {
-    setTimeout(() => bodyRef.current?.focus(), 150);
-  }, []);
-
-  function fmt(cmd, val) {
-    bodyRef.current?.focus();
-    document.execCommand(cmd, false, val || null);
-  }
-  function insertLink() {
-    const url = normalizeSafeUrl(prompt("URL:"));
-    if (!url) {
-      onSuccess("Only http, https, or mailto links are allowed", "error");
-      return;
-    }
-    fmt("createLink", url);
-  }
-  function applyMacro(m) {
-    if (!bodyRef.current) return;
-    bodyRef.current.innerHTML = plainTextToSafeHtml(m.body);
-    setBody(m.body);
-    setMacroSearch("");
-    setShowMacroDD(false);
-    bodyRef.current?.focus();
-  }
-
-  async function doSend() {
-    if (!to.trim()) {
-      onSuccess("Please enter a recipient", "error");
-      return;
-    }
-    setSending(true);
-    const safeBody = sanitizeHtml(bodyRef.current?.innerHTML || "");
-    const res = await authFetch(
-      "/api/inbox/compose",
-      {
-        method: "POST",
-        body: JSON.stringify({
-          to: to.trim(),
-          subject: subject.trim(),
-          bodyHtml: safeBody,
-          bodyText: bodyRef.current?.textContent || "",
-          cc: cc.trim() || undefined,
-          bcc: bcc.trim() || undefined,
-        }),
-      },
-      token,
-    );
-    const data = await res.json();
-    setSending(false);
-    if (data.success || data.id || data.conversationId) {
-      onSuccess("Message sent!");
-      onClose();
-    } else onSuccess(data.error || "Failed to send", "error");
-  }
-
-  const liveMacros = Array.isArray(macros) ? macros.filter((m) => !m.archived) : [];
-  const macroHits = macroSearch
-    ? liveMacros.filter((m) => (m.name + m.body + (m.tags || []).join(" ")).toLowerCase().includes(macroSearch.toLowerCase())).slice(0, 8)
-    : [];
-  const suggested = liveMacros.slice(0, 5);
-
-  return (
-    <div className="flex-1 flex flex-col overflow-hidden border-l border-border bg-(--bg-surface) relative z-[1]">
-      {/* ── Top bar: Subject + controls ── */}
-      <div className="border-b border-border shrink-0">
-        {/* Row 1 */}
-        <div className="flex items-center px-3.5 py-2.5 gap-2">
-          <input
-            value={subject}
-            onChange={(e) => setSubject(e.target.value)}
-            placeholder="Subject"
-            className="flex-1 bg-transparent border-none outline-none text-sm font-semibold text-(--text-1) font-[inherit] min-w-0"
-          />
-          {/* Priority */}
-          <div className="flex items-center gap-1 px-[9px] py-[3px] rounded-md border border-border text-[11.5px] text-(--text-2) cursor-default whitespace-nowrap shrink-0">
-            <Zap size={9} />
-            normal
-          </div>
-          {/* Prev/Next */}
-          <button className="bg-none border border-border rounded-md px-[7px] py-1 cursor-pointer text-(--text-2) flex shrink-0" title="Previous">
-            <ChevronLeft size={11} />
-          </button>
-          <button className="bg-none border border-border rounded-md px-[7px] py-1 cursor-pointer text-(--text-2) flex shrink-0" title="Next">
-            <ChevronRight size={11} />
-          </button>
-          {/* Customer search */}
-          <div className="flex items-center gap-1.5 bg-(--bg-input) border border-border rounded-lg px-2.5 py-[5px] w-60 shrink-0">
-            <Search size={11} className="text-(--text-3)" />
-            <input
-              placeholder="Search customers by email, order..."
-              className="bg-transparent border-none outline-none text-[11.5px] text-(--text-1) font-[inherit] w-full"
-            />
-          </div>
-          {/* Settings */}
-          <button className="bg-none border border-border rounded-md px-[7px] py-[5px] cursor-pointer text-(--text-2) flex shrink-0" title="Settings">
-            <Settings size={15} />
-          </button>
-          {/* Unassigned */}
-          <button className="flex items-center gap-[5px] px-2.5 py-1 bg-(--bg-input) border border-border rounded-[7px] text-[11.5px] text-(--text-2) cursor-pointer font-[inherit] whitespace-nowrap shrink-0">
-            Unassigned
-            <ChevronDown size={10} />
-          </button>
-          {/* Close */}
-          <button onClick={onClose} className="bg-none border-none cursor-pointer text-(--text-3) p-1 flex shrink-0">
-            <X size={15} />
-          </button>
-        </div>
-
-        {/* Row 2: Tags + metadata */}
-        <div className="flex items-center px-3.5 py-1.5 gap-3.5 text-xs text-(--text-2) border-t border-border flex-wrap">
-          <div className="flex items-center gap-1.5 flex-wrap">
-            {tags.map((t) => (
-              <span
-                key={t}
-                className="inline-flex items-center gap-1 bg-(--bg-input) border border-border rounded-[5px] px-[7px] py-[1px] text-[11.5px] text-(--text-1)"
-              >
-                {t}
-                <button
-                  onClick={() => setTags((p) => p.filter((x) => x !== t))}
-                  className="bg-none border-none cursor-pointer text-(--text-3) p-0 leading-none flex"
-                >
-                  <X size={9} />
-                </button>
-              </span>
-            ))}
-            <button
-              onClick={() => setShowTagInput((v) => !v)}
-              className="inline-flex items-center gap-[3px] bg-none border-none cursor-pointer text-(--text-2) text-[11.5px] font-[inherit] p-0"
-            >
-              <Plus size={10} />
-              Add tags
-            </button>
-            {showTagInput && (
-              <input
-                autoFocus
-                value={tagInput}
-                onChange={(e) => setTagInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if ((e.key === "Enter" || e.key === ",") && tagInput.trim()) {
-                    setTags((p) => [...new Set([...p, tagInput.trim()])]);
-                    setTagInput("");
-                    if (e.key === ",") e.preventDefault();
-                  }
-                  if (e.key === "Escape") setShowTagInput(false);
-                }}
-                placeholder="tag name…"
-                className="bg-transparent border-none border-b border-b-(--border-hover) outline-none text-[11.5px] text-(--text-1) font-[inherit] w-[84px]"
-              />
-            )}
-          </div>
-          <div className="w-px h-[13px] bg-(--border) shrink-0" />
-          <span>
-            Contact reason: <button className="text-(--text-2) bg-none border-none cursor-pointer font-[inherit] text-xs p-0">+Add</button>
-          </span>
-          <div className="w-px h-[13px] bg-(--border) shrink-0" />
-          <span>
-            Product: <button className="text-(--text-2) bg-none border-none cursor-pointer font-[inherit] text-xs p-0">+Add</button>
-          </span>
-          <div className="w-px h-[13px] bg-(--border) shrink-0" />
-          <span>
-            Resolution: <button className="text-(--text-2) bg-none border-none cursor-pointer font-[inherit] text-xs p-0">+Add</button>
-          </span>
-        </div>
-      </div>
-
-      {/* ── Empty thread area ── */}
-      <div className="flex-1 overflow-y-auto min-h-5" />
-
-      {/* ── Bottom compose section ── */}
-      <div className="border-t border-border shrink-0">
-        {/* To row */}
-        <div className="flex items-center px-3.5 py-2 border-b border-border gap-2">
-          <span className="text-[10.5px] font-bold text-(--text-3) tracking-[.08em] uppercase w-[38px] shrink-0">To</span>
-          <input
-            value={to}
-            onChange={(e) => setTo(e.target.value)}
-            placeholder="Search customers..."
-            autoFocus
-            className="flex-1 bg-transparent border-none outline-none text-[13px] text-(--text-1) font-[inherit]"
-          />
-          <button
-            onClick={() => setShowCC((v) => !v)}
-            className={`text-[10.5px] font-semibold border border-border rounded-[5px] px-[9px] py-[2px] cursor-pointer font-[inherit] shrink-0 transition-all ${showCC ? "text-(--text-1) bg-(--bg-surface-2)" : "text-(--text-3) bg-none"}`}
-          >
-            Cc / Bcc
-          </button>
-        </div>
-
-        {/* From row */}
-        {connectedEmail && (
-          <div className="flex items-center px-3.5 py-2 border-b border-border gap-2">
-            <span className="text-[10.5px] font-bold text-(--text-3) tracking-[.08em] uppercase w-[38px] shrink-0">From</span>
-            <span className="text-[13px] text-(--text-2)">{connectedEmail}</span>
-          </div>
-        )}
-
-        {/* CC + Bcc row */}
-        {showCC && (
-          <div className="flex items-center px-3.5 py-2 border-b border-border gap-2 bg-(--bg-input)">
-            <span className="text-[10.5px] font-bold text-(--text-3) tracking-[.08em] uppercase w-[38px] shrink-0">CC</span>
-            <input
-              value={cc}
-              onChange={(e) => setCC(e.target.value)}
-              placeholder="cc@email.com"
-              className="flex-1 bg-transparent border-none outline-none text-[13px] text-(--text-1) font-[inherit]"
-            />
-            <span className="text-[10.5px] font-bold text-(--text-3) tracking-[.08em] uppercase w-[38px] shrink-0">BCC</span>
-            <input
-              value={bcc}
-              onChange={(e) => setBcc(e.target.value)}
-              placeholder="bcc@email.com"
-              className="flex-1 bg-transparent border-none outline-none text-[13px] text-(--text-1) font-[inherit]"
-            />
-          </div>
-        )}
-
-        {/* Macro search row */}
-        <div className="flex items-center px-3.5 py-[7px] border-b border-border gap-2 relative">
-          <Plus size={13} className="text-(--text-3)" />
-          <input
-            ref={macroRef}
-            value={macroSearch}
-            onChange={(e) => {
-              setMacroSearch(e.target.value);
-              setShowMacroDD(true);
-            }}
-            onFocus={() => setShowMacroDD(true)}
-            onBlur={() => setTimeout(() => setShowMacroDD(false), 160)}
-            placeholder="Search macros by name, tags or body..."
-            className="flex-1 bg-transparent border-none outline-none text-[13px] text-(--text-1) font-[inherit]"
-          />
-          {macroSearch && (
-            <button
-              onMouseDown={(e) => {
-                e.preventDefault();
-                setMacroSearch("");
-                setShowMacroDD(false);
-              }}
-              className="bg-none border-none cursor-pointer text-(--text-3) p-[2px] flex"
-            >
-              <X size={11} />
-            </button>
-          )}
-          <ChevronDown size={11} className="text-(--text-3)" />
-          {showMacroDD && macroHits.length > 0 && (
-            <div className="absolute bottom-[calc(100%+3px)] left-0 right-0 bg-(--bg-surface) border border-border rounded-xl shadow-[0_-8px_24px_rgba(0,0,0,0.1)] z-[60] max-h-[220px] overflow-y-auto p-1">
-              {macroHits.map((m) => (
-                <button
-                  key={m.id}
-                  onMouseDown={() => applyMacro(m)}
-                  className="block w-full text-left px-[11px] py-2 bg-none border-none cursor-pointer rounded-[7px] font-[inherit] transition-[background] duration-100 hover:bg-(--bg-input)"
-                >
-                  <div className="text-[12.5px] font-semibold text-(--text-1)">{m.name}</div>
-                  <div className="text-[11.5px] text-(--text-2) overflow-hidden text-ellipsis whitespace-nowrap mt-px">{m.body?.replace(/\n/g, " ")}</div>
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Rich text body */}
-        <div
-          ref={bodyRef}
-          contentEditable
-          suppressContentEditableWarning
-          data-placeholder="Click here to reply, or press r."
-          onInput={(e) => setBody(e.currentTarget.textContent)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) doSend();
-          }}
-          className="compose-ta w-full resize-none outline-none bg-transparent px-4 py-3 text-sm text-(--text-1) leading-relaxed min-h-[90px] tracking-[.005em] min-h-[130px] px-4 py-3 text-[13.5px] leading-[1.75] overflow-y-auto"
-        />
-
-        {/* Suggested macros */}
-        {!body && suggested.length > 0 && (
-          <div className="px-3.5 pt-[7px] pb-2 border-t border-border flex items-center gap-[7px] flex-wrap">
-            <Clock size={11} className="text-(--text-3)" />
-            <span className="text-[11px] text-(--text-3) font-medium">Suggested macros</span>
-            {suggested.map((m) => (
-              <button
-                key={m.id}
-                onClick={() => applyMacro(m)}
-                className="px-2.5 py-[2px] bg-(--bg-input) border border-border rounded-full text-[11.5px] text-(--text-1) cursor-pointer font-[inherit] transition-[border-color] hover:border-(--border-hover)"
-              >
-                {m.name}
-              </button>
-            ))}
-          </div>
-        )}
-
-        {/* Toolbar + Send buttons */}
-        <div className="flex items-center px-3 py-[7px] border-t border-border gap-[3px]">
-          <button className="min-w-[30px] h-[30px] flex items-center justify-center rounded-[7px] cursor-pointer text-xs font-bold text-(--text-3) transition-all hover:bg-(--bg-surface-2) hover:text-(--text-1) font-bold min-w-[26px] text-xs" onMouseDown={(e) => e.preventDefault()} onClick={() => fmt("bold")} title="Bold">
-            B
-          </button>
-          <button className="min-w-[30px] h-[30px] flex items-center justify-center rounded-[7px] cursor-pointer text-xs font-bold text-(--text-3) transition-all hover:bg-(--bg-surface-2) hover:text-(--text-1) italic min-w-[26px] text-xs" onMouseDown={(e) => e.preventDefault()} onClick={() => fmt("italic")} title="Italic">
-            I
-          </button>
-          <button
-            className="min-w-[30px] h-[30px] flex items-center justify-center rounded-[7px] cursor-pointer text-xs font-bold text-(--text-3) transition-all hover:bg-(--bg-surface-2) hover:text-(--text-1) underline min-w-[26px] text-xs"
-            onMouseDown={(e) => e.preventDefault()}
-            onClick={() => fmt("underline")}
-            title="Underline"
-          >
-            U
-          </button>
-          <div className="w-px h-3.5 bg-(--border) mx-[3px]" />
-          <button className="min-w-[30px] h-[30px] flex items-center justify-center rounded-[7px] cursor-pointer text-xs font-bold text-(--text-3) transition-all hover:bg-(--bg-surface-2) hover:text-(--text-1)" onMouseDown={(e) => e.preventDefault()} onClick={insertLink} title="Link">
-            <Link2 size={12} />
-          </button>
-          <button className="min-w-[30px] h-[30px] flex items-center justify-center rounded-[7px] cursor-pointer text-xs font-bold text-(--text-3) transition-all hover:bg-(--bg-surface-2) hover:text-(--text-1)" onMouseDown={(e) => e.preventDefault()} onClick={() => fmt("insertUnorderedList")} title="Bullet list">
-            <List size={12} />
-          </button>
-          <div className="flex-1" />
-          {/* Send button group */}
-          <div className="flex items-stretch rounded-[9px] overflow-hidden gap-px shrink-0">
-            <button
-              onClick={doSend}
-              disabled={sending}
-              className={`flex items-center gap-1.5 px-4 py-[7px] bg-(--text-1) text-white border-none text-[12.5px] font-semibold font-[inherit] transition-[background] ${sending ? "cursor-not-allowed opacity-70" : "cursor-pointer opacity-100"}`}
-            >
-              {sending ? (
-                <>
-                  <RefreshCw size={11} className="animate-spin" />
-                  Sending…
-                </>
-              ) : (
-                <>Send</>
-              )}
-            </button>
-            <div className="w-px bg-white/15 shrink-0" />
-            <button
-              onClick={doSend}
-              disabled={sending}
-              className={`flex items-center gap-[5px] px-4 py-[7px] bg-(--text-1) text-white border-none text-[12.5px] font-semibold font-[inherit] transition-[background] whitespace-nowrap ${sending ? "cursor-not-allowed opacity-70" : "cursor-pointer opacity-100"}`}
-            >
-              Send &amp; Close
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ─── Refund Modal ─────────────────────────────────────────────
-function RefundModal({ order, token, onClose, onSuccess }) {
-  const [mode, setMode] = useState("items"); // 'items' | 'full' | 'custom'
-  const [qtys, setQtys] = useState(Object.fromEntries((order.lineItems || []).map((li) => [li.id, 0])));
-  const [customAmount, setCustomAmount] = useState("");
-  const [restock, setRestock] = useState(false);
-  const [notify, setNotify] = useState(true);
-  const [reason, setReason] = useState("");
-  const [shipping, setShipping] = useState(false);
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    if (mode === "full") setQtys(Object.fromEntries((order.lineItems || []).map((li) => [li.id, li.quantity])));
-    else if (mode === "items") setQtys(Object.fromEntries((order.lineItems || []).map((li) => [li.id, 0])));
-  }, [mode]);
-
-  const itemsTotal = (order.lineItems || []).reduce((s, li) => s + (qtys[li.id] || 0) * Number(li.price), 0);
-  const totalRefund = mode === "custom" ? Number(customAmount) || 0 : itemsTotal;
-  const canSubmit = reason && (mode === "custom" ? Number(customAmount) > 0 : totalRefund > 0);
-
-  async function handleRefund() {
-    setLoading(true);
-    let body;
-    if (mode === "custom") {
-      body = { customAmount: Number(customAmount), notify, reason };
-    } else {
-      const lineItems = (order.lineItems || []).filter((li) => qtys[li.id] > 0).map((li) => ({ lineItemId: li.id, quantity: qtys[li.id] }));
-      body = { lineItems, restock, notify, reason, shipping };
-    }
-    const res = await authFetch(`/api/shopify/orders/${order.id}/refund`, { method: "POST", body: JSON.stringify(body) }, token);
-    const data = await res.json();
-    setLoading(false);
-    if (data.success) onSuccess("Refund processed!");
-    else onSuccess(data.error || "Refund failed", "error");
-  }
-
-  const MODES = [
-    { v: "items", l: "By items" },
-    { v: "full", l: "Full refund" },
-    { v: "custom", l: "Custom amount" },
-  ];
-
-  return (
-    <Dialog
-      open={true}
-      onOpenChange={(open) => {
-        if (!open) onClose();
-      }}
-    >
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{`Refund — ${order.name}`}</DialogTitle>
-        </DialogHeader>
-        {/* 3-way mode toggle */}
-        <div className="flex gap-[5px] mb-[18px] p-1 bg-(--bg-input) rounded-[11px] border border-border">
-          {MODES.map((o) => (
-            <button
-              key={o.v}
-              onClick={() => setMode(o.v)}
-              className={`flex-1 px-2.5 py-2 rounded-lg text-xs font-semibold font-[inherit] cursor-pointer transition-all border border-transparent ${mode === o.v ? "bg-(--text-1) text-white" : "bg-transparent text-(--text-3)"}`}
-            >
-              {o.l}
-            </button>
-          ))}
-        </div>
-
-        {/* Custom amount input */}
-        {mode === "custom" && (
-          <div className="mb-[18px]">
-            <label className="text-[10.5px] font-bold tracking-[.07em] uppercase text-(--text-3) mb-[7px] block">Refund amount</label>
-            <div className="relative">
-              <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm font-bold text-(--text-3) pointer-events-none">€</span>
-              <Input
-                type="number"
-                className="w-full bg-(--bg-surface-2) border border-(--border) rounded-xl px-3.5 py-[11px] text-[13.5px] text-(--text-1) outline-none pl-7"
-                value={customAmount}
-                onChange={(e) => setCustomAmount(e.target.value)}
-                placeholder="0.00"
-                min="0"
-                step="0.01"
-                max={order.totalPrice}
-                autoFocus
-              />
-            </div>
-            {Number(customAmount) > 0 && (
-              <div className="mt-2 text-xs text-(--text-3)">
-                Max: <span className="text-(--text-2) font-semibold">{fmtPrice(order.totalPrice, order.currency)}</span>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Line items table (items + full mode) */}
-        {mode !== "custom" && (
-          <div className="mb-4">
-            <div className="grid grid-cols-[1fr_auto_auto_auto] gap-x-3 items-center pb-2 mb-1.5 border-b border-white/[0.07]">
-              <span className="text-[10px] font-bold text-(--text-3) tracking-[.07em] uppercase">Product</span>
-              <span className="text-[10px] font-bold text-(--text-3) tracking-[.07em] uppercase">Price</span>
-              <span className="text-[10px] font-bold text-(--text-3) tracking-[.07em] uppercase text-center min-w-20">Qty</span>
-              <span className="text-[10px] font-bold text-(--text-3) tracking-[.07em] uppercase text-right">Total</span>
-            </div>
-            {(order.lineItems || []).map((li) => (
-              <div key={li.id} className="flex items-center gap-3 py-[11px] border-b border-(--border) last:border-b-0">
-                <div className="flex-1">
-                  <div className="text-[13px] font-semibold text-(--text-1)">{li.title}</div>
-                  {li.variantTitle && <div className="text-[11.5px] text-(--text-3)">{li.variantTitle}</div>}
-                </div>
-                <span className="text-[12.5px] text-(--text-2) min-w-[60px] text-right">{fmtPrice(li.price, order.currency)}</span>
-                <div className="flex items-center gap-1.5 min-w-20 justify-center">
-                  <button
-                    className="w-7 h-7 rounded-[7px] bg-(--bg-surface-2) border border-(--border) text-(--text-2) text-[15px] cursor-pointer flex items-center justify-center transition-all hover:border-(--border-hover) hover:text-(--text-1) disabled:opacity-[.28] disabled:cursor-not-allowed"
-                    onClick={() =>
-                      setQtys((q) => ({
-                        ...q,
-                        [li.id]: Math.max(0, q[li.id] - 1),
-                      }))
-                    }
-                    disabled={!qtys[li.id] || mode === "full"}
-                  >
-                    −
-                  </button>
-                  <span className="text-[13px] font-semibold text-(--text-1) min-w-5 text-center">{qtys[li.id]}</span>
-                  <button
-                    className="w-7 h-7 rounded-[7px] bg-(--bg-surface-2) border border-(--border) text-(--text-2) text-[15px] cursor-pointer flex items-center justify-center transition-all hover:border-(--border-hover) hover:text-(--text-1) disabled:opacity-[.28] disabled:cursor-not-allowed"
-                    onClick={() =>
-                      setQtys((q) => ({
-                        ...q,
-                        [li.id]: Math.min(li.quantity, q[li.id] + 1),
-                      }))
-                    }
-                    disabled={qtys[li.id] >= li.quantity || mode === "full"}
-                  >
-                    +
-                  </button>
-                  <span className="text-[11px] text-(--text-3)">/{li.quantity}</span>
-                </div>
-                <span className="text-[13px] font-bold text-(--text-1) min-w-[60px] text-right">
-                  {fmtPrice((qtys[li.id] || 0) * Number(li.price), order.currency)}
-                </span>
-              </div>
-            ))}
-          </div>
-        )}
-
-        <div className="flex flex-col gap-3 mb-4">
-          {mode !== "custom" && (
-            <label className="flex items-center gap-2.5 cursor-pointer select-none">
-              <Checkbox checked={restock} onCheckedChange={() => setRestock((v) => !v)} />
-              <span className="text-[13px] text-(--text-2)">Restock items</span>
-            </label>
-          )}
-          <label className="flex items-center gap-2.5 cursor-pointer select-none">
-            <Checkbox checked={notify} onCheckedChange={() => setNotify((v) => !v)} />
-            <span className="text-[13px] text-(--text-2)">Notify customer</span>
-          </label>
-          {mode !== "custom" && (
-            <label className="flex items-center gap-2.5 cursor-pointer select-none">
-              <Checkbox checked={shipping} onCheckedChange={() => setShipping((v) => !v)} />
-              <span className="text-[13px] text-(--text-2)">Refund shipping costs</span>
-            </label>
-          )}
-        </div>
-
-        <div className="mb-4">
-          <label className="text-[10.5px] font-bold tracking-[.07em] uppercase text-(--text-3) mb-[7px] block">Reason</label>
-          <select className="w-full bg-(--bg-surface-2) border border-(--border) rounded-xl px-3.5 py-[11px] text-[13.5px] text-(--text-1) outline-none cursor-pointer" value={reason} onChange={(e) => setReason(e.target.value)} required>
-            <option value="" disabled>
-              Select a reason…
-            </option>
-            {REFUND_REASONS.map((r) => (
-              <option key={r.value} value={r.value}>
-                {r.label}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="bg-(--bg-surface-2) border border-border rounded-xl px-[15px] py-[13px]">
-          <div className="flex justify-between">
-            <span className="text-sm font-bold text-(--text-1)">Refund total</span>
-            <span className={`text-[15px] font-extrabold ${totalRefund > 0 ? "text-green-400" : "text-(--text-3)"}`}>
-              {fmtPrice(totalRefund, order.currency)}
-            </span>
-          </div>
-        </div>
-        <DialogFooter>
-          <Button variant="outline" className="" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button variant="destructive" onClick={handleRefund} disabled={loading || !canSubmit}>
-            {loading ? <Loader2 size={13} className="animate-spin text-white" /> : "Process refund"}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-// ─── Cancel Modal ─────────────────────────────────────────────
-function CancelModal({ order, token, onClose, onSuccess }) {
-  const [reason, setReason] = useState("customer");
-  const [restock, setRestock] = useState(true);
-  const [notify, setNotify] = useState(true);
-  const [refund, setRefund] = useState(true);
-  const [loading, setLoading] = useState(false);
-
-  async function handleCancel() {
-    setLoading(true);
-    const res = await authFetch(
-      `/api/shopify/orders/${order.id}/cancel`,
-      {
-        method: "POST",
-        body: JSON.stringify({ reason, restock, notify, refund }),
-      },
-      token,
-    );
-    const data = await res.json();
-    setLoading(false);
-    if (data.success) onSuccess("Order cancelled");
-    else onSuccess(data.error || "Failed to cancel order", "error");
-  }
-
-  return (
-    <Dialog
-      open={true}
-      onOpenChange={(open) => {
-        if (!open) onClose();
-      }}
-    >
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{`Cancel order — ${order.name}`}</DialogTitle>
-        </DialogHeader>
-        <div className="mb-4">
-          <label className="text-[10.5px] font-bold tracking-[.07em] uppercase text-(--text-3) mb-[7px] block">Reason for cancellation</label>
-          <select className="w-full bg-(--bg-surface-2) border border-(--border) rounded-xl px-3.5 py-[11px] text-[13.5px] text-(--text-1) outline-none cursor-pointer" value={reason} onChange={(e) => setReason(e.target.value)}>
-            {CANCEL_REASONS.map((r) => (
-              <option key={r.value} value={r.value}>
-                {r.label}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="flex flex-col gap-3 mb-2">
-          <label className="flex items-center gap-2.5 cursor-pointer select-none">
-            <Checkbox checked={restock} onCheckedChange={() => setRestock((v) => !v)} />
-            <span className="text-[13px] text-(--text-2)">Restock items</span>
-          </label>
-          <label className="flex items-center gap-2.5 cursor-pointer select-none">
-            <Checkbox checked={notify} onCheckedChange={() => setNotify((v) => !v)} />
-            <span className="text-[13px] text-(--text-2)">Notify customer</span>
-          </label>
-          <label className="flex items-center gap-2.5 cursor-pointer select-none">
-            <Checkbox checked={refund} onCheckedChange={() => setRefund((v) => !v)} />
-            <span className="text-[13px] text-(--text-2)">Refund payment</span>
-          </label>
-        </div>
-        <DialogFooter>
-          <Button variant="outline" className="" onClick={onClose}>
-            Keep order
-          </Button>
-          <Button variant="destructive" onClick={handleCancel} disabled={loading}>
-            {loading ? <Loader2 size={13} className="animate-spin text-white" /> : "Cancel order"}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-// ─── Duplicate Modal ──────────────────────────────────────────
-function DuplicateModal({ order, token, onClose, onSuccess }) {
-  const [note, setNote] = useState(`Duplicate of ${order.name}`);
-  const [keepAddress, setKeepAddress] = useState(true);
-  const [discountType, setDiscountType] = useState("none"); // 'none' | 'percentage' | 'fixed'
-  const [discountValue, setDiscountValue] = useState("");
-  const [loading, setLoading] = useState(false);
-
-  const originalTotal = Number(order.totalPrice) || 0;
-  const discountAmount =
-    discountType === "percentage"
-      ? (originalTotal * (Number(discountValue) || 0)) / 100
-      : discountType === "fixed"
-        ? Math.min(Number(discountValue) || 0, originalTotal)
-        : 0;
-  const newTotal = Math.max(0, originalTotal - discountAmount);
-
-  async function handleDuplicate() {
-    setLoading(true);
-    const res = await authFetch(
-      `/api/shopify/orders/${order.id}/duplicate`,
-      {
-        method: "POST",
-        body: JSON.stringify({
-          keepAddress,
-          note,
-          tags: "",
-          discountType: discountType !== "none" ? discountType : undefined,
-          discountValue: discountType !== "none" ? Number(discountValue) : undefined,
-        }),
-      },
-      token,
-    );
-    const data = await res.json();
-    setLoading(false);
-    if (data.success) onSuccess(`Draft ${data.draftOrder?.name || ""} created!`);
-    else onSuccess(data.error || "Duplicate failed", "error");
-  }
-
-  return (
-    <Dialog
-      open={true}
-      onOpenChange={(open) => {
-        if (!open) onClose();
-      }}
-    >
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{`Duplicate — ${order.name}`}</DialogTitle>
-        </DialogHeader>
-        {/* Products */}
-        <div className="bg-(--bg-surface-2) border border-border rounded-xl px-3.5 py-2.5 mb-3.5">
-          {(order.lineItems || []).map((li) => (
-            <div key={li.id} className="flex justify-between py-[5px] border-b border-white/5">
-              <span className="text-[12.5px] text-(--text-2)">
-                {li.quantity}× {li.title}
-                {li.variantTitle ? ` · ${li.variantTitle}` : ""}
-              </span>
-              <span className="text-[12.5px] text-(--text-2)">{fmtPrice(Number(li.price) * li.quantity, order.currency)}</span>
-            </div>
-          ))}
-          <div className="flex justify-between pt-2 mt-1">
-            <span className="text-[12.5px] text-(--text-2)">Original</span>
-            <span className="text-[13px] font-bold text-(--text-1)">{fmtPrice(originalTotal, order.currency)}</span>
-          </div>
-        </div>
-
-        {/* Discount section */}
-        <div className="mb-3.5">
-          <label className="text-[10.5px] font-bold tracking-[.07em] uppercase text-(--text-3) mb-[7px] block">Discount</label>
-          <div className={`flex gap-1.5 ${discountType !== "none" ? "mb-2.5" : "mb-0"}`}>
-            {[
-              { v: "none", l: "None" },
-              { v: "percentage", l: "Percentage %" },
-              { v: "fixed", l: "Fixed amount" },
-            ].map((o) => (
-              <button
-                key={o.v}
-                onClick={() => {
-                  setDiscountType(o.v);
-                  setDiscountValue("");
-                }}
-                className={`flex-1 px-2 py-[7px] rounded-lg text-[11.5px] font-semibold font-[inherit] cursor-pointer transition-all border border-transparent ${discountType === o.v ? "bg-(--text-1) text-white" : "bg-(--bg-input) text-(--text-3)"}`}
-              >
-                {o.l}
-              </button>
-            ))}
-          </div>
-          {discountType !== "none" && (
-            <div className="flex items-center gap-2.5">
-              <Input
-                type="number"
-                className="w-full bg-(--bg-surface-2) border border-(--border) rounded-xl px-3.5 py-[11px] text-[13.5px] text-(--text-1) outline-none flex-1"
-                value={discountValue}
-                onChange={(e) => setDiscountValue(e.target.value)}
-                placeholder={discountType === "percentage" ? "e.g. 10" : "e.g. 5.00"}
-                min="0"
-                max={discountType === "percentage" ? 100 : undefined}
-              />
-              <span className="text-[12.5px] font-bold text-(--text-2) shrink-0">{discountType === "percentage" ? "%" : "€"}</span>
-            </div>
-          )}
-        </div>
-
-        {/* New total preview */}
-        {discountType !== "none" && Number(discountValue) > 0 && (
-          <div className="bg-(--bg-surface-2) border border-border rounded-xl px-3.5 py-2.5 mb-3.5 flex justify-between items-center">
-            <div>
-              <div className="text-[11px] text-(--text-3) mb-[2px]">Discount</div>
-              <div className="text-[12.5px] font-bold text-rose-400">− {fmtPrice(discountAmount, order.currency)}</div>
-            </div>
-            <div className="text-right">
-              <div className="text-[11px] text-(--text-3) mb-[2px]">New total</div>
-              <div className="text-[15px] font-extrabold text-green-400">{fmtPrice(newTotal, order.currency)}</div>
-            </div>
-          </div>
-        )}
-
-        <div className="mb-3.5">
-          <label className="text-[10.5px] font-bold tracking-[.07em] uppercase text-(--text-3) mb-[7px] block">Note</label>
-          <Input className="w-full bg-(--bg-surface-2) border border-(--border) rounded-xl px-3.5 py-[11px] text-[13.5px] text-(--text-1) outline-none" value={note} onChange={(e) => setNote(e.target.value)} />
-        </div>
-        <label className="flex items-center gap-2.5 cursor-pointer select-none">
-          <Checkbox checked={keepAddress} onCheckedChange={() => setKeepAddress((v) => !v)} />
-          <span className="text-[13px] text-(--text-2)">Copy shipping address</span>
-        </label>
-        <DialogFooter>
-          <Button variant="outline" className="" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button className="flex items-center gap-[7px]" onClick={handleDuplicate} disabled={loading}>
-            {loading ? (
-              <Loader2 size={13} className="animate-spin text-white" />
-            ) : (
-              <span className="flex">
-                <Copy size={12} />
-              </span>
-            )}
-            Create draft
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-// ─── Edit Address Modal ───────────────────────────────────────
-function EditAddressModal({ order, token, onClose, onSuccess }) {
-  const sa = order.shippingAddress || {};
-  const [form, setForm] = useState({
-    firstName: sa.firstName || "",
-    lastName: sa.lastName || "",
-    address1: sa.address1 || "",
-    address2: sa.address2 || "",
-    city: sa.city || "",
-    zip: sa.zip || "",
-    country: sa.country || "",
-    countryCode: sa.countryCode || "",
-    phone: sa.phone || "",
-  });
-  const [loading, setLoading] = useState(false);
-  const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
-
-  async function handleSave() {
-    setLoading(true);
-    const res = await authFetch(`/api/shopify/orders/${order.id}/address`, { method: "PUT", body: JSON.stringify(form) }, token);
-    const data = await res.json();
-    setLoading(false);
-    if (data.success) onSuccess("Address updated");
-    else onSuccess(data.error || "Failed to save address", "error");
-  }
-
-  return (
-    <Dialog
-      open={true}
-      onOpenChange={(open) => {
-        if (!open) onClose();
-      }}
-    >
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{`Edit address — ${order.name}`}</DialogTitle>
-        </DialogHeader>
-        <div className="flex flex-col gap-3">
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-[10.5px] font-bold tracking-[.07em] uppercase text-(--text-3) mb-[7px] block">First name</label>
-              <Input className="w-full bg-(--bg-surface-2) border border-(--border) rounded-xl px-3.5 py-[11px] text-[13.5px] text-(--text-1) outline-none" value={form.firstName} onChange={(e) => set("firstName", e.target.value)} />
-            </div>
-            <div>
-              <label className="text-[10.5px] font-bold tracking-[.07em] uppercase text-(--text-3) mb-[7px] block">Last name</label>
-              <Input className="w-full bg-(--bg-surface-2) border border-(--border) rounded-xl px-3.5 py-[11px] text-[13.5px] text-(--text-1) outline-none" value={form.lastName} onChange={(e) => set("lastName", e.target.value)} />
-            </div>
-          </div>
-          <div>
-            <label className="text-[10.5px] font-bold tracking-[.07em] uppercase text-(--text-3) mb-[7px] block">Address line 1</label>
-            <Input className="w-full bg-(--bg-surface-2) border border-(--border) rounded-xl px-3.5 py-[11px] text-[13.5px] text-(--text-1) outline-none" value={form.address1} onChange={(e) => set("address1", e.target.value)} />
-          </div>
-          <div>
-            <label className="text-[10.5px] font-bold tracking-[.07em] uppercase text-(--text-3) mb-[7px] block">Address line 2 (optional)</label>
-            <Input className="w-full bg-(--bg-surface-2) border border-(--border) rounded-xl px-3.5 py-[11px] text-[13.5px] text-(--text-1) outline-none" value={form.address2} onChange={(e) => set("address2", e.target.value)} />
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-[10.5px] font-bold tracking-[.07em] uppercase text-(--text-3) mb-[7px] block">City</label>
-              <Input className="w-full bg-(--bg-surface-2) border border-(--border) rounded-xl px-3.5 py-[11px] text-[13.5px] text-(--text-1) outline-none" value={form.city} onChange={(e) => set("city", e.target.value)} />
-            </div>
-            <div>
-              <label className="text-[10.5px] font-bold tracking-[.07em] uppercase text-(--text-3) mb-[7px] block">Zip code</label>
-              <Input className="w-full bg-(--bg-surface-2) border border-(--border) rounded-xl px-3.5 py-[11px] text-[13.5px] text-(--text-1) outline-none" value={form.zip} onChange={(e) => set("zip", e.target.value)} />
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-[10.5px] font-bold tracking-[.07em] uppercase text-(--text-3) mb-[7px] block">Country</label>
-              <Input className="w-full bg-(--bg-surface-2) border border-(--border) rounded-xl px-3.5 py-[11px] text-[13.5px] text-(--text-1) outline-none" value={form.country} onChange={(e) => set("country", e.target.value)} />
-            </div>
-            <div>
-              <label className="text-[10.5px] font-bold tracking-[.07em] uppercase text-(--text-3) mb-[7px] block">Phone</label>
-              <Input className="w-full bg-(--bg-surface-2) border border-(--border) rounded-xl px-3.5 py-[11px] text-[13.5px] text-(--text-1) outline-none" value={form.phone} onChange={(e) => set("phone", e.target.value)} />
-            </div>
-          </div>
-        </div>
-        <DialogFooter>
-          <Button variant="outline" className="" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button className="" onClick={handleSave} disabled={loading}>
-            {loading ? <Loader2 size={13} className="animate-spin text-white" /> : "Save"}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-// ─── Fulfill Modal ────────────────────────────────────────────
-function FulfillModal({ order, token, onClose, onSuccess }) {
-  const [trackingNumber, setTrackingNumber] = useState("");
-  const [trackingCompany, setTrackingCompany] = useState("");
-  const [notify, setNotify] = useState(true);
-  const [loading, setLoading] = useState(false);
-
-  async function handleFulfill() {
-    setLoading(true);
-    const res = await authFetch(
-      `/api/shopify/orders/${order.id}/fulfill`,
-      {
-        method: "POST",
-        body: JSON.stringify({ trackingNumber, trackingCompany, notify }),
-      },
-      token,
-    );
-    const data = await res.json();
-    setLoading(false);
-    if (data.success) onSuccess("Order marked as fulfilled");
-    else onSuccess(data.error || "Failed to fulfill order", "error");
-  }
-
-  return (
-    <Dialog
-      open={true}
-      onOpenChange={(open) => {
-        if (!open) onClose();
-      }}
-    >
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{`Fulfill order — ${order.name}`}</DialogTitle>
-        </DialogHeader>
-        <div className="flex flex-col gap-3">
-          <div className="bg-green-400/5 border border-green-400/15 rounded-xl px-3.5 py-2.5 text-[12.5px] text-green-400/80">
-            All items will be marked as fulfilled.
-          </div>
-          <div>
-            <label className="text-[10.5px] font-bold tracking-[.07em] uppercase text-(--text-3) mb-[7px] block">Tracking number (optional)</label>
-            <Input className="w-full bg-(--bg-surface-2) border border-(--border) rounded-xl px-3.5 py-[11px] text-[13.5px] text-(--text-1) outline-none" value={trackingNumber} onChange={(e) => setTrackingNumber(e.target.value)} placeholder="e.g. 3SBME123456789" />
-          </div>
-          <div>
-            <label className="text-[10.5px] font-bold tracking-[.07em] uppercase text-(--text-3) mb-[7px] block">Carrier (optional)</label>
-            <Input className="w-full bg-(--bg-surface-2) border border-(--border) rounded-xl px-3.5 py-[11px] text-[13.5px] text-(--text-1) outline-none" value={trackingCompany} onChange={(e) => setTrackingCompany(e.target.value)} placeholder="e.g. PostNL, DHL, UPS…" />
-          </div>
-          <label className="flex items-center gap-2.5 cursor-pointer select-none">
-            <Checkbox checked={notify} onCheckedChange={() => setNotify((v) => !v)} />
-            <span className="text-[13px] text-(--text-2)">Send shipping confirmation to customer</span>
-          </label>
-        </div>
-        <DialogFooter>
-          <Button variant="outline" className="" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button className="flex items-center gap-[7px]" onClick={handleFulfill} disabled={loading}>
-            {loading ? (
-              <Loader2 size={13} className="animate-spin text-white" />
-            ) : (
-              <span className="flex">
-                <Truck size={12} />
-              </span>
-            )}
-            Mark as fulfilled
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-// ─── Note Modal ───────────────────────────────────────────────
-function NoteModal({ order, token, onClose, onSuccess }) {
-  const [note, setNote] = useState(order.note || "");
-  const [loading, setLoading] = useState(false);
-
-  async function handleSave() {
-    setLoading(true);
-    const res = await authFetch(`/api/shopify/orders/${order.id}/note`, { method: "PUT", body: JSON.stringify({ note }) }, token);
-    const data = await res.json();
-    setLoading(false);
-    if (data.success) onSuccess("Note saved");
-    else onSuccess(data.error || "Failed to save note", "error");
-  }
-
-  return (
-    <Dialog
-      open={true}
-      onOpenChange={(open) => {
-        if (!open) onClose();
-      }}
-    >
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{`Note — ${order.name}`}</DialogTitle>
-        </DialogHeader>
-        <div>
-          <label className="text-[10.5px] font-bold tracking-[.07em] uppercase text-(--text-3) mb-[7px] block">Internal note (visible in Shopify)</label>
-          <textarea className="w-full bg-(--bg-surface-2) border border-(--border) rounded-xl px-3.5 py-[11px] text-[13.5px] text-(--text-1) outline-none resize-y min-h-[100px]"
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-            rows={5}
-            placeholder="Add a note to this order…"
-          />
-        </div>
-        <DialogFooter>
-          <Button variant="outline" className="" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button className="" onClick={handleSave} disabled={loading}>
-            {loading ? <Loader2 size={13} className="animate-spin text-white" /> : "Save"}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-// ─── Ticket action bar ────────────────────────────────────────
-function TicketActionBar({ meta, status, onClose, onAddTag, onRemoveTag, onFieldChange }) {
-  const fieldButton = (key, label) => (
-    <button
-      onClick={() => onFieldChange(key, label)}
-      className="inline-flex items-center gap-1 border-none bg-transparent p-0 text-[10.5px] text-(--text-3) font-[inherit]"
-    >
-      <span className="text-(--text-2) font-semibold">{label}:</span>
-      <span>{meta[key] || "+Add"}</span>
-    </button>
-  );
-
-  return (
-    <div className="flex items-center gap-2 pt-2 mt-[9px] border-t border-(--border) min-h-[42px] flex-wrap">
-      <button
-        onClick={onClose}
-        className="inline-flex items-center gap-[5px] h-[26px] px-2.5 border border-black/9 rounded-[5px] bg-[#FAFAFA] text-(--text-2) text-xs font-semibold font-[inherit]"
-        title="Close ticket"
-      >
-        <span className="text-xs">✓</span>
-        {status === "closed" ? "Closed" : "Close"}
-      </button>
-
-      <div className="flex items-center gap-1.5 flex-wrap">
-        {(meta.tags || []).map((tag) => (
-          <button
-            key={tag}
-            onClick={() => onRemoveTag(tag)}
-            title="Remove tag"
-            className="inline-flex items-center gap-1 h-[22px] px-2 border border-black/9 rounded-full bg-[#F5F5F5] text-(--text-2) text-[11px] font-medium font-[inherit]"
-          >
-            {tag}
-            <span className="text-(--text-3)">×</span>
-          </button>
-        ))}
-        <button onClick={onAddTag} className="border-none bg-transparent text-[10.5px] text-(--text-3) font-[inherit] p-0">
-          +Add tag
-        </button>
-      </div>
-
-      <div className="grid grid-cols-[minmax(120px,1fr)_minmax(120px,1fr)_minmax(120px,1fr)] gap-[18px] flex-[1_1_420px] min-w-[320px]">
-        {fieldButton("contactReason", "Contact reason")}
-        {fieldButton("product", "Product")}
-        {fieldButton("resolution", "Resolution")}
-      </div>
-
-      <select
-        value={meta.assignee || "Unassigned"}
-        onChange={(e) => onFieldChange("assignee", e.target.value)}
-        className="ml-auto border border-(--border) rounded-lg bg-(--bg-surface) text-(--text-2) text-[11px] py-1 px-2 font-[inherit] outline-none"
-      >
-        <option>Unassigned</option>
-        <option>Support</option>
-        <option>Admin</option>
-        <option>Escalated</option>
-      </select>
-    </div>
-  );
-}
-
-// ─── Macro Panel ──────────────────────────────────────────────
-function MacroPanel({ macros, aiMacros, onInsert, onClose, customerName, onManage, onCreateNew, favs, onToggleFav }) {
-  const [search, setSearch] = useState("");
-  const [selected, setSelected] = useState(null);
-  const [gearOpen, setGearOpen] = useState(false);
-  const searchRef = useRef(null);
-  const gearRef = useRef(null);
-
-  useEffect(() => {
-    searchRef.current?.focus();
-  }, []);
-  useEffect(() => {
-    function h(e) {
-      if (e.key === "Escape") {
-        if (gearOpen) setGearOpen(false);
-        else onClose();
-      }
-    }
-    document.addEventListener("keydown", h);
-    return () => document.removeEventListener("keydown", h);
-  }, [onClose, gearOpen]);
-  useEffect(() => {
-    if (!gearOpen) return;
-    function h(e) {
-      if (gearRef.current && !gearRef.current.contains(e.target)) setGearOpen(false);
-    }
-    document.addEventListener("mousedown", h);
-    return () => document.removeEventListener("mousedown", h);
-  }, [gearOpen]);
-
-  function toggleFav(id, e) {
-    e.stopPropagation();
-    onToggleFav(id);
-  }
-
-  const filtered = macros.filter((m) => !search || (m.name + m.body + (m.tags || []).join("")).toLowerCase().includes(search.toLowerCase()));
-  const favMacros = filtered.filter((m) => favs.includes(m.id));
-  const nonFavMacros = filtered.filter((m) => !favs.includes(m.id));
-  const active = selected || filtered[0] || null;
-
-  const StarIcon = ({ filled }) => <Star size={13} fill={filled ? "#f59e0b" : "none"} stroke={filled ? "#f59e0b" : "currentColor"} />;
-
-  function applyMacro(m) {
-    const firstName = (customerName || "").split(" ")[0] || "there";
-    const body = m.body.replace(/{{name}}/gi, firstName).replace(/{{firstname}}/gi, firstName);
-    onInsert(body);
-  }
-
-  function renderPreview(body) {
-    return body.split(/({{[^}]+}})/).map((part, i) =>
-      part.match(/{{[^}]+}}/) ? (
-        <span key={i} className="macro-var">
-          {part}
-        </span>
-      ) : (
-        <span key={i}>{part}</span>
-      ),
-    );
-  }
-
-  return (
-    <div className="border-t border-(--border) animate-[fadeUp_.18s_ease_both] flex flex-col h-[min(360px,46vh)] min-h-[220px] bg-(--bg-surface)">
-      {/* Search + gear row */}
-      <div className="flex items-center gap-2 py-2 px-3 border-b border-(--border) bg-(--bg-surface-2) shrink-0">
-        <span className="text-(--text-3) flex shrink-0">
-          <Zap size={13} />
-        </span>
-        <input
-          ref={searchRef}
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search macros by name, tag or content…"
-          className="flex-1 bg-transparent border-none outline-none text-[12.5px] text-(--text-1) font-[inherit]"
-        />
-        {aiMacros?.length > 0 && (
-          <span className="text-[10px] font-bold py-0.5 px-[7px] rounded-[5px] bg-(--bg-surface-2) text-(--text-2) tracking-[.04em] shrink-0">AI ✦</span>
-        )}
-        {/* Gear settings */}
-        <div ref={gearRef} className="relative shrink-0">
-          <button
-            onClick={() => setGearOpen((p) => !p)}
-            style={{
-              color: gearOpen ? "var(--text-1)" : "var(--text-2)",
-              display: "flex",
-              padding: "5px 6px",
-              borderRadius: 6,
-              background: gearOpen ? "var(--bg-surface-2)" : "transparent",
-              border: gearOpen ? "1px solid var(--border)" : "1px solid transparent",
-              transition: "all .15s",
-            }}
-            onMouseEnter={(e) => {
-              if (!gearOpen) {
-                e.currentTarget.style.background = "var(--bg-surface)";
-                e.currentTarget.style.border = "1px solid var(--border)";
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (!gearOpen) {
-                e.currentTarget.style.background = "transparent";
-                e.currentTarget.style.border = "1px solid transparent";
-              }
-            }}
-            title="Macro settings"
-          >
-            <Settings size={15} />
-          </button>
-          {gearOpen && (
-            <div className="macro-gear-menu">
-              <button
-                className="macro-gear-item"
-                onClick={() => {
-                  setGearOpen(false);
-                  onManage();
-                }}
-              >
-                <FileText size={13} />
-                Manage macros
-              </button>
-              <button
-                className="macro-gear-item"
-                onClick={() => {
-                  setGearOpen(false);
-                  active && onManage(active);
-                }}
-              >
-                <SquarePen size={13} />
-                Edit macro
-              </button>
-              <button
-                className="macro-gear-item"
-                onClick={() => {
-                  setGearOpen(false);
-                  onCreateNew();
-                }}
-              >
-                <Plus size={13} />
-                Create new macro
-              </button>
-              <div className="macro-gear-divider" />
-              <button
-                className="macro-gear-item danger"
-                onClick={() => {
-                  setGearOpen(false);
-                  active && confirm("Delete this macro?") && onDeleteMacro && onDeleteMacro(active.id);
-                }}
-              >
-                <Trash2 size={13} />
-                Delete macro
-              </button>
-              <div className="macro-gear-divider" />
-              <button
-                className="macro-gear-item"
-                onClick={() => {
-                  setGearOpen(false);
-                  onManage();
-                }}
-              >
-                <User size={13} />
-                My macro preferences
-              </button>
-            </div>
-          )}
-        </div>
-        <button
-          onClick={onClose}
-          className="flex py-[5px] px-1.5 rounded-md border border-transparent transition-all duration-150"
-          style={{ color: "var(--text-2)" }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.color = "var(--text-1)";
-            e.currentTarget.style.background = "var(--bg-surface)";
-            e.currentTarget.style.border = "1px solid var(--border)";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.color = "var(--text-2)";
-            e.currentTarget.style.background = "transparent";
-            e.currentTarget.style.border = "1px solid transparent";
-          }}
-        >
-          <X size={14} />
-        </button>
-      </div>
-
-      {/* Two-panel — fills remaining height */}
-      <div className="flex-1 flex overflow-hidden">
-        {/* List */}
-        <div className="w-[230px] border-r border-(--border) overflow-y-auto shrink-0 sscroll border-r border-(--border)">
-          {aiMacros?.length > 0 && (
-            <>
-              <div className="macro-suggest">AI suggestions ✦</div>
-              {aiMacros.map((m) => (
-                <div
-                  key={m.id}
-                  className={`macro-item${active?.id === m.id ? " mi-active" : ""}`}
-                  onClick={() => setSelected(m)}
-                  onDoubleClick={() => applyMacro(m)}
-                >
-                  <div className="flex items-start gap-1.5">
-                    <div className="flex-1 min-w-0">
-                      <div className="text-[12.5px] font-semibold text-(--text-1) mb-[3px]">{m.name}</div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-              <div className="h-px bg-(--border) my-1" />
-            </>
-          )}
-          {filtered.length === 0 && <div className="py-5 px-3.5 text-xs text-(--text-3) text-center">No macros found</div>}
-          {/* Favorites section */}
-          {favMacros.length > 0 && (
-            <>
-              <div className="macro-suggest flex items-center gap-1">
-                <Star size={9} fill="#f59e0b" stroke="#f59e0b" />
-                Favorites
-              </div>
-              {favMacros.map((m) => (
-                <div
-                  key={m.id}
-                  className={`macro-item${active?.id === m.id ? " mi-active" : ""}`}
-                  onClick={() => setSelected(m)}
-                  onDoubleClick={() => applyMacro(m)}
-                >
-                  <div className="flex items-start gap-1.5">
-                    <div className="flex-1 min-w-0">
-                      <div className="text-[12.5px] font-semibold text-(--text-1) mb-[3px]">{m.name}</div>
-                      <div className="flex gap-1 flex-wrap">
-                        {(m.tags || []).map((t) => (
-                          <span key={t} className="text-[10px] font-semibold px-1.5 py-[1px] rounded bg-(--bg-surface-2) text-(--text-3)">
-                            {t}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                    <button className="macro-star fav mt-px" onClick={(e) => toggleFav(m.id, e)} title="Remove from favorites">
-                      <StarIcon filled />
-                    </button>
-                  </div>
-                </div>
-              ))}
-              {nonFavMacros.length > 0 && <div className="h-px bg-(--border) my-1" />}
-            </>
-          )}
-          {/* All / remaining macros */}
-          {nonFavMacros.length > 0 && (
-            <>
-              {favMacros.length > 0 && <div className="macro-suggest">All macros</div>}
-              {nonFavMacros.map((m) => (
-                <div
-                  key={m.id}
-                  className={`macro-item${active?.id === m.id ? " mi-active" : ""}`}
-                  onClick={() => setSelected(m)}
-                  onDoubleClick={() => applyMacro(m)}
-                >
-                  <div className="flex items-start gap-1.5">
-                    <div className="flex-1 min-w-0">
-                      <div className="text-[12.5px] font-semibold text-(--text-1) mb-[3px]">{m.name}</div>
-                      <div className="flex gap-1 flex-wrap">
-                        {(m.tags || []).map((t) => (
-                          <span key={t} className="text-[10px] font-semibold px-1.5 py-[1px] rounded bg-(--bg-surface-2) text-(--text-3)">
-                            {t}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                    <button className="macro-star mt-px" onClick={(e) => toggleFav(m.id, e)} title="Add to favorites">
-                      <StarIcon filled={false} />
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </>
-          )}
-        </div>
-
-        {/* Preview — no buttons here */}
-        {active ? (
-          <div className="flex-1 px-4 py-3.5 overflow-y-auto text-[13px] leading-[1.75] text-(--text-2) whitespace-pre-wrap sscroll flex-1">{renderPreview(active.body)}</div>
-        ) : (
-          <div className="flex-1 flex items-center justify-center text-(--text-3) text-[12.5px]">Select a macro to preview</div>
-        )}
-      </div>
-
-      {/* Full-width footer — always visible, connected to bottom of panel */}
-      <div className="border-t border-(--border) py-2 px-3.5 flex items-center justify-end gap-2 shrink-0 bg-(--bg-surface)">
-        <Button variant="outline" className="text-[11.5px] py-1.5 px-3.5" onClick={onClose}>
-          Close
-        </Button>
-        <button
-          className="btn-send text-[11.5px] py-1.5 px-4"
-          style={{
-            opacity: active ? 1 : 0.45,
-            cursor: active ? "pointer" : "default",
-          }}
-          onClick={() => active && applyMacro(active)}
-        >
-          Insert
-        </button>
-      </div>
-    </div>
-  );
-}
-
-// ─── Macro Editor ─────────────────────────────────────────────
-function MacroEditor({ macro, onSave, onDuplicate, onDelete, onBack }) {
-  const isNew = !macro?.id;
-  const [name, setName] = useState(macro?.name || "");
-  const [body, setBody] = useState(macro?.body || "");
-  const [tags, setTags] = useState((macro?.tags || []).join(", "));
-  const [language, setLang] = useState(macro?.language || "English");
-  const [tagInput, setTagInput] = useState((macro?.tags || []).join(", "));
-  const bodyRef = useRef(null);
-
-  useEffect(() => {
-    if (bodyRef.current) bodyRef.current.value = macro?.body || "";
-  }, []);
-
-  function insertVar(v) {
-    const ta = bodyRef.current;
-    if (!ta) return;
-    const s = ta.selectionStart,
-      e = ta.selectionEnd;
-    const newVal = ta.value.slice(0, s) + v + ta.value.slice(e);
-    ta.value = newVal;
-    setBody(newVal);
-    ta.focus();
-    ta.setSelectionRange(s + v.length, s + v.length);
-  }
-
-  function handleSave() {
-    if (!name.trim()) return;
-    const t = tagInput
-      .split(",")
-      .map((s) => s.trim())
-      .filter(Boolean);
-    onSave({
-      id: macro?.id || `m_${Date.now()}`,
-      name: name.trim(),
-      body: bodyRef.current?.value || body,
-      tags: t,
-      language,
-      usageCount: macro?.usageCount || 0,
-      updatedAt: new Date().toISOString(),
-      archived: macro?.archived || false,
-    });
-  }
-
-  const VARS = [
-    { label: "Customer first name", value: "{{name}}" },
-    { label: "Order number", value: "{{order_number}}" },
-    { label: "Tracking link", value: "{{tracking_link}}" },
-    { label: "Agent name", value: "{{agent_name}}" },
-  ];
-
-  return (
-    <div className="flex-1 flex flex-col overflow-auto bg-(--bg-page)">
-      {/* Top bar */}
-      <div className="flex items-center gap-2.5 py-3.5 px-6 border-b border-(--border) bg-(--bg-surface) shrink-0">
-        <Button variant="ghost" size="sm" onClick={onBack} className="flex items-center gap-[5px] text-(--text-2) text-[13px] py-1 px-0 font-[inherit]">
-          <ChevronLeft size={16} />
-          Back
-        </Button>
-        <span className="text-(--border) text-[16px]">|</span>
-        <span className="text-sm font-semibold text-(--text-1)">{isNew ? "Create macro" : `Edit: ${macro.name}`}</span>
-      </div>
-
-      {/* Form */}
-      <div className="max-w-[860px] w-full mx-auto py-8 px-6 flex gap-8">
-        {/* Left col — main */}
-        <div className="flex-1 flex flex-col gap-5">
-          {/* Name */}
-          <div>
-            <label className="block text-xs font-semibold text-(--text-2) mb-1.5">
-              Macro name <span className="text-(--danger)">*</span>
-            </label>
-            <Input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. Delivery - Delay"
-              className="w-full py-[9px] px-3 border border-(--border) rounded-lg text-[13px] text-(--text-1) bg-(--bg-surface) font-[inherit]"
-            />
-            <div className="text-[11px] text-(--text-3) mt-[5px]">Name that all agents will see while searching for it</div>
-          </div>
-
-          {/* Response text */}
-          <div>
-            <label className="block text-xs font-semibold text-(--text-2) mb-1.5">Response text</label>
-            {/* Recipient row */}
-            <div className="flex items-center gap-2 py-[7px] px-3 rounded-t-lg border border-(--border) border-b-0 bg-(--bg-surface-2) text-xs text-(--text-2)">
-              <span className="font-semibold">To:</span>
-              <span className="py-0.5 px-2 rounded-[5px] bg-(--bg-surface-2) text-(--text-2) font-semibold text-[11px] border border-(--border)">
-                Current client
-              </span>
-            </div>
-            {/* Toolbar */}
-            <div className="flex items-center gap-0.5 py-[5px] px-2.5 border border-(--border) border-b-0 bg-(--bg-surface) flex-wrap">
-              {["B", "I", "U"].map((f) => (
-                <button
-                  key={f}
-                  style={{
-                    fontWeight: f === "B" ? 700 : 400,
-                    fontStyle: f === "I" ? "italic" : "normal",
-                    textDecoration: f === "U" ? "underline" : "none",
-                  }}
-                  className="py-[3px] px-[7px] rounded-[5px] border border-transparent bg-none text-(--text-2) text-[13px] font-[inherit]"
-                >
-                  {f}
-                </button>
-              ))}
-              <span className="w-px h-4 bg-(--border) mx-1" />
-              {VARS.map((v) => (
-                <button
-                  key={v.value}
-                  onClick={() => insertVar(v.value)}
-                  className="py-0.5 px-2 rounded-[5px] border border-(--border) bg-(--bg-surface-2) text-(--text-2) text-[11px] font-medium font-[inherit] whitespace-nowrap"
-                >
-                  {v.label}
-                </button>
-              ))}
-            </div>
-            {/* Body */}
-            <textarea
-              ref={bodyRef}
-              defaultValue={macro?.body || ""}
-              onChange={(e) => setBody(e.target.value)}
-              placeholder="Write your macro response here. Use the variable buttons above to insert dynamic values."
-              className="w-full min-h-[200px] py-3 px-3.5 border border-(--border) rounded-b-lg resize-y text-[13px] leading-[1.75] text-(--text-1) bg-(--bg-surface) font-[inherit] outline-none"
-            />
-          </div>
-
-          {/* Tags */}
-          <div>
-            <label className="block text-xs font-semibold text-(--text-2) mb-1.5">
-              Tags <span className="text-[11px] font-normal text-(--text-3)">(comma separated)</span>
-            </label>
-            <Input
-              value={tagInput}
-              onChange={(e) => setTagInput(e.target.value)}
-              placeholder="e.g. shipping, support"
-              className="w-full py-[9px] px-3 border border-(--border) rounded-lg text-[13px] text-(--text-1) bg-(--bg-surface) font-[inherit]"
-            />
-          </div>
-
-          {/* Actions row */}
-          <div className="flex items-center justify-between pt-2 border-t border-(--border)">
-            <div className="flex gap-2">
-              <Button
-                onClick={handleSave}
-                className="py-[9px] px-[18px] rounded-lg border-none bg-(--text-1) text-(--bg-surface) font-semibold text-[13px] font-[inherit]"
-              >
-                {isNew ? "Create macro" : "Update macro"}
-              </Button>
-              {!isNew && (
-                <Button
-                  variant="outline"
-                  onClick={() => onDuplicate(macro)}
-                  className="py-[9px] px-4 rounded-lg border border-(--border) bg-(--bg-surface) text-(--text-1) font-medium text-[13px] font-[inherit]"
-                >
-                  Duplicate macro
-                </Button>
-              )}
-            </div>
-            <div className="flex gap-2">
-              {!isNew && (
-                <Button
-                  variant="destructive"
-                  onClick={() => onDelete(macro.id)}
-                  className="py-[9px] px-4 rounded-lg border border-[rgba(220,38,38,0.3)] bg-[rgba(220,38,38,0.06)] text-(--danger) font-medium text-[13px] font-[inherit]"
-                >
-                  Delete macro
-                </Button>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Right col — language */}
-        <div className="w-[220px] shrink-0 flex flex-col gap-4">
-          <div>
-            <label className="block text-xs font-semibold text-(--text-2) mb-1.5">Language</label>
-            <select
-              value={language}
-              onChange={(e) => setLang(e.target.value)}
-              className="w-full py-[9px] px-3 border border-(--border) rounded-lg text-[13px] text-(--text-1) bg-(--bg-surface) font-[inherit] outline-none cursor-pointer"
-            >
-              {["English", "Dutch", "German", "French", "Spanish", "Italian", "Portuguese"].map((l) => (
-                <option key={l} value={l}>
-                  {l}
-                </option>
-              ))}
-            </select>
-            <div className="text-[11px] text-(--text-3) mt-[5px]">Language in which this macro is written</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ─── Macro Manager ─────────────────────────────────────────────
-function MacroManager({ macros, favs, onClose, onSaveMacro, onDeleteMacro, onToggleFav }) {
-  const [tab, setTab] = useState("active");
-  const [search, setSearch] = useState("");
-  const [langFilter, setLangF] = useState("all");
-  const [tagFilter, setTagF] = useState("all");
-  const [editing, setEditing] = useState(null); // null=list, 'new'=create, macro=edit
-
-  const allTags = [...new Set(macros.flatMap((m) => m.tags || []))].sort();
-  const allLangs = [...new Set(macros.map((m) => m.language || "English"))].sort();
-
-  const visible = macros.filter((m) => {
-    if (tab === "active" && m.archived) return false;
-    if (tab === "archived" && !m.archived) return false;
-    if (search && !(m.name + m.body + (m.tags || []).join("")).toLowerCase().includes(search.toLowerCase())) return false;
-    if (langFilter !== "all" && m.language !== langFilter) return false;
-    if (tagFilter !== "all" && !(m.tags || []).includes(tagFilter)) return false;
-    return true;
-  });
-
-  function handleSave(m) {
-    onSaveMacro(m);
-    setEditing(null);
-  }
-  function handleDuplicate(m) {
-    onSaveMacro({
-      ...m,
-      id: `m_${Date.now()}`,
-      name: `${m.name} (copy)`,
-      usageCount: 0,
-      updatedAt: new Date().toISOString(),
-    });
-    setEditing(null);
-  }
-  function handleDelete(id) {
-    if (!confirm("Delete this macro? This cannot be undone.")) return;
-    onDeleteMacro(id);
-    setEditing(null);
-  }
-  function handleArchive(m) {
-    onSaveMacro({
-      ...m,
-      archived: !m.archived,
-      updatedAt: new Date().toISOString(),
-    });
-  }
-
-  function fmtDate(iso) {
-    if (!iso) return "—";
-    try {
-      return new Date(iso).toLocaleDateString("en-GB", {
-        day: "numeric",
-        month: "short",
-        year: "numeric",
-      });
-    } catch {
-      return "—";
-    }
-  }
-
-  if (editing) {
-    return (
-      <div className="fixed inset-0 bg-(--bg-page) z-[200] flex flex-col">
-        <MacroEditor
-          macro={editing === "new" ? null : editing}
-          onSave={handleSave}
-          onDuplicate={handleDuplicate}
-          onDelete={handleDelete}
-          onBack={() => setEditing(null)}
-        />
-      </div>
-    );
-  }
-
-  return (
-    <div className="fixed inset-0 bg-(--bg-page) z-[200] flex flex-col">
-      {/* Header */}
-      <div className="flex items-center gap-4 py-3.5 px-7 border-b border-(--border) bg-(--bg-surface) shrink-0">
-        <Button variant="ghost" size="sm" onClick={onClose} className="flex items-center gap-[5px] text-(--text-2) text-[13px] py-1 px-0 font-[inherit]">
-          <ChevronLeft size={16} />
-          Back to inbox
-        </Button>
-        <span className="flex-1 text-[16px] font-bold text-(--text-1)">Macros</span>
-        {/* Filters */}
-        <div className="relative flex items-center">
-          <Search
-            size={14}
-            style={{
-              position: "absolute",
-              left: 9,
-              color: "var(--text-3)",
-              pointerEvents: "none",
-            }}
-          />
-          <Input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search macros..."
-            className="pl-[30px] pr-3 py-[7px] border border-(--border) rounded-lg text-[12.5px] text-(--text-1) bg-(--bg-surface-2) w-[200px] font-[inherit]"
-          />
-        </div>
-        <select
-          value={langFilter}
-          onChange={(e) => setLangF(e.target.value)}
-          className="py-[7px] px-2.5 border border-(--border) rounded-lg text-[12.5px] text-(--text-2) bg-(--bg-surface-2) cursor-pointer font-[inherit] outline-none"
-        >
-          <option value="all">Language</option>
-          {allLangs.map((l) => (
-            <option key={l} value={l}>
-              {l}
-            </option>
-          ))}
-        </select>
-        <select
-          value={tagFilter}
-          onChange={(e) => setTagF(e.target.value)}
-          className="py-[7px] px-2.5 border border-(--border) rounded-lg text-[12.5px] text-(--text-2) bg-(--bg-surface-2) cursor-pointer font-[inherit] outline-none"
-        >
-          <option value="all">All tags</option>
-          {allTags.map((t) => (
-            <option key={t} value={t}>
-              {t}
-            </option>
-          ))}
-        </select>
-        <Button
-          onClick={() => setEditing("new")}
-          className="py-2 px-4 rounded-lg border-none bg-(--text-1) text-white font-semibold text-[13px] font-[inherit] whitespace-nowrap"
-        >
-          Create macro
-        </Button>
-      </div>
-
-      {/* Tabs */}
-      <div className="flex gap-0 px-7 border-b border-(--border) bg-(--bg-surface) shrink-0">
-        {["active", "archived"].map((t) => (
-          <button
-            key={t}
-            onClick={() => setTab(t)}
-            style={{
-              borderBottom: `2px solid ${tab === t ? "#111111" : "transparent"}`,
-              color: tab === t ? "var(--text-1)" : "var(--text-2)",
-              fontWeight: tab === t ? 600 : 500,
-            }}
-            className="py-2.5 px-4 bg-none border-none text-[13px] font-[inherit] capitalize transition-all duration-150"
-          >
-            {t.charAt(0).toUpperCase() + t.slice(1)}
-          </button>
-        ))}
-      </div>
-
-      {/* Table */}
-      <div className="flex-1 overflow-auto px-7">
-        <table className="w-full border-collapse">
-          <thead>
-            <tr className="border-b border-(--border)">
-              {[
-                ["MACRO", ""],
-                ["TAGS", "160px"],
-                ["LANGUAGE", "110px"],
-                ["USAGE", "90px"],
-                ["LAST UPDATED", "140px"],
-                ["", "56px"],
-              ].map(([h, w]) => (
-                <th
-                  key={h}
-                  style={{ width: w || "auto" }}
-                  className="py-2.5 pr-3 pl-0 text-[10.5px] font-bold text-(--text-3) tracking-[.05em] text-left whitespace-nowrap"
-                >
-                  {h}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {visible.length === 0 && (
-              <tr>
-                <td colSpan={6} className="py-10 text-center text-(--text-3) text-[13px]">
-                  No macros found
-                </td>
-              </tr>
-            )}
-            {visible.map((m) => (
-              <tr
-                key={m.id}
-                className="border-b border-(--border)"
-                onMouseEnter={(e) => (e.currentTarget.style.background = "var(--bg-surface-2)")}
-                onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
-              >
-                {/* Name */}
-                <td className="py-3 pr-3 pl-0">
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onToggleFav(m.id);
-                      }}
-                      style={{
-                        color: favs.includes(m.id) ? "#f59e0b" : "var(--text-3)",
-                        opacity: favs.includes(m.id) ? 1 : 0.4,
-                      }}
-                      className="bg-none border-none flex p-0.5 shrink-0 transition-opacity duration-150"
-                      onMouseEnter={(e) => (e.currentTarget.style.opacity = 1)}
-                      onMouseLeave={(e) => (e.currentTarget.style.opacity = favs.includes(m.id) ? 1 : 0.4)}
-                    >
-                      <Star size={13} fill={favs.includes(m.id) ? "#f59e0b" : "none"} stroke={favs.includes(m.id) ? "#f59e0b" : "currentColor"} />
-                    </button>
-                    <button onClick={() => setEditing(m)} className="bg-none border-none font-[inherit] text-left p-0 text-(--text-1) text-[13px] font-medium">
-                      {m.name}
-                    </button>
-                  </div>
-                </td>
-                {/* Tags */}
-                <td className="py-3 pr-3 pl-0">
-                  <div className="flex gap-1 flex-wrap">
-                    {(m.tags || []).map((t) => (
-                      <span key={t} className="text-[10px] font-semibold py-0.5 px-[7px] rounded bg-(--bg-surface-2) text-(--text-2) border border-(--border)">
-                        {t}
-                      </span>
-                    ))}
-                  </div>
-                </td>
-                {/* Language */}
-                <td className="py-3 pr-3 pl-0 text-[12.5px] text-(--text-2)">{m.language || "English"}</td>
-                {/* Usage */}
-                <td className="py-3 pr-3 pl-0 text-[12.5px] text-(--text-2)">{m.usageCount || 0}</td>
-                {/* Updated */}
-                <td className="py-3 pr-3 pl-0 text-xs text-(--text-3)">{fmtDate(m.updatedAt)}</td>
-                {/* Actions */}
-                <td className="py-3 pl-0 text-right">
-                  <div className="flex items-center gap-1 justify-end">
-                    <button
-                      onClick={() => setEditing(m)}
-                      title="Edit"
-                      className="bg-none border-none text-(--text-3) flex p-1 rounded-[5px] transition-colors duration-150 hover:text-(--text-1)"
-                      onMouseEnter={(e) => (e.currentTarget.style.color = "var(--text-1)")}
-                      onMouseLeave={(e) => (e.currentTarget.style.color = "var(--text-3)")}
-                    >
-                      <SquarePen size={14} />
-                    </button>
-                    <button
-                      onClick={() => handleArchive(m)}
-                      title={m.archived ? "Unarchive" : "Archive"}
-                      className="bg-none border-none text-(--text-3) flex p-1 rounded-[5px] transition-colors duration-150 hover:text-(--text-1)"
-                      onMouseEnter={(e) => (e.currentTarget.style.color = "var(--text-1)")}
-                      onMouseLeave={(e) => (e.currentTarget.style.color = "var(--text-3)")}
-                    >
-                      <Archive size={14} />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(m.id)}
-                      title="Delete"
-                      className="bg-none border-none text-(--text-3) flex p-1 rounded-[5px] transition-colors duration-150 hover:text-(--danger)"
-                      onMouseEnter={(e) => (e.currentTarget.style.color = "var(--danger)")}
-                      onMouseLeave={(e) => (e.currentTarget.style.color = "var(--text-3)")}
-                    >
-                      <Trash2 size={14} />
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
-}
 // ─── Main page ────────────────────────────────────────────────
 function InboxPage() {
   const router = useRouter();
@@ -2516,7 +695,12 @@ function InboxPage() {
             <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-(--text-3) pointer-events-none flex">
               <Search size={14} />
             </span>
-            <input className="w-full py-[9px] pl-[34px] pr-3 bg-(--bg-input) border border-(--border) rounded-xl text-(--text-1) text-[12.5px] outline-none transition-all focus:border-(--border-hover)" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search threads…" />
+            <input
+              className="w-full py-[9px] pl-[34px] pr-3 bg-(--bg-input) border border-(--border) rounded-xl text-(--text-1) text-[12.5px] outline-none transition-all focus:border-(--border-hover)"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search threads…"
+            />
           </div>
 
           {/* Folder tabs */}
@@ -2844,11 +1028,17 @@ function InboxPage() {
                             {msgTranslations[msg.id] === "__loading__" ? (
                               <span className="text-[10px] text-(--text-3)">Translating…</span>
                             ) : msgTranslations[msg.id] ? (
-                              <button className="text-[10px] font-semibold text-(--text-3) bg-transparent cursor-pointer px-[7px] py-[2px] rounded-[5px] transition-all hover:text-(--text-1) hover:bg-(--bg-surface-2)" onClick={() => _setTranslation(msg.id, undefined)}>
+                              <button
+                                className="text-[10px] font-semibold text-(--text-3) bg-transparent cursor-pointer px-[7px] py-[2px] rounded-[5px] transition-all hover:text-(--text-1) hover:bg-(--bg-surface-2)"
+                                onClick={() => _setTranslation(msg.id, undefined)}
+                              >
                                 Show original
                               </button>
                             ) : (
-                              <button className="text-[10px] font-semibold text-(--text-3) bg-transparent cursor-pointer px-[7px] py-[2px] rounded-[5px] transition-all hover:text-(--text-1) hover:bg-(--bg-surface-2)" onClick={() => translateMessage(msg.id, msg.body || msg.snippet || "")}>
+                              <button
+                                className="text-[10px] font-semibold text-(--text-3) bg-transparent cursor-pointer px-[7px] py-[2px] rounded-[5px] transition-all hover:text-(--text-1) hover:bg-(--bg-surface-2)"
+                                onClick={() => translateMessage(msg.id, msg.body || msg.snippet || "")}
+                              >
                                 Translate
                               </button>
                             )}
@@ -3012,7 +1202,10 @@ function InboxPage() {
                       {attachments.length > 0 && (
                         <div className="flex flex-wrap gap-[5px] pt-2 px-3.5 pb-0">
                           {attachments.map((a, i) => (
-                            <span key={i} className="inline-flex items-center gap-[5px] px-2.5 py-1 bg-(--bg-surface-2) border border-(--border) rounded-lg text-[11px] text-(--text-2)">
+                            <span
+                              key={i}
+                              className="inline-flex items-center gap-[5px] px-2.5 py-1 bg-(--bg-surface-2) border border-(--border) rounded-lg text-[11px] text-(--text-2)"
+                            >
                               <Paperclip size={13} /> {a.name}
                               <Button
                                 variant="ghost"
@@ -3082,17 +1275,37 @@ function InboxPage() {
 
                       {/* Toolbar + Send buttons — single bottom row */}
                       <div className="flex items-center gap-px px-2.5 py-[7px] border-t border-border">
-                        <button className="min-w-[30px] h-[30px] flex items-center justify-center rounded-[7px] cursor-pointer text-xs font-bold text-(--text-3) transition-all hover:bg-(--bg-surface-2) hover:text-(--text-1)" title="Bold (⌘B)" onClick={() => formatDoc("bold")} onMouseDown={(e) => e.preventDefault()}>
+                        <button
+                          className="min-w-[30px] h-[30px] flex items-center justify-center rounded-[7px] cursor-pointer text-xs font-bold text-(--text-3) transition-all hover:bg-(--bg-surface-2) hover:text-(--text-1)"
+                          title="Bold (⌘B)"
+                          onClick={() => formatDoc("bold")}
+                          onMouseDown={(e) => e.preventDefault()}
+                        >
                           <span className="font-extrabold text-[13px]">B</span>
                         </button>
-                        <button className="min-w-[30px] h-[30px] flex items-center justify-center rounded-[7px] cursor-pointer text-xs font-bold text-(--text-3) transition-all hover:bg-(--bg-surface-2) hover:text-(--text-1)" title="Italic (⌘I)" onClick={() => formatDoc("italic")} onMouseDown={(e) => e.preventDefault()}>
+                        <button
+                          className="min-w-[30px] h-[30px] flex items-center justify-center rounded-[7px] cursor-pointer text-xs font-bold text-(--text-3) transition-all hover:bg-(--bg-surface-2) hover:text-(--text-1)"
+                          title="Italic (⌘I)"
+                          onClick={() => formatDoc("italic")}
+                          onMouseDown={(e) => e.preventDefault()}
+                        >
                           <span className="italic text-[13px]">I</span>
                         </button>
-                        <button className="min-w-[30px] h-[30px] flex items-center justify-center rounded-[7px] cursor-pointer text-xs font-bold text-(--text-3) transition-all hover:bg-(--bg-surface-2) hover:text-(--text-1)" title="Underline (⌘U)" onClick={() => formatDoc("underline")} onMouseDown={(e) => e.preventDefault()}>
+                        <button
+                          className="min-w-[30px] h-[30px] flex items-center justify-center rounded-[7px] cursor-pointer text-xs font-bold text-(--text-3) transition-all hover:bg-(--bg-surface-2) hover:text-(--text-1)"
+                          title="Underline (⌘U)"
+                          onClick={() => formatDoc("underline")}
+                          onMouseDown={(e) => e.preventDefault()}
+                        >
                           <span className="underline text-[13px]">U</span>
                         </button>
                         <div className="rtbar-sep" />
-                        <button className="min-w-[30px] h-[30px] flex items-center justify-center rounded-[7px] cursor-pointer text-xs font-bold text-(--text-3) transition-all hover:bg-(--bg-surface-2) hover:text-(--text-1)" title="Insert link" onClick={insertLink} onMouseDown={(e) => e.preventDefault()}>
+                        <button
+                          className="min-w-[30px] h-[30px] flex items-center justify-center rounded-[7px] cursor-pointer text-xs font-bold text-(--text-3) transition-all hover:bg-(--bg-surface-2) hover:text-(--text-1)"
+                          title="Insert link"
+                          onClick={insertLink}
+                          onMouseDown={(e) => e.preventDefault()}
+                        >
                           <Link2 size={13} />
                         </button>
                         <button
@@ -3113,7 +1326,10 @@ function InboxPage() {
                             <Smile size={13} />
                           </button>
                           {showEmoji && (
-                            <div className="absolute bottom-[calc(100%+8px)] left-[-8px] bg-(--bg-surface) backdrop-blur-[28px] border border-(--border) rounded-2xl p-2.5 z-[200] shadow-[0_24px_80px_rgba(0,0,0,0.2)] animate-[fadeUp_.16s_ease_both]" onClick={(e) => e.stopPropagation()}>
+                            <div
+                              className="absolute bottom-[calc(100%+8px)] left-[-8px] bg-(--bg-surface) backdrop-blur-[28px] border border-(--border) rounded-2xl p-2.5 z-[200] shadow-[0_24px_80px_rgba(0,0,0,0.2)] animate-[fadeUp_.16s_ease_both]"
+                              onClick={(e) => e.stopPropagation()}
+                            >
                               <div className="grid grid-cols-7 gap-[2px]">
                                 {EMOJIS.map((em) => (
                                   <button
@@ -3152,14 +1368,20 @@ function InboxPage() {
                           <span>{customerLang ? customerLang.name : "Translate"}</span>
                         </button>
                         <div className="flex-1" />
-                        <Button variant="outline" className="h-8 px-3 text-[12.5px] font-semibold bg-(--bg-surface-2) border border-(--border) text-(--text-1) rounded-[7px] transition-all hover:bg-(--bg-input) hover:border-(--border-hover) hover:text-(--text-1) flex items-center gap-1.5 px-[13px] py-[7px]"
+                        <Button
+                          variant="outline"
+                          className="h-8 px-3 text-[12.5px] font-semibold bg-(--bg-surface-2) border border-(--border) text-(--text-1) rounded-[7px] transition-all hover:bg-(--bg-input) hover:border-(--border-hover) hover:text-(--text-1) flex items-center gap-1.5 px-[13px] py-[7px]"
                           onClick={handleAiReply}
                           disabled={aiLoading || !messages.length}
                         >
                           {aiLoading ? <Loader2 size={13} className="animate-spin" /> : <span className="text-primary text-[13px] leading-none">✦</span>}
                           {aiLoading ? "Generating…" : "AI Reply"}
                         </Button>
-                        <Button className="px-[9px] py-[9px] text-[12.5px] font-semibold bg-[rgba(74,222,128,0.07)] border border-[rgba(74,222,128,0.2)] text-[rgba(74,222,128,0.75)] rounded-xl flex items-center gap-[5px] transition-all hover:bg-[rgba(74,222,128,0.13)] hover:border-[rgba(74,222,128,0.38)] hover:text-[#4ade80] ml-1.5" onClick={handleSendResolve} disabled={!reply.trim() || sending}>
+                        <Button
+                          className="px-[9px] py-[9px] text-[12.5px] font-semibold bg-[rgba(74,222,128,0.07)] border border-[rgba(74,222,128,0.2)] text-[rgba(74,222,128,0.75)] rounded-xl flex items-center gap-[5px] transition-all hover:bg-[rgba(74,222,128,0.13)] hover:border-[rgba(74,222,128,0.38)] hover:text-[#4ade80] ml-1.5"
+                          onClick={handleSendResolve}
+                          disabled={!reply.trim() || sending}
+                        >
                           <Check size={11} />
                           Send & Close
                         </Button>
@@ -3228,7 +1450,10 @@ function InboxPage() {
 
             {/* Customer Fields — collapsible */}
             <div className="border-b border-border shrink-0">
-              <button className="w-full flex items-center gap-1.5 py-[9px] px-3.5 bg-transparent cursor-pointer text-left transition-[background] duration-[120ms] hover:bg-(--bg-surface-2)" onClick={() => setCustFieldsOpen((v) => !v)}>
+              <button
+                className="w-full flex items-center gap-1.5 py-[9px] px-3.5 bg-transparent cursor-pointer text-left transition-[background] duration-[120ms] hover:bg-(--bg-surface-2)"
+                onClick={() => setCustFieldsOpen((v) => !v)}
+              >
                 <span className="text-[10px] font-bold text-(--text-3) flex-1 tracking-[.07em] uppercase">Customer Fields</span>
                 <ChevronDown size={10} className={`transition-transform duration-200 text-(--text-3) shrink-0 ${custFieldsOpen ? "rotate-180" : "rotate-0"}`} />
               </button>
@@ -3238,7 +1463,13 @@ function InboxPage() {
                     <span className="text-xs text-(--text-3) shrink-0 min-w-[72px]">Email</span>
                     <span className="text-xs font-medium text-(--text-1) text-right break-words text-[11px] break-all">{extractEmail(selected.from)}</span>
                   </div>
-                  {loadingCust && [0, 1].map((i) => <div key={i} className="bg-gradient-to-r from-(--skeleton-from) via-(--skeleton-to) to-(--skeleton-from) bg-[length:400%_100%] animate-[shimmer_1.8s_linear_infinite] rounded-md h-[18px] rounded-[5px] my-1" />)}
+                  {loadingCust &&
+                    [0, 1].map((i) => (
+                      <div
+                        key={i}
+                        className="bg-gradient-to-r from-(--skeleton-from) via-(--skeleton-to) to-(--skeleton-from) bg-[length:400%_100%] animate-[shimmer_1.8s_linear_infinite] rounded-md h-[18px] rounded-[5px] my-1"
+                      />
+                    ))}
                   {customer?.customer && !loadingCust && (
                     <>
                       {customer.customer.phone && (
@@ -3250,7 +1481,9 @@ function InboxPage() {
                       {(customer.customer.city || customer.customer.country) && (
                         <div className="flex items-baseline justify-between gap-4 px-3.5">
                           <span className="text-xs text-(--text-3) shrink-0 min-w-[72px]">Location</span>
-                          <span className="text-xs font-medium text-(--text-1) text-right break-words">{[customer.customer.city, customer.customer.country].filter(Boolean).join(", ")}</span>
+                          <span className="text-xs font-medium text-(--text-1) text-right break-words">
+                            {[customer.customer.city, customer.customer.country].filter(Boolean).join(", ")}
+                          </span>
                         </div>
                       )}
                       {customer.customer.createdAt && (
@@ -3324,10 +1557,16 @@ function InboxPage() {
 
             {/* Tabs */}
             <div className="flex border-b border-border shrink-0">
-              <button className={`flex-1 py-2 px-1.5 bg-transparent cursor-pointer text-[11.5px] font-medium text-(--text-2) border-b-2 border-transparent transition-all whitespace-nowrap text-center${rightTab === "info" ? " on" : ""}`} onClick={() => setRightTab("info")}>
+              <button
+                className={`flex-1 py-2 px-1.5 bg-transparent cursor-pointer text-[11.5px] font-medium text-(--text-2) border-b-2 border-transparent transition-all whitespace-nowrap text-center${rightTab === "info" ? " on" : ""}`}
+                onClick={() => setRightTab("info")}
+              >
                 Customer
               </button>
-              <button className={`flex-1 py-2 px-1.5 bg-transparent cursor-pointer text-[11.5px] font-medium text-(--text-2) border-b-2 border-transparent transition-all whitespace-nowrap text-center${rightTab === "shopify" ? " on" : ""}`} onClick={() => setRightTab("shopify")}>
+              <button
+                className={`flex-1 py-2 px-1.5 bg-transparent cursor-pointer text-[11.5px] font-medium text-(--text-2) border-b-2 border-transparent transition-all whitespace-nowrap text-center${rightTab === "shopify" ? " on" : ""}`}
+                onClick={() => setRightTab("shopify")}
+              >
                 Orders
                 {(customer?.orders || []).length > 0 ? ` (${customer.orders.length})` : ""}
               </button>
@@ -3339,7 +1578,10 @@ function InboxPage() {
                 {loadingCust && (
                   <div className="px-3.5 py-3">
                     {[0, 1, 2].map((i) => (
-                      <div key={i} className="bg-gradient-to-r from-(--skeleton-from) via-(--skeleton-to) to-(--skeleton-from) bg-[length:400%_100%] animate-[shimmer_1.8s_linear_infinite] rounded-md h-5 rounded-[5px] mb-2" />
+                      <div
+                        key={i}
+                        className="bg-gradient-to-r from-(--skeleton-from) via-(--skeleton-to) to-(--skeleton-from) bg-[length:400%_100%] animate-[shimmer_1.8s_linear_infinite] rounded-md h-5 rounded-[5px] mb-2"
+                      />
                     ))}
                   </div>
                 )}
@@ -3393,7 +1635,9 @@ function InboxPage() {
                         {(customer.customer.city || customer.customer.country) && (
                           <div className="flex items-baseline justify-between gap-4 px-3.5">
                             <span className="text-xs text-(--text-3) shrink-0 min-w-[72px]">Location</span>
-                            <span className="text-xs font-medium text-(--text-1) text-right break-words">{[customer.customer.city, customer.customer.country].filter(Boolean).join(", ")}</span>
+                            <span className="text-xs font-medium text-(--text-1) text-right break-words">
+                              {[customer.customer.city, customer.customer.country].filter(Boolean).join(", ")}
+                            </span>
                           </div>
                         )}
                         {customer.customer.createdAt && (
@@ -3413,7 +1657,9 @@ function InboxPage() {
                         </div>
                         <div className="flex items-baseline justify-between gap-4 px-3.5">
                           <span className="text-xs text-(--text-3) shrink-0 min-w-[72px]">Total spent</span>
-                          <span className="text-xs font-medium text-(--text-1) text-right break-words font-bold text-(--text-1)">{fmtPrice(customer.customer.totalSpent, customer.customer.currency)}</span>
+                          <span className="text-xs font-medium text-(--text-1) text-right break-words font-bold text-(--text-1)">
+                            {fmtPrice(customer.customer.totalSpent, customer.customer.currency)}
+                          </span>
                         </div>
                       </div>
                     )}
@@ -3525,24 +1771,36 @@ function InboxPage() {
                           </div>
                           {/* Row 3: action buttons */}
                           <div className="flex gap-1 flex-wrap mb-2.5">
-                            <button className="inline-flex items-center gap-1 text-[11px] font-medium px-[9px] py-1 rounded-md border border-(--border) bg-(--bg-surface) text-(--text-1) cursor-pointer transition-all hover:border-(--border-hover) hover:bg-(--bg-surface-2)" onClick={() => setModal({ type: "duplicate", order })}>
+                            <button
+                              className="inline-flex items-center gap-1 text-[11px] font-medium px-[9px] py-1 rounded-md border border-(--border) bg-(--bg-surface) text-(--text-1) cursor-pointer transition-all hover:border-(--border-hover) hover:bg-(--bg-surface-2)"
+                              onClick={() => setModal({ type: "duplicate", order })}
+                            >
                               <span className="flex">
                                 <Copy size={12} />
                               </span>
                               Duplicate
                             </button>
                             {canRefund && (
-                              <button className="inline-flex items-center gap-1 text-[11px] font-medium px-[9px] py-1 rounded-md border border-(--border) bg-(--bg-surface) text-(--text-1) cursor-pointer transition-all hover:border-(--border-hover) hover:bg-(--bg-surface-2)" onClick={() => setModal({ type: "refund", order })}>
+                              <button
+                                className="inline-flex items-center gap-1 text-[11px] font-medium px-[9px] py-1 rounded-md border border-(--border) bg-(--bg-surface) text-(--text-1) cursor-pointer transition-all hover:border-(--border-hover) hover:bg-(--bg-surface-2)"
+                                onClick={() => setModal({ type: "refund", order })}
+                              >
                                 <RotateCcw size={11} />$ Refund
                               </button>
                             )}
                             {canCancel && (
-                              <button className="inline-flex items-center gap-1 text-[11px] font-medium px-[9px] py-1 rounded-md border border-(--border) bg-(--bg-surface) text-(--text-1) cursor-pointer transition-all hover:border-[rgba(220,38,38,0.35)] hover:text-[#dc2626] hover:bg-[rgba(220,38,38,0.05)]" onClick={() => setModal({ type: "cancel", order })}>
+                              <button
+                                className="inline-flex items-center gap-1 text-[11px] font-medium px-[9px] py-1 rounded-md border border-(--border) bg-(--bg-surface) text-(--text-1) cursor-pointer transition-all hover:border-[rgba(220,38,38,0.35)] hover:text-[#dc2626] hover:bg-[rgba(220,38,38,0.05)]"
+                                onClick={() => setModal({ type: "cancel", order })}
+                              >
                                 <XCircle size={11} />
                                 Cancel
                               </button>
                             )}
-                            <button className="inline-flex items-center gap-1 text-[11px] font-medium px-[9px] py-1 rounded-md border border-(--border) bg-(--bg-surface) text-(--text-1) cursor-pointer transition-all hover:border-(--border-hover) hover:bg-(--bg-surface-2) px-[7px] py-1" onClick={() => setModal({ type: "note", order })}>
+                            <button
+                              className="inline-flex items-center gap-1 text-[11px] font-medium px-[9px] py-1 rounded-md border border-(--border) bg-(--bg-surface) text-(--text-1) cursor-pointer transition-all hover:border-(--border-hover) hover:bg-(--bg-surface-2) px-[7px] py-1"
+                              onClick={() => setModal({ type: "note", order })}
+                            >
                               <MoreHorizontal size={13} />
                             </button>
                           </div>
@@ -3561,7 +1819,9 @@ function InboxPage() {
                             </div>
                             <div className="flex items-baseline justify-between gap-4 px-3.5">
                               <span className="text-xs text-(--text-3) shrink-0 min-w-[72px]">Total</span>
-                              <span className="text-xs font-medium text-(--text-1) text-right break-words font-bold text-(--text-1)">{fmtPrice(order.totalPrice, order.currency)}</span>
+                              <span className="text-xs font-medium text-(--text-1) text-right break-words font-bold text-(--text-1)">
+                                {fmtPrice(order.totalPrice, order.currency)}
+                              </span>
                             </div>
                           </div>
 
@@ -3596,7 +1856,9 @@ function InboxPage() {
                                     {f.trackingNumber && (
                                       <div className="flex items-baseline justify-between gap-4 px-3.5">
                                         <span className="text-xs text-(--text-3) shrink-0 min-w-[72px]">Tracking #</span>
-                                        <span className="text-xs font-medium text-(--text-1) text-right break-words font-mono text-[10.5px]">{f.trackingNumber}</span>
+                                        <span className="text-xs font-medium text-(--text-1) text-right break-words font-mono text-[10.5px]">
+                                          {f.trackingNumber}
+                                        </span>
                                       </div>
                                     )}
                                     <div className="flex items-baseline justify-between gap-4 px-3.5">
@@ -3716,7 +1978,9 @@ function InboxPage() {
                                   <div className="pb-1">
                                     <div className="flex items-baseline justify-between gap-4 px-3.5">
                                       <span className="text-xs text-(--text-3) shrink-0 min-w-[72px]">Amount</span>
-                                      <span className="text-xs font-medium text-(--text-1) text-right break-words">{fmtPrice(Number(item.price) * item.quantity, order.currency)}</span>
+                                      <span className="text-xs font-medium text-(--text-1) text-right break-words">
+                                        {fmtPrice(Number(item.price) * item.quantity, order.currency)}
+                                      </span>
                                     </div>
                                     {item.sku && (
                                       <div className="flex items-baseline justify-between gap-4 px-3.5">

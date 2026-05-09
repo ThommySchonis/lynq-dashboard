@@ -59,7 +59,7 @@ export function escapeHtml(value = ''): string {
     .replace(/'/g, '&#39;')
 }
 
-function normalizeSafeUrl(href: string | null, opts?: { allowImages?: boolean }): string | null {
+export function normalizeSafeUrl(href: string | null, opts?: { allowImages?: boolean }): string | null {
   if (!href) return null
   try {
     const url = new URL(href, window.location.origin)

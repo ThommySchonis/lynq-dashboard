@@ -333,10 +333,16 @@ export function ConversationView() {
       )}
 
       {/* Macro manager dialog */}
-      <MacroManager
-        open={showMacroManager}
-        onOpenChange={setShowMacroManager}
-      />
+      {showMacroManager && (
+        <MacroManager
+          macros={[]}
+          favs={[]}
+          onClose={() => setShowMacroManager(false)}
+          onSaveMacro={() => {}}
+          onDeleteMacro={() => {}}
+          onToggleFav={() => {}}
+        />
+      )}
     </div>
   )
 }

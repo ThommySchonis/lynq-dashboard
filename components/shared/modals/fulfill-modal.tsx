@@ -1,114 +1,80 @@
-"use client"
+// @ts-nocheck
+'use client'
 
-import { useState } from "react"
-import type { ShopifyOrder } from "@/types/inbox"
-import { authFetch } from "@/lib/inbox-utils"
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Loader2, Truck } from "lucide-react"
+import { useState } from 'react'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Loader2, Truck } from 'lucide-react'
+import { authFetch } from '@/lib/inbox-utils'
 
-interface FulfillModalProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  order: ShopifyOrder
-  token: string
-  onSuccess: (msg: string) => void
-}
-
-export function FulfillModal({ open, onOpenChange, order, token, onSuccess }: FulfillModalProps) {
-  const [trackingNumber, setTrackingNumber] = useState("")
-  const [trackingCompany, setTrackingCompany] = useState("")
-  const [notifyCustomer, setNotifyCustomer] = useState(true)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState("")
+export function FulfillModal({ order, token, onClose, onSuccess }) {
+  const [trackingNumber, setTrackingNumber] = useState("");
+  const [trackingCompany, setTrackingCompany] = useState("");
+  const [notify, setNotify] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   async function handleFulfill() {
-    setLoading(true)
-    setError("")
-    try {
-      const res = await authFetch(
-        `/api/shopify/orders/${order.id}/fulfill`,
-        {
-          method: "POST",
-          body: JSON.stringify({
-            tracking_number: trackingNumber,
-            tracking_company: trackingCompany,
-            notify_customer: notifyCustomer,
-          }),
-        },
-        token,
-      )
-      const data = await res.json()
-      setLoading(false)
-      if (data.success) {
-        onSuccess("Order marked as fulfilled")
-        onOpenChange(false)
-      } else {
-        setError(data.error || "Failed to fulfill order")
-      }
-    } catch {
-      setLoading(false)
-      setError("Network error")
-    }
+    setLoading(true);
+    const res = await authFetch(
+      `/api/shopify/orders/${order.id}/fulfill`,
+      {
+        method: "POST",
+        body: JSON.stringify({ trackingNumber, trackingCompany, notify }),
+      },
+      token,
+    );
+    const data = await res.json();
+    setLoading(false);
+    if (data.success) onSuccess("Order marked as fulfilled");
+    else onSuccess(data.error || "Failed to fulfill order", "error");
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-sm">
+    <Dialog
+      open={true}
+      onOpenChange={(open) => {
+        if (!open) onClose();
+      }}
+    >
+      <DialogContent>
         <DialogHeader>
-          <DialogTitle>Fulfill order &mdash; {order.name}</DialogTitle>
+          <DialogTitle>{`Fulfill order — ${order.name}`}</DialogTitle>
         </DialogHeader>
-
-        <div className="space-y-3">
-          <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-3 text-xs text-emerald-600 dark:text-emerald-400">
+        <div className="flex flex-col gap-3">
+          <div className="bg-green-400/5 border border-green-400/15 rounded-xl px-3.5 py-2.5 text-[12.5px] text-green-400/80">
             All items will be marked as fulfilled.
           </div>
-
-          <div className="space-y-1.5">
-            <Label>Tracking number (optional)</Label>
-            <Input
-              value={trackingNumber}
-              onChange={e => setTrackingNumber(e.target.value)}
-              placeholder="e.g. 3SBME123456789"
-            />
+          <div>
+            <label className="text-[10.5px] font-bold tracking-[.07em] uppercase text-(--text-3) mb-[7px] block">Tracking number (optional)</label>
+            <Input className="w-full bg-(--bg-surface-2) border border-(--border) rounded-xl px-3.5 py-[11px] text-[13.5px] text-(--text-1) outline-none" value={trackingNumber} onChange={(e) => setTrackingNumber(e.target.value)} placeholder="e.g. 3SBME123456789" />
           </div>
-
-          <div className="space-y-1.5">
-            <Label>Carrier (optional)</Label>
-            <Input
-              value={trackingCompany}
-              onChange={e => setTrackingCompany(e.target.value)}
-              placeholder="e.g. PostNL, DHL, UPS..."
-            />
+          <div>
+            <label className="text-[10.5px] font-bold tracking-[.07em] uppercase text-(--text-3) mb-[7px] block">Carrier (optional)</label>
+            <Input className="w-full bg-(--bg-surface-2) border border-(--border) rounded-xl px-3.5 py-[11px] text-[13.5px] text-(--text-1) outline-none" value={trackingCompany} onChange={(e) => setTrackingCompany(e.target.value)} placeholder="e.g. PostNL, DHL, UPS…" />
           </div>
-
-          <label className="flex items-center gap-2 text-sm">
-            <Checkbox checked={notifyCustomer} onCheckedChange={() => setNotifyCustomer(v => !v)} />
-            Send shipping confirmation to customer
+          <label className="flex items-center gap-2.5 cursor-pointer select-none">
+            <Checkbox checked={notify} onCheckedChange={() => setNotify((v) => !v)} />
+            <span className="text-[13px] text-(--text-2)">Send shipping confirmation to customer</span>
           </label>
         </div>
-
-        {error && <p className="text-sm text-destructive">{error}</p>}
-
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button variant="outline" className="" onClick={onClose}>
             Cancel
           </Button>
-          <Button onClick={handleFulfill} disabled={loading}>
-            {loading ? <Loader2 className="mr-2 size-4 animate-spin" /> : <Truck className="mr-2 size-4" />}
+          <Button className="flex items-center gap-[7px]" onClick={handleFulfill} disabled={loading}>
+            {loading ? (
+              <Loader2 size={13} className="animate-spin text-white" />
+            ) : (
+              <span className="flex">
+                <Truck size={12} />
+              </span>
+            )}
             Mark as fulfilled
           </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

@@ -1,192 +1,155 @@
-"use client"
+// @ts-nocheck
+'use client'
 
-import { useState } from "react"
-import type { ShopifyOrder } from "@/types/inbox"
-import { authFetch, fmtPrice } from "@/lib/inbox-utils"
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Loader2, Copy } from "lucide-react"
+import { useState } from 'react'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Copy, Loader2 } from 'lucide-react'
+import { authFetch, fmtPrice } from '@/lib/inbox-utils'
 
-interface DuplicateModalProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  order: ShopifyOrder
-  token: string
-  onSuccess: (msg: string) => void
-}
+export function DuplicateModal({ order, token, onClose, onSuccess }) {
+  const [note, setNote] = useState(`Duplicate of ${order.name}`);
+  const [keepAddress, setKeepAddress] = useState(true);
+  const [discountType, setDiscountType] = useState("none"); // 'none' | 'percentage' | 'fixed'
+  const [discountValue, setDiscountValue] = useState("");
+  const [loading, setLoading] = useState(false);
 
-type DiscountType = "none" | "percentage" | "fixed"
-
-export function DuplicateModal({ open, onOpenChange, order, token, onSuccess }: DuplicateModalProps) {
-  const [note, setNote] = useState(`Duplicate of ${order.name}`)
-  const [keepAddress, setKeepAddress] = useState(true)
-  const [discountType, setDiscountType] = useState<DiscountType>("none")
-  const [discountValue, setDiscountValue] = useState("")
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState("")
-
-  const originalTotal = Number(order.total_price) || 0
+  const originalTotal = Number(order.totalPrice) || 0;
   const discountAmount =
     discountType === "percentage"
-      ? originalTotal * (Number(discountValue) || 0) / 100
+      ? (originalTotal * (Number(discountValue) || 0)) / 100
       : discountType === "fixed"
         ? Math.min(Number(discountValue) || 0, originalTotal)
-        : 0
-  const newTotal = Math.max(0, originalTotal - discountAmount)
+        : 0;
+  const newTotal = Math.max(0, originalTotal - discountAmount);
 
   async function handleDuplicate() {
-    setLoading(true)
-    setError("")
-    try {
-      const res = await authFetch(
-        `/api/shopify/orders/${order.id}/duplicate`,
-        {
-          method: "POST",
-          body: JSON.stringify({
-            keepAddress,
-            note,
-            tags: "",
-            discount: discountType !== "none"
-              ? { type: discountType, value: Number(discountValue) }
-              : undefined,
-            discountType: discountType !== "none" ? discountType : undefined,
-            discountValue: discountType !== "none" ? Number(discountValue) : undefined,
-          }),
-        },
-        token,
-      )
-      const data = await res.json()
-      setLoading(false)
-      if (data.success) {
-        onSuccess(`Draft ${data.draftOrder?.name || ""} created!`)
-        onOpenChange(false)
-      } else {
-        setError(data.error || "Duplicate failed")
-      }
-    } catch {
-      setLoading(false)
-      setError("Network error")
-    }
+    setLoading(true);
+    const res = await authFetch(
+      `/api/shopify/orders/${order.id}/duplicate`,
+      {
+        method: "POST",
+        body: JSON.stringify({
+          keepAddress,
+          note,
+          tags: "",
+          discountType: discountType !== "none" ? discountType : undefined,
+          discountValue: discountType !== "none" ? Number(discountValue) : undefined,
+        }),
+      },
+      token,
+    );
+    const data = await res.json();
+    setLoading(false);
+    if (data.success) onSuccess(`Draft ${data.draftOrder?.name || ""} created!`);
+    else onSuccess(data.error || "Duplicate failed", "error");
   }
 
-  const DISCOUNT_OPTS: { v: DiscountType; l: string }[] = [
-    { v: "none", l: "None" },
-    { v: "percentage", l: "Percentage %" },
-    { v: "fixed", l: "Fixed amount" },
-  ]
-
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+    <Dialog
+      open={true}
+      onOpenChange={(open) => {
+        if (!open) onClose();
+      }}
+    >
+      <DialogContent>
         <DialogHeader>
-          <DialogTitle>Duplicate &mdash; {order.name}</DialogTitle>
+          <DialogTitle>{`Duplicate — ${order.name}`}</DialogTitle>
         </DialogHeader>
-
-        {/* Products summary */}
-        <div className="rounded-lg border bg-muted/50 p-3 space-y-1">
-          {(order.line_items || []).map(li => (
-            <div key={li.id} className="flex items-center justify-between border-b border-border/50 py-1 last:border-0">
-              <span className="text-xs text-muted-foreground">
-                {li.quantity}&times; {li.title}
-                {li.variant_title ? ` \u00b7 ${li.variant_title}` : ""}
+        {/* Products */}
+        <div className="bg-(--bg-surface-2) border border-border rounded-xl px-3.5 py-2.5 mb-3.5">
+          {(order.lineItems || []).map((li) => (
+            <div key={li.id} className="flex justify-between py-[5px] border-b border-white/5">
+              <span className="text-[12.5px] text-(--text-2)">
+                {li.quantity}× {li.title}
+                {li.variantTitle ? ` · ${li.variantTitle}` : ""}
               </span>
-              <span className="text-xs text-muted-foreground">
-                {fmtPrice(Number(li.price) * li.quantity, order.currency)}
-              </span>
+              <span className="text-[12.5px] text-(--text-2)">{fmtPrice(Number(li.price) * li.quantity, order.currency)}</span>
             </div>
           ))}
-          <div className="flex items-center justify-between pt-2">
-            <span className="text-xs text-muted-foreground">Original</span>
-            <span className="text-sm font-bold">{fmtPrice(originalTotal, order.currency)}</span>
+          <div className="flex justify-between pt-2 mt-1">
+            <span className="text-[12.5px] text-(--text-2)">Original</span>
+            <span className="text-[13px] font-bold text-(--text-1)">{fmtPrice(originalTotal, order.currency)}</span>
           </div>
         </div>
 
         {/* Discount section */}
-        <div className="space-y-2">
-          <Label>Discount</Label>
-          <div className="flex gap-1 rounded-lg border bg-muted/50 p-1">
-            {DISCOUNT_OPTS.map(o => (
+        <div className="mb-3.5">
+          <label className="text-[10.5px] font-bold tracking-[.07em] uppercase text-(--text-3) mb-[7px] block">Discount</label>
+          <div className={`flex gap-1.5 ${discountType !== "none" ? "mb-2.5" : "mb-0"}`}>
+            {[
+              { v: "none", l: "None" },
+              { v: "percentage", l: "Percentage %" },
+              { v: "fixed", l: "Fixed amount" },
+            ].map((o) => (
               <button
                 key={o.v}
-                type="button"
-                onClick={() => { setDiscountType(o.v); setDiscountValue("") }}
-                className={`flex-1 rounded-md px-2 py-1.5 text-xs font-semibold transition-colors ${
-                  discountType === o.v
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
+                onClick={() => {
+                  setDiscountType(o.v);
+                  setDiscountValue("");
+                }}
+                className={`flex-1 px-2 py-[7px] rounded-lg text-[11.5px] font-semibold font-[inherit] cursor-pointer transition-all border border-transparent ${discountType === o.v ? "bg-(--text-1) text-white" : "bg-(--bg-input) text-(--text-3)"}`}
               >
                 {o.l}
               </button>
             ))}
           </div>
           {discountType !== "none" && (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2.5">
               <Input
                 type="number"
-                className="flex-1"
+                className="w-full bg-(--bg-surface-2) border border-(--border) rounded-xl px-3.5 py-[11px] text-[13.5px] text-(--text-1) outline-none flex-1"
                 value={discountValue}
-                onChange={e => setDiscountValue(e.target.value)}
+                onChange={(e) => setDiscountValue(e.target.value)}
                 placeholder={discountType === "percentage" ? "e.g. 10" : "e.g. 5.00"}
                 min="0"
-                max={discountType === "percentage" ? "100" : undefined}
+                max={discountType === "percentage" ? 100 : undefined}
               />
-              <span className="text-sm font-bold text-muted-foreground">
-                {discountType === "percentage" ? "%" : "\u20ac"}
-              </span>
+              <span className="text-[12.5px] font-bold text-(--text-2) shrink-0">{discountType === "percentage" ? "%" : "€"}</span>
             </div>
           )}
         </div>
 
         {/* New total preview */}
         {discountType !== "none" && Number(discountValue) > 0 && (
-          <div className="flex items-center justify-between rounded-lg border bg-muted/50 p-3">
+          <div className="bg-(--bg-surface-2) border border-border rounded-xl px-3.5 py-2.5 mb-3.5 flex justify-between items-center">
             <div>
-              <p className="text-[11px] text-muted-foreground">Discount</p>
-              <p className="text-sm font-bold text-rose-400">
-                &minus; {fmtPrice(discountAmount, order.currency)}
-              </p>
+              <div className="text-[11px] text-(--text-3) mb-[2px]">Discount</div>
+              <div className="text-[12.5px] font-bold text-rose-400">− {fmtPrice(discountAmount, order.currency)}</div>
             </div>
             <div className="text-right">
-              <p className="text-[11px] text-muted-foreground">New total</p>
-              <p className="text-base font-extrabold text-emerald-500">
-                {fmtPrice(newTotal, order.currency)}
-              </p>
+              <div className="text-[11px] text-(--text-3) mb-[2px]">New total</div>
+              <div className="text-[15px] font-extrabold text-green-400">{fmtPrice(newTotal, order.currency)}</div>
             </div>
           </div>
         )}
 
-        <div className="space-y-1.5">
-          <Label>Note</Label>
-          <Input value={note} onChange={e => setNote(e.target.value)} />
+        <div className="mb-3.5">
+          <label className="text-[10.5px] font-bold tracking-[.07em] uppercase text-(--text-3) mb-[7px] block">Note</label>
+          <Input className="w-full bg-(--bg-surface-2) border border-(--border) rounded-xl px-3.5 py-[11px] text-[13.5px] text-(--text-1) outline-none" value={note} onChange={(e) => setNote(e.target.value)} />
         </div>
-
-        <label className="flex items-center gap-2 text-sm">
-          <Checkbox checked={keepAddress} onCheckedChange={() => setKeepAddress(v => !v)} />
-          Copy shipping address
+        <label className="flex items-center gap-2.5 cursor-pointer select-none">
+          <Checkbox checked={keepAddress} onCheckedChange={() => setKeepAddress((v) => !v)} />
+          <span className="text-[13px] text-(--text-2)">Copy shipping address</span>
         </label>
-
-        {error && <p className="text-sm text-destructive">{error}</p>}
-
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button variant="outline" className="" onClick={onClose}>
             Cancel
           </Button>
-          <Button onClick={handleDuplicate} disabled={loading}>
-            {loading ? <Loader2 className="mr-2 size-4 animate-spin" /> : <Copy className="mr-2 size-4" />}
+          <Button className="flex items-center gap-[7px]" onClick={handleDuplicate} disabled={loading}>
+            {loading ? (
+              <Loader2 size={13} className="animate-spin text-white" />
+            ) : (
+              <span className="flex">
+                <Copy size={12} />
+              </span>
+            )}
             Create draft
           </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

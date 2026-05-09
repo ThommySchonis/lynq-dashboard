@@ -2733,11 +2733,11 @@ function InboxPage() {
                 const isOpen       = expandedOrders[order.id]===undefined ? oi===0 : expandedOrders[order.id]
                 const shippingOpen = expandedSubs[`${order.id}_shipping`]===undefined ? true : !!expandedSubs[`${order.id}_shipping`]
                 const trackOpen    = expandedSubs[`${order.id}_track`]===undefined ? true : !!expandedSubs[`${order.id}_track`]
-                const isCancelled  = order.financialStatus==='cancelled'||order.financialStatus==='voided'
+                const isCancelled  = !!order.cancelledAt||order.financialStatus==='cancelled'||order.financialStatus==='voided'
                 const isRefunded   = order.financialStatus==='refunded'
                 const canRefund    = !isCancelled && !isRefunded
                 const canCancel    = !isCancelled
-                const finS         = ORDER_STATUS[order.financialStatus?.toLowerCase()]
+                const finS         = isCancelled ? ORDER_STATUS.cancelled : ORDER_STATUS[order.financialStatus?.toLowerCase()]
                 const fulS         = ORDER_STATUS[order.fulfillmentStatus?.toLowerCase()]
                 const sa           = order.shippingAddress
                 return (

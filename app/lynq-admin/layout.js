@@ -1,6 +1,6 @@
 'use client'
 
-import AdminSidebar from '../components/AdminSidebar'
+import AdminSidebar from '../../components/features/admin/admin-sidebar'
 
 // Shell for /lynq-admin/* routes — mirrors the admin panel shell at /admin
 // so the two feel like one cohesive surface. The sidebar runs in link-mode

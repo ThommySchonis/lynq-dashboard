@@ -3,8 +3,7 @@
 import { useEffect, useState } from 'react'
 import { Instrument_Serif, DM_Sans } from 'next/font/google'
 import { supabase } from '../../lib/supabase'
-import Sidebar from '../components/Sidebar'
-import PostCard from './components/PostCard'
+import PostCard from '@/components/features/value-feed/post-card'
 
 // /value-feed — editorial light feed met /login brand DNA. Eén
 // consistent card pattern, type alleen via subtle tracked-out caps

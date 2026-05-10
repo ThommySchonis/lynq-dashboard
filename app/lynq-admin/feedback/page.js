@@ -5,8 +5,7 @@ import { useRouter } from 'next/navigation'
 import {
   Bug, Lightbulb, MessageSquare, Inbox, Search, X, Send, ExternalLink,
 } from 'lucide-react'
-import { ToastContainer } from '../../components/Toast'
-import { useToast } from '../../hooks/useToast'
+import { toast } from 'sonner'
 import { supabase } from '../../../lib/supabase'
 
 const TYPE_META = {
@@ -44,7 +43,7 @@ function initialsFor(user) {
 
 export default function LynqAdminFeedbackPage() {
   const router = useRouter()
-  const { toasts, addToast, removeToast } = useToast()
+  const addToast = (message, type = 'success') => toast[type === 'error' ? 'error' : 'success'](message)
   const [loading, setLoading] = useState(true)
   const [submissions, setSubmissions] = useState([])
   const [filter, setFilter] = useState('all') // 'all' | 'bug' | 'feedback' | 'other'
@@ -234,7 +233,6 @@ export default function LynqAdminFeedbackPage() {
         <DetailPanel row={selected} onClose={() => setSelected(null)} />
       )}
 
-      <ToastContainer toasts={toasts} removeToast={removeToast} />
     </div>
   )
 }

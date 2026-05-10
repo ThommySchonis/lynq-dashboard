@@ -1,96 +1,97 @@
 'use client'
 
-import { useState } from 'react'
-import { ChevronDown, ChevronRight } from 'lucide-react'
-import { Badge } from '@/components/ui/badge'
+import type { Note } from '@/types/inbox'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { relTime } from '@/lib/inbox-utils'
-import type { Note } from '@/types'
+import { FileText, ChevronDown } from 'lucide-react'
+import { relTime as formatDate } from '@/lib/inbox-utils'
+import { useInboxUI } from '@/stores/inbox-ui'
+import { useConversation } from '@/hooks/inbox/use-inbox-data'
+import { useAddNote } from '@/hooks/inbox/use-inbox-mutations'
+import { useMemo } from 'react'
+import { toast as sonnerToast } from 'sonner'
 
-interface NotesSectionProps {
-  notes: Note[]
-  onAddNote: (text: string) => void
-  loading?: boolean
-}
+export function NotesSection() {
+  const selectedThreadId = useInboxUI((s) => s.selectedThreadId)
+  const showNotes = useInboxUI((s) => s.showNotes)
+  const setShowNotes = useInboxUI((s) => s.setShowNotes)
+  const noteInput = useInboxUI((s) => s.noteInput)
+  const setNoteInput = useInboxUI((s) => s.setNoteInput)
+  const addingNote = useInboxUI((s) => s.addingNote)
+  const setAddingNote = useInboxUI((s) => s.setAddingNote)
 
-export function NotesSection({ notes, onAddNote, loading = false }: NotesSectionProps) {
-  const [collapsed, setCollapsed] = useState(false)
-  const [noteInput, setNoteInput] = useState('')
+  const { data: conversationData } = useConversation(selectedThreadId)
+  const notes = useMemo(() => conversationData?.notes || [], [conversationData?.notes])
 
-  function handleAdd() {
-    const trimmed = noteInput.trim()
-    if (!trimmed) return
-    onAddNote(trimmed)
-    setNoteInput('')
-  }
+  const addNoteMutation = useAddNote()
 
-  function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
-    if (e.key === 'Enter') {
-      e.preventDefault()
-      handleAdd()
+  async function handleAddNote() {
+    if (!noteInput.trim() || !selectedThreadId) return
+    setAddingNote(true)
+    try {
+      await addNoteMutation.mutateAsync({
+        threadId: selectedThreadId,
+        body: noteInput.trim(),
+      })
+      setNoteInput('')
+    } catch {
+      sonnerToast.error('Failed to add note')
     }
+    setAddingNote(false)
   }
 
   return (
-    <div className="border-t border-border bg-muted/10">
-      {/* Header */}
-      <button
-        type="button"
-        onClick={() => setCollapsed((prev) => !prev)}
-        className="flex w-full items-center gap-2 px-4 py-3 text-left hover:bg-muted/50 transition-colors"
-      >
-        {collapsed ? (
-          <ChevronRight size={16} className="shrink-0 text-muted-foreground" />
-        ) : (
-          <ChevronDown size={16} className="shrink-0 text-muted-foreground" />
-        )}
-        <span className="text-sm font-medium">Internal Notes</span>
-        <Badge variant="secondary" className="ml-1 text-xs">
-          {notes.length}
-        </Badge>
-      </button>
-
-      {/* Collapsible body */}
-      {!collapsed && (
-        <div className="px-4 pb-4 space-y-3">
-          {/* Note list */}
-          {notes.length > 0 ? (
-            <ul className="space-y-2">
-              {notes.map((note) => (
-                <li key={note.id} className="rounded-md border border-border bg-card px-3 py-2 shadow-sm">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-xs font-medium text-foreground">{note.author_name}</span>
-                    <span className="text-xs text-muted-foreground">{relTime(note.created_at)}</span>
-                  </div>
-                  <p className="text-sm text-foreground whitespace-pre-wrap">{note.body}</p>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="text-xs text-muted-foreground">No internal notes yet.</p>
-          )}
-
-          {/* Add note input */}
-          <div className="flex gap-2">
-            <Input
-              placeholder="Add a note..."
-              value={noteInput}
-              onChange={(e) => setNoteInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              disabled={loading}
-              className="flex-1 text-sm"
-            />
-            <Button
-              size="sm"
-              onClick={handleAdd}
-              disabled={loading || !noteInput.trim()}
-            >
-              Add Note
-            </Button>
-          </div>
+    <>
+      {/* Internal Notes Section */}
+      {notes.length > 0 && (
+        <div className="mt-2">
+          <Button
+            variant="ghost"
+            onClick={() => setShowNotes((v) => !v)}
+            className="flex items-center gap-1.5 text-(--text-3) text-[11px] font-bold tracking-[.06em] uppercase py-1.5 px-0 font-inherit"
+          >
+            <span className="flex">
+              <FileText size={12} />
+            </span>
+            Internal Notes ({notes.length})
+            <ChevronDown size={10} className={`transition-transform duration-200 ${showNotes ? 'rotate-180' : 'rotate-0'}`} />
+          </Button>
+          {showNotes &&
+            notes.map((note: Note, ni: number) => (
+              <div key={note.id || ni} className="mb-3" style={{ animation: 'msgIn .3s cubic-bezier(.16,1,.3,1) both' }}>
+                <div className="text-xs mb-[5px]">
+                  <span className="text-[10.5px] text-(--text-2) font-bold tracking-[.01em] text-[rgba(251,191,36,0.75)]">Note</span>
+                  <span className="text-[10px] text-(--text-3) ml-[7px] font-normal">{formatDate(note.created_at)}</span>
+                </div>
+                <div className="msg-note">
+                  <div className="text-[10px] font-bold text-[rgba(251,191,36,0.75)] tracking-[.07em] uppercase mb-[7px]">Internal note</div>
+                  {note.body}
+                </div>
+              </div>
+            ))}
         </div>
       )}
-    </div>
+
+      {/* Add note inline */}
+      <div className="mt-2 flex gap-2 items-start">
+        <Input
+          value={noteInput}
+          onChange={(e) => setNoteInput(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && !e.shiftKey) handleAddNote()
+          }}
+          placeholder="Add an internal note..."
+          className="flex-1 px-3 py-2 border border-[#FDE68A] rounded-lg text-[12.5px] text-(--text-1) bg-[rgba(251,191,36,0.04)] font-inherit outline-none transition-[border-color] duration-200"
+        />
+        <Button
+          variant="outline"
+          onClick={handleAddNote}
+          disabled={addingNote || !noteInput.trim()}
+          className={`px-3.5 py-2 rounded-lg border border-[#FDE68A] bg-[rgba(251,191,36,0.08)] text-[#F59E0B] text-xs font-semibold font-inherit transition-all duration-150 shrink-0 whitespace-nowrap ${addingNote || !noteInput.trim() ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+        >
+          {addingNote ? 'Adding...' : 'Add Note'}
+        </Button>
+      </div>
+    </>
   )
 }

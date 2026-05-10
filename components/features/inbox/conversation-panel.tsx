@@ -1,9 +1,12 @@
 'use client'
 
-import type { Thread, Message, Note } from '@/types/inbox'
+import type { Thread } from '@/types/inbox'
 import { MacroPanel } from '@/components/features/inbox/macro-panel'
 import { TicketActionBar } from '@/components/features/inbox/ticket-action-bar'
-import { AvatarFallback, Avatar as ShadAvatar } from '@/components/ui/avatar'
+import { MessageList } from '@/components/features/inbox/message-list'
+import { NotesSection } from '@/components/features/inbox/notes-section'
+import { AttachmentBar } from '@/components/features/inbox/attachment-bar'
+import { ComposerToolbar } from '@/components/features/inbox/composer-toolbar'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -11,29 +14,18 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { Input } from '@/components/ui/input'
 import { STATUS } from '@/lib/inbox-constants'
 import {
-  EMOJIS,
   extractEmail,
   extractName,
-  relTime as formatDate,
   plainTextToSafeHtml,
   sanitizeHtml,
 } from '@/lib/inbox-utils'
 import {
-  Check,
   ChevronDown,
-  FileText,
   Globe,
-  ImageIcon,
-  Link2,
-  Loader2,
   Mail,
-  Paperclip,
   Radio,
-  Send,
-  Smile,
   X,
   Zap,
 } from 'lucide-react'
@@ -48,7 +40,6 @@ import { useConversations, useConversation } from '@/hooks/inbox/use-inbox-data'
 import {
   useSendReply,
   useUpdateStatus,
-  useAddNote,
   useTranslateMessage,
 } from '@/hooks/inbox/use-inbox-mutations'
 import { useComposerActions } from '@/hooks/inbox/use-composer-actions'
@@ -69,34 +60,23 @@ export function ConversationPanel() {
   const composerTab = useInboxUI((s) => s.composerTab)
   const reply = useInboxUI((s) => s.reply)
   const showEmoji = useInboxUI((s) => s.showEmoji)
-  const attachments = useInboxUI((s) => s.attachments)
   const showMacros = useInboxUI((s) => s.showMacros)
-  const showNotes = useInboxUI((s) => s.showNotes)
-  const noteInput = useInboxUI((s) => s.noteInput)
-  const sending = useInboxUI((s) => s.sending)
-  const addingNote = useInboxUI((s) => s.addingNote)
   const activeFolder = useInboxUI((s) => s.activeFolder)
   const search = useInboxUI((s) => s.search)
+  const autoTranslate = useAIStore((s) => s.autoTranslate)
+  const customerLang = useAIStore((s) => s.customerLang)
   const setComposerTab = useInboxUI((s) => s.setComposerTab)
   const setReply = useInboxUI((s) => s.setReply)
   const setShowEmoji = useInboxUI((s) => s.setShowEmoji)
   const setAttachments = useInboxUI((s) => s.setAttachments)
   const setShowMacros = useInboxUI((s) => s.setShowMacros)
   const setShowMacroManager = useInboxUI((s) => s.setShowMacroManager)
-  const setShowNotes = useInboxUI((s) => s.setShowNotes)
-  const setNoteInput = useInboxUI((s) => s.setNoteInput)
   const setSending = useInboxUI((s) => s.setSending)
-  const setAddingNote = useInboxUI((s) => s.setAddingNote)
   const setSelectedThreadId = useInboxUI((s) => s.setSelectedThreadId)
 
   // AI state
   const aiLoading = useAIStore((s) => s.aiLoading)
-  const autoTranslate = useAIStore((s) => s.autoTranslate)
-  const customerLang = useAIStore((s) => s.customerLang)
-  const msgTranslations = useAIStore((s) => s.translations)
   const setAutoTranslate = useAIStore((s) => s.setAutoTranslate)
-  const setTranslation = useAIStore((s) => s.setTranslation)
-  const translateMessage = useAIStore((s) => s.translateMessage)
   const generateReply = useAIStore((s) => s.generateReply)
 
   // Macros
@@ -114,9 +94,8 @@ export function ConversationPanel() {
 
   // TanStack data
   const { data: threads = [] } = useConversations(activeFolder, search)
-  const { data: conversationData, isLoading: loadingMsgs } = useConversation(selectedThreadId)
+  const { data: conversationData } = useConversation(selectedThreadId)
   const messages = useMemo(() => conversationData?.messages || [], [conversationData?.messages])
-  const notes = useMemo(() => conversationData?.notes || [], [conversationData?.notes])
 
   const selectedThread = useMemo(
     () => threads.find((t: Thread) => t.id === selectedThreadId) || null,
@@ -126,7 +105,6 @@ export function ConversationPanel() {
   // Mutations
   const sendReplyMutation = useSendReply()
   const updateStatusMutation = useUpdateStatus()
-  const addNoteMutation = useAddNote()
   const translateMutation = useTranslateMessage()
 
   // Composer actions
@@ -238,22 +216,6 @@ export function ConversationPanel() {
     } else sonnerToast.error('AI reply failed')
   }
 
-  // Add note
-  async function handleAddNote() {
-    if (!noteInput.trim() || !selectedThreadId) return
-    setAddingNote(true)
-    try {
-      await addNoteMutation.mutateAsync({
-        threadId: selectedThreadId,
-        body: noteInput.trim(),
-      })
-      setNoteInput('')
-    } catch {
-      sonnerToast.error('Failed to add note')
-    }
-    setAddingNote(false)
-  }
-
   if (!selectedThread) {
     return (
       <div className="flex-1 flex flex-col overflow-hidden min-w-0 relative z-[1]">
@@ -332,152 +294,10 @@ export function ConversationPanel() {
         />
       </div>
 
-      {/* Messages */}
+      {/* Messages + Notes + Note input */}
       <div className="sscroll conv-area flex-1 overflow-y-auto px-6 py-5 bg-[#FAFAFA]">
-        {loadingMsgs &&
-          [0, 1].map((i) => (
-            <div
-              key={i}
-              className={`flex gap-3 ${i % 2 === 0 ? 'flex-row' : 'flex-row-reverse'} mb-5`}
-              style={{ animation: `fadeUp .3s ease ${i * 0.1}s both` }}
-            >
-              <div className="bg-gradient-to-r from-(--skeleton-from) via-(--skeleton-to) to-(--skeleton-from) bg-[length:400%_100%] animate-[shimmer_1.8s_linear_infinite] rounded-md w-[34px] h-[34px] rounded-full shrink-0" />
-              <div className="bg-gradient-to-r from-(--skeleton-from) via-(--skeleton-to) to-(--skeleton-from) bg-[length:400%_100%] animate-[shimmer_1.8s_linear_infinite] rounded-md h-20 w-[60%] rounded-[18px]" />
-            </div>
-          ))}
-        {messages.map((msg: Message & { isNote?: boolean; snippet?: string }, idx: number) => {
-          const isAgent = msg.from?.toLowerCase().includes(session?.user?.email?.split('@')[0]?.toLowerCase() || '')
-          const isNote = msg.isNote
-          const name = extractName(msg.from)
-          const ini = (name || '?')
-            .split(' ')
-            .map((w) => w[0])
-            .join('')
-            .slice(0, 2)
-            .toUpperCase()
-          return (
-            <div
-              key={msg.id || idx}
-              className={`mb-5 flex gap-3 ${isAgent ? 'flex-row-reverse' : 'flex-row'}`}
-              style={{ animation: 'msgIn .3s cubic-bezier(.16,1,.3,1) both' }}
-            >
-              {!isNote && (
-                <ShadAvatar className="shrink-0" style={{ width: 26, height: 26 }}>
-                  <AvatarFallback className={isAgent ? 'bg-(--text-1) text-white' : 'bg-[#F0F0F0] text-(--text-2)'} style={{ fontSize: 26 * 0.34 }}>
-                    {ini}
-                  </AvatarFallback>
-                </ShadAvatar>
-              )}
-              <div className="max-w-[72%]">
-                <div className={`text-xs mb-[5px] ${isAgent ? 'text-right' : 'text-left'}`}>
-                  <span className="text-[10.5px] text-(--text-2) font-bold tracking-[.01em]">{name}</span>
-                  <span className="text-[10px] text-(--text-3) ml-[7px] font-normal">{formatDate(msg.date)}</span>
-                </div>
-                <div className={isNote ? 'msg-note' : isAgent ? 'msg-out' : 'msg-in'}>
-                  {isNote && (
-                    <div className="text-[10px] font-bold text-[rgba(251,191,36,0.75)] tracking-[.07em] uppercase mb-[7px]">Internal note</div>
-                  )}
-                  {(() => {
-                    const content =
-                      msgTranslations[msg.id] && msgTranslations[msg.id] !== '__loading__' ? msgTranslations[msg.id] : msg.body || msg.snippet || ''
-                    const isHtml = /<[a-z][\s\S]*>/i.test(content)
-                    if (!isHtml) return <span>{content}</span>
-                    return (
-                      <iframe
-                        sandbox="allow-same-origin"
-                        srcDoc={
-                          '<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>body{margin:0;padding:8px;font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',Roboto,sans-serif;font-size:14px;color:#1a1a1a;word-wrap:break-word;overflow-wrap:break-word}img{max-width:100%;height:auto}a{color:#6d28d9}blockquote{margin:8px 0;padding-left:12px;border-left:3px solid #ddd;color:#666}pre{white-space:pre-wrap;overflow-x:auto}</style></head><body>' +
-                          content +
-                          '</body></html>'
-                        }
-                        className="w-full border-none min-h-[60px] rounded-[6px] bg-white"
-                        title="Email content"
-                        onLoad={(e) => {
-                          try {
-                            const iframe = e.target as HTMLIFrameElement
-                            const h = iframe.contentDocument!.body.scrollHeight
-                            iframe.style.height = h + 16 + 'px'
-                          } catch {}
-                        }}
-                      />
-                    )
-                  })()}
-                </div>
-                {!isAgent && !isNote && (
-                  <div className="text-left mt-1">
-                    {msgTranslations[msg.id] === '__loading__' ? (
-                      <span className="text-[10px] text-(--text-3)">Translating…</span>
-                    ) : msgTranslations[msg.id] ? (
-                      <button
-                        className="text-[10px] font-semibold text-(--text-3) bg-transparent cursor-pointer px-[7px] py-[2px] rounded-[5px] transition-all hover:text-(--text-1) hover:bg-(--bg-surface-2)"
-                        onClick={() => setTranslation(msg.id, undefined)}
-                      >
-                        Show original
-                      </button>
-                    ) : (
-                      <button
-                        className="text-[10px] font-semibold text-(--text-3) bg-transparent cursor-pointer px-[7px] py-[2px] rounded-[5px] transition-all hover:text-(--text-1) hover:bg-(--bg-surface-2)"
-                        onClick={() => translateMessage(msg.id, msg.body || msg.snippet || '', token)}
-                      >
-                        Translate
-                      </button>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-          )
-        })}
-        {/* Internal Notes Section */}
-        {notes.length > 0 && (
-          <div className="mt-2">
-            <Button
-              variant="ghost"
-              onClick={() => setShowNotes((v) => !v)}
-              className="flex items-center gap-1.5 text-(--text-3) text-[11px] font-bold tracking-[.06em] uppercase py-1.5 px-0 font-inherit"
-            >
-              <span className="flex">
-                <FileText size={12} />
-              </span>
-              Internal Notes ({notes.length})
-              <ChevronDown size={10} className={`transition-transform duration-200 ${showNotes ? 'rotate-180' : 'rotate-0'}`} />
-            </Button>
-            {showNotes &&
-              notes.map((note: Note, ni: number) => (
-                <div key={note.id || ni} className="mb-3" style={{ animation: 'msgIn .3s cubic-bezier(.16,1,.3,1) both' }}>
-                  <div className="text-xs mb-[5px]">
-                    <span className="text-[10.5px] text-(--text-2) font-bold tracking-[.01em] text-[rgba(251,191,36,0.75)]">Note</span>
-                    <span className="text-[10px] text-(--text-3) ml-[7px] font-normal">{formatDate(note.created_at)}</span>
-                  </div>
-                  <div className="msg-note">
-                    <div className="text-[10px] font-bold text-[rgba(251,191,36,0.75)] tracking-[.07em] uppercase mb-[7px]">Internal note</div>
-                    {note.body}
-                  </div>
-                </div>
-              ))}
-          </div>
-        )}
-        {/* Add note inline */}
-        <div className="mt-2 flex gap-2 items-start">
-          <Input
-            value={noteInput}
-            onChange={(e) => setNoteInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey) handleAddNote()
-            }}
-            placeholder="Add an internal note..."
-            className="flex-1 px-3 py-2 border border-[#FDE68A] rounded-lg text-[12.5px] text-(--text-1) bg-[rgba(251,191,36,0.04)] font-inherit outline-none transition-[border-color] duration-200"
-          />
-          <Button
-            variant="outline"
-            onClick={handleAddNote}
-            disabled={addingNote || !noteInput.trim()}
-            className={`px-3.5 py-2 rounded-lg border border-[#FDE68A] bg-[rgba(251,191,36,0.08)] text-[#F59E0B] text-xs font-semibold font-inherit transition-all duration-150 shrink-0 whitespace-nowrap ${addingNote || !noteInput.trim() ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
-          >
-            {addingNote ? 'Adding...' : 'Add Note'}
-          </Button>
-        </div>
-        <div ref={msgEndRef} />
+        <MessageList msgEndRef={msgEndRef} />
+        <NotesSection />
       </div>
 
       {/* Composer */}
@@ -579,26 +399,7 @@ export function ConversationPanel() {
               )}
 
               {/* Attachments */}
-              {attachments.length > 0 && (
-                <div className="flex flex-wrap gap-[5px] pt-2 px-3.5 pb-0">
-                  {attachments.map((a, i) => (
-                    <span
-                      key={i}
-                      className="inline-flex items-center gap-[5px] px-2.5 py-1 bg-(--bg-surface-2) border border-(--border) rounded-lg text-[11px] text-(--text-2)"
-                    >
-                      <Paperclip size={13} /> {a.name}
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => setAttachments((p) => p.filter((_, j) => j !== i))}
-                        className="text-(--text-3) flex p-0 ml-0.5"
-                      >
-                        <X size={10} />
-                      </Button>
-                    </span>
-                  ))}
-                </div>
-              )}
+              <AttachmentBar />
 
               {/* Contenteditable composer */}
               <div
@@ -653,121 +454,18 @@ export function ConversationPanel() {
                 </div>
               )}
 
-              {/* Toolbar + Send buttons — single bottom row */}
-              <div className="flex items-center gap-px px-2.5 py-[7px] border-t border-border">
-                <button
-                  className="min-w-[30px] h-[30px] flex items-center justify-center rounded-[7px] cursor-pointer text-xs font-bold text-(--text-3) transition-all hover:bg-(--bg-surface-2) hover:text-(--text-1)"
-                  title="Bold (⌘B)"
-                  onClick={() => formatDoc('bold')}
-                  onMouseDown={(e) => e.preventDefault()}
-                >
-                  <span className="font-extrabold text-[13px]">B</span>
-                </button>
-                <button
-                  className="min-w-[30px] h-[30px] flex items-center justify-center rounded-[7px] cursor-pointer text-xs font-bold text-(--text-3) transition-all hover:bg-(--bg-surface-2) hover:text-(--text-1)"
-                  title="Italic (⌘I)"
-                  onClick={() => formatDoc('italic')}
-                  onMouseDown={(e) => e.preventDefault()}
-                >
-                  <span className="italic text-[13px]">I</span>
-                </button>
-                <button
-                  className="min-w-[30px] h-[30px] flex items-center justify-center rounded-[7px] cursor-pointer text-xs font-bold text-(--text-3) transition-all hover:bg-(--bg-surface-2) hover:text-(--text-1)"
-                  title="Underline (⌘U)"
-                  onClick={() => formatDoc('underline')}
-                  onMouseDown={(e) => e.preventDefault()}
-                >
-                  <span className="underline text-[13px]">U</span>
-                </button>
-                <div className="rtbar-sep" />
-                <button
-                  className="min-w-[30px] h-[30px] flex items-center justify-center rounded-[7px] cursor-pointer text-xs font-bold text-(--text-3) transition-all hover:bg-(--bg-surface-2) hover:text-(--text-1)"
-                  title="Insert link"
-                  onClick={insertLink}
-                  onMouseDown={(e) => e.preventDefault()}
-                >
-                  <Link2 size={13} />
-                </button>
-                <button
-                  className="min-w-[30px] h-[30px] flex items-center justify-center rounded-[7px] cursor-pointer text-xs font-bold text-(--text-3) transition-all hover:bg-(--bg-surface-2) hover:text-(--text-1)"
-                  title="Insert image"
-                  onClick={() => imgUploadRef.current?.click()}
-                  onMouseDown={(e) => e.preventDefault()}
-                >
-                  <ImageIcon size={13} />
-                </button>
-                <div className="relative">
-                  <button
-                    className={`min-w-[30px] h-[30px] flex items-center justify-center rounded-[7px] cursor-pointer text-xs font-bold text-(--text-3) transition-all hover:bg-(--bg-surface-2) hover:text-(--text-1)${showEmoji ? ' rton' : ''}`}
-                    title="Emoji"
-                    onClick={() => setShowEmoji(!showEmoji)}
-                    onMouseDown={(e) => e.preventDefault()}
-                  >
-                    <Smile size={13} />
-                  </button>
-                  {showEmoji && (
-                    <div
-                      className="absolute bottom-[calc(100%+8px)] left-[-8px] bg-(--bg-surface) backdrop-blur-[28px] border border-(--border) rounded-2xl p-2.5 z-[200] shadow-[0_24px_80px_rgba(0,0,0,0.2)] animate-[fadeUp_.16s_ease_both]"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <div className="grid grid-cols-7 gap-[2px]">
-                        {EMOJIS.map((em) => (
-                          <button
-                            key={em}
-                            className="w-8 h-8 flex items-center justify-center rounded-lg text-[17px] cursor-pointer bg-transparent transition-colors hover:bg-(--bg-surface-2)"
-                            onMouseDown={(e) => {
-                              e.preventDefault()
-                              insertEmoji(em)
-                              setShowEmoji(false)
-                            }}
-                          >
-                            {em}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-                <button
-                  className="min-w-[30px] h-[30px] flex items-center justify-center rounded-[7px] cursor-pointer text-xs font-bold text-(--text-3) transition-all hover:bg-(--bg-surface-2) hover:text-(--text-1)"
-                  title="Attach file"
-                  onClick={() => fileUploadRef.current?.click()}
-                  onMouseDown={(e) => e.preventDefault()}
-                >
-                  <Paperclip size={13} />
-                </button>
-                <div className="rtbar-sep" />
-                <button
-                  className={`min-w-[30px] h-[30px] flex items-center justify-center rounded-[7px] cursor-pointer text-xs font-bold text-(--text-3) transition-all hover:bg-(--bg-surface-2) hover:text-(--text-1)${autoTranslate ? ' rton' : ''} gap-1 pl-1.5 pr-2 text-[11px] font-semibold min-w-auto`}
-                  title={customerLang ? `Auto-translate to ${customerLang.name}` : 'Detect language'}
-                  onClick={() => (customerLang ? setAutoTranslate(!autoTranslate) : null)}
-                >
-                  <Globe size={13} />
-                  <span>{customerLang ? customerLang.name : 'Translate'}</span>
-                </button>
-                <div className="flex-1" />
-                <Button
-                  variant="outline"
-                  className="h-8 px-3 text-[12.5px] font-semibold bg-(--bg-surface-2) border border-(--border) text-(--text-1) rounded-[7px] transition-all hover:bg-(--bg-input) hover:border-(--border-hover) hover:text-(--text-1) flex items-center gap-1.5 px-[13px] py-[7px]"
-                  onClick={handleAiReply}
-                  disabled={aiLoading || !messages.length}
-                >
-                  {aiLoading ? <Loader2 size={13} className="animate-spin" /> : <span className="text-primary text-[13px] leading-none">✦</span>}
-                  {aiLoading ? 'Generating…' : 'AI Reply'}
-                </Button>
-                <Button
-                  className="px-[9px] py-[9px] text-[12.5px] font-semibold bg-[rgba(74,222,128,0.07)] border border-[rgba(74,222,128,0.2)] text-[rgba(74,222,128,0.75)] rounded-xl flex items-center gap-[5px] transition-all hover:bg-[rgba(74,222,128,0.13)] hover:border-[rgba(74,222,128,0.38)] hover:text-[#4ade80] ml-1.5"
-                  onClick={handleSendResolve}
-                  disabled={!reply.trim() || sending}
-                >
-                  <Check size={11} />
-                  Send & Close
-                </Button>
-                <Button className="flex items-center gap-1.5 ml-1.5" onClick={handleSend} disabled={!reply.trim() || sending}>
-                  {sending ? <Loader2 size={13} className="animate-spin text-white" /> : <Send size={13} />}
-                  {sending ? 'Sending…' : 'Send'}
-                </Button>
-              </div>
+              {/* Toolbar + Send buttons */}
+              <ComposerToolbar
+                onFormatDoc={formatDoc}
+                onInsertLink={insertLink}
+                onImageUpload={() => imgUploadRef.current?.click()}
+                onFileAttach={() => fileUploadRef.current?.click()}
+                onInsertEmoji={insertEmoji}
+                onAiReply={handleAiReply}
+                onSend={handleSend}
+                onSendResolve={handleSendResolve}
+                hasMessages={messages.length > 0}
+              />
             </div>
           </>
         )}

@@ -1,4 +1,3 @@
-// @ts-nocheck
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
@@ -6,10 +5,22 @@ import { ChevronLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 
+interface MacroData {
+  id?: string
+  name?: string
+  body?: string
+  tags?: string[]
+  language?: string
+  usageCount?: number
+  updatedAt?: string
+  archived?: boolean
+  [key: string]: unknown
+}
+
 export function MacroEditor({ macro, onSave, onDuplicate, onDelete, onBack }: {
-  macro: any;
-  onSave: (m: any) => void;
-  onDuplicate: (m: any) => void;
+  macro: MacroData | null;
+  onSave: (m: MacroData) => void;
+  onDuplicate: (m: MacroData) => void;
   onDelete: (id: string) => void;
   onBack: () => void;
 }) {
@@ -19,13 +30,13 @@ export function MacroEditor({ macro, onSave, onDuplicate, onDelete, onBack }: {
   const [tags, setTags] = useState((macro?.tags || []).join(", "));
   const [language, setLang] = useState(macro?.language || "English");
   const [tagInput, setTagInput] = useState((macro?.tags || []).join(", "));
-  const bodyRef = useRef(null);
+  const bodyRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     if (bodyRef.current) bodyRef.current.value = macro?.body || "";
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  function insertVar(v) {
+  function insertVar(v: string) {
     const ta = bodyRef.current;
     if (!ta) return;
     const s = ta.selectionStart,
@@ -174,7 +185,7 @@ export function MacroEditor({ macro, onSave, onDuplicate, onDelete, onBack }: {
               {!isNew && (
                 <Button
                   variant="destructive"
-                  onClick={() => onDelete(macro.id)}
+                  onClick={() => onDelete(macro!.id!)}
                   className="py-[9px] px-4 rounded-lg border border-[rgba(220,38,38,0.3)] bg-[rgba(220,38,38,0.06)] text-(--danger) font-medium text-[13px] font-[inherit]"
                 >
                   Delete macro

@@ -1,4 +1,3 @@
-// @ts-nocheck
 'use client'
 
 import { useState } from 'react'
@@ -8,7 +7,20 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Loader2 } from 'lucide-react'
 import { authFetch, CANCEL_REASONS } from '@/lib/inbox-utils'
 
-export function CancelModal({ order, token, onClose, onSuccess }) {
+interface CancelOrder {
+  id: string
+  name: string
+  [key: string]: unknown
+}
+
+interface CancelModalProps {
+  order: CancelOrder
+  token: string
+  onClose: () => void
+  onSuccess: (msg: string, type?: string) => void
+}
+
+export function CancelModal({ order, token, onClose, onSuccess }: CancelModalProps) {
   const [reason, setReason] = useState("customer");
   const [restock, setRestock] = useState(true);
   const [notify, setNotify] = useState(true);

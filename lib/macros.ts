@@ -4,7 +4,7 @@
 
 export const MACRO_LANGS = ['auto', 'en', 'nl', 'fr', 'de', 'es', 'it']
 
-export function relativeTime(date: any) {
+export function relativeTime(date: string | number | Date | null | undefined) {
   if (!date) return null
   const ms = Date.now() - new Date(date).getTime()
   if (ms < 0) return 'just now'
@@ -21,10 +21,24 @@ export function relativeTime(date: any) {
   return `${Math.floor(months / 12)}y ago`
 }
 
+interface MacroInput {
+  name?: string
+  body?: string
+  language?: string
+  tags?: unknown[]
+}
+
+interface SanitizedMacro {
+  name?: string
+  body?: string
+  language?: string
+  tags?: string[]
+}
+
 // Sanitize macro fields from request body. Returns { name, body, language, tags }.
 // Throws an Error with .code property on validation failure.
-export function sanitizeMacroInput(body: any, { partial = false } = {}) {
-  const out: any = {}
+export function sanitizeMacroInput(body: MacroInput, { partial = false } = {}): SanitizedMacro {
+  const out: SanitizedMacro = {}
 
   if (body.name !== undefined) {
     if (typeof body.name !== 'string') throw fieldError('Name must be a string', 'invalid_name')
@@ -50,7 +64,7 @@ export function sanitizeMacroInput(body: any, { partial = false } = {}) {
   if (body.tags !== undefined) {
     if (!Array.isArray(body.tags)) throw fieldError('Tags must be an array', 'invalid_tags')
     out.tags = body.tags
-      .map((t: any) => typeof t === 'string' ? t.trim().slice(0, 40) : '')
+      .map((t: unknown) => typeof t === 'string' ? t.trim().slice(0, 40) : '')
       .filter(Boolean)
       .slice(0, 25)
   }

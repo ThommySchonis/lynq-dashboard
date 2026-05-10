@@ -3,25 +3,21 @@
 import Link from 'next/link'
 import Sidebar from './Sidebar'
 
-// Reusable full-page empty state. Renders Sidebar + centered content
-// with title, description, and 1+ action buttons. Consumed by /inbox,
-// /analytics, /performance, /macros, /tags per ONBOARDING_SPEC v1.1
-// section 4.
-//
-// Usage:
-//   <EmptyState
-//     icon="📬"
-//     title="Your inbox is empty"
-//     description="Connect your email to start receiving customer support tickets."
-//     actions={[
-//       { label: 'Connect Gmail',   href: '/settings/integrations/email', variant: 'primary' },
-//       { label: 'Connect Outlook', href: '/settings/integrations/email', variant: 'primary' },
-//     ]}
-//   />
-//
-// Action variants: 'primary' (Iris Electric filled), 'secondary' (white
-// w/ border), 'link' (text-only inline). Multiple primary buttons allowed.
-export default function EmptyState({ icon, title, description, actions = [] }) {
+interface EmptyStateAction {
+  label: string
+  href?: string
+  variant?: 'primary' | 'secondary' | 'link'
+  onClick?: () => void
+}
+
+interface EmptyStateProps {
+  icon?: string
+  title: string
+  description: string
+  actions?: EmptyStateAction[]
+}
+
+export default function EmptyState({ icon, title, description, actions = [] }: EmptyStateProps) {
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: '#F9F8FF' }}>
       <Sidebar />
@@ -80,8 +76,8 @@ export default function EmptyState({ icon, title, description, actions = [] }) {
   )
 }
 
-function ActionButton({ label, href, variant = 'primary', onClick }) {
-  const style =
+function ActionButton({ label, href, variant = 'primary', onClick }: EmptyStateAction) {
+  const style: React.CSSProperties =
     variant === 'primary'
       ? {
           padding: '10px 20px',
@@ -108,7 +104,7 @@ function ActionButton({ label, href, variant = 'primary', onClick }) {
           cursor: 'pointer',
           fontFamily: 'inherit',
         }
-      : /* link */ {
+      : {
           color: '#A175FC',
           fontSize: 13,
           fontWeight: 500,
@@ -128,7 +124,7 @@ function ActionButton({ label, href, variant = 'primary', onClick }) {
     )
   }
   return (
-    <Link href={href} style={style}>
+    <Link href={href || '#'} style={style}>
       {label}
     </Link>
   )

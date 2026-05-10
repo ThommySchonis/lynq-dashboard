@@ -1,4 +1,3 @@
-// @ts-nocheck
 'use client'
 
 import { useState } from 'react'
@@ -8,8 +7,35 @@ import { Input } from '@/components/ui/input'
 import { Loader2 } from 'lucide-react'
 import { authFetch } from '@/lib/inbox-utils'
 
-export function EditAddressModal({ order, token, onClose, onSuccess }) {
-  const sa = order.shippingAddress || {};
+interface AddressFields {
+  firstName?: string
+  lastName?: string
+  address1?: string
+  address2?: string
+  city?: string
+  zip?: string
+  country?: string
+  countryCode?: string
+  phone?: string
+  [key: string]: unknown
+}
+
+interface EditAddressOrder {
+  id: string
+  name: string
+  shippingAddress?: AddressFields | null
+  [key: string]: unknown
+}
+
+interface EditAddressModalProps {
+  order: EditAddressOrder
+  token: string
+  onClose: () => void
+  onSuccess: (msg: string, type?: string) => void
+}
+
+export function EditAddressModal({ order, token, onClose, onSuccess }: EditAddressModalProps) {
+  const sa: AddressFields = order.shippingAddress || {};
   const [form, setForm] = useState({
     firstName: sa.firstName || "",
     lastName: sa.lastName || "",
@@ -22,7 +48,7 @@ export function EditAddressModal({ order, token, onClose, onSuccess }) {
     phone: sa.phone || "",
   });
   const [loading, setLoading] = useState(false);
-  const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
+  const set = (k: string, v: string) => setForm((f) => ({ ...f, [k]: v }));
 
   async function handleSave() {
     setLoading(true);

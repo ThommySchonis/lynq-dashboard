@@ -1,4 +1,3 @@
-// @ts-nocheck
 'use client'
 
 import { useEffect, useState } from 'react'
@@ -9,7 +8,32 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Loader2 } from 'lucide-react'
 import { authFetch, fmtPrice, REFUND_REASONS } from '@/lib/inbox-utils'
 
-export function RefundModal({ order, token, onClose, onSuccess }) {
+interface RefundLineItem {
+  id: string
+  title: string
+  quantity: number
+  price: string
+  variantTitle?: string
+  [key: string]: unknown
+}
+
+interface RefundOrder {
+  id: string
+  name: string
+  totalPrice: string | number
+  currency: string
+  lineItems?: RefundLineItem[]
+  [key: string]: unknown
+}
+
+interface RefundModalProps {
+  order: RefundOrder
+  token: string
+  onClose: () => void
+  onSuccess: (msg: string, type?: string) => void
+}
+
+export function RefundModal({ order, token, onClose, onSuccess }: RefundModalProps) {
   const [mode, setMode] = useState("items"); // 'items' | 'full' | 'custom'
   const [qtys, setQtys] = useState(Object.fromEntries((order.lineItems || []).map((li) => [li.id, 0])));
   const [customAmount, setCustomAmount] = useState("");

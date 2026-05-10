@@ -1,4 +1,3 @@
-// @ts-nocheck
 'use client'
 
 import { AvatarFallback, Avatar as ShadAvatar } from '@/components/ui/avatar'
@@ -32,6 +31,85 @@ import { useMemo, useCallback } from 'react'
 import { useInboxUI } from '@/stores/inbox-ui'
 import { useConversations, useCustomerSearch } from '@/hooks/inbox/use-inbox-data'
 
+interface SidebarThread {
+  id: string
+  from: string
+  subject: string
+  [key: string]: unknown
+}
+
+interface SidebarFulfillment {
+  trackingCompany?: string
+  trackingNumber?: string
+  trackingUrl?: string
+  [key: string]: unknown
+}
+
+interface SidebarLineItem {
+  id: string
+  title: string
+  quantity: number
+  price: string | number
+  sku?: string
+  variantTitle?: string
+  [key: string]: unknown
+}
+
+interface SidebarAddress {
+  firstName?: string
+  lastName?: string
+  address1?: string
+  address2?: string
+  city?: string
+  country?: string
+  province?: string
+  zip?: string
+  [key: string]: unknown
+}
+
+interface SidebarRefund {
+  id: string
+  [key: string]: unknown
+}
+
+interface SidebarOrder {
+  id: string
+  name: string
+  createdAt: string
+  totalPrice: string | number
+  currency: string
+  financialStatus?: string
+  fulfillmentStatus?: string
+  cancelledAt?: string | null
+  note?: string | null
+  lineItems?: SidebarLineItem[]
+  shippingAddress?: SidebarAddress | null
+  fulfillments?: SidebarFulfillment[]
+  refunds?: SidebarRefund[]
+  [key: string]: unknown
+}
+
+interface SidebarCustomerData {
+  firstName?: string
+  lastName?: string
+  phone?: string | null
+  city?: string
+  country?: string
+  createdAt?: string
+  note?: string | null
+  ordersCount?: number
+  totalSpent?: string | number
+  currency?: string
+  tags?: string
+  [key: string]: unknown
+}
+
+interface SidebarCustomerResult {
+  customer?: SidebarCustomerData | null
+  orders?: SidebarOrder[]
+  [key: string]: unknown
+}
+
 export function CustomerSidebar() {
   // Zustand UI state
   const selectedThreadId = useInboxUI((s) => s.selectedThreadId)
@@ -53,21 +131,21 @@ export function CustomerSidebar() {
   const setModal = useInboxUI((s) => s.setModal)
 
   // TanStack data
-  const { data: threads = [] } = useConversations(activeFolder, search)
+  const { data: threads = [] } = useConversations(activeFolder, search) as { data?: SidebarThread[] }
 
   const selectedThread = useMemo(
-    () => threads.find((t) => t.id === selectedThreadId) || null,
+    () => (threads || []).find((t: SidebarThread) => t.id === selectedThreadId) || null,
     [threads, selectedThreadId],
   )
 
   // Customer search: auto-fetch when a thread is selected
   const autoCustomerEmail = selectedThread ? extractEmail(selectedThread.from) || '' : ''
   const customerQuery = custSearch || autoCustomerEmail
-  const { data: customer, isLoading: loadingCust } = useCustomerSearch(customerQuery)
+  const { data: customer, isLoading: loadingCust } = useCustomerSearch(customerQuery) as { data?: SidebarCustomerResult; isLoading: boolean }
 
   // Manual customer search handler
   const handleCustSearch = useCallback(
-    (query) => {
+    (query: string) => {
       if (!query.trim()) return
       setCustSearch(query.trim())
     },
@@ -77,7 +155,7 @@ export function CustomerSidebar() {
   if (!selectedThread) return null
 
   // Inline avatar helper
-  const renderAvatar = (name, size) => {
+  const renderAvatar = (name: string, size: number) => {
     const ini = (name || '?')
       .split(' ')
       .map((w) => w[0])
@@ -205,13 +283,13 @@ export function CustomerSidebar() {
           const orders = customer.orders || []
           const withRefund = orders.filter((o) => o.refunds && o.refunds.length > 0)
           const refundPct = orders.length > 0 ? Math.round((withRefund.length / orders.length) * 100) : 0
-          const approx = customer.customer.ordersCount > 50
+          const approx = (customer.customer.ordersCount ?? 0) > 50
           const badgeColor = refundPct > 30 ? '#f87171' : refundPct > 10 ? '#fbbf24' : null
           return (
             <div className="flex border-b border-border shrink-0">
               <div className="flex-1 py-2.5 text-center border-r border-border">
                 <div className="text-sm font-extrabold text-(--text-1) tracking-[-0.02em]">
-                  {fmtPrice(customer.customer.totalSpent, customer.customer.currency)}
+                  {fmtPrice(customer.customer.totalSpent ?? 0, customer.customer.currency ?? '')}
                 </div>
                 <div className="text-[9.5px] text-(--text-3) mt-0.5 uppercase tracking-[.06em]">Spent</div>
               </div>
@@ -257,7 +335,7 @@ export function CustomerSidebar() {
           onClick={() => setRightTab('shopify')}
         >
           Orders
-          {(customer?.orders || []).length > 0 ? ` (${customer.orders.length})` : ''}
+          {(customer?.orders || []).length > 0 ? ` (${customer?.orders?.length ?? 0})` : ''}
         </button>
       </div>
 
@@ -347,7 +425,7 @@ export function CustomerSidebar() {
                   <div className="flex items-baseline justify-between gap-4 px-3.5">
                     <span className="text-xs text-(--text-3) shrink-0 min-w-[72px]">Total spent</span>
                     <span className="text-xs font-medium text-(--text-1) text-right break-words font-bold text-(--text-1)">
-                      {fmtPrice(customer.customer.totalSpent, customer.customer.currency)}
+                      {fmtPrice(customer.customer.totalSpent ?? 0, customer.customer.currency ?? '')}
                     </span>
                   </div>
                 </div>
@@ -405,8 +483,8 @@ export function CustomerSidebar() {
             const isRefunded = order.financialStatus === 'refunded'
             const canRefund = !isCancelled && !isRefunded
             const canCancel = !isCancelled
-            const finS = isCancelled ? ORDER_STATUS.cancelled : ORDER_STATUS[order.financialStatus?.toLowerCase()]
-            const fulS = ORDER_STATUS[order.fulfillmentStatus?.toLowerCase()]
+            const finS = isCancelled ? ORDER_STATUS.cancelled : ORDER_STATUS[order.financialStatus?.toLowerCase() ?? '']
+            const fulS = ORDER_STATUS[order.fulfillmentStatus?.toLowerCase() ?? '']
             const sa = order.shippingAddress
             return (
               <div key={order.id} className="border-b border-border">
@@ -452,7 +530,7 @@ export function CustomerSidebar() {
                           {fulS.label}
                         </span>
                       )}
-                      {order.refunds?.length > 0 && order.financialStatus !== 'refunded' && (
+                      {(order.refunds?.length ?? 0) > 0 && order.financialStatus !== 'refunded' && (
                         <span className="text-[10px] font-bold px-[7px] py-0.5 rounded tracking-[.05em] uppercase bg-[rgba(248,113,133,0.12)] text-[#fb7185] border border-[rgba(248,113,133,0.22)]">
                           Partial refund
                         </span>
@@ -536,7 +614,7 @@ export function CustomerSidebar() {
                           />
                         </button>
                         {trackOpen &&
-                          order.fulfillments.slice(0, 1).map((f, fi) => (
+                          (order.fulfillments ?? []).slice(0, 1).map((f: SidebarFulfillment, fi: number) => (
                             <div key={fi} className="pb-1.5">
                               <div className="flex items-baseline justify-between gap-4 px-3.5">
                                 <span className="text-xs text-(--text-3) shrink-0 min-w-[72px]">Carrier</span>
@@ -626,7 +704,7 @@ export function CustomerSidebar() {
                               sa.province ? { l: 'Province', v: sa.province } : null,
                               sa.zip ? { l: 'Zip', v: sa.zip } : null,
                             ]
-                              .filter(Boolean)
+                              .filter((r): r is { l: string; v: string } => r !== null)
                               .map((row) => (
                                 <div key={row.l} className="flex items-baseline justify-between gap-4 px-3.5">
                                   <span className="text-xs text-(--text-3) shrink-0 min-w-[72px]">{row.l}</span>

@@ -1,4 +1,3 @@
-// @ts-nocheck
 'use client'
 
 import { useState } from 'react'
@@ -7,7 +6,21 @@ import { Button } from '@/components/ui/button'
 import { Loader2 } from 'lucide-react'
 import { authFetch } from '@/lib/inbox-utils'
 
-export function NoteModal({ order, token, onClose, onSuccess }) {
+interface NoteOrder {
+  id: string
+  name: string
+  note?: string | null
+  [key: string]: unknown
+}
+
+interface NoteModalProps {
+  order: NoteOrder
+  token: string
+  onClose: () => void
+  onSuccess: (msg: string, type?: string) => void
+}
+
+export function NoteModal({ order, token, onClose, onSuccess }: NoteModalProps) {
   const [note, setNote] = useState(order.note || "");
   const [loading, setLoading] = useState(false);
 

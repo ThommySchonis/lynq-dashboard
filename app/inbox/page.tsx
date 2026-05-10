@@ -1,5 +1,6 @@
 "use client";
 
+import type { Thread } from "@/types/inbox";
 import { MacroManager } from "@/components/features/inbox/macro-manager";
 import { ConversationPanel } from "@/components/features/inbox/conversation-panel";
 import { CustomerSidebar } from "@/components/features/inbox/customer-sidebar";
@@ -10,13 +11,8 @@ import { EditAddressModal } from "@/components/shared/modals/edit-address-modal"
 import { FulfillModal } from "@/components/shared/modals/fulfill-modal";
 import { NoteModal } from "@/components/shared/modals/note-modal";
 import { RefundModal } from "@/components/shared/modals/refund-modal";
-import {
-  useConversations,
-  useEmailConnected,
-} from "@/hooks/inbox/use-inbox-data";
-import {
-  useAIMacros,
-} from "@/hooks/inbox/use-inbox-mutations";
+import { useConversations, useEmailConnected } from "@/hooks/inbox/use-inbox-data";
+import { useAIMacros } from "@/hooks/inbox/use-inbox-mutations";
 import { useKeyboardShortcuts } from "@/hooks/inbox/use-keyboard-shortcuts";
 import { URGENCY_SCORE } from "@/lib/inbox-constants";
 import { useSearchParams } from "next/navigation";
@@ -50,7 +46,7 @@ function InboxPage() {
   const resetForNewThread = useInboxUI((s) => s.resetForNewThread);
 
   // ── Composer ref for keyboard shortcuts ──
-  const composerRef = useRef(null);
+  const composerRef = useRef<HTMLDivElement>(null);
 
   // ── AI store ──
   const analyses = useAIStore((s) => s.analyses);
@@ -71,8 +67,7 @@ function InboxPage() {
   useEffect(() => {
     const view = searchParams.get("view");
     if (view) setActiveFolder(view);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [searchParams, setActiveFolder]);
 
   // ── TanStack queries ──
   const { data: threads = [] } = useConversations(activeFolder, search);
@@ -84,27 +79,23 @@ function InboxPage() {
       return;
     }
     _fetchMacros(token);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session]);
+  }, [session, _fetchMacros, token]);
 
   // ── Trigger AI analysis when threads change ──
   useEffect(() => {
     if (threads.length > 0 && token) {
       _analyzeThreads(threads, token);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [threads]);
+  }, [threads, token, _analyzeThreads]);
 
   // ── Auto-fetch AI macros + detect language when thread changes ──
   const aiMacrosMutation = useAIMacros();
-  const selectedThread = useMemo(
-    () => threads.find((t) => t.id === selectedThreadId) || null,
-    [threads, selectedThreadId],
-  );
+  const selectedThread = useMemo(() => threads.find((t: Thread) => t.id === selectedThreadId) || null, [threads, selectedThreadId]);
 
   useEffect(() => {
     if (!selectedThreadId || !selectedThread || !token) return;
-    aiMacrosMutation.mutateAsync({ subject: selectedThread.subject, snippet: selectedThread.snippet })
+    aiMacrosMutation
+      .mutateAsync({ subject: selectedThread.subject, snippet: selectedThread.snippet })
       .then((macroList) => {
         if (macroList?.length) _setAiMacros(macroList);
       })
@@ -112,31 +103,33 @@ function InboxPage() {
     if (selectedThread.snippet) {
       _detectLanguage(selectedThread.snippet, token);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedThreadId]);
+  }, [selectedThreadId, selectedThread, token, aiMacrosMutation, _setAiMacros, _detectLanguage]);
 
   // ── Sorted threads for keyboard nav ──
   const sortedFiltered = useMemo(() => {
     const filtered = threads.filter(
-      (t) =>
+      (t: Thread) =>
         !search ||
         t.subject?.toLowerCase().includes(search.toLowerCase()) ||
         (t.customer_name || t.customer_email || t.from || "").toLowerCase().includes(search.toLowerCase()),
     );
-    return [...filtered].sort((a, b) => {
+    return [...filtered].sort((a: Thread, b: Thread) => {
       const sa = URGENCY_SCORE[analyses[a.id]?.urgency] || 0;
       const sb = URGENCY_SCORE[analyses[b.id]?.urgency] || 0;
       if (sb !== sa) return sb - sa;
-      return new Date(b.last_message_at || b.date) - new Date(a.last_message_at || a.date);
+      return new Date(b.last_message_at || b.date).getTime() - new Date(a.last_message_at || a.date).getTime();
     });
   }, [threads, search, analyses]);
 
   // ── Thread selection ──
-  const openThread = useCallback((thread) => {
-    setSelectedThreadId(thread.id);
-    resetForNewThread();
-    _resetAIForThread();
-  }, [setSelectedThreadId, resetForNewThread, _resetAIForThread]);
+  const openThread = useCallback(
+    (thread: Thread) => {
+      setSelectedThreadId(thread.id);
+      resetForNewThread();
+      _resetAIForThread();
+    },
+    [setSelectedThreadId, resetForNewThread, _resetAIForThread],
+  );
 
   // ── Keyboard shortcuts ──
   useKeyboardShortcuts({
@@ -146,9 +139,10 @@ function InboxPage() {
     composerRef,
   });
 
-  function handleModalSuccess(msg, type = "success") {
+  function handleModalSuccess(msg: string, type = "success") {
     setModal(null);
-    type === "success" ? sonnerToast.success(msg) : sonnerToast.error(msg);
+    if (type === "success") sonnerToast.success(msg);
+    else sonnerToast.error(msg);
   }
 
   if (!session) return null;
@@ -174,21 +168,11 @@ function InboxPage() {
       {selectedThreadId && <CustomerSidebar />}
 
       {/* ═══════════════ Modals ═══════════════ */}
-      {modal?.type === "refund" && (
-        <RefundModal order={modal.order} token={token} onClose={() => setModal(null)} onSuccess={handleModalSuccess} />
-      )}
-      {modal?.type === "cancel" && (
-        <CancelModal order={modal.order} token={token} onClose={() => setModal(null)} onSuccess={handleModalSuccess} />
-      )}
-      {modal?.type === "duplicate" && (
-        <DuplicateModal order={modal.order} token={token} onClose={() => setModal(null)} onSuccess={handleModalSuccess} />
-      )}
-      {modal?.type === "address" && (
-        <EditAddressModal order={modal.order} token={token} onClose={() => setModal(null)} onSuccess={handleModalSuccess} />
-      )}
-      {modal?.type === "fulfill" && (
-        <FulfillModal order={modal.order} token={token} onClose={() => setModal(null)} onSuccess={handleModalSuccess} />
-      )}
+      {modal?.type === "refund" && <RefundModal order={modal.order} token={token} onClose={() => setModal(null)} onSuccess={handleModalSuccess} />}
+      {modal?.type === "cancel" && <CancelModal order={modal.order} token={token} onClose={() => setModal(null)} onSuccess={handleModalSuccess} />}
+      {modal?.type === "duplicate" && <DuplicateModal order={modal.order} token={token} onClose={() => setModal(null)} onSuccess={handleModalSuccess} />}
+      {modal?.type === "address" && <EditAddressModal order={modal.order} token={token} onClose={() => setModal(null)} onSuccess={handleModalSuccess} />}
+      {modal?.type === "fulfill" && <FulfillModal order={modal.order} token={token} onClose={() => setModal(null)} onSuccess={handleModalSuccess} />}
       {modal?.type === "note" && <NoteModal order={modal.order} token={token} onClose={() => setModal(null)} onSuccess={handleModalSuccess} />}
 
       {/* Macro Manager overlay */}

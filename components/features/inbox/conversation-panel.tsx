@@ -1,6 +1,6 @@
-// @ts-nocheck
 'use client'
 
+import type { Thread, Message, Note } from '@/types/inbox'
 import { MacroPanel } from '@/components/features/inbox/macro-panel'
 import { TicketActionBar } from '@/components/features/inbox/ticket-action-bar'
 import { AvatarFallback, Avatar as ShadAvatar } from '@/components/ui/avatar'
@@ -119,7 +119,7 @@ export function ConversationPanel() {
   const notes = useMemo(() => conversationData?.notes || [], [conversationData?.notes])
 
   const selectedThread = useMemo(
-    () => threads.find((t) => t.id === selectedThreadId) || null,
+    () => threads.find((t: Thread) => t.id === selectedThreadId) || null,
     [threads, selectedThreadId],
   )
 
@@ -146,24 +146,24 @@ export function ConversationPanel() {
 
   // Status helpers
   const getStatus = useCallback(
-    (id) => {
-      const thread = threads.find((t) => t.id === id)
+    (id: string) => {
+      const thread = threads.find((t: Thread) => t.id === id)
       return thread?.status || 'open'
     },
     [threads],
   )
 
-  async function saveStatus(id, s) {
+  async function saveStatus(id: string, s: string) {
     await updateStatusMutation.mutateAsync({ threadId: id, status: s })
   }
 
-  function addTicketTag(id) {
+  function addTicketTag(id: string) {
     const tag = prompt('Add tag:')
     if (!tag?.trim()) return
     addTag(id, tag.trim())
   }
 
-  function updateTicketField(id, key, label) {
+  function updateTicketField(id: string, key: string, label: string) {
     const value = prompt(`${label}:`)
     if (value === null) return
     updateMeta(id, { [key]: value.trim() })
@@ -213,8 +213,8 @@ export function ConversationPanel() {
   async function handleSendResolve() {
     if (!selectedThreadId) return
     const currentId = selectedThreadId
-    const currentIdx = sortedFiltered.findIndex((t) => t.id === currentId)
-    const nextThread = sortedFiltered.find((t, i) => i !== currentIdx)
+    const currentIdx = sortedFiltered.findIndex((t: Thread) => t.id === currentId)
+    const nextThread = sortedFiltered.find((_t: Thread, i: number) => i !== currentIdx)
     const ok = await handleSend()
     if (ok) {
       await saveStatus(currentId, 'resolved')
@@ -290,9 +290,9 @@ export function ConversationPanel() {
                   <button
                     className="flex items-center gap-1.5 px-[11px] py-[5px] rounded-[20px] cursor-pointer text-xs font-semibold font-inherit transition-all duration-150"
                     style={{
-                      background: STATUS[getStatus(selectedThread.id)]?.bg,
-                      border: `1px solid ${STATUS[getStatus(selectedThread.id)]?.border}`,
-                      color: STATUS[getStatus(selectedThread.id)]?.color,
+                      background: STATUS[getStatus(selectedThread.id) as keyof typeof STATUS]?.bg,
+                      border: `1px solid ${STATUS[getStatus(selectedThread.id) as keyof typeof STATUS]?.border}`,
+                      color: STATUS[getStatus(selectedThread.id) as keyof typeof STATUS]?.color,
                     }}
                   />
                 }
@@ -300,10 +300,10 @@ export function ConversationPanel() {
                 <span
                   className="w-1.5 h-1.5 rounded-full shrink-0"
                   style={{
-                    background: STATUS[getStatus(selectedThread.id)]?.color,
+                    background: STATUS[getStatus(selectedThread.id) as keyof typeof STATUS]?.color,
                   }}
                 />
-                {STATUS[getStatus(selectedThread.id)]?.label}
+                {STATUS[getStatus(selectedThread.id) as keyof typeof STATUS]?.label}
                 <ChevronDown size={11} />
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
@@ -345,8 +345,8 @@ export function ConversationPanel() {
               <div className="bg-gradient-to-r from-(--skeleton-from) via-(--skeleton-to) to-(--skeleton-from) bg-[length:400%_100%] animate-[shimmer_1.8s_linear_infinite] rounded-md h-20 w-[60%] rounded-[18px]" />
             </div>
           ))}
-        {messages.map((msg, idx) => {
-          const isAgent = msg.from?.toLowerCase().includes(session.user.email?.split('@')[0]?.toLowerCase() || '')
+        {messages.map((msg: Message & { isNote?: boolean; snippet?: string }, idx: number) => {
+          const isAgent = msg.from?.toLowerCase().includes(session?.user?.email?.split('@')[0]?.toLowerCase() || '')
           const isNote = msg.isNote
           const name = extractName(msg.from)
           const ini = (name || '?')
@@ -394,8 +394,9 @@ export function ConversationPanel() {
                         title="Email content"
                         onLoad={(e) => {
                           try {
-                            const h = e.target.contentDocument.body.scrollHeight
-                            e.target.style.height = h + 16 + 'px'
+                            const iframe = e.target as HTMLIFrameElement
+                            const h = iframe.contentDocument!.body.scrollHeight
+                            iframe.style.height = h + 16 + 'px'
                           } catch {}
                         }}
                       />
@@ -442,7 +443,7 @@ export function ConversationPanel() {
               <ChevronDown size={10} className={`transition-transform duration-200 ${showNotes ? 'rotate-180' : 'rotate-0'}`} />
             </Button>
             {showNotes &&
-              notes.map((note, ni) => (
+              notes.map((note: Note, ni: number) => (
                 <div key={note.id || ni} className="mb-3" style={{ animation: 'msgIn .3s cubic-bezier(.16,1,.3,1) both' }}>
                   <div className="text-xs mb-[5px]">
                     <span className="text-[10.5px] text-(--text-2) font-bold tracking-[.01em] text-[rgba(251,191,36,0.75)]">Note</span>
@@ -520,7 +521,7 @@ export function ConversationPanel() {
                 { id: 'reply', label: 'Reply' },
                 { id: 'note', label: 'Internal note' },
               ].map((t) => (
-                <button key={t.id} className={`ctab${composerTab === t.id ? ' on' : ''}`} onClick={() => setComposerTab(t.id)}>
+                <button key={t.id} className={`ctab${composerTab === t.id ? ' on' : ''}`} onClick={() => setComposerTab(t.id as 'reply' | 'note')}>
                   {t.label}
                 </button>
               ))}
@@ -632,7 +633,7 @@ export function ConversationPanel() {
                   <span className="text-[10.5px] text-(--text-2) font-semibold shrink-0">Suggested macros</span>
                   {(aiMacros.length > 0 ? aiMacros : macros).slice(0, 3).map((m) => {
                     const firstName = extractName(selectedThread?.from || '').split(' ')[0] || 'there'
-                    const body = m.body.replace(/{{name}}/gi, firstName).replace(/{{firstname}}/gi, firstName)
+                    const body = (m.body || '').replace(/{{name}}/gi, firstName).replace(/{{firstname}}/gi, firstName)
                     return (
                       <button
                         key={m.id}

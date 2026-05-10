@@ -109,7 +109,7 @@ export function useAIReply() {
       messages,
     }: {
       threadId: string
-      messages: any[]
+      messages: Array<Record<string, unknown>>
     }) => {
       const res = await authFetch(
         '/api/ai/reply',
@@ -150,7 +150,7 @@ export function useTranslateMessage() {
 export function useAnalyzeThreads() {
   const token = useToken()
   return useMutation({
-    mutationFn: async (threads: any[]) => {
+    mutationFn: async (threads: Array<{ id: string; subject: string; snippet: string }>) => {
       const res = await authFetch(
         '/api/ai/analyze',
         {

@@ -1,4 +1,3 @@
-// @ts-nocheck
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
@@ -15,22 +14,31 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
-export function MacroPanel({ macros = [], aiMacros = [], onInsert, onClose, customerName = "", onManage, onCreateNew = () => {}, favs = [], onToggleFav = () => {} }: {
-  macros?: any[];
-  aiMacros?: any[];
+interface MacroPanelItem {
+  id: string
+  name: string
+  body?: string
+  tags?: string[]
+  [key: string]: unknown
+}
+
+export function MacroPanel({ macros = [], aiMacros = [], onInsert, onClose, customerName = "", onManage, onCreateNew = () => {}, favs = [], onToggleFav = () => {}, onDeleteMacro }: {
+  macros?: MacroPanelItem[];
+  aiMacros?: MacroPanelItem[];
   onInsert: (content: string) => void;
   onClose: () => void;
   customerName?: string;
-  onManage: (macro?: any) => void;
+  onManage: (macro?: MacroPanelItem) => void;
   onCreateNew?: () => void;
   favs?: string[];
   onToggleFav?: (id: string) => void;
+  onDeleteMacro?: (id: string) => void;
 }) {
   const [search, setSearch] = useState("");
-  const [selected, setSelected] = useState(null);
+  const [selected, setSelected] = useState<MacroPanelItem | null>(null);
   const [gearOpen, setGearOpen] = useState(false);
-  const searchRef = useRef(null);
-  const gearRef = useRef(null);
+  const searchRef = useRef<HTMLInputElement>(null);
+  const gearRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     searchRef.current?.focus();
@@ -54,7 +62,7 @@ export function MacroPanel({ macros = [], aiMacros = [], onInsert, onClose, cust
     return () => document.removeEventListener("mousedown", h);
   }, [gearOpen]);
 
-  function toggleFav(id, e) {
+  function toggleFav(id: string, e: React.MouseEvent) {
     e.stopPropagation();
     onToggleFav(id);
   }
@@ -64,15 +72,15 @@ export function MacroPanel({ macros = [], aiMacros = [], onInsert, onClose, cust
   const nonFavMacros = filtered.filter((m) => !favs.includes(m.id));
   const active = selected || filtered[0] || null;
 
-  const StarIcon = ({ filled }) => <Star size={13} fill={filled ? "#f59e0b" : "none"} stroke={filled ? "#f59e0b" : "currentColor"} />;
+  const StarIcon = ({ filled }: { filled: boolean }) => <Star size={13} fill={filled ? "#f59e0b" : "none"} stroke={filled ? "#f59e0b" : "currentColor"} />;
 
-  function applyMacro(m) {
+  function applyMacro(m: MacroPanelItem) {
     const firstName = (customerName || "").split(" ")[0] || "there";
-    const body = m.body.replace(/{{name}}/gi, firstName).replace(/{{firstname}}/gi, firstName);
+    const body = (m.body ?? "").replace(/{{name}}/gi, firstName).replace(/{{firstname}}/gi, firstName);
     onInsert(body);
   }
 
-  function renderPreview(body) {
+  function renderPreview(body: string) {
     return body.split(/({{[^}]+}})/).map((part, i) =>
       part.match(/{{[^}]+}}/) ? (
         <span key={i} className="macro-var">
@@ -299,7 +307,7 @@ export function MacroPanel({ macros = [], aiMacros = [], onInsert, onClose, cust
 
         {/* Preview — no buttons here */}
         {active ? (
-          <div className="flex-1 px-4 py-3.5 overflow-y-auto text-[13px] leading-[1.75] text-(--text-2) whitespace-pre-wrap sscroll flex-1">{renderPreview(active.body)}</div>
+          <div className="flex-1 px-4 py-3.5 overflow-y-auto text-[13px] leading-[1.75] text-(--text-2) whitespace-pre-wrap sscroll flex-1">{renderPreview(active.body ?? "")}</div>
         ) : (
           <div className="flex-1 flex items-center justify-center text-(--text-3) text-[12.5px]">Select a macro to preview</div>
         )}

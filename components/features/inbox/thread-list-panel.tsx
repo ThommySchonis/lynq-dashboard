@@ -1,4 +1,3 @@
-// @ts-nocheck
 'use client'
 
 import { Button } from '@/components/ui/button'
@@ -22,6 +21,7 @@ import { useAIStore } from '@/stores/ai'
 import { URGENCY_SCORE } from '@/lib/inbox-constants'
 import { useMemo, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
+import type { Thread } from '@/types/inbox'
 
 export function ThreadListPanel() {
   const router = useRouter()
@@ -53,27 +53,27 @@ export function ThreadListPanel() {
   // Sorted + filtered threads
   const sortedFiltered = useMemo(() => {
     const filtered = threads.filter(
-      (t) =>
+      (t: Thread) =>
         !search ||
         t.subject?.toLowerCase().includes(search.toLowerCase()) ||
         (t.customer_name || t.customer_email || t.from || '').toLowerCase().includes(search.toLowerCase()),
     )
-    return [...filtered].sort((a, b) => {
+    return [...filtered].sort((a: Thread, b: Thread) => {
       const sa = URGENCY_SCORE[analyses[a.id]?.urgency] || 0
       const sb = URGENCY_SCORE[analyses[b.id]?.urgency] || 0
       if (sb !== sa) return sb - sa
-      return new Date(b.last_message_at || b.date) - new Date(a.last_message_at || a.date)
+      return new Date(b.last_message_at || b.date).getTime() - new Date(a.last_message_at || a.date).getTime()
     })
   }, [threads, search, analyses])
 
   // Handlers
-  const onSelectThread = useCallback((thread) => {
+  const onSelectThread = useCallback((thread: Thread) => {
     setSelectedThreadId(thread.id)
     resetForNewThread()
     resetAIForThread()
   }, [setSelectedThreadId, resetForNewThread, resetAIForThread])
 
-  const onSwitchFolder = useCallback((key) => {
+  const onSwitchFolder = useCallback((key: string) => {
     setActiveFolder(key)
     setSelectedThreadId(null)
   }, [setActiveFolder, setSelectedThreadId])
@@ -91,8 +91,8 @@ export function ThreadListPanel() {
     router.push('/inbox/create')
   }, [router])
 
-  const getStatus = useCallback((id) => {
-    const thread = threads.find((t) => t.id === id)
+  const getStatus = useCallback((id: string) => {
+    const thread = threads.find((t: Thread) => t.id === id)
     return thread?.status || 'open'
   }, [threads])
 
@@ -110,7 +110,7 @@ export function ThreadListPanel() {
     { key: 'trash', label: 'Trash', count: counts.trash },
   ]
 
-  const URGENCY_UI = {
+  const URGENCY_UI: Record<string, { color: string; bg: string; border: string }> = {
     critical: {
       color: '#ef4444',
       bg: 'rgba(239,68,68,0.13)',
@@ -206,7 +206,7 @@ export function ThreadListPanel() {
             className="trow-cb mt-0"
             checked={allChecked}
             onChange={(e) => {
-              const next = {}
+              const next: Record<string, boolean> = {}
               if (e.target.checked) listIds.forEach((id) => (next[id] = true))
               setCheckedThreads(next)
             }}

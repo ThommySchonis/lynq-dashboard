@@ -1,4 +1,3 @@
-// @ts-nocheck
 'use client'
 
 import { useState } from 'react'
@@ -9,7 +8,20 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Loader2, Truck } from 'lucide-react'
 import { authFetch } from '@/lib/inbox-utils'
 
-export function FulfillModal({ order, token, onClose, onSuccess }) {
+interface FulfillOrder {
+  id: string
+  name: string
+  [key: string]: unknown
+}
+
+interface FulfillModalProps {
+  order: FulfillOrder
+  token: string
+  onClose: () => void
+  onSuccess: (msg: string, type?: string) => void
+}
+
+export function FulfillModal({ order, token, onClose, onSuccess }: FulfillModalProps) {
   const [trackingNumber, setTrackingNumber] = useState("");
   const [trackingCompany, setTrackingCompany] = useState("");
   const [notify, setNotify] = useState(true);

@@ -1,4 +1,3 @@
-// @ts-nocheck
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
@@ -18,12 +17,21 @@ import {
 } from 'lucide-react'
 import { authFetch, normalizeSafeUrl, plainTextToSafeHtml, sanitizeHtml } from '@/lib/inbox-utils'
 
+interface TicketMacro {
+  id: string
+  name: string
+  body: string
+  tags?: string[]
+  archived?: boolean
+  [key: string]: unknown
+}
+
 export function CreateTicketView({ token, connectedEmail, onClose, onSuccess, macros = [] }: {
   token: string;
   connectedEmail?: string | null;
   onClose: () => void;
   onSuccess: (msg: string, type?: string) => void;
-  macros?: any[];
+  macros?: TicketMacro[];
 }) {
   const [to, setTo] = useState("");
   const [subject, setSubject] = useState("");
@@ -32,7 +40,7 @@ export function CreateTicketView({ token, connectedEmail, onClose, onSuccess, ma
   const [showCC, setShowCC] = useState(false);
   const [cc, setCC] = useState("");
   const [bcc, setBcc] = useState("");
-  const [tags, setTags] = useState([]);
+  const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState("");
   const [showTagInput, setShowTagInput] = useState(false);
   const [macroSearch, setMacroSearch] = useState("");
@@ -51,9 +59,9 @@ export function CreateTicketView({ token, connectedEmail, onClose, onSuccess, ma
     setTimeout(() => bodyRef.current?.focus(), 150);
   }, []);
 
-  function fmt(cmd, val) {
+  function fmt(cmd: string, val?: string) {
     bodyRef.current?.focus();
-    document.execCommand(cmd, false, val || null);
+    document.execCommand(cmd, false, val || undefined);
   }
   function insertLink() {
     const url = normalizeSafeUrl(prompt("URL:"));
@@ -63,7 +71,7 @@ export function CreateTicketView({ token, connectedEmail, onClose, onSuccess, ma
     }
     fmt("createLink", url);
   }
-  function applyMacro(m) {
+  function applyMacro(m: TicketMacro) {
     if (!bodyRef.current) return;
     bodyRef.current.innerHTML = plainTextToSafeHtml(m.body);
     setBody(m.body);

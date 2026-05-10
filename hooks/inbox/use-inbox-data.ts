@@ -31,7 +31,7 @@ export function useConversations(folder: string, search: string) {
       if (search) params.set('search', search)
       const res = await authFetch(`/api/inbox/conversations?${params}`, {}, token)
       const data = await res.json()
-      return (data.conversations || []).map((c: any) => ({
+      return (data.conversations || []).map((c: Record<string, string | boolean | null>) => ({
         ...c,
         from: c.customer_name
           ? `${c.customer_name} <${c.customer_email || ''}>`
@@ -54,7 +54,7 @@ export function useConversation(threadId: string | null) {
     queryFn: async () => {
       const res = await authFetch(`/api/inbox/conversations/${threadId}`, {}, token)
       const data = await res.json()
-      const messages = (data.messages || []).map((m: any) => ({
+      const messages = (data.messages || []).map((m: Record<string, string | null>) => ({
         ...m,
         from: m.from_name
           ? `${m.from_name} <${m.from_email || ''}>`

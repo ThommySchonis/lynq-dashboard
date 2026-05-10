@@ -1,4 +1,3 @@
-// @ts-nocheck
 'use client'
 
 import { useState } from 'react'
@@ -14,11 +13,23 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { MacroEditor } from './macro-editor'
 
+interface MacroItem {
+  id: string
+  name: string
+  body?: string
+  tags?: string[]
+  language?: string
+  usageCount?: number
+  updatedAt?: string
+  archived?: boolean
+  [key: string]: unknown
+}
+
 export function MacroManager({ macros, favs, onClose, onSaveMacro, onDeleteMacro, onToggleFav }: {
-  macros: any[];
+  macros: MacroItem[];
   favs: string[];
   onClose: () => void;
-  onSaveMacro: (m: any) => void;
+  onSaveMacro: (m: MacroItem) => void;
   onDeleteMacro: (id: string) => void;
   onToggleFav: (id: string) => void;
 }) {
@@ -26,7 +37,7 @@ export function MacroManager({ macros, favs, onClose, onSaveMacro, onDeleteMacro
   const [search, setSearch] = useState("");
   const [langFilter, setLangF] = useState("all");
   const [tagFilter, setTagF] = useState("all");
-  const [editing, setEditing] = useState(null); // null=list, 'new'=create, macro=edit
+  const [editing, setEditing] = useState<MacroItem | "new" | null>(null);
 
   const allTags = [...new Set(macros.flatMap((m) => m.tags || []))].sort();
   const allLangs = [...new Set(macros.map((m) => m.language || "English"))].sort();
@@ -40,26 +51,27 @@ export function MacroManager({ macros, favs, onClose, onSaveMacro, onDeleteMacro
     return true;
   });
 
-  function handleSave(m) {
-    onSaveMacro(m);
+  function handleSave(m: MacroItem | Record<string, unknown>) {
+    onSaveMacro(m as MacroItem);
     setEditing(null);
   }
-  function handleDuplicate(m) {
+  function handleDuplicate(m: MacroItem | Record<string, unknown>) {
+    const macro = m as MacroItem;
     onSaveMacro({
-      ...m,
+      ...macro,
       id: `m_${Date.now()}`,
-      name: `${m.name} (copy)`,
+      name: `${macro.name} (copy)`,
       usageCount: 0,
       updatedAt: new Date().toISOString(),
     });
     setEditing(null);
   }
-  function handleDelete(id) {
+  function handleDelete(id: string) {
     if (!confirm("Delete this macro? This cannot be undone.")) return;
     onDeleteMacro(id);
     setEditing(null);
   }
-  function handleArchive(m) {
+  function handleArchive(m: MacroItem) {
     onSaveMacro({
       ...m,
       archived: !m.archived,
@@ -67,7 +79,7 @@ export function MacroManager({ macros, favs, onClose, onSaveMacro, onDeleteMacro
     });
   }
 
-  function fmtDate(iso) {
+  function fmtDate(iso: string | undefined) {
     if (!iso) return "—";
     try {
       return new Date(iso).toLocaleDateString("en-GB", {
@@ -222,8 +234,8 @@ export function MacroManager({ macros, favs, onClose, onSaveMacro, onDeleteMacro
                         opacity: favs.includes(m.id) ? 1 : 0.4,
                       }}
                       className="bg-none border-none flex p-0.5 shrink-0 transition-opacity duration-150"
-                      onMouseEnter={(e) => (e.currentTarget.style.opacity = 1)}
-                      onMouseLeave={(e) => (e.currentTarget.style.opacity = favs.includes(m.id) ? 1 : 0.4)}
+                      onMouseEnter={(e) => (e.currentTarget.style.opacity = "1")}
+                      onMouseLeave={(e) => (e.currentTarget.style.opacity = favs.includes(m.id) ? "1" : "0.4")}
                     >
                       <Star size={13} fill={favs.includes(m.id) ? "#f59e0b" : "none"} stroke={favs.includes(m.id) ? "#f59e0b" : "currentColor"} />
                     </button>

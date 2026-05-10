@@ -1,4 +1,3 @@
-// @ts-nocheck
 'use client'
 
 import { useState } from 'react'
@@ -9,7 +8,32 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Copy, Loader2 } from 'lucide-react'
 import { authFetch, fmtPrice } from '@/lib/inbox-utils'
 
-export function DuplicateModal({ order, token, onClose, onSuccess }) {
+interface DuplicateLineItem {
+  id: string
+  title: string
+  quantity: number
+  price: string | number
+  variantTitle?: string
+  [key: string]: unknown
+}
+
+interface DuplicateOrder {
+  id: string
+  name: string
+  totalPrice: string | number
+  currency: string
+  lineItems?: DuplicateLineItem[]
+  [key: string]: unknown
+}
+
+interface DuplicateModalProps {
+  order: DuplicateOrder
+  token: string
+  onClose: () => void
+  onSuccess: (msg: string, type?: string) => void
+}
+
+export function DuplicateModal({ order, token, onClose, onSuccess }: DuplicateModalProps) {
   const [note, setNote] = useState(`Duplicate of ${order.name}`);
   const [keepAddress, setKeepAddress] = useState(true);
   const [discountType, setDiscountType] = useState("none"); // 'none' | 'percentage' | 'fixed'

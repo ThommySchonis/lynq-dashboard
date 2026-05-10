@@ -1,4 +1,3 @@
-// @ts-nocheck
 'use client'
 
 export function TicketActionBar({ meta, status, onClose, onAddTag, onRemoveTag, onFieldChange }: {
@@ -9,7 +8,7 @@ export function TicketActionBar({ meta, status, onClose, onAddTag, onRemoveTag, 
   onRemoveTag: (tag: string) => void;
   onFieldChange: (key: string, value: string) => void;
 }) {
-  const fieldButton = (key, label) => (
+  const fieldButton = (key: string, label: string) => (
     <button
       onClick={() => onFieldChange(key, label)}
       className="inline-flex items-center gap-1 border-none bg-transparent p-0 text-[10.5px] text-(--text-3) font-[inherit]"
@@ -31,7 +30,7 @@ export function TicketActionBar({ meta, status, onClose, onAddTag, onRemoveTag, 
       </button>
 
       <div className="flex items-center gap-1.5 flex-wrap">
-        {(meta.tags || []).map((tag) => (
+        {(meta.tags || []).map((tag: string) => (
           <button
             key={tag}
             onClick={() => onRemoveTag(tag)}

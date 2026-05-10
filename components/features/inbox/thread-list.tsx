@@ -13,7 +13,7 @@ import { LoadingState } from '@/components/shared/loading-state'
 import { ThreadRow } from './thread-row'
 import { useInboxStore } from '@/stores/inbox'
 import { useAIStore } from '@/stores/ai'
-import { useInbox } from '@/hooks/use-inbox'
+import { useInbox } from '@/hooks/inbox/use-inbox'
 import type { Thread, InboxFolder } from '@/types'
 import { cn } from '@/lib/utils'
 

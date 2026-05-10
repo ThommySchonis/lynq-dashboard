@@ -37,7 +37,7 @@ import {
   PopoverContent,
 } from '@/components/ui/popover'
 import { EMOJIS } from '@/lib/inbox-utils'
-import { useAI } from '@/hooks/use-ai'
+import { useAI } from '@/hooks/inbox/use-ai'
 import { useAIStore } from '@/stores/ai'
 
 // ---------------------------------------------------------------------------

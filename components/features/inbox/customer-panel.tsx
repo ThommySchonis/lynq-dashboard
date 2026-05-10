@@ -5,7 +5,7 @@ import { toast } from 'sonner'
 import { User, Mail, Phone, MapPin, Package, DollarSign, Calendar, Search } from 'lucide-react'
 
 import { useInboxStore } from '@/stores/inbox'
-import { useInbox } from '@/hooks/use-inbox'
+import { useInbox } from '@/hooks/inbox/use-inbox'
 import { useAuthStore } from '@/stores/auth'
 import { fmtDate, fmtPrice } from '@/lib/inbox-utils'
 

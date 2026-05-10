@@ -14,6 +14,25 @@ import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import {
+  useConversations,
+  useConversation,
+  useInboxCounts,
+  useCustomerSearch,
+  useEmailConnected,
+} from "@/hooks/inbox/use-inbox-data";
+import {
+  useSendReply,
+  useUpdateStatus,
+  useAddNote,
+  useSyncInbox,
+  useAIReply,
+  useTranslateMessage,
+  useAIMacros,
+} from "@/hooks/inbox/use-inbox-mutations";
+import { useInboxState } from "@/hooks/inbox/use-inbox-state";
+import { useComposerActions } from "@/hooks/inbox/use-composer-actions";
+import { useKeyboardShortcuts } from "@/hooks/inbox/use-keyboard-shortcuts";
+import {
   Calendar,
   Check,
   ChevronDown,
@@ -46,20 +65,18 @@ import {
   Zap,
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo } from "react";
 import { toast as sonnerToast } from "sonner";
 import {
-  authFetch,
   EMOJIS,
   extractEmail,
   extractName,
   fmtPrice,
   relTime as formatDate,
-  normalizeSafeUrl,
   plainTextToSafeHtml,
   sanitizeHtml,
 } from "../../lib/inbox-utils";
-import { supabase } from "../../lib/supabase";
+import { useAuthStore } from "../../stores/auth";
 import { useAIStore } from "../../stores/ai";
 import { useMacrosStore } from "../../stores/macros";
 import { useTicketMetaStore } from "../../stores/ticket-meta";
@@ -125,11 +142,6 @@ const ORDER_STATUS = {
     label: "Authorized",
   },
 };
-// Macros — managed by Zustand store (stores/macros.ts)
-
-// ─── Demo data removed — unified inbox API is the sole data source ───
-
-// ─── Helpers (imported from lib/inbox-utils) ─────────────────
 
 // ─── Base components ─────────────────────────────────────────
 function InboxAvatar({ name = "?", size = 32, agent = false }) {
@@ -148,53 +160,78 @@ function InboxAvatar({ name = "?", size = 32, agent = false }) {
   );
 }
 
+function showT(msg, type = "success") {
+  type === "success" ? sonnerToast.success(msg) : sonnerToast.error(msg);
+}
+
 // ─── Main page ────────────────────────────────────────────────
 function InboxPage() {
   const router = useRouter();
-  const [session, setSession] = useState(null);
-  const [threads, setThreads] = useState([]);
   const searchParams = useSearchParams();
-  const [activeFolder, setActiveFolder] = useState(searchParams.get("view") || "open");
-  const [selected, setSelected] = useState(null);
-  const [messages, setMessages] = useState([]);
-  const [notes, setNotes] = useState([]);
-  const [loadingThreads, setLT] = useState(true);
-  const [loadingMsgs, setLM] = useState(false);
-  const [reply, setReply] = useState("");
-  const [composerTab, setComposerTab] = useState("reply");
-  const [sending, setSending] = useState(false);
-  // AI state — powered by Zustand store
+
+  // ── Auth (from Zustand — populated by AuthHydrator) ──
+  const session = useAuthStore((s) => s.session);
+  const token = session?.access_token ?? "";
+
+  // ── Local UI state (consolidated hook) ──
+  const state = useInboxState();
+
+  // Initialize activeFolder from search params
+  useEffect(() => {
+    const view = searchParams.get("view");
+    if (view) state.setActiveFolder(view);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // ── TanStack queries (READ operations) ──
+  const {
+    data: threads = [],
+    isLoading: loadingThreads,
+    refetch: refetchThreads,
+  } = useConversations(state.activeFolder, state.search);
+
+  const {
+    data: conversationData,
+    isLoading: loadingMsgs,
+  } = useConversation(state.selectedThreadId);
+
+  const messages = conversationData?.messages || [];
+  const notes = conversationData?.notes || [];
+
+  const { data: counts = { open: 0, pending: 0, resolved: 0, unlinked: 0, trash: 0 } } = useInboxCounts();
+
+  // Customer search: auto-fetch when a thread is selected (using email from thread)
+  const selectedThread = threads.find((t) => t.id === state.selectedThreadId) || null;
+  const autoCustomerEmail = selectedThread
+    ? extractEmail(selectedThread.from) || conversationData?.conversation?.customer_email || ""
+    : "";
+  const customerQuery = state.custSearch || autoCustomerEmail;
+  const { data: customer, isLoading: loadingCust } = useCustomerSearch(customerQuery);
+
+  // ── TanStack mutations (WRITE operations) ──
+  const sendReplyMutation = useSendReply();
+  const updateStatusMutation = useUpdateStatus();
+  const addNoteMutation = useAddNote();
+  const syncInboxMutation = useSyncInbox();
+  const aiReplyMutation = useAIReply();
+  const translateMutation = useTranslateMessage();
+  const aiMacrosMutation = useAIMacros();
+
+  // ── AI state — powered by Zustand store ──
   const aiLoading = useAIStore((s) => s.aiLoading);
   const analyses = useAIStore((s) => s.analyses);
   const autoTranslate = useAIStore((s) => s.autoTranslate);
   const customerLang = useAIStore((s) => s.customerLang);
   const msgTranslations = useAIStore((s) => s.translations);
   const _setAutoTranslate = useAIStore((s) => s.setAutoTranslate);
-  const _setAnalyses = useAIStore((s) => s.setAnalyses);
   const _setTranslation = useAIStore((s) => s.setTranslation);
   const _resetAIForThread = useAIStore((s) => s.resetForThread);
   const _analyzeThreads = useAIStore((s) => s.analyzeThreads);
   const _generateReply = useAIStore((s) => s.generateReply);
   const _translateMessage = useAIStore((s) => s.translateMessage);
   const _detectLanguage = useAIStore((s) => s.detectLanguage);
-  const [search, setSearch] = useState("");
-  const [syncing, setSyncing] = useState(false);
-  const [counts, setCounts] = useState({
-    open: 0,
-    pending: 0,
-    resolved: 0,
-    unlinked: 0,
-    trash: 0,
-  });
-  const [connectedEmail, setConnectedEmail] = useState(null);
-  const [noteInput, setNoteInput] = useState("");
-  const [addingNote, setAddingNote] = useState(false);
-  const [showNotes, setShowNotes] = useState(true);
-  const [customer, setCustomer] = useState(null);
-  const [loadingCust, setLoadingCust] = useState(false);
-  const [custSearch, setCustSearch] = useState("");
-  const [rightTab, setRightTab] = useState("shopify");
-  // Macros — powered by Zustand store
+
+  // ── Macros — powered by Zustand store ──
   const macros = useMacrosStore((s) => s.macros);
   const aiMacros = useMacrosStore((s) => s.aiMacros);
   const macroFavs = useMacrosStore((s) => s.favs);
@@ -203,93 +240,87 @@ function InboxPage() {
   const _toggleMacroFav = useMacrosStore((s) => s.toggleFav);
   const _setAiMacros = useMacrosStore((s) => s.setAiMacros);
   const _fetchMacros = useMacrosStore((s) => s.fetchMacros);
-  const [showMacros, setShowMacros] = useState(false);
-  const [showMacroManager, setShowMacroManager] = useState(false);
 
-  function saveMacro(m) {
-    _saveMacro(m);
-  }
-  function deleteMacro(id) {
-    _deleteMacro(id);
-  }
-  function toggleMacroFav(id) {
-    _toggleMacroFav(id);
-  }
-  // Order modals
-  const [modal, setModal] = useState(null); // { type:'refund'|'cancel'|'duplicate'|'address', order }
-  // AI triage + translation — powered by Zustand (declared above)
-  // Composer extras
-  const [showEmoji, setShowEmoji] = useState(false);
-  const [attachments, setAttachments] = useState([]);
-  const [expandedOrders, setExpandedOrders] = useState({});
-  const [expandedSubs, setExpandedSubs] = useState({});
-  const [custFieldsOpen, setCustFieldsOpen] = useState(true);
-  const [custShowMore, setCustShowMore] = useState(false);
-  const [checkedThreads, setCheckedThreads] = useState({});
-  // ticketMeta — powered by Zustand store (persisted to localStorage)
+  // ── Ticket meta — powered by Zustand store ──
   const getTicketMeta = useTicketMetaStore((s) => s.getMeta);
   const _addTag = useTicketMetaStore((s) => s.addTag);
   const _removeTag = useTicketMetaStore((s) => s.removeTag);
   const _updateMeta = useTicketMetaStore((s) => s.updateMeta);
 
-  const msgEnd = useRef(null);
-  const replyRef = useRef(null);
-  const imgUploadRef = useRef(null);
-  const fileUploadRef = useRef(null);
+  // ── Composer actions (formatting, links, images, files) ──
+  const { formatDoc, insertLink, handleImageUpload, handleFileAttach, insertEmoji } = useComposerActions(
+    state.composerRef,
+    state.setReply,
+    state.setAttachments,
+    showT,
+  );
 
-  // ── Auth + load ──
+  // ── Auth + initial load ──
   useEffect(() => {
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      if (!session) {
-        window.location.href = "/login";
-        return;
-      }
-      setSession(session);
-      await triggerSync(session.access_token);
-      await loadConversations(session.access_token, "open");
-      fetchCounts(session.access_token);
-      fetchMacros(session.access_token);
-    });
-  }, []);
+    if (!session) {
+      window.location.href = "/login";
+      return;
+    }
+    _fetchMacros(token);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session]);
 
+  // ── Trigger AI analysis when threads change ──
   useEffect(() => {
-    msgEnd.current?.scrollIntoView({ behavior: "smooth" });
+    if (threads.length > 0 && token) {
+      _analyzeThreads(threads, token);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [threads]);
+
+  // ── Scroll to bottom on new messages ──
+  useEffect(() => {
+    state.msgEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // ── Keyboard shortcuts ──
+  // ── Auto-fetch AI macros + detect language when thread changes ──
   useEffect(() => {
-    function h(e) {
-      const tag = document.activeElement?.tagName;
-      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
-      if (e.key === "j") {
-        const i = sortedFiltered.findIndex((t) => t.id === selected?.id);
-        if (i < sortedFiltered.length - 1) openThread(sortedFiltered[i + 1]);
-      }
-      if (e.key === "k") {
-        const i = sortedFiltered.findIndex((t) => t.id === selected?.id);
-        if (i > 0) openThread(sortedFiltered[i - 1]);
-      }
-      if (e.key === "r" && selected) setTimeout(() => replyRef.current?.focus(), 10);
+    if (!state.selectedThreadId || !selectedThread || !token) return;
+    // AI macro suggestions
+    aiMacrosMutation.mutateAsync({ subject: selectedThread.subject, snippet: selectedThread.snippet })
+      .then((macroList) => {
+        if (macroList?.length) _setAiMacros(macroList);
+      })
+      .catch(() => {});
+    // Detect customer language from snippet
+    if (selectedThread.snippet) {
+      _detectLanguage(selectedThread.snippet, token);
     }
-    document.addEventListener("keydown", h);
-    return () => document.removeEventListener("keydown", h);
-  }, [threads, selected, activeFolder, search, analyses]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.selectedThreadId]);
+
+  // ── Filtered + priority-sorted threads ──
+  const URGENCY_SCORE = { critical: 4, high: 3, medium: 2, low: 1 };
+  const sortedFiltered = useMemo(() => {
+    const filtered = threads.filter(
+      (t) =>
+        !state.search ||
+        t.subject?.toLowerCase().includes(state.search.toLowerCase()) ||
+        (t.customer_name || t.customer_email || t.from || "").toLowerCase().includes(state.search.toLowerCase()),
+    );
+    return [...filtered].sort((a, b) => {
+      const sa = URGENCY_SCORE[analyses[a.id]?.urgency] || 0;
+      const sb = URGENCY_SCORE[analyses[b.id]?.urgency] || 0;
+      if (sb !== sa) return sb - sa;
+      return new Date(b.last_message_at || b.date) - new Date(a.last_message_at || a.date);
+    });
+  }, [threads, state.search, analyses]);
 
   // ── Status helpers ──
   async function saveStatus(id, s) {
-    // Update locally immediately
-    setThreads((p) => p.map((t) => (t.id === id ? { ...t, status: s } : t)));
-    // Persist via API
-    if (session) {
-      await authFetch(`/api/inbox/conversations/${id}`, { method: "PATCH", body: JSON.stringify({ status: s }) }, session.access_token);
-      fetchCounts(session.access_token);
-    }
+    await updateStatusMutation.mutateAsync({ threadId: id, status: s });
   }
+
   const getStatus = (id) => {
     const thread = threads.find((t) => t.id === id);
     return thread?.status || "open";
   };
-  // getTicketMeta is from the store (declared above with useState replacements)
+
   function updateTicketMeta(id, patch) {
     _updateMeta(id, patch);
   }
@@ -307,222 +338,64 @@ function InboxPage() {
     _updateMeta(id, { [key]: value.trim() });
   }
 
-  // ── Filtered + priority-sorted threads ──
-  // Conversations are already filtered by folder via the API; apply local search filter only
-  const URGENCY_SCORE = { critical: 4, high: 3, medium: 2, low: 1 };
-  const filtered = threads.filter(
-    (t) =>
-      !search ||
-      t.subject?.toLowerCase().includes(search.toLowerCase()) ||
-      (t.customer_name || t.customer_email || t.from || "").toLowerCase().includes(search.toLowerCase()),
-  );
+  // ── Thread selection ──
+  const openThread = useCallback((thread) => {
+    state.setSelectedThreadId(thread.id);
+    state.resetForNewThread();
+    _resetAIForThread();
+    if (state.composerRef.current) state.composerRef.current.innerHTML = "";
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  const sortedFiltered = [...filtered].sort((a, b) => {
-    const sa = URGENCY_SCORE[analyses[a.id]?.urgency] || 0;
-    const sb = URGENCY_SCORE[analyses[b.id]?.urgency] || 0;
-    if (sb !== sa) return sb - sa;
-    return new Date(b.last_message_at || b.date) - new Date(a.last_message_at || a.date);
+  // ── Keyboard shortcuts ──
+  useKeyboardShortcuts({
+    threads: sortedFiltered,
+    selectedThreadId: state.selectedThreadId,
+    onSelectThread: openThread,
+    composerRef: state.composerRef,
   });
 
-  // ── API calls (unified inbox) ──
-  async function fetchMacros(token) {
-    _fetchMacros(token);
-  }
-
-  async function fetchCounts(token) {
-    try {
-      const res = await authFetch("/api/inbox/counts", {}, token);
-      const data = await res.json();
-      setCounts({
-        open: data.open || 0,
-        pending: data.pending || 0,
-        resolved: data.resolved || 0,
-        unlinked: data.unlinked || 0,
-        trash: data.trash || 0,
-      });
-    } catch {}
-  }
-
-  async function triggerSync(token) {
-    setSyncing(true);
-    try {
-      await authFetch("/api/inbox/sync", { method: "POST" }, token);
-    } catch {}
-    setSyncing(false);
-  }
-
-  async function loadConversations(token, folder) {
-    setLT(true);
-    const folderParam = folder || activeFolder;
-    const params = new URLSearchParams();
-    if (folderParam === "unlinked") params.set("unlinked", "true");
-    else if (folderParam === "trash") params.set("status", "closed");
-    else params.set("status", folderParam);
-    if (search) params.set("search", search);
-    try {
-      const res = await authFetch(`/api/inbox/conversations?${params}`, {}, token);
-      const data = await res.json();
-      const convs = (data.conversations || []).map((c) => ({
-        ...c,
-        // Map unified fields to the shape the UI expects
-        from: c.customer_name ? `${c.customer_name} <${c.customer_email || ""}>` : c.customer_email || "Unknown",
-        subject: c.subject || "(no subject)",
-        snippet: c.snippet || c.preview || "",
-        date: c.last_message_at || c.created_at,
-        unread: c.is_unread || false,
-      }));
-      setThreads(convs);
-      analyzeThreads(convs, token);
-    } catch {
-      setThreads([]);
-    }
-    setLT(false);
-  }
-
-  async function analyzeThreads(threadList, token) {
-    _analyzeThreads(threadList, token);
-  }
-
-  async function openThread(thread) {
-    setSelected(thread);
-    setMessages([]);
-    setNotes([]);
-    setReply("");
-    setCustomer(null);
-    setLM(true);
-    setShowMacros(false);
-    _resetAIForThread();
-    setShowEmoji(false);
-    setAttachments([]);
-    setNoteInput("");
-    setShowNotes(true);
-    if (replyRef.current) replyRef.current.innerHTML = "";
-    // Fetch conversation, messages, and notes via unified API
-    const res = await authFetch(`/api/inbox/conversations/${thread.id}`, {}, session.access_token);
-    const data = await res.json();
-    const msgs = (data.messages || []).map((m) => ({
-      ...m,
-      from: m.from_name ? `${m.from_name} <${m.from_email || ""}>` : m.from_email || m.from || "",
-      date: m.sent_at || m.created_at || m.date,
-      body: m.body_html || m.body_text || m.body || "",
-    }));
-    setMessages(msgs);
-    setNotes(data.notes || []);
-    setLM(false);
-    // Mark read locally
-    if (thread.unread) setThreads((p) => p.map((t) => (t.id === thread.id ? { ...t, unread: false, is_unread: false } : t)));
-    // Fetch Shopify customer data
-    const email = extractEmail(thread.from) || data.conversation?.customer_email;
-    if (email) {
-      setLoadingCust(true);
-      const cr = await authFetch(`/api/shopify/customer?email=${encodeURIComponent(email)}`, {}, session.access_token);
-      const cd = await cr.json();
-      setCustomer(cd);
-      setLoadingCust(false);
-      // AI macro suggestions
-      authFetch(
-        "/api/ai/macros",
-        {
-          method: "POST",
-          body: JSON.stringify({
-            subject: thread.subject,
-            snippet: thread.snippet,
-          }),
-        },
-        session.access_token,
-      )
-        .then((r) => r.json())
-        .then((d) => {
-          if (d.macros?.length) _setAiMacros(d.macros);
-        })
-        .catch(() => {});
-      // Detect customer language from snippet
-      if (thread.snippet) {
-        _detectLanguage(thread.snippet, session.access_token);
-      }
-    }
-  }
-
-  async function addNote() {
-    if (!noteInput.trim() || !selected || !session) return;
-    setAddingNote(true);
-    try {
-      const res = await authFetch(
-        `/api/inbox/conversations/${selected.id}/notes`,
-        { method: "POST", body: JSON.stringify({ body: noteInput.trim() }) },
-        session.access_token,
-      );
-      const data = await res.json();
-      if (data.note) setNotes((p) => [...p, data.note]);
-      setNoteInput("");
-    } catch {
-      showT("Failed to add note", "error");
-    }
-    setAddingNote(false);
-  }
-
-  async function handleAiReply() {
-    if (!messages.length || !selected) return;
-    const reply = await _generateReply(selected, messages, session.access_token);
-    if (reply) {
-      if (replyRef.current) {
-        replyRef.current.innerHTML = plainTextToSafeHtml(reply);
-        setReply(replyRef.current.textContent);
-      } else setReply(reply);
-    } else showT("AI reply failed", "error");
-  }
-
+  // ── Send reply ──
   async function handleSend() {
-    const textContent = replyRef.current?.textContent || reply;
-    if (!textContent.trim() || !selected) return false;
-    setSending(true);
-    let bodyHtml = sanitizeHtml(replyRef.current?.innerHTML || reply);
+    const textContent = state.composerRef.current?.textContent || state.reply;
+    if (!textContent.trim() || !state.selectedThreadId) return false;
+    state.setSending(true);
+    let bodyHtml = sanitizeHtml(state.composerRef.current?.innerHTML || state.reply);
     let bodyText = textContent;
     // Auto-translate outgoing message to customer's language
     if (autoTranslate && customerLang && customerLang.code !== "en") {
       try {
-        const tres = await authFetch(
-          "/api/ai/translate",
-          {
-            method: "POST",
-            body: JSON.stringify({
-              text: textContent,
-              targetLang: customerLang.name,
-            }),
-          },
-          session.access_token,
-        );
-        const td = await tres.json();
+        const td = await translateMutation.mutateAsync({
+          text: textContent,
+          targetLang: customerLang.name,
+        });
         if (td.translated) {
           bodyHtml = plainTextToSafeHtml(td.translated);
           bodyText = td.translated;
         }
       } catch {}
     }
-    const res = await authFetch(
-      `/api/inbox/conversations/${selected.id}/reply`,
-      { method: "POST", body: JSON.stringify({ bodyHtml, bodyText }) },
-      session.access_token,
-    );
-    const data = await res.json();
+    const data = await sendReplyMutation.mutateAsync({
+      threadId: state.selectedThreadId,
+      bodyHtml,
+      bodyText,
+    });
     if (data.success || data.messageId || data.id) {
       showT("Message sent!", "success");
-      if (replyRef.current) replyRef.current.innerHTML = "";
-      setReply("");
-      setAttachments([]);
-      loadConversations(session.access_token);
-      fetchCounts(session.access_token);
-      setSending(false);
+      if (state.composerRef.current) state.composerRef.current.innerHTML = "";
+      state.setReply("");
+      state.setAttachments([]);
+      state.setSending(false);
       return true;
     }
     showT(data.error || "Failed to send", "error");
-    setSending(false);
+    state.setSending(false);
     return false;
   }
 
   async function handleSendResolve() {
-    if (!selected) return;
-    const currentId = selected.id;
+    if (!state.selectedThreadId) return;
+    const currentId = state.selectedThreadId;
     const currentIdx = sortedFiltered.findIndex((t) => t.id === currentId);
     const nextThread = sortedFiltered.find((t, i) => i !== currentIdx);
     const ok = await handleSend();
@@ -530,96 +403,67 @@ function InboxPage() {
       await saveStatus(currentId, "resolved");
       showT("Resolved & closed", "success");
       if (nextThread) openThread(nextThread);
-      else setSelected(null);
+      else state.setSelectedThreadId(null);
     }
   }
 
-  async function translateMessage(msgId, text) {
-    _translateMessage(msgId, text, session.access_token);
+  // ── AI reply ──
+  async function handleAiReply() {
+    if (!messages.length || !state.selectedThreadId) return;
+    const reply = await _generateReply(selectedThread, messages, token);
+    if (reply) {
+      if (state.composerRef.current) {
+        state.composerRef.current.innerHTML = plainTextToSafeHtml(reply);
+        state.setReply(state.composerRef.current.textContent);
+      } else state.setReply(reply);
+    } else showT("AI reply failed", "error");
   }
 
-  function formatDoc(cmd, val) {
-    replyRef.current?.focus();
-    document.execCommand(cmd, false, val || null);
-  }
-
-  function insertLink() {
-    const url = prompt("Enter URL:");
-    const safeUrl = normalizeSafeUrl(url);
-    if (url && !safeUrl) {
-      showT("Only http, https, or mailto links are allowed", "error");
-      return;
-    }
-    if (safeUrl) {
-      replyRef.current?.focus();
-      document.execCommand("createLink", false, safeUrl);
-    }
-  }
-
-  function handleImageUpload(e) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    if (!/^image\/(png|jpe?g|gif|webp)$/i.test(file.type)) {
-      showT("Unsupported image type", "error");
-      e.target.value = "";
-      return;
-    }
-    const reader = new FileReader();
-    reader.onload = () => {
-      const src = normalizeSafeUrl(reader.result, { allowImages: true });
-      if (!src) {
-        showT("Unsupported image type", "error");
-        return;
-      }
-      replyRef.current?.focus();
-      document.execCommand("insertImage", false, src);
-      setReply(replyRef.current?.textContent || "");
-    };
-    reader.readAsDataURL(file);
-    e.target.value = "";
-  }
-
-  function handleFileAttach(e) {
-    const files = Array.from(e.target.files || []);
-    setAttachments((p) => [...p, ...files.map((f) => ({ name: f.name, size: f.size }))]);
-    e.target.value = "";
-  }
-
-  // EMOJIS imported from lib/inbox-utils
-
-  function showT(msg, type = "success") {
-    type === "success" ? sonnerToast.success(msg) : sonnerToast.error(msg);
-  }
-
-  async function handleCustSearch(query) {
-    if (!query.trim() || !session) return;
-    setLoadingCust(true);
-    setCustomer(null);
-    const isOrder = /^#?\d+$/.test(query.trim());
-    const param = isOrder ? `order=${encodeURIComponent(query.trim().replace(/^#/, ""))}` : `email=${encodeURIComponent(query.trim())}`;
+  // ── Add note ──
+  async function addNote() {
+    if (!state.noteInput.trim() || !state.selectedThreadId) return;
+    state.setAddingNote(true);
     try {
-      const res = await authFetch(`/api/shopify/customer?${param}`, {}, session.access_token);
-      const data = await res.json();
-      setCustomer(data);
+      await addNoteMutation.mutateAsync({
+        threadId: state.selectedThreadId,
+        body: state.noteInput.trim(),
+      });
+      state.setNoteInput("");
     } catch {
-      setCustomer(null);
-    } finally {
-      setLoadingCust(false);
+      showT("Failed to add note", "error");
     }
+    state.setAddingNote(false);
+  }
+
+  // ── Translate message ──
+  async function translateMessage(msgId, text) {
+    _translateMessage(msgId, text, token);
+  }
+
+  // ── Sync ──
+  async function triggerSync() {
+    state.setSyncing(true);
+    try {
+      await syncInboxMutation.mutateAsync();
+    } catch {}
+    state.setSyncing(false);
+  }
+
+  // ── Customer search (manual) ──
+  function handleCustSearch(query) {
+    if (!query.trim()) return;
+    state.setCustSearch(query.trim());
   }
 
   function handleModalSuccess(msg, type = "success") {
-    setModal(null);
+    state.setModal(null);
     showT(msg, type);
-    if (customer && session) {
-      const email = extractEmail(selected?.from || "") || selected?.customer_email;
-      if (email) {
-        authFetch(`/api/shopify/customer?email=${encodeURIComponent(email)}`, {}, session.access_token)
-          .then((r) => r.json())
-          .then((d) => setCustomer(d))
-          .catch(() => {});
-      }
-    }
+    // Customer data will auto-refetch via TanStack query
+  }
+
+  function switchFolder(key) {
+    state.setActiveFolder(key);
+    state.setSelectedThreadId(null);
   }
 
   if (!session) return null;
@@ -631,12 +475,6 @@ function InboxPage() {
     { key: "unlinked", label: "Unlinked", count: counts.unlinked },
     { key: "trash", label: "Trash", count: counts.trash },
   ];
-
-  function switchFolder(key) {
-    setActiveFolder(key);
-    setSelected(null);
-    if (session) loadConversations(session.access_token, key);
-  }
 
   // ── Render ──
   return (
@@ -668,14 +506,13 @@ function InboxPage() {
                 variant="ghost"
                 size="icon"
                 onClick={async () => {
-                  await triggerSync(session.access_token);
-                  loadConversations(session.access_token);
-                  fetchCounts(session.access_token);
+                  await triggerSync();
+                  refetchThreads();
                 }}
-                className={`p-[5px] rounded-[7px] transition-all duration-150 ${syncing ? "text-(--text-2)" : "text-(--text-3)"}`}
+                className={`p-[5px] rounded-[7px] transition-all duration-150 ${state.syncing ? "text-(--text-2)" : "text-(--text-3)"}`}
                 title="Sync & Refresh"
               >
-                <span className={`flex ${syncing ? "animate-spin" : ""}`}>
+                <span className={`flex ${state.syncing ? "animate-spin" : ""}`}>
                   <RefreshCw size={14} />
                 </span>
               </Button>
@@ -697,8 +534,8 @@ function InboxPage() {
             </span>
             <input
               className="w-full py-[9px] pl-[34px] pr-3 bg-(--bg-input) border border-(--border) rounded-xl text-(--text-1) text-[12.5px] outline-none transition-all focus:border-(--border-hover)"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              value={state.search}
+              onChange={(e) => state.setSearch(e.target.value)}
               placeholder="Search threads…"
             />
           </div>
@@ -706,11 +543,11 @@ function InboxPage() {
           {/* Folder tabs */}
           <div className="sscroll flex border-b border-border overflow-x-auto">
             {FOLDERS.map((f) => (
-              <button key={f.key} className={`vtab${activeFolder === f.key ? " on" : ""}`} onClick={() => switchFolder(f.key)}>
+              <button key={f.key} className={`vtab${state.activeFolder === f.key ? " on" : ""}`} onClick={() => switchFolder(f.key)}>
                 {f.label}
                 {f.count > 0 && (
                   <span
-                    className={`ml-1 text-[9px] font-bold px-[5px] py-px rounded-full border border-border ${activeFolder === f.key ? "bg-[#111111] text-white" : "bg-(--bg-surface-2) text-(--text-3)"}`}
+                    className={`ml-1 text-[9px] font-bold px-[5px] py-px rounded-full border border-border ${state.activeFolder === f.key ? "bg-[#111111] text-white" : "bg-(--bg-surface-2) text-(--text-3)"}`}
                   >
                     {f.count}
                   </span>
@@ -725,9 +562,9 @@ function InboxPage() {
           {/* Select all bar */}
           {(() => {
             const listIds = sortedFiltered.map((t) => t.id);
-            const allChecked = listIds.length > 0 && listIds.every((id) => checkedThreads[id]);
-            const anyChecked = listIds.some((id) => checkedThreads[id]);
-            const checkedCount = listIds.filter((id) => checkedThreads[id]).length;
+            const allChecked = listIds.length > 0 && listIds.every((id) => state.checkedThreads[id]);
+            const anyChecked = listIds.some((id) => state.checkedThreads[id]);
+            const checkedCount = listIds.filter((id) => state.checkedThreads[id]).length;
             return (
               <div className="flex items-center gap-2.5 py-[9px] pl-[15px] pr-3.5 border-b border-border bg-(--bg-surface) sticky top-0 z-[2]">
                 <input
@@ -737,7 +574,7 @@ function InboxPage() {
                   onChange={(e) => {
                     const next = {};
                     if (e.target.checked) listIds.forEach((id) => (next[id] = true));
-                    setCheckedThreads(next);
+                    state.setCheckedThreads(next);
                   }}
                 />
                 <span className="flex-1 text-xs font-semibold text-(--text-2)">{anyChecked ? `${checkedCount} selected` : "Select all"}</span>
@@ -800,7 +637,6 @@ function InboxPage() {
               </div>
             );
           })()}
-          {/* Demo mode removed — unified inbox API is the sole data source */}
           {loadingThreads &&
             [0, 1, 2, 3, 4].map((i) => (
               <div key={i} className="py-[11px] pr-3.5 pl-3 border-b border-border flex gap-[9px]" style={{ opacity: 1 - i * 0.16 }}>
@@ -816,7 +652,7 @@ function InboxPage() {
             <div className="px-5 py-10 text-center text-(--text-3) text-[12.5px]">No conversations in this folder</div>
           )}
           {sortedFiltered.map((thread) => {
-            const active = selected?.id === thread.id;
+            const active = state.selectedThreadId === thread.id;
             const name = extractName(thread.from);
             const status = getStatus(thread.id);
             const analysis = analyses[thread.id];
@@ -850,10 +686,10 @@ function InboxPage() {
                 <input
                   type="checkbox"
                   className="trow-cb"
-                  checked={!!checkedThreads[thread.id]}
+                  checked={!!state.checkedThreads[thread.id]}
                   onClick={(e) => e.stopPropagation()}
                   onChange={(e) =>
-                    setCheckedThreads((p) => ({
+                    state.setCheckedThreads((p) => ({
                       ...p,
                       [thread.id]: e.target.checked,
                     }))
@@ -891,7 +727,7 @@ function InboxPage() {
       <>
         {/* ═══════════════ CENTER: Conversation ═══════════════ */}
         <div className="flex-1 flex flex-col overflow-hidden min-w-0 relative z-[1]">
-          {!selected ? (
+          {!selectedThread ? (
             <div className="flex-1 flex flex-col items-center justify-center gap-3 text-(--text-3)">
               <div className="opacity-40">
                 <Mail size={20} />
@@ -906,10 +742,10 @@ function InboxPage() {
                 <div className="flex items-center gap-3.5">
                   <div className="flex-1 min-w-0">
                     <div className="text-sm font-bold text-(--text-1) overflow-hidden text-ellipsis whitespace-nowrap mb-0.5 tracking-[-0.01em]">
-                      {selected.subject}
+                      {selectedThread.subject}
                     </div>
                     <div className="text-[11.5px] text-(--text-3)">
-                      {extractName(selected.from)} · {messages.length} message
+                      {extractName(selectedThread.from)} · {messages.length} message
                       {messages.length !== 1 ? "s" : ""}
                     </div>
                   </div>
@@ -921,9 +757,9 @@ function InboxPage() {
                           <button
                             className="flex items-center gap-1.5 px-[11px] py-[5px] rounded-[20px] cursor-pointer text-xs font-semibold font-inherit transition-all duration-150"
                             style={{
-                              background: STATUS[getStatus(selected.id)]?.bg,
-                              border: `1px solid ${STATUS[getStatus(selected.id)]?.border}`,
-                              color: STATUS[getStatus(selected.id)]?.color,
+                              background: STATUS[getStatus(selectedThread.id)]?.bg,
+                              border: `1px solid ${STATUS[getStatus(selectedThread.id)]?.border}`,
+                              color: STATUS[getStatus(selectedThread.id)]?.color,
                             }}
                           />
                         }
@@ -931,18 +767,18 @@ function InboxPage() {
                         <span
                           className="w-1.5 h-1.5 rounded-full shrink-0"
                           style={{
-                            background: STATUS[getStatus(selected.id)]?.color,
+                            background: STATUS[getStatus(selectedThread.id)]?.color,
                           }}
                         />
-                        {STATUS[getStatus(selected.id)]?.label}
+                        {STATUS[getStatus(selectedThread.id)]?.label}
                         <ChevronDown size={11} />
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         {Object.entries(STATUS).map(([k, s]) => (
-                          <DropdownMenuItem key={k} onClick={() => saveStatus(selected.id, k)} style={{ color: s.color }}>
+                          <DropdownMenuItem key={k} onClick={() => saveStatus(selectedThread.id, k)} style={{ color: s.color }}>
                             <span className="w-2 h-2 rounded-full shrink-0" style={{ background: s.color }} />
                             {s.label}
-                            {getStatus(selected.id) === k && <span className="ml-auto text-[10px] text-(--text-3)">&#10003;</span>}
+                            {getStatus(selectedThread.id) === k && <span className="ml-auto text-[10px] text-(--text-3)">&#10003;</span>}
                           </DropdownMenuItem>
                         ))}
                       </DropdownMenuContent>
@@ -950,17 +786,17 @@ function InboxPage() {
                   </div>
                 </div>
                 <TicketActionBar
-                  meta={getTicketMeta(selected.id)}
-                  status={getStatus(selected.id)}
-                  onClose={() => saveStatus(selected.id, "closed")}
-                  onAddTag={() => addTicketTag(selected.id)}
-                  onRemoveTag={(tag) => removeTicketTag(selected.id, tag)}
+                  meta={getTicketMeta(selectedThread.id)}
+                  status={getStatus(selectedThread.id)}
+                  onClose={() => saveStatus(selectedThread.id, "closed")}
+                  onAddTag={() => addTicketTag(selectedThread.id)}
+                  onRemoveTag={(tag) => removeTicketTag(selectedThread.id, tag)}
                   onFieldChange={(field, labelOrValue) =>
                     field === "assignee"
-                      ? updateTicketMeta(selected.id, {
+                      ? updateTicketMeta(selectedThread.id, {
                           assignee: labelOrValue,
                         })
-                      : updateTicketField(selected.id, field, labelOrValue)
+                      : updateTicketField(selectedThread.id, field, labelOrValue)
                   }
                 />
               </div>
@@ -1053,16 +889,16 @@ function InboxPage() {
                   <div className="mt-2">
                     <Button
                       variant="ghost"
-                      onClick={() => setShowNotes((v) => !v)}
+                      onClick={() => state.setShowNotes((v) => !v)}
                       className="flex items-center gap-1.5 text-(--text-3) text-[11px] font-bold tracking-[.06em] uppercase py-1.5 px-0 font-inherit"
                     >
                       <span className="flex">
                         <FileText size={12} />
                       </span>
                       Internal Notes ({notes.length})
-                      <ChevronDown size={10} className={`transition-transform duration-200 ${showNotes ? "rotate-180" : "rotate-0"}`} />
+                      <ChevronDown size={10} className={`transition-transform duration-200 ${state.showNotes ? "rotate-180" : "rotate-0"}`} />
                     </Button>
-                    {showNotes &&
+                    {state.showNotes &&
                       notes.map((note, ni) => (
                         <div key={note.id || ni} className="mb-3" style={{ animation: "msgIn .3s cubic-bezier(.16,1,.3,1) both" }}>
                           <div className="text-xs mb-[5px]">
@@ -1080,8 +916,8 @@ function InboxPage() {
                 {/* Add note inline */}
                 <div className="mt-2 flex gap-2 items-start">
                   <Input
-                    value={noteInput}
-                    onChange={(e) => setNoteInput(e.target.value)}
+                    value={state.noteInput}
+                    onChange={(e) => state.setNoteInput(e.target.value)}
                     onKeyDown={(e) => {
                       if (e.key === "Enter" && !e.shiftKey) addNote();
                     }}
@@ -1091,49 +927,49 @@ function InboxPage() {
                   <Button
                     variant="outline"
                     onClick={addNote}
-                    disabled={addingNote || !noteInput.trim()}
-                    className={`px-3.5 py-2 rounded-lg border border-[#FDE68A] bg-[rgba(251,191,36,0.08)] text-[#F59E0B] text-xs font-semibold font-inherit transition-all duration-150 shrink-0 whitespace-nowrap ${addingNote || !noteInput.trim() ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                    disabled={state.addingNote || !state.noteInput.trim()}
+                    className={`px-3.5 py-2 rounded-lg border border-[#FDE68A] bg-[rgba(251,191,36,0.08)] text-[#F59E0B] text-xs font-semibold font-inherit transition-all duration-150 shrink-0 whitespace-nowrap ${state.addingNote || !state.noteInput.trim() ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
                   >
-                    {addingNote ? "Adding..." : "Add Note"}
+                    {state.addingNote ? "Adding..." : "Add Note"}
                   </Button>
                 </div>
-                <div ref={msgEnd} />
+                <div ref={state.msgEndRef} />
               </div>
 
               {/* Composer */}
               <div className="border-t border-border shrink-0 bg-(--bg-surface)">
                 {/* Macro panel */}
-                {showMacros && (
+                {state.showMacros && (
                   <MacroPanel
                     macros={macros.filter((m) => !m.archived)}
                     aiMacros={aiMacros}
-                    customerName={extractName(selected?.from || "")}
+                    customerName={extractName(selectedThread?.from || "")}
                     favs={macroFavs}
-                    onToggleFav={toggleMacroFav}
+                    onToggleFav={_toggleMacroFav}
                     onInsert={(body) => {
                       const safeBody = plainTextToSafeHtml(body);
-                      if (replyRef.current) {
-                        replyRef.current.innerHTML = safeBody;
-                        setReply(replyRef.current.textContent);
-                      } else setReply(body);
-                      setShowMacros(false);
-                      setTimeout(() => replyRef.current?.focus(), 10);
+                      if (state.composerRef.current) {
+                        state.composerRef.current.innerHTML = safeBody;
+                        state.setReply(state.composerRef.current.textContent);
+                      } else state.setReply(body);
+                      state.setShowMacros(false);
+                      setTimeout(() => state.composerRef.current?.focus(), 10);
                     }}
-                    onClose={() => setShowMacros(false)}
+                    onClose={() => state.setShowMacros(false)}
                     onManage={() => {
-                      setShowMacros(false);
-                      setShowMacroManager(true);
+                      state.setShowMacros(false);
+                      state.setShowMacroManager(true);
                     }}
                     onCreateNew={() => {
-                      setShowMacros(false);
-                      setShowMacroManager(true);
+                      state.setShowMacros(false);
+                      state.setShowMacroManager(true);
                     }}
-                    onDeleteMacro={deleteMacro}
+                    onDeleteMacro={_deleteMacro}
                   />
                 )}
 
                 {/* Composer */}
-                {!showMacros && (
+                {!state.showMacros && (
                   <>
                     {/* Tab strip */}
                     <div className="flex border-b border-border pl-4">
@@ -1141,7 +977,7 @@ function InboxPage() {
                         { id: "reply", label: "Reply" },
                         { id: "note", label: "Internal note" },
                       ].map((t) => (
-                        <button key={t.id} className={`ctab${composerTab === t.id ? " on" : ""}`} onClick={() => setComposerTab(t.id)}>
+                        <button key={t.id} className={`ctab${state.composerTab === t.id ? " on" : ""}`} onClick={() => state.setComposerTab(t.id)}>
                           {t.label}
                         </button>
                       ))}
@@ -1154,8 +990,8 @@ function InboxPage() {
                       </span>
                       <span className="text-[11.5px] text-(--text-2) font-semibold shrink-0">To:</span>
                       <span className="flex-1 text-xs text-(--text-1) overflow-hidden text-ellipsis whitespace-nowrap">
-                        {extractName(selected.from)}
-                        {extractEmail(selected.from) ? ` (${extractEmail(selected.from)})` : ""}
+                        {extractName(selectedThread.from)}
+                        {extractEmail(selectedThread.from) ? ` (${extractEmail(selectedThread.from)})` : ""}
                       </span>
                       <ChevronDown size={11} className="text-(--text-3) shrink-0" />
                     </div>
@@ -1163,7 +999,7 @@ function InboxPage() {
                     {/* Macro search row */}
                     <div
                       className="flex items-center gap-2 px-3.5 py-[7px] border-b border-border cursor-pointer transition-[background] duration-[120ms] hover:bg-(--bg-surface-2)"
-                      onClick={() => setShowMacros(true)}
+                      onClick={() => state.setShowMacros(true)}
                     >
                       <span className="text-(--text-3) flex shrink-0">
                         <Zap size={13} />
@@ -1178,11 +1014,11 @@ function InboxPage() {
                     </div>
 
                     {/* Hidden file inputs */}
-                    <input ref={imgUploadRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
-                    <input ref={fileUploadRef} type="file" multiple className="hidden" onChange={handleFileAttach} />
+                    <input ref={state.imgUploadRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
+                    <input ref={state.fileUploadRef} type="file" multiple className="hidden" onChange={handleFileAttach} />
 
                     {/* Flat compose area */}
-                    <div className="compose-box bg-(--bg-surface)" onClick={() => showEmoji && setShowEmoji(false)}>
+                    <div className="compose-box bg-(--bg-surface)" onClick={() => state.showEmoji && state.setShowEmoji(false)}>
                       {/* Auto-translate banner */}
                       {autoTranslate && customerLang && customerLang.code !== "en" && (
                         <div className="flex items-center gap-2 px-3.5 py-1.5 bg-(--bg-surface-2) border-b border-(--border) text-[11.5px] text-(--text-2)">
@@ -1199,9 +1035,9 @@ function InboxPage() {
                       )}
 
                       {/* Attachments */}
-                      {attachments.length > 0 && (
+                      {state.attachments.length > 0 && (
                         <div className="flex flex-wrap gap-[5px] pt-2 px-3.5 pb-0">
-                          {attachments.map((a, i) => (
+                          {state.attachments.map((a, i) => (
                             <span
                               key={i}
                               className="inline-flex items-center gap-[5px] px-2.5 py-1 bg-(--bg-surface-2) border border-(--border) rounded-lg text-[11px] text-(--text-2)"
@@ -1210,7 +1046,7 @@ function InboxPage() {
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                onClick={() => setAttachments((p) => p.filter((_, j) => j !== i))}
+                                onClick={() => state.setAttachments((p) => p.filter((_, j) => j !== i))}
                                 className="text-(--text-3) flex p-0 ml-0.5"
                               >
                                 <X size={10} />
@@ -1222,15 +1058,15 @@ function InboxPage() {
 
                       {/* Contenteditable composer */}
                       <div
-                        ref={replyRef}
+                        ref={state.composerRef}
                         contentEditable
                         suppressContentEditableWarning
-                        data-placeholder={composerTab === "reply" ? "Click here to reply, or press r." : "Internal note — not visible to customer…"}
-                        onInput={(e) => setReply(e.currentTarget.textContent)}
+                        data-placeholder={state.composerTab === "reply" ? "Click here to reply, or press r." : "Internal note — not visible to customer…"}
+                        onInput={(e) => state.setReply(e.currentTarget.textContent)}
                         onKeyDown={(e) => {
                           if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) handleSend();
                         }}
-                        className={`compose-ta w-full resize-none outline-none bg-transparent px-4 py-3 text-sm text-(--text-1) leading-relaxed min-h-[90px] tracking-[.005em] min-h-[150px] ${composerTab === "note" ? "bg-[rgba(251,191,36,0.03)]" : "bg-transparent"}`}
+                        className={`compose-ta w-full resize-none outline-none bg-transparent px-4 py-3 text-sm text-(--text-1) leading-relaxed min-h-[90px] tracking-[.005em] min-h-[150px] ${state.composerTab === "note" ? "bg-[rgba(251,191,36,0.03)]" : "bg-transparent"}`}
                       />
 
                       {/* AI generating dots */}
@@ -1252,18 +1088,18 @@ function InboxPage() {
                           <Radio size={12} className="text-(--text-3) shrink-0" />
                           <span className="text-[10.5px] text-(--text-2) font-semibold shrink-0">Suggested macros</span>
                           {(aiMacros.length > 0 ? aiMacros : macros).slice(0, 3).map((m) => {
-                            const firstName = extractName(selected?.from || "").split(" ")[0] || "there";
+                            const firstName = extractName(selectedThread?.from || "").split(" ")[0] || "there";
                             const body = m.body.replace(/{{name}}/gi, firstName).replace(/{{firstname}}/gi, firstName);
                             return (
                               <button
                                 key={m.id}
                                 className="inline-flex items-center text-xs font-medium px-2.5 py-[3px] rounded-[5px] border border-black/[0.08] bg-(--bg-surface-2) text-(--text-2) cursor-pointer transition-all hover:border-(--border-hover) hover:text-(--text-1)"
                                 onClick={() => {
-                                  if (replyRef.current) {
-                                    replyRef.current.innerHTML = body.replace(/\n/g, "<br>");
-                                    setReply(replyRef.current.textContent);
-                                  } else setReply(body);
-                                  setTimeout(() => replyRef.current?.focus(), 10);
+                                  if (state.composerRef.current) {
+                                    state.composerRef.current.innerHTML = body.replace(/\n/g, "<br>");
+                                    state.setReply(state.composerRef.current.textContent);
+                                  } else state.setReply(body);
+                                  setTimeout(() => state.composerRef.current?.focus(), 10);
                                 }}
                               >
                                 {m.name}
@@ -1311,21 +1147,21 @@ function InboxPage() {
                         <button
                           className="min-w-[30px] h-[30px] flex items-center justify-center rounded-[7px] cursor-pointer text-xs font-bold text-(--text-3) transition-all hover:bg-(--bg-surface-2) hover:text-(--text-1)"
                           title="Insert image"
-                          onClick={() => imgUploadRef.current?.click()}
+                          onClick={() => state.imgUploadRef.current?.click()}
                           onMouseDown={(e) => e.preventDefault()}
                         >
                           <ImageIcon size={13} />
                         </button>
                         <div className="relative">
                           <button
-                            className={`min-w-[30px] h-[30px] flex items-center justify-center rounded-[7px] cursor-pointer text-xs font-bold text-(--text-3) transition-all hover:bg-(--bg-surface-2) hover:text-(--text-1)${showEmoji ? " rton" : ""}`}
+                            className={`min-w-[30px] h-[30px] flex items-center justify-center rounded-[7px] cursor-pointer text-xs font-bold text-(--text-3) transition-all hover:bg-(--bg-surface-2) hover:text-(--text-1)${state.showEmoji ? " rton" : ""}`}
                             title="Emoji"
-                            onClick={() => setShowEmoji((v) => !v)}
+                            onClick={() => state.setShowEmoji((v) => !v)}
                             onMouseDown={(e) => e.preventDefault()}
                           >
                             <Smile size={13} />
                           </button>
-                          {showEmoji && (
+                          {state.showEmoji && (
                             <div
                               className="absolute bottom-[calc(100%+8px)] left-[-8px] bg-(--bg-surface) backdrop-blur-[28px] border border-(--border) rounded-2xl p-2.5 z-[200] shadow-[0_24px_80px_rgba(0,0,0,0.2)] animate-[fadeUp_.16s_ease_both]"
                               onClick={(e) => e.stopPropagation()}
@@ -1337,10 +1173,8 @@ function InboxPage() {
                                     className="w-8 h-8 flex items-center justify-center rounded-lg text-[17px] cursor-pointer bg-transparent transition-colors hover:bg-(--bg-surface-2)"
                                     onMouseDown={(e) => {
                                       e.preventDefault();
-                                      replyRef.current?.focus();
-                                      document.execCommand("insertText", false, em);
-                                      setReply(replyRef.current?.textContent || "");
-                                      setShowEmoji(false);
+                                      insertEmoji(em);
+                                      state.setShowEmoji(false);
                                     }}
                                   >
                                     {em}
@@ -1353,7 +1187,7 @@ function InboxPage() {
                         <button
                           className="min-w-[30px] h-[30px] flex items-center justify-center rounded-[7px] cursor-pointer text-xs font-bold text-(--text-3) transition-all hover:bg-(--bg-surface-2) hover:text-(--text-1)"
                           title="Attach file"
-                          onClick={() => fileUploadRef.current?.click()}
+                          onClick={() => state.fileUploadRef.current?.click()}
                           onMouseDown={(e) => e.preventDefault()}
                         >
                           <Paperclip size={13} />
@@ -1380,14 +1214,14 @@ function InboxPage() {
                         <Button
                           className="px-[9px] py-[9px] text-[12.5px] font-semibold bg-[rgba(74,222,128,0.07)] border border-[rgba(74,222,128,0.2)] text-[rgba(74,222,128,0.75)] rounded-xl flex items-center gap-[5px] transition-all hover:bg-[rgba(74,222,128,0.13)] hover:border-[rgba(74,222,128,0.38)] hover:text-[#4ade80] ml-1.5"
                           onClick={handleSendResolve}
-                          disabled={!reply.trim() || sending}
+                          disabled={!state.reply.trim() || state.sending}
                         >
                           <Check size={11} />
                           Send & Close
                         </Button>
-                        <Button className="flex items-center gap-1.5 ml-1.5" onClick={handleSend} disabled={!reply.trim() || sending}>
-                          {sending ? <Loader2 size={13} className="animate-spin text-white" /> : <Send size={13} />}
-                          {sending ? "Sending…" : "Send"}
+                        <Button className="flex items-center gap-1.5 ml-1.5" onClick={handleSend} disabled={!state.reply.trim() || state.sending}>
+                          {state.sending ? <Loader2 size={13} className="animate-spin text-white" /> : <Send size={13} />}
+                          {state.sending ? "Sending…" : "Send"}
                         </Button>
                       </div>
                     </div>
@@ -1399,7 +1233,7 @@ function InboxPage() {
         </div>
 
         {/* ═══════════════ RIGHT: Customer panel ═══════════════ */}
-        {selected && (
+        {selectedThread && (
           <div className="sscroll w-[280px] border-l border-border flex flex-col shrink-0 overflow-y-auto bg-(--bg-surface)">
             {/* Search */}
             <div className="px-3 py-2.5 border-b border-border shrink-0">
@@ -1410,10 +1244,10 @@ function InboxPage() {
                 <input
                   className="w-full py-[7px] px-3 pl-[32px] bg-(--bg-surface-2) border border-(--border) rounded-lg text-(--text-1) text-xs outline-none transition-[border-color] duration-200 focus:border-(--border-hover)"
                   placeholder="Search by email or #order number..."
-                  value={custSearch}
-                  onChange={(e) => setCustSearch(e.target.value)}
+                  value={state.custSearch}
+                  onChange={(e) => state.setCustSearch(e.target.value)}
                   onKeyDown={(e) => {
-                    if (e.key === "Enter") handleCustSearch(custSearch);
+                    if (e.key === "Enter") handleCustSearch(state.custSearch);
                   }}
                 />
               </div>
@@ -1425,18 +1259,18 @@ function InboxPage() {
                 <InboxAvatar
                   name={
                     customer?.customer
-                      ? `${customer.customer.firstName || ""} ${customer.customer.lastName || ""}`.trim() || extractName(selected.from)
-                      : extractName(selected.from)
+                      ? `${customer.customer.firstName || ""} ${customer.customer.lastName || ""}`.trim() || extractName(selectedThread.from)
+                      : extractName(selectedThread.from)
                   }
                   size={28}
                 />
                 <div className="flex-1 min-w-0">
                   <div className="text-[13px] font-bold text-(--text-1) overflow-hidden text-ellipsis whitespace-nowrap">
                     {customer?.customer
-                      ? `${customer.customer.firstName || ""} ${customer.customer.lastName || ""}`.trim() || extractName(selected.from)
-                      : extractName(selected.from)}
+                      ? `${customer.customer.firstName || ""} ${customer.customer.lastName || ""}`.trim() || extractName(selectedThread.from)
+                      : extractName(selectedThread.from)}
                   </div>
-                  <div className="text-[11px] text-(--text-3) mt-px overflow-hidden text-ellipsis whitespace-nowrap">{extractEmail(selected.from)}</div>
+                  <div className="text-[11px] text-(--text-3) mt-px overflow-hidden text-ellipsis whitespace-nowrap">{extractEmail(selectedThread.from)}</div>
                 </div>
                 <Button
                   variant="outline"
@@ -1452,16 +1286,16 @@ function InboxPage() {
             <div className="border-b border-border shrink-0">
               <button
                 className="w-full flex items-center gap-1.5 py-[9px] px-3.5 bg-transparent cursor-pointer text-left transition-[background] duration-[120ms] hover:bg-(--bg-surface-2)"
-                onClick={() => setCustFieldsOpen((v) => !v)}
+                onClick={() => state.setCustFieldsOpen((v) => !v)}
               >
                 <span className="text-[10px] font-bold text-(--text-3) flex-1 tracking-[.07em] uppercase">Customer Fields</span>
-                <ChevronDown size={10} className={`transition-transform duration-200 text-(--text-3) shrink-0 ${custFieldsOpen ? "rotate-180" : "rotate-0"}`} />
+                <ChevronDown size={10} className={`transition-transform duration-200 text-(--text-3) shrink-0 ${state.custFieldsOpen ? "rotate-180" : "rotate-0"}`} />
               </button>
-              {custFieldsOpen && (
+              {state.custFieldsOpen && (
                 <div className="px-3.5 pb-2.5 pt-0 flex flex-col">
                   <div className="flex items-baseline justify-between gap-4 px-3.5">
                     <span className="text-xs text-(--text-3) shrink-0 min-w-[72px]">Email</span>
-                    <span className="text-xs font-medium text-(--text-1) text-right break-words text-[11px] break-all">{extractEmail(selected.from)}</span>
+                    <span className="text-xs font-medium text-(--text-1) text-right break-words text-[11px] break-all">{extractEmail(selectedThread.from)}</span>
                   </div>
                   {loadingCust &&
                     [0, 1].map((i) => (
@@ -1558,14 +1392,14 @@ function InboxPage() {
             {/* Tabs */}
             <div className="flex border-b border-border shrink-0">
               <button
-                className={`flex-1 py-2 px-1.5 bg-transparent cursor-pointer text-[11.5px] font-medium text-(--text-2) border-b-2 border-transparent transition-all whitespace-nowrap text-center${rightTab === "info" ? " on" : ""}`}
-                onClick={() => setRightTab("info")}
+                className={`flex-1 py-2 px-1.5 bg-transparent cursor-pointer text-[11.5px] font-medium text-(--text-2) border-b-2 border-transparent transition-all whitespace-nowrap text-center${state.rightTab === "info" ? " on" : ""}`}
+                onClick={() => state.setRightTab("info")}
               >
                 Customer
               </button>
               <button
-                className={`flex-1 py-2 px-1.5 bg-transparent cursor-pointer text-[11.5px] font-medium text-(--text-2) border-b-2 border-transparent transition-all whitespace-nowrap text-center${rightTab === "shopify" ? " on" : ""}`}
-                onClick={() => setRightTab("shopify")}
+                className={`flex-1 py-2 px-1.5 bg-transparent cursor-pointer text-[11.5px] font-medium text-(--text-2) border-b-2 border-transparent transition-all whitespace-nowrap text-center${state.rightTab === "shopify" ? " on" : ""}`}
+                onClick={() => state.setRightTab("shopify")}
               >
                 Orders
                 {(customer?.orders || []).length > 0 ? ` (${customer.orders.length})` : ""}
@@ -1573,7 +1407,7 @@ function InboxPage() {
             </div>
 
             {/* ── Customer tab ── */}
-            {rightTab === "info" && (
+            {state.rightTab === "info" && (
               <div className="shrink-0">
                 {loadingCust && (
                   <div className="px-3.5 py-3">
@@ -1602,10 +1436,10 @@ function InboxPage() {
                         <Mail size={13} />
                       </span>
                       <a
-                        href={`mailto:${extractEmail(selected.from)}`}
+                        href={`mailto:${extractEmail(selectedThread.from)}`}
                         className="text-xs text-(--text-1) no-underline overflow-hidden text-ellipsis whitespace-nowrap hover:underline"
                       >
-                        {extractEmail(selected.from)}
+                        {extractEmail(selectedThread.from)}
                       </a>
                     </div>
                     {/* Phone row */}
@@ -1623,14 +1457,14 @@ function InboxPage() {
                     {customer?.customer && (
                       <Button
                         variant="ghost"
-                        onClick={() => setCustShowMore((v) => !v)}
+                        onClick={() => state.setCustShowMore((v) => !v)}
                         className="flex items-center gap-1 py-[5px] px-0 text-xs text-(--text-2) font-inherit font-medium"
                       >
-                        {custShowMore ? "Show less" : "Show more"}
-                        <ChevronDown size={10} className={`transition-transform duration-200 ${custShowMore ? "rotate-180" : "rotate-0"}`} />
+                        {state.custShowMore ? "Show less" : "Show more"}
+                        <ChevronDown size={10} className={`transition-transform duration-200 ${state.custShowMore ? "rotate-180" : "rotate-0"}`} />
                       </Button>
                     )}
-                    {custShowMore && customer?.customer && (
+                    {state.custShowMore && customer?.customer && (
                       <div className="flex flex-col pt-1 border-t border-border">
                         {(customer.customer.city || customer.customer.country) && (
                           <div className="flex items-baseline justify-between gap-4 px-3.5">
@@ -1675,13 +1509,13 @@ function InboxPage() {
                     <Calendar size={12} />
                     Open Timeline
                   </Button>
-                  {selected?.id && <span className="text-[11px] text-(--text-3)">1 ticket, 1 open</span>}
+                  {selectedThread?.id && <span className="text-[11px] text-(--text-3)">1 ticket, 1 open</span>}
                 </div>
               </div>
             )}
 
             {/* ── Orders tab ── */}
-            {rightTab === "shopify" && (
+            {state.rightTab === "shopify" && (
               <div>
                 {/* Create order */}
                 <div className="px-3 py-2.5 border-b border-border">
@@ -1709,9 +1543,9 @@ function InboxPage() {
 
                 {/* Order sections */}
                 {(customer?.orders || []).map((order, oi) => {
-                  const isOpen = expandedOrders[order.id] === undefined ? oi === 0 : expandedOrders[order.id];
-                  const shippingOpen = expandedSubs[`${order.id}_shipping`] === undefined ? true : !!expandedSubs[`${order.id}_shipping`];
-                  const trackOpen = expandedSubs[`${order.id}_track`] === undefined ? true : !!expandedSubs[`${order.id}_track`];
+                  const isOpen = state.expandedOrders[order.id] === undefined ? oi === 0 : state.expandedOrders[order.id];
+                  const shippingOpen = state.expandedSubs[`${order.id}_shipping`] === undefined ? true : !!state.expandedSubs[`${order.id}_shipping`];
+                  const trackOpen = state.expandedSubs[`${order.id}_track`] === undefined ? true : !!state.expandedSubs[`${order.id}_track`];
                   const isCancelled = !!order.cancelledAt || order.financialStatus === "cancelled" || order.financialStatus === "voided";
                   const isRefunded = order.financialStatus === "refunded";
                   const canRefund = !isCancelled && !isRefunded;
@@ -1725,7 +1559,7 @@ function InboxPage() {
                       <button
                         className="w-full flex items-center gap-1.5 py-2.5 px-3.5 bg-transparent cursor-pointer text-left transition-[background] duration-[120ms] hover:bg-(--bg-surface-2)"
                         onClick={() =>
-                          setExpandedOrders((v) => ({
+                          state.setExpandedOrders((v) => ({
                             ...v,
                             [order.id]: !isOpen,
                           }))
@@ -1773,7 +1607,7 @@ function InboxPage() {
                           <div className="flex gap-1 flex-wrap mb-2.5">
                             <button
                               className="inline-flex items-center gap-1 text-[11px] font-medium px-[9px] py-1 rounded-md border border-(--border) bg-(--bg-surface) text-(--text-1) cursor-pointer transition-all hover:border-(--border-hover) hover:bg-(--bg-surface-2)"
-                              onClick={() => setModal({ type: "duplicate", order })}
+                              onClick={() => state.setModal({ type: "duplicate", order })}
                             >
                               <span className="flex">
                                 <Copy size={12} />
@@ -1783,7 +1617,7 @@ function InboxPage() {
                             {canRefund && (
                               <button
                                 className="inline-flex items-center gap-1 text-[11px] font-medium px-[9px] py-1 rounded-md border border-(--border) bg-(--bg-surface) text-(--text-1) cursor-pointer transition-all hover:border-(--border-hover) hover:bg-(--bg-surface-2)"
-                                onClick={() => setModal({ type: "refund", order })}
+                                onClick={() => state.setModal({ type: "refund", order })}
                               >
                                 <RotateCcw size={11} />$ Refund
                               </button>
@@ -1791,7 +1625,7 @@ function InboxPage() {
                             {canCancel && (
                               <button
                                 className="inline-flex items-center gap-1 text-[11px] font-medium px-[9px] py-1 rounded-md border border-(--border) bg-(--bg-surface) text-(--text-1) cursor-pointer transition-all hover:border-[rgba(220,38,38,0.35)] hover:text-[#dc2626] hover:bg-[rgba(220,38,38,0.05)]"
-                                onClick={() => setModal({ type: "cancel", order })}
+                                onClick={() => state.setModal({ type: "cancel", order })}
                               >
                                 <XCircle size={11} />
                                 Cancel
@@ -1799,7 +1633,7 @@ function InboxPage() {
                             )}
                             <button
                               className="inline-flex items-center gap-1 text-[11px] font-medium px-[9px] py-1 rounded-md border border-(--border) bg-(--bg-surface) text-(--text-1) cursor-pointer transition-all hover:border-(--border-hover) hover:bg-(--bg-surface-2) px-[7px] py-1"
-                              onClick={() => setModal({ type: "note", order })}
+                              onClick={() => state.setModal({ type: "note", order })}
                             >
                               <MoreHorizontal size={13} />
                             </button>
@@ -1831,7 +1665,7 @@ function InboxPage() {
                               <button
                                 className="w-full flex items-center gap-1.5 py-[7px] bg-transparent cursor-pointer text-[11.5px] font-semibold text-(--text-1) text-left transition-opacity border-t border-(--border) mt-1.5 hover:opacity-75"
                                 onClick={() =>
-                                  setExpandedSubs((v) => ({
+                                  state.setExpandedSubs((v) => ({
                                     ...v,
                                     [`${order.id}_track`]: !trackOpen,
                                   }))
@@ -1893,7 +1727,7 @@ function InboxPage() {
                               <button
                                 className="w-full flex items-center gap-1.5 py-[7px] bg-transparent cursor-pointer text-[11.5px] font-semibold text-(--text-1) text-left transition-opacity border-t border-(--border) mt-1.5 hover:opacity-75"
                                 onClick={() =>
-                                  setExpandedSubs((v) => ({
+                                  state.setExpandedSubs((v) => ({
                                     ...v,
                                     [`${order.id}_shipping`]: !shippingOpen,
                                   }))
@@ -1914,7 +1748,7 @@ function InboxPage() {
                                     <Button
                                       variant="outline"
                                       size="sm"
-                                      onClick={() => setModal({ type: "address", order })}
+                                      onClick={() => state.setModal({ type: "address", order })}
                                       className="inline-flex items-center gap-1 text-(--text-2) text-[11px] font-semibold px-2 py-[3px] rounded-[6px] border border-border bg-transparent transition-all duration-150 font-inherit hover:text-(--text-1) hover:border-(--border-hover)"
                                     >
                                       <span className="flex">
@@ -1952,13 +1786,13 @@ function InboxPage() {
                           {/* Line items — each item as its own collapsible sub-section */}
                           {(order.lineItems || []).map((item, ii) => {
                             const itemKey = `${order.id}_item_${item.id}`;
-                            const itemOpen = expandedSubs[itemKey] === undefined ? true : !!expandedSubs[itemKey];
+                            const itemOpen = state.expandedSubs[itemKey] === undefined ? true : !!state.expandedSubs[itemKey];
                             return (
                               <div key={item.id}>
                                 <button
                                   className="w-full flex items-center gap-1.5 py-[7px] bg-transparent cursor-pointer text-[11.5px] font-semibold text-(--text-1) text-left transition-opacity border-t border-(--border) mt-1.5 hover:opacity-75"
                                   onClick={() =>
-                                    setExpandedSubs((v) => ({
+                                    state.setExpandedSubs((v) => ({
                                       ...v,
                                       [itemKey]: !itemOpen,
                                     }))
@@ -2011,38 +1845,38 @@ function InboxPage() {
       </>
 
       {/* ═══════════════ Modals ═══════════════ */}
-      {modal?.type === "refund" && (
-        <RefundModal order={modal.order} token={session.access_token} onClose={() => setModal(null)} onSuccess={handleModalSuccess} />
+      {state.modal?.type === "refund" && (
+        <RefundModal order={state.modal.order} token={token} onClose={() => state.setModal(null)} onSuccess={handleModalSuccess} />
       )}
-      {modal?.type === "cancel" && (
-        <CancelModal order={modal.order} token={session.access_token} onClose={() => setModal(null)} onSuccess={handleModalSuccess} />
+      {state.modal?.type === "cancel" && (
+        <CancelModal order={state.modal.order} token={token} onClose={() => state.setModal(null)} onSuccess={handleModalSuccess} />
       )}
-      {modal?.type === "duplicate" && (
-        <DuplicateModal order={modal.order} token={session.access_token} onClose={() => setModal(null)} onSuccess={handleModalSuccess} />
+      {state.modal?.type === "duplicate" && (
+        <DuplicateModal order={state.modal.order} token={token} onClose={() => state.setModal(null)} onSuccess={handleModalSuccess} />
       )}
-      {modal?.type === "address" && (
-        <EditAddressModal order={modal.order} token={session.access_token} onClose={() => setModal(null)} onSuccess={handleModalSuccess} />
+      {state.modal?.type === "address" && (
+        <EditAddressModal order={state.modal.order} token={token} onClose={() => state.setModal(null)} onSuccess={handleModalSuccess} />
       )}
-      {modal?.type === "fulfill" && (
-        <FulfillModal order={modal.order} token={session.access_token} onClose={() => setModal(null)} onSuccess={handleModalSuccess} />
+      {state.modal?.type === "fulfill" && (
+        <FulfillModal order={state.modal.order} token={token} onClose={() => state.setModal(null)} onSuccess={handleModalSuccess} />
       )}
-      {modal?.type === "note" && <NoteModal order={modal.order} token={session.access_token} onClose={() => setModal(null)} onSuccess={handleModalSuccess} />}
+      {state.modal?.type === "note" && <NoteModal order={state.modal.order} token={token} onClose={() => state.setModal(null)} onSuccess={handleModalSuccess} />}
 
       {/* Macro Manager overlay */}
-      {showMacroManager && (
+      {state.showMacroManager && (
         <MacroManager
           macros={macros}
           favs={macroFavs}
-          onClose={() => setShowMacroManager(false)}
+          onClose={() => state.setShowMacroManager(false)}
           onSaveMacro={(m) => {
-            saveMacro(m);
+            _saveMacro(m);
             sonnerToast.success("Macro saved");
           }}
           onDeleteMacro={(id) => {
-            deleteMacro(id);
+            _deleteMacro(id);
             sonnerToast("Macro deleted");
           }}
-          onToggleFav={toggleMacroFav}
+          onToggleFav={_toggleMacroFav}
         />
       )}
     </div>
@@ -2053,37 +1887,9 @@ function InboxPage() {
 // If no email account is connected for this workspace, render the
 // onboarding empty state instead.
 export default function InboxPageWrapper() {
-  // null = checking, true = connected, false = not connected
-  const [emailConnected, setEmailConnected] = useState(null);
+  const { data: emailConnected, isLoading } = useEmailConnected();
 
-  useEffect(() => {
-    let cancelled = false;
-    async function check() {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (!session) {
-        window.location.href = "/login";
-        return;
-      }
-      try {
-        const res = await fetch("/api/inbox/accounts", {
-          headers: { Authorization: `Bearer ${session.access_token}` },
-          cache: "no-store",
-        });
-        const data = await res.json().catch(() => ({}));
-        if (!cancelled) setEmailConnected(Boolean(data?.accounts?.length > 0));
-      } catch {
-        if (!cancelled) setEmailConnected(false);
-      }
-    }
-    check();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  if (emailConnected === null) return null; // brief loading flash, no spinner
+  if (isLoading || emailConnected === undefined) return null; // brief loading flash, no spinner
 
   if (!emailConnected) {
     return (

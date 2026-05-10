@@ -210,10 +210,7 @@ supabaseAdmin.from("tickets").select("*").eq("workspace_id", ctx.workspaceId);
 
 // Option B — scoped() helper from lib/db.js
 import { scoped } from "../../../lib/db";
-const { data } = await scoped(
-  supabaseAdmin.from("tickets").select("*"),
-  ctx.workspaceId,
-);
+const { data } = await scoped(supabaseAdmin.from("tickets").select("*"), ctx.workspaceId);
 ```
 
 **Wrong — never do this:**
@@ -229,6 +226,77 @@ Use `getAuthContext(request)` from `lib/auth.js` in every API route handler — 
 Four roles in `workspace_members.role`: `owner`, `admin`, `agent`, `observer`.
 Invite roles (cannot invite as owner): `admin`, `agent`, `observer`.
 See `lib/permissions.js` for `can.*` capability checks.
+
+## Frontend Development Rules — mandatory
+
+These rules apply to all new features, components, and refactoring work on the frontend.
+
+### 1. Separate business logic from UI
+
+- **Never** put API calls, data transformations, or complex state logic directly in components.
+- Extract logic into custom hooks in `hooks/` (grouped by feature, e.g. `hooks/inbox/`).
+- Components should only handle rendering and call hooks for data and actions.
+
+### 2. Use TanStack React Query for all server data
+
+- All API fetches must use `useQuery` (reads) and `useMutation` (writes) from `@tanstack/react-query`.
+- Define query keys in a `Keys` object per feature for consistent cache invalidation.
+- **Never** use `useState` + `useEffect` + `fetch` for server data — that pattern is replaced by TanStack.
+- Mutations should invalidate related queries on success.
+
+### 3. Use Tailwind classes and shadcn components — no inline style objects
+
+- **Never** use `style={{...}}` for static styling. Use Tailwind utility classes instead.
+- `style={{}}` is only acceptable for truly dynamic values computed from JS variables.
+- **Never** inject CSS via `<style dangerouslySetInnerHTML>` or `const CSS = \`...\``. Move styles to `globals.css` or use Tailwind.
+- Colors must reference CSS variables from the design system: `text-(--text-1)`, `bg-(--bg-surface)`, `border-(--border)`, or shadcn semantic classes (`text-foreground`, `bg-card`, `bg-muted`, etc.).
+
+### 4. Keep components small and focused
+
+- Extract repeated UI blocks into separate component files.
+- A component file should ideally be under 300 lines. If it grows beyond that, look for extractable sub-components.
+- Group feature components in `components/features/<feature>/` and shared ones in `components/shared/`.
+
+### 5. TypeScript only — no JavaScript files
+
+- All new files must be `.ts` or `.tsx`. Never create `.js` or `.jsx` files.
+- When modifying an existing `.js` file, convert it to `.ts`/`.tsx` as part of the change.
+- Add proper type annotations — avoid `any`. Use `unknown`, specific interfaces, or `Record<string, unknown>` instead.
+- Import types from `types/` (e.g. `import type { Thread } from '@/types/inbox'`).
+
+### 6. Use Lucide icons — no inline SVGs
+
+- Use icons from `lucide-react` for all standard icons.
+- **Never** write inline `<svg>` tags in components.
+- If a needed icon doesn't exist in Lucide, create a separate `.svg` file in `public/icons/` and import it — don't inline the SVG markup.
+- Don't create wrapper components or icon objects (`const I = {...}`) around icons — use Lucide components directly.
+
+### 7. Prefer Tailwind theme over globals.css
+
+- Configure colors, spacing, and design tokens in the Tailwind theme (via `globals.css` CSS variables + `@theme inline` block).
+- Only use `globals.css` for styles that genuinely can't be expressed with Tailwind: complex pseudo-selectors (`::-webkit-scrollbar`, `[contenteditable]:empty:before`), parent-hover interactions, keyframe animations, and dark mode variants that need `[data-theme="dark"]`.
+- **Never** add element-level resets (`* {}`, `button {}`, `input {}`) outside `@layer base` — they override Tailwind utilities.
+
+### 8. Use Zustand for UI state, TanStack for server state
+
+- **Zustand** is for client-side UI state only: selected items, toggles, modals, form inputs, expanded sections.
+- **TanStack** is for all server-originated data: API responses, cached data, loading/error states.
+- **Never** store API response data in Zustand — let TanStack manage it.
+- Use Zustand selectors to avoid unnecessary re-renders: `useStore(s => s.field)`, not `useStore()`.
+- Prefer a shared Zustand store over prop-drilling when multiple components need the same UI state.
+
+### 9. Keep constants in separate files
+
+- Move configuration objects, enums, label maps, and static data to dedicated files in `lib/` (e.g. `lib/inbox-constants.ts`).
+- **Never** define large constant objects inline in component files.
+- Constants should be importable and reusable across components and hooks.
+
+### 10. Prefer shadcn components over custom-styled HTML elements
+
+- Use `<Button>`, `<Input>`, `<Dialog>`, `<DropdownMenu>`, `<Checkbox>`, `<Tabs>`, `<Badge>`, `<Avatar>`, `<ScrollArea>`, `<Skeleton>`, etc. from `components/ui/`.
+- **Never** create a custom-styled `<button>` or `<input>` when a shadcn equivalent exists.
+- When a shadcn component needs visual customization, use the `className` prop with Tailwind — don't create a wrapper component.
+- Note: shadcn in this project uses **base-ui** (not Radix). Triggers use the `render` prop instead of `asChild`.
 
 ## Volgende fases
 

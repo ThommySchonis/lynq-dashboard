@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useEffect } from 'react'
-import { useSearchParams } from 'next/navigation'
-import { supabase } from '../../lib/supabase'
-import { Users, UserCheck, Radio, Bell } from 'lucide-react'
-import AdminSidebar from '../components/AdminSidebar'
+import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
+import { supabase } from "../../lib/supabase";
+import { Users, UserCheck, Radio, Bell } from "lucide-react";
+import AdminSidebar from "../components/AdminSidebar";
 
 const ADMIN_EMAIL = "info@lynqagency.com";
 
@@ -113,38 +113,38 @@ const CSS = `
 // NAV config moved to app/components/AdminSidebar.js (single source of truth).
 
 export default function AdminPage() {
-  const searchParams = useSearchParams()
-  const [clients, setClients]             = useState([])
-  const [broadcasts, setBroadcasts]       = useState([])
-  const [notifications, setNotifications] = useState([])
-  const [teamMembers, setTeamMembers]     = useState([])
-  const [loading, setLoading]             = useState(false)
-  const [broadcastLoading, setBroadcastLoading] = useState(false)
-  const [notifLoading, setNotifLoading]   = useState(false)
-  const [teamLoading, setTeamLoading]     = useState(false)
-  const [success, setSuccess]             = useState('')
-  const [broadcastSuccess, setBroadcastSuccess] = useState('')
-  const [notifSuccess, setNotifSuccess]   = useState('')
-  const [teamSuccess, setTeamSuccess]     = useState('')
-  const [teamError, setTeamError]         = useState('')
-  const [authorized, setAuthorized]       = useState(false)
-  const [activeTab, setActiveTab]         = useState('dashboard')
-  const [teamForm, setTeamForm]           = useState({ name: '', email: '', password: '', role: 'developer' })
-  const [finance, setFinance]             = useState(null)
-  const [financeLoading, setFinanceLoading] = useState(false)
-  const [timeData, setTimeData]           = useState(null)
-  const [timeLoading, setTimeLoading]     = useState(false)
-  const [timeFilter, setTimeFilter]       = useState('week')
-  const [broadcastForm, setBroadcastForm] = useState({ title: '', body: '', type: 'update', youtube_url: '', topic: '' })
-  const [broadcastReactions, setBroadcastReactions] = useState([])
-  const [masterclasses, setMasterclasses] = useState([])
-  const [mcForm, setMcForm]               = useState({ title: '', speaker: '', description: '', scheduled_at: '', zoom_url: '' })
-  const [mcLoading, setMcLoading]         = useState(false)
-  const [mcSuccess, setMcSuccess]         = useState('')
-  const [mcError, setMcError]             = useState('')
-  const [editingZoom, setEditingZoom]     = useState(null)
-  const [inquiries, setInquiries]         = useState([])
-  const [notifForm, setNotifForm]         = useState({ title: '', body: '', type: 'info' })
+  const searchParams = useSearchParams();
+  const [clients, setClients] = useState([]);
+  const [broadcasts, setBroadcasts] = useState([]);
+  const [notifications, setNotifications] = useState([]);
+  const [teamMembers, setTeamMembers] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [broadcastLoading, setBroadcastLoading] = useState(false);
+  const [notifLoading, setNotifLoading] = useState(false);
+  const [teamLoading, setTeamLoading] = useState(false);
+  const [success, setSuccess] = useState("");
+  const [broadcastSuccess, setBroadcastSuccess] = useState("");
+  const [notifSuccess, setNotifSuccess] = useState("");
+  const [teamSuccess, setTeamSuccess] = useState("");
+  const [teamError, setTeamError] = useState("");
+  const [authorized, setAuthorized] = useState(false);
+  const [activeTab, setActiveTab] = useState("dashboard");
+  const [teamForm, setTeamForm] = useState({ name: "", email: "", password: "", role: "developer" });
+  const [finance, setFinance] = useState(null);
+  const [financeLoading, setFinanceLoading] = useState(false);
+  const [timeData, setTimeData] = useState(null);
+  const [timeLoading, setTimeLoading] = useState(false);
+  const [timeFilter, setTimeFilter] = useState("week");
+  const [broadcastForm, setBroadcastForm] = useState({ title: "", body: "", type: "update", youtube_url: "", topic: "" });
+  const [broadcastReactions, setBroadcastReactions] = useState([]);
+  const [masterclasses, setMasterclasses] = useState([]);
+  const [mcForm, setMcForm] = useState({ title: "", speaker: "", description: "", scheduled_at: "", zoom_url: "" });
+  const [mcLoading, setMcLoading] = useState(false);
+  const [mcSuccess, setMcSuccess] = useState("");
+  const [mcError, setMcError] = useState("");
+  const [editingZoom, setEditingZoom] = useState(null);
+  const [inquiries, setInquiries] = useState([]);
+  const [notifForm, setNotifForm] = useState({ title: "", body: "", type: "info" });
   const [form, setForm] = useState({
     company_name: "",
     email: "",
@@ -178,53 +178,33 @@ export default function AdminPage() {
   // Open the right tab when navigating in via /admin?tab=<id> (used by the
   // shared AdminSidebar in link-mode from /lynq-admin/* routes).
   useEffect(() => {
-    const tab = searchParams?.get('tab')
-    if (!tab) return
-    setActiveTab(tab)
-    if (tab === 'finance' && !finance) fetchFinance()
-    if (tab === 'time') fetchTimeData(timeFilter)
+    const tab = searchParams?.get("tab");
+    if (!tab) return;
+    setActiveTab(tab);
+    if (tab === "finance" && !finance) fetchFinance();
+    if (tab === "time") fetchTimeData(timeFilter);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams])
+  }, [searchParams]);
 
   async function fetchInquiries() {
-    const { data } = await supabase
-      .from("service_inquiries")
-      .select("*")
-      .order("created_at", { ascending: false });
+    const { data } = await supabase.from("service_inquiries").select("*").order("created_at", { ascending: false });
     if (data) setInquiries(data);
   }
   async function markInquiryRead(id) {
-    await supabase
-      .from("service_inquiries")
-      .update({ status: "read" })
-      .eq("id", id);
-    setInquiries((prev) =>
-      prev.map((i) => (i.id === id ? { ...i, status: "read" } : i)),
-    );
+    await supabase.from("service_inquiries").update({ status: "read" }).eq("id", id);
+    setInquiries((prev) => prev.map((i) => (i.id === id ? { ...i, status: "read" } : i)));
   }
   async function fetchBroadcastReactions() {
-    const { data } = await supabase
-      .from("broadcast_reactions")
-      .select("broadcast_id, emoji");
+    const { data } = await supabase.from("broadcast_reactions").select("broadcast_id, emoji");
     if (data) setBroadcastReactions(data);
   }
   async function togglePin(id, isPinned) {
-    if (!isPinned)
-      await supabase
-        .from("broadcasts")
-        .update({ is_pinned: false })
-        .eq("is_pinned", true);
-    await supabase
-      .from("broadcasts")
-      .update({ is_pinned: !isPinned })
-      .eq("id", id);
+    if (!isPinned) await supabase.from("broadcasts").update({ is_pinned: false }).eq("is_pinned", true);
+    await supabase.from("broadcasts").update({ is_pinned: !isPinned }).eq("id", id);
     fetchBroadcasts();
   }
   async function fetchMasterclasses() {
-    const { data } = await supabase
-      .from("masterclasses")
-      .select("*")
-      .order("scheduled_at", { ascending: false });
+    const { data } = await supabase.from("masterclasses").select("*").order("scheduled_at", { ascending: false });
     if (data) setMasterclasses(data);
   }
   async function handleCreateMasterclass(e) {
@@ -267,10 +247,7 @@ export default function AdminPage() {
     fetchMasterclasses();
   }
   async function fetchTeamMembers() {
-    const { data } = await supabase
-      .from("team_members")
-      .select("*")
-      .order("created_at", { ascending: false });
+    const { data } = await supabase.from("team_members").select("*").order("created_at", { ascending: false });
     if (data) setTeamMembers(data);
   }
   async function fetchTimeData(f = timeFilter) {
@@ -310,8 +287,7 @@ export default function AdminPage() {
     setTeamLoading(false);
   }
   async function deleteTeamMember(id, email) {
-    if (!confirm(`Remove ${email}? They will no longer be able to log in.`))
-      return;
+    if (!confirm(`Remove ${email}? They will no longer be able to log in.`)) return;
     const {
       data: { session },
     } = await supabase.auth.getSession();
@@ -336,23 +312,18 @@ export default function AdminPage() {
     setFinanceLoading(false);
   }
   async function fetchNotifications() {
-    const { data } = await supabase
-      .from("notifications")
-      .select("*")
-      .order("created_at", { ascending: false });
+    const { data } = await supabase.from("notifications").select("*").order("created_at", { ascending: false });
     if (data) setNotifications(data);
   }
   async function handleNotification(e) {
     e.preventDefault();
     setNotifLoading(true);
     setNotifSuccess("");
-    const { error } = await supabase
-      .from("notifications")
-      .insert({
-        title: notifForm.title,
-        body: notifForm.body,
-        type: notifForm.type,
-      });
+    const { error } = await supabase.from("notifications").insert({
+      title: notifForm.title,
+      body: notifForm.body,
+      type: notifForm.type,
+    });
     if (error) alert("Error: " + error.message);
     else {
       setNotifSuccess("Notification pushed!");
@@ -366,10 +337,7 @@ export default function AdminPage() {
     fetchNotifications();
   }
   async function fetchBroadcasts() {
-    const { data } = await supabase
-      .from("broadcasts")
-      .select("*")
-      .order("created_at", { ascending: false });
+    const { data } = await supabase.from("broadcasts").select("*").order("created_at", { ascending: false });
     if (data) setBroadcasts(data);
   }
   async function handleBroadcast(e) {
@@ -404,10 +372,7 @@ export default function AdminPage() {
     fetchBroadcastReactions();
   }
   async function fetchClients() {
-    const { data } = await supabase
-      .from("clients")
-      .select("*")
-      .order("created_at", { ascending: false });
+    const { data } = await supabase.from("clients").select("*").order("created_at", { ascending: false });
     if (data) setClients(data);
   }
   async function handleSubmit(e) {
@@ -509,9 +474,9 @@ export default function AdminPage() {
       <AdminSidebar
         activeTab={activeTab}
         onTabChange={(id) => {
-          setActiveTab(id)
-          if (id === 'finance' && !finance) fetchFinance()
-          if (id === 'time') fetchTimeData(timeFilter)
+          setActiveTab(id);
+          if (id === "finance" && !finance) fetchFinance();
+          if (id === "time") fetchTimeData(timeFilter);
         }}
         clientCount={clients.length}
         newInquiriesCount={newInquiriesCount}
@@ -539,12 +504,8 @@ export default function AdminPage() {
             flexShrink: 0,
           }}
         >
-          <div style={{ fontSize: 14, fontWeight: 600, color: "#0F0F10" }}>
-            {meta.title}
-          </div>
-          {meta.sub && (
-            <div style={{ fontSize: 13, color: "#6B7280" }}>{meta.sub}</div>
-          )}
+          <div style={{ fontSize: 14, fontWeight: 600, color: "#0F0F10" }}>{meta.title}</div>
+          {meta.sub && <div style={{ fontSize: 13, color: "#6B7280" }}>{meta.sub}</div>}
           <div style={{ flex: 1 }} />
           <button
             onClick={async () => {
@@ -695,9 +656,7 @@ export default function AdminPage() {
                         >
                           {c.company_name}
                         </div>
-                        <div style={{ fontSize: 12, color: "#6B7280" }}>
-                          {c.email}
-                        </div>
+                        <div style={{ fontSize: 12, color: "#6B7280" }}>{c.email}</div>
                       </div>
                       <span
                         style={{
@@ -705,10 +664,7 @@ export default function AdminPage() {
                           fontWeight: 600,
                           padding: "3px 9px",
                           borderRadius: 100,
-                          background:
-                            c.status === "active"
-                              ? "rgba(16,185,129,0.08)"
-                              : "#F5F5F5",
+                          background: c.status === "active" ? "rgba(16,185,129,0.08)" : "#F5F5F5",
                           color: c.status === "active" ? "#059669" : "#9CA3AF",
                           border: `1px solid ${c.status === "active" ? "rgba(16,185,129,0.15)" : "rgba(0,0,0,0.06)"}`,
                         }}
@@ -776,9 +732,7 @@ export default function AdminPage() {
                     >
                       {c.company_name}
                     </div>
-                    <div style={{ fontSize: 12, color: "#6B7280" }}>
-                      {c.email}
-                    </div>
+                    <div style={{ fontSize: 12, color: "#6B7280" }}>{c.email}</div>
                   </div>
                   <span
                     style={{
@@ -786,10 +740,7 @@ export default function AdminPage() {
                       fontWeight: 600,
                       padding: "3px 9px",
                       borderRadius: 100,
-                      background:
-                        c.status === "active"
-                          ? "rgba(16,185,129,0.08)"
-                          : "#F5F5F5",
+                      background: c.status === "active" ? "rgba(16,185,129,0.08)" : "#F5F5F5",
                       color: c.status === "active" ? "#059669" : "#9CA3AF",
                       border: `1px solid ${c.status === "active" ? "rgba(16,185,129,0.15)" : "rgba(0,0,0,0.06)"}`,
                     }}
@@ -824,11 +775,7 @@ export default function AdminPage() {
                   >
                     Create client
                   </div>
-                  <div
-                    style={{ fontSize: 13, color: "#6B7280", marginBottom: 20 }}
-                  >
-                    Create account + configure API integrations
-                  </div>
+                  <div style={{ fontSize: 13, color: "#6B7280", marginBottom: 20 }}>Create account + configure API integrations</div>
                   {success && <div className="ap-success">{success}</div>}
                   <form onSubmit={handleSubmit}>
                     <div
@@ -847,9 +794,7 @@ export default function AdminPage() {
                     <input
                       className="ap-input"
                       value={form.company_name}
-                      onChange={(e) =>
-                        setForm({ ...form, company_name: e.target.value })
-                      }
+                      onChange={(e) => setForm({ ...form, company_name: e.target.value })}
                       required
                       placeholder="Smith Sisters"
                     />
@@ -858,9 +803,7 @@ export default function AdminPage() {
                       className="ap-input"
                       type="email"
                       value={form.email}
-                      onChange={(e) =>
-                        setForm({ ...form, email: e.target.value })
-                      }
+                      onChange={(e) => setForm({ ...form, email: e.target.value })}
                       required
                       placeholder="client@company.com"
                     />
@@ -869,9 +812,7 @@ export default function AdminPage() {
                       className="ap-input"
                       type="password"
                       value={form.password}
-                      onChange={(e) =>
-                        setForm({ ...form, password: e.target.value })
-                      }
+                      onChange={(e) => setForm({ ...form, password: e.target.value })}
                       required
                       placeholder="Min. 6 characters"
                     />
@@ -894,18 +835,14 @@ export default function AdminPage() {
                     <input
                       className="ap-input"
                       value={form.shopify_domain}
-                      onChange={(e) =>
-                        setForm({ ...form, shopify_domain: e.target.value })
-                      }
+                      onChange={(e) => setForm({ ...form, shopify_domain: e.target.value })}
                       placeholder="store.myshopify.com"
                     />
                     <label className="ap-label">Shopify API Key</label>
                     <input
                       className="ap-input"
                       value={form.shopify_api_key}
-                      onChange={(e) =>
-                        setForm({ ...form, shopify_api_key: e.target.value })
-                      }
+                      onChange={(e) => setForm({ ...form, shopify_api_key: e.target.value })}
                       placeholder="API key"
                     />
 
@@ -922,11 +859,7 @@ export default function AdminPage() {
                       }
                       placeholder="Parcel Panel API key"
                     />
-                    <button
-                      className="ap-btn-primary"
-                      type="submit"
-                      disabled={loading}
-                    >
+                    <button className="ap-btn-primary" type="submit" disabled={loading}>
                       {loading ? "Creating…" : "Create Client"}
                     </button>
                   </form>
@@ -986,9 +919,7 @@ export default function AdminPage() {
                       >
                         {c.company_name}
                       </div>
-                      <div style={{ fontSize: 12, color: "#6B7280" }}>
-                        {c.email}
-                      </div>
+                      <div style={{ fontSize: 12, color: "#6B7280" }}>{c.email}</div>
                     </div>
                     <span
                       style={{
@@ -996,10 +927,7 @@ export default function AdminPage() {
                         fontWeight: 600,
                         padding: "3px 9px",
                         borderRadius: 100,
-                        background:
-                          c.status === "active"
-                            ? "rgba(16,185,129,0.08)"
-                            : "#F5F5F5",
+                        background: c.status === "active" ? "rgba(16,185,129,0.08)" : "#F5F5F5",
                         color: c.status === "active" ? "#059669" : "#9CA3AF",
                         border: `1px solid ${c.status === "active" ? "rgba(16,185,129,0.15)" : "rgba(0,0,0,0.06)"}`,
                       }}
@@ -1017,9 +945,7 @@ export default function AdminPage() {
             (() => {
               const getYtId = (url) => {
                 if (!url) return null;
-                const m = url.match(
-                  /(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/,
-                );
+                const m = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
                 return m ? m[1] : null;
               };
               const TYPE_CFG = {
@@ -1113,15 +1039,8 @@ export default function AdminPage() {
                 },
               };
               const cfg = TYPE_CFG[broadcastForm.type] || TYPE_CFG.update;
-              const ytId =
-                broadcastForm.type === "video"
-                  ? getYtId(broadcastForm.youtube_url)
-                  : null;
-              const canSubmit =
-                broadcastForm.title.trim() &&
-                (broadcastForm.type === "video"
-                  ? true
-                  : broadcastForm.body.trim());
+              const ytId = broadcastForm.type === "video" ? getYtId(broadcastForm.youtube_url) : null;
+              const canSubmit = broadcastForm.title.trim() && (broadcastForm.type === "video" ? true : broadcastForm.body.trim());
 
               return (
                 <div
@@ -1154,9 +1073,7 @@ export default function AdminPage() {
                       >
                         Published to the Value Feed of all clients
                       </div>
-                      {broadcastSuccess && (
-                        <div className="ap-success">{broadcastSuccess}</div>
-                      )}
+                      {broadcastSuccess && <div className="ap-success">{broadcastSuccess}</div>}
                       <form onSubmit={handleBroadcast}>
                         <label className="ap-label">Content type</label>
                         <div
@@ -1172,26 +1089,15 @@ export default function AdminPage() {
                               key={id}
                               type="button"
                               className="ap-type-pill"
-                              onClick={() =>
-                                setBroadcastForm({ ...broadcastForm, type: id })
-                              }
+                              onClick={() => setBroadcastForm({ ...broadcastForm, type: id })}
                               style={{
-                                borderColor:
-                                  broadcastForm.type === id
-                                    ? t.border
-                                    : "rgba(0,0,0,0.10)",
-                                background:
-                                  broadcastForm.type === id
-                                    ? t.bg
-                                    : "transparent",
+                                borderColor: broadcastForm.type === id ? t.border : "rgba(0,0,0,0.10)",
+                                background: broadcastForm.type === id ? t.bg : "transparent",
                               }}
                             >
                               <span
                                 style={{
-                                  color:
-                                    broadcastForm.type === id
-                                      ? t.accent
-                                      : "#9CA3AF",
+                                  color: broadcastForm.type === id ? t.accent : "#9CA3AF",
                                 }}
                               >
                                 {t.icon}
@@ -1201,10 +1107,7 @@ export default function AdminPage() {
                                   style={{
                                     fontSize: 12.5,
                                     fontWeight: 600,
-                                    color:
-                                      broadcastForm.type === id
-                                        ? "#0F0F10"
-                                        : "#6B7280",
+                                    color: broadcastForm.type === id ? "#0F0F10" : "#6B7280",
                                   }}
                                 >
                                   {t.label}
@@ -1244,14 +1147,7 @@ export default function AdminPage() {
                             marginBottom: 16,
                           }}
                         >
-                          {[
-                            "Media Buying",
-                            "Creative Strategy",
-                            "Supply Chain",
-                            "Customer Service",
-                            "Email Marketing",
-                            "Analytics",
-                          ].map((t) => (
+                          {["Media Buying", "Creative Strategy", "Supply Chain", "Customer Service", "Email Marketing", "Analytics"].map((t) => (
                             <button
                               key={t}
                               type="button"
@@ -1321,18 +1217,10 @@ export default function AdminPage() {
                             })
                           }
                           required
-                          placeholder={
-                            broadcastForm.type === "tip"
-                              ? "Your tip in one sentence…"
-                              : "Post title…"
-                          }
+                          placeholder={broadcastForm.type === "tip" ? "Your tip in one sentence…" : "Post title…"}
                         />
 
-                        <label className="ap-label">
-                          {broadcastForm.type === "video"
-                            ? "Description"
-                            : "Content"}
-                        </label>
+                        <label className="ap-label">{broadcastForm.type === "video" ? "Description" : "Content"}</label>
                         <textarea
                           className="ap-textarea"
                           value={broadcastForm.body}
@@ -1346,14 +1234,8 @@ export default function AdminPage() {
                           placeholder="Write your content here…"
                         />
 
-                        <button
-                          className="ap-btn-primary"
-                          type="submit"
-                          disabled={broadcastLoading || !canSubmit}
-                        >
-                          {broadcastLoading
-                            ? "Publishing…"
-                            : `Publish ${cfg.label}`}
+                        <button className="ap-btn-primary" type="submit" disabled={broadcastLoading || !canSubmit}>
+                          {broadcastLoading ? "Publishing…" : `Publish ${cfg.label}`}
                         </button>
                       </form>
                     </div>
@@ -1385,15 +1267,9 @@ export default function AdminPage() {
                     )}
                     {broadcasts.map((b) => {
                       const tc = TYPE_CFG[b.type] || TYPE_CFG.update;
-                      const bYtId =
-                        b.type === "video" ? getYtId(b.youtube_url) : null;
-                      const tu = broadcastReactions.filter(
-                        (r) =>
-                          r.broadcast_id === b.id && r.emoji === "thumbs_up",
-                      ).length;
-                      const fi = broadcastReactions.filter(
-                        (r) => r.broadcast_id === b.id && r.emoji === "fire",
-                      ).length;
+                      const bYtId = b.type === "video" ? getYtId(b.youtube_url) : null;
+                      const tu = broadcastReactions.filter((r) => r.broadcast_id === b.id && r.emoji === "thumbs_up").length;
+                      const fi = broadcastReactions.filter((r) => r.broadcast_id === b.id && r.emoji === "fire").length;
                       return (
                         <div
                           key={b.id}
@@ -1481,10 +1357,7 @@ export default function AdminPage() {
                                 </span>
                               )}
                               <span style={{ fontSize: 10, color: "#9CA3AF" }}>
-                                {new Date(b.created_at).toLocaleDateString(
-                                  "en-US",
-                                  { month: "short", day: "numeric" },
-                                )}
+                                {new Date(b.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
                               </span>
                             </div>
                             <div
@@ -1585,12 +1458,8 @@ export default function AdminPage() {
                               borderRadius: 5,
                               flexShrink: 0,
                             }}
-                            onMouseEnter={(e) =>
-                              (e.currentTarget.style.color = "#EF4444")
-                            }
-                            onMouseLeave={(e) =>
-                              (e.currentTarget.style.color = "#9CA3AF")
-                            }
+                            onMouseEnter={(e) => (e.currentTarget.style.color = "#EF4444")}
+                            onMouseLeave={(e) => (e.currentTarget.style.color = "#9CA3AF")}
                           >
                             <svg
                               width="13"
@@ -1638,14 +1507,8 @@ export default function AdminPage() {
                   >
                     Push notification
                   </div>
-                  <div
-                    style={{ fontSize: 13, color: "#6B7280", marginBottom: 20 }}
-                  >
-                    Appears in the notification icon of all clients
-                  </div>
-                  {notifSuccess && (
-                    <div className="ap-success">{notifSuccess}</div>
-                  )}
+                  <div style={{ fontSize: 13, color: "#6B7280", marginBottom: 20 }}>Appears in the notification icon of all clients</div>
+                  {notifSuccess && <div className="ap-success">{notifSuccess}</div>}
                   <form onSubmit={handleNotification}>
                     <label className="ap-label">Type</label>
                     <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
@@ -1657,17 +1520,12 @@ export default function AdminPage() {
                         <button
                           key={t}
                           type="button"
-                          onClick={() =>
-                            setNotifForm({ ...notifForm, type: t })
-                          }
+                          onClick={() => setNotifForm({ ...notifForm, type: t })}
                           style={{
                             padding: "6px 12px",
                             borderRadius: 7,
                             border: `1px solid ${notifForm.type === t ? "rgba(139,92,246,0.4)" : "rgba(0,0,0,0.10)"}`,
-                            background:
-                              notifForm.type === t
-                                ? "rgba(139,92,246,0.06)"
-                                : "transparent",
+                            background: notifForm.type === t ? "rgba(139,92,246,0.06)" : "transparent",
                             fontSize: 12,
                             fontWeight: 600,
                             cursor: "pointer",
@@ -1683,9 +1541,7 @@ export default function AdminPage() {
                     <input
                       className="ap-input"
                       value={notifForm.title}
-                      onChange={(e) =>
-                        setNotifForm({ ...notifForm, title: e.target.value })
-                      }
+                      onChange={(e) => setNotifForm({ ...notifForm, title: e.target.value })}
                       required
                       placeholder="Notification subject"
                     />
@@ -1693,17 +1549,11 @@ export default function AdminPage() {
                     <textarea
                       className="ap-textarea"
                       value={notifForm.body}
-                      onChange={(e) =>
-                        setNotifForm({ ...notifForm, body: e.target.value })
-                      }
+                      onChange={(e) => setNotifForm({ ...notifForm, body: e.target.value })}
                       required
                       placeholder="Write your notification here…"
                     />
-                    <button
-                      className="ap-btn-primary"
-                      type="submit"
-                      disabled={notifLoading}
-                    >
+                    <button className="ap-btn-primary" type="submit" disabled={notifLoading}>
                       {notifLoading ? "Pushing…" : "Push notification"}
                     </button>
                   </form>
@@ -1758,26 +1608,14 @@ export default function AdminPage() {
                             fontWeight: 600,
                             padding: "2px 8px",
                             borderRadius: 100,
-                            background:
-                              n.type === "alert"
-                                ? "rgba(239,68,68,0.08)"
-                                : n.type === "warning"
-                                  ? "rgba(245,158,11,0.08)"
-                                  : "rgba(59,130,246,0.08)",
-                            color:
-                              n.type === "alert"
-                                ? "#DC2626"
-                                : n.type === "warning"
-                                  ? "#D97706"
-                                  : "#2563EB",
+                            background: n.type === "alert" ? "rgba(239,68,68,0.08)" : n.type === "warning" ? "rgba(245,158,11,0.08)" : "rgba(59,130,246,0.08)",
+                            color: n.type === "alert" ? "#DC2626" : n.type === "warning" ? "#D97706" : "#2563EB",
                             border: `1px solid ${n.type === "alert" ? "rgba(239,68,68,0.2)" : n.type === "warning" ? "rgba(245,158,11,0.2)" : "rgba(59,130,246,0.2)"}`,
                           }}
                         >
                           {n.type}
                         </span>
-                        <span style={{ fontSize: 11, color: "#9CA3AF" }}>
-                          {new Date(n.created_at).toLocaleDateString("en-US")}
-                        </span>
+                        <span style={{ fontSize: 11, color: "#9CA3AF" }}>{new Date(n.created_at).toLocaleDateString("en-US")}</span>
                       </div>
                       <div
                         style={{
@@ -1809,12 +1647,8 @@ export default function AdminPage() {
                         fontSize: 14,
                         flexShrink: 0,
                       }}
-                      onMouseEnter={(e) =>
-                        (e.currentTarget.style.color = "#EF4444")
-                      }
-                      onMouseLeave={(e) =>
-                        (e.currentTarget.style.color = "#9CA3AF")
-                      }
+                      onMouseEnter={(e) => (e.currentTarget.style.color = "#EF4444")}
+                      onMouseLeave={(e) => (e.currentTarget.style.color = "#9CA3AF")}
                     >
                       ✕
                     </button>
@@ -1857,11 +1691,7 @@ export default function AdminPage() {
                       { label: "New", value: unread.length, color: "#EF4444" },
                       { label: "Read", value: read.length, color: "#0F0F10" },
                     ].map(({ label, value, color }) => (
-                      <div
-                        key={label}
-                        className="ap-metric-card"
-                        style={{ padding: "16px 18px" }}
-                      >
+                      <div key={label} className="ap-metric-card" style={{ padding: "16px 18px" }}>
                         <div
                           style={{
                             fontSize: 24,
@@ -1983,14 +1813,11 @@ export default function AdminPage() {
                                     marginLeft: "auto",
                                   }}
                                 >
-                                  {new Date(inq.created_at).toLocaleDateString(
-                                    "en-US",
-                                    {
-                                      month: "short",
-                                      day: "numeric",
-                                      year: "numeric",
-                                    },
-                                  )}
+                                  {new Date(inq.created_at).toLocaleDateString("en-US", {
+                                    month: "short",
+                                    day: "numeric",
+                                    year: "numeric",
+                                  })}
                                 </span>
                               </div>
                               <div
@@ -2109,23 +1936,15 @@ export default function AdminPage() {
                   >
                     Add team member
                   </div>
-                  <div
-                    style={{ fontSize: 13, color: "#6B7280", marginBottom: 20 }}
-                  >
-                    Account created instantly — no email confirmation required
-                  </div>
-                  {teamSuccess && (
-                    <div className="ap-success">{teamSuccess}</div>
-                  )}
+                  <div style={{ fontSize: 13, color: "#6B7280", marginBottom: 20 }}>Account created instantly — no email confirmation required</div>
+                  {teamSuccess && <div className="ap-success">{teamSuccess}</div>}
                   {teamError && <div className="ap-error">{teamError}</div>}
                   <form onSubmit={handleCreateTeamMember}>
                     <label className="ap-label">Name</label>
                     <input
                       className="ap-input"
                       value={teamForm.name}
-                      onChange={(e) =>
-                        setTeamForm({ ...teamForm, name: e.target.value })
-                      }
+                      onChange={(e) => setTeamForm({ ...teamForm, name: e.target.value })}
                       required
                       placeholder="Jan de Vries"
                     />
@@ -2134,9 +1953,7 @@ export default function AdminPage() {
                       className="ap-input"
                       type="email"
                       value={teamForm.email}
-                      onChange={(e) =>
-                        setTeamForm({ ...teamForm, email: e.target.value })
-                      }
+                      onChange={(e) => setTeamForm({ ...teamForm, email: e.target.value })}
                       required
                       placeholder="jan@lynqagency.com"
                     />
@@ -2145,9 +1962,7 @@ export default function AdminPage() {
                       className="ap-input"
                       type="password"
                       value={teamForm.password}
-                      onChange={(e) =>
-                        setTeamForm({ ...teamForm, password: e.target.value })
-                      }
+                      onChange={(e) => setTeamForm({ ...teamForm, password: e.target.value })}
                       required
                       placeholder="Min. 6 characters"
                     />
@@ -2162,10 +1977,7 @@ export default function AdminPage() {
                             padding: "7px 16px",
                             borderRadius: 7,
                             border: `1px solid ${teamForm.role === r ? "rgba(139,92,246,0.4)" : "rgba(0,0,0,0.10)"}`,
-                            background:
-                              teamForm.role === r
-                                ? "rgba(139,92,246,0.06)"
-                                : "transparent",
+                            background: teamForm.role === r ? "rgba(139,92,246,0.06)" : "transparent",
                             fontSize: 12.5,
                             fontWeight: 600,
                             cursor: "pointer",
@@ -2177,11 +1989,7 @@ export default function AdminPage() {
                         </button>
                       ))}
                     </div>
-                    <button
-                      className="ap-btn-primary"
-                      type="submit"
-                      disabled={teamLoading}
-                    >
+                    <button className="ap-btn-primary" type="submit" disabled={teamLoading}>
                       {teamLoading ? "Creating…" : "Create account"}
                     </button>
                   </form>
@@ -2239,18 +2047,10 @@ export default function AdminPage() {
                       >
                         {m.name}
                       </div>
-                      <div style={{ fontSize: 12, color: "#6B7280" }}>
-                        {m.email}
-                      </div>
-                      <div
-                        style={{ fontSize: 11, color: "#9CA3AF", marginTop: 1 }}
-                      >
-                        {new Date(m.created_at).toLocaleDateString("en-US")}
-                      </div>
+                      <div style={{ fontSize: 12, color: "#6B7280" }}>{m.email}</div>
+                      <div style={{ fontSize: 11, color: "#9CA3AF", marginTop: 1 }}>{new Date(m.created_at).toLocaleDateString("en-US")}</div>
                     </div>
-                    <div
-                      style={{ display: "flex", alignItems: "center", gap: 10 }}
-                    >
+                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                       <span
                         style={{
                           fontSize: 11,
@@ -2273,12 +2073,8 @@ export default function AdminPage() {
                           cursor: "pointer",
                           fontSize: 14,
                         }}
-                        onMouseEnter={(e) =>
-                          (e.currentTarget.style.color = "#EF4444")
-                        }
-                        onMouseLeave={(e) =>
-                          (e.currentTarget.style.color = "#9CA3AF")
-                        }
+                        onMouseEnter={(e) => (e.currentTarget.style.color = "#EF4444")}
+                        onMouseLeave={(e) => (e.currentTarget.style.color = "#9CA3AF")}
                       >
                         ✕
                       </button>
@@ -2316,39 +2112,20 @@ export default function AdminPage() {
                   : "—";
               const workedSec = (s) => {
                 if (!s.clocked_out_at) return s.active_seconds || 0;
-                const total = Math.round(
-                  (new Date(s.clocked_out_at) - new Date(s.clocked_in_at)) /
-                    1000,
-                );
+                const total = Math.round((new Date(s.clocked_out_at) - new Date(s.clocked_in_at)) / 1000);
                 return Math.max(0, total - (s.paused_seconds || 0));
               };
               const sessions = timeData?.sessions || [];
               const members = timeData?.members || [];
               const activeCount = timeData?.active_count ?? 0;
               const pausedCount = timeData?.paused_count ?? 0;
-              const totalSec = sessions.reduce(
-                (sum, s) => sum + workedSec(s),
-                0,
-              );
+              const totalSec = sessions.reduce((sum, s) => sum + workedSec(s), 0);
               const exportCSV = () => {
-                const rows = [
-                  [
-                    "Name",
-                    "Date",
-                    "Clock In",
-                    "Clock Out",
-                    "Worked (h)",
-                    "Break (h)",
-                    "Report",
-                  ],
-                ];
+                const rows = [["Name", "Date", "Clock In", "Clock Out", "Worked (h)", "Break (h)", "Report"]];
                 sessions.forEach((s) => {
                   const wSec = workedSec(s),
                     worked = s.clocked_out_at ? (wSec / 3600).toFixed(2) : "",
-                    brk =
-                      s.paused_seconds > 0
-                        ? (s.paused_seconds / 3600).toFixed(2)
-                        : "0";
+                    brk = s.paused_seconds > 0 ? (s.paused_seconds / 3600).toFixed(2) : "0";
                   rows.push([
                     s.member_name || "",
                     fmtD(s.clocked_in_at),
@@ -2359,13 +2136,9 @@ export default function AdminPage() {
                     (s.eod_report || "").replace(/"/g, '""'),
                   ]);
                 });
-                const csv = rows
-                  .map((r) => r.map((c) => `"${c}"`).join(","))
-                  .join("\n");
+                const csv = rows.map((r) => r.map((c) => `"${c}"`).join(",")).join("\n");
                 const a = document.createElement("a");
-                a.href = URL.createObjectURL(
-                  new Blob([csv], { type: "text/csv" }),
-                );
+                a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
                 a.download = `time-tracking-${timeFilter}-${new Date().toISOString().slice(0, 10)}.csv`;
                 a.click();
               };
@@ -2531,8 +2304,7 @@ export default function AdminPage() {
                           <div
                             style={{
                               display: "grid",
-                              gridTemplateColumns:
-                                "repeat(auto-fill,minmax(200px,1fr))",
+                              gridTemplateColumns: "repeat(auto-fill,minmax(200px,1fr))",
                               gap: 10,
                               marginBottom: 18,
                             }}
@@ -2561,11 +2333,7 @@ export default function AdminPage() {
                                       height: 7,
                                       borderRadius: "50%",
                                       flexShrink: 0,
-                                      background: m.is_paused
-                                        ? "#F59E0B"
-                                        : m.is_active
-                                          ? "#10B981"
-                                          : "#D1D5DB",
+                                      background: m.is_paused ? "#F59E0B" : m.is_active ? "#10B981" : "#D1D5DB",
                                     }}
                                   />
                                   <div
@@ -2601,8 +2369,7 @@ export default function AdminPage() {
                                         fontWeight: 600,
                                         color: "#059669",
                                         background: "rgba(16,185,129,0.08)",
-                                        border:
-                                          "1px solid rgba(16,185,129,0.2)",
+                                        border: "1px solid rgba(16,185,129,0.2)",
                                         borderRadius: 4,
                                         padding: "1px 6px",
                                       }}
@@ -2634,11 +2401,7 @@ export default function AdminPage() {
                                     {m.sessions_count} session
                                     {m.sessions_count !== 1 ? "s" : ""}
                                   </span>
-                                  {m.paused_seconds > 0 && (
-                                    <span style={{ color: "#D97706" }}>
-                                      Break {fmtSec(m.paused_seconds)}
-                                    </span>
-                                  )}
+                                  {m.paused_seconds > 0 && <span style={{ color: "#D97706" }}>Break {fmtSec(m.paused_seconds)}</span>}
                                 </div>
                               </div>
                             ))}
@@ -2655,22 +2418,13 @@ export default function AdminPage() {
                         <div
                           style={{
                             display: "grid",
-                            gridTemplateColumns:
-                              "140px 110px 65px 65px 70px 60px 1fr",
+                            gridTemplateColumns: "140px 110px 65px 65px 70px 60px 1fr",
                             gap: 10,
                             padding: "10px 0",
                             borderBottom: "1px solid rgba(0,0,0,0.06)",
                           }}
                         >
-                          {[
-                            "Employee",
-                            "Date",
-                            "In",
-                            "Out",
-                            "Worked",
-                            "Break",
-                            "Report",
-                          ].map((h) => (
+                          {["Employee", "Date", "In", "Out", "Worked", "Break", "Report"].map((h) => (
                             <div
                               key={h}
                               style={{
@@ -2687,23 +2441,14 @@ export default function AdminPage() {
                         </div>
                         {sessions.map((s2) => {
                           const wSec = workedSec(s2),
-                            hrs =
-                              wSec > 0
-                                ? (wSec / 3600).toFixed(2)
-                                : s2.clocked_out_at
-                                  ? "0.00"
-                                  : "—",
-                            brk =
-                              s2.paused_seconds > 0
-                                ? fmtSec(s2.paused_seconds)
-                                : "—";
+                            hrs = wSec > 0 ? (wSec / 3600).toFixed(2) : s2.clocked_out_at ? "0.00" : "—",
+                            brk = s2.paused_seconds > 0 ? fmtSec(s2.paused_seconds) : "—";
                           return (
                             <div
                               key={s2.id}
                               style={{
                                 display: "grid",
-                                gridTemplateColumns:
-                                  "140px 110px 65px 65px 70px 60px 1fr",
+                                gridTemplateColumns: "140px 110px 65px 65px 70px 60px 1fr",
                                 gap: 10,
                                 alignItems: "start",
                                 padding: "10px 0",
@@ -2730,9 +2475,7 @@ export default function AdminPage() {
                                   {s2.member_email}
                                 </div>
                               </div>
-                              <div style={{ fontSize: 12.5, color: "#6B7280" }}>
-                                {fmtD(s2.clocked_in_at)}
-                              </div>
+                              <div style={{ fontSize: 12.5, color: "#6B7280" }}>{fmtD(s2.clocked_in_at)}</div>
                               <div
                                 style={{
                                   fontSize: 12.5,
@@ -2745,15 +2488,11 @@ export default function AdminPage() {
                               <div
                                 style={{
                                   fontSize: 12.5,
-                                  color: s2.clocked_out_at
-                                    ? "#6B7280"
-                                    : "#059669",
+                                  color: s2.clocked_out_at ? "#6B7280" : "#059669",
                                   fontVariantNumeric: "tabular-nums",
                                 }}
                               >
-                                {s2.clocked_out_at
-                                  ? fmtT(s2.clocked_out_at)
-                                  : "Active"}
+                                {s2.clocked_out_at ? fmtT(s2.clocked_out_at) : "Active"}
                               </div>
                               <div
                                 style={{
@@ -2767,10 +2506,7 @@ export default function AdminPage() {
                               <div
                                 style={{
                                   fontSize: 12.5,
-                                  color:
-                                    s2.paused_seconds > 0
-                                      ? "#D97706"
-                                      : "#9CA3AF",
+                                  color: s2.paused_seconds > 0 ? "#D97706" : "#9CA3AF",
                                 }}
                               >
                                 {brk}
@@ -2821,11 +2557,7 @@ export default function AdminPage() {
               )}
               {!financeLoading && !finance && (
                 <div style={{ textAlign: "center", padding: "32px" }}>
-                  <button
-                    className="ap-btn-primary"
-                    style={{ width: "auto", padding: "10px 24px" }}
-                    onClick={fetchFinance}
-                  >
+                  <button className="ap-btn-primary" style={{ width: "auto", padding: "10px 24px" }} onClick={fetchFinance}>
                     Load finance data
                   </button>
                 </div>
@@ -2898,9 +2630,7 @@ export default function AdminPage() {
                             >
                               {label}
                             </div>
-                            <div style={{ fontSize: 11, color: "#9CA3AF" }}>
-                              {sub}
-                            </div>
+                            <div style={{ fontSize: 11, color: "#9CA3AF" }}>{sub}</div>
                           </div>
                         ))}
                       </div>
@@ -2943,16 +2673,13 @@ export default function AdminPage() {
                                 label: "Last 7 days",
                                 cost: ai.week.cost,
                                 calls: ai.week.calls,
-                                tokens:
-                                  ai.week.input_tokens + ai.week.output_tokens,
+                                tokens: ai.week.input_tokens + ai.week.output_tokens,
                               },
                               {
                                 label: "This month",
                                 cost: ai.month.cost,
                                 calls: ai.month.calls,
-                                tokens:
-                                  ai.month.input_tokens +
-                                  ai.month.output_tokens,
+                                tokens: ai.month.input_tokens + ai.month.output_tokens,
                               },
                               { label: "Last month", cost: ai.lastMonth.cost },
                             ].map(({ label, cost, calls, tokens }) => (
@@ -3033,11 +2760,7 @@ export default function AdminPage() {
                             >
                               This month
                             </div>
-                            {Object.entries(ai.byRoute).length === 0 && (
-                              <div style={{ fontSize: 13, color: "#9CA3AF" }}>
-                                No AI calls logged.
-                              </div>
-                            )}
+                            {Object.entries(ai.byRoute).length === 0 && <div style={{ fontSize: 13, color: "#9CA3AF" }}>No AI calls logged.</div>}
                             {Object.entries(ai.byRoute)
                               .sort(([, a], [, b]) => b.cost - a.cost)
                               .map(([route, v]) => (
@@ -3082,9 +2805,7 @@ export default function AdminPage() {
                                       marginBottom: 6,
                                     }}
                                   >
-                                    {fmtN(v.calls)} calls ·{" "}
-                                    {fmtN(v.input_tokens)} in ·{" "}
-                                    {fmtN(v.output_tokens)} out
+                                    {fmtN(v.calls)} calls · {fmtN(v.input_tokens)} in · {fmtN(v.output_tokens)} out
                                   </div>
                                   <div
                                     style={{
@@ -3229,91 +2950,74 @@ export default function AdminPage() {
                             >
                               This month
                             </div>
-                            {ai.daily.length === 0 && (
-                              <div style={{ fontSize: 13, color: "#9CA3AF" }}>
-                                No data yet.
-                              </div>
-                            )}
+                            {ai.daily.length === 0 && <div style={{ fontSize: 13, color: "#9CA3AF" }}>No data yet.</div>}
                             <div style={{ maxHeight: 260, overflowY: "auto" }}>
-                              {[...ai.daily]
-                                .reverse()
-                                .map(({ date, cost, calls }) => {
-                                  const maxCost = Math.max(
-                                      ...ai.daily.map((d) => d.cost),
-                                      0.0001,
-                                    ),
-                                    pct = Math.min(100, (cost / maxCost) * 100);
-                                  return (
+                              {[...ai.daily].reverse().map(({ date, cost, calls }) => {
+                                const maxCost = Math.max(...ai.daily.map((d) => d.cost), 0.0001),
+                                  pct = Math.min(100, (cost / maxCost) * 100);
+                                return (
+                                  <div
+                                    key={date}
+                                    style={{
+                                      padding: "7px 0",
+                                      borderBottom: "1px solid rgba(0,0,0,0.04)",
+                                    }}
+                                  >
                                     <div
-                                      key={date}
                                       style={{
-                                        padding: "7px 0",
-                                        borderBottom:
-                                          "1px solid rgba(0,0,0,0.04)",
+                                        display: "flex",
+                                        justifyContent: "space-between",
+                                        marginBottom: 4,
+                                      }}
+                                    >
+                                      <span
+                                        style={{
+                                          fontSize: 12,
+                                          color: "#9CA3AF",
+                                        }}
+                                      >
+                                        {new Date(date).toLocaleDateString("en-US", { day: "numeric", month: "short" })}
+                                      </span>
+                                      <span
+                                        style={{
+                                          fontSize: 12,
+                                          fontWeight: 600,
+                                          color: "#7C3AED",
+                                        }}
+                                      >
+                                        {fmt(cost)}{" "}
+                                        <span
+                                          style={{
+                                            color: "#9CA3AF",
+                                            fontWeight: 400,
+                                          }}
+                                        >
+                                          · {calls}x
+                                        </span>
+                                      </span>
+                                    </div>
+                                    <div
+                                      style={{
+                                        height: 3,
+                                        background: "#F0F0F0",
+                                        borderRadius: 2,
                                       }}
                                     >
                                       <div
                                         style={{
-                                          display: "flex",
-                                          justifyContent: "space-between",
-                                          marginBottom: 4,
-                                        }}
-                                      >
-                                        <span
-                                          style={{
-                                            fontSize: 12,
-                                            color: "#9CA3AF",
-                                          }}
-                                        >
-                                          {new Date(date).toLocaleDateString(
-                                            "en-US",
-                                            { day: "numeric", month: "short" },
-                                          )}
-                                        </span>
-                                        <span
-                                          style={{
-                                            fontSize: 12,
-                                            fontWeight: 600,
-                                            color: "#7C3AED",
-                                          }}
-                                        >
-                                          {fmt(cost)}{" "}
-                                          <span
-                                            style={{
-                                              color: "#9CA3AF",
-                                              fontWeight: 400,
-                                            }}
-                                          >
-                                            · {calls}x
-                                          </span>
-                                        </span>
-                                      </div>
-                                      <div
-                                        style={{
                                           height: 3,
-                                          background: "#F0F0F0",
+                                          background: "#7C3AED",
                                           borderRadius: 2,
+                                          width: `${pct}%`,
+                                          opacity: 0.6,
                                         }}
-                                      >
-                                        <div
-                                          style={{
-                                            height: 3,
-                                            background: "#7C3AED",
-                                            borderRadius: 2,
-                                            width: `${pct}%`,
-                                            opacity: 0.6,
-                                          }}
-                                        />
-                                      </div>
+                                      />
                                     </div>
-                                  );
-                                })}
+                                  </div>
+                                );
+                              })}
                             </div>
-                            <button
-                              className="ap-btn-primary"
-                              style={{ marginTop: 16 }}
-                              onClick={fetchFinance}
-                            >
+                            <button className="ap-btn-primary" style={{ marginTop: 16 }} onClick={fetchFinance}>
                               Refresh
                             </button>
                           </div>
@@ -3367,18 +3071,14 @@ export default function AdminPage() {
                       >
                         Appears in the Value Feed of all clients
                       </div>
-                      {mcSuccess && (
-                        <div className="ap-success">{mcSuccess}</div>
-                      )}
+                      {mcSuccess && <div className="ap-success">{mcSuccess}</div>}
                       {mcError && <div className="ap-error">{mcError}</div>}
                       <form onSubmit={handleCreateMasterclass}>
                         <label className="ap-label">Title</label>
                         <input
                           className="ap-input"
                           value={mcForm.title}
-                          onChange={(e) =>
-                            setMcForm({ ...mcForm, title: e.target.value })
-                          }
+                          onChange={(e) => setMcForm({ ...mcForm, title: e.target.value })}
                           required
                           placeholder="How to scale Meta Ads…"
                         />
@@ -3398,9 +3098,7 @@ export default function AdminPage() {
                         <input
                           className="ap-input"
                           value={mcForm.speaker}
-                          onChange={(e) =>
-                            setMcForm({ ...mcForm, speaker: e.target.value })
-                          }
+                          onChange={(e) => setMcForm({ ...mcForm, speaker: e.target.value })}
                           placeholder="Name · Role or company"
                         />
                         <label className="ap-label">
@@ -3457,16 +3155,10 @@ export default function AdminPage() {
                         <input
                           className="ap-input"
                           value={mcForm.zoom_url}
-                          onChange={(e) =>
-                            setMcForm({ ...mcForm, zoom_url: e.target.value })
-                          }
+                          onChange={(e) => setMcForm({ ...mcForm, zoom_url: e.target.value })}
                           placeholder="https://zoom.us/j/…"
                         />
-                        <button
-                          className="ap-btn-primary"
-                          type="submit"
-                          disabled={mcLoading}
-                        >
+                        <button className="ap-btn-primary" type="submit" disabled={mcLoading}>
                           {mcLoading ? "Scheduling…" : "Schedule masterclass"}
                         </button>
                       </form>
@@ -3513,9 +3205,7 @@ export default function AdminPage() {
                               flexShrink: 0,
                               width: 40,
                               textAlign: "center",
-                              background: past
-                                ? "#F5F5F5"
-                                : "rgba(139,92,246,0.08)",
+                              background: past ? "#F5F5F5" : "rgba(139,92,246,0.08)",
                               border: `1px solid ${past ? "rgba(0,0,0,0.07)" : "rgba(139,92,246,0.2)"}`,
                               borderRadius: 9,
                               padding: "7px 4px",
@@ -3535,18 +3225,13 @@ export default function AdminPage() {
                               style={{
                                 fontSize: 9,
                                 fontWeight: 700,
-                                color: past
-                                  ? "#9CA3AF"
-                                  : "rgba(124,58,237,0.7)",
+                                color: past ? "#9CA3AF" : "rgba(124,58,237,0.7)",
                                 textTransform: "uppercase",
                                 letterSpacing: ".05em",
                                 marginTop: 2,
                               }}
                             >
-                              {new Date(mc.scheduled_at).toLocaleDateString(
-                                "en-US",
-                                { month: "short" },
-                              )}
+                              {new Date(mc.scheduled_at).toLocaleDateString("en-US", { month: "short" })}
                             </div>
                           </div>
                           <div style={{ flex: 1, minWidth: 0 }}>
@@ -3569,9 +3254,7 @@ export default function AdminPage() {
                               >
                                 {past ? "Past" : "Upcoming"}
                               </span>
-                              <span style={{ fontSize: 11, color: "#9CA3AF" }}>
-                                {fmtDT(mc.scheduled_at)}
-                              </span>
+                              <span style={{ fontSize: 11, color: "#9CA3AF" }}>{fmtDT(mc.scheduled_at)}</span>
                             </div>
                             <div
                               style={{
@@ -3584,11 +3267,7 @@ export default function AdminPage() {
                             >
                               {mc.title}
                             </div>
-                            {mc.speaker && (
-                              <div style={{ fontSize: 11.5, color: "#6B7280" }}>
-                                with {mc.speaker}
-                              </div>
-                            )}
+                            {mc.speaker && <div style={{ fontSize: 11.5, color: "#6B7280" }}>with {mc.speaker}</div>}
                             {editingZoom?.id === mc.id ? (
                               <div
                                 style={{
@@ -3608,10 +3287,8 @@ export default function AdminPage() {
                                   }
                                   placeholder="https://zoom.us/j/…"
                                   onKeyDown={(e) => {
-                                    if (e.key === "Enter")
-                                      updateZoomUrl(mc.id, editingZoom.url);
-                                    if (e.key === "Escape")
-                                      setEditingZoom(null);
+                                    if (e.key === "Enter") updateZoomUrl(mc.id, editingZoom.url);
+                                    if (e.key === "Escape") setEditingZoom(null);
                                   }}
                                   autoFocus
                                   style={{
@@ -3627,9 +3304,7 @@ export default function AdminPage() {
                                   }}
                                 />
                                 <button
-                                  onClick={() =>
-                                    updateZoomUrl(mc.id, editingZoom.url)
-                                  }
+                                  onClick={() => updateZoomUrl(mc.id, editingZoom.url)}
                                   style={{
                                     padding: "5px 10px",
                                     background: "#7C3AED",
@@ -3670,17 +3345,9 @@ export default function AdminPage() {
                                 }}
                               >
                                 {mc.zoom_url ? (
-                                  <span
-                                    style={{ fontSize: 11, color: "#059669" }}
-                                  >
-                                    ✓ Zoom link set
-                                  </span>
+                                  <span style={{ fontSize: 11, color: "#059669" }}>✓ Zoom link set</span>
                                 ) : (
-                                  <span
-                                    style={{ fontSize: 11, color: "#9CA3AF" }}
-                                  >
-                                    No Zoom link yet
-                                  </span>
+                                  <span style={{ fontSize: 11, color: "#9CA3AF" }}>No Zoom link yet</span>
                                 )}
                                 <button
                                   onClick={() =>
@@ -3698,12 +3365,8 @@ export default function AdminPage() {
                                     padding: "2px 4px",
                                     borderRadius: 4,
                                   }}
-                                  onMouseEnter={(e) =>
-                                    (e.currentTarget.style.color = "#7C3AED")
-                                  }
-                                  onMouseLeave={(e) =>
-                                    (e.currentTarget.style.color = "#9CA3AF")
-                                  }
+                                  onMouseEnter={(e) => (e.currentTarget.style.color = "#7C3AED")}
+                                  onMouseLeave={(e) => (e.currentTarget.style.color = "#9CA3AF")}
                                 >
                                   Edit
                                 </button>
@@ -3721,12 +3384,8 @@ export default function AdminPage() {
                               borderRadius: 5,
                               flexShrink: 0,
                             }}
-                            onMouseEnter={(e) =>
-                              (e.currentTarget.style.color = "#EF4444")
-                            }
-                            onMouseLeave={(e) =>
-                              (e.currentTarget.style.color = "#9CA3AF")
-                            }
+                            onMouseEnter={(e) => (e.currentTarget.style.color = "#EF4444")}
+                            onMouseLeave={(e) => (e.currentTarget.style.color = "#9CA3AF")}
                           >
                             <svg
                               width="13"

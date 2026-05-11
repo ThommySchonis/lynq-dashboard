@@ -3,7 +3,9 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { supabase } from '../../lib/supabase'
-import AuthShell, { FloatField } from '../components/AuthShell'
+import { AuthShell } from '@/components/layout/auth-shell'
+// TODO: FloatField was part of old AuthShell — needs migration
+const FloatField = ({ label, ...props }) => <input placeholder={label} {...props} />
 
 export default function ForgotPasswordPage() {
   const [email,   setEmail]   = useState('')

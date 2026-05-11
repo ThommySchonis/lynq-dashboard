@@ -2,9 +2,9 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { supabase } from '../../lib/supabase'
-import Sidebar from '../components/Sidebar'
-import WelcomeBanner from '../components/WelcomeBanner'
-import TrialEndingBanner from '../components/TrialEndingBanner'
+import { Sidebar } from '@/components/layout/sidebar'
+import { WelcomeBanner } from '@/components/shared/welcome-banner'
+import { TrialEndingBanner } from '@/components/shared/trial-ending-banner'
 import { isTrialEndingSoon } from '../../lib/trialStatus'
 
 function getGreeting() {

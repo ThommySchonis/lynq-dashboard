@@ -88,17 +88,28 @@ export interface ShopifyCustomer {
   orders: ShopifyOrder[]
 }
 
+export interface MacroTagObject {
+  id?: string
+  name: string
+  color: string
+}
+
 export interface Macro {
   id: string
   name: string
   content?: string
   body?: string
   tags: string[]
+  tagObjects?: MacroTagObject[]
   language: string
   variables?: string[]
   usageCount?: number
+  usage_count?: number
   updatedAt?: string
+  updated_at?: string
+  last_updated_relative?: string | null
   archived: boolean
+  archived_at?: string | null
   created_at?: string
 }
 

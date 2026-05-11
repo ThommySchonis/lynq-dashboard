@@ -22,8 +22,8 @@ import { useAuthStore } from "../../stores/auth";
 import { useAIStore } from "../../stores/ai";
 import { useMacrosStore } from "../../stores/macros";
 import { useInboxUI } from "../../stores/inbox-ui";
-import EmptyState from "../components/EmptyState";
-import Sidebar from "../components/Sidebar";
+import { EmptyState } from "@/components/shared/empty-state";
+import { Sidebar } from "@/components/layout/sidebar";
 
 // ─── Main page ────────────────────────────────────────────────
 function InboxPage() {

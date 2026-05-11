@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
-import EmptyState from '../components/EmptyState'
+import { EmptyState } from '@/components/shared/empty-state'
 
 // Performance metrics page. Per ONBOARDING_SPEC v1.1 §4.2: empty state
 // die de gebruiker naar de email-connect flow stuurt. De echte metrics

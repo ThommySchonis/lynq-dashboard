@@ -4,9 +4,9 @@ import { AuthHydrator } from '@/components/providers/auth-hydrator'
 import { ThemeSync } from '@/components/providers/theme-sync'
 import { QueryProvider } from '@/components/providers/query-provider'
 import { Toaster } from '@/components/ui/sonner'
-import PageTransition from './components/PageTransition'
-import BlockedStateGuard from './components/BlockedStateGuard'
-import SentryUserSync from './components/SentryUserSync'
+import { PageTransition } from '@/components/shared/page-transition'
+import { BlockedStateGuard } from '@/components/shared/blocked-state-guard'
+import { SentryUserSync } from '@/components/providers/sentry-user-sync'
 
 export const metadata: Metadata = {
   title: 'Lynq — Customer Support Dashboard',

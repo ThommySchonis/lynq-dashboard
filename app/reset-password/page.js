@@ -3,7 +3,9 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { supabase } from '../../lib/supabase'
-import AuthShell, { PasswordField } from '../components/AuthShell'
+import { AuthShell } from '@/components/layout/auth-shell'
+// TODO: PasswordField was part of old AuthShell — needs migration
+const PasswordField = ({ label, ...props }) => <input type="password" placeholder={label} {...props} />
 
 const PASSWORD_MIN = 8
 

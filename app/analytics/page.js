@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { supabase } from '../../lib/supabase'
-import Sidebar from '../components/Sidebar'
-import EmptyState from '../components/EmptyState'
+import { Sidebar } from '@/components/layout/sidebar'
+import { EmptyState } from '@/components/shared/empty-state'
 import { DEMO_REFUNDS, DEMO_KPIS, DEMO_TREND, DEMO_INSIGHTS } from '../../lib/demoData'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────

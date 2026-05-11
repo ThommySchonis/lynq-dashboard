@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { supabase } from '../../lib/supabase'
-import Sidebar from '../components/Sidebar'
+import { Sidebar } from '@/components/layout/sidebar'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const SIDEBAR_W  = 208   // main app sidebar

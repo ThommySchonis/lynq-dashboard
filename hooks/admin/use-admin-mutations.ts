@@ -1,0 +1,217 @@
+'use client'
+
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { supabase } from '@/lib/supabase'
+import { useAuthStore } from '@/stores/auth'
+import { adminKeys } from './use-admin-data'
+import type { CreateClientForm, BroadcastForm, NotificationForm, TeamMemberForm, MasterclassForm } from '@/types/admin'
+
+function useToken() {
+  return useAuthStore((s) => s.session?.access_token ?? '')
+}
+
+export function useCreateClient() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (form: CreateClientForm) => {
+      const { error: authError } = await supabase.auth.signUp({
+        email: form.email,
+        password: form.password,
+      })
+      if (authError) throw authError
+
+      const { error: dbError } = await supabase.from('clients').insert({
+        company_name: form.company_name,
+        email: form.email,
+        shopify_domain: form.shopify_domain || null,
+        shopify_api_key: form.shopify_api_key || null,
+        parcel_panel_api_key: form.parcel_panel_api_key || null,
+        status: 'active',
+      })
+      if (dbError) throw dbError
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: adminKeys.clients() })
+    },
+  })
+}
+
+export function useCreateBroadcast() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (form: BroadcastForm) => {
+      const { error } = await supabase.from('broadcasts').insert({
+        title: form.title,
+        body: form.body || null,
+        type: form.type,
+        youtube_url: form.youtube_url?.trim() || null,
+        topic: form.topic?.trim() || null,
+      })
+      if (error) throw error
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: adminKeys.broadcasts() })
+      qc.invalidateQueries({ queryKey: adminKeys.broadcastReactions() })
+    },
+  })
+}
+
+export function useDeleteBroadcast() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('broadcasts').delete().eq('id', id)
+      if (error) throw error
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: adminKeys.broadcasts() })
+      qc.invalidateQueries({ queryKey: adminKeys.broadcastReactions() })
+    },
+  })
+}
+
+export function useTogglePin() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ id, isPinned }: { id: string; isPinned: boolean }) => {
+      if (!isPinned) {
+        await supabase.from('broadcasts').update({ is_pinned: false }).eq('is_pinned', true)
+      }
+      const { error } = await supabase.from('broadcasts').update({ is_pinned: !isPinned }).eq('id', id)
+      if (error) throw error
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: adminKeys.broadcasts() })
+    },
+  })
+}
+
+export function useCreateNotification() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (form: NotificationForm) => {
+      const { error } = await supabase.from('notifications').insert({
+        title: form.title,
+        body: form.body,
+        type: form.type,
+      })
+      if (error) throw error
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: adminKeys.notifications() })
+    },
+  })
+}
+
+export function useDeleteNotification() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('notifications').delete().eq('id', id)
+      if (error) throw error
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: adminKeys.notifications() })
+    },
+  })
+}
+
+export function useMarkInquiryRead() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('service_inquiries').update({ status: 'read' }).eq('id', id)
+      if (error) throw error
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: adminKeys.inquiries() })
+    },
+  })
+}
+
+export function useCreateTeamMember() {
+  const token = useToken()
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (form: TeamMemberForm) => {
+      const res = await fetch('/api/admin/create-user', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(form),
+      })
+      const d = await res.json()
+      if (!res.ok) throw new Error(d.error || 'Something went wrong')
+      return d
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: adminKeys.team() })
+    },
+  })
+}
+
+export function useDeleteTeamMember() {
+  const token = useToken()
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (id: string) => {
+      await fetch(`/api/admin/delete-user?id=${id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      })
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: adminKeys.team() })
+    },
+  })
+}
+
+export function useCreateMasterclass() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (form: MasterclassForm) => {
+      const { error } = await supabase.from('masterclasses').insert({
+        title: form.title,
+        speaker: form.speaker?.trim() || null,
+        description: form.description?.trim() || null,
+        scheduled_at: new Date(form.scheduled_at).toISOString(),
+        zoom_url: form.zoom_url?.trim() || null,
+      })
+      if (error) throw error
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: adminKeys.masterclasses() })
+    },
+  })
+}
+
+export function useDeleteMasterclass() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('masterclasses').delete().eq('id', id)
+      if (error) throw error
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: adminKeys.masterclasses() })
+    },
+  })
+}
+
+export function useUpdateZoomUrl() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ id, url }: { id: string; url: string }) => {
+      const { error } = await supabase
+        .from('masterclasses')
+        .update({ zoom_url: url?.trim() || null })
+        .eq('id', id)
+      if (error) throw error
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: adminKeys.masterclasses() })
+    },
+  })
+}

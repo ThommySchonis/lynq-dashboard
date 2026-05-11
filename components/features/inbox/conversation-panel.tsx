@@ -1,0 +1,475 @@
+'use client'
+
+import type { Thread } from '@/types/inbox'
+import { MacroPanel } from '@/components/features/inbox/macro-panel'
+import { TicketActionBar } from '@/components/features/inbox/ticket-action-bar'
+import { MessageList } from '@/components/features/inbox/message-list'
+import { NotesSection } from '@/components/features/inbox/notes-section'
+import { AttachmentBar } from '@/components/features/inbox/attachment-bar'
+import { ComposerToolbar } from '@/components/features/inbox/composer-toolbar'
+import { Button } from '@/components/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { STATUS } from '@/lib/inbox-constants'
+import {
+  extractEmail,
+  extractName,
+  plainTextToSafeHtml,
+  sanitizeHtml,
+} from '@/lib/inbox-utils'
+import {
+  ChevronDown,
+  Globe,
+  Mail,
+  Radio,
+  X,
+  Zap,
+} from 'lucide-react'
+import { useRef, useCallback, useEffect, useMemo } from 'react'
+import { toast as sonnerToast } from 'sonner'
+import { useInboxUI } from '@/stores/inbox-ui'
+import { useAuthStore } from '@/stores/auth'
+import { useAIStore } from '@/stores/ai'
+import { useMacrosStore } from '@/stores/macros'
+import { useTicketMetaStore } from '@/stores/ticket-meta'
+import { useConversations, useConversation } from '@/hooks/inbox/use-inbox-data'
+import {
+  useSendReply,
+  useUpdateStatus,
+  useTranslateMessage,
+} from '@/hooks/inbox/use-inbox-mutations'
+import { useComposerActions } from '@/hooks/inbox/use-composer-actions'
+
+export function ConversationPanel() {
+  // Refs (local to this component)
+  const composerRef = useRef<HTMLDivElement>(null)
+  const imgUploadRef = useRef<HTMLInputElement>(null)
+  const fileUploadRef = useRef<HTMLInputElement>(null)
+  const msgEndRef = useRef<HTMLDivElement>(null)
+
+  // Auth
+  const session = useAuthStore((s) => s.session)
+  const token = session?.access_token ?? ''
+
+  // Zustand UI state
+  const selectedThreadId = useInboxUI((s) => s.selectedThreadId)
+  const composerTab = useInboxUI((s) => s.composerTab)
+  const reply = useInboxUI((s) => s.reply)
+  const showEmoji = useInboxUI((s) => s.showEmoji)
+  const showMacros = useInboxUI((s) => s.showMacros)
+  const activeFolder = useInboxUI((s) => s.activeFolder)
+  const search = useInboxUI((s) => s.search)
+  const autoTranslate = useAIStore((s) => s.autoTranslate)
+  const customerLang = useAIStore((s) => s.customerLang)
+  const setComposerTab = useInboxUI((s) => s.setComposerTab)
+  const setReply = useInboxUI((s) => s.setReply)
+  const setShowEmoji = useInboxUI((s) => s.setShowEmoji)
+  const setAttachments = useInboxUI((s) => s.setAttachments)
+  const setShowMacros = useInboxUI((s) => s.setShowMacros)
+  const setShowMacroManager = useInboxUI((s) => s.setShowMacroManager)
+  const setSending = useInboxUI((s) => s.setSending)
+  const setSelectedThreadId = useInboxUI((s) => s.setSelectedThreadId)
+
+  // AI state
+  const aiLoading = useAIStore((s) => s.aiLoading)
+  const setAutoTranslate = useAIStore((s) => s.setAutoTranslate)
+  const generateReply = useAIStore((s) => s.generateReply)
+
+  // Macros
+  const macros = useMacrosStore((s) => s.macros)
+  const aiMacros = useMacrosStore((s) => s.aiMacros)
+  const macroFavs = useMacrosStore((s) => s.favs)
+  const toggleMacroFav = useMacrosStore((s) => s.toggleFav)
+  const deleteMacro = useMacrosStore((s) => s.deleteMacro)
+
+  // Ticket meta
+  const getTicketMeta = useTicketMetaStore((s) => s.getMeta)
+  const addTag = useTicketMetaStore((s) => s.addTag)
+  const removeTag = useTicketMetaStore((s) => s.removeTag)
+  const updateMeta = useTicketMetaStore((s) => s.updateMeta)
+
+  // TanStack data
+  const { data: threads = [] } = useConversations(activeFolder, search)
+  const { data: conversationData } = useConversation(selectedThreadId)
+  const messages = useMemo(() => conversationData?.messages || [], [conversationData?.messages])
+
+  const selectedThread = useMemo(
+    () => threads.find((t: Thread) => t.id === selectedThreadId) || null,
+    [threads, selectedThreadId],
+  )
+
+  // Mutations
+  const sendReplyMutation = useSendReply()
+  const updateStatusMutation = useUpdateStatus()
+  const translateMutation = useTranslateMessage()
+
+  // Composer actions
+  const { formatDoc, insertLink, handleImageUpload, handleFileAttach, insertEmoji } = useComposerActions(
+    composerRef,
+    setReply,
+    setAttachments,
+    (msg, type = 'success') => {
+      type === 'success' ? sonnerToast.success(msg) : sonnerToast.error(msg)
+    },
+  )
+
+  // Scroll to bottom on new messages
+  useEffect(() => {
+    msgEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [messages])
+
+  // Status helpers
+  const getStatus = useCallback(
+    (id: string) => {
+      const thread = threads.find((t: Thread) => t.id === id)
+      return thread?.status || 'open'
+    },
+    [threads],
+  )
+
+  async function saveStatus(id: string, s: string) {
+    await updateStatusMutation.mutateAsync({ threadId: id, status: s })
+  }
+
+  function addTicketTag(id: string) {
+    const tag = prompt('Add tag:')
+    if (!tag?.trim()) return
+    addTag(id, tag.trim())
+  }
+
+  function updateTicketField(id: string, key: string, label: string) {
+    const value = prompt(`${label}:`)
+    if (value === null) return
+    updateMeta(id, { [key]: value.trim() })
+  }
+
+  // Sorted threads for send & resolve navigation
+  const sortedFiltered = useMemo(() => threads, [threads])
+
+  // Send reply
+  async function handleSend() {
+    const textContent = composerRef.current?.textContent || reply
+    if (!textContent.trim() || !selectedThreadId) return false
+    setSending(true)
+    let bodyHtml = sanitizeHtml(composerRef.current?.innerHTML || reply)
+    let bodyText = textContent
+    // Auto-translate outgoing message to customer's language
+    if (autoTranslate && customerLang && customerLang.code !== 'en') {
+      try {
+        const td = await translateMutation.mutateAsync({
+          text: textContent,
+          targetLang: customerLang.name,
+        })
+        if (td.translated) {
+          bodyHtml = plainTextToSafeHtml(td.translated)
+          bodyText = td.translated
+        }
+      } catch {}
+    }
+    const data = await sendReplyMutation.mutateAsync({
+      threadId: selectedThreadId,
+      bodyHtml,
+      bodyText,
+    })
+    if (data.success || data.messageId || data.id) {
+      sonnerToast.success('Message sent!')
+      if (composerRef.current) composerRef.current.innerHTML = ''
+      setReply('')
+      setAttachments([])
+      setSending(false)
+      return true
+    }
+    sonnerToast.error(data.error || 'Failed to send')
+    setSending(false)
+    return false
+  }
+
+  async function handleSendResolve() {
+    if (!selectedThreadId) return
+    const currentId = selectedThreadId
+    const currentIdx = sortedFiltered.findIndex((t: Thread) => t.id === currentId)
+    const nextThread = sortedFiltered.find((_t: Thread, i: number) => i !== currentIdx)
+    const ok = await handleSend()
+    if (ok) {
+      await saveStatus(currentId, 'resolved')
+      sonnerToast.success('Resolved & closed')
+      if (nextThread) {
+        setSelectedThreadId(nextThread.id)
+        useInboxUI.getState().resetForNewThread()
+      } else setSelectedThreadId(null)
+    }
+  }
+
+  // AI reply
+  async function handleAiReply() {
+    if (!messages.length || !selectedThreadId) return
+    const replyText = await generateReply(selectedThread, messages, token)
+    if (replyText) {
+      if (composerRef.current) {
+        composerRef.current.innerHTML = plainTextToSafeHtml(replyText)
+        setReply(composerRef.current.textContent)
+      } else setReply(replyText)
+    } else sonnerToast.error('AI reply failed')
+  }
+
+  if (!selectedThread) {
+    return (
+      <div className="flex-1 flex flex-col overflow-hidden min-w-0 relative z-[1]">
+        <div className="flex-1 flex flex-col items-center justify-center gap-3 text-(--text-3)">
+          <div className="opacity-40">
+            <Mail size={20} />
+          </div>
+          <div className="text-[13px]">Select a thread to read</div>
+          <div className="text-[11px] text-(--text-3)">j / k navigate · r reply</div>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex-1 flex flex-col overflow-hidden min-w-0 relative z-[1]">
+      {/* Ticket header */}
+      <div className="py-3.5 px-[22px] border-b border-border shrink-0 bg-(--bg-surface)">
+        <div className="flex items-center gap-3.5">
+          <div className="flex-1 min-w-0">
+            <div className="text-sm font-bold text-(--text-1) overflow-hidden text-ellipsis whitespace-nowrap mb-0.5 tracking-[-0.01em]">
+              {selectedThread.subject}
+            </div>
+            <div className="text-[11.5px] text-(--text-3)">
+              {extractName(selectedThread.from)} · {messages.length} message
+              {messages.length !== 1 ? 's' : ''}
+            </div>
+          </div>
+          <div className="flex gap-1.5 items-center shrink-0">
+            {/* Status dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                render={
+                  <button
+                    className="flex items-center gap-1.5 px-[11px] py-[5px] rounded-[20px] cursor-pointer text-xs font-semibold font-inherit transition-all duration-150"
+                    style={{
+                      background: STATUS[getStatus(selectedThread.id) as keyof typeof STATUS]?.bg,
+                      border: `1px solid ${STATUS[getStatus(selectedThread.id) as keyof typeof STATUS]?.border}`,
+                      color: STATUS[getStatus(selectedThread.id) as keyof typeof STATUS]?.color,
+                    }}
+                  />
+                }
+              >
+                <span
+                  className="w-1.5 h-1.5 rounded-full shrink-0"
+                  style={{
+                    background: STATUS[getStatus(selectedThread.id) as keyof typeof STATUS]?.color,
+                  }}
+                />
+                {STATUS[getStatus(selectedThread.id) as keyof typeof STATUS]?.label}
+                <ChevronDown size={11} />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {Object.entries(STATUS).map(([k, s]) => (
+                  <DropdownMenuItem key={k} onClick={() => saveStatus(selectedThread.id, k)} style={{ color: s.color }}>
+                    <span className="w-2 h-2 rounded-full shrink-0" style={{ background: s.color }} />
+                    {s.label}
+                    {getStatus(selectedThread.id) === k && <span className="ml-auto text-[10px] text-(--text-3)">&#10003;</span>}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </div>
+        <TicketActionBar
+          meta={getTicketMeta(selectedThread.id)}
+          status={getStatus(selectedThread.id)}
+          onClose={() => saveStatus(selectedThread.id, 'closed')}
+          onAddTag={() => addTicketTag(selectedThread.id)}
+          onRemoveTag={(tag) => removeTag(selectedThread.id, tag)}
+          onFieldChange={(field, labelOrValue) =>
+            field === 'assignee'
+              ? updateMeta(selectedThread.id, { assignee: labelOrValue })
+              : updateTicketField(selectedThread.id, field, labelOrValue)
+          }
+        />
+      </div>
+
+      {/* Messages + Notes + Note input */}
+      <div className="sscroll conv-area flex-1 overflow-y-auto px-6 py-5 bg-[#FAFAFA]">
+        <MessageList msgEndRef={msgEndRef} />
+        <NotesSection />
+      </div>
+
+      {/* Composer */}
+      <div className="border-t border-border shrink-0 bg-(--bg-surface)">
+        {/* Macro panel */}
+        {showMacros && (
+          <MacroPanel
+            macros={macros.filter((m) => !m.archived)}
+            aiMacros={aiMacros}
+            customerName={extractName(selectedThread?.from || '')}
+            favs={macroFavs}
+            onToggleFav={toggleMacroFav}
+            onInsert={(body) => {
+              const safeBody = plainTextToSafeHtml(body)
+              if (composerRef.current) {
+                composerRef.current.innerHTML = safeBody
+                setReply(composerRef.current.textContent)
+              } else setReply(body)
+              setShowMacros(false)
+              setTimeout(() => composerRef.current?.focus(), 10)
+            }}
+            onClose={() => setShowMacros(false)}
+            onManage={() => {
+              setShowMacros(false)
+              setShowMacroManager(true)
+            }}
+            onCreateNew={() => {
+              setShowMacros(false)
+              setShowMacroManager(true)
+            }}
+            onDeleteMacro={deleteMacro}
+          />
+        )}
+
+        {/* Composer */}
+        {!showMacros && (
+          <>
+            {/* Tab strip */}
+            <div className="flex border-b border-border pl-4">
+              {[
+                { id: 'reply', label: 'Reply' },
+                { id: 'note', label: 'Internal note' },
+              ].map((t) => (
+                <button key={t.id} className={`ctab${composerTab === t.id ? ' on' : ''}`} onClick={() => setComposerTab(t.id as 'reply' | 'note')}>
+                  {t.label}
+                </button>
+              ))}
+            </div>
+
+            {/* To: row */}
+            <div className="flex items-center gap-2 px-3.5 py-2 border-b border-border">
+              <span className="flex text-(--text-3) shrink-0">
+                <Mail size={14} />
+              </span>
+              <span className="text-[11.5px] text-(--text-2) font-semibold shrink-0">To:</span>
+              <span className="flex-1 text-xs text-(--text-1) overflow-hidden text-ellipsis whitespace-nowrap">
+                {extractName(selectedThread.from)}
+                {extractEmail(selectedThread.from) ? ` (${extractEmail(selectedThread.from)})` : ''}
+              </span>
+              <ChevronDown size={11} className="text-(--text-3) shrink-0" />
+            </div>
+
+            {/* Macro search row */}
+            <div
+              className="flex items-center gap-2 px-3.5 py-[7px] border-b border-border cursor-pointer transition-[background] duration-[120ms] hover:bg-(--bg-surface-2)"
+              onClick={() => setShowMacros(true)}
+            >
+              <span className="text-(--text-3) flex shrink-0">
+                <Zap size={13} />
+              </span>
+              <span className="flex-1 text-xs text-(--text-3)">Search macros by name, tags or body...</span>
+              {aiMacros.length > 0 && (
+                <span className="text-[9px] font-bold px-1.5 py-px rounded bg-(--bg-surface-2) text-(--text-2) tracking-[.04em] shrink-0 border border-border">
+                  AI
+                </span>
+              )}
+              <ChevronDown size={11} className="text-(--text-3) shrink-0" />
+            </div>
+
+            {/* Hidden file inputs */}
+            <input ref={imgUploadRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
+            <input ref={fileUploadRef} type="file" multiple className="hidden" onChange={handleFileAttach} />
+
+            {/* Flat compose area */}
+            <div className="compose-box bg-(--bg-surface)" onClick={() => showEmoji && setShowEmoji(false)}>
+              {/* Auto-translate banner */}
+              {autoTranslate && customerLang && customerLang.code !== 'en' && (
+                <div className="flex items-center gap-2 px-3.5 py-1.5 bg-(--bg-surface-2) border-b border-(--border) text-[11.5px] text-(--text-2)">
+                  <span className="flex">
+                    <Globe size={13} />
+                  </span>
+                  <span className="flex-1">
+                    Auto-translating to <strong>{customerLang.name}</strong>
+                  </span>
+                  <Button variant="ghost" size="icon" onClick={() => setAutoTranslate(false)} className="text-(--text-3) flex p-0">
+                    <X size={10} />
+                  </Button>
+                </div>
+              )}
+
+              {/* Attachments */}
+              <AttachmentBar />
+
+              {/* Contenteditable composer */}
+              <div
+                ref={composerRef}
+                contentEditable
+                suppressContentEditableWarning
+                data-placeholder={composerTab === 'reply' ? 'Click here to reply, or press r.' : 'Internal note — not visible to customer…'}
+                onInput={(e) => setReply(e.currentTarget.textContent)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) handleSend()
+                }}
+                className={`compose-ta w-full resize-none outline-none bg-transparent px-4 py-3 text-sm text-(--text-1) leading-relaxed min-h-[90px] tracking-[.005em] min-h-[150px] ${composerTab === 'note' ? 'bg-[rgba(251,191,36,0.03)]' : 'bg-transparent'}`}
+              />
+
+              {/* AI generating dots */}
+              {aiLoading && (
+                <div className="pt-1 px-4 pb-0 flex items-center gap-1">
+                  {[0, 0.18, 0.36].map((d) => (
+                    <span
+                      key={d}
+                      className="w-[5px] h-[5px] rounded-full bg-(--text-3) block"
+                      style={{ animation: `glowPulse .9s ease-in-out ${d}s infinite` }}
+                    />
+                  ))}
+                </div>
+              )}
+
+              {/* Suggested macros */}
+              {(aiMacros.length > 0 || macros.length > 0) && (
+                <div className="flex items-center gap-1.5 px-3.5 py-1.5 border-t border-border flex-wrap">
+                  <Radio size={12} className="text-(--text-3) shrink-0" />
+                  <span className="text-[10.5px] text-(--text-2) font-semibold shrink-0">Suggested macros</span>
+                  {(aiMacros.length > 0 ? aiMacros : macros).slice(0, 3).map((m) => {
+                    const firstName = extractName(selectedThread?.from || '').split(' ')[0] || 'there'
+                    const body = (m.body || '').replace(/{{name}}/gi, firstName).replace(/{{firstname}}/gi, firstName)
+                    return (
+                      <button
+                        key={m.id}
+                        className="inline-flex items-center text-xs font-medium px-2.5 py-[3px] rounded-[5px] border border-black/[0.08] bg-(--bg-surface-2) text-(--text-2) cursor-pointer transition-all hover:border-(--border-hover) hover:text-(--text-1)"
+                        onClick={() => {
+                          if (composerRef.current) {
+                            composerRef.current.innerHTML = body.replace(/\n/g, '<br>')
+                            setReply(composerRef.current.textContent)
+                          } else setReply(body)
+                          setTimeout(() => composerRef.current?.focus(), 10)
+                        }}
+                      >
+                        {m.name}
+                      </button>
+                    )
+                  })}
+                </div>
+              )}
+
+              {/* Toolbar + Send buttons */}
+              <ComposerToolbar
+                onFormatDoc={formatDoc}
+                onInsertLink={insertLink}
+                onImageUpload={() => imgUploadRef.current?.click()}
+                onFileAttach={() => fileUploadRef.current?.click()}
+                onInsertEmoji={insertEmoji}
+                onAiReply={handleAiReply}
+                onSend={handleSend}
+                onSendResolve={handleSendResolve}
+                hasMessages={messages.length > 0}
+              />
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  )
+}

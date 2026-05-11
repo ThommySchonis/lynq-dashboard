@@ -16,6 +16,7 @@ export const inboxKeys = {
   counts: () => [...inboxKeys.all, 'counts'] as const,
   accounts: () => [...inboxKeys.all, 'accounts'] as const,
   customer: (query: string) => ['customer', query] as const,
+  macros: () => [...inboxKeys.all, 'macros'] as const,
 }
 
 /** Fetch conversation list by folder + optional search */
@@ -106,6 +107,32 @@ export function useCustomerSearch(query: string) {
   })
 }
 
+/** Fetch macros for compose (with localStorage fallback) */
+export function useComposeMacros() {
+  const token = useToken()
+  return useQuery({
+    queryKey: inboxKeys.macros(),
+    queryFn: async () => {
+      const res = await authFetch('/api/macros', {}, token)
+      const data = await res.json()
+      if (data.macros?.length) return data.macros as Array<{
+        id: string
+        name: string
+        body?: string
+        tags?: string[]
+        archived?: boolean
+      }>
+      // Fallback to localStorage
+      try {
+        const stored = JSON.parse(localStorage.getItem('lynq_macros') || 'null')
+        if (Array.isArray(stored) && stored.length) return stored
+      } catch { /* ignore */ }
+      return []
+    },
+    enabled: !!token,
+  })
+}
+
 /** Check if email account is connected */
 export function useEmailConnected() {
   const token = useToken()
@@ -115,6 +142,29 @@ export function useEmailConnected() {
       const res = await authFetch('/api/inbox/accounts', {}, token)
       const data = await res.json().catch(() => ({}))
       return Boolean(data?.accounts?.length > 0)
+    },
+    enabled: !!token,
+  })
+}
+
+/** Fetch email account details (provider, email) for compose page */
+export function useEmailAccountInfo() {
+  const token = useToken()
+  return useQuery({
+    queryKey: [...inboxKeys.accounts(), 'info'] as const,
+    queryFn: async () => {
+      const res = await authFetch('/api/inbox/accounts', {}, token)
+      const data = await res.json().catch(() => ({ accounts: [] }))
+      const accounts = data?.accounts || []
+      const active = accounts.find((a: Record<string, unknown>) => a.status === 'active')
+      if (active) {
+        return {
+          connected: true,
+          provider: active.provider as string,
+          email: (active.email_address || null) as string | null,
+        }
+      }
+      return { connected: false, provider: null, email: null }
     },
     enabled: !!token,
   })

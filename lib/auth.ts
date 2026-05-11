@@ -1,4 +1,20 @@
 import { supabaseAdmin, getUserFromToken } from './supabaseAdmin'
+import type { NextRequest } from 'next/server'
+import type { User } from '@supabase/supabase-js'
+
+export interface AuthWorkspace {
+  id: string
+  name: string
+  owner_id: string
+}
+
+export interface AuthContext {
+  user: User
+  workspace: AuthWorkspace
+  workspaceId: string
+  role: string
+  memberId: string | null
+}
 
 /**
  * Resolves authenticated user + workspace membership from a Bearer token.
@@ -11,7 +27,7 @@ import { supabaseAdmin, getUserFromToken } from './supabaseAdmin'
  * Returns null on missing/invalid token. Never swallows provisioning errors
  * silently — every failure path logs to console (visible in Vercel logs).
  */
-export async function getAuthContext(request: any) {
+export async function getAuthContext(request: NextRequest): Promise<AuthContext | null> {
   const authHeader = request.headers.get('authorization')
   if (!authHeader) return null
 
@@ -39,7 +55,7 @@ export async function getAuthContext(request: any) {
     console.log('[auth] path A — membership found, workspace:', membership.workspace_id, 'role:', membership.role)
     return {
       user,
-      workspace:   membership.workspaces,
+      workspace:   membership.workspaces as unknown as AuthWorkspace,
       workspaceId: membership.workspace_id,
       role:        membership.role,
       memberId:    membership.id,

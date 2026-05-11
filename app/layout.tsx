@@ -1,5 +1,22 @@
 import type { Metadata } from 'next'
+import { Instrument_Serif, DM_Sans } from 'next/font/google'
 import './globals.css'
+
+const instrumentSerif = Instrument_Serif({
+  subsets:  ['latin'],
+  weight:   '400',
+  display:  'swap',
+  variable: '--font-display',
+  fallback: ['Cormorant Garamond', 'Georgia', 'Cambria', 'serif'],
+})
+
+const dmSans = DM_Sans({
+  subsets:  ['latin'],
+  weight:   ['400', '500', '600'],
+  display:  'swap',
+  variable: '--font-dm-sans',
+  fallback: ['-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'sans-serif'],
+})
 import { AuthHydrator } from '@/components/providers/auth-hydrator'
 import { ThemeSync } from '@/components/providers/theme-sync'
 import { QueryProvider } from '@/components/providers/query-provider'
@@ -17,7 +34,7 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning className={`${instrumentSerif.variable} ${dmSans.variable}`}>
       <head>
         <script
           dangerouslySetInnerHTML={{

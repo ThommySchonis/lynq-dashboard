@@ -3,7 +3,7 @@ import { supabaseAdmin } from './supabaseAdmin'
 // Workspace-scoped credentials lookup. Returns OAuth token from integrations
 // row tied to the workspace, or null. Used by routes that have already
 // resolved getAuthContext().
-export async function getShopifyCredentialsByWorkspace(workspaceId: string) {
+export async function getShopifyCredentialsByWorkspace(workspaceId: string): Promise<{ domain: string; accessToken: string } | null> {
   if (!workspaceId) return null
 
   const { data: integration } = await supabaseAdmin
@@ -25,7 +25,7 @@ export async function getShopifyCredentialsByWorkspace(workspaceId: string) {
 // Legacy single-tenant lookup. Tries integrations table (by user_id) first,
 // falls back to clients table (manual API key by email). Still in use by
 // routes that haven't been migrated yet — do not call from new code.
-export async function getShopifyCredentials(userId: string, userEmail: string) {
+export async function getShopifyCredentials(userId: string, userEmail: string): Promise<{ domain: string; accessToken: string } | null> {
   // 1. Try OAuth token from integrations table
   const { data: integration } = await supabaseAdmin
     .from('integrations')

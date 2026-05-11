@@ -354,6 +354,132 @@
   to   { opacity: 1; transform: translateY(0); }
 }
 
+/* ── Auth page orb drift animations ──────────────────────────────────── */
+@keyframes orbDriftA {
+  0%,100% { transform: translate(0, 0)         scale(1);    }
+  50%     { transform: translate(240px, 180px)  scale(1.12); }
+}
+@keyframes orbDriftB {
+  0%,100% { transform: translate(0, 0)          scale(1);    }
+  50%     { transform: translate(-280px, 140px) scale(1.08); }
+}
+@keyframes orbDriftC {
+  0%,100% { transform: translate(0, 0)           scale(1);    }
+  50%     { transform: translate(-200px, -220px) scale(1.10); }
+}
+
+/* ── Auth page animations ─────────────────────────────────────────────── */
+@keyframes wordReveal {
+  from { opacity: 0; transform: translateY(20px); filter: blur(10px); }
+  to   { opacity: 1; transform: translateY(0); filter: blur(0); }
+}
+
+@keyframes dotBounce {
+  0%, 80%, 100% { transform: translateY(0); }
+  40% { transform: translateY(-6px); }
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+@keyframes pulseGreen {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(34,197,94,0.4); }
+  50%       { box-shadow: 0 0 0 8px rgba(34,197,94,0); }
+}
+@keyframes borderPulse {
+  0%, 100% { opacity: 0.4; }
+  50%       { opacity: 0.9; }
+}
+
+/* ── Home page chat styles ──────────────────────────────────────────────── */
+.chat-scroll::-webkit-scrollbar       { width: 3px; }
+.chat-scroll::-webkit-scrollbar-track { background: transparent; }
+.chat-scroll::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 2px; }
+
+.msg-user {
+  background: rgba(139,92,246,0.08);
+  border: 1px solid rgba(139,92,246,0.15);
+  border-radius: 20px 20px 5px 20px;
+  padding: 13px 17px;
+  max-width: 72%;
+  font-size: 14px; line-height: 1.72; color: #0F0F10;
+  white-space: pre-wrap; word-break: break-word;
+}
+.msg-ai {
+  background: #FFFFFF;
+  border: 1px solid rgba(0,0,0,0.07);
+  border-radius: 20px 20px 20px 5px;
+  padding: 13px 17px;
+  max-width: 72%;
+  font-size: 14px; line-height: 1.72; color: #0F0F10;
+  white-space: pre-wrap; word-break: break-word;
+}
+
+.chat-bottom {
+  background: #FFFFFF;
+  border: 1px solid rgba(0,0,0,0.08);
+  border-radius: 14px;
+  padding: 14px 14px 14px 18px;
+  display: flex; align-items: flex-end; gap: 12px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.chat-bottom:focus-within {
+  border-color: rgba(0,0,0,0.14);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+}
+.chat-bottom textarea {
+  background: transparent; border: none; outline: none;
+  color: #0F0F10; font-size: 14px; line-height: 1.65; resize: none;
+  font-family: inherit; width: 100%; padding: 0;
+  max-height: 180px; overflow-y: auto;
+}
+.chat-bottom textarea::placeholder { color: #9CA3AF; }
+
+@keyframes auroraBlob {
+  0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.3; }
+  33%      { transform: translate(100px, -50px) scale(1.2); opacity: 0.5; }
+  66%      { transform: translate(-80px, 60px) scale(0.9); opacity: 0.35; }
+}
+
+/* ── Auth page stagger fade-in ───────────────────────────────────────── */
+.login-fade { opacity: 0; animation: fadeInUp 700ms cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+.login-d-0  { animation-delay:   0ms; }
+.login-d-2  { animation-delay: 160ms; }
+.login-d-3  { animation-delay: 240ms; }
+.login-d-4  { animation-delay: 320ms; }
+.login-d-5  { animation-delay: 400ms; }
+.login-d-6  { animation-delay: 480ms; }
+.login-d-7  { animation-delay: 560ms; }
+.login-d-8  { animation-delay: 640ms; }
+.login-d-9  { animation-delay: 720ms; }
+.login-d-10 { animation-delay: 800ms; }
+
+@media (prefers-reduced-motion: reduce) {
+  .login-fade { opacity: 1 !important; animation: none !important; transform: none !important; }
+}
+
+/* ── Headline word-by-word reveal ────────────────────────────────────── */
+.word-reveal {
+  display: inline-block;
+  opacity: 0;
+  animation: wordReveal 800ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: opacity, transform, filter;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .word-reveal { opacity: 1 !important; animation: none !important; transform: none !important; filter: none !important; }
+}
+
+/* ── Float field label transition ─────────────────────────────────────── */
+.float-field:not(:placeholder-shown) ~ .float-label,
+.float-field:focus ~ .float-label {
+  transform: translateY(-1.25rem) scale(0.85);
+  color: var(--text-4);
+}
+
 .home-content-item {
   animation: fadeInUp 0.6s ease forwards;
   opacity: 0;
@@ -789,6 +915,7 @@
   @keyframes modalIn  { from{opacity:0;transform:scale(.96) translateY(16px)} to{opacity:1;transform:scale(1) translateY(0)} }
   @keyframes glowPulse { 0%,100%{opacity:.5} 50%{opacity:1} }
   @keyframes urgPulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.4;transform:scale(.8)} }
+  @keyframes checkPop { 0%{transform:scale(0)} 65%{transform:scale(1.18)} 100%{transform:scale(1)} }
 
   /* ── Aurora background animations ── */
   @keyframes auroraA {
@@ -932,4 +1059,58 @@
 
 @media print {
   .cert-no-print { display: none !important; }
+}
+
+/* ── Value Feed ─────────────────────────────────────────────────────────────── */
+
+/* Generic stagger fade (uses fadeUp keyframe defined in @layer base above) */
+.vf-fade {
+  opacity: 0;
+  animation: fadeUp 500ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Filter tabs — Linear underline-style */
+.vf-tab {
+  background: transparent;
+  border: none;
+  padding: 8px 0;
+  font-size: 14px;
+  font-weight: 400;
+  color: #6B6B66;
+  cursor: pointer;
+  font-family: inherit;
+  border-bottom: 1px solid transparent;
+  transition: color 150ms ease, border-color 150ms ease, opacity 150ms ease, font-weight 150ms ease;
+  opacity: 0.5;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.vf-tab:hover  { opacity: 1; color: #0A0612; }
+.vf-tab.active {
+  opacity: 1;
+  color: #0A0612;
+  font-weight: 500;
+  border-bottom-color: #0A0612;
+}
+.vf-tab-count {
+  font-size: 11px;
+  color: #999893;
+  font-variant-numeric: tabular-nums;
+}
+.vf-tab.active .vf-tab-count { color: #6B6B66; }
+
+/* ── Feedback detail panel slide-in ──────────────────────────────────────── */
+@keyframes fbPanel {
+  from { transform: translateX(40px); opacity: 0; }
+  to   { transform: translateX(0);    opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vf-orb { animation: none !important; }
+  .vf-fade {
+    opacity: 1 !important;
+    animation: none !important;
+    transform: none !important;
+  }
 }

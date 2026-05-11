@@ -25,9 +25,10 @@ interface PostCardProps {
   dateText?: string;
   body?: string;
   author?: { initials: string; name: string; scheduledText?: string };
-  zoomUrl?: string;
-  calUrl?: string;
-  youtubeUrl?: string;
+  /** undefined = no CTA section; null = "Zoom link coming soon" placeholder */
+  zoomUrl?: string | null;
+  calUrl?: string | null;
+  youtubeUrl?: string | null;
 }
 
 export default function PostCard({ kind, title, dateText, body, author, zoomUrl, calUrl, youtubeUrl }: PostCardProps) {

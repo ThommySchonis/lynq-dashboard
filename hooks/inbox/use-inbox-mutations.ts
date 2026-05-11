@@ -9,6 +9,46 @@ function useToken() {
   return useAuthStore((s) => s.session?.access_token ?? '')
 }
 
+/** Compose and send a new email */
+export function useComposeEmail() {
+  const token = useToken()
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({
+      to,
+      subject,
+      bodyHtml,
+      bodyText,
+      cc,
+      bcc,
+    }: {
+      to: Array<{ email: string; name: string }>
+      subject: string
+      bodyHtml: string
+      bodyText: string
+      cc?: Array<{ email: string; name: string }>
+      bcc?: Array<{ email: string; name: string }>
+    }) => {
+      const res = await authFetch(
+        '/api/inbox/compose',
+        {
+          method: 'POST',
+          body: JSON.stringify({ to, subject, bodyHtml, bodyText, cc, bcc }),
+        },
+        token,
+      )
+      const data = await res.json()
+      if (!data.success && !data.conversationId) {
+        throw new Error(data.error || 'Failed to send')
+      }
+      return data
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: inboxKeys.all })
+    },
+  })
+}
+
 /** Send reply to a conversation */
 export function useSendReply() {
   const token = useToken()

@@ -14,4 +14,7 @@
  *   tickets, agents, macros, workspace_members, workspace_invites,
  *   ai_settings, integrations, and any future resource table.
  */
-export const scoped = (query: any, workspaceId: string) => query.eq('workspace_id', workspaceId)
+export const scoped = <Q extends { eq: (column: string, value: string) => Q }>(
+  query: Q,
+  workspaceId: string
+): Q => query.eq('workspace_id', workspaceId) as Q

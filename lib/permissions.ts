@@ -4,7 +4,7 @@
 // agent   — reply to tickets, use Shopify integration; no settings
 // observer — view-only; cannot reply or change anything
 
-type Role = string
+import type { Role } from '@/types/database'
 
 export const can = {
   // Member management (owner cannot be removed; self cannot be removed)

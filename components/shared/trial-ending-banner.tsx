@@ -46,8 +46,8 @@ export function TrialEndingBanner({ onDismissed }: TrialEndingBannerProps) {
         </div>
       </div>
       <div className="flex flex-wrap items-center gap-2">
-        <Button asChild size="sm" className="bg-amber-500 text-white hover:bg-amber-600">
-          <Link href="/settings/billing">See plans</Link>
+        <Button size="sm" className="bg-amber-500 text-white hover:bg-amber-600" render={<Link href="/settings/billing" />}>
+          See plans
         </Button>
         <button
           type="button"

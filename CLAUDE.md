@@ -8,7 +8,7 @@ Een client dashboard platform voor Lynq & Flow agency. Elke klant krijgt een eig
 
 ## Tech Stack
 
-- **Frontend:** Next.js 16.2.3 (app router), React 19
+- **Frontend:** Next.js 16.2.3 (app router), React 19, TanStack React Query, Zustand, react-hook-form + zod
 - **Database/Auth:** Supabase (project: cvrzvhnsltjubmfkcxql.supabase.co)
 - **Hosting:** Vercel (lynq-dashboard.vercel.app)
 - **Repo:** github.com/ThommySchonis/lynq-dashboard
@@ -287,8 +287,10 @@ These rules apply to all new features, components, and refactoring work on the f
 
 ### 9. Keep constants in separate files
 
-- Move configuration objects, enums, label maps, and static data to dedicated files in `lib/` (e.g. `lib/inbox-constants.ts`).
-- **Never** define large constant objects inline in component files.
+- Move configuration objects, enums, label maps, and static data to dedicated files in `lib/` following the pattern `lib/<feature>-constants.ts` (e.g. `lib/inbox-constants.ts`, `lib/services-constants.ts`).
+- **Never** define constant arrays, config objects, or label maps inline in page or component files.
+- Helper/utility functions follow the pattern `lib/<feature>-utils.ts` (e.g. `lib/date-utils.ts`, `lib/value-feed-utils.ts`).
+- Shared utilities (used across features) go in `lib/date-utils.ts`, `lib/inbox-utils.ts`, etc. — don't duplicate helpers across feature files.
 - Constants should be importable and reusable across components and hooks.
 
 ### 10. Prefer shadcn components over custom-styled HTML elements
@@ -297,6 +299,52 @@ These rules apply to all new features, components, and refactoring work on the f
 - **Never** create a custom-styled `<button>` or `<input>` when a shadcn equivalent exists.
 - When a shadcn component needs visual customization, use the `className` prop with Tailwind — don't create a wrapper component.
 - Note: shadcn in this project uses **base-ui** (not Radix). Triggers use the `render` prop instead of `asChild`.
+
+### 11. Use react-hook-form + zod for all forms
+
+- All forms with 2+ fields must use `useForm` from `react-hook-form` with `zodResolver` from `@hookform/resolvers/zod`.
+- **Never** use manual `useState` per form field + a custom `validate()` function — that pattern is replaced by react-hook-form.
+- Define a zod schema for each form. Use `.refine()` for cross-field validation (e.g. password confirmation).
+- Use `register()` to bind fields — spread onto `<Input>`, `<FloatField>`, `<PasswordField>` (they accept native input props via `forwardRef`).
+- Use `formState.errors` for field-level error display. Use `setError()` for server-side validation errors.
+- For forms that need `Controller` (e.g. shadcn `Select`, radio groups), use `Controller` from react-hook-form.
+
+### 12. Use auth store for client-side session access
+
+- **Never** call `supabase.auth.getSession()` directly in components for session checks. The `AuthHydrator` in the root layout already populates the Zustand auth store.
+- Use `useAuthStore((s) => s.session)` for session data, `useAuthStore((s) => s.user)` for user data, `useAuthStore((s) => s.isLoading)` for loading state.
+- For redirect-on-no-session: `const session = useAuthStore((s) => s.session); const isLoading = useAuthStore((s) => s.isLoading); useEffect(() => { if (!isLoading && !session) router.replace('/login') }, [isLoading, session, router])`.
+- Exception: `supabase.auth.onAuthStateChange()` is acceptable for listening to auth events (e.g. PASSWORD_RECOVERY in reset-password flow).
+
+### 13. Page files must be thin orchestrators
+
+- Page files (`app/**/page.tsx`) should only contain the page component itself — no sub-components, no constants, no helper functions.
+- **Extract sub-components** to `components/features/<feature>/` — even if they're only used by one page.
+- **Extract constants** (arrays, config objects, label maps, static data) to `lib/<feature>-constants.ts`.
+- **Extract helper functions** (formatters, calculators, URL builders) to `lib/<feature>-utils.ts`.
+- A page file should ideally be under 150 lines. It imports hooks, components, and constants — then renders.
+
+### 14. Load fonts globally — never per-page
+
+- **Never** import fonts via `next/font/google` inside individual page files. This creates duplicate font loading and inconsistent rendering.
+- All fonts must be loaded once in `app/layout.tsx` using the `variable` option (e.g. `Instrument_Serif({ variable: '--font-display' })`), then applied to `<html>` via `className`.
+- Reference fonts in components via Tailwind classes using CSS variables: `font-[family-name:var(--font-display)]` or `[font-family:var(--font-display)]`.
+
+### 15. Hook directory structure
+
+- Each feature's hooks live in `hooks/<feature>/` with this structure:
+  - `use-<feature>-data.ts` — TanStack `useQuery` hooks (reads)
+  - `use-<feature>-mutations.ts` — TanStack `useMutation` hooks (writes)
+  - `index.ts` — barrel re-export (`export * from './use-<feature>-data'` etc.)
+- All hook files must have `'use client'` directive at the top.
+- Define query keys as a `<feature>Keys` object at the top of the data file.
+- Custom hooks that don't fit TanStack (e.g. streaming responses) go in their own file (e.g. `use-ai-chat.ts`).
+
+### 16. SVG and static assets
+
+- Non-icon SVGs (textures, patterns, backgrounds) go in `public/textures/` or `public/icons/` — never inline as JavaScript string constants.
+- Reference via URL: `style={{ backgroundImage: "url('/textures/noise.svg')" }}` or `<img src="/icons/logo.svg" />`.
+- Icon SVGs use Lucide components (see rule 6). Only create `.svg` files for icons not available in Lucide.
 
 ## Volgende fases
 

@@ -47,14 +47,14 @@ export function WelcomeBanner({ firstName, onDismissed }: WelcomeBannerProps) {
         </div>
       </div>
       <div className="flex flex-wrap items-center gap-2">
-        <Button asChild size="sm" className="bg-[#A175FC] text-white hover:bg-[#8B5CF6]">
-          <Link href="/settings/integrations/email">Connect Gmail</Link>
+        <Button size="sm" className="bg-[#A175FC] text-white hover:bg-[#8B5CF6]" render={<Link href="/settings/integrations/email" />}>
+          Connect Gmail
         </Button>
-        <Button asChild size="sm" className="bg-[#A175FC] text-white hover:bg-[#8B5CF6]">
-          <Link href="/settings/integrations/email">Connect Outlook</Link>
+        <Button size="sm" className="bg-[#A175FC] text-white hover:bg-[#8B5CF6]" render={<Link href="/settings/integrations/email" />}>
+          Connect Outlook
         </Button>
-        <Button asChild size="sm" className="bg-[#A175FC] text-white hover:bg-[#8B5CF6]">
-          <Link href="/settings/integrations/shopify">Connect Shopify</Link>
+        <Button size="sm" className="bg-[#A175FC] text-white hover:bg-[#8B5CF6]" render={<Link href="/settings/integrations/shopify" />}>
+          Connect Shopify
         </Button>
         <button
           type="button"

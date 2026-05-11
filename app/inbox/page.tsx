@@ -23,6 +23,7 @@ import { useAIStore } from "../../stores/ai";
 import { useMacrosStore } from "../../stores/macros";
 import { useInboxUI } from "../../stores/inbox-ui";
 import { EmptyState } from "@/components/shared/empty-state";
+import { Mail } from "lucide-react";
 import { Sidebar } from "@/components/layout/sidebar";
 
 // ─── Main page ────────────────────────────────────────────────
@@ -205,16 +206,11 @@ export default function InboxPageWrapper() {
   if (!emailConnected) {
     return (
       <EmptyState
-        icon="📬"
+        icon={Mail}
         title="Connect your email to get started"
         description="Connect your email account to start receiving and managing customer support tickets."
-        actions={[
-          {
-            label: "Connect Email",
-            href: "/settings/integrations/email",
-            variant: "primary",
-          },
-        ]}
+        actionLabel="Connect Email"
+        onAction={() => window.location.href = "/settings/integrations/email"}
       />
     );
   }

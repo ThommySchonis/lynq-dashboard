@@ -1,6 +1,7 @@
 import { supabaseAdmin } from './supabaseAdmin'
 import { getAdapter } from './providers'
 import { checkEmailLimit, incrementEmailCount } from './emailUsage'
+import { recordOutboundMessage } from './services/billing'
 
 // ---------------------------------------------------------------------------
 // Sync
@@ -211,7 +212,24 @@ export async function processInboundMessage(account: any, normalizedMessage: any
     }
   }
 
-  if (conversation) {
+  // 10-day reactivation rule:
+  //   - Match on a 'closed' or 'resolved' conversation
+  //   - Customer's inbound arrived > 10 days after the last outbound
+  //   → don't reopen; create a NEW conversation row instead so the
+  //     next agent reply counts as a fresh billable ticket.
+  //
+  // Within 10 days, or for any other status, fall through to the
+  // existing "reopen + append message" behavior.
+  const REACTIVATION_THRESHOLD_MS = 10 * 24 * 60 * 60 * 1000
+  const shouldReactivateAsNew = (() => {
+    if (!conversation) return false
+    if (!['closed', 'resolved'].includes(conversation.status)) return false
+    if (!conversation.last_outbound_at) return false  // never had an outbound; safe to reopen
+    const lastOut = new Date(conversation.last_outbound_at).getTime()
+    return Date.now() - lastOut > REACTIVATION_THRESHOLD_MS
+  })()
+
+  if (conversation && !shouldReactivateAsNew) {
     await insertMessages(conversation.id, workspaceId, [normalizedMessage])
 
     const updates: any = {
@@ -231,7 +249,11 @@ export async function processInboundMessage(account: any, normalizedMessage: any
       .update(updates)
       .eq('id', conversation.id)
   } else {
-    // New conversation
+    // Two paths land here:
+    //   (a) No prior conversation matched the inbound → fresh conversation.
+    //   (b) Prior conversation matched but it was closed/resolved and the
+    //       10-day reactivation window has lapsed → new conversation row
+    //       linked back via reactivated_from for analytics.
     const shopifyCustomerId = await matchShopifyCustomer(workspaceId, normalizedMessage.from.email)
 
     const { data: newConv } = await supabaseAdmin
@@ -249,6 +271,9 @@ export async function processInboundMessage(account: any, normalizedMessage: any
         last_message_at: normalizedMessage.date || new Date().toISOString(),
         message_count: 1,
         is_unread: true,
+        // Attribution: if we got here via the 10-day reactivation rule,
+        // record which prior conversation this one descends from.
+        reactivated_from: shouldReactivateAsNew ? conversation.id : null,
       })
       .select()
       .single()
@@ -330,7 +355,10 @@ export async function sendReply(workspaceId: string, conversationId: string, use
       is_outbound: true,
     })
 
-  // Reply sent → status becomes pending (awaiting customer response)
+  // Reply sent → status becomes pending (awaiting customer response).
+  // NB: when the inbox UI uses "Send & Close", the client follows up
+  // with a separate updateStatus('resolved') call after handleSend()
+  // resolves. We keep the "pending" default here to preserve that flow.
   await supabaseAdmin
     .from('email_conversations')
     .update({
@@ -340,9 +368,19 @@ export async function sendReply(workspaceId: string, conversationId: string, use
     })
     .eq('id', conversationId)
 
+  // Legacy email-count (workspace-agnostic, user_email-keyed) — kept
+  // alongside the new billing system until Whop migration completes.
   await incrementEmailCount(userEmail)
 
-  return { success: true }
+  // New billing system — workspace_subscriptions / usage_counters path.
+  // Records this outbound against the workspace's ticket counter, with
+  // the spam-aware + count-once-per-conversation rules from PR 3.
+  const billing = await recordOutboundMessage(workspaceId, conversationId)
+
+  return {
+    success: true,
+    billing,
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -421,7 +459,14 @@ export async function sendNewEmail(workspaceId: string, userEmail: string, accou
 
   await incrementEmailCount(userEmail)
 
-  return { success: true, conversationId: conversation?.id }
+  // New billing system — count this conversation against the workspace's
+  // ticket counter (this is a brand-new conversation, so counted_in_usage_period
+  // is null and the helper will count via the 'first_outbound' branch).
+  const billing = conversation?.id
+    ? await recordOutboundMessage(workspaceId, conversation.id)
+    : null
+
+  return { success: true, conversationId: conversation?.id, billing }
 }
 
 // ---------------------------------------------------------------------------

@@ -5,6 +5,7 @@ import { MacroManager } from "@/components/features/inbox/macro-manager";
 import { ConversationPanel } from "@/components/features/inbox/conversation-panel";
 import { CustomerSidebar } from "@/components/features/inbox/customer-sidebar";
 import { ThreadListPanel } from "@/components/features/inbox/thread-list-panel";
+import { InboxUsageBanner } from "@/components/features/inbox/usage-banner";
 import { CancelModal } from "@/components/shared/modals/cancel-modal";
 import { DuplicateModal } from "@/components/shared/modals/duplicate-modal";
 import { EditAddressModal } from "@/components/shared/modals/edit-address-modal";
@@ -159,6 +160,9 @@ function InboxPage() {
           <div className="hidden dark:block absolute inset-0" style={{ backgroundImage: 'linear-gradient(rgba(255,255,255,0.018) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.018) 1px,transparent 1px)', backgroundSize: '72px 72px' }} />
           <div className="absolute inset-0 dark:bg-[radial-gradient(ellipse_115%_105%_at_50%_50%,transparent_32%,rgba(10,5,32,0.42)_70%,rgba(10,5,32,0.82)_100%)]" />
         </div>
+
+      {/* Workspace usage banner — fixed-positioned, conditionally rendered */}
+      <InboxUsageBanner />
 
       <ThreadListPanel />
 

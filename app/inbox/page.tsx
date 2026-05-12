@@ -24,7 +24,6 @@ import { useMacrosStore } from "../../stores/macros";
 import { useInboxUI } from "../../stores/inbox-ui";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Mail } from "lucide-react";
-import { Sidebar } from "@/components/layout/sidebar";
 
 // ─── Main page ────────────────────────────────────────────────
 function InboxPage() {
@@ -104,7 +103,8 @@ function InboxPage() {
     if (selectedThread.snippet) {
       _detectLanguage(selectedThread.snippet, token);
     }
-  }, [selectedThreadId, selectedThread, token, aiMacrosMutation, _setAiMacros, _detectLanguage]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedThreadId, selectedThread, token]);
 
   // ── Sorted threads for keyboard nav ──
   const sortedFiltered = useMemo(() => {
@@ -150,17 +150,15 @@ function InboxPage() {
 
   // ── Render ──
   return (
-    <div className="ir in-bg flex h-screen overflow-hidden relative">
-      {/* ── Aurora background ── */}
-      <div aria-hidden className="absolute inset-0 overflow-hidden pointer-events-none z-0">
-        <div className="in-al1" />
-        <div className="in-al4" />
-        <div className="in-al6" />
-        <div className="in-grid" />
-        <div className="in-vig" />
-      </div>
-
-      <Sidebar />
+      <div className="ir in-bg flex h-screen overflow-hidden relative">
+        {/* ── Aurora background ── */}
+        <div aria-hidden className="absolute inset-0 overflow-hidden pointer-events-none z-0">
+          <div className="in-al1" />
+          <div className="in-al4" />
+          <div className="in-al6" />
+          <div className="in-grid" />
+          <div className="in-vig" />
+        </div>
 
       <ThreadListPanel />
 
@@ -193,7 +191,7 @@ function InboxPage() {
           onToggleFav={_toggleMacroFav}
         />
       )}
-    </div>
+      </div>
   );
 }
 

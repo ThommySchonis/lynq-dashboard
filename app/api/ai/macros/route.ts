@@ -37,9 +37,10 @@ export async function POST(request: NextRequest) {
 
   const macroList = MACROS.map(m => `${m.id}: ${m.name}`).join('\n')
 
-  const { text, usage } = await generateText({
-    model: anthropic('claude-haiku-4-5-20251001'),
-    prompt: `You are a customer service assistant. Based on this customer email, pick the 3 most relevant macro IDs to suggest as quick replies. Return only the 3 IDs, comma-separated, nothing else.
+  try {
+    const { text, usage } = await generateText({
+      model: anthropic('claude-haiku-4-5-20251001'),
+      prompt: `You are a customer service assistant. Based on this customer email, pick the 3 most relevant macro IDs to suggest as quick replies. Return only the 3 IDs, comma-separated, nothing else.
 
 Email subject: ${subject}
 Email content: ${snippet}
@@ -48,30 +49,34 @@ Available macros:
 ${macroList}
 
 Return exactly 3 IDs, comma-separated:`,
-    maxOutputTokens: 60,
-  })
+      maxOutputTokens: 60,
+    })
 
-  await supabaseAdmin.from('ai_usage').insert({
-    route: 'macros',
-    model: 'claude-haiku-4-5-20251001',
-    input_tokens: usage.inputTokens,
-    output_tokens: usage.outputTokens,
-    cost_usd: ((usage.inputTokens ?? 0) * 0.0000008) + ((usage.outputTokens ?? 0) * 0.000004),
-    user_email: user.email,
-  })
+    await supabaseAdmin.from('ai_usage').insert({
+      route: 'macros',
+      model: 'claude-haiku-4-5-20251001',
+      input_tokens: usage.inputTokens,
+      output_tokens: usage.outputTokens,
+      cost_usd: ((usage.inputTokens ?? 0) * 0.0000008) + ((usage.outputTokens ?? 0) * 0.000004),
+      user_email: user.email,
+    })
 
-  const suggested: Macro[] = text.trim()
-    .split(',')
-    .map(id => id.trim())
-    .map(id => MACROS.find(m => m.id === id))
-    .filter((m): m is Macro => m !== undefined)
+    const suggested: Macro[] = text.trim()
+      .split(',')
+      .map(id => id.trim())
+      .map(id => MACROS.find(m => m.id === id))
+      .filter((m): m is Macro => m !== undefined)
 
-  // Fill up to 3 with fallbacks
-  const used = new Set(suggested.map(m => m.id))
-  for (const macro of MACROS) {
-    if (suggested.length >= 3) break
-    if (!used.has(macro.id)) { suggested.push(macro); used.add(macro.id) }
+    // Fill up to 3 with fallbacks
+    const used = new Set(suggested.map(m => m.id))
+    for (const macro of MACROS) {
+      if (suggested.length >= 3) break
+      if (!used.has(macro.id)) { suggested.push(macro); used.add(macro.id) }
+    }
+
+    return NextResponse.json({ macros: suggested.slice(0, 3) })
+  } catch {
+    // Fallback to first 3 macros when AI call fails (e.g. insufficient credits)
+    return NextResponse.json({ macros: MACROS.slice(0, 3) })
   }
-
-  return NextResponse.json({ macros: suggested.slice(0, 3) })
 }

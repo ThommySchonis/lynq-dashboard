@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { Bug, Lightbulb, Loader2, MessageSquare, Send, X } from "lucide-react";
-import { supabase } from "@/lib/supabase";
+import { useAuthStore } from "@/stores/auth";
 import { Button } from "@/components/ui/button";
 
 const TYPES = [
@@ -64,9 +64,7 @@ export function FeedbackModal({ open, onClose, onSuccess, onError }: FeedbackMod
     if (!canSubmit) return;
     setSubmitting(true);
     try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+      const session = useAuthStore.getState().session;
       if (!session) {
         onError?.("You must be logged in to send feedback.");
         setSubmitting(false);

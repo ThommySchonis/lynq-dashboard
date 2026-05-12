@@ -2,7 +2,6 @@
 
 import { useState, useEffect, type FormEvent } from 'react'
 import { toast } from 'sonner'
-import { Sidebar } from '@/components/layout/sidebar'
 import {
   Dialog,
   DialogContent,
@@ -79,10 +78,8 @@ export default function ServicesPage() {
   }
 
   return (
-    <div className="flex min-h-screen bg-[#F9F8FF] text-(--text-1)">
-      <Sidebar />
-
-      <main className="flex-1 overflow-y-auto p-6 bg-[#F9F8FF] relative [scrollbar-width:thin] [&::-webkit-scrollbar]:w-[3px] [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-black/[0.12] [&::-webkit-scrollbar-thumb]:rounded-sm">
+    <>
+      <main className="flex min-h-screen flex-col overflow-y-auto p-6 bg-[#F9F8FF] text-(--text-1) relative [scrollbar-width:thin] [&::-webkit-scrollbar]:w-[3px] [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-black/[0.12] [&::-webkit-scrollbar-thumb]:rounded-sm">
         <div className="max-w-[840px] mx-auto">
 
           {/* Header */}
@@ -187,6 +184,6 @@ export default function ServicesPage() {
           )}
         </DialogContent>
       </Dialog>
-    </div>
+    </>
   )
 }

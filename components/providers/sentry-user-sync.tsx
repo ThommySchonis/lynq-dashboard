@@ -3,17 +3,14 @@
 import { useEffect } from "react";
 import * as Sentry from "@sentry/nextjs";
 import { supabase } from "@/lib/supabase";
+import { useAuthStore } from "@/stores/auth";
 
 export function SentryUserSync() {
   useEffect(() => {
-    let cancelled = false;
-
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (cancelled) return;
-      if (session?.user) {
-        Sentry.setUser({ id: session.user.id, email: session.user.email });
-      }
-    });
+    const user = useAuthStore.getState().session?.user;
+    if (user) {
+      Sentry.setUser({ id: user.id, email: user.email });
+    }
 
     const {
       data: { subscription },
@@ -26,7 +23,6 @@ export function SentryUserSync() {
     });
 
     return () => {
-      cancelled = true;
       subscription.unsubscribe();
     };
   }, []);

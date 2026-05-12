@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { ChevronLeft, Share2, Download, Lock, Award, Loader2 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
-import { Sidebar } from '@/components/layout/sidebar'
+import { useAuthStore } from '@/stores/auth'
 import { EASE } from '@/lib/academy-constants'
 
 interface CertData {
@@ -27,30 +27,35 @@ export function CertificatePage() {
   const [cert, setCert] = useState<CertData | null>(null)
   const [name, setName] = useState('')
 
+  const storeSession = useAuthStore((s) => s.session)
+  const storeUser = useAuthStore((s) => s.user)
+  const isAuthLoading = useAuthStore((s) => s.isLoading)
+
   useEffect(() => {
-    supabase.auth.getSession().then(async ({ data: { session: s } }) => {
-      if (!s) {
-        window.location.href = '/login'
-        return
-      }
+    if (isAuthLoading) return
+    if (!storeSession || !storeUser) {
+      window.location.href = '/login'
+      return
+    }
 
-      const meta = (s.user.user_metadata || {}) as Record<string, string>
-      const raw = (s.user.email || '').split('@')[0]
-      setName(meta.full_name || meta.name || raw.charAt(0).toUpperCase() + raw.slice(1))
+    const meta = (storeUser.user_metadata || {}) as Record<string, string>
+    const raw = (storeUser.email || '').split('@')[0]
+    setName(meta.full_name || meta.name || raw.charAt(0).toUpperCase() + raw.slice(1))
 
+    ;(async () => {
       try {
         const { data } = await supabase
           .from('certificates')
           .select('*')
-          .eq('user_id', s.user.id)
+          .eq('user_id', storeUser.id)
           .single()
         setCert((data as CertData) || null)
       } catch {
         setCert(null)
       }
       setLoading(false)
-    })
-  }, [])
+    })()
+  }, [isAuthLoading, storeSession, storeUser])
 
   function handleDownload() {
     window.print()
@@ -68,22 +73,17 @@ export function CertificatePage() {
 
   if (loading)
     return (
-      <div className="flex h-screen bg-[#F9F9FB]">
-        <Sidebar />
-        <div className="flex flex-1 items-center justify-center">
+        <div className="flex h-screen items-center justify-center bg-[#F9F9FB]">
           <div className="text-center">
             <Loader2 className="mx-auto mb-3 size-9 animate-spin text-violet-500" />
             <div className="text-[13px] text-(--text-4)">Loading...</div>
           </div>
         </div>
-      </div>
     )
 
   if (!cert)
     return (
-      <div className="flex h-screen bg-[#F9F9FB]">
-        <Sidebar />
-        <div className="ac-scroll flex flex-1 items-center justify-center overflow-y-auto px-6 py-10">
+        <div className="ac-scroll flex h-screen items-center justify-center overflow-y-auto bg-[#F9F9FB] px-6 py-10">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -116,13 +116,10 @@ export function CertificatePage() {
             </div>
           </motion.div>
         </div>
-      </div>
     )
 
   return (
-    <div className="flex h-screen bg-[#F9F9FB]">
-      <Sidebar />
-      <div className="ac-scroll flex-1 overflow-y-auto px-6 py-8">
+      <div className="ac-scroll h-screen overflow-y-auto bg-[#F9F9FB] px-6 py-8">
         <div className="mx-auto max-w-[760px]">
           {/* Actions bar */}
           <motion.div
@@ -255,6 +252,5 @@ export function CertificatePage() {
           <div className="h-10" />
         </div>
       </div>
-    </div>
   )
 }

@@ -2,14 +2,14 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/stores/auth'
-import { Sidebar } from '@/components/layout/sidebar'
 import { WelcomeBanner } from '@/components/shared/welcome-banner'
 import { TrialEndingBanner } from '@/components/shared/trial-ending-banner'
 import { isTrialEndingSoon } from '@/lib/trialStatus'
 import { useHomeKpis, useOnboardingStatus, useAiChat } from '@/hooks/home'
 import { Search, ArrowUp, Send } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { SUGGESTIONS } from '@/lib/home-constants'
 import { getGreeting } from '@/lib/home-utils'
 import { ChatMessageBubble } from '@/components/features/home/chat-message-bubble'
@@ -21,6 +21,7 @@ import { ChatMessageBubble } from '@/components/features/home/chat-message-bubbl
 export default function HomePage() {
   const router = useRouter()
   const session = useAuthStore((s) => s.session)
+  const isLoading = useAuthStore((s) => s.isLoading)
   const user = useAuthStore((s) => s.user)
   const [mounted, setMounted] = useState(false)
   const [input, setInput] = useState('')
@@ -45,15 +46,11 @@ export default function HomePage() {
   const { data: onboarding } = useOnboardingStatus()
   const { messages, isStreaming, sendMessage } = useAiChat()
 
-  // Session check
+  useEffect(() => { setMounted(true) }, [])
+
   useEffect(() => {
-    setMounted(true)
-    supabase.auth.getSession().then(({ data: { session: s } }) => {
-      if (!s) {
-        router.push('/login')
-      }
-    })
-  }, [router])
+    if (!isLoading && !session) router.push('/login')
+  }, [isLoading, session, router])
 
   // Auto-scroll on new messages
   useEffect(() => {
@@ -102,10 +99,7 @@ export default function HomePage() {
   if (!mounted) return null
 
   return (
-    <div className="flex min-h-screen bg-[#F5F4FF] font-[Switzer,-apple-system,BlinkMacSystemFont,sans-serif] antialiased">
-      <Sidebar />
-
-      <div className="relative flex min-h-screen flex-1 flex-col overflow-hidden bg-[#F5F4FF]">
+      <div className="relative flex min-h-screen flex-1 flex-col overflow-hidden bg-[#F5F4FF] font-[Switzer,-apple-system,BlinkMacSystemFont,sans-serif] antialiased">
         {/* Banners */}
         {trialEndingShouldShow && <TrialEndingBanner />}
         {welcomeShouldShow && (
@@ -190,7 +184,7 @@ export default function HomePage() {
                   />
                   <div className="relative z-[1] flex items-center gap-2.5 rounded-xl bg-white/[0.92] p-[10px_12px] backdrop-blur-[20px]">
                     <Search className="size-4 shrink-0 text-[#BDBDBD]" strokeWidth={2} />
-                    <input
+                    <Input
                       ref={heroInputRef}
                       type="text"
                       value={input}
@@ -198,20 +192,21 @@ export default function HomePage() {
                       onKeyDown={onKey}
                       placeholder={contextLoaded ? 'Ask anything about your store\u2026' : 'Connecting\u2026'}
                       disabled={!contextLoaded || isStreaming}
-                      className="flex-1 border-none bg-transparent text-sm text-[#111111] outline-none placeholder:text-[#BDBDBD]"
+                      className="flex-1 border-none bg-transparent text-sm text-[#111111] shadow-none placeholder:text-[#BDBDBD]"
                     />
-                    <button
+                    <Button
                       onClick={() => handleSend(input)}
                       disabled={!input.trim() || isStreaming || !contextLoaded}
                       aria-label="Send"
-                      className="flex size-[34px] shrink-0 cursor-pointer items-center justify-center rounded-lg bg-[#111111] transition-colors hover:bg-[#333333] disabled:cursor-not-allowed disabled:opacity-[0.26]"
+                      size="icon"
+                      className="size-[34px] rounded-lg bg-[#111111] hover:bg-[#333333]"
                     >
                       {isStreaming ? (
                         <div className="size-3.5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
                       ) : (
                         <ArrowUp className="size-4 text-white" strokeWidth={2.5} />
                       )}
-                    </button>
+                    </Button>
                   </div>
                 </div>
               </div>
@@ -219,14 +214,16 @@ export default function HomePage() {
               {/* Suggestion chips */}
               <div className="home-content-item flex flex-wrap justify-center gap-2">
                 {SUGGESTIONS.map((text) => (
-                  <button
+                  <Button
                     key={text}
+                    variant="outline"
+                    size="sm"
                     onClick={() => handleSend(text)}
                     disabled={isStreaming || !contextLoaded}
-                    className="rounded-full border border-black/[0.08] bg-white/80 px-3.5 py-[7px] text-xs font-medium text-[#555555] shadow-[0_1px_3px_rgba(0,0,0,0.05)] backdrop-blur-[10px] transition-all hover:translate-y-[-2px] hover:border-violet-500/20 hover:shadow-[0_4px_16px_rgba(139,92,246,0.12)] disabled:cursor-not-allowed disabled:opacity-50"
+                    className="rounded-full"
                   >
                     {text}
-                  </button>
+                  </Button>
                 ))}
               </div>
 
@@ -269,18 +266,19 @@ export default function HomePage() {
                       target.style.height = `${Math.min(target.scrollHeight, 180)}px`
                     }}
                   />
-                  <button
+                  <Button
                     onClick={() => handleSend(input)}
                     disabled={!input.trim() || isStreaming}
                     aria-label="Send"
-                    className="flex size-[42px] shrink-0 cursor-pointer items-center justify-center rounded-[10px] bg-[#0F0F10] transition-colors hover:bg-[#1a1a1a] disabled:cursor-not-allowed disabled:opacity-[0.26]"
+                    size="icon"
+                    className="size-[34px] rounded-lg bg-[#111111] hover:bg-[#333333]"
                   >
                     {isStreaming ? (
                       <div className="size-[15px] animate-spin rounded-full border-2 border-white/[0.22] border-t-white" />
                     ) : (
                       <Send className="size-4 text-white" strokeWidth={2.3} />
                     )}
-                  </button>
+                  </Button>
                 </div>
                 <div className="mt-2.5 text-center text-[11px] text-[#BDBDBD]">
                   Lynq AI &middot; Answers based on live store data &middot; &#8629; Enter to send
@@ -290,6 +288,5 @@ export default function HomePage() {
           </div>
         )}
       </div>
-    </div>
   )
 }

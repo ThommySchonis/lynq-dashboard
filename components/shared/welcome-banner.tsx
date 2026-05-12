@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { supabase } from "@/lib/supabase";
+import { useAuthStore } from "@/stores/auth";
 import { Button } from "@/components/ui/button";
 
 interface WelcomeBannerProps {
@@ -17,9 +17,7 @@ export function WelcomeBanner({ firstName, onDismissed }: WelcomeBannerProps) {
     if (dismissing) return;
     setDismissing(true);
     try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+      const session = useAuthStore.getState().session;
       if (!session) return;
       await fetch("/api/profile", {
         method: "PATCH",

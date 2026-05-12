@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { supabase } from '@/lib/supabase'
+import { useAuthStore } from '@/stores/auth'
 import { useSignOut } from '@/hooks/auth'
 import { Button } from '@/components/ui/button'
 import { PRICING_PLANS, type PricingPlan } from '@/lib/pricing-constants'
@@ -70,15 +70,18 @@ export default function PricingRequiredPage() {
   const [firstName, setFirstName] = useState('')
   const router = useRouter()
   const signOut = useSignOut()
+  const session = useAuthStore((s) => s.session)
+  const user = useAuthStore((s) => s.user)
+  const isLoading = useAuthStore((s) => s.isLoading)
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session) { router.push('/login'); return }
-      const meta = session.user.user_metadata ?? {}
-      const raw = (meta.name || meta.full_name || session.user.email?.split('@')[0] || '').split(/\s+/)[0]
+    if (!isLoading && !session) { router.push('/login'); return }
+    if (user) {
+      const meta = user.user_metadata ?? {}
+      const raw = (meta.name || meta.full_name || user.email?.split('@')[0] || '').split(/\s+/)[0]
       setFirstName(raw || '')
-    })
-  }, [router])
+    }
+  }, [isLoading, session, user, router])
 
   function handleLogout() {
     signOut.mutate(undefined, {

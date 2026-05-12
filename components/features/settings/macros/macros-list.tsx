@@ -33,7 +33,7 @@ import {
   useRestoreMacro,
   useDeleteMacro,
   useGenerateMacros,
-} from '@/hooks/settings/use-settings-mutations'
+} from '@/hooks/settings/use-macro-mutations'
 import { MacrosToolbar } from './macros-toolbar'
 import { MacroRow } from './macro-row'
 import type { Macro } from '@/types/inbox'

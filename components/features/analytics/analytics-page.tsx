@@ -2,7 +2,6 @@
 
 import { useState, useMemo } from 'react'
 import { BarChart3, Info, Loader2, RefreshCw } from 'lucide-react'
-import { Sidebar } from '@/components/layout/sidebar'
 import { EmptyState } from '@/components/shared/empty-state'
 import { DEMO_REFUNDS, DEMO_KPIS, DEMO_TREND, DEMO_INSIGHTS } from '@/lib/demoData'
 import {
@@ -147,9 +146,7 @@ function AnalyticsContent() {
   }
 
   return (
-    <div className="flex min-h-screen bg-[var(--bg-page)]">
-      <Sidebar />
-      <main className="flex-1 overflow-y-auto bg-[#F9F8FF] p-6 relative" style={{ scrollbarWidth: 'thin' }}>
+      <main className="min-h-screen overflow-y-auto bg-[#F9F8FF] p-6 relative" style={{ scrollbarWidth: 'thin' }}>
         <div className="relative z-[1] mx-auto max-w-[1200px]">
 
           {/* Header */}
@@ -304,8 +301,7 @@ function AnalyticsContent() {
           </div>
         </div>
       </main>
-    </div>
-  )
+    )
 }
 
 // ── Wrapper: gate Analytics behind Shopify-connected check ──────────────────

@@ -17,6 +17,9 @@ import {
   Clock,
   Loader2,
 } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select'
 import { useAuthStore } from '@/stores/auth'
 import { useComposeMacros, useEmailAccountInfo } from '@/hooks/inbox/use-inbox-data'
 import { useComposeEmail } from '@/hooks/inbox/use-inbox-mutations'
@@ -191,13 +194,10 @@ export default function CreateTicketPage() {
                 New ticket
               </span>
             </div>
-            <button
-              onClick={() => router.push('/inbox')}
-              className="flex items-center gap-1 rounded-[7px] border border-(--border) bg-(--bg-input) px-2.5 py-1 text-[11.5px] font-semibold text-(--text-2) transition-colors hover:border-(--border-hover) hover:text-(--text-1)"
-            >
+            <Button variant="outline" size="xs" onClick={() => router.push('/inbox')} className="gap-1 text-[11.5px] font-semibold">
               <ChevronLeft className="h-2.5 w-2.5" />
               Back
-            </button>
+            </Button>
           </div>
           <div className="text-[9.5px] font-bold uppercase tracking-[0.1em] text-(--text-3)">
             Recent tickets
@@ -243,48 +243,46 @@ export default function CreateTicketPage() {
         <div className="shrink-0 border-b border-(--border)">
           {/* Row 1: Subject + Priority + Search + Assign + Close */}
           <div className="flex items-center gap-2 px-4 py-2.5">
-            <input
+            <Input
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
               placeholder="Subject"
-              className="min-w-0 flex-1 border-none bg-transparent text-sm font-semibold text-(--text-1) outline-none placeholder:text-(--text-3)"
+              className="min-w-0 flex-1 border-none bg-transparent text-sm font-semibold text-(--text-1) shadow-none placeholder:text-(--text-3)"
             />
             {/* Priority */}
-            <div className="relative shrink-0">
-              <select
-                value={priority}
-                onChange={(e) => setPriority(e.target.value)}
-                className="cursor-pointer appearance-none rounded-md border border-(--border) bg-(--bg-input) py-[3px] pl-[9px] pr-6 text-[11.5px] text-(--text-2) outline-none"
-              >
+            <Select value={priority} onValueChange={(v) => { if (v) setPriority(v) }}>
+              <SelectTrigger size="sm" className="shrink-0 text-[11.5px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
                 {PRIORITY_OPTS.map((p) => (
-                  <option key={p} value={p}>
-                    {p}
-                  </option>
+                  <SelectItem key={p} value={p}>{p}</SelectItem>
                 ))}
-              </select>
-              <ChevronDown className="pointer-events-none absolute right-[7px] top-1/2 h-[9px] w-[9px] -translate-y-1/2 text-(--text-3)" />
-            </div>
+              </SelectContent>
+            </Select>
             {/* Customer search */}
             <div className="flex w-[210px] shrink-0 items-center gap-1.5 rounded-lg border border-(--border) bg-(--bg-input) px-2.5 py-[5px]">
               <Search className="h-[11px] w-[11px] shrink-0 text-(--text-3)" />
-              <input
+              <Input
                 placeholder="Search customers..."
-                className="w-full border-none bg-transparent text-[11.5px] text-(--text-1) outline-none placeholder:text-(--text-3)"
+                className="w-full border-none bg-transparent text-[11.5px] text-(--text-1) shadow-none placeholder:text-(--text-3)"
               />
             </div>
             {/* Unassigned */}
-            <button className="flex shrink-0 items-center gap-[5px] whitespace-nowrap rounded-[7px] border border-(--border) bg-(--bg-input) px-2.5 py-1 text-[11.5px] text-(--text-2) transition-colors hover:border-(--border-hover)">
+            <Button variant="outline" size="xs" className="gap-[5px] text-[11.5px] text-(--text-2)">
               Unassigned
               <ChevronDown className="h-2.5 w-2.5" />
-            </button>
+            </Button>
             {/* Close */}
-            <button
+            <Button
+              variant="ghost"
+              size="icon-xs"
               onClick={() => router.push('/inbox')}
               title="Close (Esc)"
-              className="flex shrink-0 rounded-md p-1 text-(--text-3) transition-colors hover:text-(--text-1)"
+              className="shrink-0 text-(--text-3) hover:text-(--text-1)"
             >
               <X className="h-[15px] w-[15px]" />
-            </button>
+            </Button>
           </div>
 
           {/* Row 2: Tags + metadata */}
@@ -312,7 +310,7 @@ export default function CreateTicketPage() {
                 Add tags
               </button>
               {showTagInput && (
-                <input
+                <Input
                   autoFocus
                   value={tagInput}
                   onChange={(e) => setTagInput(e.target.value)}
@@ -325,7 +323,7 @@ export default function CreateTicketPage() {
                     if (e.key === 'Escape') setShowTagInput(false)
                   }}
                   placeholder="tag name..."
-                  className="w-[84px] border-b border-(--border-hover) bg-transparent text-[11.5px] text-(--text-1) outline-none placeholder:text-(--text-3)"
+                  className="h-auto w-[84px] rounded-none border-x-0 border-t-0 border-b border-(--border-hover) bg-transparent py-0 text-[11.5px] text-(--text-1) shadow-none placeholder:text-(--text-3)"
                 />
               )}
             </div>
@@ -369,23 +367,25 @@ export default function CreateTicketPage() {
             <span className="w-10 shrink-0 text-[10.5px] font-bold uppercase tracking-[0.09em] text-(--text-3)">
               To
             </span>
-            <input
+            <Input
               value={to}
               onChange={(e) => setTo(e.target.value)}
               placeholder="customer@email.com"
               autoFocus
-              className="min-w-0 flex-1 border-none bg-transparent text-[13px] text-(--text-1) outline-none placeholder:text-(--text-3)"
+              className="min-w-0 flex-1 border-none bg-transparent text-[13px] text-(--text-1) shadow-none placeholder:text-(--text-3)"
             />
-            <button
+            <Button
+              variant="outline"
+              size="xs"
               onClick={() => setShowCC((v) => !v)}
-              className={`shrink-0 rounded-[5px] border px-[9px] py-[2px] text-[10.5px] font-semibold transition-colors ${
+              className={`px-[9px] text-[10.5px] font-semibold ${
                 showCC
-                  ? 'border-(--border) bg-(--bg-surface-2) text-(--text-1)'
-                  : 'border-(--border) text-(--text-3)'
+                  ? 'bg-(--bg-surface-2) text-(--text-1)'
+                  : 'text-(--text-3)'
               }`}
             >
               Cc / Bcc
-            </button>
+            </Button>
           </div>
 
           {/* From */}
@@ -424,20 +424,20 @@ export default function CreateTicketPage() {
               <span className="w-10 shrink-0 text-[10.5px] font-bold uppercase tracking-[0.09em] text-(--text-3)">
                 CC
               </span>
-              <input
+              <Input
                 value={cc}
                 onChange={(e) => setCC(e.target.value)}
                 placeholder="cc@email.com"
-                className="min-w-0 flex-1 border-none bg-transparent text-[13px] text-(--text-1) outline-none placeholder:text-(--text-3)"
+                className="min-w-0 flex-1 border-none bg-transparent text-[13px] text-(--text-1) shadow-none placeholder:text-(--text-3)"
               />
               <span className="w-10 shrink-0 text-[10.5px] font-bold uppercase tracking-[0.09em] text-(--text-3)">
                 BCC
               </span>
-              <input
+              <Input
                 value={bcc}
                 onChange={(e) => setBcc(e.target.value)}
                 placeholder="bcc@email.com"
-                className="min-w-0 flex-1 border-none bg-transparent text-[13px] text-(--text-1) outline-none placeholder:text-(--text-3)"
+                className="min-w-0 flex-1 border-none bg-transparent text-[13px] text-(--text-1) shadow-none placeholder:text-(--text-3)"
               />
             </div>
           )}
@@ -445,7 +445,7 @@ export default function CreateTicketPage() {
           {/* Macro search */}
           <div className="relative flex items-center gap-2 border-b border-(--border) px-4 py-[7px]">
             <Plus className="h-[13px] w-[13px] shrink-0 text-(--text-3)" />
-            <input
+            <Input
               value={macroSearch}
               onChange={(e) => {
                 setMacroSearch(e.target.value)
@@ -454,7 +454,7 @@ export default function CreateTicketPage() {
               onFocus={() => setShowMacroDD(true)}
               onBlur={() => setTimeout(() => setShowMacroDD(false), 160)}
               placeholder="Search macros by name, tags or body..."
-              className="min-w-0 flex-1 border-none bg-transparent text-[13px] text-(--text-1) outline-none placeholder:text-(--text-3)"
+              className="min-w-0 flex-1 border-none bg-transparent text-[13px] text-(--text-1) shadow-none placeholder:text-(--text-3)"
             />
             {macroSearch && (
               <button
@@ -567,10 +567,10 @@ export default function CreateTicketPage() {
             <div className="flex-1" />
             <span className="mr-2 text-[10.5px] text-(--text-3)">Cmd+Enter to send</span>
             <div className="flex shrink-0 items-stretch overflow-hidden rounded-[9px] shadow-[0_2px_12px_rgba(124,92,252,0.35)]">
-              <button
+              <Button
                 onClick={doSend}
                 disabled={composeEmail.isPending}
-                className="flex items-center gap-1.5 bg-[linear-gradient(135deg,#7C5CFC_0%,#6d4af8_100%)] px-[18px] py-[7px] text-[12.5px] font-semibold text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-65"
+                className="gap-1.5 rounded-none bg-[linear-gradient(135deg,#7C5CFC_0%,#6d4af8_100%)] px-[18px] py-[7px] text-[12.5px] font-semibold text-white hover:opacity-90"
               >
                 {composeEmail.isPending ? (
                   <>
@@ -583,15 +583,15 @@ export default function CreateTicketPage() {
                     Send
                   </>
                 )}
-              </button>
+              </Button>
               <div className="w-px shrink-0 bg-white/20" />
-              <button
+              <Button
                 onClick={doSend}
                 disabled={composeEmail.isPending}
-                className="flex items-center gap-[5px] whitespace-nowrap bg-[linear-gradient(135deg,#7C5CFC_0%,#6d4af8_100%)] px-[18px] py-[7px] text-[12.5px] font-semibold text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-65"
+                className="gap-[5px] rounded-none bg-[linear-gradient(135deg,#7C5CFC_0%,#6d4af8_100%)] px-[18px] py-[7px] text-[12.5px] font-semibold text-white hover:opacity-90"
               >
                 Send &amp; Close
-              </button>
+              </Button>
             </div>
           </div>
         </div>

@@ -4,10 +4,9 @@ import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
-import { supabase } from '@/lib/supabase'
-import { useSaveBrand, useConnectParcelPanel, useCompleteOnboarding } from '@/hooks/onboarding'
-import type { User } from '@supabase/supabase-js'
+import { useAuthStore } from '@/stores/auth'
+import { useSaveBrand, useConnectParcelPanel, useConnectShopify, useCompleteOnboarding } from '@/hooks/onboarding'
+import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
   Select,
@@ -20,18 +19,8 @@ import { FieldLabel } from '@/components/features/onboarding/field-label'
 import { ConnectedBadge } from '@/components/features/onboarding/connected-badge'
 import { ConnectCard } from '@/components/features/onboarding/connect-card'
 import { ProgressBar } from '@/components/features/onboarding/progress-bar'
-import { TONE_OPTIONS, LANGUAGE_OPTIONS } from '@/lib/onboarding-constants'
-import type { Tone, Language } from '@/lib/onboarding-constants'
-
-// ── Brand form schema ───────────────────────────────────────────────────────
-
-const brandSchema = z.object({
-  brandName: z.string().min(1, 'Brand name is required'),
-  language: z.enum(['English', 'Dutch', 'French', 'German', 'Spanish']),
-  tone: z.enum(['friendly', 'professional', 'luxury']),
-})
-
-type BrandFormValues = z.infer<typeof brandSchema>
+import { brandSchema, TONE_OPTIONS, LANGUAGE_OPTIONS } from '@/lib/onboarding-constants'
+import type { BrandFormData, Tone, Language } from '@/lib/onboarding-constants'
 
 // ── Skip text ───────────────────────────────────────────────────────────────
 
@@ -49,7 +38,9 @@ export default function OnboardingPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
 
-  const [user, setUser] = useState<User | null>(null)
+  const session = useAuthStore((s) => s.session)
+  const user = useAuthStore((s) => s.user)
+  const isLoading = useAuthStore((s) => s.isLoading)
   const [step, setStep] = useState(1)
 
   // Connections
@@ -61,6 +52,7 @@ export default function OnboardingPage() {
 
   const saveBrandMutation = useSaveBrand()
   const connectParcelPanelMutation = useConnectParcelPanel()
+  const connectShopify = useConnectShopify()
   const completeOnboardingMutation = useCompleteOnboarding()
 
   const {
@@ -68,7 +60,7 @@ export default function OnboardingPage() {
     handleSubmit,
     control,
     formState: { errors, isValid },
-  } = useForm<BrandFormValues>({
+  } = useForm<BrandFormData>({
     resolver: zodResolver(brandSchema),
     defaultValues: {
       brandName: '',
@@ -80,33 +72,28 @@ export default function OnboardingPage() {
 
   // Session check + OAuth callback detection
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session) {
-        router.replace('/login')
-        return
-      }
-      setUser(session.user)
+    if (isLoading) return
+    if (!session) { router.replace('/login'); return }
 
-      // Detect OAuth callbacks via search params
-      if (searchParams.get('shopify') === 'connected') {
-        setShopifyConnected(true)
-        setStep(3)
+    // Detect OAuth callbacks via search params
+    if (searchParams.get('shopify') === 'connected') {
+      setShopifyConnected(true)
+      setStep(3)
+    }
+    if (searchParams.get('gmail') === 'connected') {
+      setGmailConnected(true)
+      setStep(3)
+    }
+    const stepParam = searchParams.get('step')
+    if (stepParam) {
+      const parsed = parseInt(stepParam, 10)
+      if (!isNaN(parsed) && parsed >= 1 && parsed <= 4) {
+        setStep(parsed)
       }
-      if (searchParams.get('gmail') === 'connected') {
-        setGmailConnected(true)
-        setStep(3)
-      }
-      const stepParam = searchParams.get('step')
-      if (stepParam) {
-        const parsed = parseInt(stepParam, 10)
-        if (!isNaN(parsed) && parsed >= 1 && parsed <= 4) {
-          setStep(parsed)
-        }
-      }
-    })
-  }, [router, searchParams])
+    }
+  }, [isLoading, session, router, searchParams])
 
-  async function onBrandSubmit(values: BrandFormValues) {
+  async function onBrandSubmit(values: BrandFormData) {
     await saveBrandMutation.mutateAsync({
       brandName: values.brandName,
       language: values.language as Language,
@@ -121,20 +108,13 @@ export default function OnboardingPage() {
     setParcelConnected(true)
   }
 
-  async function handleConnectShopify() {
+  function handleConnectShopify() {
     if (!shopifyStore) return
-    const { data: { session } } = await supabase.auth.getSession()
-    if (!session) return
-    const res = await fetch('/api/auth/shopify', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${session.access_token}`,
+    connectShopify.mutate(shopifyStore, {
+      onSuccess: (data) => {
+        if (data.url) window.location.href = data.url
       },
-      body: JSON.stringify({ shop: shopifyStore }),
     })
-    const data = await res.json() as { url?: string }
-    if (data.url) window.location.href = data.url
   }
 
   async function handleCompleteOnboarding() {
@@ -143,7 +123,7 @@ export default function OnboardingPage() {
     router.push('/inbox')
   }
 
-  if (!user) return null
+  if (isLoading || !user) return null
 
   const isSaving = saveBrandMutation.isPending
   const isConnectingParcel = connectParcelPanelMutation.isPending
@@ -180,12 +160,12 @@ export default function OnboardingPage() {
               Let&apos;s get your dashboard ready in a few steps.<br />
               It only takes about 2 minutes.
             </p>
-            <button
+            <Button
               onClick={() => setStep(2)}
-              className="bg-[#A175FC] text-white rounded-[10px] px-10 py-3.5 text-[15px] font-semibold cursor-pointer"
+              className="bg-[#A175FC] rounded-[10px] px-10 py-3.5 text-[15px] font-semibold"
             >
               Get Started →
-            </button>
+            </Button>
           </div>
         )}
 
@@ -260,18 +240,18 @@ export default function OnboardingPage() {
               />
             </div>
 
-            <button
+            <Button
               type="submit"
               disabled={!isValid || isSaving}
               className={[
                 'w-full py-[13px] rounded-[10px] text-sm font-semibold text-white transition-colors',
                 !isValid || isSaving
-                  ? 'bg-[rgba(161,117,252,0.3)] cursor-not-allowed'
-                  : 'bg-[#A175FC] cursor-pointer',
+                  ? 'bg-[rgba(161,117,252,0.3)]'
+                  : 'bg-[#A175FC]',
               ].join(' ')}
             >
               {isSaving ? 'Saving...' : 'Save & Continue →'}
-            </button>
+            </Button>
           </form>
         )}
 
@@ -295,12 +275,13 @@ export default function OnboardingPage() {
                   <ConnectedBadge />
                 ) : (
                   <>
-                    <button
+                    <Button
+                      variant="outline"
                       onClick={() => { window.location.href = '/api/auth/gmail' }}
-                      className="w-full py-[9px] bg-transparent border border-[rgba(161,117,252,0.4)] text-[#A175FC] rounded-lg text-[13px] font-medium cursor-pointer"
+                      className="w-full py-[9px] bg-transparent border-[rgba(161,117,252,0.4)] text-[#A175FC] rounded-lg text-[13px] font-medium"
                     >
                       Connect Gmail
-                    </button>
+                    </Button>
                     <SkipText />
                   </>
                 )}
@@ -326,18 +307,19 @@ export default function OnboardingPage() {
                     <div className="text-[11px] text-white/30 mb-2.5">
                       Only the store name — not the full URL
                     </div>
-                    <button
+                    <Button
+                      variant="outline"
                       onClick={handleConnectShopify}
                       disabled={!shopifyStore}
                       className={[
-                        'w-full py-[9px] rounded-lg text-[13px] font-medium border transition-colors',
+                        'w-full py-[9px] rounded-lg text-[13px] font-medium transition-colors',
                         shopifyStore
-                          ? 'bg-transparent border-[rgba(161,117,252,0.4)] text-[#A175FC] cursor-pointer'
-                          : 'bg-transparent border-white/[0.08] text-white/20 cursor-not-allowed',
+                          ? 'bg-transparent border-[rgba(161,117,252,0.4)] text-[#A175FC]'
+                          : 'bg-transparent border-white/[0.08] text-white/20',
                       ].join(' ')}
                     >
                       Connect Shopify
-                    </button>
+                    </Button>
                     <SkipText />
                   </>
                 )}
@@ -361,30 +343,31 @@ export default function OnboardingPage() {
                       placeholder="API Key"
                       className="bg-[#1C0F36] border-white/10 text-white placeholder:text-white/30 focus-visible:border-[#A175FC]/60 mb-2.5 h-auto py-2"
                     />
-                    <button
+                    <Button
+                      variant="outline"
                       onClick={handleConnectParcelPanel}
                       disabled={!parcelPanelKey || isConnectingParcel}
                       className={[
-                        'w-full py-[9px] rounded-lg text-[13px] font-medium border transition-colors',
+                        'w-full py-[9px] rounded-lg text-[13px] font-medium transition-colors',
                         parcelPanelKey && !isConnectingParcel
-                          ? 'bg-transparent border-[rgba(161,117,252,0.4)] text-[#A175FC] cursor-pointer'
-                          : 'bg-transparent border-white/[0.08] text-white/20 cursor-not-allowed',
+                          ? 'bg-transparent border-[rgba(161,117,252,0.4)] text-[#A175FC]'
+                          : 'bg-transparent border-white/[0.08] text-white/20',
                       ].join(' ')}
                     >
                       {isConnectingParcel ? 'Connecting...' : 'Connect'}
-                    </button>
+                    </Button>
                     <SkipText />
                   </>
                 )}
               </ConnectCard>
             </div>
 
-            <button
+            <Button
               onClick={() => setStep(4)}
-              className="w-full py-[13px] bg-[#A175FC] text-white rounded-[10px] text-sm font-semibold cursor-pointer"
+              className="w-full py-[13px] bg-[#A175FC] text-white rounded-[10px] text-sm font-semibold"
             >
               Continue →
-            </button>
+            </Button>
           </div>
         )}
 
@@ -399,20 +382,21 @@ export default function OnboardingPage() {
               Your dashboard is ready.<br />
               Start by checking your inbox.
             </p>
-            <button
+            <Button
               onClick={handleCompleteOnboarding}
               disabled={isCompleting}
-              className="w-full bg-[#A175FC] text-white rounded-[10px] px-10 py-3.5 text-[15px] font-semibold mb-4 cursor-pointer disabled:opacity-60"
+              className="w-full bg-[#A175FC] text-white rounded-[10px] px-10 py-3.5 text-[15px] font-semibold mb-4"
             >
               {isCompleting ? 'Loading...' : 'Go to Inbox →'}
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="ghost"
               onClick={handleCompleteOnboarding}
               disabled={isCompleting}
-              className="bg-transparent text-white/35 text-[13px] p-2 cursor-pointer disabled:opacity-60"
+              className="bg-transparent text-white/35 text-[13px] p-2"
             >
               Complete settings later
-            </button>
+            </Button>
           </div>
         )}
       </div>

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Check, Circle, X } from "lucide-react";
-import { supabase } from "@/lib/supabase";
+import { useAuthStore } from "@/stores/auth";
 
 interface OnboardingStatus {
   macros_count?: number;
@@ -104,9 +104,7 @@ export function SetupChecklist({ status, onDismissed }: SetupChecklistProps) {
     if (dismissing) return;
     setDismissing(true);
     try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+      const session = useAuthStore.getState().session;
       if (!session) return;
       await fetch("/api/profile", {
         method: "PATCH",

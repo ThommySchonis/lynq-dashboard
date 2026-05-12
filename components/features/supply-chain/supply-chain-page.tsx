@@ -2,7 +2,6 @@
 
 import { useMemo } from 'react'
 import { Package, RefreshCw, CheckCircle, AlertTriangle, AlertCircle } from 'lucide-react'
-import { Sidebar } from '@/components/layout/sidebar'
 import { useShipments } from '@/hooks/supply-chain/use-supply-chain-data'
 import { useSupplyChainUI } from '@/stores/supply-chain-ui'
 import { getAttentionItems, FILTER_STATUS } from '@/lib/supply-chain-constants'
@@ -65,10 +64,7 @@ export function SupplyChainPage() {
   const visibleAttention = showAllAttention ? attentionItems : attentionItems.slice(0, 3)
 
   return (
-    <div className="flex min-h-screen bg-(--bg-page) text-(--text-1)" style={{ fontFamily: "'Switzer', -apple-system, BlinkMacSystemFont, sans-serif" }}>
-      <Sidebar />
-
-      <main className="flex-1 overflow-y-auto py-10 px-11 relative [&::-webkit-scrollbar]:w-[3px] [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-(--scrollbar) [&::-webkit-scrollbar-thumb]:rounded-sm">
+      <main className="min-h-screen overflow-y-auto py-10 px-11 relative text-(--text-1) [&::-webkit-scrollbar]:w-[3px] [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-(--scrollbar) [&::-webkit-scrollbar-thumb]:rounded-sm" style={{ fontFamily: "'Switzer', -apple-system, BlinkMacSystemFont, sans-serif" }}>
         <div className="relative z-[1] max-w-[980px] mx-auto">
 
           {/* Header */}
@@ -216,6 +212,5 @@ export function SupplyChainPage() {
           )}
         </div>
       </main>
-    </div>
-  )
+    )
 }

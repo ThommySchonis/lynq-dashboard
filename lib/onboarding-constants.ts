@@ -1,5 +1,15 @@
+import { z } from 'zod'
+
 export type Tone = 'friendly' | 'professional' | 'luxury'
 export type Language = 'English' | 'Dutch' | 'French' | 'German' | 'Spanish'
+
+export const brandSchema = z.object({
+  brandName: z.string().min(1, 'Brand name is required'),
+  language: z.enum(['English', 'Dutch', 'French', 'German', 'Spanish']),
+  tone: z.enum(['friendly', 'professional', 'luxury']),
+})
+
+export type BrandFormData = z.infer<typeof brandSchema>
 
 export const STEPS = ['Welcome', 'Brand Setup', 'Connect Tools', 'Done'] as const
 

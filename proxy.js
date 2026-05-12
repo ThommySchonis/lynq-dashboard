@@ -8,6 +8,9 @@ const AUTH_BYPASS_PREFIXES = [
   // Invite flow: GET metadata + POST signup zijn pre-session.
   // De /accept sub-route enforced zelf nog Bearer auth in zijn handler.
   '/api/invites/',
+  // Vercel Cron jobs — geen user session, eigen CRON_SECRET check
+  // gebeurt in elke handler.
+  '/api/cron/',
 ]
 
 // ─── Blocked-state bypass (Bearer wel vereist, maar mag door bij

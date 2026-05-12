@@ -20,6 +20,7 @@
   --popover: #FFFFFF;
   --popover-foreground: #0F0F10;
   --primary: #8B5CF6;
+  --primary-hover: #7C3AED;
   --primary-foreground: #FFFFFF;
   --secondary: #F5F4FF;
   --secondary-foreground: #0F0F10;
@@ -28,6 +29,7 @@
   --accent: #8B5CF6;
   --accent-foreground: #0F0F10;
   --destructive: #EF4444;
+  --destructive-hover: #DC2626;
   --border: rgba(0,0,0,0.07);
   --input: rgba(0,0,0,0.03);
   --ring: #8B5CF6;
@@ -37,17 +39,20 @@
   --foreground-3: #6B7280;
   --foreground-4: #9CA3AF;
   --success: #10B981;
+  --success-foreground: #FFFFFF;
   --success-soft: rgba(16,185,129,0.08);
   --warning: #F59E0B;
+  --warning-foreground: #FFFFFF;
   --warning-soft: rgba(245,158,11,0.08);
   --destructive-soft: rgba(239,68,68,0.08);
   --info: #3B82F6;
+  --info-foreground: #FFFFFF;
   --info-soft: rgba(59,130,246,0.08);
-  --border-hover: rgba(0,0,0,0.10);
+  --border-hover: rgba(0,0,0,0.14);
   --accent-soft: rgba(139,92,246,0.08);
   --accent-border: rgba(139,92,246,0.2);
   --divider: rgba(0,0,0,0.07);
-  --shadow-card: none;
+  --shadow-card: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.02);
   --shadow-card-hover: 0 4px 20px rgba(0,0,0,0.08);
   --shadow-row: none;
   --shadow-row-hover: 0 4px 12px rgba(0,0,0,0.07);
@@ -101,9 +106,10 @@
   --accent: #A175FC;
   --accent-foreground: #F8FAFC;
   --destructive: #f87171;
+  --destructive-hover: #ef4444;
   --destructive-soft: rgba(239,68,68,0.08);
   --border: rgba(255,255,255,0.07);
-  --border-hover: rgba(255,255,255,0.14);
+  --border-hover: rgba(255,255,255,0.18);
   --input: rgba(255,255,255,0.04);
   --ring: #A175FC;
 
@@ -111,15 +117,18 @@
   --foreground-3: rgba(248,250,252,0.38);
   --foreground-4: rgba(248,250,252,0.28);
   --success: #4ade80;
+  --success-foreground: #052e16;
   --success-soft: rgba(74,222,128,0.08);
   --warning: #fb923c;
+  --warning-foreground: #431407;
   --warning-soft: rgba(251,146,60,0.08);
   --info: #60a5fa;
+  --info-foreground: #1e3a5f;
   --info-soft: rgba(96,165,250,0.08);
   --accent-soft: rgba(255,255,255,0.04);
   --accent-border: rgba(255,255,255,0.10);
   --divider: rgba(255,255,255,0.06);
-  --shadow-card: none;
+  --shadow-card: 0 1px 4px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.06);
   --shadow-card-hover: 0 6px 24px rgba(0,0,0,0.3);
   --shadow-row: none;
   --shadow-row-hover: 0 6px 24px rgba(0,0,0,0.3);
@@ -160,7 +169,7 @@
   html {
     @apply font-sans;
     scrollbar-width: thin;
-    scrollbar-color: rgba(0,0,0,0.1) transparent;
+    scrollbar-color: color-mix(in srgb, var(--foreground) 10%, transparent) transparent;
   }
   body {
     @apply bg-background text-foreground;
@@ -170,14 +179,14 @@
   }
   ::-webkit-scrollbar { width: 4px; height: 4px; }
   ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 10px; }
-  ::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.18); }
-  ::selection { background: rgba(139,92,246,0.15); color: #111; }
-  a { transition: color 0.1s ease; }
-  tr { transition: background 0.08s ease; }
+  ::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--foreground) 10%, transparent); border-radius: 10px; }
+  ::-webkit-scrollbar-thumb:hover { background: color-mix(in srgb, var(--foreground) 18%, transparent); }
+  ::selection { background: color-mix(in srgb, var(--primary) 18%, transparent); }
+  a { transition: color 0.15s ease; }
+  tr { transition: background 0.1s ease; }
   .thin-scrollbar::-webkit-scrollbar { width: 3px; }
   .thin-scrollbar::-webkit-scrollbar-track { background: transparent; }
-  .thin-scrollbar::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 2px; }
+  .thin-scrollbar::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--foreground) 10%, transparent); border-radius: 2px; }
 }
 
 /* ── Float field label transition ───────────────────────────────────────────── */
@@ -213,6 +222,7 @@
 @theme inline {
   --font-heading: 'Switzer', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --font-sans: 'Switzer', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-display: var(--font-display, 'Instrument Serif'), 'Cormorant Garamond', Georgia, Cambria, serif;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -228,6 +238,11 @@
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
+  --color-destructive-hover: var(--destructive-hover);
+  --color-primary-hover: var(--primary-hover);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-info-foreground: var(--info-foreground);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
@@ -260,6 +275,10 @@
   --color-accent-soft: var(--accent-soft);
   --color-accent-border: var(--accent-border);
   --color-divider: var(--divider);
+
+  /* Shadows */
+  --shadow-card: var(--shadow-card);
+  --shadow-card-hover: var(--shadow-card-hover);
 
   /* Radius */
   --radius-sm: calc(var(--radius) * 0.6);

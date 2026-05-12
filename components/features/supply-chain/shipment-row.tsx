@@ -36,7 +36,7 @@ export function ShipmentRow({ order, index, isAttention }: ShipmentRowProps) {
 
   return (
     <div
-      className="bg-(--bg-row) border border-(--border) rounded-[14px] overflow-hidden shadow-[var(--shadow-row)] transition-all duration-200 hover:border-(--border-hover) hover:shadow-[var(--shadow-row-hover)] animate-[fadeUp_0.4s_ease_both]"
+      className="bg-card border border-border rounded-[14px] overflow-hidden shadow-[var(--shadow-row)] transition-all duration-200 hover:border-(--border-hover) hover:shadow-[var(--shadow-row-hover)] animate-[fadeUp_0.4s_ease_both]"
       style={{
         animationDelay: `${index * 35}ms`,
         borderColor: isAttention ? 'rgba(248,113,113,0.18)' : undefined,
@@ -49,29 +49,29 @@ export function ShipmentRow({ order, index, isAttention }: ShipmentRowProps) {
       >
         <div className="min-w-0">
           <div className="flex items-center gap-2 mb-[3px]">
-            <span className="text-sm font-bold text-(--text-1)">{order.order_number}</span>
+            <span className="text-sm font-bold text-foreground">{order.order_number}</span>
             <StatusBadge status={shipment.status} />
           </div>
-          <p className="text-[12.5px] text-(--text-2) overflow-hidden text-ellipsis whitespace-nowrap">
+          <p className="text-[12.5px] text-foreground-2 overflow-hidden text-ellipsis whitespace-nowrap">
             {order.customer?.name || '\u2014'}
           </p>
         </div>
 
-        <p className="text-[12.5px] text-(--text-2) overflow-hidden text-ellipsis whitespace-nowrap">
+        <p className="text-[12.5px] text-foreground-2 overflow-hidden text-ellipsis whitespace-nowrap">
           {products}
         </p>
 
         <CarrierBadge name={carrierName} logoUrl={carrierLogo} />
 
         <div className="text-right min-w-[90px]">
-          <p className="text-[11px] text-(--text-3) mb-0.5">
+          <p className="text-[11px] text-muted-foreground mb-0.5">
             {shipment.status === 'DELIVERED'
               ? 'Delivered'
               : shipment.estimated_delivery_date
                 ? 'Est. delivery'
                 : 'Shipped'}
           </p>
-          <p className="text-[12.5px] text-(--text-2) font-semibold">
+          <p className="text-[12.5px] text-foreground-2 font-semibold">
             {shipment.status === 'DELIVERED'
               ? fmtDate(shipment.delivery_date)
               : shipment.estimated_delivery_date
@@ -81,7 +81,7 @@ export function ShipmentRow({ order, index, isAttention }: ShipmentRowProps) {
         </div>
 
         <div
-          className="text-(--text-3) flex transition-transform duration-200"
+          className="text-muted-foreground flex transition-transform duration-200"
           style={{ transform: expanded ? 'rotate(180deg)' : 'none' }}
         >
           <ChevronDown className="w-3.5 h-3.5" />
@@ -94,7 +94,7 @@ export function ShipmentRow({ order, index, isAttention }: ShipmentRowProps) {
           <div className="grid grid-cols-2 gap-7">
             {/* Left: tracking details */}
             <div>
-              <p className="text-[10px] font-bold text-[#9CA3AF] uppercase tracking-[.08em] mb-3.5">
+              <p className="text-[10px] font-bold text-foreground-4 uppercase tracking-[.08em] mb-3.5">
                 Tracking Details
               </p>
               <div className="flex flex-col gap-2.5">
@@ -102,18 +102,18 @@ export function ShipmentRow({ order, index, isAttention }: ShipmentRowProps) {
                   .filter(([, v]) => v && v !== '\u2014')
                   .map(([label, val]) => (
                     <div key={label} className="flex gap-2 items-start">
-                      <span className="text-xs text-(--text-3) min-w-[130px] shrink-0">{label}</span>
-                      <span className="text-[12.5px] text-(--text-2) break-all">{val}</span>
+                      <span className="text-xs text-muted-foreground min-w-[130px] shrink-0">{label}</span>
+                      <span className="text-[12.5px] text-foreground-2 break-all">{val}</span>
                     </div>
                   ))}
               </div>
 
               {order.shipping_address && (
                 <div className="mt-[18px]">
-                  <p className="text-[10px] font-bold text-[#9CA3AF] uppercase tracking-[.08em] mb-2">
+                  <p className="text-[10px] font-bold text-foreground-4 uppercase tracking-[.08em] mb-2">
                     Ship to
                   </p>
-                  <p className="text-[12.5px] text-(--text-2) leading-[1.65]">
+                  <p className="text-[12.5px] text-foreground-2 leading-[1.65]">
                     {order.shipping_address.name}<br />
                     {order.shipping_address.city}
                     {order.shipping_address.province_code ? `, ${order.shipping_address.province_code}` : ''}{' '}
@@ -128,7 +128,7 @@ export function ShipmentRow({ order, index, isAttention }: ShipmentRowProps) {
                   href={order.tracking_link}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 mt-4 py-2 px-3.5 rounded-lg bg-(--bg-surface-2) border border-(--border) text-(--text-2) text-[12.5px] font-semibold no-underline"
+                  className="inline-flex items-center gap-1.5 mt-4 py-2 px-3.5 rounded-lg bg-secondary border border-border text-foreground-2 text-[12.5px] font-semibold no-underline"
                 >
                   <ExternalLink className="w-3 h-3" />
                   Track on carrier site
@@ -138,7 +138,7 @@ export function ShipmentRow({ order, index, isAttention }: ShipmentRowProps) {
 
             {/* Right: tracking events */}
             <div>
-              <p className="text-[10px] font-bold text-[#9CA3AF] uppercase tracking-[.08em] mb-3.5">
+              <p className="text-[10px] font-bold text-foreground-4 uppercase tracking-[.08em] mb-3.5">
                 Tracking Events
               </p>
               <CheckpointTimeline checkpoints={shipment.checkpoints || []} />

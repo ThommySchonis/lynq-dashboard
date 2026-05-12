@@ -10,7 +10,7 @@ interface InviteLayoutProps {
 
 export default function InviteLayout({ children, loading = false }: InviteLayoutProps) {
   return (
-    <div className="min-h-screen bg-[#F8F7FA] flex items-center justify-center p-6 font-sans antialiased">
+    <div className="min-h-screen bg-secondary flex items-center justify-center p-6 font-sans antialiased">
       <div className="w-full max-w-[440px]">
         {/* Brand wordmark */}
         <div className="text-center mb-8">
@@ -31,8 +31,8 @@ export default function InviteLayout({ children, loading = false }: InviteLayout
 
           {loading ? (
             <div className="flex flex-col items-center justify-center py-12 px-8">
-              <Loader size={28} strokeWidth={1.75} className="text-[#9B91A8] animate-spin" />
-              <p className="mt-3 text-sm text-[#9B91A8]">Loading invite…</p>
+              <Loader size={28} strokeWidth={1.75} className="text-foreground-4 animate-spin" />
+              <p className="mt-3 text-sm text-foreground-4">Loading invite…</p>
             </div>
           ) : (
             children

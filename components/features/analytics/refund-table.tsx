@@ -59,12 +59,12 @@ export function RefundTable({ refunds, loaded }: RefundTableProps) {
   ]
 
   return (
-    <div className="mb-6 animate-fade-in rounded-xl border border-white/65 bg-white/80 p-[22px_24px] shadow-sm backdrop-blur-xl transition-shadow duration-200 hover:shadow-lg">
+    <div className="mb-6 animate-fade-up rounded-xl border border-white/65 bg-white/80 p-[22px_24px] shadow-sm backdrop-blur-xl transition-shadow duration-200 hover:shadow-lg">
       {/* Header */}
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2.5">
         <div>
-          <div className="mb-0.5 text-[13px] font-semibold text-[var(--text-1)]">Refund History</div>
-          <div className="text-[11px] text-[var(--text-3)]">
+          <div className="mb-0.5 text-[13px] font-semibold text-foreground">Refund History</div>
+          <div className="text-[11px] text-muted-foreground">
             {loaded
               ? `${filtered.length} of ${enriched.length} refund${enriched.length !== 1 ? 's' : ''} \u00B7 ${catFilter === 'All' ? 'all categories' : catFilter}`
               : 'Loading\u2026'}
@@ -130,7 +130,7 @@ export function RefundTable({ refunds, loaded }: RefundTableProps) {
       )}
 
       {loaded && filtered.length === 0 && enriched.length > 0 && (
-        <div className="py-8 text-center text-xs text-[var(--text-3)]">No refunds in category &ldquo;{catFilter}&rdquo;</div>
+        <div className="py-8 text-center text-xs text-muted-foreground">No refunds in category &ldquo;{catFilter}&rdquo;</div>
       )}
 
       {/* Table */}
@@ -139,7 +139,7 @@ export function RefundTable({ refunds, loaded }: RefundTableProps) {
           <div className="overflow-x-auto">
             <table className="w-full min-w-[780px] border-collapse">
               <thead>
-                <tr className="border-b border-black/[0.07] bg-[#F9F8FF]">
+                <tr className="border-b border-black/[0.07] bg-background">
                   {headers.map(h => (
                     <th
                       key={h.label}
@@ -184,7 +184,7 @@ export function RefundTable({ refunds, loaded }: RefundTableProps) {
             <div className="mt-4 text-center">
               <button
                 onClick={() => setShowAll(true)}
-                className="rounded-full border border-[var(--border)] bg-[var(--bg-surface-2)] px-5 py-[7px] text-xs font-semibold text-[var(--text-2)] transition-all duration-150 hover:bg-[var(--bg-input)] hover:text-[var(--text-1)]"
+                className="rounded-full border border-[var(--border)] bg-secondary px-5 py-[7px] text-xs font-semibold text-foreground-2 transition-all duration-150 hover:bg-input hover:text-foreground"
               >
                 Show all {sorted.length} refunds
               </button>

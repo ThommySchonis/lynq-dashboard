@@ -20,9 +20,9 @@ export const STATUS = {
   },
   closed: {
     label: 'Closed',
-    bg: 'var(--bg-input)',
-    color: 'var(--text-3)',
-    border: 'var(--bg-surface-2)',
+    bg: 'var(--input)',
+    color: 'var(--foreground-3)',
+    border: 'var(--secondary)',
   },
 } as const
 

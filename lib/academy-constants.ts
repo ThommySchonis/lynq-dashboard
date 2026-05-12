@@ -263,6 +263,17 @@ export const SECTION_META: SectionMeta[] = [
   { label: 'Performance & KPIs', color: '#F59E0B' },
 ]
 
+// ── Confetti pieces (pre-computed, stable) ──────────────────────────────────
+
+export const CONFETTI_COLORS = ['#8B5CF6', '#6366F1', '#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#EC4899']
+export const CONFETTI = Array.from({ length: 30 }, (_, i) => ({
+  left: `${(i * 37 + 11) % 100}%`,
+  delay: `${((i * 7) % 30) * 0.1}s`,
+  color: CONFETTI_COLORS[i % CONFETTI_COLORS.length],
+  size: 6 + (i % 5),
+  duration: `${2.5 + (i % 8) * 0.2}s`,
+}))
+
 export const ALL_EXAM_QUESTIONS: ExamQuestion[] = [
   // -- Section 0: CS Fundamentals (0-9) --
   { q: "A customer emails saying their order arrived damaged. What is your FIRST action?",

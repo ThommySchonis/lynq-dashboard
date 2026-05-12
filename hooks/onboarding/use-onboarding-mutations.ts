@@ -70,6 +70,25 @@ export function useConnectParcelPanel() {
   })
 }
 
+export function useConnectShopify() {
+  const token = useToken()
+
+  return useMutation({
+    mutationFn: async (shop: string) => {
+      const res = await fetch('/api/auth/shopify', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ shop }),
+      })
+      if (!res.ok) throw new Error('Failed to connect Shopify')
+      return res.json() as Promise<{ url?: string }>
+    },
+  })
+}
+
 export function useCompleteOnboarding() {
   return useMutation({
     mutationFn: async (userId: string) => {

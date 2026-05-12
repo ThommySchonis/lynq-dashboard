@@ -59,16 +59,16 @@ export function FulfillModal({ order, token, onClose, onSuccess }: FulfillModalP
             All items will be marked as fulfilled.
           </div>
           <div>
-            <label className="text-[10.5px] font-bold tracking-[.07em] uppercase text-(--text-3) mb-[7px] block">Tracking number (optional)</label>
-            <Input className="w-full bg-(--bg-surface-2) border border-(--border) rounded-xl px-3.5 py-[11px] text-[13.5px] text-(--text-1) outline-none" value={trackingNumber} onChange={(e) => setTrackingNumber(e.target.value)} placeholder="e.g. 3SBME123456789" />
+            <label className="text-[10.5px] font-bold tracking-[.07em] uppercase text-muted-foreground mb-[7px] block">Tracking number (optional)</label>
+            <Input className="w-full bg-secondary border border-border rounded-xl px-3.5 py-[11px] text-[13.5px] text-foreground outline-none" value={trackingNumber} onChange={(e) => setTrackingNumber(e.target.value)} placeholder="e.g. 3SBME123456789" />
           </div>
           <div>
-            <label className="text-[10.5px] font-bold tracking-[.07em] uppercase text-(--text-3) mb-[7px] block">Carrier (optional)</label>
-            <Input className="w-full bg-(--bg-surface-2) border border-(--border) rounded-xl px-3.5 py-[11px] text-[13.5px] text-(--text-1) outline-none" value={trackingCompany} onChange={(e) => setTrackingCompany(e.target.value)} placeholder="e.g. PostNL, DHL, UPS…" />
+            <label className="text-[10.5px] font-bold tracking-[.07em] uppercase text-muted-foreground mb-[7px] block">Carrier (optional)</label>
+            <Input className="w-full bg-secondary border border-border rounded-xl px-3.5 py-[11px] text-[13.5px] text-foreground outline-none" value={trackingCompany} onChange={(e) => setTrackingCompany(e.target.value)} placeholder="e.g. PostNL, DHL, UPS…" />
           </div>
           <label className="flex items-center gap-2.5 cursor-pointer select-none">
             <Checkbox checked={notify} onCheckedChange={() => setNotify((v) => !v)} />
-            <span className="text-[13px] text-(--text-2)">Send shipping confirmation to customer</span>
+            <span className="text-[13px] text-foreground-2">Send shipping confirmation to customer</span>
           </label>
         </div>
         <DialogFooter>

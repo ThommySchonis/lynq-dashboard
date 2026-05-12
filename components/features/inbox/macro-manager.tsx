@@ -94,7 +94,7 @@ export function MacroManager({ macros, favs, onClose, onSaveMacro, onDeleteMacro
 
   if (editing) {
     return (
-      <div className="fixed inset-0 bg-(--bg-page) z-[200] flex flex-col">
+      <div className="fixed inset-0 bg-background z-[200] flex flex-col">
         <MacroEditor
           macro={editing === "new" ? null : editing}
           onSave={handleSave}
@@ -107,14 +107,14 @@ export function MacroManager({ macros, favs, onClose, onSaveMacro, onDeleteMacro
   }
 
   return (
-    <div className="fixed inset-0 bg-(--bg-page) z-[200] flex flex-col">
+    <div className="fixed inset-0 bg-background z-[200] flex flex-col">
       {/* Header */}
-      <div className="flex items-center gap-4 py-3.5 px-7 border-b border-(--border) bg-(--bg-surface) shrink-0">
-        <Button variant="ghost" size="sm" onClick={onClose} className="flex items-center gap-[5px] text-(--text-2) text-[13px] py-1 px-0 font-[inherit]">
+      <div className="flex items-center gap-4 py-3.5 px-7 border-b border-border bg-card shrink-0">
+        <Button variant="ghost" size="sm" onClick={onClose} className="flex items-center gap-[5px] text-foreground-2 text-[13px] py-1 px-0 font-[inherit]">
           <ChevronLeft size={16} />
           Back to inbox
         </Button>
-        <span className="flex-1 text-[16px] font-bold text-(--text-1)">Macros</span>
+        <span className="flex-1 text-[16px] font-bold text-foreground">Macros</span>
         {/* Filters */}
         <div className="relative flex items-center">
           <Search
@@ -122,7 +122,7 @@ export function MacroManager({ macros, favs, onClose, onSaveMacro, onDeleteMacro
             style={{
               position: "absolute",
               left: 9,
-              color: "var(--text-3)",
+              color: "var(--foreground-3)",
               pointerEvents: "none",
             }}
           />
@@ -130,13 +130,13 @@ export function MacroManager({ macros, favs, onClose, onSaveMacro, onDeleteMacro
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search macros..."
-            className="pl-[30px] pr-3 py-[7px] border border-(--border) rounded-lg text-[12.5px] text-(--text-1) bg-(--bg-surface-2) w-[200px] font-[inherit]"
+            className="pl-[30px] pr-3 py-[7px] border border-border rounded-lg text-[12.5px] text-foreground bg-secondary w-[200px] font-[inherit]"
           />
         </div>
         <select
           value={langFilter}
           onChange={(e) => setLangF(e.target.value)}
-          className="py-[7px] px-2.5 border border-(--border) rounded-lg text-[12.5px] text-(--text-2) bg-(--bg-surface-2) cursor-pointer font-[inherit] outline-none"
+          className="py-[7px] px-2.5 border border-border rounded-lg text-[12.5px] text-foreground-2 bg-secondary cursor-pointer font-[inherit] outline-none"
         >
           <option value="all">Language</option>
           {allLangs.map((l) => (
@@ -148,7 +148,7 @@ export function MacroManager({ macros, favs, onClose, onSaveMacro, onDeleteMacro
         <select
           value={tagFilter}
           onChange={(e) => setTagF(e.target.value)}
-          className="py-[7px] px-2.5 border border-(--border) rounded-lg text-[12.5px] text-(--text-2) bg-(--bg-surface-2) cursor-pointer font-[inherit] outline-none"
+          className="py-[7px] px-2.5 border border-border rounded-lg text-[12.5px] text-foreground-2 bg-secondary cursor-pointer font-[inherit] outline-none"
         >
           <option value="all">All tags</option>
           {allTags.map((t) => (
@@ -159,21 +159,21 @@ export function MacroManager({ macros, favs, onClose, onSaveMacro, onDeleteMacro
         </select>
         <Button
           onClick={() => setEditing("new")}
-          className="py-2 px-4 rounded-lg border-none bg-(--text-1) text-white font-semibold text-[13px] font-[inherit] whitespace-nowrap"
+          className="py-2 px-4 rounded-lg border-none bg-foreground text-white font-semibold text-[13px] font-[inherit] whitespace-nowrap"
         >
           Create macro
         </Button>
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-0 px-7 border-b border-(--border) bg-(--bg-surface) shrink-0">
+      <div className="flex gap-0 px-7 border-b border-border bg-card shrink-0">
         {["active", "archived"].map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
             style={{
               borderBottom: `2px solid ${tab === t ? "#111111" : "transparent"}`,
-              color: tab === t ? "var(--text-1)" : "var(--text-2)",
+              color: tab === t ? "var(--foreground)" : "var(--foreground-2)",
               fontWeight: tab === t ? 600 : 500,
             }}
             className="py-2.5 px-4 bg-none border-none text-[13px] font-[inherit] capitalize transition-all duration-150"
@@ -187,7 +187,7 @@ export function MacroManager({ macros, favs, onClose, onSaveMacro, onDeleteMacro
       <div className="flex-1 overflow-auto px-7">
         <table className="w-full border-collapse">
           <thead>
-            <tr className="border-b border-(--border)">
+            <tr className="border-b border-border">
               {[
                 ["MACRO", ""],
                 ["TAGS", "160px"],
@@ -199,7 +199,7 @@ export function MacroManager({ macros, favs, onClose, onSaveMacro, onDeleteMacro
                 <th
                   key={h}
                   style={{ width: w || "auto" }}
-                  className="py-2.5 pr-3 pl-0 text-[10.5px] font-bold text-(--text-3) tracking-[.05em] text-left whitespace-nowrap"
+                  className="py-2.5 pr-3 pl-0 text-[10.5px] font-bold text-muted-foreground tracking-[.05em] text-left whitespace-nowrap"
                 >
                   {h}
                 </th>
@@ -209,7 +209,7 @@ export function MacroManager({ macros, favs, onClose, onSaveMacro, onDeleteMacro
           <tbody>
             {visible.length === 0 && (
               <tr>
-                <td colSpan={6} className="py-10 text-center text-(--text-3) text-[13px]">
+                <td colSpan={6} className="py-10 text-center text-muted-foreground text-[13px]">
                   No macros found
                 </td>
               </tr>
@@ -217,8 +217,8 @@ export function MacroManager({ macros, favs, onClose, onSaveMacro, onDeleteMacro
             {visible.map((m) => (
               <tr
                 key={m.id}
-                className="border-b border-(--border)"
-                onMouseEnter={(e) => (e.currentTarget.style.background = "var(--bg-surface-2)")}
+                className="border-b border-border"
+                onMouseEnter={(e) => (e.currentTarget.style.background = "var(--secondary)")}
                 onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
               >
                 {/* Name */}
@@ -230,7 +230,7 @@ export function MacroManager({ macros, favs, onClose, onSaveMacro, onDeleteMacro
                         onToggleFav(m.id);
                       }}
                       style={{
-                        color: favs.includes(m.id) ? "#f59e0b" : "var(--text-3)",
+                        color: favs.includes(m.id) ? "#f59e0b" : "var(--foreground-3)",
                         opacity: favs.includes(m.id) ? 1 : 0.4,
                       }}
                       className="bg-none border-none flex p-0.5 shrink-0 transition-opacity duration-150"
@@ -239,7 +239,7 @@ export function MacroManager({ macros, favs, onClose, onSaveMacro, onDeleteMacro
                     >
                       <Star size={13} fill={favs.includes(m.id) ? "#f59e0b" : "none"} stroke={favs.includes(m.id) ? "#f59e0b" : "currentColor"} />
                     </button>
-                    <button onClick={() => setEditing(m)} className="bg-none border-none font-[inherit] text-left p-0 text-(--text-1) text-[13px] font-medium">
+                    <button onClick={() => setEditing(m)} className="bg-none border-none font-[inherit] text-left p-0 text-foreground text-[13px] font-medium">
                       {m.name}
                     </button>
                   </div>
@@ -248,45 +248,45 @@ export function MacroManager({ macros, favs, onClose, onSaveMacro, onDeleteMacro
                 <td className="py-3 pr-3 pl-0">
                   <div className="flex gap-1 flex-wrap">
                     {(m.tags || []).map((t) => (
-                      <span key={t} className="text-[10px] font-semibold py-0.5 px-[7px] rounded bg-(--bg-surface-2) text-(--text-2) border border-(--border)">
+                      <span key={t} className="text-[10px] font-semibold py-0.5 px-[7px] rounded bg-secondary text-foreground-2 border border-border">
                         {t}
                       </span>
                     ))}
                   </div>
                 </td>
                 {/* Language */}
-                <td className="py-3 pr-3 pl-0 text-[12.5px] text-(--text-2)">{m.language || "English"}</td>
+                <td className="py-3 pr-3 pl-0 text-[12.5px] text-foreground-2">{m.language || "English"}</td>
                 {/* Usage */}
-                <td className="py-3 pr-3 pl-0 text-[12.5px] text-(--text-2)">{m.usageCount || 0}</td>
+                <td className="py-3 pr-3 pl-0 text-[12.5px] text-foreground-2">{m.usageCount || 0}</td>
                 {/* Updated */}
-                <td className="py-3 pr-3 pl-0 text-xs text-(--text-3)">{fmtDate(m.updatedAt)}</td>
+                <td className="py-3 pr-3 pl-0 text-xs text-muted-foreground">{fmtDate(m.updatedAt)}</td>
                 {/* Actions */}
                 <td className="py-3 pl-0 text-right">
                   <div className="flex items-center gap-1 justify-end">
                     <button
                       onClick={() => setEditing(m)}
                       title="Edit"
-                      className="bg-none border-none text-(--text-3) flex p-1 rounded-[5px] transition-colors duration-150 hover:text-(--text-1)"
-                      onMouseEnter={(e) => (e.currentTarget.style.color = "var(--text-1)")}
-                      onMouseLeave={(e) => (e.currentTarget.style.color = "var(--text-3)")}
+                      className="bg-none border-none text-muted-foreground flex p-1 rounded-[5px] transition-colors duration-150 hover:text-foreground"
+                      onMouseEnter={(e) => (e.currentTarget.style.color = "var(--foreground)")}
+                      onMouseLeave={(e) => (e.currentTarget.style.color = "var(--foreground-3)")}
                     >
                       <SquarePen size={14} />
                     </button>
                     <button
                       onClick={() => handleArchive(m)}
                       title={m.archived ? "Unarchive" : "Archive"}
-                      className="bg-none border-none text-(--text-3) flex p-1 rounded-[5px] transition-colors duration-150 hover:text-(--text-1)"
-                      onMouseEnter={(e) => (e.currentTarget.style.color = "var(--text-1)")}
-                      onMouseLeave={(e) => (e.currentTarget.style.color = "var(--text-3)")}
+                      className="bg-none border-none text-muted-foreground flex p-1 rounded-[5px] transition-colors duration-150 hover:text-foreground"
+                      onMouseEnter={(e) => (e.currentTarget.style.color = "var(--foreground)")}
+                      onMouseLeave={(e) => (e.currentTarget.style.color = "var(--foreground-3)")}
                     >
                       <Archive size={14} />
                     </button>
                     <button
                       onClick={() => handleDelete(m.id)}
                       title="Delete"
-                      className="bg-none border-none text-(--text-3) flex p-1 rounded-[5px] transition-colors duration-150 hover:text-(--danger)"
-                      onMouseEnter={(e) => (e.currentTarget.style.color = "var(--danger)")}
-                      onMouseLeave={(e) => (e.currentTarget.style.color = "var(--text-3)")}
+                      className="bg-none border-none text-muted-foreground flex p-1 rounded-[5px] transition-colors duration-150 hover:text-destructive"
+                      onMouseEnter={(e) => (e.currentTarget.style.color = "var(--destructive)")}
+                      onMouseLeave={(e) => (e.currentTarget.style.color = "var(--foreground-3)")}
                     >
                       <Trash2 size={14} />
                     </button>

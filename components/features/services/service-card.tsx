@@ -34,17 +34,17 @@ export function ServiceCard({ svc, index, onRequest }: ServiceCardProps) {
       )}
 
       {/* Icon */}
-      <div className="w-10 h-10 rounded-[10px] flex items-center justify-center mb-4 bg-[rgba(161,117,252,0.08)]">
-        <Icon className="size-5 text-[#6B5E7B]" strokeWidth={1.75} />
+      <div className="w-10 h-10 rounded-[10px] flex items-center justify-center mb-4 bg-primary/8">
+        <Icon className="size-5 text-muted-foreground" strokeWidth={1.75} />
       </div>
 
       {/* Title */}
-      <h2 className="text-[17px] font-bold text-[#0F0F10] tracking-[-0.01em] mb-2">
+      <h2 className="text-[17px] font-bold text-foreground tracking-[-0.01em] mb-2">
         {svc.title}
       </h2>
 
       {/* Description */}
-      <p className="text-[13px] text-[#6B7280] leading-relaxed mb-4 flex-1">
+      <p className="text-[13px] text-muted-foreground leading-relaxed mb-4 flex-1">
         {svc.description}
       </p>
 
@@ -52,8 +52,8 @@ export function ServiceCard({ svc, index, onRequest }: ServiceCardProps) {
       <div className="flex flex-col">
         {svc.features.map((f) => (
           <div key={f} className="flex items-center gap-2 mb-1.5">
-            <Check className="size-3.5 text-[#9B91A8] shrink-0" strokeWidth={2.5} />
-            <span className="text-[13px] text-[#374151]">{f}</span>
+            <Check className="size-3.5 text-foreground-4 shrink-0" strokeWidth={2.5} />
+            <span className="text-[13px] text-foreground-2">{f}</span>
           </div>
         ))}
       </div>

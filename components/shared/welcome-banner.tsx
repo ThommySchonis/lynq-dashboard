@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { supabase } from "@/lib/supabase";
+import { useAuthStore } from "@/stores/auth";
 import { Button } from "@/components/ui/button";
 
 interface WelcomeBannerProps {
@@ -17,9 +17,7 @@ export function WelcomeBanner({ firstName, onDismissed }: WelcomeBannerProps) {
     if (dismissing) return;
     setDismissing(true);
     try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+      const session = useAuthStore.getState().session;
       if (!session) return;
       await fetch("/api/profile", {
         method: "PATCH",
@@ -36,9 +34,9 @@ export function WelcomeBanner({ firstName, onDismissed }: WelcomeBannerProps) {
   }
 
   return (
-    <div className="relative z-5 mx-6 mt-4 flex flex-wrap items-center gap-4 rounded-xl border border-[#A175FC]/20 bg-gradient-to-br from-[#A175FC]/10 to-indigo-500/6 p-4 px-5 shadow-[0_1px_2px_rgba(28,15,54,0.04)]">
+    <div className="relative z-5 mx-6 mt-4 flex flex-wrap items-center gap-4 rounded-xl border border-primary/20 bg-gradient-to-br from-primary/10 to-indigo-500/6 p-4 px-5 shadow-[0_1px_2px_rgba(28,15,54,0.04)]">
       <div className="min-w-0 flex-[1_1_320px]">
-        <div className="mb-1 text-sm font-semibold -tracking-[0.01em] text-[#1C0F36]">
+        <div className="mb-1 text-sm font-semibold -tracking-[0.01em] text-foreground">
           Welcome to Lynq &amp; Flow{firstName ? `, ${firstName}` : ""}
         </div>
         <div className="text-[13px] leading-normal text-[#6B5E7B]">
@@ -47,13 +45,13 @@ export function WelcomeBanner({ firstName, onDismissed }: WelcomeBannerProps) {
         </div>
       </div>
       <div className="flex flex-wrap items-center gap-2">
-        <Button size="sm" className="bg-[#A175FC] text-white hover:bg-[#8B5CF6]" render={<Link href="/settings/integrations/email" />}>
+        <Button size="sm" className="bg-primary text-white hover:bg-[#8B5CF6]" render={<Link href="/settings/integrations/email" />}>
           Connect Gmail
         </Button>
-        <Button size="sm" className="bg-[#A175FC] text-white hover:bg-[#8B5CF6]" render={<Link href="/settings/integrations/email" />}>
+        <Button size="sm" className="bg-primary text-white hover:bg-[#8B5CF6]" render={<Link href="/settings/integrations/email" />}>
           Connect Outlook
         </Button>
-        <Button size="sm" className="bg-[#A175FC] text-white hover:bg-[#8B5CF6]" render={<Link href="/settings/integrations/shopify" />}>
+        <Button size="sm" className="bg-primary text-white hover:bg-[#8B5CF6]" render={<Link href="/settings/integrations/shopify" />}>
           Connect Shopify
         </Button>
         <button

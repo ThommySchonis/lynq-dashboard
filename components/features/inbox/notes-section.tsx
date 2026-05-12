@@ -48,7 +48,7 @@ export function NotesSection() {
           <Button
             variant="ghost"
             onClick={() => setShowNotes((v) => !v)}
-            className="flex items-center gap-1.5 text-(--text-3) text-[11px] font-bold tracking-[.06em] uppercase py-1.5 px-0 font-inherit"
+            className="flex items-center gap-1.5 text-muted-foreground text-[11px] font-bold tracking-[.06em] uppercase py-1.5 px-0 font-inherit"
           >
             <span className="flex">
               <FileText size={12} />
@@ -60,10 +60,10 @@ export function NotesSection() {
             notes.map((note: Note, ni: number) => (
               <div key={note.id || ni} className="mb-3" style={{ animation: 'msgIn .3s cubic-bezier(.16,1,.3,1) both' }}>
                 <div className="text-xs mb-[5px]">
-                  <span className="text-[10.5px] text-(--text-2) font-bold tracking-[.01em] text-[rgba(251,191,36,0.75)]">Note</span>
-                  <span className="text-[10px] text-(--text-3) ml-[7px] font-normal">{formatDate(note.created_at)}</span>
+                  <span className="text-[10.5px] text-foreground-2 font-bold tracking-[.01em] text-[rgba(251,191,36,0.75)]">Note</span>
+                  <span className="text-[10px] text-muted-foreground ml-[7px] font-normal">{formatDate(note.created_at)}</span>
                 </div>
-                <div className="msg-note">
+                <div className="bg-[#FFFBEB] border border-[#FDE68A] border-l-[3px] border-l-[#F59E0B] rounded-[2px_14px_14px_14px] px-[18px] py-[14px] text-[13.5px] leading-[1.75] text-[#0F172A] whitespace-pre-wrap break-words dark:bg-[rgba(251,191,36,0.08)] dark:border-[rgba(251,191,36,0.2)] dark:border-l-[rgba(251,191,36,0.5)] dark:text-(--foreground)">
                   <div className="text-[10px] font-bold text-[rgba(251,191,36,0.75)] tracking-[.07em] uppercase mb-[7px]">Internal note</div>
                   {note.body}
                 </div>
@@ -81,7 +81,7 @@ export function NotesSection() {
             if (e.key === 'Enter' && !e.shiftKey) handleAddNote()
           }}
           placeholder="Add an internal note..."
-          className="flex-1 px-3 py-2 border border-[#FDE68A] rounded-lg text-[12.5px] text-(--text-1) bg-[rgba(251,191,36,0.04)] font-inherit outline-none transition-[border-color] duration-200"
+          className="flex-1 px-3 py-2 border border-[#FDE68A] rounded-lg text-[12.5px] text-foreground bg-[rgba(251,191,36,0.04)] font-inherit outline-none transition-[border-color] duration-200"
         />
         <Button
           variant="outline"

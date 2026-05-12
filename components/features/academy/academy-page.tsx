@@ -3,8 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronRight, Award } from 'lucide-react'
-import { supabase } from '@/lib/supabase'
-import { Sidebar } from '@/components/layout/sidebar'
+import { useAuthStore } from '@/stores/auth'
 import { MODULES, EASE, readKey } from '@/lib/academy-constants'
 import { useAcademyUI } from '@/stores/academy-ui'
 import { AcademySidebar } from './academy-sidebar'
@@ -24,6 +23,10 @@ export function AcademyPage() {
   const [passedTypes, setPassedTypes] = useState<string[]>([])
   const [readMap, setReadMap] = useState<Record<string, boolean>>({})
 
+  const storeSession = useAuthStore((s) => s.session)
+  const storeUser = useAuthStore((s) => s.user)
+  const isLoading = useAuthStore((s) => s.isLoading)
+
   const { view, selectedModuleId, selectedLesson, setView, selectModule, selectLesson, reset } =
     useAcademyUI()
 
@@ -40,29 +43,36 @@ export function AcademyPage() {
       }),
     )
     setReadMap(map)
-
-    supabase.auth.getSession().then(async ({ data: { session: s } }) => {
-      if (!s) {
-        window.location.href = '/login'
-        return
-      }
-      setSession(s as unknown as Record<string, unknown>)
-      const meta = (s.user.user_metadata || {}) as Record<string, string>
-      const raw = (s.user.email || '').split('@')[0]
-      setUserName(meta.full_name || meta.name || raw.charAt(0).toUpperCase() + raw.slice(1))
-
-      const resultRes = await fetch('/api/exams/result', {
-        headers: { Authorization: `Bearer ${s.access_token}` },
-      })
-      const resultData = await resultRes.json()
-      const submissions = (resultData.submissions || resultData || []) as Array<{
-        passed: boolean
-        exam_type: string
-      }>
-      const passed = [...new Set(submissions.filter((s) => s.passed).map((s) => s.exam_type))]
-      setPassedTypes(passed)
-    })
   }, [])
+
+  useEffect(() => {
+    if (isLoading) return
+    if (!storeSession || !storeUser) {
+      window.location.href = '/login'
+      return
+    }
+
+    // Set session for downstream use (double-cast is tech debt)
+    setSession(storeSession as unknown as Record<string, unknown>)
+    const meta = (storeUser.user_metadata || {}) as Record<string, string>
+    const raw = (storeUser.email || '').split('@')[0]
+    setUserName(meta.full_name || meta.name || raw.charAt(0).toUpperCase() + raw.slice(1))
+
+    // Keep existing API call logic but use storeSession.access_token
+    const token = storeSession.access_token
+    fetch('/api/exams/result', {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((r) => r.json())
+      .then((resultData) => {
+        const submissions = (resultData.submissions || resultData || []) as Array<{
+          passed: boolean
+          exam_type: string
+        }>
+        const passed = [...new Set(submissions.filter((s) => s.passed).map((s) => s.exam_type))]
+        setPassedTypes(passed)
+      })
+  }, [isLoading, storeSession, storeUser])
 
   const markRead = useCallback(
     (moduleId: string, lessonIdx: number) => {
@@ -111,9 +121,7 @@ export function AcademyPage() {
   const allDone = MODULES.every((m) => passedTypes.includes(m.examType))
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[#F9F9FB]">
-      <Sidebar />
-
+      <div className="flex h-screen overflow-hidden bg-[#F9F9FB]">
       <AcademySidebar passedTypes={passedTypes} readMap={readMap} isAdmin={isAdmin} />
 
       {/* Main area */}
@@ -128,7 +136,7 @@ export function AcademyPage() {
           onGoModule={() => setView('module')}
         />
 
-        <div className="ac-scroll flex-1 overflow-y-auto">
+        <div className="thin-scrollbar flex-1 overflow-y-auto">
           <AnimatePresence mode="wait">
             {view === 'welcome' && (
               <motion.div
@@ -243,10 +251,10 @@ export function AcademyPage() {
               <Award className="size-3.5 text-violet-500" />
             </div>
             <div className="flex-1">
-              <div className="text-[13px] font-semibold text-(--text-1)">
+              <div className="text-[13px] font-semibold text-foreground">
                 All modules completed!
               </div>
-              <div className="mt-0.5 text-xs text-(--text-3)">
+              <div className="mt-0.5 text-xs text-muted-foreground">
                 Click to view and download your certificate
               </div>
             </div>
@@ -254,6 +262,6 @@ export function AcademyPage() {
           </motion.div>
         )}
       </div>
-    </div>
+      </div>
   )
 }

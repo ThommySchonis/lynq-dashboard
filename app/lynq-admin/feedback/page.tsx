@@ -59,13 +59,13 @@ export default function LynqAdminFeedbackPage() {
   }, [submissions, filter, search])
 
   return (
-    <div className="flex-1 min-h-screen overflow-auto bg-[#F8F7FA] text-[#1C0F36]">
+    <div className="flex-1 min-h-screen overflow-auto bg-secondary text-foreground">
       <div className="min-h-screen">
         <main className="max-w-[1200px] mx-auto p-8">
           {/* Header */}
           <div className="border-b border-[#F0EDF4] pb-5 mb-6">
             <h1 className="text-[28px] font-semibold m-0 tracking-tight">Feedback</h1>
-            <p className="text-sm text-[#6B5E7B] mt-1.5 mb-0">
+            <p className="text-sm text-muted-foreground mt-1.5 mb-0">
               Bug reports and suggestions from customers.
             </p>
           </div>
@@ -82,12 +82,12 @@ export default function LynqAdminFeedbackPage() {
                     className={[
                       'h-9 px-3 rounded-lg text-[13px] inline-flex items-center gap-1.5 cursor-pointer border',
                       active
-                        ? 'bg-[#EDE5FE] border-[#A175FC] text-[#A175FC] font-medium'
-                        : 'bg-[#F8F7FA] border-[#E5E0EB] text-[#6B5E7B] font-normal',
+                        ? 'bg-primary/10 border-primary text-primary font-medium'
+                        : 'bg-secondary border-[#E5E0EB] text-muted-foreground font-normal',
                     ].join(' ')}
                   >
                     {label}
-                    <span className={['text-xs font-normal', active ? 'text-[#A175FC]' : 'text-[#9B91A8]'].join(' ')}>
+                    <span className={['text-xs font-normal', active ? 'text-primary' : 'text-foreground-4'].join(' ')}>
                       ({counts[key] || 0})
                     </span>
                   </button>
@@ -99,13 +99,13 @@ export default function LynqAdminFeedbackPage() {
               <Search
                 size={14}
                 strokeWidth={1.75}
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9B91A8] pointer-events-none z-10"
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-foreground-4 pointer-events-none z-10"
               />
               <Input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search messages..."
-                className="pl-[34px] h-9 rounded-lg border-[#E5E0EB] bg-[#F8F7FA] text-[13px] text-[#1C0F36]"
+                className="pl-[34px] h-9 rounded-lg border-[#E5E0EB] bg-secondary text-[13px] text-foreground"
               />
             </div>
           </div>
@@ -113,7 +113,7 @@ export default function LynqAdminFeedbackPage() {
           {/* Table */}
           <div className="bg-white rounded-xl border border-[#E5E0EB] overflow-hidden">
             {isLoading ? (
-              <div className="py-20 text-center text-[#9B91A8] text-[13px]">Loading…</div>
+              <div className="py-20 text-center text-foreground-4 text-[13px]">Loading…</div>
             ) : visible.length === 0 ? (
               <FeedbackEmptyState
                 hasFilter={filter !== 'all' || search.trim().length > 0}
@@ -122,7 +122,7 @@ export default function LynqAdminFeedbackPage() {
             ) : (
               <>
                 {/* Header row */}
-                <div className="grid gap-3 px-4 py-2.5 bg-[#F8F7FA] border-b border-[#F0EDF4] text-[11px] font-semibold tracking-[.08em] uppercase text-[#9B91A8]"
+                <div className="grid gap-3 px-4 py-2.5 bg-secondary border-b border-[#F0EDF4] text-[11px] font-semibold tracking-[.08em] uppercase text-foreground-4"
                   style={{ gridTemplateColumns: '110px 1fr 200px 160px 200px 110px' }}>
                   <div>Type</div>
                   <div>Message</div>

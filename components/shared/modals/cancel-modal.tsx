@@ -55,8 +55,8 @@ export function CancelModal({ order, token, onClose, onSuccess }: CancelModalPro
           <DialogTitle>{`Cancel order — ${order.name}`}</DialogTitle>
         </DialogHeader>
         <div className="mb-4">
-          <label className="text-[10.5px] font-bold tracking-[.07em] uppercase text-(--text-3) mb-[7px] block">Reason for cancellation</label>
-          <select className="w-full bg-(--bg-surface-2) border border-(--border) rounded-xl px-3.5 py-[11px] text-[13.5px] text-(--text-1) outline-none cursor-pointer" value={reason} onChange={(e) => setReason(e.target.value)}>
+          <label className="text-[10.5px] font-bold tracking-[.07em] uppercase text-muted-foreground mb-[7px] block">Reason for cancellation</label>
+          <select className="w-full bg-secondary border border-border rounded-xl px-3.5 py-[11px] text-[13.5px] text-foreground outline-none cursor-pointer" value={reason} onChange={(e) => setReason(e.target.value)}>
             {CANCEL_REASONS.map((r) => (
               <option key={r.value} value={r.value}>
                 {r.label}
@@ -67,15 +67,15 @@ export function CancelModal({ order, token, onClose, onSuccess }: CancelModalPro
         <div className="flex flex-col gap-3 mb-2">
           <label className="flex items-center gap-2.5 cursor-pointer select-none">
             <Checkbox checked={restock} onCheckedChange={() => setRestock((v) => !v)} />
-            <span className="text-[13px] text-(--text-2)">Restock items</span>
+            <span className="text-[13px] text-foreground-2">Restock items</span>
           </label>
           <label className="flex items-center gap-2.5 cursor-pointer select-none">
             <Checkbox checked={notify} onCheckedChange={() => setNotify((v) => !v)} />
-            <span className="text-[13px] text-(--text-2)">Notify customer</span>
+            <span className="text-[13px] text-foreground-2">Notify customer</span>
           </label>
           <label className="flex items-center gap-2.5 cursor-pointer select-none">
             <Checkbox checked={refund} onCheckedChange={() => setRefund((v) => !v)} />
-            <span className="text-[13px] text-(--text-2)">Refund payment</span>
+            <span className="text-[13px] text-foreground-2">Refund payment</span>
           </label>
         </div>
         <DialogFooter>

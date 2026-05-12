@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { supabase } from '../../lib/supabase'
+import { useAuthStore } from '@/stores/auth'
 import { EmptyState } from '@/components/shared/empty-state'
 import { Users } from 'lucide-react'
 
@@ -14,13 +14,14 @@ import { Users } from 'lucide-react'
 export default function PerformancePage() {
   const [mounted, setMounted] = useState(false)
   const router = useRouter()
+  const session = useAuthStore((s) => s.session)
+  const isLoading = useAuthStore((s) => s.isLoading)
+
+  useEffect(() => { setMounted(true) }, [])
 
   useEffect(() => {
-    setMounted(true)
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session) router.push('/login')
-    })
-  }, [router])
+    if (!isLoading && !session) router.push('/login')
+  }, [isLoading, session, router])
 
   if (!mounted) return null
 

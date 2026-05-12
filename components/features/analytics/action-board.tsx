@@ -76,7 +76,7 @@ export function ActionBoard({ patternActions, aiInsights, noRefunds, loaded, onS
       <div className="mb-6 rounded-xl border border-white/65 bg-white/80 p-[22px_24px] shadow-sm backdrop-blur-xl">
         <div className="mb-5 flex items-center gap-2.5">
           <Loader2 size={16} className="animate-spin text-gray-500" />
-          <div className="text-sm font-bold text-[var(--text-2)]">Analysing refund patterns...</div>
+          <div className="text-sm font-bold text-foreground-2">Analysing refund patterns...</div>
         </div>
         <div className="flex flex-col gap-2.5">
           {[0, 1, 2, 3].map(i => <Skeleton key={i} className="h-20 rounded-xl" />)}
@@ -89,7 +89,7 @@ export function ActionBoard({ patternActions, aiInsights, noRefunds, loaded, onS
   const TAB_LABELS: Record<string, string> = { open: 'Open', picked_up: 'Picked Up', done: 'Done' }
 
   return (
-    <div className="mb-6 animate-fade-in rounded-xl border border-white/65 bg-white/80 p-[22px_24px] shadow-sm backdrop-blur-xl transition-shadow duration-200 hover:shadow-lg">
+    <div className="mb-6 animate-fade-up rounded-xl border border-white/65 bg-white/80 p-[22px_24px] shadow-sm backdrop-blur-xl transition-shadow duration-200 hover:shadow-lg">
       {/* Header */}
       <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
         <div>
@@ -97,23 +97,23 @@ export function ActionBoard({ patternActions, aiInsights, noRefunds, loaded, onS
             {noRefunds
               ? <CheckCircle size={16} className="text-green-500" />
               : <Zap size={16} className="text-orange-500" />}
-            <span className="text-[15px] font-bold text-[var(--text-1)]">
+            <span className="text-[15px] font-bold text-foreground">
               {noRefunds ? 'No refunds — stay ahead' : 'Action Board'}
             </span>
             {!noRefunds && (
-              <span className="text-[11px] text-[var(--text-3)]">
+              <span className="text-[11px] text-muted-foreground">
                 — {allItems.length} action{allItems.length !== 1 ? 's' : ''}
                 {patternActions.length > 0 && ` \u00B7 ${patternActions.length} pattern-detected`}
               </span>
             )}
           </div>
-          <div className="text-[11px] text-[var(--text-3)]">
+          <div className="text-[11px] text-muted-foreground">
             {noRefunds ? 'No refunds in this period — all clear' : 'Real-time tasks based on your refund data — assign to your team'}
           </div>
         </div>
         <div className="flex items-center gap-1.5">
           {usingFallback && (
-            <div className="rounded-full border border-[var(--border)] px-2.5 py-0.5 text-[10px] text-[var(--text-3)]">Local only</div>
+            <div className="rounded-full border border-[var(--border)] px-2.5 py-0.5 text-[10px] text-muted-foreground">Local only</div>
           )}
           {!noRefunds && TABS.map(tab => {
             const cnt = tab === 'open' ? openItems.length : tab === 'picked_up' ? pickupItems.length : doneItems.length
@@ -157,7 +157,7 @@ export function ActionBoard({ patternActions, aiInsights, noRefunds, loaded, onS
           {activeTab === 'done'
             ? <CheckCircle size={32} className="mx-auto mb-2.5 text-green-700/35" />
             : <CircleAlert size={32} className="mx-auto mb-2.5 text-gray-300" />}
-          <div className="text-[13px] text-[var(--text-3)]">
+          <div className="text-[13px] text-muted-foreground">
             {activeTab === 'open'
               ? 'All actions picked up or done'
               : activeTab === 'picked_up'
@@ -202,8 +202,8 @@ export function ActionBoard({ patternActions, aiInsights, noRefunds, loaded, onS
                     {'action' in item ? item.action : 'body' in item ? item.body : ''}
                   </div>
                   {status === 'picked_up' && st.pickedUpBy && (
-                    <div className="mb-2 text-[11px] text-[var(--text-3)]">
-                      Picked up by <strong className="text-[var(--text-2)]">{st.pickedUpBy}</strong>
+                    <div className="mb-2 text-[11px] text-muted-foreground">
+                      Picked up by <strong className="text-foreground-2">{st.pickedUpBy}</strong>
                     </div>
                   )}
                   {isDone && (

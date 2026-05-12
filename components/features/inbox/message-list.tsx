@@ -56,17 +56,17 @@ export function MessageList({ msgEndRef }: MessageListProps) {
           >
             {!isNote && (
               <ShadAvatar className="shrink-0" style={{ width: 26, height: 26 }}>
-                <AvatarFallback className={isAgent ? 'bg-(--text-1) text-white' : 'bg-[#F0F0F0] text-(--text-2)'} style={{ fontSize: 26 * 0.34 }}>
+                <AvatarFallback className={isAgent ? 'bg-foreground text-white' : 'bg-[#F0F0F0] text-foreground-2'} style={{ fontSize: 26 * 0.34 }}>
                   {ini}
                 </AvatarFallback>
               </ShadAvatar>
             )}
             <div className="max-w-[72%]">
               <div className={`text-xs mb-[5px] ${isAgent ? 'text-right' : 'text-left'}`}>
-                <span className="text-[10.5px] text-(--text-2) font-bold tracking-[.01em]">{name}</span>
-                <span className="text-[10px] text-(--text-3) ml-[7px] font-normal">{formatDate(msg.date)}</span>
+                <span className="text-[10.5px] text-foreground-2 font-bold tracking-[.01em]">{name}</span>
+                <span className="text-[10px] text-muted-foreground ml-[7px] font-normal">{formatDate(msg.date)}</span>
               </div>
-              <div className={isNote ? 'msg-note' : isAgent ? 'msg-out' : 'msg-in'}>
+              <div className={isNote ? 'bg-[#FFFBEB] border border-[#FDE68A] border-l-[3px] border-l-[#F59E0B] rounded-[2px_14px_14px_14px] px-[18px] py-[14px] text-[13.5px] leading-[1.75] text-[#0F172A] whitespace-pre-wrap break-words dark:bg-[rgba(251,191,36,0.08)] dark:border-[rgba(251,191,36,0.2)] dark:border-l-[rgba(251,191,36,0.5)] dark:text-(--foreground)' : isAgent ? 'bg-(--secondary) border border-[rgba(0,0,0,0.06)] rounded-[12px_4px_12px_12px] px-4 py-3 text-sm leading-[1.6] text-(--foreground) whitespace-pre-wrap break-words dark:bg-[rgba(255,255,255,0.06)] dark:border-[rgba(255,255,255,0.1)] dark:shadow-none dark:backdrop-blur-[12px]' : 'bg-(--card) border border-(--border) rounded-[4px_12px_12px_12px] px-4 py-3 text-sm leading-[1.6] text-(--foreground) whitespace-pre-wrap break-words dark:bg-[rgba(255,255,255,0.06)] dark:border-[rgba(255,255,255,0.1)] dark:shadow-none dark:backdrop-blur-[12px]'}>
                 {isNote && (
                   <div className="text-[10px] font-bold text-[rgba(251,191,36,0.75)] tracking-[.07em] uppercase mb-[7px]">Internal note</div>
                 )}
@@ -99,17 +99,17 @@ export function MessageList({ msgEndRef }: MessageListProps) {
               {!isAgent && !isNote && (
                 <div className="text-left mt-1">
                   {msgTranslations[msg.id] === '__loading__' ? (
-                    <span className="text-[10px] text-(--text-3)">Translating…</span>
+                    <span className="text-[10px] text-muted-foreground">Translating…</span>
                   ) : msgTranslations[msg.id] ? (
                     <button
-                      className="text-[10px] font-semibold text-(--text-3) bg-transparent cursor-pointer px-[7px] py-[2px] rounded-[5px] transition-all hover:text-(--text-1) hover:bg-(--bg-surface-2)"
+                      className="text-[10px] font-semibold text-muted-foreground bg-transparent cursor-pointer px-[7px] py-[2px] rounded-[5px] transition-all hover:text-foreground hover:bg-secondary"
                       onClick={() => setTranslation(msg.id, undefined)}
                     >
                       Show original
                     </button>
                   ) : (
                     <button
-                      className="text-[10px] font-semibold text-(--text-3) bg-transparent cursor-pointer px-[7px] py-[2px] rounded-[5px] transition-all hover:text-(--text-1) hover:bg-(--bg-surface-2)"
+                      className="text-[10px] font-semibold text-muted-foreground bg-transparent cursor-pointer px-[7px] py-[2px] rounded-[5px] transition-all hover:text-foreground hover:bg-secondary"
                       onClick={() => translateMessage(msg.id, msg.body || msg.snippet || '', token)}
                     >
                       Translate

@@ -15,7 +15,7 @@ function SetupStep({ n, title, children }: { n: number; title: string; children:
         {n}
       </div>
       <div className="flex-1">
-        <p className="text-[13px] font-semibold text-(--text-1) mb-1">{title}</p>
+        <p className="text-[13px] font-semibold text-foreground mb-1">{title}</p>
         {children}
       </div>
     </div>
@@ -49,10 +49,10 @@ export function SetupWizard({ onConnected }: SetupWizardProps) {
         <Package className="w-7 h-7 text-[#555555]" strokeWidth={1.85} />
       </div>
 
-      <h2 className="text-[26px] font-extrabold tracking-[-0.04em] text-(--text-1) mb-2.5">
+      <h2 className="text-[26px] font-extrabold tracking-[-0.04em] text-foreground mb-2.5">
         Connect Parcel Panel
       </h2>
-      <p className="text-sm text-(--text-2) max-w-[440px] leading-[1.7] mb-7">
+      <p className="text-sm text-foreground-2 max-w-[440px] leading-[1.7] mb-7">
         Link your Parcel Panel account to automatically track all shipments and get proactive alerts.
       </p>
 
@@ -66,19 +66,19 @@ export function SetupWizard({ onConnected }: SetupWizardProps) {
 
       <div className="w-full max-w-[440px] text-left">
         {/* Steps */}
-        <div className="bg-(--bg-surface) border border-(--border) rounded-xl p-5 pb-1 mb-4">
-          <p className="text-[10px] font-bold text-[#9CA3AF] uppercase tracking-[.1em] mb-[18px]">
+        <div className="bg-card border border-border rounded-xl p-5 pb-1 mb-4">
+          <p className="text-[10px] font-bold text-foreground-4 uppercase tracking-[.1em] mb-[18px]">
             Setup instructions
           </p>
 
           <SetupStep n={1} title="Add your API key">
-            <p className="text-[12.5px] text-(--text-2) leading-[1.55]">
+            <p className="text-[12.5px] text-foreground-2 leading-[1.55]">
               Copy your API key from Parcel Panel &rarr; Settings &rarr; API and paste it below.
             </p>
           </SetupStep>
 
           <SetupStep n={2} title="Add the webhook URL in Parcel Panel">
-            <p className="text-[12.5px] text-(--text-2) leading-[1.55] mb-2">
+            <p className="text-[12.5px] text-foreground-2 leading-[1.55] mb-2">
               Go to Parcel Panel &rarr; Settings &rarr; Webhooks &rarr; Add webhook and enter this URL:
             </p>
             <div className="flex items-center gap-1.5 bg-[#F5F5F5] border border-[rgba(0,0,0,0.07)] rounded-lg py-2 px-2.5">
@@ -100,13 +100,13 @@ export function SetupWizard({ onConnected }: SetupWizardProps) {
           </SetupStep>
 
           <SetupStep n={3} title="Select all shipping status events">
-            <p className="text-[12.5px] text-(--text-2) leading-[1.55]">
+            <p className="text-[12.5px] text-foreground-2 leading-[1.55]">
               Enable all event types so every status update is sent to your dashboard.
             </p>
           </SetupStep>
 
           <SetupStep n={4} title="Confirm connection">
-            <p className="text-[12.5px] text-(--text-2) leading-[1.55]">
+            <p className="text-[12.5px] text-foreground-2 leading-[1.55]">
               Paste your API key below and click Connect to activate tracking.
             </p>
           </SetupStep>
@@ -119,7 +119,7 @@ export function SetupWizard({ onConnected }: SetupWizardProps) {
           onKeyDown={e => e.key === 'Enter' && handleConnect()}
           placeholder="Paste your Parcel Panel API key..."
           type="password"
-          className="w-full py-3 px-4 bg-(--bg-input) border border-(--border) rounded-[10px] text-(--text-1) text-sm font-[inherit] outline-none transition-colors duration-150 placeholder:text-(--text-3) focus:border-(--border-hover) focus:bg-(--bg-surface-2) mb-2.5"
+          className="w-full py-3 px-4 bg-input border border-border rounded-[10px] text-foreground text-sm font-[inherit] outline-none transition-colors duration-150 placeholder:text-muted-foreground focus:border-(--border-hover) focus:bg-secondary mb-2.5"
         />
 
         {/* Error */}

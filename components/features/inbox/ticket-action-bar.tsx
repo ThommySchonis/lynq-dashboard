@@ -11,18 +11,18 @@ export function TicketActionBar({ meta, status, onClose, onAddTag, onRemoveTag, 
   const fieldButton = (key: string, label: string) => (
     <button
       onClick={() => onFieldChange(key, label)}
-      className="inline-flex items-center gap-1 border-none bg-transparent p-0 text-[10.5px] text-(--text-3) font-[inherit]"
+      className="inline-flex items-center gap-1 border-none bg-transparent p-0 text-[10.5px] text-muted-foreground font-[inherit]"
     >
-      <span className="text-(--text-2) font-semibold">{label}:</span>
+      <span className="text-foreground-2 font-semibold">{label}:</span>
       <span>{meta[key] || "+Add"}</span>
     </button>
   );
 
   return (
-    <div className="flex items-center gap-2 pt-2 mt-[9px] border-t border-(--border) min-h-[42px] flex-wrap">
+    <div className="flex items-center gap-2 pt-2 mt-[9px] border-t border-border min-h-[42px] flex-wrap">
       <button
         onClick={onClose}
-        className="inline-flex items-center gap-[5px] h-[26px] px-2.5 border border-black/9 rounded-[5px] bg-[#FAFAFA] text-(--text-2) text-xs font-semibold font-[inherit]"
+        className="inline-flex items-center gap-[5px] h-[26px] px-2.5 border border-black/9 rounded-[5px] bg-[#FAFAFA] text-foreground-2 text-xs font-semibold font-[inherit]"
         title="Close ticket"
       >
         <span className="text-xs">✓</span>
@@ -35,13 +35,13 @@ export function TicketActionBar({ meta, status, onClose, onAddTag, onRemoveTag, 
             key={tag}
             onClick={() => onRemoveTag(tag)}
             title="Remove tag"
-            className="inline-flex items-center gap-1 h-[22px] px-2 border border-black/9 rounded-full bg-[#F5F5F5] text-(--text-2) text-[11px] font-medium font-[inherit]"
+            className="inline-flex items-center gap-1 h-[22px] px-2 border border-black/9 rounded-full bg-[#F5F5F5] text-foreground-2 text-[11px] font-medium font-[inherit]"
           >
             {tag}
-            <span className="text-(--text-3)">×</span>
+            <span className="text-muted-foreground">×</span>
           </button>
         ))}
-        <button onClick={onAddTag} className="border-none bg-transparent text-[10.5px] text-(--text-3) font-[inherit] p-0">
+        <button onClick={onAddTag} className="border-none bg-transparent text-[10.5px] text-muted-foreground font-[inherit] p-0">
           +Add tag
         </button>
       </div>
@@ -55,7 +55,7 @@ export function TicketActionBar({ meta, status, onClose, onAddTag, onRemoveTag, 
       <select
         value={meta.assignee || "Unassigned"}
         onChange={(e) => onFieldChange("assignee", e.target.value)}
-        className="ml-auto border border-(--border) rounded-lg bg-(--bg-surface) text-(--text-2) text-[11px] py-1 px-2 font-[inherit] outline-none"
+        className="ml-auto border border-border rounded-lg bg-card text-foreground-2 text-[11px] py-1 px-2 font-[inherit] outline-none"
       >
         <option>Unassigned</option>
         <option>Support</option>

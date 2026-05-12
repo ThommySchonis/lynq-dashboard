@@ -6,7 +6,7 @@ interface FeedEmptyStateProps {
 export function FeedEmptyState({ hasFilter, onClear }: FeedEmptyStateProps) {
   return (
     <div
-      className="vf-fade px-6 py-[72px] text-center"
+      className="opacity-0 animate-fade-up-quick motion-reduce:opacity-100 motion-reduce:animate-none px-6 py-[72px] text-center"
       style={{ animationDelay: '700ms' }}
     >
       <div className="mb-1.5 text-base font-semibold text-[#0A0612]">

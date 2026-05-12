@@ -26,7 +26,7 @@ export function AppShell({ children }: AppShellProps) {
 
   if (isMobile) {
     return (
-      <div className="min-h-screen bg-[var(--bg-page)]">
+      <div className="min-h-screen bg-background">
         <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
           <SheetTrigger
             render={
@@ -50,7 +50,7 @@ export function AppShell({ children }: AppShellProps) {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--bg-page)]">
+    <div className="min-h-screen bg-background">
       <Sidebar />
       <main
         className={cn(

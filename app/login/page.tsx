@@ -37,7 +37,7 @@ export default function LoginPage() {
       {HEADLINE_WORDS.map((word, i) => (
         <span
           key={word}
-          className="inline-block opacity-0 animate-[wordReveal_800ms_cubic-bezier(0.16,1,0.3,1)_forwards] will-change-[opacity,transform,filter]"
+          className="inline-block opacity-0 animate-word-reveal will-change-[opacity,transform,filter] motion-reduce:opacity-100 motion-reduce:animate-none"
           style={{ animationDelay: `${i * WORD_REVEAL_DELAY_MS}ms` }}
         >
           {word}
@@ -66,7 +66,7 @@ export default function LoginPage() {
       footer={footer}
     >
       <form onSubmit={handleSubmit} autoComplete="on" noValidate>
-        <div className="login-fade login-d-5">
+        <div className="opacity-0 animate-fade-up motion-reduce:opacity-100 motion-reduce:animate-none delay-[400ms]">
           <FloatField
             id="email"
             label="Email"
@@ -78,7 +78,7 @@ export default function LoginPage() {
           />
         </div>
 
-        <div className="login-fade login-d-6 mt-3">
+        <div className="opacity-0 animate-fade-up motion-reduce:opacity-100 motion-reduce:animate-none delay-[480ms] mt-3">
           <PasswordField
             id="password"
             value={password}
@@ -105,7 +105,7 @@ export default function LoginPage() {
           </div>
         )}
 
-        <div className="login-fade login-d-7 mt-6">
+        <div className="opacity-0 animate-fade-up motion-reduce:opacity-100 motion-reduce:animate-none delay-[560ms] mt-6">
           <button
             type="submit"
             disabled={signIn.isPending}

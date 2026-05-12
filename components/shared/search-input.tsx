@@ -41,7 +41,7 @@ export function SearchInput({
 
   return (
     <div className={cn('relative', className)}>
-      <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-4)]" />
+      <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-foreground-4" />
       <Input
         value={internal}
         onChange={(e) => setInternal(e.target.value)}
@@ -51,7 +51,7 @@ export function SearchInput({
       {internal && (
         <button
           onClick={() => { setInternal(''); onChange('') }}
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-4)] hover:text-[var(--text-2)]"
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-foreground-4 hover:text-foreground-2"
         >
           <X size={14} />
         </button>

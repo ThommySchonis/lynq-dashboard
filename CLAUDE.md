@@ -14,13 +14,31 @@ Een client dashboard platform voor Lynq & Flow agency. Elke klant krijgt een eig
 - **Repo:** github.com/ThommySchonis/lynq-dashboard
 - **Dashboard UI:** Static HTML in /public/dashboard.html (prototype: /Users/thommy.schonisziggo.nl/agency-dashboard/dashboard_prototype.html)
 
-## Design
+## Design System
 
-- Achtergrond: `#1C0F36`
-- Surface: `#241352`
-- Accent: `#A175FC`
-- Font: Rethink Sans
-- Border: `rgba(255,255,255,0.07)`
+All design tokens live in `app/globals.css` as CSS variables and are mapped to Tailwind via `@theme inline`. Colors use shadcn naming convention (hex/rgba, not oklch).
+
+### Token Architecture
+
+- **Standard shadcn tokens** (`--background`, `--foreground`, `--card`, `--primary`, `--secondary`, `--muted`, `--destructive`, `--border`, `--input`, `--ring`) — used via Tailwind classes: `bg-background`, `text-foreground`, `bg-primary`, etc.
+- **Semantic extensions** (`--foreground-2`, `--foreground-3`, `--foreground-4`, `--success`, `--warning`, `--info`, `--border-hover`, `--accent-soft`, `--shadow-card`, `--skeleton-from`, etc.) — used via `text-foreground-2`, `bg-success`, `hover:border-border-hover`, etc.
+- **Light/dark mode** — `:root` (light) and `.dark` (dark) blocks. Dark mode toggled via `.dark` class on `<html>`, **not** `[data-theme="dark"]`.
+
+### Key Colors
+
+| Token | Light | Dark | Usage |
+|-------|-------|------|-------|
+| `--background` | `#F9F8FF` | `#1C0F36` | Page background |
+| `--card` | `#FFFFFF` | `#241352` | Card/surface background |
+| `--primary` | `#8B5CF6` | `#A175FC` | Brand accent (purple) |
+| `--foreground` | `#0F0F10` | `#F8FAFC` | Primary text |
+| `--border` | `rgba(0,0,0,0.07)` | `rgba(255,255,255,0.07)` | Borders |
+
+### Fonts
+
+- **Body:** Switzer (loaded via Fontshare CDN, mapped to `font-sans` in Tailwind theme)
+- **Display:** Instrument Serif (loaded via `next/font/google`, variable `--font-display`)
+- **Value Feed:** DM Sans (loaded via `next/font/google`, variable `--font-dm-sans`)
 
 ## Bestandsstructuur
 
@@ -247,9 +265,13 @@ These rules apply to all new features, components, and refactoring work on the f
 ### 3. Use Tailwind classes and shadcn components — no inline style objects
 
 - **Never** use `style={{...}}` for static styling. Use Tailwind utility classes instead.
-- `style={{}}` is only acceptable for truly dynamic values computed from JS variables.
+- `style={{}}` is only acceptable for truly dynamic values computed from JS variables (e.g., animation delays, complex decorative gradients).
 - **Never** inject CSS via `<style dangerouslySetInnerHTML>` or `const CSS = \`...\``. Move styles to `globals.css` or use Tailwind.
-- Colors must reference CSS variables from the design system: `text-(--text-1)`, `bg-(--bg-surface)`, `border-(--border)`, or shadcn semantic classes (`text-foreground`, `bg-card`, `bg-muted`, etc.).
+- **Never** define custom CSS classes in `globals.css` for component styling. All styling must be inline Tailwind utilities in component `className` props. The only CSS classes in `globals.css` are pseudo-element selectors that Tailwind can't express (`::-webkit-scrollbar`, `[contenteditable]:empty:before`, `input:-webkit-autofill`, sibling selectors).
+- Colors must use shadcn Tailwind token classes: `text-foreground`, `bg-card`, `bg-primary`, `text-muted-foreground`, `border-border`, `bg-secondary`, etc.
+- For semantic extension tokens: `text-foreground-2`, `text-foreground-3`, `text-foreground-4`, `bg-success`, `bg-warning`, `hover:border-border-hover`, `bg-accent-soft`, etc.
+- **Never** use old token names: `--bg-page`, `--bg-surface`, `--text-1`, `--text-2`, `--text-3`, `--text-4`, `--error`, `--danger`. These have been removed.
+- **Never** hardcode hex colors that map to design tokens. Use `bg-primary` instead of `bg-[#A175FC]`, `text-foreground` instead of `text-[#0F0F10]`, etc. Hardcoded hex is only acceptable for decorative one-offs (confetti, SVG strokes, unique gradients).
 
 ### 4. Keep components small and focused
 
@@ -274,8 +296,13 @@ These rules apply to all new features, components, and refactoring work on the f
 ### 7. Prefer Tailwind theme over globals.css
 
 - Configure colors, spacing, and design tokens in the Tailwind theme (via `globals.css` CSS variables + `@theme inline` block).
-- Only use `globals.css` for styles that genuinely can't be expressed with Tailwind: complex pseudo-selectors (`::-webkit-scrollbar`, `[contenteditable]:empty:before`), parent-hover interactions, keyframe animations, and dark mode variants that need `[data-theme="dark"]`.
+- `globals.css` structure: imports → `:root` tokens → `.dark` tokens → `@layer base` → pseudo-element selectors → `@theme inline` → `@keyframes`. Nothing else.
+- Only use `globals.css` for styles that genuinely can't be expressed with Tailwind: pseudo-element selectors (`::-webkit-scrollbar`, `[contenteditable]:empty:before`, `input:-webkit-autofill`), sibling selectors (`.float-field ~ .float-label`), and `@keyframes` definitions.
+- **Never** add custom utility classes to `globals.css`. All component styling must be inline Tailwind in `className`.
 - **Never** add element-level resets (`* {}`, `button {}`, `input {}`) outside `@layer base` — they override Tailwind utilities.
+- Dark mode uses `.dark` class on `<html>` (Tailwind-native). Use `dark:` prefix in components. **Never** use `[data-theme="dark"]` selectors.
+- New animations: define `@keyframes` in `globals.css` and register in `@theme inline` as `--animate-<name>`. Use as `animate-<name>` in components.
+- `motion-reduce:` variant must be applied to any element with `opacity-0` + animation to respect `prefers-reduced-motion`.
 
 ### 8. Use Zustand for UI state, TanStack for server state
 

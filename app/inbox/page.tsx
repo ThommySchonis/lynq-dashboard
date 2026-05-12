@@ -24,7 +24,6 @@ import { useMacrosStore } from "../../stores/macros";
 import { useInboxUI } from "../../stores/inbox-ui";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Mail } from "lucide-react";
-import { Sidebar } from "@/components/layout/sidebar";
 
 // ─── Main page ────────────────────────────────────────────────
 function InboxPage() {
@@ -104,7 +103,8 @@ function InboxPage() {
     if (selectedThread.snippet) {
       _detectLanguage(selectedThread.snippet, token);
     }
-  }, [selectedThreadId, selectedThread, token, aiMacrosMutation, _setAiMacros, _detectLanguage]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedThreadId, selectedThread, token]);
 
   // ── Sorted threads for keyboard nav ──
   const sortedFiltered = useMemo(() => {
@@ -150,17 +150,15 @@ function InboxPage() {
 
   // ── Render ──
   return (
-    <div className="ir in-bg flex h-screen overflow-hidden relative">
-      {/* ── Aurora background ── */}
-      <div aria-hidden className="absolute inset-0 overflow-hidden pointer-events-none z-0">
-        <div className="in-al1" />
-        <div className="in-al4" />
-        <div className="in-al6" />
-        <div className="in-grid" />
-        <div className="in-vig" />
-      </div>
-
-      <Sidebar />
+      <div className="flex h-screen overflow-hidden relative bg-background dark:bg-[#0A0520] [font-family:'Switzer',-apple-system,BlinkMacSystemFont,sans-serif] antialiased [&_*]:box-border [&_input]:font-[inherit] [&_textarea]:font-[inherit] [&_select]:font-[inherit] [&_button:focus-visible]:outline-2 [&_button:focus-visible]:outline-[rgba(17,17,17,0.45)] [&_button:focus-visible]:outline-offset-2 [&_button:focus-visible]:rounded-md [&_a:focus-visible]:outline-2 [&_a:focus-visible]:outline-[rgba(17,17,17,0.45)] [&_a:focus-visible]:outline-offset-2 [&_a:focus-visible]:rounded-md [&_input:focus-visible]:outline-none [&_textarea:focus-visible]:outline-none [&_[contenteditable]:focus-visible]:outline-none">
+        {/* ── Aurora background ── */}
+        <div aria-hidden className="absolute inset-0 overflow-hidden pointer-events-none z-0">
+          <div className="hidden dark:block absolute rounded-full animate-aurora-a" style={{ top: '-25%', left: '12%', width: 1000, height: 900, background: 'radial-gradient(ellipse,rgba(161,117,252,0.62) 0%,rgba(124,58,237,0.32) 38%,rgba(109,40,217,0.1) 60%,transparent 74%)', filter: 'blur(55px)' }} />
+          <div className="hidden dark:block absolute rounded-full animate-aurora-d" style={{ top: '2%', left: '3%', width: 420, height: 420, background: 'radial-gradient(ellipse,rgba(139,92,246,0.55) 0%,rgba(109,40,217,0.22) 50%,transparent 72%)', filter: 'blur(42px)' }} />
+          <div className="hidden dark:block absolute rounded-full animate-aurora-b" style={{ bottom: '10%', left: '30%', width: 500, height: 500, background: 'radial-gradient(ellipse,rgba(107,63,196,0.38) 0%,rgba(75,40,148,0.14) 48%,transparent 70%)', filter: 'blur(58px)', animationDirection: 'reverse' }} />
+          <div className="hidden dark:block absolute inset-0" style={{ backgroundImage: 'linear-gradient(rgba(255,255,255,0.018) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.018) 1px,transparent 1px)', backgroundSize: '72px 72px' }} />
+          <div className="absolute inset-0 dark:bg-[radial-gradient(ellipse_115%_105%_at_50%_50%,transparent_32%,rgba(10,5,32,0.42)_70%,rgba(10,5,32,0.82)_100%)]" />
+        </div>
 
       <ThreadListPanel />
 
@@ -193,7 +191,7 @@ function InboxPage() {
           onToggleFav={_toggleMacroFav}
         />
       )}
-    </div>
+      </div>
   );
 }
 

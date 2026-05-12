@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { toast } from 'sonner'
-import { User, Mail, Phone, MapPin, Package, DollarSign, Calendar, Search } from 'lucide-react'
+import { User, Phone, Search } from 'lucide-react'
 
 import { useInboxStore } from '@/stores/inbox'
 import { useInbox } from '@/hooks/inbox/use-inbox'
@@ -13,10 +13,11 @@ import { SearchInput } from '@/components/shared/search-input'
 import { LoadingState } from '@/components/shared/loading-state'
 import { EmptyState } from '@/components/shared/empty-state'
 
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Separator } from '@/components/ui/separator'
-import { Badge } from '@/components/ui/badge'
+
+import { CustomerCard } from '@/components/features/inbox/customer-card'
+import { CustomerStatsGrid } from '@/components/features/inbox/customer-stats-grid'
 
 // ── Local types mirroring the camelCase shape returned by /api/shopify/customer ──
 
@@ -86,12 +87,6 @@ interface CustomerResponse {
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
-
-function getInitials(first?: string, last?: string): string {
-  const f = (first?.[0] ?? '').toUpperCase()
-  const l = (last?.[0] ?? '').toUpperCase()
-  return (f + l) || '?'
-}
 
 function fullName(first?: string, last?: string): string {
   return [first, last].filter(Boolean).join(' ') || 'Unknown customer'
@@ -344,108 +339,26 @@ export function CustomerPanel() {
         {!loadingCustomer && cust && (
           <div className="space-y-0">
             {/* Customer card */}
-            <div className="px-4 py-4 space-y-3">
-              <div className="flex items-center gap-3">
-                <Avatar className="size-10 shrink-0">
-                  <AvatarFallback className="bg-primary/10 text-primary text-sm font-semibold">
-                    {getInitials(cust.firstName, cust.lastName)}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-bold text-foreground truncate">
-                    {fullName(cust.firstName, cust.lastName)}
-                  </p>
-                  {cust.email && (
-                    <a
-                      href={`mailto:${cust.email}`}
-                      className="text-xs text-primary hover:underline truncate block"
-                    >
-                      {cust.email}
-                    </a>
-                  )}
-                </div>
-              </div>
-
-              {/* Contact details */}
-              <div className="space-y-1">
-                {cust.phone && (
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <Phone size={11} className="shrink-0" />
-                    <span>{cust.phone}</span>
-                  </div>
-                )}
-                {(cust.city || cust.country) && (
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <MapPin size={11} className="shrink-0" />
-                    <span>{[cust.city, cust.country].filter(Boolean).join(', ')}</span>
-                  </div>
-                )}
-              </div>
-
-              {/* Tags */}
-              {cust.tags && cust.tags.trim() && (
-                <div className="flex flex-wrap gap-1">
-                  {cust.tags
-                    .split(',')
-                    .map(t => t.trim())
-                    .filter(Boolean)
-                    .map(tag => (
-                      <Badge key={tag} variant="secondary" className="text-[10px] px-1.5 py-0.5">
-                        {tag}
-                      </Badge>
-                    ))}
-                </div>
-              )}
-
-              {/* Customer note */}
-              {cust.note && (
-                <div className="rounded-lg border border-border bg-muted/20 p-2">
-                  <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-0.5">
-                    Note
-                  </p>
-                  <p className="text-xs italic text-muted-foreground leading-relaxed">
-                    {cust.note}
-                  </p>
-                </div>
-              )}
-            </div>
+            <CustomerCard
+              firstName={cust.firstName}
+              lastName={cust.lastName}
+              email={cust.email}
+              phone={cust.phone}
+              city={cust.city}
+              country={cust.country}
+              tags={cust.tags}
+              note={cust.note}
+            />
 
             <Separator />
 
             {/* Stats row */}
-            <div className="grid grid-cols-3 divide-x divide-border bg-muted/20 px-0 py-0 shrink-0">
-              <div className="flex flex-col items-center py-3 gap-0.5">
-                <span className="text-sm font-extrabold text-foreground leading-none">
-                  {cust.ordersCount ?? '—'}
-                </span>
-                <span className="text-[10px] text-muted-foreground uppercase tracking-wider mt-0.5">
-                  Orders
-                </span>
-              </div>
-              <div className="flex flex-col items-center py-3 gap-0.5">
-                <span className="text-sm font-extrabold text-foreground leading-none">
-                  {cust.totalSpent != null
-                    ? fmtPrice(cust.totalSpent, cust.currency)
-                    : '—'}
-                </span>
-                <span className="text-[10px] text-muted-foreground uppercase tracking-wider mt-0.5">
-                  Spent
-                </span>
-              </div>
-              <div className="flex flex-col items-center py-3 gap-0.5">
-                <span className="text-sm font-extrabold text-foreground leading-none">
-                  {cust.createdAt
-                    ? new Date(cust.createdAt).toLocaleDateString('en-US', {
-                        month: 'short',
-                        year: 'numeric',
-                      })
-                    : '—'}
-                </span>
-                <span className="text-[10px] text-muted-foreground uppercase tracking-wider mt-0.5">
-                  Since
-                </span>
-              </div>
-            </div>
+            <CustomerStatsGrid
+              ordersCount={cust.ordersCount}
+              totalSpent={cust.totalSpent}
+              currency={cust.currency}
+              createdAt={cust.createdAt}
+            />
 
             <Separator />
 

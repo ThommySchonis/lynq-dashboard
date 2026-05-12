@@ -14,7 +14,7 @@ export function PageShell({ title, description, actions, filters, children }: Pa
     <div className="flex h-screen flex-col">
       <PageHeader title={title} description={description} actions={actions} />
       {filters && (
-        <div className="border-b border-[var(--border)] px-6 py-2">
+        <div className="border-b border-border px-6 py-2">
           {filters}
         </div>
       )}

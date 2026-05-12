@@ -2,7 +2,6 @@
 
 import { useState, useMemo } from 'react'
 import { BarChart3, Info, Loader2, RefreshCw } from 'lucide-react'
-import { Sidebar } from '@/components/layout/sidebar'
 import { EmptyState } from '@/components/shared/empty-state'
 import { DEMO_REFUNDS, DEMO_KPIS, DEMO_TREND, DEMO_INSIGHTS } from '@/lib/demoData'
 import {
@@ -147,13 +146,11 @@ function AnalyticsContent() {
   }
 
   return (
-    <div className="flex min-h-screen bg-[var(--bg-page)]">
-      <Sidebar />
-      <main className="flex-1 overflow-y-auto bg-[#F9F8FF] p-6 relative" style={{ scrollbarWidth: 'thin' }}>
+      <main className="min-h-screen overflow-y-auto bg-background p-6 relative" style={{ scrollbarWidth: 'thin' }}>
         <div className="relative z-[1] mx-auto max-w-[1200px]">
 
           {/* Header */}
-          <div className="mb-6 animate-fade-in">
+          <div className="mb-6 animate-fade-up">
             <div className="flex items-center justify-between">
               <div>
                 <h1 className="mb-1 text-xl font-bold tracking-tight text-gray-900">Refund Intelligence</h1>
@@ -224,7 +221,7 @@ function AnalyticsContent() {
                     max={customTo || undefined}
                     onChange={e => { const v = e.target.value; applyCustomRange(v, customTo) }}
                   />
-                  <span className="text-[11px] text-[var(--text-3)]">&rarr;</span>
+                  <span className="text-[11px] text-muted-foreground">&rarr;</span>
                   <input
                     type="date"
                     className="rounded-[7px] border border-black/[0.08] bg-gray-100 px-2.5 py-1 text-[11.5px] text-gray-900 focus:border-black/[0.18] focus:outline-none"
@@ -239,7 +236,7 @@ function AnalyticsContent() {
           </div>
 
           {demoMode ? (
-            <div className="mb-4 flex animate-fade-in items-center gap-2.5 rounded-md border border-black/[0.07] bg-gray-50 px-3.5 py-2">
+            <div className="mb-4 flex animate-fade-up items-center gap-2.5 rounded-md border border-black/[0.07] bg-gray-50 px-3.5 py-2">
               <Info size={13} className="shrink-0 text-gray-400" />
               <div className="flex-1">
                 <span className="text-xs text-gray-400">Demo mode — connect your Shopify store in Settings to see real insights.</span>
@@ -255,7 +252,7 @@ function AnalyticsContent() {
 
           {/* Sync needed banner */}
           {!demoMode && loaded.kpis && (kpis as unknown as Record<string, unknown>).needsSync ? (
-            <div className="mb-4 flex animate-fade-in items-center gap-2.5 rounded-md border border-black/[0.07] bg-gray-50 px-3.5 py-2">
+            <div className="mb-4 flex animate-fade-up items-center gap-2.5 rounded-md border border-black/[0.07] bg-gray-50 px-3.5 py-2">
               <RefreshCw size={13} className="shrink-0 text-gray-400" />
               <div className="flex-1">
                 <span className="text-xs text-gray-400">No order data found. Go to Settings &rarr; Shopify to sync your orders.</span>
@@ -274,7 +271,7 @@ function AnalyticsContent() {
           <RevenueTrendChart trend={trend} loaded={loaded.trend} rangeLabel={rangeLabel} />
 
           {/* Donut + Monthly side by side */}
-          <div className="mb-6 grid animate-fade-in grid-cols-2 gap-4">
+          <div className="mb-6 grid animate-fade-up grid-cols-2 gap-4">
             <DonutReasonChart refunds={refunds} loaded={loaded.refunds} />
             <MonthlyTrendChart allRefunds={allRefunds} loaded={loaded.allRefunds} />
           </div>
@@ -292,20 +289,19 @@ function AnalyticsContent() {
           <ProductMatrix allRefunds={allRefunds} loaded={loaded.allRefunds} />
 
           {!noRefunds ? (
-            <div className="mb-6 animate-fade-in">
+            <div className="mb-6 animate-fade-up">
               <RefundReasons refunds={refunds} loaded={loaded.refunds} />
             </div>
           ) : null}
 
           <WeeklyReport allRefunds={allRefunds} loaded={loaded.allRefunds} />
 
-          <div className="mt-4 text-center text-[10.5px] tracking-[.04em] text-[var(--text-3)]">
+          <div className="mt-4 text-center text-[10.5px] tracking-[.04em] text-muted-foreground">
             Lynq Analytics &middot; Shopify data &middot; AI by Claude &middot; Refreshed on load
           </div>
         </div>
       </main>
-    </div>
-  )
+    )
 }
 
 // ── Wrapper: gate Analytics behind Shopify-connected check ──────────────────

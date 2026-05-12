@@ -113,11 +113,11 @@ export default function SignupPage() {
           onChange={(e) => setEmail(e.target.value)}
           required
           autoComplete="email"
-          className="login-fade login-d-5"
+          className="opacity-0 animate-fade-up motion-reduce:opacity-100 motion-reduce:animate-none delay-[400ms]"
         />
 
         {/* First + last name in 2-col grid */}
-        <div className="grid grid-cols-2 gap-3 mt-3 login-fade login-d-6">
+        <div className="grid grid-cols-2 gap-3 mt-3 opacity-0 animate-fade-up motion-reduce:opacity-100 motion-reduce:animate-none delay-[480ms]">
           <FloatField
             id="first_name"
             label="First name"
@@ -139,7 +139,7 @@ export default function SignupPage() {
         </div>
 
         {/* Company */}
-        <div className="mt-3 login-fade login-d-7">
+        <div className="mt-3 opacity-0 animate-fade-up motion-reduce:opacity-100 motion-reduce:animate-none delay-[560ms]">
           <FloatField
             id="company_name"
             label="Company name"
@@ -152,7 +152,7 @@ export default function SignupPage() {
         </div>
 
         {/* Password with strength meter */}
-        <div className="mt-3 login-fade login-d-8">
+        <div className="mt-3 opacity-0 animate-fade-up motion-reduce:opacity-100 motion-reduce:animate-none delay-[640ms]">
           <PasswordField
             id="password"
             value={password}
@@ -179,7 +179,7 @@ export default function SignupPage() {
         )}
 
         {/* Submit */}
-        <div className="mt-6 login-fade login-d-9">
+        <div className="mt-6 opacity-0 animate-fade-up motion-reduce:opacity-100 motion-reduce:animate-none delay-[720ms]">
           <button
             type="submit"
             disabled={isLoading}
@@ -195,7 +195,7 @@ export default function SignupPage() {
       </form>
 
       {/* Trust row */}
-      <div className="flex flex-wrap gap-x-5 gap-y-2 justify-center mt-6 text-[13px] text-white/50 login-fade login-d-10">
+      <div className="flex flex-wrap gap-x-5 gap-y-2 justify-center mt-6 text-[13px] text-white/50 opacity-0 animate-fade-up motion-reduce:opacity-100 motion-reduce:animate-none delay-[800ms]">
         {TRUST_ITEMS.map((item) => (
           <TrustItem key={item.text} item={item} />
         ))}

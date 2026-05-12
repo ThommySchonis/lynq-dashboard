@@ -23,8 +23,8 @@ export function RefundReasons({ refunds, loaded }: RefundReasonsProps) {
   return (
     <div className="flex-1 rounded-xl border border-white/65 bg-white/80 p-[22px_24px] shadow-sm backdrop-blur-xl transition-shadow duration-200 hover:shadow-lg">
       <div className="mb-[18px]">
-        <div className="mb-0.5 text-[13px] font-semibold text-[var(--text-1)]">Why refunds happen</div>
-        <div className="text-[11px] text-[var(--text-3)]">By total amount lost</div>
+        <div className="mb-0.5 text-[13px] font-semibold text-foreground">Why refunds happen</div>
+        <div className="text-[11px] text-muted-foreground">By total amount lost</div>
       </div>
 
       {!loaded ? (
@@ -37,7 +37,7 @@ export function RefundReasons({ refunds, loaded }: RefundReasonsProps) {
           ))}
         </div>
       ) : reasons.length === 0 ? (
-        <div className="py-8 text-center text-xs text-[var(--text-3)]">No data this period</div>
+        <div className="py-8 text-center text-xs text-muted-foreground">No data this period</div>
       ) : (
         <div className="flex flex-col gap-3.5">
           {reasons.map((r, i) => {

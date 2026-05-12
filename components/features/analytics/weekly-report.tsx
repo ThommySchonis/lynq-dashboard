@@ -26,10 +26,10 @@ export function WeeklyReport({ allRefunds, loaded }: WeeklyReportProps) {
   const weeks = buildWeeklyReport(allRefunds)
 
   return (
-    <div className="mb-6 animate-fade-in rounded-xl border border-white/65 bg-white/80 p-[22px_24px] shadow-sm backdrop-blur-xl transition-shadow duration-200 hover:shadow-lg">
+    <div className="mb-6 animate-fade-up rounded-xl border border-white/65 bg-white/80 p-[22px_24px] shadow-sm backdrop-blur-xl transition-shadow duration-200 hover:shadow-lg">
       <div className="mb-[18px]">
-        <div className="mb-0.5 text-[13px] font-semibold text-[var(--text-1)]">Weekly Overview</div>
-        <div className="text-[11px] text-[var(--text-3)]">Last 4 weeks (Sun&ndash;Sat) &middot; all refunds</div>
+        <div className="mb-0.5 text-[13px] font-semibold text-foreground">Weekly Overview</div>
+        <div className="text-[11px] text-muted-foreground">Last 4 weeks (Sun&ndash;Sat) &middot; all refunds</div>
       </div>
       <div className="grid grid-cols-4 gap-3">
         {weeks.map((w, i) => (

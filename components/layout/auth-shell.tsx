@@ -34,9 +34,9 @@ export function AuthShell({ title, subtitle, children, className }: AuthShellPro
           transition={{ duration: 0.4 }}
           className={cn('w-full max-w-md', className)}
         >
-          <h1 className="text-2xl font-bold tracking-tight text-[var(--text-1)]">{title}</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">{title}</h1>
           {subtitle && (
-            <p className="mt-2 text-sm text-[var(--text-3)]">{subtitle}</p>
+            <p className="mt-2 text-sm text-muted-foreground">{subtitle}</p>
           )}
           <div className="mt-8">{children}</div>
         </motion.div>

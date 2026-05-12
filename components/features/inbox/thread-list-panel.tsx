@@ -134,13 +134,13 @@ export function ThreadListPanel() {
   }
 
   return (
-    <div className="in-panel-l w-[260px] flex flex-col shrink-0 relative z-[1]">
+    <div className="w-[260px] flex flex-col shrink-0 relative z-[1] bg-card border-r border-border dark:bg-[rgba(10,4,28,0.52)] dark:backdrop-blur-[24px] dark:border-r-[rgba(255,255,255,0.07)]">
       {/* Header */}
       <div className="px-3.5 pt-3.5 pb-0 shrink-0">
         <div className="flex items-center justify-between mb-2.5">
           <div className="flex items-center gap-2">
-            <span className="text-[15px] font-bold text-(--text-1) tracking-[-0.01em]">Inbox</span>
-            <span title="Shortcuts: j/k navigate · r reply" className="text-[9.5px] text-(--text-3) bg-(--bg-surface-2) px-1.5 py-0.5 rounded cursor-default">
+            <span className="text-[15px] font-bold text-foreground tracking-[-0.01em]">Inbox</span>
+            <span title="Shortcuts: j/k navigate · r reply" className="text-[9.5px] text-muted-foreground bg-secondary px-1.5 py-0.5 rounded cursor-default">
               j/k/r
             </span>
           </div>
@@ -149,7 +149,7 @@ export function ThreadListPanel() {
               variant="ghost"
               size="icon"
               onClick={onSync}
-              className={`p-[5px] rounded-[7px] transition-all duration-150 ${syncing ? 'text-(--text-2)' : 'text-(--text-3)'}`}
+              className={`p-[5px] rounded-[7px] transition-all duration-150 ${syncing ? 'text-foreground-2' : 'text-muted-foreground'}`}
               title="Sync & Refresh"
             >
               <span className={`flex ${syncing ? 'animate-spin' : ''}`}>
@@ -169,11 +169,11 @@ export function ThreadListPanel() {
 
         {/* Search */}
         <div className="relative mb-2.5">
-          <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-(--text-3) pointer-events-none flex">
+          <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none flex">
             <Search size={14} />
           </span>
           <input
-            className="w-full py-[9px] pl-[34px] pr-3 bg-(--bg-input) border border-(--border) rounded-xl text-(--text-1) text-[12.5px] outline-none transition-all focus:border-(--border-hover)"
+            className="w-full py-[9px] pl-[34px] pr-3 bg-input border border-border rounded-xl text-foreground text-[12.5px] outline-none transition-all focus:border-(--border-hover)"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search threads…"
@@ -181,13 +181,13 @@ export function ThreadListPanel() {
         </div>
 
         {/* Folder tabs */}
-        <div className="sscroll flex border-b border-border overflow-x-auto">
+        <div className="thin-scrollbar flex border-b border-border overflow-x-auto">
           {FOLDERS.map((f) => (
-            <button key={f.key} className={`vtab${activeFolder === f.key ? ' on' : ''}`} onClick={() => onSwitchFolder(f.key)}>
+            <button key={f.key} className={`py-2 px-1.5 bg-transparent cursor-pointer text-xs font-medium font-inherit rounded-none transition-all duration-[180ms] text-foreground-3 whitespace-nowrap tracking-[.01em] border-none border-b-2 border-b-transparent ${activeFolder === f.key ? 'text-foreground border-b-foreground font-semibold' : 'hover:text-foreground-2'}`} onClick={() => onSwitchFolder(f.key)}>
               {f.label}
               {f.count > 0 && (
                 <span
-                  className={`ml-1 text-[9px] font-bold px-[5px] py-px rounded-full border border-border ${activeFolder === f.key ? 'bg-[#111111] text-white' : 'bg-(--bg-surface-2) text-(--text-3)'}`}
+                  className={`ml-1 text-[9px] font-bold px-[5px] py-px rounded-full border border-border ${activeFolder === f.key ? 'bg-[#111111] text-white' : 'bg-secondary text-muted-foreground'}`}
                 >
                   {f.count}
                 </span>
@@ -198,12 +198,12 @@ export function ThreadListPanel() {
       </div>
 
       {/* Thread list */}
-      <div className="sscroll flex-1 overflow-y-auto">
+      <div className="thin-scrollbar flex-1 overflow-y-auto">
         {/* Select all bar */}
-        <div className="flex items-center gap-2.5 py-[9px] pl-[15px] pr-3.5 border-b border-border bg-(--bg-surface) sticky top-0 z-[2]">
+        <div className="flex items-center gap-2.5 py-[9px] pl-[15px] pr-3.5 border-b border-border bg-card sticky top-0 z-[2]">
           <input
             type="checkbox"
-            className="trow-cb mt-0"
+            className="w-4 h-4 rounded border-[1.5px] border-border bg-card cursor-pointer appearance-none shrink-0 transition-all duration-150 checked:bg-foreground checked:border-foreground checked:bg-[url('data:image/svg+xml,%3Csvg%20viewBox=%270%200%2016%2016%27%20fill=%27white%27%20xmlns=%27http://www.w3.org/2000/svg%27%3E%3Cpath%20d=%27M13.3%204.3a1%201%200%200%201%200%201.4l-6%206a1%201%200%200%201-1.4%200l-3-3a1%201%200%201%201%201.4-1.4L6.6%209.6l5.3-5.3a1%201%200%200%201%201.4%200z%27/%3E%3C/svg%3E')] checked:bg-no-repeat checked:bg-center hover:not-checked:border-border-hover mt-0"
             checked={allChecked}
             onChange={(e) => {
               const next: Record<string, boolean> = {}
@@ -211,14 +211,14 @@ export function ThreadListPanel() {
               setCheckedThreads(next)
             }}
           />
-          <span className="flex-1 text-xs font-semibold text-(--text-2)">{anyChecked ? `${checkedCount} selected` : 'Select all'}</span>
+          <span className="flex-1 text-xs font-semibold text-foreground-2">{anyChecked ? `${checkedCount} selected` : 'Select all'}</span>
           {anyChecked && (
             <>
               <Button
                 variant="ghost"
                 size="icon"
                 title="Mark as read"
-                className="text-(--text-2) flex p-1 rounded-[5px] transition-colors duration-150 hover:text-(--text-1)"
+                className="text-foreground-2 flex p-1 rounded-[5px] transition-colors duration-150 hover:text-foreground"
               >
                 <Check size={15} />
               </Button>
@@ -226,7 +226,7 @@ export function ThreadListPanel() {
                 variant="ghost"
                 size="icon"
                 title="Assign"
-                className="text-(--text-2) flex p-1 rounded-[5px] transition-colors duration-150 hover:text-(--text-1)"
+                className="text-foreground-2 flex p-1 rounded-[5px] transition-colors duration-150 hover:text-foreground"
               >
                 <User size={15} />
               </Button>
@@ -234,7 +234,7 @@ export function ThreadListPanel() {
                 variant="ghost"
                 size="icon"
                 title="More actions"
-                className="text-(--text-2) flex p-1 rounded-[5px] transition-colors duration-150 hover:text-(--text-1)"
+                className="text-foreground-2 flex p-1 rounded-[5px] transition-colors duration-150 hover:text-foreground"
               >
                 <MoreVertical size={15} />
               </Button>
@@ -246,7 +246,7 @@ export function ThreadListPanel() {
                 variant="ghost"
                 size="icon"
                 title="Mark all read"
-                className="text-(--text-2) flex p-1 rounded-[5px] transition-colors duration-150 hover:text-(--text-1)"
+                className="text-foreground-2 flex p-1 rounded-[5px] transition-colors duration-150 hover:text-foreground"
               >
                 <Check size={15} />
               </Button>
@@ -254,7 +254,7 @@ export function ThreadListPanel() {
                 variant="ghost"
                 size="icon"
                 title="Assign"
-                className="text-(--text-2) flex p-1 rounded-[5px] transition-colors duration-150 hover:text-(--text-1)"
+                className="text-foreground-2 flex p-1 rounded-[5px] transition-colors duration-150 hover:text-foreground"
               >
                 <User size={15} />
               </Button>
@@ -262,7 +262,7 @@ export function ThreadListPanel() {
                 variant="ghost"
                 size="icon"
                 title="More"
-                className="text-(--text-2) flex p-1 rounded-[5px] transition-colors duration-150 hover:text-(--text-1)"
+                className="text-foreground-2 flex p-1 rounded-[5px] transition-colors duration-150 hover:text-foreground"
               >
                 <MoreHorizontal size={15} />
               </Button>
@@ -281,7 +281,7 @@ export function ThreadListPanel() {
             </div>
           ))}
         {!loadingThreads && sortedFiltered.length === 0 && (
-          <div className="px-5 py-10 text-center text-(--text-3) text-[12.5px]">No conversations in this folder</div>
+          <div className="px-5 py-10 text-center text-muted-foreground text-[12.5px]">No conversations in this folder</div>
         )}
         {sortedFiltered.map((thread) => {
           const active = selectedThreadId === thread.id
@@ -291,11 +291,11 @@ export function ThreadListPanel() {
           const urg = analysis?.urgency
           const urgUI = URGENCY_UI[urg]
           return (
-            <div key={thread.id} className={`trow${active ? ' trow-active' : ''}`} onClick={() => onSelectThread(thread)}>
+            <div key={thread.id} className={`py-[10px] px-[14px] cursor-pointer border-b border-border border-l-[3px] transition-[background] duration-150 relative flex items-start gap-[9px] ${active ? 'bg-secondary border-l-accent dark:bg-[rgba(255,255,255,0.06)] after:absolute after:left-0 after:top-0 after:bottom-0 after:w-[3px] after:bg-accent after:rounded-r-sm after:content-[\'\']' : 'border-l-transparent hover:bg-secondary dark:hover:bg-[rgba(255,255,255,0.03)]'}`} onClick={() => onSelectThread(thread)}>
               {/* Checkbox */}
               <input
                 type="checkbox"
-                className="trow-cb"
+                className="w-4 h-4 rounded border-[1.5px] border-border bg-card cursor-pointer appearance-none shrink-0 mt-0.5 transition-all duration-150 checked:bg-foreground checked:border-foreground checked:bg-[url('data:image/svg+xml,%3Csvg%20viewBox=%270%200%2016%2016%27%20fill=%27white%27%20xmlns=%27http://www.w3.org/2000/svg%27%3E%3Cpath%20d=%27M13.3%204.3a1%201%200%200%201%200%201.4l-6%206a1%201%200%200%201-1.4%200l-3-3a1%201%200%201%201%201.4-1.4L6.6%209.6l5.3-5.3a1%201%200%200%201%201.4%200z%27/%3E%3C/svg%3E')] checked:bg-no-repeat checked:bg-center hover:not-checked:border-border-hover"
                 checked={!!checkedThreads[thread.id]}
                 onClick={(e) => e.stopPropagation()}
                 onChange={(e) =>
@@ -310,22 +310,22 @@ export function ThreadListPanel() {
                 {/* Row 1: name + email icon + time + unread dot */}
                 <div className="flex items-center gap-[5px] mb-0.5">
                   <span
-                    className={`text-[12.5px] ${thread.unread ? 'font-bold' : 'font-semibold'} text-(--text-1) overflow-hidden text-ellipsis whitespace-nowrap flex-1`}
+                    className={`text-[12.5px] ${thread.unread ? 'font-bold' : 'font-semibold'} text-foreground overflow-hidden text-ellipsis whitespace-nowrap flex-1`}
                   >
                     {thread.customer_name || name}
                   </span>
-                  <Mail size={11} className="text-(--text-1) shrink-0" />
-                  <span className="text-[10.5px] text-(--text-1) shrink-0 whitespace-nowrap">{formatDate(thread.date)}</span>
+                  <Mail size={11} className="text-foreground shrink-0" />
+                  <span className="text-[10.5px] text-foreground shrink-0 whitespace-nowrap">{formatDate(thread.date)}</span>
                   {thread.unread && <span className="w-[7px] h-[7px] rounded-full bg-primary shrink-0 shadow-[0_0_0_1.5px_rgba(161,117,252,0.25)]" />}
                 </div>
                 {/* Row 2: subject */}
                 <div
-                  className={`text-xs ${thread.unread ? 'font-semibold text-(--text-1)' : 'font-medium text-(--text-2)'} overflow-hidden text-ellipsis whitespace-nowrap mb-[3px]`}
+                  className={`text-xs ${thread.unread ? 'font-semibold text-foreground' : 'font-medium text-foreground-2'} overflow-hidden text-ellipsis whitespace-nowrap mb-[3px]`}
                 >
                   {thread.subject || '(no subject)'}
                 </div>
                 {/* Row 3: snippet — 2 lines */}
-                <div className="trow-snippet text-[11.5px] text-(--text-1) leading-[1.45]">{thread.snippet}</div>
+                <div className="line-clamp-2 text-[11.5px] text-foreground leading-[1.45]">{thread.snippet}</div>
               </div>
             </div>
           )

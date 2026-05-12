@@ -17,7 +17,7 @@ export function FeedbackRow({ row, onClick }: FeedbackRowProps) {
   return (
     <div
       onClick={onClick}
-      className="grid gap-3 px-4 py-3.5 border-b border-[#F0EDF4] cursor-pointer transition-colors duration-[120ms] items-center hover:bg-[#F8F7FA]"
+      className="grid gap-3 px-4 py-3.5 border-b border-[#F0EDF4] cursor-pointer transition-colors duration-[120ms] items-center hover:bg-secondary"
       style={{ gridTemplateColumns: '110px 1fr 200px 160px 200px 110px' }}
     >
       {/* Type badge */}
@@ -29,37 +29,37 @@ export function FeedbackRow({ row, onClick }: FeedbackRowProps) {
       </div>
 
       {/* Message */}
-      <div className="text-sm text-[#1C0F36] overflow-hidden text-ellipsis whitespace-nowrap">
+      <div className="text-sm text-foreground overflow-hidden text-ellipsis whitespace-nowrap">
         {truncate(row.message, 80)}
       </div>
 
       {/* User */}
       <div className="flex items-center gap-2 min-w-0">
-        <div className="w-6 h-6 rounded-full bg-[#EDE5FE] text-[#A175FC] flex items-center justify-center text-[10px] font-semibold shrink-0">
+        <div className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-[10px] font-semibold shrink-0">
           {initialsFor(row.user)}
         </div>
         <div className="min-w-0">
-          <div className="text-[13px] font-medium text-[#1C0F36] overflow-hidden text-ellipsis whitespace-nowrap">
+          <div className="text-[13px] font-medium text-foreground overflow-hidden text-ellipsis whitespace-nowrap">
             {row.user?.name ?? row.user?.email?.split('@')[0] ?? 'Unknown'}
           </div>
-          <div className="text-[12px] text-[#9B91A8] overflow-hidden text-ellipsis whitespace-nowrap">
+          <div className="text-[12px] text-foreground-4 overflow-hidden text-ellipsis whitespace-nowrap">
             {row.user?.email ?? '—'}
           </div>
         </div>
       </div>
 
       {/* Workspace */}
-      <div className="text-[13px] text-[#6B5E7B] overflow-hidden text-ellipsis whitespace-nowrap">
+      <div className="text-[13px] text-muted-foreground overflow-hidden text-ellipsis whitespace-nowrap">
         {row.workspace?.name ?? '—'}
       </div>
 
       {/* Page URL */}
-      <div className="text-[12px] text-[#9B91A8] font-mono overflow-hidden text-ellipsis whitespace-nowrap">
+      <div className="text-[12px] text-foreground-4 font-mono overflow-hidden text-ellipsis whitespace-nowrap">
         {row.page_url ?? '—'}
       </div>
 
       {/* Time */}
-      <div className="text-[13px] text-[#6B5E7B]">
+      <div className="text-[13px] text-muted-foreground">
         {timeAgo(row.created_at)}
       </div>
     </div>

@@ -74,15 +74,15 @@ export function MacroEditor({ macro, onSave, onDuplicate, onDelete, onBack }: {
   ];
 
   return (
-    <div className="flex-1 flex flex-col overflow-auto bg-(--bg-page)">
+    <div className="flex-1 flex flex-col overflow-auto bg-background">
       {/* Top bar */}
-      <div className="flex items-center gap-2.5 py-3.5 px-6 border-b border-(--border) bg-(--bg-surface) shrink-0">
-        <Button variant="ghost" size="sm" onClick={onBack} className="flex items-center gap-[5px] text-(--text-2) text-[13px] py-1 px-0 font-[inherit]">
+      <div className="flex items-center gap-2.5 py-3.5 px-6 border-b border-border bg-card shrink-0">
+        <Button variant="ghost" size="sm" onClick={onBack} className="flex items-center gap-[5px] text-foreground-2 text-[13px] py-1 px-0 font-[inherit]">
           <ChevronLeft size={16} />
           Back
         </Button>
         <span className="text-(--border) text-[16px]">|</span>
-        <span className="text-sm font-semibold text-(--text-1)">{isNew ? "Create macro" : `Edit: ${macro.name}`}</span>
+        <span className="text-sm font-semibold text-foreground">{isNew ? "Create macro" : `Edit: ${macro.name}`}</span>
       </div>
 
       {/* Form */}
@@ -91,30 +91,30 @@ export function MacroEditor({ macro, onSave, onDuplicate, onDelete, onBack }: {
         <div className="flex-1 flex flex-col gap-5">
           {/* Name */}
           <div>
-            <label className="block text-xs font-semibold text-(--text-2) mb-1.5">
-              Macro name <span className="text-(--danger)">*</span>
+            <label className="block text-xs font-semibold text-foreground-2 mb-1.5">
+              Macro name <span className="text-destructive">*</span>
             </label>
             <Input
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g. Delivery - Delay"
-              className="w-full py-[9px] px-3 border border-(--border) rounded-lg text-[13px] text-(--text-1) bg-(--bg-surface) font-[inherit]"
+              className="w-full py-[9px] px-3 border border-border rounded-lg text-[13px] text-foreground bg-card font-[inherit]"
             />
-            <div className="text-[11px] text-(--text-3) mt-[5px]">Name that all agents will see while searching for it</div>
+            <div className="text-[11px] text-muted-foreground mt-[5px]">Name that all agents will see while searching for it</div>
           </div>
 
           {/* Response text */}
           <div>
-            <label className="block text-xs font-semibold text-(--text-2) mb-1.5">Response text</label>
+            <label className="block text-xs font-semibold text-foreground-2 mb-1.5">Response text</label>
             {/* Recipient row */}
-            <div className="flex items-center gap-2 py-[7px] px-3 rounded-t-lg border border-(--border) border-b-0 bg-(--bg-surface-2) text-xs text-(--text-2)">
+            <div className="flex items-center gap-2 py-[7px] px-3 rounded-t-lg border border-border border-b-0 bg-secondary text-xs text-foreground-2">
               <span className="font-semibold">To:</span>
-              <span className="py-0.5 px-2 rounded-[5px] bg-(--bg-surface-2) text-(--text-2) font-semibold text-[11px] border border-(--border)">
+              <span className="py-0.5 px-2 rounded-[5px] bg-secondary text-foreground-2 font-semibold text-[11px] border border-border">
                 Current client
               </span>
             </div>
             {/* Toolbar */}
-            <div className="flex items-center gap-0.5 py-[5px] px-2.5 border border-(--border) border-b-0 bg-(--bg-surface) flex-wrap">
+            <div className="flex items-center gap-0.5 py-[5px] px-2.5 border border-border border-b-0 bg-card flex-wrap">
               {["B", "I", "U"].map((f) => (
                 <button
                   key={f}
@@ -123,7 +123,7 @@ export function MacroEditor({ macro, onSave, onDuplicate, onDelete, onBack }: {
                     fontStyle: f === "I" ? "italic" : "normal",
                     textDecoration: f === "U" ? "underline" : "none",
                   }}
-                  className="py-[3px] px-[7px] rounded-[5px] border border-transparent bg-none text-(--text-2) text-[13px] font-[inherit]"
+                  className="py-[3px] px-[7px] rounded-[5px] border border-transparent bg-none text-foreground-2 text-[13px] font-[inherit]"
                 >
                   {f}
                 </button>
@@ -133,7 +133,7 @@ export function MacroEditor({ macro, onSave, onDuplicate, onDelete, onBack }: {
                 <button
                   key={v.value}
                   onClick={() => insertVar(v.value)}
-                  className="py-0.5 px-2 rounded-[5px] border border-(--border) bg-(--bg-surface-2) text-(--text-2) text-[11px] font-medium font-[inherit] whitespace-nowrap"
+                  className="py-0.5 px-2 rounded-[5px] border border-border bg-secondary text-foreground-2 text-[11px] font-medium font-[inherit] whitespace-nowrap"
                 >
                   {v.label}
                 </button>
@@ -145,29 +145,29 @@ export function MacroEditor({ macro, onSave, onDuplicate, onDelete, onBack }: {
               defaultValue={macro?.body || ""}
               onChange={(e) => setBody(e.target.value)}
               placeholder="Write your macro response here. Use the variable buttons above to insert dynamic values."
-              className="w-full min-h-[200px] py-3 px-3.5 border border-(--border) rounded-b-lg resize-y text-[13px] leading-[1.75] text-(--text-1) bg-(--bg-surface) font-[inherit] outline-none"
+              className="w-full min-h-[200px] py-3 px-3.5 border border-border rounded-b-lg resize-y text-[13px] leading-[1.75] text-foreground bg-card font-[inherit] outline-none"
             />
           </div>
 
           {/* Tags */}
           <div>
-            <label className="block text-xs font-semibold text-(--text-2) mb-1.5">
-              Tags <span className="text-[11px] font-normal text-(--text-3)">(comma separated)</span>
+            <label className="block text-xs font-semibold text-foreground-2 mb-1.5">
+              Tags <span className="text-[11px] font-normal text-muted-foreground">(comma separated)</span>
             </label>
             <Input
               value={tagInput}
               onChange={(e) => setTagInput(e.target.value)}
               placeholder="e.g. shipping, support"
-              className="w-full py-[9px] px-3 border border-(--border) rounded-lg text-[13px] text-(--text-1) bg-(--bg-surface) font-[inherit]"
+              className="w-full py-[9px] px-3 border border-border rounded-lg text-[13px] text-foreground bg-card font-[inherit]"
             />
           </div>
 
           {/* Actions row */}
-          <div className="flex items-center justify-between pt-2 border-t border-(--border)">
+          <div className="flex items-center justify-between pt-2 border-t border-border">
             <div className="flex gap-2">
               <Button
                 onClick={handleSave}
-                className="py-[9px] px-[18px] rounded-lg border-none bg-(--text-1) text-(--bg-surface) font-semibold text-[13px] font-[inherit]"
+                className="py-[9px] px-[18px] rounded-lg border-none bg-foreground text-card font-semibold text-[13px] font-[inherit]"
               >
                 {isNew ? "Create macro" : "Update macro"}
               </Button>
@@ -175,7 +175,7 @@ export function MacroEditor({ macro, onSave, onDuplicate, onDelete, onBack }: {
                 <Button
                   variant="outline"
                   onClick={() => onDuplicate(macro)}
-                  className="py-[9px] px-4 rounded-lg border border-(--border) bg-(--bg-surface) text-(--text-1) font-medium text-[13px] font-[inherit]"
+                  className="py-[9px] px-4 rounded-lg border border-border bg-card text-foreground font-medium text-[13px] font-[inherit]"
                 >
                   Duplicate macro
                 </Button>
@@ -186,7 +186,7 @@ export function MacroEditor({ macro, onSave, onDuplicate, onDelete, onBack }: {
                 <Button
                   variant="destructive"
                   onClick={() => onDelete(macro!.id!)}
-                  className="py-[9px] px-4 rounded-lg border border-[rgba(220,38,38,0.3)] bg-[rgba(220,38,38,0.06)] text-(--danger) font-medium text-[13px] font-[inherit]"
+                  className="py-[9px] px-4 rounded-lg border border-[rgba(220,38,38,0.3)] bg-[rgba(220,38,38,0.06)] text-destructive font-medium text-[13px] font-[inherit]"
                 >
                   Delete macro
                 </Button>
@@ -198,11 +198,11 @@ export function MacroEditor({ macro, onSave, onDuplicate, onDelete, onBack }: {
         {/* Right col — language */}
         <div className="w-[220px] shrink-0 flex flex-col gap-4">
           <div>
-            <label className="block text-xs font-semibold text-(--text-2) mb-1.5">Language</label>
+            <label className="block text-xs font-semibold text-foreground-2 mb-1.5">Language</label>
             <select
               value={language}
               onChange={(e) => setLang(e.target.value)}
-              className="w-full py-[9px] px-3 border border-(--border) rounded-lg text-[13px] text-(--text-1) bg-(--bg-surface) font-[inherit] outline-none cursor-pointer"
+              className="w-full py-[9px] px-3 border border-border rounded-lg text-[13px] text-foreground bg-card font-[inherit] outline-none cursor-pointer"
             >
               {["English", "Dutch", "German", "French", "Spanish", "Italian", "Portuguese"].map((l) => (
                 <option key={l} value={l}>
@@ -210,7 +210,7 @@ export function MacroEditor({ macro, onSave, onDuplicate, onDelete, onBack }: {
                 </option>
               ))}
             </select>
-            <div className="text-[11px] text-(--text-3) mt-[5px]">Language in which this macro is written</div>
+            <div className="text-[11px] text-muted-foreground mt-[5px]">Language in which this macro is written</div>
           </div>
         </div>
       </div>

@@ -17,12 +17,12 @@ export function ShipmentFilters({ attentionCount, filteredCount }: ShipmentFilte
       <div className="flex items-center gap-2.5 mb-3.5 flex-wrap">
         {/* Search input */}
         <div className="relative flex-[1_1_200px] min-w-[170px]">
-          <Search className="absolute left-[11px] top-1/2 -translate-y-1/2 pointer-events-none text-(--text-3) w-3.5 h-3.5" />
+          <Search className="absolute left-[11px] top-1/2 -translate-y-1/2 pointer-events-none text-muted-foreground w-3.5 h-3.5" />
           <input
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Search order, customer, tracking #..."
-            className="w-full py-2.5 pl-[38px] pr-3.5 bg-(--bg-input) border border-(--border) rounded-[10px] text-(--text-1) text-[13.5px] font-[inherit] outline-none transition-colors duration-150 placeholder:text-(--text-3) focus:border-(--border-hover)"
+            className="w-full py-2.5 pl-[38px] pr-3.5 bg-input border border-border rounded-[10px] text-foreground text-[13.5px] font-[inherit] outline-none transition-colors duration-150 placeholder:text-muted-foreground focus:border-(--border-hover)"
           />
         </div>
 
@@ -44,7 +44,7 @@ export function ShipmentFilters({ attentionCount, filteredCount }: ShipmentFilte
             } else if (hasIssue) {
               pillClasses += ' text-[#DC2626] bg-[rgba(220,38,38,0.06)] border-[rgba(220,38,38,0.14)]'
             } else {
-              pillClasses += ' bg-[#FAFAFA] border-[rgba(0,0,0,0.08)] text-[#888888] hover:text-(--text-2) hover:bg-(--bg-surface-2)'
+              pillClasses += ' bg-[#FAFAFA] border-[rgba(0,0,0,0.08)] text-[#888888] hover:text-foreground-2 hover:bg-secondary'
             }
 
             return (
@@ -72,7 +72,7 @@ export function ShipmentFilters({ attentionCount, filteredCount }: ShipmentFilte
         </div>
       </div>
 
-      <p className="text-xs text-(--text-3) mb-2.5">
+      <p className="text-xs text-muted-foreground mb-2.5">
         {filteredCount} shipment{filteredCount !== 1 ? 's' : ''}{filter !== 'All' ? ` \u00b7 ${filter}` : ''}
       </p>
     </div>

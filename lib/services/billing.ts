@@ -471,6 +471,134 @@ export async function listAddons(workspaceId: string): Promise<SubscriptionAddon
   }))
 }
 
+// ─── Ticket counting — recordOutboundMessage ─────────────────────────
+//
+// Called from the inbox reply path on every outbound message.
+// Determines whether this outbound is the first one on a conversation
+// that should count toward billable usage, and updates the counter row
+// accordingly.
+//
+// Rules (mirrors spec § "Counter increment timing"):
+//
+//   1. Outbound on a spam conversation → never counts.
+//
+//   2. Outbound on a conversation whose `counted_in_usage_period` is
+//      NULL → count this period (increment tickets_used or
+//      tickets_overage), set the conversation's counted_in_usage_period
+//      + billable_event_at + last_outbound_at.
+//
+//   3. Outbound on a conversation already marked as counted (any
+//      prior period) → no count. Just bump last_outbound_at.
+//
+// The 10-day reactivation rule lives in processInboundMessage(): when
+// a customer replies to a closed conversation after >10 days, the
+// inbound handler creates a NEW conversation row. That row has
+// counted_in_usage_period=NULL by definition, so the next outbound
+// naturally counts via rule (2) above. No special "count again in
+// new period" branch is needed.
+
+interface RecordOutboundResult {
+  counted: boolean
+  overage: boolean
+  reason:  'first_outbound' | 'continuation' | 'spam' | 'no_subscription' | 'conversation_not_found'
+}
+
+export async function recordOutboundMessage(
+  workspaceId: string,
+  conversationId: string,
+): Promise<RecordOutboundResult> {
+  // 1. Fetch the conversation
+  const { data: conv, error: convError } = await supabaseAdmin
+    .from('email_conversations')
+    .select('id, workspace_id, status, is_spam, counted_in_usage_period')
+    .eq('id', conversationId)
+    .eq('workspace_id', workspaceId)
+    .maybeSingle()
+
+  if (convError) console.error('[recordOutboundMessage] fetch failed:', convError.message)
+
+  if (!conv) {
+    return { counted: false, overage: false, reason: 'conversation_not_found' }
+  }
+
+  const nowIso = new Date().toISOString()
+
+  // 2. Spam exclusion — don't count, but still stamp last_outbound_at
+  if ((conv as { is_spam: boolean }).is_spam) {
+    await supabaseAdmin
+      .from('email_conversations')
+      .update({ last_outbound_at: nowIso })
+      .eq('id', conversationId)
+    return { counted: false, overage: false, reason: 'spam' }
+  }
+
+  // 3. Already counted in some prior period → continuation
+  if ((conv as { counted_in_usage_period: string | null }).counted_in_usage_period) {
+    await supabaseAdmin
+      .from('email_conversations')
+      .update({ last_outbound_at: nowIso })
+      .eq('id', conversationId)
+    return { counted: false, overage: false, reason: 'continuation' }
+  }
+
+  // 4. First outbound — count this period
+  const sub = await getSubscription(workspaceId)
+  if (!sub) {
+    // Defensive: still set last_outbound_at so reactivation rule works
+    await supabaseAdmin
+      .from('email_conversations')
+      .update({ last_outbound_at: nowIso })
+      .eq('id', conversationId)
+    return { counted: false, overage: false, reason: 'no_subscription' }
+  }
+
+  const counter = await ensureCurrentPeriod(workspaceId, sub)
+  if (!counter) {
+    await supabaseAdmin
+      .from('email_conversations')
+      .update({ last_outbound_at: nowIso })
+      .eq('id', conversationId)
+    return { counted: false, overage: false, reason: 'no_subscription' }
+  }
+
+  // Pull plan limit to decide tickets_used vs tickets_overage bucket
+  const plan = await getPlan(sub.plan_id)
+  const ticketLimit = plan?.ticket_limit ?? null
+  const isOverage = ticketLimit != null && counter.tickets_used >= ticketLimit
+
+  // Update counter — atomic via single UPDATE
+  const counterUpdates = isOverage
+    ? { tickets_overage: counter.tickets_overage + 1 }
+    : { tickets_used:    counter.tickets_used    + 1 }
+
+  const { error: counterError } = await supabaseAdmin
+    .from('usage_counters')
+    .update(counterUpdates)
+    .eq('id', counter.id)
+
+  if (counterError) {
+    console.error('[recordOutboundMessage] counter update failed:', counterError.message)
+    // Don't claim we counted if the increment failed
+    await supabaseAdmin
+      .from('email_conversations')
+      .update({ last_outbound_at: nowIso })
+      .eq('id', conversationId)
+    return { counted: false, overage: false, reason: 'no_subscription' }
+  }
+
+  // Mark the conversation as counted
+  await supabaseAdmin
+    .from('email_conversations')
+    .update({
+      counted_in_usage_period: counter.id,
+      billable_event_at:       nowIso,
+      last_outbound_at:        nowIso,
+    })
+    .eq('id', conversationId)
+
+  return { counted: true, overage: isOverage, reason: 'first_outbound' }
+}
+
 export async function subscribeAddon(workspaceId: string, addonId: string): Promise<{ ok: true; status: WorkspaceAddonStatus }> {
   const { data: addon } = await supabaseAdmin
     .from('subscription_addons')

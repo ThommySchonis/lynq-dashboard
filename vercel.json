@@ -1,6 +1,10 @@
 {
   "crons": [
     {
+      "path": "/api/cron/data-retention",
+      "schedule": "0 3 * * *"
+    },
+    {
       "path": "/api/cron/trial-expiry",
       "schedule": "30 3 * * *"
     },

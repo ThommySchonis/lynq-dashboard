@@ -18,7 +18,7 @@ export function MemberRow({ member: m }: MemberRowProps) {
   const badgeLabel = paused ? 'Paused' : active ? 'Online' : 'Offline'
 
   return (
-    <div className="flex cursor-default items-center gap-3 border-b border-black/5 px-4.5 py-3 transition-colors last:border-b-0 hover:bg-[#F9F8FF]">
+    <div className="flex cursor-default items-center gap-3 border-b border-black/5 px-4.5 py-3 transition-colors last:border-b-0 hover:bg-background">
       {/* Avatar */}
       <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-black/7 bg-gray-100 text-xs font-semibold text-gray-600">
         {m.name?.charAt(0).toUpperCase() || '?'}
@@ -26,13 +26,13 @@ export function MemberRow({ member: m }: MemberRowProps) {
 
       {/* Name + role */}
       <div className="min-w-0 flex-1">
-        <div className="text-[13px] font-medium text-[#0F0F10]">{m.name}</div>
+        <div className="text-[13px] font-medium text-foreground">{m.name}</div>
         <div className="text-xs text-gray-500">{m.role}</div>
       </div>
 
       {/* Hours */}
       <div className="mr-4 shrink-0 text-right">
-        <div className="text-[13px] font-semibold text-[#0F0F10] tabular-nums">{fmtDur(m.worked_seconds)}</div>
+        <div className="text-[13px] font-semibold text-foreground tabular-nums">{fmtDur(m.worked_seconds)}</div>
         <div className="text-[11px] text-gray-400">{m.sessions_count} session{m.sessions_count !== 1 ? 's' : ''}</div>
       </div>
 

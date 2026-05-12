@@ -7,7 +7,7 @@ interface VerifyPanelProps {
 export function VerifyPanel({ email }: VerifyPanelProps) {
   return (
     <div
-      className="login-fade login-d-0 rounded-3xl px-10 py-12 text-center backdrop-blur-xl"
+      className="opacity-0 animate-fade-up motion-reduce:opacity-100 motion-reduce:animate-none rounded-3xl px-10 py-12 text-center backdrop-blur-xl"
       style={{
         background: 'linear-gradient(145deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.04) 100%)',
         border: '1px solid rgba(255,255,255,0.18)',

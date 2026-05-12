@@ -73,40 +73,40 @@ export function EditAddressModal({ order, token, onClose, onSuccess }: EditAddre
         <div className="flex flex-col gap-3">
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-[10.5px] font-bold tracking-[.07em] uppercase text-(--text-3) mb-[7px] block">First name</label>
-              <Input className="w-full bg-(--bg-surface-2) border border-(--border) rounded-xl px-3.5 py-[11px] text-[13.5px] text-(--text-1) outline-none" value={form.firstName} onChange={(e) => set("firstName", e.target.value)} />
+              <label className="text-[10.5px] font-bold tracking-[.07em] uppercase text-muted-foreground mb-[7px] block">First name</label>
+              <Input className="w-full bg-secondary border border-border rounded-xl px-3.5 py-[11px] text-[13.5px] text-foreground outline-none" value={form.firstName} onChange={(e) => set("firstName", e.target.value)} />
             </div>
             <div>
-              <label className="text-[10.5px] font-bold tracking-[.07em] uppercase text-(--text-3) mb-[7px] block">Last name</label>
-              <Input className="w-full bg-(--bg-surface-2) border border-(--border) rounded-xl px-3.5 py-[11px] text-[13.5px] text-(--text-1) outline-none" value={form.lastName} onChange={(e) => set("lastName", e.target.value)} />
+              <label className="text-[10.5px] font-bold tracking-[.07em] uppercase text-muted-foreground mb-[7px] block">Last name</label>
+              <Input className="w-full bg-secondary border border-border rounded-xl px-3.5 py-[11px] text-[13.5px] text-foreground outline-none" value={form.lastName} onChange={(e) => set("lastName", e.target.value)} />
             </div>
           </div>
           <div>
-            <label className="text-[10.5px] font-bold tracking-[.07em] uppercase text-(--text-3) mb-[7px] block">Address line 1</label>
-            <Input className="w-full bg-(--bg-surface-2) border border-(--border) rounded-xl px-3.5 py-[11px] text-[13.5px] text-(--text-1) outline-none" value={form.address1} onChange={(e) => set("address1", e.target.value)} />
+            <label className="text-[10.5px] font-bold tracking-[.07em] uppercase text-muted-foreground mb-[7px] block">Address line 1</label>
+            <Input className="w-full bg-secondary border border-border rounded-xl px-3.5 py-[11px] text-[13.5px] text-foreground outline-none" value={form.address1} onChange={(e) => set("address1", e.target.value)} />
           </div>
           <div>
-            <label className="text-[10.5px] font-bold tracking-[.07em] uppercase text-(--text-3) mb-[7px] block">Address line 2 (optional)</label>
-            <Input className="w-full bg-(--bg-surface-2) border border-(--border) rounded-xl px-3.5 py-[11px] text-[13.5px] text-(--text-1) outline-none" value={form.address2} onChange={(e) => set("address2", e.target.value)} />
+            <label className="text-[10.5px] font-bold tracking-[.07em] uppercase text-muted-foreground mb-[7px] block">Address line 2 (optional)</label>
+            <Input className="w-full bg-secondary border border-border rounded-xl px-3.5 py-[11px] text-[13.5px] text-foreground outline-none" value={form.address2} onChange={(e) => set("address2", e.target.value)} />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-[10.5px] font-bold tracking-[.07em] uppercase text-(--text-3) mb-[7px] block">City</label>
-              <Input className="w-full bg-(--bg-surface-2) border border-(--border) rounded-xl px-3.5 py-[11px] text-[13.5px] text-(--text-1) outline-none" value={form.city} onChange={(e) => set("city", e.target.value)} />
+              <label className="text-[10.5px] font-bold tracking-[.07em] uppercase text-muted-foreground mb-[7px] block">City</label>
+              <Input className="w-full bg-secondary border border-border rounded-xl px-3.5 py-[11px] text-[13.5px] text-foreground outline-none" value={form.city} onChange={(e) => set("city", e.target.value)} />
             </div>
             <div>
-              <label className="text-[10.5px] font-bold tracking-[.07em] uppercase text-(--text-3) mb-[7px] block">Zip code</label>
-              <Input className="w-full bg-(--bg-surface-2) border border-(--border) rounded-xl px-3.5 py-[11px] text-[13.5px] text-(--text-1) outline-none" value={form.zip} onChange={(e) => set("zip", e.target.value)} />
+              <label className="text-[10.5px] font-bold tracking-[.07em] uppercase text-muted-foreground mb-[7px] block">Zip code</label>
+              <Input className="w-full bg-secondary border border-border rounded-xl px-3.5 py-[11px] text-[13.5px] text-foreground outline-none" value={form.zip} onChange={(e) => set("zip", e.target.value)} />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-[10.5px] font-bold tracking-[.07em] uppercase text-(--text-3) mb-[7px] block">Country</label>
-              <Input className="w-full bg-(--bg-surface-2) border border-(--border) rounded-xl px-3.5 py-[11px] text-[13.5px] text-(--text-1) outline-none" value={form.country} onChange={(e) => set("country", e.target.value)} />
+              <label className="text-[10.5px] font-bold tracking-[.07em] uppercase text-muted-foreground mb-[7px] block">Country</label>
+              <Input className="w-full bg-secondary border border-border rounded-xl px-3.5 py-[11px] text-[13.5px] text-foreground outline-none" value={form.country} onChange={(e) => set("country", e.target.value)} />
             </div>
             <div>
-              <label className="text-[10.5px] font-bold tracking-[.07em] uppercase text-(--text-3) mb-[7px] block">Phone</label>
-              <Input className="w-full bg-(--bg-surface-2) border border-(--border) rounded-xl px-3.5 py-[11px] text-[13.5px] text-(--text-1) outline-none" value={form.phone} onChange={(e) => set("phone", e.target.value)} />
+              <label className="text-[10.5px] font-bold tracking-[.07em] uppercase text-muted-foreground mb-[7px] block">Phone</label>
+              <Input className="w-full bg-secondary border border-border rounded-xl px-3.5 py-[11px] text-[13.5px] text-foreground outline-none" value={form.phone} onChange={(e) => set("phone", e.target.value)} />
             </div>
           </div>
         </div>

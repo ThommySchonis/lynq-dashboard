@@ -48,17 +48,17 @@ export function LessonView({
           >
             Knowledge Check
           </div>
-          <h2 className="mb-2 text-2xl font-bold tracking-tight text-(--text-1)">
+          <h2 className="mb-2 text-2xl font-bold tracking-tight text-foreground">
             Test Your Knowledge
           </h2>
-          <p className="text-sm text-(--text-3)">
+          <p className="text-sm text-muted-foreground">
             Answer all questions and score 70% or higher to complete this module.
           </p>
         </div>
         <QuizView mod={mod} onPass={() => onMarkRead(lessonIdx)} variant="inline" />
         <div className="mt-6">
           <button
-            className="cursor-pointer rounded-[20px] border border-black/9 bg-black/4 px-5 py-2.5 font-[inherit] text-[13px] font-medium text-(--text-3) transition-all duration-150 hover:bg-black/7 hover:text-(--text-2)"
+            className="cursor-pointer rounded-[20px] border border-black/9 bg-black/4 px-5 py-2.5 font-[inherit] text-[13px] font-medium text-muted-foreground transition-all duration-150 hover:bg-black/7 hover:text-foreground-2"
             onClick={onBack}
           >
             &larr; Back to module
@@ -73,10 +73,10 @@ export function LessonView({
       {/* Progress bar */}
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.4 }}>
         <div className="mb-2.5 flex items-center justify-between">
-          <span className="text-xs text-(--text-4)">
+          <span className="text-xs text-foreground-4">
             Lesson {lessonIdx + 1} of {mod.sections.length}
           </span>
-          <span className="text-xs text-(--text-4)">{mod.label}</span>
+          <span className="text-xs text-foreground-4">{mod.label}</span>
         </div>
         <div className="mb-7 h-[3px] overflow-hidden rounded-[10px] bg-black/8">
           <div
@@ -92,7 +92,7 @@ export function LessonView({
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, ease: EASE }}
       >
-        <h2 className="mb-6 text-[28px] font-bold leading-[1.25] tracking-tight text-(--text-1)">
+        <h2 className="mb-6 text-[28px] font-bold leading-[1.25] tracking-tight text-foreground">
           {sec.title}
         </h2>
       </motion.div>
@@ -109,10 +109,10 @@ export function LessonView({
             (para.match(/^\d+\./) || para.match(/^P[1-3]/) ? (
               <div key={pi} className="mb-2.5 flex gap-2.5">
                 <div className="mt-[9px] size-1.5 shrink-0 rounded-full bg-indigo-500" />
-                <p className="text-base leading-[1.8] text-(--text-2)">{para}</p>
+                <p className="text-base leading-[1.8] text-foreground-2">{para}</p>
               </div>
             ) : (
-              <p key={pi} className="mb-4 text-base leading-[1.8] text-(--text-2)">
+              <p key={pi} className="mb-4 text-base leading-[1.8] text-foreground-2">
                 {para}
               </p>
             )),
@@ -127,7 +127,7 @@ export function LessonView({
             <span className="mr-2 text-[11px] font-bold uppercase tracking-[0.06em] text-indigo-500">
               TIP
             </span>
-            <span className="text-[15px] text-(--text-2)">{tip}</span>
+            <span className="text-[15px] text-foreground-2">{tip}</span>
           </div>
         ))}
 
@@ -140,7 +140,7 @@ export function LessonView({
             {sec.takeaways.map((t, ti) => (
               <div key={ti} className="mb-2 flex gap-2.5">
                 <Check className="size-[13px] shrink-0 text-emerald-500" />
-                <span className="text-sm leading-[1.55] text-(--text-2)">{t}</span>
+                <span className="text-sm leading-[1.55] text-foreground-2">{t}</span>
               </div>
             ))}
           </div>
@@ -149,10 +149,10 @@ export function LessonView({
         {/* Example */}
         {sec.example && (
           <div className="mb-5 rounded-[10px] border border-black/8 bg-black/3 p-[18px]">
-            <div className="mb-2.5 text-[11px] font-bold uppercase tracking-[0.07em] text-(--text-4)">
+            <div className="mb-2.5 text-[11px] font-bold uppercase tracking-[0.07em] text-foreground-4">
               Example
             </div>
-            <pre className="whitespace-pre-wrap font-[inherit] text-[13px] leading-[1.7] text-(--text-2)">
+            <pre className="whitespace-pre-wrap font-[inherit] text-[13px] leading-[1.7] text-foreground-2">
               {sec.example}
             </pre>
           </div>
@@ -167,7 +167,7 @@ export function LessonView({
         className="mt-8 flex flex-wrap items-center justify-between gap-3"
       >
         <button
-          className="cursor-pointer rounded-[20px] border border-black/9 bg-black/4 px-5 py-2.5 font-[inherit] text-[13px] font-medium text-(--text-3) transition-all duration-150 hover:bg-black/7 hover:text-(--text-2) disabled:opacity-35"
+          className="cursor-pointer rounded-[20px] border border-black/9 bg-black/4 px-5 py-2.5 font-[inherit] text-[13px] font-medium text-muted-foreground transition-all duration-150 hover:bg-black/7 hover:text-foreground-2 disabled:opacity-35"
           onClick={onPrev}
           disabled={lessonIdx === 0}
         >
@@ -199,7 +199,7 @@ export function LessonView({
           )}
           {isLast && isDone && (
             <button
-              className="cursor-pointer rounded-[20px] border border-black/9 bg-black/4 px-5 py-2.5 font-[inherit] text-[13px] font-medium text-(--text-3) transition-all duration-150 hover:bg-black/7 hover:text-(--text-2)"
+              className="cursor-pointer rounded-[20px] border border-black/9 bg-black/4 px-5 py-2.5 font-[inherit] text-[13px] font-medium text-muted-foreground transition-all duration-150 hover:bg-black/7 hover:text-foreground-2"
               onClick={onBack}
             >
               Back to module

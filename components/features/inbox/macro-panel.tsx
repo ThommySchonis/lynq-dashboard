@@ -83,7 +83,7 @@ export function MacroPanel({ macros = [], aiMacros = [], onInsert, onClose, cust
   function renderPreview(body: string) {
     return body.split(/({{[^}]+}})/).map((part, i) =>
       part.match(/{{[^}]+}}/) ? (
-        <span key={i} className="macro-var">
+        <span key={i} className="text-foreground-2 bg-secondary py-px px-[5px] rounded border border-border font-semibold text-[11px]">
           {part}
         </span>
       ) : (
@@ -93,10 +93,10 @@ export function MacroPanel({ macros = [], aiMacros = [], onInsert, onClose, cust
   }
 
   return (
-    <div className="border-t border-(--border) animate-[fadeUp_.18s_ease_both] flex flex-col h-[min(360px,46vh)] min-h-[220px] bg-(--bg-surface)">
+    <div className="border-t border-border animate-[fadeUp_.18s_ease_both] flex flex-col h-[min(360px,46vh)] min-h-[220px] bg-card">
       {/* Search + gear row */}
-      <div className="flex items-center gap-2 py-2 px-3 border-b border-(--border) bg-(--bg-surface-2) shrink-0">
-        <span className="text-(--text-3) flex shrink-0">
+      <div className="flex items-center gap-2 py-2 px-3 border-b border-border bg-secondary shrink-0">
+        <span className="text-muted-foreground flex shrink-0">
           <Zap size={13} />
         </span>
         <input
@@ -104,27 +104,27 @@ export function MacroPanel({ macros = [], aiMacros = [], onInsert, onClose, cust
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search macros by name, tag or content…"
-          className="flex-1 bg-transparent border-none outline-none text-[12.5px] text-(--text-1) font-[inherit]"
+          className="flex-1 bg-transparent border-none outline-none text-[12.5px] text-foreground font-[inherit]"
         />
         {aiMacros?.length > 0 && (
-          <span className="text-[10px] font-bold py-0.5 px-[7px] rounded-[5px] bg-(--bg-surface-2) text-(--text-2) tracking-[.04em] shrink-0">AI ✦</span>
+          <span className="text-[10px] font-bold py-0.5 px-[7px] rounded-[5px] bg-secondary text-foreground-2 tracking-[.04em] shrink-0">AI ✦</span>
         )}
         {/* Gear settings */}
         <div ref={gearRef} className="relative shrink-0">
           <button
             onClick={() => setGearOpen((p) => !p)}
             style={{
-              color: gearOpen ? "var(--text-1)" : "var(--text-2)",
+              color: gearOpen ? "var(--foreground)" : "var(--foreground-2)",
               display: "flex",
               padding: "5px 6px",
               borderRadius: 6,
-              background: gearOpen ? "var(--bg-surface-2)" : "transparent",
+              background: gearOpen ? "var(--secondary)" : "transparent",
               border: gearOpen ? "1px solid var(--border)" : "1px solid transparent",
               transition: "all .15s",
             }}
             onMouseEnter={(e) => {
               if (!gearOpen) {
-                e.currentTarget.style.background = "var(--bg-surface)";
+                e.currentTarget.style.background = "var(--card)";
                 e.currentTarget.style.border = "1px solid var(--border)";
               }
             }}
@@ -139,9 +139,9 @@ export function MacroPanel({ macros = [], aiMacros = [], onInsert, onClose, cust
             <Settings size={15} />
           </button>
           {gearOpen && (
-            <div className="macro-gear-menu">
+            <div className="absolute top-[calc(100%+4px)] right-0 min-w-[192px] bg-card border border-border rounded-[10px] shadow-[0_8px_24px_rgba(15,23,42,0.12),0_2px_6px_rgba(15,23,42,0.06)] z-40 p-1 animate-[fadeUp_.14s_ease_both]">
               <button
-                className="macro-gear-item"
+                className="flex items-center gap-[9px] w-full py-2 px-[11px] rounded-[7px] bg-none border-none font-inherit text-[12.5px] text-foreground cursor-pointer text-left transition-[background] duration-120 hover:bg-secondary"
                 onClick={() => {
                   setGearOpen(false);
                   onManage();
@@ -151,7 +151,7 @@ export function MacroPanel({ macros = [], aiMacros = [], onInsert, onClose, cust
                 Manage macros
               </button>
               <button
-                className="macro-gear-item"
+                className="flex items-center gap-[9px] w-full py-2 px-[11px] rounded-[7px] bg-none border-none font-inherit text-[12.5px] text-foreground cursor-pointer text-left transition-[background] duration-120 hover:bg-secondary"
                 onClick={() => {
                   setGearOpen(false);
                   active && onManage(active);
@@ -161,7 +161,7 @@ export function MacroPanel({ macros = [], aiMacros = [], onInsert, onClose, cust
                 Edit macro
               </button>
               <button
-                className="macro-gear-item"
+                className="flex items-center gap-[9px] w-full py-2 px-[11px] rounded-[7px] bg-none border-none font-inherit text-[12.5px] text-foreground cursor-pointer text-left transition-[background] duration-120 hover:bg-secondary"
                 onClick={() => {
                   setGearOpen(false);
                   onCreateNew();
@@ -170,9 +170,9 @@ export function MacroPanel({ macros = [], aiMacros = [], onInsert, onClose, cust
                 <Plus size={13} />
                 Create new macro
               </button>
-              <div className="macro-gear-divider" />
+              <div className="h-px bg-border my-[3px]" />
               <button
-                className="macro-gear-item danger"
+                className="flex items-center gap-[9px] w-full py-2 px-[11px] rounded-[7px] bg-none border-none font-inherit text-[12.5px] text-destructive cursor-pointer text-left transition-[background] duration-120 hover:bg-secondary"
                 onClick={() => {
                   setGearOpen(false);
                   active && confirm("Delete this macro?") && onDeleteMacro && onDeleteMacro(active.id);
@@ -181,9 +181,9 @@ export function MacroPanel({ macros = [], aiMacros = [], onInsert, onClose, cust
                 <Trash2 size={13} />
                 Delete macro
               </button>
-              <div className="macro-gear-divider" />
+              <div className="h-px bg-border my-[3px]" />
               <button
-                className="macro-gear-item"
+                className="flex items-center gap-[9px] w-full py-2 px-[11px] rounded-[7px] bg-none border-none font-inherit text-[12.5px] text-foreground cursor-pointer text-left transition-[background] duration-120 hover:bg-secondary"
                 onClick={() => {
                   setGearOpen(false);
                   onManage();
@@ -198,14 +198,14 @@ export function MacroPanel({ macros = [], aiMacros = [], onInsert, onClose, cust
         <button
           onClick={onClose}
           className="flex py-[5px] px-1.5 rounded-md border border-transparent transition-all duration-150"
-          style={{ color: "var(--text-2)" }}
+          style={{ color: "var(--foreground-2)" }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.color = "var(--text-1)";
-            e.currentTarget.style.background = "var(--bg-surface)";
+            e.currentTarget.style.color = "var(--foreground)";
+            e.currentTarget.style.background = "var(--card)";
             e.currentTarget.style.border = "1px solid var(--border)";
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.color = "var(--text-2)";
+            e.currentTarget.style.color = "var(--foreground-2)";
             e.currentTarget.style.background = "transparent";
             e.currentTarget.style.border = "1px solid transparent";
           }}
@@ -217,20 +217,20 @@ export function MacroPanel({ macros = [], aiMacros = [], onInsert, onClose, cust
       {/* Two-panel — fills remaining height */}
       <div className="flex-1 flex overflow-hidden">
         {/* List */}
-        <div className="w-[230px] border-r border-(--border) overflow-y-auto shrink-0 sscroll border-r border-(--border)">
+        <div className="w-[230px] border-r border-border overflow-y-auto shrink-0 thin-scrollbar">
           {aiMacros?.length > 0 && (
             <>
-              <div className="macro-suggest">AI suggestions ✦</div>
+              <div className="py-1 px-[14px] pb-1.5 text-[9.5px] font-bold tracking-[.08em] uppercase text-foreground-3">AI suggestions ✦</div>
               {aiMacros.map((m) => (
                 <div
                   key={m.id}
-                  className={`macro-item${active?.id === m.id ? " mi-active" : ""}`}
+                  className={`group py-[10px] px-[14px] cursor-pointer transition-[background] duration-120 border-l-2 ${active?.id === m.id ? 'bg-secondary border-l-foreground-2' : 'border-l-transparent hover:bg-secondary'}`}
                   onClick={() => setSelected(m)}
                   onDoubleClick={() => applyMacro(m)}
                 >
                   <div className="flex items-start gap-1.5">
                     <div className="flex-1 min-w-0">
-                      <div className="text-[12.5px] font-semibold text-(--text-1) mb-[3px]">{m.name}</div>
+                      <div className="text-[12.5px] font-semibold text-foreground mb-[3px]">{m.name}</div>
                     </div>
                   </div>
                 </div>
@@ -238,33 +238,33 @@ export function MacroPanel({ macros = [], aiMacros = [], onInsert, onClose, cust
               <div className="h-px bg-(--border) my-1" />
             </>
           )}
-          {filtered.length === 0 && <div className="py-5 px-3.5 text-xs text-(--text-3) text-center">No macros found</div>}
+          {filtered.length === 0 && <div className="py-5 px-3.5 text-xs text-muted-foreground text-center">No macros found</div>}
           {/* Favorites section */}
           {favMacros.length > 0 && (
             <>
-              <div className="macro-suggest flex items-center gap-1">
+              <div className="py-1 px-[14px] pb-1.5 text-[9.5px] font-bold tracking-[.08em] uppercase text-foreground-3 flex items-center gap-1">
                 <Star size={9} fill="#f59e0b" stroke="#f59e0b" />
                 Favorites
               </div>
               {favMacros.map((m) => (
                 <div
                   key={m.id}
-                  className={`macro-item${active?.id === m.id ? " mi-active" : ""}`}
+                  className={`group py-[10px] px-[14px] cursor-pointer transition-[background] duration-120 border-l-2 ${active?.id === m.id ? 'bg-secondary border-l-foreground-2' : 'border-l-transparent hover:bg-secondary'}`}
                   onClick={() => setSelected(m)}
                   onDoubleClick={() => applyMacro(m)}
                 >
                   <div className="flex items-start gap-1.5">
                     <div className="flex-1 min-w-0">
-                      <div className="text-[12.5px] font-semibold text-(--text-1) mb-[3px]">{m.name}</div>
+                      <div className="text-[12.5px] font-semibold text-foreground mb-[3px]">{m.name}</div>
                       <div className="flex gap-1 flex-wrap">
                         {(m.tags || []).map((t) => (
-                          <span key={t} className="text-[10px] font-semibold px-1.5 py-[1px] rounded bg-(--bg-surface-2) text-(--text-3)">
+                          <span key={t} className="text-[10px] font-semibold px-1.5 py-[1px] rounded bg-secondary text-muted-foreground">
                             {t}
                           </span>
                         ))}
                       </div>
                     </div>
-                    <button className="macro-star fav mt-px" onClick={(e) => toggleFav(m.id, e)} title="Remove from favorites">
+                    <button className="bg-transparent border-none cursor-pointer flex items-center py-0.5 px-[3px] rounded shrink-0 opacity-100 hover:opacity-100! mt-px" onClick={(e) => toggleFav(m.id, e)} title="Remove from favorites">
                       <StarIcon filled />
                     </button>
                   </div>
@@ -276,26 +276,26 @@ export function MacroPanel({ macros = [], aiMacros = [], onInsert, onClose, cust
           {/* All / remaining macros */}
           {nonFavMacros.length > 0 && (
             <>
-              {favMacros.length > 0 && <div className="macro-suggest">All macros</div>}
+              {favMacros.length > 0 && <div className="py-1 px-[14px] pb-1.5 text-[9.5px] font-bold tracking-[.08em] uppercase text-foreground-3">All macros</div>}
               {nonFavMacros.map((m) => (
                 <div
                   key={m.id}
-                  className={`macro-item${active?.id === m.id ? " mi-active" : ""}`}
+                  className={`group py-[10px] px-[14px] cursor-pointer transition-[background] duration-120 border-l-2 ${active?.id === m.id ? 'bg-secondary border-l-foreground-2' : 'border-l-transparent hover:bg-secondary'}`}
                   onClick={() => setSelected(m)}
                   onDoubleClick={() => applyMacro(m)}
                 >
                   <div className="flex items-start gap-1.5">
                     <div className="flex-1 min-w-0">
-                      <div className="text-[12.5px] font-semibold text-(--text-1) mb-[3px]">{m.name}</div>
+                      <div className="text-[12.5px] font-semibold text-foreground mb-[3px]">{m.name}</div>
                       <div className="flex gap-1 flex-wrap">
                         {(m.tags || []).map((t) => (
-                          <span key={t} className="text-[10px] font-semibold px-1.5 py-[1px] rounded bg-(--bg-surface-2) text-(--text-3)">
+                          <span key={t} className="text-[10px] font-semibold px-1.5 py-[1px] rounded bg-secondary text-muted-foreground">
                             {t}
                           </span>
                         ))}
                       </div>
                     </div>
-                    <button className="macro-star mt-px" onClick={(e) => toggleFav(m.id, e)} title="Add to favorites">
+                    <button className="bg-transparent border-none cursor-pointer flex items-center py-0.5 px-[3px] rounded shrink-0 opacity-0 group-hover:opacity-45 hover:opacity-100! transition-opacity duration-150 mt-px" onClick={(e) => toggleFav(m.id, e)} title="Add to favorites">
                       <StarIcon filled={false} />
                     </button>
                   </div>
@@ -307,14 +307,14 @@ export function MacroPanel({ macros = [], aiMacros = [], onInsert, onClose, cust
 
         {/* Preview — no buttons here */}
         {active ? (
-          <div className="flex-1 px-4 py-3.5 overflow-y-auto text-[13px] leading-[1.75] text-(--text-2) whitespace-pre-wrap sscroll flex-1">{renderPreview(active.body ?? "")}</div>
+          <div className="flex-1 px-4 py-3.5 overflow-y-auto text-[13px] leading-[1.75] text-foreground-2 whitespace-pre-wrap thin-scrollbar">{renderPreview(active.body ?? "")}</div>
         ) : (
-          <div className="flex-1 flex items-center justify-center text-(--text-3) text-[12.5px]">Select a macro to preview</div>
+          <div className="flex-1 flex items-center justify-center text-muted-foreground text-[12.5px]">Select a macro to preview</div>
         )}
       </div>
 
       {/* Full-width footer — always visible, connected to bottom of panel */}
-      <div className="border-t border-(--border) py-2 px-3.5 flex items-center justify-end gap-2 shrink-0 bg-(--bg-surface)">
+      <div className="border-t border-border py-2 px-3.5 flex items-center justify-end gap-2 shrink-0 bg-card">
         <Button variant="outline" className="text-[11.5px] py-1.5 px-3.5" onClick={onClose}>
           Close
         </Button>

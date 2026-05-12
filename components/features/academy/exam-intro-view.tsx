@@ -12,7 +12,7 @@ interface ExamIntroViewProps {
 
 export function ExamIntroView({ onStart, onReturn }: ExamIntroViewProps) {
   return (
-      <div className="ac-scroll flex h-screen items-center justify-center overflow-y-auto bg-[#F9F9FB] px-6 py-10">
+      <div className="thin-scrollbar flex h-screen items-center justify-center overflow-y-auto bg-[#F9F9FB] px-6 py-10">
         <motion.div
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
@@ -26,10 +26,10 @@ export function ExamIntroView({ onStart, onReturn }: ExamIntroViewProps) {
             <div className="mb-3 text-[11px] font-bold uppercase tracking-[0.12em] text-violet-500">
               Lynq Academy
             </div>
-            <h1 className="mb-3 text-[32px] font-extrabold tracking-tight text-(--text-1)">
+            <h1 className="mb-3 text-[32px] font-extrabold tracking-tight text-foreground">
               Final Certification Exam
             </h1>
-            <p className="mx-auto max-w-[460px] text-[15px] leading-[1.65] text-(--text-3)">
+            <p className="mx-auto max-w-[460px] text-[15px] leading-[1.65] text-muted-foreground">
               Complete all 50 questions to earn your certificate.
             </p>
           </div>
@@ -65,7 +65,7 @@ export function ExamIntroView({ onStart, onReturn }: ExamIntroViewProps) {
             {SECTION_META.map(({ label }: SectionMeta, i: number) => (
               <div
                 key={i}
-                className="flex items-center gap-3.5 rounded-[10px] border border-(--border) bg-white px-[18px] py-3.5 transition-colors duration-150 hover:bg-[#F9F8FF]"
+                className="flex items-center gap-3.5 rounded-[10px] border border-border bg-white px-[18px] py-3.5 transition-colors duration-150 hover:bg-background"
               >
                 <div className="flex size-7 shrink-0 items-center justify-center rounded-lg border border-black/8 bg-[#F5F5F5]">
                   <span className="text-xs font-bold text-[#555555]">
@@ -73,10 +73,10 @@ export function ExamIntroView({ onStart, onReturn }: ExamIntroViewProps) {
                   </span>
                 </div>
                 <div>
-                  <div className="mb-[3px] text-[10px] font-bold uppercase tracking-[0.08em] text-(--text-4)">
+                  <div className="mb-[3px] text-[10px] font-bold uppercase tracking-[0.08em] text-foreground-4">
                     Section {i + 1}
                   </div>
-                  <div className="text-sm font-semibold text-(--text-1)">{label}</div>
+                  <div className="text-sm font-semibold text-foreground">{label}</div>
                 </div>
                 <div className="ml-auto text-[11px] text-[#C4C4C4]">10 questions</div>
               </div>
@@ -85,14 +85,14 @@ export function ExamIntroView({ onStart, onReturn }: ExamIntroViewProps) {
 
           <div className="flex justify-center gap-3">
             <button
-              className="cursor-pointer rounded-[20px] border border-black/9 bg-black/4 px-5 py-2.5 font-[inherit] text-[13px] font-medium text-(--text-3) transition-all duration-150 hover:bg-black/7 hover:text-(--text-2)"
+              className="cursor-pointer rounded-[20px] border border-black/9 bg-black/4 px-5 py-2.5 font-[inherit] text-[13px] font-medium text-muted-foreground transition-all duration-150 hover:bg-black/7 hover:text-foreground-2"
               onClick={onReturn}
             >
               &larr; Back to Academy
             </button>
             <button
               onClick={onStart}
-              className="cursor-pointer rounded-lg border-none bg-(--text-1) px-7 py-[11px] font-[inherit] text-[13px] font-semibold text-white transition-opacity duration-150 hover:opacity-85"
+              className="cursor-pointer rounded-lg border-none bg-foreground px-7 py-[11px] font-[inherit] text-[13px] font-semibold text-white transition-opacity duration-150 hover:opacity-85"
             >
               Start Exam &rarr;
             </button>

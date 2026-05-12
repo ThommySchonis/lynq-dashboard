@@ -68,7 +68,7 @@ export function DataTable<T extends { id?: string }>({
 
   return (
     <div className={cn('space-y-3', className)}>
-      <div className="rounded-lg border border-[var(--border)]">
+      <div className="rounded-lg border border-border">
         <Table>
           <TableHeader>
             <TableRow>
@@ -80,7 +80,7 @@ export function DataTable<T extends { id?: string }>({
                       className="flex items-center gap-1 font-medium"
                     >
                       {col.header}
-                      <ArrowUpDown size={14} className="text-[var(--text-4)]" />
+                      <ArrowUpDown size={14} className="text-foreground-4" />
                     </button>
                   ) : (
                     col.header
@@ -109,7 +109,7 @@ export function DataTable<T extends { id?: string }>({
 
       {totalPages > 1 && (
         <div className="flex items-center justify-between">
-          <p className="text-xs text-[var(--text-3)]">
+          <p className="text-xs text-muted-foreground">
             {page * pageSize + 1}–{Math.min((page + 1) * pageSize, data.length)} of {data.length}
           </p>
           <div className="flex gap-1">

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Check, Loader2 } from 'lucide-react'
+import { cn } from '@/lib/utils'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/stores/auth'
 import {
@@ -115,7 +116,7 @@ export function FinalExam() {
         <div className="flex h-screen items-center justify-center bg-[#F9F9FB]">
           <div className="text-center">
             <Loader2 className="mx-auto mb-3 size-9 animate-spin text-violet-500" />
-            <div className="text-[13px] text-(--text-4)">Loading...</div>
+            <div className="text-[13px] text-foreground-4">Loading...</div>
           </div>
         </div>
     )
@@ -153,7 +154,7 @@ export function FinalExam() {
   return (
       <div className="flex h-screen flex-col overflow-hidden bg-[#F9F9FB]">
         {/* Progress header */}
-        <div className="flex h-[52px] shrink-0 items-center gap-4 border-b border-(--border) bg-white px-6">
+        <div className="flex h-[52px] shrink-0 items-center gap-4 border-b border-border bg-white px-6">
           <div className="flex flex-1 items-center gap-1.5">
             {SECTION_META.map(({ label, color }: SectionMeta, i: number) => (
               <div key={i} className="flex items-center gap-[5px]">
@@ -188,9 +189,9 @@ export function FinalExam() {
               </div>
             ))}
           </div>
-          <span className="shrink-0 text-xs text-(--text-4)">Q{currentQ + 1}/50</span>
+          <span className="shrink-0 text-xs text-foreground-4">Q{currentQ + 1}/50</span>
           <button
-            className="cursor-pointer rounded-[20px] border border-black/9 bg-black/4 px-3.5 py-1.5 font-[inherit] text-xs font-medium text-(--text-3) transition-all duration-150 hover:bg-black/7 hover:text-(--text-2)"
+            className="cursor-pointer rounded-[20px] border border-black/9 bg-black/4 px-3.5 py-1.5 font-[inherit] text-xs font-medium text-muted-foreground transition-all duration-150 hover:bg-black/7 hover:text-foreground-2"
             onClick={() => setView('intro')}
           >
             Exit
@@ -207,7 +208,7 @@ export function FinalExam() {
           />
         </div>
 
-        <div className="ac-scroll flex-1 overflow-y-auto">
+        <div className="thin-scrollbar flex-1 overflow-y-auto">
           <div className="mx-auto max-w-[720px] px-6 py-8">
             <AnimatePresence mode="wait">
               <motion.div
@@ -226,7 +227,7 @@ export function FinalExam() {
                     >
                       {meta.label} &mdash; Question {qInSection + 1} of 10
                     </span>
-                    <span className="text-[11px] text-(--text-4)">
+                    <span className="text-[11px] text-foreground-4">
                       {answeredTotal}/50 answered
                     </span>
                   </div>
@@ -247,12 +248,12 @@ export function FinalExam() {
                     initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.3 }}
-                    className="mb-5 rounded-lg border border-violet-500/12 border-l-[3px] border-l-violet-500 bg-[#F9F8FF] px-5 py-4"
+                    className="mb-5 rounded-lg border border-violet-500/12 border-l-[3px] border-l-violet-500 bg-background px-5 py-4"
                   >
                     <div className="mb-2 text-[10px] font-bold uppercase tracking-[0.1em] text-violet-500">
                       Case Study: {q.caseTitle}
                     </div>
-                    <p className="text-sm leading-[1.75] text-(--text-2)">{q.caseContext}</p>
+                    <p className="text-sm leading-[1.75] text-foreground-2">{q.caseContext}</p>
                   </motion.div>
                 )}
 
@@ -266,8 +267,8 @@ export function FinalExam() {
                 )}
 
                 {/* Question */}
-                <div className="mb-3.5 rounded-xl border border-(--border) bg-white px-7 py-6">
-                  <h3 className="text-lg font-semibold leading-[1.5] text-(--text-1)">{q.q}</h3>
+                <div className="mb-3.5 rounded-xl border border-border bg-white px-7 py-6">
+                  <h3 className="text-lg font-semibold leading-[1.5] text-foreground">{q.q}</h3>
                 </div>
 
                 {/* Options */}
@@ -276,13 +277,21 @@ export function FinalExam() {
                   return (
                     <div
                       key={idx}
-                      className={`fe-option ${sel ? 'selected' : ''}`}
+                      className={cn(
+                        'mb-2 flex cursor-pointer items-center gap-3.5 rounded-[10px] border border-black/9 bg-white px-[18px] py-3.5 transition-all duration-150 hover:border-[rgba(139,92,246,0.35)] hover:bg-[rgba(139,92,246,0.02)]',
+                        sel && 'border-[#8B5CF6] bg-[rgba(139,92,246,0.06)]',
+                      )}
                       onClick={() => setAnswers((prev) => ({ ...prev, [currentQ]: idx }))}
                     >
-                      <div className="fe-radio">
+                      <div
+                        className={cn(
+                          'flex size-[18px] shrink-0 items-center justify-center rounded-full border-2 border-black/20 transition-all duration-150',
+                          sel && 'border-[#8B5CF6] bg-[#8B5CF6]',
+                        )}
+                      >
                         {sel && <div className="size-2 rounded-full bg-white" />}
                       </div>
-                      <span className="flex-1 text-sm text-(--text-1)">{opt}</span>
+                      <span className="flex-1 text-sm text-foreground">{opt}</span>
                     </div>
                   )
                 })}
@@ -290,7 +299,7 @@ export function FinalExam() {
                 {/* Navigation */}
                 <div className="mt-5 flex items-center justify-between">
                   <button
-                    className="cursor-pointer rounded-[20px] border border-black/9 bg-black/4 px-5 py-2.5 font-[inherit] text-[13px] font-medium text-(--text-3) transition-all duration-150 hover:bg-black/7 hover:text-(--text-2) disabled:opacity-35"
+                    className="cursor-pointer rounded-[20px] border border-black/9 bg-black/4 px-5 py-2.5 font-[inherit] text-[13px] font-medium text-muted-foreground transition-all duration-150 hover:bg-black/7 hover:text-foreground-2 disabled:opacity-35"
                     onClick={() => setCurrentQ((q) => q - 1)}
                     disabled={isFirstQ}
                   >

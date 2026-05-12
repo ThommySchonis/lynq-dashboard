@@ -34,7 +34,7 @@ export function ExamResultsView({ scores, passed, onRetake, onReturn }: ExamResu
             }}
           />
         ))}
-      <div className="ac-scroll flex h-full items-center justify-center overflow-y-auto px-6 py-10">
+      <div className="thin-scrollbar flex h-full items-center justify-center overflow-y-auto px-6 py-10">
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -71,22 +71,22 @@ export function ExamResultsView({ scores, passed, onRetake, onReturn }: ExamResu
               />
             </svg>
             <div className="absolute text-center">
-              <div className="text-4xl font-extrabold text-(--text-1)">{scores.total}%</div>
-              <div className="text-[11px] text-(--text-4)">total score</div>
+              <div className="text-4xl font-extrabold text-foreground">{scores.total}%</div>
+              <div className="text-[11px] text-foreground-4">total score</div>
             </div>
           </div>
 
-          <h2 className="mb-2.5 text-[26px] font-extrabold tracking-tight text-(--text-1)">
+          <h2 className="mb-2.5 text-[26px] font-extrabold tracking-tight text-foreground">
             {passed ? 'Congratulations!' : 'Almost there!'}
           </h2>
-          <p className="mx-auto mb-8 max-w-[440px] text-[15px] leading-[1.65] text-(--text-3)">
+          <p className="mx-auto mb-8 max-w-[440px] text-[15px] leading-[1.65] text-muted-foreground">
             {passed
               ? "You've earned your Lynq Academy certificate. Outstanding work!"
               : `You scored ${scores.total}%. You need 80% to pass. Review sections below 80% and retake when ready.`}
           </p>
 
-          <div className="mb-7 rounded-[14px] border border-(--border) bg-white px-6 py-5 text-left">
-            <div className="mb-4 text-xs font-bold uppercase tracking-[0.08em] text-(--text-4)">
+          <div className="mb-7 rounded-[14px] border border-border bg-white px-6 py-5 text-left">
+            <div className="mb-4 text-xs font-bold uppercase tracking-[0.08em] text-foreground-4">
               Section Scores
             </div>
             {SECTION_META.map(({ label, color }: SectionMeta, i: number) => {
@@ -94,7 +94,7 @@ export function ExamResultsView({ scores, passed, onRetake, onReturn }: ExamResu
               return (
                 <div key={i} className="mb-3.5 last:mb-0">
                   <div className="mb-[5px] flex justify-between">
-                    <span className="text-[13px] font-medium text-(--text-2)">{label}</span>
+                    <span className="text-[13px] font-medium text-foreground-2">{label}</span>
                     <span
                       className="text-[13px] font-bold"
                       style={{
@@ -128,7 +128,7 @@ export function ExamResultsView({ scores, passed, onRetake, onReturn }: ExamResu
                   Claim Your Certificate &rarr;
                 </button>
                 <button
-                  className="cursor-pointer rounded-[20px] border border-black/9 bg-black/4 px-5 py-2.5 font-[inherit] text-[13px] font-medium text-(--text-3) transition-all duration-150 hover:bg-black/7 hover:text-(--text-2)"
+                  className="cursor-pointer rounded-[20px] border border-black/9 bg-black/4 px-5 py-2.5 font-[inherit] text-[13px] font-medium text-muted-foreground transition-all duration-150 hover:bg-black/7 hover:text-foreground-2"
                   onClick={onReturn}
                 >
                   Back to Academy
@@ -137,7 +137,7 @@ export function ExamResultsView({ scores, passed, onRetake, onReturn }: ExamResu
             ) : (
               <>
                 <button
-                  className="cursor-pointer rounded-[20px] border border-black/9 bg-black/4 px-5 py-2.5 font-[inherit] text-[13px] font-medium text-(--text-3) transition-all duration-150 hover:bg-black/7 hover:text-(--text-2)"
+                  className="cursor-pointer rounded-[20px] border border-black/9 bg-black/4 px-5 py-2.5 font-[inherit] text-[13px] font-medium text-muted-foreground transition-all duration-150 hover:bg-black/7 hover:text-foreground-2"
                   onClick={onReturn}
                 >
                   Back to Academy

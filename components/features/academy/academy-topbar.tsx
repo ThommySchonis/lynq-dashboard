@@ -32,26 +32,26 @@ export function AcademyTopbar({
         <>
           <span
             onClick={onGoWelcome}
-            className="cursor-pointer text-(--text-3) transition-colors duration-100 hover:text-(--text-2)"
+            className="cursor-pointer text-muted-foreground transition-colors duration-100 hover:text-foreground-2"
           >
             Academy
           </span>
           <span className="mx-1.5 text-black/20">&rsaquo;</span>
-          <span className="font-medium text-(--text-1)">{selectedModule?.label}</span>
+          <span className="font-medium text-foreground">{selectedModule?.label}</span>
         </>
       )
     if (view === 'lesson')
       return (
         <>
-          <span onClick={onGoWelcome} className="cursor-pointer text-(--text-3) hover:text-(--text-2)">
+          <span onClick={onGoWelcome} className="cursor-pointer text-muted-foreground hover:text-foreground-2">
             Academy
           </span>
           <span className="mx-1.5 text-black/20">&rsaquo;</span>
-          <span onClick={onGoModule} className="cursor-pointer text-(--text-3) hover:text-(--text-2)">
+          <span onClick={onGoModule} className="cursor-pointer text-muted-foreground hover:text-foreground-2">
             {selectedModule?.label}
           </span>
           <span className="mx-1.5 text-black/20">&rsaquo;</span>
-          <span className="font-medium text-(--text-1)">
+          <span className="font-medium text-foreground">
             {selectedModule?.sections[selectedLesson]?.title}
           </span>
         </>
@@ -59,35 +59,35 @@ export function AcademyTopbar({
     if (view === 'quiz')
       return (
         <>
-          <span onClick={onGoWelcome} className="cursor-pointer text-(--text-3) hover:text-(--text-2)">
+          <span onClick={onGoWelcome} className="cursor-pointer text-muted-foreground hover:text-foreground-2">
             Academy
           </span>
           <span className="mx-1.5 text-black/20">&rsaquo;</span>
-          <span onClick={onGoModule} className="cursor-pointer text-(--text-3) hover:text-(--text-2)">
+          <span onClick={onGoModule} className="cursor-pointer text-muted-foreground hover:text-foreground-2">
             {selectedModule?.label}
           </span>
           <span className="mx-1.5 text-black/20">&rsaquo;</span>
-          <span className="font-medium text-(--text-1)">Quiz</span>
+          <span className="font-medium text-foreground">Quiz</span>
         </>
       )
     if (view === 'certificate')
       return (
         <>
-          <span onClick={onGoWelcome} className="cursor-pointer text-(--text-3) hover:text-(--text-2)">
+          <span onClick={onGoWelcome} className="cursor-pointer text-muted-foreground hover:text-foreground-2">
             Academy
           </span>
           <span className="mx-1.5 text-black/20">&rsaquo;</span>
-          <span className="font-medium text-(--text-1)">Certificate</span>
+          <span className="font-medium text-foreground">Certificate</span>
         </>
       )
     return null
   }
 
   return (
-    <div className="flex h-[52px] shrink-0 items-center gap-4 border-b border-(--border) bg-white px-6">
+    <div className="flex h-[52px] shrink-0 items-center gap-4 border-b border-border bg-white px-6">
       <div className="flex flex-1 items-center text-[13px]">{breadcrumb()}</div>
       <div className="flex items-center gap-2.5">
-        <div className="rounded-[20px] border border-violet-500/30 bg-violet-500/15 px-3 py-1 text-xs font-semibold text-[#A175FC]">
+        <div className="rounded-[20px] border border-violet-500/30 bg-violet-500/15 px-3 py-1 text-xs font-semibold text-primary">
           {pct}% complete
         </div>
         {userName && (

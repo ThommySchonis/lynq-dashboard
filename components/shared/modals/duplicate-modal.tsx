@@ -83,25 +83,25 @@ export function DuplicateModal({ order, token, onClose, onSuccess }: DuplicateMo
           <DialogTitle>{`Duplicate — ${order.name}`}</DialogTitle>
         </DialogHeader>
         {/* Products */}
-        <div className="bg-(--bg-surface-2) border border-border rounded-xl px-3.5 py-2.5 mb-3.5">
+        <div className="bg-secondary border border-border rounded-xl px-3.5 py-2.5 mb-3.5">
           {(order.lineItems || []).map((li) => (
             <div key={li.id} className="flex justify-between py-[5px] border-b border-white/5">
-              <span className="text-[12.5px] text-(--text-2)">
+              <span className="text-[12.5px] text-foreground-2">
                 {li.quantity}× {li.title}
                 {li.variantTitle ? ` · ${li.variantTitle}` : ""}
               </span>
-              <span className="text-[12.5px] text-(--text-2)">{fmtPrice(Number(li.price) * li.quantity, order.currency)}</span>
+              <span className="text-[12.5px] text-foreground-2">{fmtPrice(Number(li.price) * li.quantity, order.currency)}</span>
             </div>
           ))}
           <div className="flex justify-between pt-2 mt-1">
-            <span className="text-[12.5px] text-(--text-2)">Original</span>
-            <span className="text-[13px] font-bold text-(--text-1)">{fmtPrice(originalTotal, order.currency)}</span>
+            <span className="text-[12.5px] text-foreground-2">Original</span>
+            <span className="text-[13px] font-bold text-foreground">{fmtPrice(originalTotal, order.currency)}</span>
           </div>
         </div>
 
         {/* Discount section */}
         <div className="mb-3.5">
-          <label className="text-[10.5px] font-bold tracking-[.07em] uppercase text-(--text-3) mb-[7px] block">Discount</label>
+          <label className="text-[10.5px] font-bold tracking-[.07em] uppercase text-muted-foreground mb-[7px] block">Discount</label>
           <div className={`flex gap-1.5 ${discountType !== "none" ? "mb-2.5" : "mb-0"}`}>
             {[
               { v: "none", l: "None" },
@@ -114,7 +114,7 @@ export function DuplicateModal({ order, token, onClose, onSuccess }: DuplicateMo
                   setDiscountType(o.v);
                   setDiscountValue("");
                 }}
-                className={`flex-1 px-2 py-[7px] rounded-lg text-[11.5px] font-semibold font-[inherit] cursor-pointer transition-all border border-transparent ${discountType === o.v ? "bg-(--text-1) text-white" : "bg-(--bg-input) text-(--text-3)"}`}
+                className={`flex-1 px-2 py-[7px] rounded-lg text-[11.5px] font-semibold font-[inherit] cursor-pointer transition-all border border-transparent ${discountType === o.v ? "bg-foreground text-white" : "bg-input text-muted-foreground"}`}
               >
                 {o.l}
               </button>
@@ -124,39 +124,39 @@ export function DuplicateModal({ order, token, onClose, onSuccess }: DuplicateMo
             <div className="flex items-center gap-2.5">
               <Input
                 type="number"
-                className="w-full bg-(--bg-surface-2) border border-(--border) rounded-xl px-3.5 py-[11px] text-[13.5px] text-(--text-1) outline-none flex-1"
+                className="w-full bg-secondary border border-border rounded-xl px-3.5 py-[11px] text-[13.5px] text-foreground outline-none flex-1"
                 value={discountValue}
                 onChange={(e) => setDiscountValue(e.target.value)}
                 placeholder={discountType === "percentage" ? "e.g. 10" : "e.g. 5.00"}
                 min="0"
                 max={discountType === "percentage" ? 100 : undefined}
               />
-              <span className="text-[12.5px] font-bold text-(--text-2) shrink-0">{discountType === "percentage" ? "%" : "€"}</span>
+              <span className="text-[12.5px] font-bold text-foreground-2 shrink-0">{discountType === "percentage" ? "%" : "€"}</span>
             </div>
           )}
         </div>
 
         {/* New total preview */}
         {discountType !== "none" && Number(discountValue) > 0 && (
-          <div className="bg-(--bg-surface-2) border border-border rounded-xl px-3.5 py-2.5 mb-3.5 flex justify-between items-center">
+          <div className="bg-secondary border border-border rounded-xl px-3.5 py-2.5 mb-3.5 flex justify-between items-center">
             <div>
-              <div className="text-[11px] text-(--text-3) mb-[2px]">Discount</div>
+              <div className="text-[11px] text-muted-foreground mb-[2px]">Discount</div>
               <div className="text-[12.5px] font-bold text-rose-400">− {fmtPrice(discountAmount, order.currency)}</div>
             </div>
             <div className="text-right">
-              <div className="text-[11px] text-(--text-3) mb-[2px]">New total</div>
+              <div className="text-[11px] text-muted-foreground mb-[2px]">New total</div>
               <div className="text-[15px] font-extrabold text-green-400">{fmtPrice(newTotal, order.currency)}</div>
             </div>
           </div>
         )}
 
         <div className="mb-3.5">
-          <label className="text-[10.5px] font-bold tracking-[.07em] uppercase text-(--text-3) mb-[7px] block">Note</label>
-          <Input className="w-full bg-(--bg-surface-2) border border-(--border) rounded-xl px-3.5 py-[11px] text-[13.5px] text-(--text-1) outline-none" value={note} onChange={(e) => setNote(e.target.value)} />
+          <label className="text-[10.5px] font-bold tracking-[.07em] uppercase text-muted-foreground mb-[7px] block">Note</label>
+          <Input className="w-full bg-secondary border border-border rounded-xl px-3.5 py-[11px] text-[13.5px] text-foreground outline-none" value={note} onChange={(e) => setNote(e.target.value)} />
         </div>
         <label className="flex items-center gap-2.5 cursor-pointer select-none">
           <Checkbox checked={keepAddress} onCheckedChange={() => setKeepAddress((v) => !v)} />
-          <span className="text-[13px] text-(--text-2)">Copy shipping address</span>
+          <span className="text-[13px] text-foreground-2">Copy shipping address</span>
         </label>
         <DialogFooter>
           <Button variant="outline" className="" onClick={onClose}>

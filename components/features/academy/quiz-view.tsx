@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Check, X, Loader2 } from 'lucide-react'
+import { cn } from '@/lib/utils'
 import { EASE, PASS_THRESHOLD } from '@/lib/academy-constants'
 import { useAuthStore } from '@/stores/auth'
 import { useSubmitQuiz } from '@/hooks/academy/use-academy-mutations'
@@ -121,7 +122,7 @@ export function QuizView({
   if (isInline) {
     if (inlineQuestions.length === 0) {
       return (
-        <div className="py-8 text-center text-(--text-4)">
+        <div className="py-8 text-center text-foreground-4">
           No quiz questions available for this module yet.
         </div>
       )
@@ -169,14 +170,14 @@ export function QuizView({
               />
             </svg>
             <div className="absolute text-center">
-              <div className="text-[28px] font-extrabold text-(--text-1)">{score}%</div>
-              <div className="text-[11px] text-(--text-4)">score</div>
+              <div className="text-[28px] font-extrabold text-foreground">{score}%</div>
+              <div className="text-[11px] text-foreground-4">score</div>
             </div>
           </div>
-          <h3 className="mb-1.5 text-xl font-bold text-(--text-1)">
+          <h3 className="mb-1.5 text-xl font-bold text-foreground">
             {passed ? 'Knowledge Check Passed!' : 'Not quite yet'}
           </h3>
-          <p className="mb-6 text-sm leading-relaxed text-(--text-3)">
+          <p className="mb-6 text-sm leading-relaxed text-muted-foreground">
             {passed
               ? `You scored ${score}% \u2014 module complete.`
               : `You scored ${score}%. You need 70% to pass. Review the lessons and try again.`}
@@ -194,7 +195,7 @@ export function QuizView({
             </button>
           )}
           {submitting && (
-            <p className="mt-3 text-xs text-(--text-4)">Saving result...</p>
+            <p className="mt-3 text-xs text-foreground-4">Saving result...</p>
           )}
         </motion.div>
       )
@@ -209,10 +210,10 @@ export function QuizView({
         {/* Progress */}
         <div className="mb-6">
           <div className="mb-2 flex items-center justify-between">
-            <span className="text-[11px] font-bold uppercase tracking-[0.1em] text-(--text-4)">
+            <span className="text-[11px] font-bold uppercase tracking-[0.1em] text-foreground-4">
               Question {current + 1} of {total}
             </span>
-            <span className="text-[11px] text-(--text-4)">
+            <span className="text-[11px] text-foreground-4">
               {Object.keys(answers).length}/{total} answered
             </span>
           </div>
@@ -234,8 +235,8 @@ export function QuizView({
             exit={{ opacity: 0, x: -20 }}
             transition={{ duration: 0.2, ease: EASE }}
           >
-            <div className="mb-4 rounded-xl border border-(--border) bg-white p-7">
-              <h3 className="text-lg font-semibold leading-[1.45] text-(--text-1)">{q.q}</h3>
+            <div className="mb-4 rounded-xl border border-border bg-white p-7">
+              <h3 className="text-lg font-semibold leading-[1.45] text-foreground">{q.q}</h3>
             </div>
             <div className="flex flex-col gap-2">
               {q.opts.map((opt, idx) => {
@@ -247,12 +248,20 @@ export function QuizView({
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: idx * 0.06, duration: 0.25, ease: EASE }}
                     onClick={() => setAnswers((prev) => ({ ...prev, [current]: idx }))}
-                    className={`ac-option ${sel ? 'selected' : ''}`}
+                    className={cn(
+                      'mb-2.5 flex cursor-pointer items-center gap-4 rounded-xl border border-black/9 bg-white px-5 py-4 transition-all duration-150 hover:border-[rgba(139,92,246,0.3)] hover:bg-[#F9F9FB]',
+                      sel && 'border-[#8B5CF6] bg-[rgba(139,92,246,0.06)]',
+                    )}
                   >
-                    <div className="ac-radio">
+                    <div
+                      className={cn(
+                        'flex size-5 shrink-0 items-center justify-center rounded-full border-2 border-black/20 transition-all duration-150',
+                        sel && 'border-[#8B5CF6] bg-[#8B5CF6]',
+                      )}
+                    >
                       {sel && <div className="size-2 rounded-full bg-white" />}
                     </div>
-                    <span className="flex-1 text-[15px] text-(--text-1)">{opt}</span>
+                    <span className="flex-1 text-[15px] text-foreground">{opt}</span>
                   </motion.div>
                 )
               })}
@@ -263,7 +272,7 @@ export function QuizView({
         {/* Navigation */}
         <div className="mt-5 flex items-center justify-between">
           <button
-            className="cursor-pointer rounded-[20px] border border-black/9 bg-black/4 px-5 py-2.5 font-[inherit] text-[13px] font-medium text-(--text-3) transition-all duration-150 hover:bg-black/7 hover:text-(--text-2) disabled:opacity-35"
+            className="cursor-pointer rounded-[20px] border border-black/9 bg-black/4 px-5 py-2.5 font-[inherit] text-[13px] font-medium text-muted-foreground transition-all duration-150 hover:bg-black/7 hover:text-foreground-2 disabled:opacity-35"
             onClick={() => setCurrent((c) => Math.max(0, c - 1))}
             disabled={current === 0}
           >
@@ -297,7 +306,7 @@ export function QuizView({
       <div className="flex min-h-[400px] items-center justify-center">
         <div className="text-center">
           <Loader2 className="mx-auto mb-3 size-8 animate-spin text-violet-500" />
-          <div className="text-[13px] text-(--text-4)">Loading questions...</div>
+          <div className="text-[13px] text-foreground-4">Loading questions...</div>
         </div>
       </div>
     )
@@ -308,7 +317,7 @@ export function QuizView({
       <div className="p-10 text-center">
         <div className="mb-4 text-sm text-red-500">{error}</div>
         <button
-          className="cursor-pointer rounded-[20px] border border-black/9 bg-black/4 px-5 py-2.5 font-[inherit] text-[13px] font-medium text-(--text-3) transition-all duration-150 hover:bg-black/7 hover:text-(--text-2)"
+          className="cursor-pointer rounded-[20px] border border-black/9 bg-black/4 px-5 py-2.5 font-[inherit] text-[13px] font-medium text-muted-foreground transition-all duration-150 hover:bg-black/7 hover:text-foreground-2"
           onClick={onBack}
         >
           &larr; Back
@@ -321,12 +330,12 @@ export function QuizView({
     return (
       <div className="mx-auto max-w-[500px] p-10 text-center" style={{ marginTop: 80 }}>
         <div className="mb-4 text-4xl">&#9940;</div>
-        <div className="mb-2 text-xl font-bold text-(--text-1)">Maximum attempts reached</div>
-        <div className="mb-6 text-sm text-(--text-3)">
+        <div className="mb-2 text-xl font-bold text-foreground">Maximum attempts reached</div>
+        <div className="mb-6 text-sm text-muted-foreground">
           You have used all 3 attempts for this module&apos;s exam.
         </div>
         <button
-          className="cursor-pointer rounded-[20px] border border-black/9 bg-black/4 px-5 py-2.5 font-[inherit] text-[13px] font-medium text-(--text-3) transition-all duration-150 hover:bg-black/7 hover:text-(--text-2)"
+          className="cursor-pointer rounded-[20px] border border-black/9 bg-black/4 px-5 py-2.5 font-[inherit] text-[13px] font-medium text-muted-foreground transition-all duration-150 hover:bg-black/7 hover:text-foreground-2"
           onClick={onBack}
         >
           &larr; Back to module
@@ -338,11 +347,11 @@ export function QuizView({
   if (apiQuestions.length === 0) {
     return (
       <div className="mx-auto max-w-[500px] p-10 text-center" style={{ marginTop: 80 }}>
-        <div className="mb-4 text-sm text-(--text-3)">
+        <div className="mb-4 text-sm text-muted-foreground">
           No questions available for this module yet.
         </div>
         <button
-          className="cursor-pointer rounded-[20px] border border-black/9 bg-black/4 px-5 py-2.5 font-[inherit] text-[13px] font-medium text-(--text-3) transition-all duration-150 hover:bg-black/7 hover:text-(--text-2)"
+          className="cursor-pointer rounded-[20px] border border-black/9 bg-black/4 px-5 py-2.5 font-[inherit] text-[13px] font-medium text-muted-foreground transition-all duration-150 hover:bg-black/7 hover:text-foreground-2"
           onClick={onBack}
         >
           &larr; Back
@@ -397,15 +406,15 @@ export function QuizView({
               />
             </svg>
             <div className="absolute text-center">
-              <div className="text-4xl font-extrabold text-(--text-1)">{Math.round(pct)}%</div>
-              <div className="text-[11px] text-(--text-4)">score</div>
+              <div className="text-4xl font-extrabold text-foreground">{Math.round(pct)}%</div>
+              <div className="text-[11px] text-foreground-4">score</div>
             </div>
           </div>
 
-          <h2 className="mb-2 text-2xl font-bold tracking-tight text-(--text-1)">
+          <h2 className="mb-2 text-2xl font-bold tracking-tight text-foreground">
             {passed ? 'Excellent work!' : 'Keep practicing'}
           </h2>
-          <p className="mb-7 text-[15px] leading-relaxed text-(--text-3)">
+          <p className="mb-7 text-[15px] leading-relaxed text-muted-foreground">
             {passed
               ? `You passed with ${Math.round(pct)}%. ${mod.label} is now complete!`
               : `You scored ${Math.round(pct)}%. You need ${PASS_THRESHOLD}% to pass. Review the lessons and try again.`}
@@ -436,7 +445,7 @@ export function QuizView({
                       <X className="size-2.5 text-red-500" strokeWidth={3} />
                     )}
                   </div>
-                  <span className="flex-1 text-[13px] text-(--text-2)">
+                  <span className="flex-1 text-[13px] text-foreground-2">
                     Q{qi + 1}: {(q.question || q.text) as string}
                   </span>
                   <span
@@ -461,7 +470,7 @@ export function QuizView({
             ) : (
               <>
                 <button
-                  className="cursor-pointer rounded-[20px] border border-black/9 bg-black/4 px-5 py-2.5 font-[inherit] text-[13px] font-medium text-(--text-3) transition-all duration-150 hover:bg-black/7 hover:text-(--text-2)"
+                  className="cursor-pointer rounded-[20px] border border-black/9 bg-black/4 px-5 py-2.5 font-[inherit] text-[13px] font-medium text-muted-foreground transition-all duration-150 hover:bg-black/7 hover:text-foreground-2"
                   onClick={onBack}
                 >
                   &larr; Back to lessons
@@ -492,7 +501,7 @@ export function QuizView({
   return (
     <div className="mx-auto max-w-[680px] px-6 py-10">
       <div className="mb-7">
-        <div className="mb-2.5 text-[11px] font-bold uppercase tracking-[0.1em] text-(--text-4)">
+        <div className="mb-2.5 text-[11px] font-bold uppercase tracking-[0.1em] text-foreground-4">
           Question {current + 1} of {apiQuestions.length}
         </div>
         <div className="h-[3px] overflow-hidden rounded-[10px] bg-black/8">
@@ -512,33 +521,44 @@ export function QuizView({
           exit={{ opacity: 0, x: -20 }}
           transition={{ duration: 0.25, ease: EASE }}
         >
-          <h3 className="mb-6 text-[22px] font-bold leading-[1.4] tracking-tight text-(--text-1)">
+          <h3 className="mb-6 text-[22px] font-bold leading-[1.4] tracking-tight text-foreground">
             {(q?.question || q?.text) as string}
           </h3>
 
-          {opts.map((opt, idx) => (
+          {opts.map((opt, idx) => {
+            const sel = answers[q.id as number] === idx
+            return (
             <motion.div
               key={idx}
-              className={`ac-option ${answers[q.id as number] === idx ? 'selected' : ''}`}
+              className={cn(
+                'mb-2.5 flex cursor-pointer items-center gap-4 rounded-xl border border-black/9 bg-white px-5 py-4 transition-all duration-150 hover:border-[rgba(139,92,246,0.3)] hover:bg-[#F9F9FB]',
+                sel && 'border-[#8B5CF6] bg-[rgba(139,92,246,0.06)]',
+              )}
               initial={{ opacity: 0, x: -8 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: idx * 0.07, duration: 0.3, ease: EASE }}
               onClick={() => setAnswers((prev) => ({ ...prev, [q.id as number]: idx }))}
             >
-              <div className="ac-radio">
-                {answers[q.id as number] === idx && (
+              <div
+                className={cn(
+                  'flex size-5 shrink-0 items-center justify-center rounded-full border-2 border-black/20 transition-all duration-150',
+                  sel && 'border-[#8B5CF6] bg-[#8B5CF6]',
+                )}
+              >
+                {sel && (
                   <div className="size-2 rounded-full bg-white" />
                 )}
               </div>
-              <span className="flex-1 text-[15px] text-(--text-1)">{opt}</span>
+              <span className="flex-1 text-[15px] text-foreground">{opt}</span>
             </motion.div>
-          ))}
+            )
+          })}
         </motion.div>
       </AnimatePresence>
 
       <div className="mt-6 flex justify-between">
         <button
-          className="cursor-pointer rounded-[20px] border border-black/9 bg-black/4 px-5 py-2.5 font-[inherit] text-[13px] font-medium text-(--text-3) transition-all duration-150 hover:bg-black/7 hover:text-(--text-2) disabled:opacity-35"
+          className="cursor-pointer rounded-[20px] border border-black/9 bg-black/4 px-5 py-2.5 font-[inherit] text-[13px] font-medium text-muted-foreground transition-all duration-150 hover:bg-black/7 hover:text-foreground-2 disabled:opacity-35"
           onClick={() => setCurrent((c) => Math.max(0, c - 1))}
           disabled={current === 0}
         >

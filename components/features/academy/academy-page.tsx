@@ -136,7 +136,7 @@ export function AcademyPage() {
           onGoModule={() => setView('module')}
         />
 
-        <div className="ac-scroll flex-1 overflow-y-auto">
+        <div className="thin-scrollbar flex-1 overflow-y-auto">
           <AnimatePresence mode="wait">
             {view === 'welcome' && (
               <motion.div
@@ -251,10 +251,10 @@ export function AcademyPage() {
               <Award className="size-3.5 text-violet-500" />
             </div>
             <div className="flex-1">
-              <div className="text-[13px] font-semibold text-(--text-1)">
+              <div className="text-[13px] font-semibold text-foreground">
                 All modules completed!
               </div>
-              <div className="mt-0.5 text-xs text-(--text-3)">
+              <div className="mt-0.5 text-xs text-muted-foreground">
                 Click to view and download your certificate
               </div>
             </div>

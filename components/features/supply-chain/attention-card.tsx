@@ -21,7 +21,7 @@ function CopyBtn({ text }: { text: string }) {
   return (
     <button
       onClick={copy}
-      className="inline-flex items-center gap-[5px] px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer transition-all duration-150 bg-(--bg-surface-2) text-(--text-2) border border-(--border)"
+      className="inline-flex items-center gap-[5px] px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer transition-all duration-150 bg-secondary text-foreground-2 border border-border"
     >
       {copied ? (
         <>
@@ -60,7 +60,7 @@ export function AttentionCard({ item, onDismiss }: AttentionCardProps) {
         <div className="flex items-start justify-between gap-3 mb-2.5">
           <div>
             <div className="flex items-center gap-[7px] mb-1">
-              <span className="text-[13.5px] font-bold text-(--text-1)">{orderNum}</span>
+              <span className="text-[13.5px] font-bold text-foreground">{orderNum}</span>
               <span
                 className="text-[10.5px] font-bold px-2 py-0.5 rounded-full"
                 style={{
@@ -72,15 +72,15 @@ export function AttentionCard({ item, onDismiss }: AttentionCardProps) {
                 {cfg.label}
               </span>
             </div>
-            <p className="text-xs text-(--text-2)">
+            <p className="text-xs text-foreground-2">
               {order.customer?.name || 'Unknown customer'}
-              {carrier && <span className="text-(--text-3) ml-1.5">&middot; {carrier}</span>}
+              {carrier && <span className="text-muted-foreground ml-1.5">&middot; {carrier}</span>}
             </p>
           </div>
           {daysSince !== null && (
             <span
               className="text-[11px] font-semibold shrink-0"
-              style={{ color: daysSince >= 10 ? '#DC2626' : 'var(--text-3)' }}
+              style={{ color: daysSince >= 10 ? '#DC2626' : 'var(--foreground-3)' }}
             >
               {daysSince === 0 ? 'Today' : `${daysSince}d ago`}
             </span>
@@ -88,7 +88,7 @@ export function AttentionCard({ item, onDismiss }: AttentionCardProps) {
         </div>
 
         {/* Last event or description */}
-        <p className="text-xs text-(--text-2) mb-3.5 leading-[1.55]">
+        <p className="text-xs text-foreground-2 mb-3.5 leading-[1.55]">
           {lastDetail || cfg.desc}
         </p>
 
@@ -107,7 +107,7 @@ export function AttentionCard({ item, onDismiss }: AttentionCardProps) {
           )}
           <button
             onClick={() => onDismiss(item.key)}
-            className="inline-flex items-center gap-[5px] px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer transition-all duration-150 bg-transparent text-(--text-3) border border-(--border)"
+            className="inline-flex items-center gap-[5px] px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer transition-all duration-150 bg-transparent text-muted-foreground border border-border"
           >
             <CheckCircle className="w-[11px] h-[11px]" />
             Mark resolved

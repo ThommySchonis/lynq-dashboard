@@ -79,11 +79,11 @@ export default function InviteAcceptPage({
           <div className="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center mx-auto mb-4">
             <X size={22} strokeWidth={1.75} className="text-red-500" />
           </div>
-          <h2 className="text-xl font-semibold text-[#1C0F36] mb-2">{copy.title}</h2>
-          <p className="text-sm text-[#6B5E7B] leading-relaxed mb-5">{copy.msg}</p>
+          <h2 className="text-xl font-semibold text-foreground mb-2">{copy.title}</h2>
+          <p className="text-sm text-muted-foreground leading-relaxed mb-5">{copy.msg}</p>
           <Link
             href="/login"
-            className="inline-flex items-center justify-center h-11 px-4 rounded-lg border border-[#E5E0EB] bg-white text-sm font-medium text-[#1C0F36] no-underline"
+            className="inline-flex items-center justify-center h-11 px-4 rounded-lg border border-[#E5E0EB] bg-white text-sm font-medium text-foreground no-underline"
           >
             Go to login
           </Link>
@@ -100,9 +100,9 @@ export default function InviteAcceptPage({
           <div className="w-12 h-12 rounded-full bg-emerald-500/10 flex items-center justify-center mx-auto mb-4">
             <Check size={24} strokeWidth={2} className="text-emerald-500" />
           </div>
-          <h2 className="text-xl font-semibold text-[#1C0F36] mb-2">You&rsquo;re in!</h2>
-          <p className="text-sm text-[#6B5E7B] leading-relaxed">
-            You&rsquo;ve joined <strong className="text-[#1C0F36]">{invite?.workspace_name}</strong> as{' '}
+          <h2 className="text-xl font-semibold text-foreground mb-2">You&rsquo;re in!</h2>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            You&rsquo;ve joined <strong className="text-foreground">{invite?.workspace_name}</strong> as{' '}
             {getRoleLabel(invite?.role)}. Redirecting…
           </p>
         </div>
@@ -118,11 +118,11 @@ export default function InviteAcceptPage({
           <div className="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center mx-auto mb-4">
             <AlertCircle size={22} strokeWidth={1.75} className="text-red-500" />
           </div>
-          <h2 className="text-xl font-semibold text-[#1C0F36] mb-2">Something went wrong</h2>
-          <p className="text-sm text-[#6B5E7B] leading-relaxed mb-5">{errorMsg}</p>
+          <h2 className="text-xl font-semibold text-foreground mb-2">Something went wrong</h2>
+          <p className="text-sm text-muted-foreground leading-relaxed mb-5">{errorMsg}</p>
           <button
             onClick={() => { setStatus('idle'); setErrorMsg('') }}
-            className="inline-flex items-center justify-center h-11 px-4 rounded-lg border border-[#E5E0EB] bg-white text-sm font-medium text-[#1C0F36] cursor-pointer"
+            className="inline-flex items-center justify-center h-11 px-4 rounded-lg border border-[#E5E0EB] bg-white text-sm font-medium text-foreground cursor-pointer"
           >
             Try again
           </button>
@@ -145,36 +145,36 @@ export default function InviteAcceptPage({
       <div className="px-8 pt-9 pb-8">
         {/* Workspace icon + invite headline */}
         <div className="text-center mb-6">
-          <div className="w-14 h-14 rounded-[14px] bg-[#EDE5FE] flex items-center justify-center mx-auto mb-3">
-            <Building2 size={26} strokeWidth={1.5} className="text-[#A175FC]" />
+          <div className="w-14 h-14 rounded-[14px] bg-primary/10 flex items-center justify-center mx-auto mb-3">
+            <Building2 size={26} strokeWidth={1.5} className="text-primary" />
           </div>
-          <h2 className="text-xl font-semibold text-[#1C0F36] mb-1.5">
+          <h2 className="text-xl font-semibold text-foreground mb-1.5">
             You&rsquo;re invited to join
           </h2>
-          <p className="text-lg font-semibold text-[#A175FC] m-0">
+          <p className="text-lg font-semibold text-primary m-0">
             {invite?.workspace_name}
           </p>
         </div>
 
         {/* Invite details panel */}
-        <div className="bg-[#F8F7FA] rounded-lg px-4 py-3 mb-6 text-sm text-[#6B5E7B]">
+        <div className="bg-secondary rounded-lg px-4 py-3 mb-6 text-sm text-muted-foreground">
           <div className="flex justify-between py-1.5">
             <span>Role</span>
-            <span className="font-semibold text-[#1C0F36]">{getRoleLabel(invite?.role)}</span>
+            <span className="font-semibold text-foreground">{getRoleLabel(invite?.role)}</span>
           </div>
           <div className="flex justify-between py-1.5">
             <span>For</span>
-            <span className="font-medium text-[#1C0F36]">{invite?.invite_email}</span>
+            <span className="font-medium text-foreground">{invite?.invite_email}</span>
           </div>
           {invite?.inviter_name && (
             <div className="flex justify-between py-1.5">
               <span>From</span>
-              <span className="font-medium text-[#1C0F36]">{invite.inviter_name}</span>
+              <span className="font-medium text-foreground">{invite.inviter_name}</span>
             </div>
           )}
           <div className="flex justify-between py-1.5 pt-2.5 border-t border-[#EDE9F1] mt-1">
             <span>Validity</span>
-            <span className="text-[#9B91A8]">{expiryText(invite?.expires_at)}</span>
+            <span className="text-foreground-4">{expiryText(invite?.expires_at)}</span>
           </div>
         </div>
 
@@ -183,13 +183,13 @@ export default function InviteAcceptPage({
           <div className="flex gap-2">
             <Link
               href={`/login?redirect=/invites/${token}`}
-              className="flex-1 inline-flex items-center justify-center h-11 px-4 rounded-lg border border-[#E5E0EB] bg-white text-sm font-medium text-[#1C0F36] no-underline"
+              className="flex-1 inline-flex items-center justify-center h-11 px-4 rounded-lg border border-[#E5E0EB] bg-white text-sm font-medium text-foreground no-underline"
             >
               Sign in
             </Link>
             <Link
               href={`/invites/${token}/signup`}
-              className="flex-1 inline-flex items-center justify-center h-11 px-4 rounded-lg border-none bg-[#A175FC] text-sm font-medium text-white no-underline"
+              className="flex-1 inline-flex items-center justify-center h-11 px-4 rounded-lg border-none bg-primary text-sm font-medium text-white no-underline"
             >
               Create account
             </Link>
@@ -199,8 +199,8 @@ export default function InviteAcceptPage({
         {/* STATE B: signed in, email matches */}
         {emailMatch && (
           <div>
-            <div className="text-xs text-[#9B91A8] text-center mb-4 px-3 py-2 bg-[#F8F7FA] rounded-md">
-              Accepting as <strong className="text-[#1C0F36]">{session?.user?.email}</strong>
+            <div className="text-xs text-foreground-4 text-center mb-4 px-3 py-2 bg-secondary rounded-md">
+              Accepting as <strong className="text-foreground">{session?.user?.email}</strong>
             </div>
             <button
               onClick={handleAccept}
@@ -228,14 +228,14 @@ export default function InviteAcceptPage({
           <div>
             <div className="flex gap-2.5 items-start bg-amber-50 border border-amber-200 rounded-lg px-3.5 py-3 mb-3.5">
               <AlertCircle size={16} strokeWidth={1.75} className="text-amber-800 flex-shrink-0 mt-0.5" />
-              <div className="text-sm text-[#1C0F36] leading-relaxed">
+              <div className="text-sm text-foreground leading-relaxed">
                 This invite is for <strong>{mismatchInvite}</strong>.<br />
                 You&rsquo;re signed in as <strong>{mismatchUser}</strong>.
               </div>
             </div>
             <button
               onClick={handleSignOut}
-              className="w-full inline-flex items-center justify-center h-11 px-4 rounded-lg border border-[#E5E0EB] bg-white text-sm font-medium text-[#1C0F36] cursor-pointer"
+              className="w-full inline-flex items-center justify-center h-11 px-4 rounded-lg border border-[#E5E0EB] bg-white text-sm font-medium text-foreground cursor-pointer"
             >
               Sign out and use {mismatchInvite}
             </button>

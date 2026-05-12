@@ -11,7 +11,7 @@ function NavBadge({ variant, children }: { variant: 'default' | 'warning' | 'iri
   const variants: Record<string, string> = {
     default: 'bg-white/10 text-white/50',
     warning: 'bg-red-400 text-white',
-    iris: 'bg-[#A175FC] text-white',
+    iris: 'bg-primary text-white',
   }
   return <span className={`${base} ${variants[variant]}`}>{children}</span>
 }
@@ -82,7 +82,7 @@ export function AdminSidebar() {
                   <Icon
                     size={15}
                     strokeWidth={1.75}
-                    className={`shrink-0 ${isActive ? 'opacity-100 text-[#A175FC]' : 'opacity-50'}`}
+                    className={`shrink-0 ${isActive ? 'opacity-100 text-primary' : 'opacity-50'}`}
                   />
                   <span className="flex-1">{item.label}</span>
                   <BadgeSlot badgeKey={item.badge} />
@@ -108,7 +108,7 @@ export function AdminSidebar() {
             <FeedbackIcon
               size={15}
               strokeWidth={1.75}
-              className={`shrink-0 ${feedbackActive ? 'opacity-100 text-[#A175FC]' : 'opacity-50'}`}
+              className={`shrink-0 ${feedbackActive ? 'opacity-100 text-primary' : 'opacity-50'}`}
             />
             <span className="flex-1">{FEEDBACK_NAV.label}</span>
             <FeedbackCountBadge />

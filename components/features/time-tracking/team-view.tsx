@@ -34,8 +34,8 @@ export function TeamView({ data, filter, onFilterChange }: TeamViewProps) {
   return (
     <>
       {/* Header */}
-      <div className="mb-7 animate-fade-in">
-        <h1 className="mb-1 text-xl font-bold tracking-tight text-[#0F0F10]">
+      <div className="mb-7 animate-fade-up">
+        <h1 className="mb-1 text-xl font-bold tracking-tight text-foreground">
           Team Time Tracking
         </h1>
         <div className="mb-4 text-[13px] text-gray-500">
@@ -50,15 +50,15 @@ export function TeamView({ data, filter, onFilterChange }: TeamViewProps) {
       </div>
 
       {/* Team Members */}
-      <div className="mb-3.5 overflow-hidden rounded-[10px] border border-black/7 bg-white animate-fade-in-2">
+      <div className="mb-3.5 overflow-hidden rounded-[10px] border border-black/7 bg-white opacity-0 animate-fade-up delay-100">
         <div className="border-b border-black/6 px-4.5 py-3.5">
-          <div className="text-[13px] font-semibold text-[#0F0F10]">Team Members</div>
+          <div className="text-[13px] font-semibold text-foreground">Team Members</div>
           <div className="mt-0.5 text-xs text-gray-500">Status and hours per member this period</div>
         </div>
         {members.length === 0 ? (
           <div className="flex flex-col items-center gap-2.5 py-12 px-4.5">
             <Clock className="h-3.5 w-3.5 text-gray-300" />
-            <div className="text-sm font-medium text-[#0F0F10]">No team members</div>
+            <div className="text-sm font-medium text-foreground">No team members</div>
             <div className="text-[13px] text-gray-500">Add team members via the admin panel</div>
           </div>
         ) : (
@@ -67,15 +67,15 @@ export function TeamView({ data, filter, onFilterChange }: TeamViewProps) {
       </div>
 
       {/* Sessions table */}
-      <div className="overflow-hidden rounded-[10px] border border-black/7 bg-white animate-fade-in-3">
+      <div className="overflow-hidden rounded-[10px] border border-black/7 bg-white opacity-0 animate-fade-up delay-150">
         <div className="border-b border-black/6 px-4.5 py-3.5">
-          <div className="text-[13px] font-semibold text-[#0F0F10]">Sessions</div>
+          <div className="text-[13px] font-semibold text-foreground">Sessions</div>
           <div className="mt-0.5 text-xs text-gray-500">All sessions with end-of-day reports</div>
         </div>
         {sessions.length === 0 ? (
           <div className="flex flex-col items-center gap-2.5 py-12 px-4.5">
             <Clock className="h-3.5 w-3.5 text-gray-300" />
-            <div className="text-sm font-medium text-[#0F0F10]">No sessions yet</div>
+            <div className="text-sm font-medium text-foreground">No sessions yet</div>
             <div className="text-[13px] text-gray-500">Data will appear once team members clock in</div>
           </div>
         ) : (

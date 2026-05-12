@@ -16,14 +16,14 @@ function SkeletonRows() {
     <div className="animate-[fadeIn_0.3s_ease_both]">
       <div className="grid grid-cols-5 gap-3.5 mb-7">
         {Array.from({ length: 5 }).map((_, i) => (
-          <div key={i} className="bg-(--bg-surface) border border-(--border) rounded-2xl p-5 px-[22px] shadow-[var(--shadow-card)] h-[84px]">
+          <div key={i} className="bg-card border border-border rounded-2xl p-5 px-[22px] shadow-[var(--shadow-card)] h-[84px]">
             <div className="h-[11px] w-[55%] mb-2.5 rounded-md bg-gradient-to-r from-(--skeleton-from) via-(--skeleton-to) to-(--skeleton-from) bg-[length:200%_100%] animate-[skWave_1.5s_ease-in-out_infinite]" />
             <div className="h-[26px] w-[40%] rounded-md bg-gradient-to-r from-(--skeleton-from) via-(--skeleton-to) to-(--skeleton-from) bg-[length:200%_100%] animate-[skWave_1.5s_ease-in-out_infinite]" />
           </div>
         ))}
       </div>
       {Array.from({ length: 4 }).map((_, i) => (
-        <div key={i} className="bg-(--bg-row) border border-(--border) rounded-[14px] py-[15px] px-5 mb-2.5 h-[68px]">
+        <div key={i} className="bg-card border border-border rounded-[14px] py-[15px] px-5 mb-2.5 h-[68px]">
           <div className="h-[13px] w-[28%] mb-2 rounded-md bg-gradient-to-r from-(--skeleton-from) via-(--skeleton-to) to-(--skeleton-from) bg-[length:200%_100%] animate-[skWave_1.5s_ease-in-out_infinite]" />
           <div className="h-[11px] w-[18%] rounded-md bg-gradient-to-r from-(--skeleton-from) via-(--skeleton-to) to-(--skeleton-from) bg-[length:200%_100%] animate-[skWave_1.5s_ease-in-out_infinite]" />
         </div>
@@ -64,7 +64,7 @@ export function SupplyChainPage() {
   const visibleAttention = showAllAttention ? attentionItems : attentionItems.slice(0, 3)
 
   return (
-      <main className="min-h-screen overflow-y-auto py-10 px-11 relative text-(--text-1) [&::-webkit-scrollbar]:w-[3px] [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-(--scrollbar) [&::-webkit-scrollbar-thumb]:rounded-sm" style={{ fontFamily: "'Switzer', -apple-system, BlinkMacSystemFont, sans-serif" }}>
+      <main className="min-h-screen overflow-y-auto py-10 px-11 relative text-foreground [&::-webkit-scrollbar]:w-[3px] [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-(--scrollbar) [&::-webkit-scrollbar-thumb]:rounded-sm" style={{ fontFamily: "'Switzer', -apple-system, BlinkMacSystemFont, sans-serif" }}>
         <div className="relative z-[1] max-w-[980px] mx-auto">
 
           {/* Header */}
@@ -72,17 +72,17 @@ export function SupplyChainPage() {
             <div className="flex items-start justify-between gap-4">
               <div>
                 <div className="flex items-center gap-2.5 mb-2.5">
-                  <div className="w-9 h-9 rounded-[10px] bg-(--bg-surface-2) border border-(--border) flex items-center justify-center">
-                    <Package className="w-[17px] h-[17px] text-(--text-2)" />
+                  <div className="w-9 h-9 rounded-[10px] bg-secondary border border-border flex items-center justify-center">
+                    <Package className="w-[17px] h-[17px] text-foreground-2" />
                   </div>
-                  <span className="text-[11.5px] font-bold text-(--text-3) uppercase tracking-[.08em]">
+                  <span className="text-[11.5px] font-bold text-muted-foreground uppercase tracking-[.08em]">
                     Supply Chain
                   </span>
                 </div>
-                <h1 className="text-xl font-bold tracking-[-0.02em] leading-[1.1] mb-2 text-[#0F0F10]">
+                <h1 className="text-xl font-bold tracking-[-0.02em] leading-[1.1] mb-2 text-foreground">
                   Shipment Tracker
                 </h1>
-                <p className="text-sm text-(--text-3)">
+                <p className="text-sm text-muted-foreground">
                   {lastUpdated
                     ? `Last updated at ${lastUpdated.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}`
                     : 'Live tracking powered by Parcel Panel'}
@@ -94,7 +94,7 @@ export function SupplyChainPage() {
                   <button
                     onClick={() => refetch()}
                     disabled={isPending}
-                    className="flex items-center gap-1.5 py-2 px-3.5 rounded-[9px] bg-(--bg-surface-2) border border-(--border) text-(--text-2) text-[12.5px] font-semibold cursor-pointer transition-all duration-150"
+                    className="flex items-center gap-1.5 py-2 px-3.5 rounded-[9px] bg-secondary border border-border text-foreground-2 text-[12.5px] font-semibold cursor-pointer transition-all duration-150"
                   >
                     <RefreshCw className={`w-[13px] h-[13px] ${isPending ? 'animate-spin' : ''}`} />
                     Refresh
@@ -102,7 +102,7 @@ export function SupplyChainPage() {
                 </div>
               )}
             </div>
-            {!notConfigured && <div className="h-px bg-(--bg-surface-2) mt-[22px]" />}
+            {!notConfigured && <div className="h-px bg-secondary mt-[22px]" />}
           </div>
 
           {/* Setup screen */}
@@ -117,8 +117,8 @@ export function SupplyChainPage() {
               <div className="w-14 h-14 rounded-full bg-[rgba(248,113,113,0.1)] border border-[rgba(248,113,113,0.2)] flex items-center justify-center mx-auto mb-4">
                 <AlertCircle className="w-[22px] h-[22px] text-[#f87171]" />
               </div>
-              <p className="text-[15px] font-bold text-(--text-1) mb-1.5">Could not load shipments</p>
-              <p className="text-[13.5px] text-(--text-3) mb-5">{error?.message}</p>
+              <p className="text-[15px] font-bold text-foreground mb-1.5">Could not load shipments</p>
+              <p className="text-[13.5px] text-muted-foreground mb-5">{error?.message}</p>
               <button
                 onClick={() => refetch()}
                 className="py-[9px] px-5 rounded-[9px] bg-[#111111] text-white border-none text-[13.5px] font-bold cursor-pointer"
@@ -148,7 +148,7 @@ export function SupplyChainPage() {
                   <div className="flex items-center justify-between mb-3.5">
                     <div className="flex items-center gap-[9px]">
                       <AlertTriangle className="w-[15px] h-[15px] text-[#DC2626]" />
-                      <span className="text-sm font-bold text-(--text-1)">Action items</span>
+                      <span className="text-sm font-bold text-foreground">Action items</span>
                       <span className="text-[11px] font-extrabold bg-[rgba(220,38,38,0.08)] border border-[rgba(220,38,38,0.18)] text-[#DC2626] py-0.5 px-2 rounded-full">
                         {attentionItems.length}
                       </span>
@@ -156,7 +156,7 @@ export function SupplyChainPage() {
                     {attentionItems.length > 3 && (
                       <button
                         onClick={toggleShowAllAttention}
-                        className="bg-transparent border-none text-(--text-3) text-[12.5px] cursor-pointer font-semibold"
+                        className="bg-transparent border-none text-muted-foreground text-[12.5px] cursor-pointer font-semibold"
                       >
                         {showAllAttention ? 'Show less' : `Show all ${attentionItems.length}`}
                       </button>
@@ -175,21 +175,21 @@ export function SupplyChainPage() {
 
               {/* Column headers */}
               {filtered.length > 0 && (
-                <div className="grid grid-cols-[1fr_1fr_auto_auto_auto] gap-4 items-center py-2 px-5 bg-[#F9F8FF] rounded-[10px] mb-1.5">
-                  <span className="text-[10px] font-bold text-[#9CA3AF] uppercase tracking-[.08em]">Order / Customer</span>
-                  <span className="text-[10px] font-bold text-[#9CA3AF] uppercase tracking-[.08em]">Products</span>
-                  <span className="text-[10px] font-bold text-[#9CA3AF] uppercase tracking-[.08em]">Carrier</span>
-                  <span className="text-[10px] font-bold text-[#9CA3AF] uppercase tracking-[.08em] text-right min-w-[90px]">Date</span>
+                <div className="grid grid-cols-[1fr_1fr_auto_auto_auto] gap-4 items-center py-2 px-5 bg-background rounded-[10px] mb-1.5">
+                  <span className="text-[10px] font-bold text-foreground-4 uppercase tracking-[.08em]">Order / Customer</span>
+                  <span className="text-[10px] font-bold text-foreground-4 uppercase tracking-[.08em]">Products</span>
+                  <span className="text-[10px] font-bold text-foreground-4 uppercase tracking-[.08em]">Carrier</span>
+                  <span className="text-[10px] font-bold text-foreground-4 uppercase tracking-[.08em] text-right min-w-[90px]">Date</span>
                   <span />
                 </div>
               )}
 
               {/* Rows or empty state */}
               {filtered.length === 0 ? (
-                <div className="bg-(--bg-surface) border border-(--border) rounded-2xl p-5 px-[22px] shadow-[var(--shadow-card)] text-center py-10 px-5 text-(--text-3) text-[13.5px]">
+                <div className="bg-card border border-border rounded-2xl p-5 px-[22px] shadow-[var(--shadow-card)] text-center py-10 px-5 text-muted-foreground text-[13.5px]">
                   {orders.length === 0 ? (
                     <>
-                      <p className="font-semibold text-(--text-2) mb-1.5">No shipments received yet</p>
+                      <p className="font-semibold text-foreground-2 mb-1.5">No shipments received yet</p>
                       <p>Shipments will appear here once Parcel Panel sends a status update. Existing orders will not appear retroactively.</p>
                     </>
                   ) : (

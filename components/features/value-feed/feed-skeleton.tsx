@@ -5,7 +5,7 @@ interface FeedSkeletonProps {
 export function FeedSkeleton({ delay = 0 }: FeedSkeletonProps) {
   return (
     <div
-      className="vf-fade flex flex-col gap-3.5 rounded-2xl border border-[rgba(10,6,18,0.08)] bg-white p-8 shadow-[0_1px_2px_rgba(10,6,18,0.03)]"
+      className="opacity-0 animate-fade-up-quick motion-reduce:opacity-100 motion-reduce:animate-none flex flex-col gap-3.5 rounded-2xl border border-[rgba(10,6,18,0.08)] bg-white p-8 shadow-[0_1px_2px_rgba(10,6,18,0.03)]"
       style={{ animationDelay: `${delay}ms` }}
     >
       <div className="flex items-center justify-between">

@@ -30,7 +30,7 @@ export function DonutReasonChart({ refunds, loaded }: DonutReasonChartProps) {
   if (total === 0) {
     return (
       <div className="flex min-h-[200px] flex-1 flex-col items-center justify-center rounded-xl border border-white/65 bg-white/80 p-[22px_24px] shadow-sm backdrop-blur-xl">
-        <div className="text-[13px] text-[var(--text-3)]">No refund reasons this period</div>
+        <div className="text-[13px] text-muted-foreground">No refund reasons this period</div>
       </div>
     )
   }
@@ -57,8 +57,8 @@ export function DonutReasonChart({ refunds, loaded }: DonutReasonChartProps) {
   return (
     <div className="flex-1 rounded-xl border border-white/65 bg-white/80 p-[22px_24px] shadow-sm backdrop-blur-xl transition-shadow duration-200 hover:shadow-lg">
       <div className="mb-[18px]">
-        <div className="mb-0.5 text-[13px] font-semibold text-[var(--text-1)]">Refund Reasons</div>
-        <div className="text-[11px] text-[var(--text-3)]">Distribution this period</div>
+        <div className="mb-0.5 text-[13px] font-semibold text-foreground">Refund Reasons</div>
+        <div className="text-[11px] text-muted-foreground">Distribution this period</div>
       </div>
       <div className="flex items-center gap-6">
         {/* Donut */}
@@ -81,8 +81,8 @@ export function DonutReasonChart({ refunds, loaded }: DonutReasonChartProps) {
             ))}
           </svg>
           <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <div className="text-[22px] font-extrabold leading-none tracking-tighter text-[var(--text-1)]">{total}</div>
-            <div className="text-[9.5px] font-semibold uppercase tracking-[.06em] text-[var(--text-3)]">refunds</div>
+            <div className="text-[22px] font-extrabold leading-none tracking-tighter text-foreground">{total}</div>
+            <div className="text-[9.5px] font-semibold uppercase tracking-[.06em] text-muted-foreground">refunds</div>
           </div>
         </div>
         {/* Legend */}

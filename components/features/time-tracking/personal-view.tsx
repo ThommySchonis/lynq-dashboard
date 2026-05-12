@@ -211,22 +211,22 @@ export function PersonalView({
   return (
     <>
       {/* Header */}
-      <div className="mb-7 animate-fade-in">
-        <h1 className="mb-1 text-xl font-bold tracking-tight text-[#0F0F10]">Time Tracking</h1>
+      <div className="mb-7 animate-fade-up">
+        <h1 className="mb-1 text-xl font-bold tracking-tight text-foreground">Time Tracking</h1>
         <div className="mb-4 text-[13px] text-gray-500">Track your daily work hours</div>
         <FilterTabs filter={filter} onChange={onFilterChange} />
       </div>
 
       {/* Admin preview banner */}
       {isAdmin && (
-        <div className="mb-4 flex items-start gap-3 rounded-lg border border-[#E5E0EB] bg-[#F7F3FF] px-4 py-2.5 animate-fade-in">
-          <Eye className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#9B91A8]" />
+        <div className="mb-4 flex items-start gap-3 rounded-lg border border-[#E5E0EB] bg-[#F7F3FF] px-4 py-2.5 animate-fade-up">
+          <Eye className="mt-0.5 h-3.5 w-3.5 shrink-0 text-foreground-4" />
           <div className="text-xs">
-            <span className="font-semibold text-[#1C0F36]">Admin preview</span>
-            <span className="ml-1.5 text-[#6B5E7B]">
+            <span className="font-semibold text-foreground">Admin preview</span>
+            <span className="ml-1.5 text-muted-foreground">
               This is exactly what team members see when they log in. View all hours in the
             </span>
-            <a href="/admin" className="ml-1 text-[#A175FC] underline">
+            <a href="/admin" className="ml-1 text-primary underline">
               Admin Panel &rarr; Time Tracking
             </a>
           </div>
@@ -235,7 +235,7 @@ export function PersonalView({
 
       {/* Error toast */}
       {error && (
-        <div className="mb-4 flex items-center gap-2.5 rounded-lg border border-red-600/15 bg-red-50 px-3.5 py-2.5 text-[13px] font-medium text-red-600 animate-fade-in">
+        <div className="mb-4 flex items-center gap-2.5 rounded-lg border border-red-600/15 bg-red-50 px-3.5 py-2.5 text-[13px] font-medium text-red-600 animate-fade-up">
           <AlertCircle className="h-4 w-4 shrink-0" />
           {error}
           <button

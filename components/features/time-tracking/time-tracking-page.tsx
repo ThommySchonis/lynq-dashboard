@@ -13,8 +13,8 @@ export function TimeTrackingPage() {
 
   if (isPending) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[--bg-page]">
-        <Loader2 className="h-7 w-7 animate-spin text-[#0F0F10]" />
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <Loader2 className="h-7 w-7 animate-spin text-foreground" />
       </div>
     )
   }

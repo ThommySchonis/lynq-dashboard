@@ -20,7 +20,7 @@ export function CertificateView({ userName, passedTypes, onBack }: CertificateVi
   return (
     <div className="px-6 py-8">
       <button
-        className="mb-6 cursor-pointer rounded-[20px] border border-black/9 bg-black/4 px-5 py-2.5 font-[inherit] text-xs font-medium text-(--text-3) transition-all duration-150 hover:bg-black/7 hover:text-(--text-2)"
+        className="mb-6 cursor-pointer rounded-[20px] border border-black/9 bg-black/4 px-5 py-2.5 font-[inherit] text-xs font-medium text-muted-foreground transition-all duration-150 hover:bg-black/7 hover:text-foreground-2"
         onClick={onBack}
       >
         &larr; Academy
@@ -31,7 +31,7 @@ export function CertificateView({ userName, passedTypes, onBack }: CertificateVi
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.5, ease: EASE }}
       >
-        <div className="relative mx-auto max-w-[720px] overflow-hidden rounded-2xl border border-(--border) bg-white p-12 text-center">
+        <div className="relative mx-auto max-w-[720px] overflow-hidden rounded-2xl border border-border bg-white p-12 text-center">
           {/* Decorative */}
           <div
             className="pointer-events-none absolute inset-0 opacity-40"
@@ -52,27 +52,27 @@ export function CertificateView({ userName, passedTypes, onBack }: CertificateVi
           <div className="relative z-[1]">
             {/* Logo */}
             <div className="mb-8 flex items-center justify-center gap-2.5">
-              <div className="flex size-[26px] items-center justify-center rounded-[7px] bg-gradient-to-br from-[#A175FC] to-violet-700">
+              <div className="flex size-[26px] items-center justify-center rounded-[7px] bg-gradient-to-br from-primary to-violet-700">
                 <Award className="size-3 text-white" strokeWidth={2.2} />
               </div>
-              <span className="text-sm font-medium text-(--text-3)">Lynq &amp; Flow Academy</span>
+              <span className="text-sm font-medium text-muted-foreground">Lynq &amp; Flow Academy</span>
             </div>
 
-            <div className="mb-4 text-[11px] font-bold uppercase tracking-[0.12em] text-(--text-4)">
+            <div className="mb-4 text-[11px] font-bold uppercase tracking-[0.12em] text-foreground-4">
               Certificate of Completion
             </div>
 
-            <div className="mb-2 text-4xl font-extrabold tracking-tight text-(--text-1)">
+            <div className="mb-2 text-4xl font-extrabold tracking-tight text-foreground">
               {userName || 'Student'}
             </div>
-            <div className="mb-1.5 text-sm text-(--text-3)">has successfully completed the</div>
+            <div className="mb-1.5 text-sm text-muted-foreground">has successfully completed the</div>
             <div className="mb-7 bg-gradient-to-br from-violet-500 to-indigo-500 bg-clip-text text-lg font-semibold text-transparent">
               E-commerce Customer Service Mastery
             </div>
 
             <div className="mb-5 h-px bg-black/7" />
 
-            <div className="mb-5 text-[13px] text-(--text-4)">Completed on {today}</div>
+            <div className="mb-5 text-[13px] text-foreground-4">Completed on {today}</div>
 
             {/* Module badges */}
             <div className="mb-7 flex flex-wrap justify-center gap-[7px]">
@@ -105,12 +105,12 @@ export function CertificateView({ userName, passedTypes, onBack }: CertificateVi
             {/* Signature */}
             <div className="mb-8 flex items-end justify-between">
               <div className="text-left">
-                <div className="mb-1 text-xs text-(--text-4)">Certified by</div>
-                <div className="text-[15px] font-semibold text-(--text-1)">Lynq &amp; Flow</div>
+                <div className="mb-1 text-xs text-foreground-4">Certified by</div>
+                <div className="text-[15px] font-semibold text-foreground">Lynq &amp; Flow</div>
               </div>
               <div className="text-right">
-                <div className="mb-1 text-xs text-(--text-4)">Date</div>
-                <div className="text-sm text-(--text-2)">{today}</div>
+                <div className="mb-1 text-xs text-foreground-4">Date</div>
+                <div className="text-sm text-foreground-2">{today}</div>
               </div>
             </div>
 
@@ -133,7 +133,7 @@ export function CertificateView({ userName, passedTypes, onBack }: CertificateVi
                 Download Certificate
               </button>
               <button
-                className="cursor-pointer rounded-lg border border-black/9 bg-black/4 px-[22px] py-[11px] font-[inherit] text-[13px] font-medium text-(--text-3) transition-all duration-150 hover:bg-black/7 hover:text-(--text-2)"
+                className="cursor-pointer rounded-lg border border-black/9 bg-black/4 px-[22px] py-[11px] font-[inherit] text-[13px] font-medium text-muted-foreground transition-all duration-150 hover:bg-black/7 hover:text-foreground-2"
                 onClick={() => {
                   const text = `I just earned the E-commerce Customer Service Mastery certificate from Lynq & Flow Academy!`
                   window.open(

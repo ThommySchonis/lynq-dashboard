@@ -16,7 +16,7 @@ export function ChatMessageBubble({ role, content, isStreaming }: ChatMessage) {
           <LynqBadge />
         </div>
       )}
-      <div className={isUser ? 'msg-user' : 'msg-ai'}>
+      <div className={isUser ? 'bg-[rgba(139,92,246,0.08)] border border-[rgba(139,92,246,0.15)] rounded-[20px_20px_5px_20px] px-[17px] py-[13px] max-w-[72%] text-sm leading-[1.72] text-[#0F0F10] whitespace-pre-wrap break-words' : 'bg-white border border-[rgba(0,0,0,0.07)] rounded-[20px_20px_20px_5px] px-[17px] py-[13px] max-w-[72%] text-sm leading-[1.72] text-[#0F0F10] whitespace-pre-wrap break-words'}>
         {isStreaming && !content ? (
           <TypingDots />
         ) : (

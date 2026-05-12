@@ -107,13 +107,13 @@ export function FeedbackModal({ open, onClose, onSuccess, onError }: FeedbackMod
       onMouseDown={(e) => {
         if (e.target === e.currentTarget && !submitting) onClose();
       }}
-      className="fixed inset-0 z-[9998] flex items-center justify-center bg-[#1C0F36]/45 p-4 backdrop-blur-sm animate-in fade-in duration-150"
+      className="fixed inset-0 z-[9998] flex items-center justify-center bg-foreground/45 p-4 backdrop-blur-sm animate-in fade-in duration-150"
     >
-      <div className="w-[480px] max-w-full rounded-xl bg-white p-6 text-[#1C0F36] shadow-[0_8px_24px_rgba(28,15,54,0.12)] animate-in slide-in-from-bottom-2 zoom-in-[0.98] duration-200">
+      <div className="w-[480px] max-w-full rounded-xl bg-white p-6 text-foreground shadow-[0_8px_24px_rgba(28,15,54,0.12)] animate-in slide-in-from-bottom-2 zoom-in-[0.98] duration-200">
         {/* Header */}
         <div className="flex items-start justify-between gap-3 border-b border-[#F0EDF4] pb-4 mb-5">
           <div className="min-w-0 flex-1">
-            <h3 id="fb-modal-title" className="m-0 text-lg font-medium -tracking-[0.01em] text-[#1C0F36]">
+            <h3 id="fb-modal-title" className="m-0 text-lg font-medium -tracking-[0.01em] text-foreground">
               Send feedback
             </h3>
             <p className="mt-1 mb-0 text-[13px] leading-normal text-[#6B5E7B]">
@@ -131,7 +131,7 @@ export function FeedbackModal({ open, onClose, onSuccess, onError }: FeedbackMod
         </div>
 
         {/* Type selector */}
-        <label className="mb-2 block text-[13px] font-medium text-[#1C0F36]">
+        <label className="mb-2 block text-[13px] font-medium text-foreground">
           Type
         </label>
         <div className="grid grid-cols-3 gap-2">
@@ -145,8 +145,8 @@ export function FeedbackModal({ open, onClose, onSuccess, onError }: FeedbackMod
                 disabled={submitting}
                 className={`flex h-9 items-center justify-center gap-1.5 rounded-lg border text-[13px] font-inherit transition-colors disabled:cursor-not-allowed ${
                   active
-                    ? "border-[#A175FC] bg-[#EDE5FE] font-medium text-[#A175FC]"
-                    : "border-[#E5E0EB] bg-[#F8F7FA] text-[#6B5E7B] hover:border-[#A175FC]/40"
+                    ? "border-primary bg-[#EDE5FE] font-medium text-primary"
+                    : "border-[#E5E0EB] bg-[#F8F7FA] text-[#6B5E7B] hover:border-primary/40"
                 }`}
               >
                 <Icon size={14} strokeWidth={1.75} />
@@ -157,7 +157,7 @@ export function FeedbackModal({ open, onClose, onSuccess, onError }: FeedbackMod
         </div>
 
         {/* Message */}
-        <label className="mt-4 mb-2 block text-[13px] font-medium text-[#1C0F36]">
+        <label className="mt-4 mb-2 block text-[13px] font-medium text-foreground">
           Message
         </label>
         <textarea
@@ -167,7 +167,7 @@ export function FeedbackModal({ open, onClose, onSuccess, onError }: FeedbackMod
           placeholder={placeholder}
           disabled={submitting}
           rows={5}
-          className="w-full resize-none rounded-lg border border-[#E5E0EB] bg-white px-3 py-3 text-sm leading-normal text-[#1C0F36] outline-none transition-[border-color,box-shadow] focus:border-[#A175FC] focus:shadow-[0_0_0_3px_rgba(161,117,252,0.25)]"
+          className="w-full resize-none rounded-lg border border-[#E5E0EB] bg-white px-3 py-3 text-sm leading-normal text-foreground outline-none transition-[border-color,box-shadow] focus:border-primary focus:shadow-[0_0_0_3px_rgba(161,117,252,0.25)]"
           style={{ minHeight: 120, maxHeight: 240 }}
         />
         <div className="mt-1 text-right text-xs text-[#9B91A8]">
@@ -192,7 +192,7 @@ export function FeedbackModal({ open, onClose, onSuccess, onError }: FeedbackMod
               size="sm"
               onClick={submit}
               disabled={!canSubmit}
-              className="gap-1.5 bg-[#A175FC] text-white hover:bg-[#8B5CF6] disabled:opacity-50"
+              className="gap-1.5 bg-primary text-white hover:bg-[#8B5CF6] disabled:opacity-50"
             >
               {submitting ? (
                 <Loader2 size={14} className="animate-spin" />

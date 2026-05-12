@@ -79,18 +79,18 @@ export default function ServicesPage() {
 
   return (
     <>
-      <main className="flex min-h-screen flex-col overflow-y-auto p-6 bg-[#F9F8FF] text-(--text-1) relative [scrollbar-width:thin] [&::-webkit-scrollbar]:w-[3px] [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-black/[0.12] [&::-webkit-scrollbar-thumb]:rounded-sm">
+      <main className="flex min-h-screen flex-col overflow-y-auto p-6 bg-background text-foreground relative [scrollbar-width:thin] [&::-webkit-scrollbar]:w-[3px] [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-black/[0.12] [&::-webkit-scrollbar-thumb]:rounded-sm">
         <div className="max-w-[840px] mx-auto">
 
           {/* Header */}
           <div className="animate-[fadeUp_.4s_ease_both] mb-8">
-            <div className="text-[10px] font-bold text-[#9CA3AF] uppercase tracking-[.1em] mb-2.5">
+            <div className="text-[10px] font-bold text-foreground-4 uppercase tracking-[.1em] mb-2.5">
               Services
             </div>
-            <h1 className="text-[20px] font-bold text-[#0F0F10] tracking-[-0.02em] mb-2">
+            <h1 className="text-[20px] font-bold text-foreground tracking-[-0.02em] mb-2">
               Grow Your Team
             </h1>
-            <p className="text-[14px] text-[#6B7280] max-w-[480px] leading-relaxed">
+            <p className="text-[14px] text-muted-foreground max-w-[480px] leading-relaxed">
               World-class e-commerce specialists, trained to your brand standards and ready to
               perform from day one.
             </p>
@@ -129,10 +129,10 @@ export default function ServicesPage() {
           <div className="animate-[fadeUp_.5s_ease_.42s_both] mb-10">
             <div className="flex items-center justify-between flex-wrap gap-4 px-6 py-5 rounded-xl bg-white border border-black/[0.07]">
               <div>
-                <p className="text-[15px] font-semibold text-[#0F0F10] mb-1">
+                <p className="text-[15px] font-semibold text-foreground mb-1">
                   Not sure which role you need?
                 </p>
-                <p className="text-[13px] text-[#6B7280]">
+                <p className="text-[13px] text-muted-foreground">
                   We&apos;ll help you figure out the perfect fit.
                 </p>
               </div>
@@ -154,7 +154,7 @@ export default function ServicesPage() {
       <Dialog open={activeService !== null} onOpenChange={(open) => { if (!open) closeModal() }}>
         <DialogContent
           showCloseButton={!submitted}
-          className="max-w-[480px] bg-(--bg-surface) border border-(--border) rounded-[22px] p-9 shadow-[0_32px_80px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.07)]"
+          className="max-w-[480px] bg-card border border-border rounded-[22px] p-9 shadow-[0_32px_80px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.07)]"
         >
           {activeService && (
             <>

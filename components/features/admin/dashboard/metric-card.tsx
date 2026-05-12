@@ -12,7 +12,7 @@ export function MetricCard({ icon: Icon, value, label }: MetricCardProps) {
     <Card>
       <CardContent className="flex flex-col gap-3">
         <div className="flex items-start justify-between">
-          <div className="flex size-9 items-center justify-center rounded-lg bg-[rgba(161,117,252,0.08)]">
+          <div className="flex size-9 items-center justify-center rounded-lg bg-primary/8">
             <Icon size={18} strokeWidth={1.75} className="text-muted-foreground" />
           </div>
         </div>

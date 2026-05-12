@@ -16,21 +16,21 @@ export function CustomerStats({ totalSpent, currency, ordersCount, refundPct, ap
   return (
     <div className="flex border-b border-border shrink-0">
       <div className="flex-1 py-2.5 text-center border-r border-border">
-        <div className="text-sm font-extrabold text-(--text-1) tracking-[-0.02em]">
+        <div className="text-sm font-extrabold text-foreground tracking-[-0.02em]">
           {fmtPrice(totalSpent, currency)}
         </div>
-        <div className="text-[9.5px] text-(--text-3) mt-0.5 uppercase tracking-[.06em]">Spent</div>
+        <div className="text-[9.5px] text-muted-foreground mt-0.5 uppercase tracking-[.06em]">Spent</div>
       </div>
       <div className="flex-1 py-2.5 text-center border-r border-border">
-        <div className="text-sm font-extrabold text-(--text-1) tracking-[-0.02em]">{ordersCount ?? '—'}</div>
-        <div className="text-[9.5px] text-(--text-3) mt-0.5 uppercase tracking-[.06em]">Orders</div>
+        <div className="text-sm font-extrabold text-foreground tracking-[-0.02em]">{ordersCount ?? '—'}</div>
+        <div className="text-[9.5px] text-muted-foreground mt-0.5 uppercase tracking-[.06em]">Orders</div>
       </div>
       <div className="flex-1 py-2.5 text-center">
-        <div className="text-sm font-extrabold tracking-[-0.02em]" style={{ color: badgeColor || 'var(--text-1)' }}>
+        <div className="text-sm font-extrabold tracking-[-0.02em]" style={{ color: badgeColor || 'var(--foreground)' }}>
           {approx ? '~' : ''}
           {refundPct}%
         </div>
-        <div className="text-[9.5px] text-(--text-3) mt-0.5 uppercase tracking-[.06em]">Refund</div>
+        <div className="text-[9.5px] text-muted-foreground mt-0.5 uppercase tracking-[.06em]">Refund</div>
       </div>
     </div>
   )

@@ -9,7 +9,7 @@ interface CheckpointTimelineProps {
 
 export function CheckpointTimeline({ checkpoints }: CheckpointTimelineProps) {
   if (!checkpoints?.length) {
-    return <p className="text-[12.5px] text-(--text-3) py-3">No tracking events yet.</p>
+    return <p className="text-[12.5px] text-muted-foreground py-3">No tracking events yet.</p>
   }
 
   return (
@@ -26,7 +26,7 @@ export function CheckpointTimeline({ checkpoints }: CheckpointTimelineProps) {
               <div
                 className="w-2.5 h-2.5 rounded-full shrink-0 mt-[3px]"
                 style={{
-                  background: isFirst ? s.color : 'var(--bg-surface-2)',
+                  background: isFirst ? s.color : 'var(--secondary)',
                   boxShadow: isFirst ? `0 0 8px ${s.color}80` : 'none',
                 }}
               />
@@ -37,13 +37,13 @@ export function CheckpointTimeline({ checkpoints }: CheckpointTimelineProps) {
 
             {/* Content */}
             <div className="pb-4 flex-1 min-w-0">
-              <p className={`text-[13px] leading-[1.45] mb-[3px] ${isFirst ? 'text-(--text-1)' : 'text-(--text-2)'}`}>
+              <p className={`text-[13px] leading-[1.45] mb-[3px] ${isFirst ? 'text-foreground' : 'text-foreground-2'}`}>
                 {cp.detail}
               </p>
               {cp.location && (
-                <p className="text-[11px] text-(--text-3) mb-0.5">{cp.location}</p>
+                <p className="text-[11px] text-muted-foreground mb-0.5">{cp.location}</p>
               )}
-              <p className="text-[11.5px] text-(--text-3)">{fmtDateTime(cp.checkpoint_time)}</p>
+              <p className="text-[11.5px] text-muted-foreground">{fmtDateTime(cp.checkpoint_time)}</p>
             </div>
           </div>
         )

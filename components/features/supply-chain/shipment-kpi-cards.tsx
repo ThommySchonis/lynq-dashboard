@@ -24,27 +24,27 @@ function KpiCard({ label, value, numericValue, accentColor, sub, icon, animIndex
 
   return (
     <div
-      className="bg-(--bg-surface) border border-(--border) rounded-2xl p-5 px-[22px] shadow-[var(--shadow-card)] transition-all duration-200 hover:border-(--border-hover) hover:shadow-[var(--shadow-card-hover)] relative overflow-hidden animate-[fadeUp_0.4s_ease_both]"
+      className="bg-card border border-border rounded-2xl p-5 px-[22px] shadow-[var(--shadow-card)] transition-all duration-200 hover:border-(--border-hover) hover:shadow-[var(--shadow-card-hover)] relative overflow-hidden animate-[fadeUp_0.4s_ease_both]"
       style={{ animationDelay: `${animIndex * 50 + 50}ms` }}
     >
       <div className="flex items-center justify-between mb-2.5">
         <span className="text-[11px] font-semibold text-[#BDBDBD] tracking-[.06em] uppercase">
           {label}
         </span>
-        <div className="w-7 h-7 rounded-[7px] bg-[rgba(161,117,252,0.08)] flex items-center justify-center text-[#9B91A8]">
+        <div className="w-7 h-7 rounded-[7px] bg-primary/8 flex items-center justify-center text-foreground-4">
           {icon}
         </div>
       </div>
       <div
         className="text-[26px] font-bold tracking-[-0.04em] leading-none"
-        style={{ color: accentColor || 'var(--text-1)' }}
+        style={{ color: accentColor || 'var(--foreground)' }}
       >
         {displayValue}
       </div>
       {sub && (
         <p
           className="text-[10.5px] mt-[5px]"
-          style={{ color: accentColor || 'var(--text-3)' }}
+          style={{ color: accentColor || 'var(--foreground-3)' }}
         >
           {sub}
         </p>
@@ -55,7 +55,7 @@ function KpiCard({ label, value, numericValue, accentColor, sub, icon, animIndex
 
 function SkeletonCard() {
   return (
-    <div className="bg-(--bg-surface) border border-(--border) rounded-2xl p-5 px-[22px] shadow-[var(--shadow-card)] h-[84px]">
+    <div className="bg-card border border-border rounded-2xl p-5 px-[22px] shadow-[var(--shadow-card)] h-[84px]">
       <div className="h-[11px] w-[55%] mb-2.5 rounded-md bg-gradient-to-r from-(--skeleton-from) via-(--skeleton-to) to-(--skeleton-from) bg-[length:200%_100%] animate-[skWave_1.5s_ease-in-out_infinite]" />
       <div className="h-[26px] w-[40%] rounded-md bg-gradient-to-r from-(--skeleton-from) via-(--skeleton-to) to-(--skeleton-from) bg-[length:200%_100%] animate-[skWave_1.5s_ease-in-out_infinite]" />
     </div>

@@ -17,7 +17,7 @@ export function FilterTabs({ filter, onChange }: FilterTabsProps) {
           className={`rounded-md px-3.5 py-1 text-xs font-semibold transition-all ${
             filter === f.id
               ? 'bg-[#0F0F10] text-white'
-              : 'bg-transparent text-gray-500 hover:bg-black/4 hover:text-[#0F0F10]'
+              : 'bg-transparent text-gray-500 hover:bg-black/4 hover:text-foreground'
           }`}
           onClick={() => onChange(f.id)}
         >

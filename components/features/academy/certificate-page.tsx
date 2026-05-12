@@ -76,14 +76,14 @@ export function CertificatePage() {
         <div className="flex h-screen items-center justify-center bg-[#F9F9FB]">
           <div className="text-center">
             <Loader2 className="mx-auto mb-3 size-9 animate-spin text-violet-500" />
-            <div className="text-[13px] text-(--text-4)">Loading...</div>
+            <div className="text-[13px] text-foreground-4">Loading...</div>
           </div>
         </div>
     )
 
   if (!cert)
     return (
-        <div className="ac-scroll flex h-screen items-center justify-center overflow-y-auto bg-[#F9F9FB] px-6 py-10">
+        <div className="thin-scrollbar flex h-screen items-center justify-center overflow-y-auto bg-[#F9F9FB] px-6 py-10">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -93,16 +93,16 @@ export function CertificatePage() {
             <div className="mx-auto mb-5 flex size-16 items-center justify-center rounded-full border border-red-500/20 bg-red-500/10">
               <Lock className="size-7 text-red-500" />
             </div>
-            <h1 className="mb-2.5 text-2xl font-extrabold text-(--text-1)">
+            <h1 className="mb-2.5 text-2xl font-extrabold text-foreground">
               Certificate Not Found
             </h1>
-            <p className="mb-6 text-sm leading-[1.65] text-(--text-3)">
+            <p className="mb-6 text-sm leading-[1.65] text-muted-foreground">
               You haven&apos;t passed the final exam yet. Complete the exam with 80%+ to earn your
               certificate.
             </p>
             <div className="flex justify-center gap-2.5">
               <button
-                className="flex cursor-pointer items-center gap-2 rounded-[20px] border border-black/9 bg-black/4 px-5 py-2.5 font-[inherit] text-[13px] font-medium text-(--text-3) transition-all duration-150 hover:bg-black/7 hover:text-(--text-2)"
+                className="flex cursor-pointer items-center gap-2 rounded-[20px] border border-black/9 bg-black/4 px-5 py-2.5 font-[inherit] text-[13px] font-medium text-muted-foreground transition-all duration-150 hover:bg-black/7 hover:text-foreground-2"
                 onClick={() => (window.location.href = '/academy')}
               >
                 Back to Academy
@@ -119,17 +119,17 @@ export function CertificatePage() {
     )
 
   return (
-      <div className="ac-scroll h-screen overflow-y-auto bg-[#F9F9FB] px-6 py-8">
+      <div className="thin-scrollbar h-screen overflow-y-auto bg-[#F9F9FB] px-6 py-8">
         <div className="mx-auto max-w-[760px]">
           {/* Actions bar */}
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, ease: EASE }}
-            className="cert-no-print mb-7 flex items-center justify-between"
+            className="print:hidden mb-7 flex items-center justify-between"
           >
             <button
-              className="flex cursor-pointer items-center gap-2 rounded-[20px] border border-black/9 bg-black/4 px-5 py-2.5 font-[inherit] text-[13px] font-medium text-(--text-3) transition-all duration-150 hover:bg-black/7 hover:text-(--text-2)"
+              className="flex cursor-pointer items-center gap-2 rounded-[20px] border border-black/9 bg-black/4 px-5 py-2.5 font-[inherit] text-[13px] font-medium text-muted-foreground transition-all duration-150 hover:bg-black/7 hover:text-foreground-2"
               onClick={() => (window.location.href = '/academy')}
             >
               <ChevronLeft className="size-3.5" />
@@ -137,7 +137,7 @@ export function CertificatePage() {
             </button>
             <div className="flex gap-2">
               <button
-                className="flex cursor-pointer items-center gap-2 rounded-[20px] border border-black/9 bg-black/4 px-5 py-2.5 font-[inherit] text-[13px] font-medium text-(--text-3) transition-all duration-150 hover:bg-black/7 hover:text-(--text-2)"
+                className="flex cursor-pointer items-center gap-2 rounded-[20px] border border-black/9 bg-black/4 px-5 py-2.5 font-[inherit] text-[13px] font-medium text-muted-foreground transition-all duration-150 hover:bg-black/7 hover:text-foreground-2"
                 onClick={handleLinkedIn}
               >
                 <Share2 className="size-3.5" />
@@ -174,7 +174,7 @@ export function CertificatePage() {
 
             <div className="relative px-16 py-[52px] text-center">
               {/* Logo / issuer */}
-              <div className="mb-8 text-[11px] font-bold uppercase tracking-[0.14em] text-(--text-4)">
+              <div className="mb-8 text-[11px] font-bold uppercase tracking-[0.14em] text-foreground-4">
                 Lynq &amp; Flow Agency
               </div>
 
@@ -186,20 +186,20 @@ export function CertificatePage() {
               {/* Divider */}
               <div className="mx-auto mb-7 h-0.5 w-[60px] bg-gradient-to-r from-transparent via-violet-500 to-transparent" />
 
-              <p className="mb-3 text-sm italic text-(--text-4)">This certifies that</p>
+              <p className="mb-3 text-sm italic text-foreground-4">This certifies that</p>
 
               {/* Name */}
-              <div className="mb-5 text-[44px] font-extrabold leading-[1.1] tracking-tight text-(--text-1)">
+              <div className="mb-5 text-[44px] font-extrabold leading-[1.1] tracking-tight text-foreground">
                 {name}
               </div>
 
-              <p className="mb-2.5 text-sm text-(--text-3)">has successfully completed</p>
+              <p className="mb-2.5 text-sm text-muted-foreground">has successfully completed</p>
 
               {/* Course name */}
-              <div className="mb-1.5 text-2xl font-bold tracking-tight text-(--text-1)">
+              <div className="mb-1.5 text-2xl font-bold tracking-tight text-foreground">
                 E-commerce CS Mastery
               </div>
-              <div className="mb-8 text-sm text-(--text-3)">
+              <div className="mb-8 text-sm text-muted-foreground">
                 Lynq Academy &middot; Full Certification Program
               </div>
 
@@ -212,7 +212,7 @@ export function CertificatePage() {
                   <div className="mb-1 text-[28px] font-extrabold text-violet-500">
                     {cert.exam_score}%
                   </div>
-                  <div className="text-[11px] uppercase tracking-[0.08em] text-(--text-4)">
+                  <div className="text-[11px] uppercase tracking-[0.08em] text-foreground-4">
                     Exam Score
                   </div>
                 </div>
@@ -221,14 +221,14 @@ export function CertificatePage() {
                   <div className="mb-1 text-[28px] font-extrabold text-emerald-500">
                     {cert.modules_completed || 6}
                   </div>
-                  <div className="text-[11px] uppercase tracking-[0.08em] text-(--text-4)">
+                  <div className="text-[11px] uppercase tracking-[0.08em] text-foreground-4">
                     Modules Completed
                   </div>
                 </div>
                 <div className="w-px bg-black/7" />
                 <div className="text-center">
                   <div className="mb-1 text-[28px] font-extrabold text-indigo-500">50</div>
-                  <div className="text-[11px] uppercase tracking-[0.08em] text-(--text-4)">
+                  <div className="text-[11px] uppercase tracking-[0.08em] text-foreground-4">
                     Questions Passed
                   </div>
                 </div>

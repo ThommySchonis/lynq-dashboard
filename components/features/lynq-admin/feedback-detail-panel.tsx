@@ -10,7 +10,7 @@ import type { FeedbackSubmission } from '@/hooks/lynq-admin'
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="py-4 border-b border-[#F0EDF4]">
-      <div className="text-[11px] font-semibold tracking-[.08em] uppercase text-[#9B91A8] mb-2.5">
+      <div className="text-[11px] font-semibold tracking-[.08em] uppercase text-foreground-4 mb-2.5">
         {title}
       </div>
       {children}
@@ -56,14 +56,14 @@ export function FeedbackDetailPanel({ row, onClose }: FeedbackDetailPanelProps) 
               <Icon size={12} strokeWidth={1.75} />
               {meta.label}
             </span>
-            <span className="text-[13px] text-[#9B91A8]">
+            <span className="text-[13px] text-foreground-4">
               {new Date(row.created_at).toLocaleString()}
             </span>
           </div>
           <button
             onClick={onClose}
             aria-label="Close"
-            className="bg-transparent border-none cursor-pointer p-1 text-[#9B91A8] flex items-center"
+            className="bg-transparent border-none cursor-pointer p-1 text-foreground-4 flex items-center"
           >
             <X size={18} strokeWidth={1.75} />
           </button>
@@ -72,22 +72,22 @@ export function FeedbackDetailPanel({ row, onClose }: FeedbackDetailPanelProps) 
         {/* Body */}
         <div className="flex-1 overflow-y-auto px-6">
           <Section title="Message">
-            <div className="bg-[#F8F7FA] rounded-lg p-3 text-sm text-[#1C0F36] leading-relaxed whitespace-pre-wrap break-words">
+            <div className="bg-secondary rounded-lg p-3 text-sm text-foreground leading-relaxed whitespace-pre-wrap break-words">
               {row.message}
             </div>
           </Section>
 
           <Section title="From">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-full bg-[#EDE5FE] text-[#A175FC] flex items-center justify-center text-[13px] font-semibold shrink-0">
+              <div className="w-9 h-9 rounded-full bg-primary/10 text-primary flex items-center justify-center text-[13px] font-semibold shrink-0">
                 {initialsFor(row.user)}
               </div>
               <div className="min-w-0">
-                <div className="text-sm font-medium text-[#1C0F36]">
+                <div className="text-sm font-medium text-foreground">
                   {row.user?.name ?? row.user?.email?.split('@')[0] ?? 'Unknown user'}
                 </div>
-                <div className="text-[13px] text-[#6B5E7B]">{row.user?.email ?? '—'}</div>
-                <div className="text-[12px] text-[#9B91A8] mt-0.5">
+                <div className="text-[13px] text-muted-foreground">{row.user?.email ?? '—'}</div>
+                <div className="text-[12px] text-foreground-4 mt-0.5">
                   Workspace: {row.workspace?.name ?? '—'}
                 </div>
               </div>
@@ -97,24 +97,24 @@ export function FeedbackDetailPanel({ row, onClose }: FeedbackDetailPanelProps) 
           <Section title="Context">
             <div className="flex flex-col gap-2">
               <div>
-                <div className="text-[11px] font-semibold tracking-[.08em] uppercase text-[#9B91A8] mb-1">Page</div>
+                <div className="text-[11px] font-semibold tracking-[.08em] uppercase text-foreground-4 mb-1">Page</div>
                 {row.page_url ? (
                   <a
                     href={row.page_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-[13px] text-[#A175FC] font-mono inline-flex items-center gap-1 break-all"
+                    className="text-[13px] text-primary font-mono inline-flex items-center gap-1 break-all"
                   >
                     {row.page_url}
                     <ExternalLink size={12} strokeWidth={1.75} />
                   </a>
                 ) : (
-                  <span className="text-[13px] text-[#9B91A8]">—</span>
+                  <span className="text-[13px] text-foreground-4">—</span>
                 )}
               </div>
               <div>
-                <div className="text-[11px] font-semibold tracking-[.08em] uppercase text-[#9B91A8] mb-1">User agent</div>
-                <div className="text-[12px] text-[#9B91A8] font-mono break-all">
+                <div className="text-[11px] font-semibold tracking-[.08em] uppercase text-foreground-4 mb-1">User agent</div>
+                <div className="text-[12px] text-foreground-4 font-mono break-all">
                   {row.user_agent ?? '—'}
                 </div>
               </div>
@@ -129,7 +129,7 @@ export function FeedbackDetailPanel({ row, onClose }: FeedbackDetailPanelProps) 
             onClick={(e) => { if (!replyHref) e.preventDefault() }}
             className={[
               'inline-flex items-center gap-1.5 h-9 px-3.5',
-              'bg-white border border-[#1C0F36] text-[#1C0F36] rounded-lg',
+              'bg-white border border-[#1C0F36] text-foreground rounded-lg',
               'text-[13px] font-medium no-underline',
               replyHref ? 'opacity-100 cursor-pointer' : 'opacity-50 cursor-not-allowed',
             ].join(' ')}

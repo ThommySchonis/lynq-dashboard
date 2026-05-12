@@ -118,7 +118,7 @@ export default function ResetPasswordPage() {
         footer={
           <>
             Remember your password?{' '}
-            <Link href="/login" className="text-[#A175FC] hover:text-[#C4B0FF] transition-colors">
+            <Link href="/login" className="text-primary hover:text-[#C4B0FF] transition-colors">
               Sign in
             </Link>
           </>
@@ -141,7 +141,7 @@ export default function ResetPasswordPage() {
         footer={
           <>
             Remember your password?{' '}
-            <Link href="/login" className="text-[#A175FC] hover:text-[#C4B0FF] transition-colors">
+            <Link href="/login" className="text-primary hover:text-[#C4B0FF] transition-colors">
               Sign in
             </Link>
           </>
@@ -178,7 +178,7 @@ export default function ResetPasswordPage() {
         <div className="mt-3 text-center">
           <Link
             href="/login"
-            className="text-sm text-[#A175FC] hover:text-[#C4B0FF] transition-colors"
+            className="text-sm text-primary hover:text-[#C4B0FF] transition-colors"
           >
             Continue to sign in →
           </Link>
@@ -195,7 +195,7 @@ export default function ResetPasswordPage() {
       footer={
         <>
           Remember your password?{' '}
-          <Link href="/login" className="text-[#A175FC] hover:text-[#C4B0FF] transition-colors">
+          <Link href="/login" className="text-primary hover:text-[#C4B0FF] transition-colors">
             Sign in
           </Link>
         </>

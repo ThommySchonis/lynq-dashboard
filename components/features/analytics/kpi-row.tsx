@@ -64,13 +64,13 @@ function KpiCardInner({ c, index, hasPrevKpis }: KpiCardInnerProps) {
   const Icon = CARD_ICONS[index]
 
   return (
-    <div className="animate-fade-in rounded-[10px] border border-black/[0.07] bg-white p-[18px_20px] relative overflow-hidden transition-all duration-200 hover:border-black/[0.12] hover:shadow-md hover:-translate-y-px">
+    <div className="animate-fade-up rounded-[10px] border border-black/[0.07] bg-white p-[18px_20px] relative overflow-hidden transition-all duration-200 hover:border-black/[0.12] hover:shadow-md hover:-translate-y-px">
       <div className="mb-3.5 flex items-start justify-between">
         <div className="text-[11px] font-semibold uppercase tracking-[.06em] text-gray-400">
           {c.label}
         </div>
         <div className="flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-[7px] bg-purple-500/[0.08]">
-          <Icon size={14} className="text-[#9B91A8]" />
+          <Icon size={14} className="text-foreground-4" />
         </div>
       </div>
       <div className="mb-2 text-2xl font-bold leading-none text-gray-900 tabular-nums">
@@ -109,7 +109,7 @@ export function KpiRow({ kpis, prevKpis, refunds, loaded }: KpiRowProps) {
     return (
       <div className="mb-7 grid grid-cols-4 gap-4">
         {[0, 1, 2, 3].map(i => (
-          <div key={i} className="animate-fade-in rounded-[10px] border border-white/65 bg-white/80 p-[18px_20px] shadow-sm backdrop-blur-xl">
+          <div key={i} className="animate-fade-up rounded-[10px] border border-white/65 bg-white/80 p-[18px_20px] shadow-sm backdrop-blur-xl">
             <Skeleton className="mb-3.5 h-[11px] w-[55%]" />
             <Skeleton className="mb-2 h-[30px] w-[70%]" />
             <Skeleton className="h-[9px] w-[85%]" />

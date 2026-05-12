@@ -15,14 +15,14 @@ export function AttachmentBar() {
       {attachments.map((a, i) => (
         <span
           key={i}
-          className="inline-flex items-center gap-[5px] px-2.5 py-1 bg-(--bg-surface-2) border border-(--border) rounded-lg text-[11px] text-(--text-2)"
+          className="inline-flex items-center gap-[5px] px-2.5 py-1 bg-secondary border border-border rounded-lg text-[11px] text-foreground-2"
         >
           <Paperclip size={13} /> {a.name}
           <Button
             variant="ghost"
             size="icon"
             onClick={() => setAttachments((p) => p.filter((_, j) => j !== i))}
-            className="text-(--text-3) flex p-0 ml-0.5"
+            className="text-muted-foreground flex p-0 ml-0.5"
           >
             <X size={10} />
           </Button>

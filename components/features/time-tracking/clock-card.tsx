@@ -34,7 +34,7 @@ export function ClockCard({
   const isActive = !!activeSession
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-5 rounded-xl border border-black/7 bg-white p-6 animate-fade-in-1">
+    <div className="flex flex-wrap items-center justify-between gap-5 rounded-xl border border-black/7 bg-white p-6 opacity-0 animate-fade-up delay-[50ms]">
       <div>
         {isActive ? (
           <>
@@ -48,7 +48,7 @@ export function ClockCard({
               {isPaused && (
                 <div className="h-2 w-2 shrink-0 rounded-full bg-amber-500" />
               )}
-              <div className="text-[22px] font-bold tracking-tight text-[#0F0F10] tabular-nums">
+              <div className="text-[22px] font-bold tracking-tight text-foreground tabular-nums">
                 {isPaused ? 'Paused' : 'Clocked in'} &middot; {fmtElapsed(elapsed)}
               </div>
             </div>
@@ -62,7 +62,7 @@ export function ClockCard({
             <div className="mb-2.5 text-[10px] font-bold uppercase tracking-widest text-gray-400">
               Not clocked in
             </div>
-            <div className="mb-2 text-[22px] font-bold tracking-tight text-[#0F0F10]">
+            <div className="mb-2 text-[22px] font-bold tracking-tight text-foreground">
               Ready to start
             </div>
             {sessions.length > 0 && sessions[0]?.clocked_out_at && (

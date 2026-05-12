@@ -56,7 +56,7 @@ export function ComposerToolbar({
   return (
     <div className="flex items-center gap-px px-2.5 py-[7px] border-t border-border">
       <button
-        className="min-w-[30px] h-[30px] flex items-center justify-center rounded-[7px] cursor-pointer text-xs font-bold text-(--text-3) transition-all hover:bg-(--bg-surface-2) hover:text-(--text-1)"
+        className="min-w-[30px] h-[30px] flex items-center justify-center rounded-[7px] cursor-pointer text-xs font-bold text-muted-foreground transition-all hover:bg-secondary hover:text-foreground"
         title="Bold (⌘B)"
         onClick={() => onFormatDoc('bold')}
         onMouseDown={(e) => e.preventDefault()}
@@ -64,7 +64,7 @@ export function ComposerToolbar({
         <span className="font-extrabold text-[13px]">B</span>
       </button>
       <button
-        className="min-w-[30px] h-[30px] flex items-center justify-center rounded-[7px] cursor-pointer text-xs font-bold text-(--text-3) transition-all hover:bg-(--bg-surface-2) hover:text-(--text-1)"
+        className="min-w-[30px] h-[30px] flex items-center justify-center rounded-[7px] cursor-pointer text-xs font-bold text-muted-foreground transition-all hover:bg-secondary hover:text-foreground"
         title="Italic (⌘I)"
         onClick={() => onFormatDoc('italic')}
         onMouseDown={(e) => e.preventDefault()}
@@ -72,16 +72,16 @@ export function ComposerToolbar({
         <span className="italic text-[13px]">I</span>
       </button>
       <button
-        className="min-w-[30px] h-[30px] flex items-center justify-center rounded-[7px] cursor-pointer text-xs font-bold text-(--text-3) transition-all hover:bg-(--bg-surface-2) hover:text-(--text-1)"
+        className="min-w-[30px] h-[30px] flex items-center justify-center rounded-[7px] cursor-pointer text-xs font-bold text-muted-foreground transition-all hover:bg-secondary hover:text-foreground"
         title="Underline (⌘U)"
         onClick={() => onFormatDoc('underline')}
         onMouseDown={(e) => e.preventDefault()}
       >
         <span className="underline text-[13px]">U</span>
       </button>
-      <div className="rtbar-sep" />
+      <div className="w-px h-[18px] bg-secondary mx-1.5 shrink-0" />
       <button
-        className="min-w-[30px] h-[30px] flex items-center justify-center rounded-[7px] cursor-pointer text-xs font-bold text-(--text-3) transition-all hover:bg-(--bg-surface-2) hover:text-(--text-1)"
+        className="min-w-[30px] h-[30px] flex items-center justify-center rounded-[7px] cursor-pointer text-xs font-bold text-muted-foreground transition-all hover:bg-secondary hover:text-foreground"
         title="Insert link"
         onClick={onInsertLink}
         onMouseDown={(e) => e.preventDefault()}
@@ -89,7 +89,7 @@ export function ComposerToolbar({
         <Link2 size={13} />
       </button>
       <button
-        className="min-w-[30px] h-[30px] flex items-center justify-center rounded-[7px] cursor-pointer text-xs font-bold text-(--text-3) transition-all hover:bg-(--bg-surface-2) hover:text-(--text-1)"
+        className="min-w-[30px] h-[30px] flex items-center justify-center rounded-[7px] cursor-pointer text-xs font-bold text-muted-foreground transition-all hover:bg-secondary hover:text-foreground"
         title="Insert image"
         onClick={onImageUpload}
         onMouseDown={(e) => e.preventDefault()}
@@ -98,7 +98,7 @@ export function ComposerToolbar({
       </button>
       <div className="relative">
         <button
-          className={`min-w-[30px] h-[30px] flex items-center justify-center rounded-[7px] cursor-pointer text-xs font-bold text-(--text-3) transition-all hover:bg-(--bg-surface-2) hover:text-(--text-1)${showEmoji ? ' rton' : ''}`}
+          className={`min-w-[30px] h-[30px] flex items-center justify-center rounded-[7px] cursor-pointer text-xs font-bold text-muted-foreground transition-all hover:bg-secondary hover:text-foreground${showEmoji ? ' rton' : ''}`}
           title="Emoji"
           onClick={() => setShowEmoji(!showEmoji)}
           onMouseDown={(e) => e.preventDefault()}
@@ -107,14 +107,14 @@ export function ComposerToolbar({
         </button>
         {showEmoji && (
           <div
-            className="absolute bottom-[calc(100%+8px)] left-[-8px] bg-(--bg-surface) backdrop-blur-[28px] border border-(--border) rounded-2xl p-2.5 z-[200] shadow-[0_24px_80px_rgba(0,0,0,0.2)] animate-[fadeUp_.16s_ease_both]"
+            className="absolute bottom-[calc(100%+8px)] left-[-8px] bg-card backdrop-blur-[28px] border border-border rounded-2xl p-2.5 z-[200] shadow-[0_24px_80px_rgba(0,0,0,0.2)] animate-[fadeUp_.16s_ease_both]"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="grid grid-cols-7 gap-[2px]">
               {EMOJIS.map((em) => (
                 <button
                   key={em}
-                  className="w-8 h-8 flex items-center justify-center rounded-lg text-[17px] cursor-pointer bg-transparent transition-colors hover:bg-(--bg-surface-2)"
+                  className="w-8 h-8 flex items-center justify-center rounded-lg text-[17px] cursor-pointer bg-transparent transition-colors hover:bg-secondary"
                   onMouseDown={(e) => {
                     e.preventDefault()
                     onInsertEmoji(em)
@@ -129,16 +129,16 @@ export function ComposerToolbar({
         )}
       </div>
       <button
-        className="min-w-[30px] h-[30px] flex items-center justify-center rounded-[7px] cursor-pointer text-xs font-bold text-(--text-3) transition-all hover:bg-(--bg-surface-2) hover:text-(--text-1)"
+        className="min-w-[30px] h-[30px] flex items-center justify-center rounded-[7px] cursor-pointer text-xs font-bold text-muted-foreground transition-all hover:bg-secondary hover:text-foreground"
         title="Attach file"
         onClick={onFileAttach}
         onMouseDown={(e) => e.preventDefault()}
       >
         <Paperclip size={13} />
       </button>
-      <div className="rtbar-sep" />
+      <div className="w-px h-[18px] bg-secondary mx-1.5 shrink-0" />
       <button
-        className={`min-w-[30px] h-[30px] flex items-center justify-center rounded-[7px] cursor-pointer text-xs font-bold text-(--text-3) transition-all hover:bg-(--bg-surface-2) hover:text-(--text-1)${autoTranslate ? ' rton' : ''} gap-1 pl-1.5 pr-2 text-[11px] font-semibold min-w-auto`}
+        className={`min-w-[30px] h-[30px] flex items-center justify-center rounded-[7px] cursor-pointer text-xs font-bold text-muted-foreground transition-all hover:bg-secondary hover:text-foreground${autoTranslate ? ' rton' : ''} gap-1 pl-1.5 pr-2 text-[11px] font-semibold min-w-auto`}
         title={customerLang ? `Auto-translate to ${customerLang.name}` : 'Detect language'}
         onClick={() => (customerLang ? setAutoTranslate(!autoTranslate) : null)}
       >
@@ -148,7 +148,7 @@ export function ComposerToolbar({
       <div className="flex-1" />
       <Button
         variant="outline"
-        className="h-8 px-3 text-[12.5px] font-semibold bg-(--bg-surface-2) border border-(--border) text-(--text-1) rounded-[7px] transition-all hover:bg-(--bg-input) hover:border-(--border-hover) hover:text-(--text-1) flex items-center gap-1.5 px-[13px] py-[7px]"
+        className="h-8 px-3 text-[12.5px] font-semibold bg-secondary border border-border text-foreground rounded-[7px] transition-all hover:bg-input hover:border-(--border-hover) hover:text-foreground flex items-center gap-1.5 px-[13px] py-[7px]"
         onClick={onAiReply}
         disabled={aiLoading || !hasMessages}
       >

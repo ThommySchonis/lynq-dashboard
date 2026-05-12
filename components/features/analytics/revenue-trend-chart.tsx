@@ -37,13 +37,13 @@ export function RevenueTrendChart({ trend, loaded, rangeLabel }: RevenueTrendCha
   const xlbls = pts.filter((_, i) => i === 0 || i % step === 0 || i === pts.length - 1)
 
   return (
-    <div className="mb-6 animate-fade-in rounded-xl border border-white/65 bg-white/80 p-[22px_24px] shadow-sm backdrop-blur-xl transition-shadow duration-200 hover:shadow-lg">
+    <div className="mb-6 animate-fade-up rounded-xl border border-white/65 bg-white/80 p-[22px_24px] shadow-sm backdrop-blur-xl transition-shadow duration-200 hover:shadow-lg">
       <div className="mb-4 flex items-center justify-between">
         <div>
-          <div className="mb-0.5 text-[13px] font-semibold text-[var(--text-1)]">Revenue Trend</div>
-          <div className="text-[11px] text-[var(--text-3)]">{rangeLabel} &middot; daily net revenue</div>
+          <div className="mb-0.5 text-[13px] font-semibold text-foreground">Revenue Trend</div>
+          <div className="text-[11px] text-muted-foreground">{rangeLabel} &middot; daily net revenue</div>
         </div>
-        <div className="text-base font-bold tracking-tight text-[var(--text-1)]">{fmtEur(tot)}</div>
+        <div className="text-base font-bold tracking-tight text-foreground">{fmtEur(tot)}</div>
       </div>
       <svg viewBox={`0 0 ${W} ${H}`} className="w-full overflow-visible" aria-hidden>
         <defs>

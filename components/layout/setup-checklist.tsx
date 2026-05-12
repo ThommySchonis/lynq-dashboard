@@ -121,7 +121,7 @@ export function SetupChecklist({ status, onDismissed }: SetupChecklistProps) {
   }
 
   return (
-    <div className="mx-2 mb-2 rounded-lg border border-[#A175FC]/18 bg-[#A175FC]/10 p-2.5 px-3">
+    <div className="mx-2 mb-2 rounded-lg border border-primary/18 bg-primary/10 p-2.5 px-3">
       <div className="mb-2 flex items-center justify-between">
         <span className="text-[11px] font-semibold text-white">
           Setup ({done}/{total})

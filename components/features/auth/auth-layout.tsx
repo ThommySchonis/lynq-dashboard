@@ -66,7 +66,7 @@ export default function AuthLayout({
       <div className={`relative z-[2] w-full ${maxWidth} text-center`}>
 
         {/* Wordmark */}
-        <div className="mb-5 text-[11px] font-semibold tracking-[0.28em] uppercase text-white/55 login-fade login-d-0">
+        <div className="mb-5 text-[11px] font-semibold tracking-[0.28em] uppercase text-white/55 opacity-0 animate-fade-up motion-reduce:opacity-100 motion-reduce:animate-none" style={{ animationDelay: '0ms' }}>
           Lynq &amp; Flow
         </div>
 
@@ -78,20 +78,20 @@ export default function AuthLayout({
         {/* Gradient divider */}
         <div
           aria-hidden="true"
-          className="w-[140px] h-px mx-auto mt-5 mb-4 login-fade login-d-2"
+          className="w-[140px] h-px mx-auto mt-5 mb-4 opacity-0 animate-fade-up motion-reduce:opacity-100 motion-reduce:animate-none delay-[160ms]"
           style={{ background: 'linear-gradient(90deg, transparent 0%, rgba(127,119,221,0.45) 50%, transparent 100%)' }}
         />
 
         {/* Subhead */}
         {subhead && (
-          <p className="text-[15px] text-white/60 mb-7 mt-0 login-fade login-d-3">
+          <p className="text-[15px] text-white/60 mb-7 mt-0 opacity-0 animate-fade-up motion-reduce:opacity-100 motion-reduce:animate-none delay-[240ms]">
             {subhead}
           </p>
         )}
 
         {/* Glassmorphism card */}
         <div
-          className="rounded-3xl px-9 py-10 text-left backdrop-blur-xl login-card login-fade login-d-4"
+          className="rounded-3xl px-9 py-10 text-left backdrop-blur-xl login-card opacity-0 animate-fade-up motion-reduce:opacity-100 motion-reduce:animate-none delay-[320ms]"
           style={{
             background: 'linear-gradient(145deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.04) 100%)',
             border: '1px solid rgba(255,255,255,0.18)',
@@ -108,7 +108,7 @@ export default function AuthLayout({
 
         {/* Footer */}
         {footer && (
-          <div className="mt-5 text-[14px] text-white/55 login-fade login-d-8">
+          <div className="mt-5 text-[14px] text-white/55 opacity-0 animate-fade-up motion-reduce:opacity-100 motion-reduce:animate-none delay-[640ms]">
             {footer}
           </div>
         )}

@@ -144,7 +144,7 @@ export default function HomePage() {
           <div className="relative z-[1] flex flex-1 items-center justify-center py-10">
             <div className="flex w-full max-w-[640px] flex-col items-center px-6 text-center">
               {/* Greeting badge */}
-              <div className="home-content-item">
+              <div className="opacity-0 animate-fade-up">
                 <div className="mb-6 inline-flex items-center gap-[7px] rounded-full border border-black/[0.08] bg-white/80 px-3.5 py-[5px] shadow-[0_1px_3px_rgba(0,0,0,0.05)] backdrop-blur-[12px]">
                   <div
                     className="size-[7px] shrink-0 rounded-full bg-green-500"
@@ -157,7 +157,7 @@ export default function HomePage() {
               </div>
 
               {/* Headline */}
-              <h1 className="home-content-item mb-3 text-[42px] font-extrabold leading-[1.1] tracking-[-0.03em] text-[#0F0F10]">
+              <h1 className="opacity-0 animate-fade-up mb-3 text-[42px] font-extrabold leading-[1.1] tracking-[-0.03em] text-foreground" style={{ animationDelay: '0.1s' }}>
                 Welcome back,{' '}
                 <span className="inline-block bg-gradient-to-br from-[#8B5CF6] via-[#6366F1] to-[#3B82F6] bg-clip-text text-transparent">
                   {userName || 'there'}
@@ -165,14 +165,14 @@ export default function HomePage() {
               </h1>
 
               {/* Subtitle */}
-              <p className="home-content-item mb-8 max-w-[420px] text-[15px] leading-[1.6] text-gray-500">
+              <p className="opacity-0 animate-fade-up mb-8 max-w-[420px] text-[15px] leading-[1.6] text-gray-500" style={{ animationDelay: '0.2s' }}>
                 {contextLoaded
                   ? 'Ask anything about your store — revenue, refunds, orders, trends.'
                   : 'Connecting to your store data\u2026'}
               </p>
 
               {/* Search bar */}
-              <div className="home-content-item w-full">
+              <div className="opacity-0 animate-fade-up w-full" style={{ animationDelay: '0.3s' }}>
                 <div className="relative mx-auto mb-5 w-[min(520px,90vw)]">
                   {/* Animated gradient border */}
                   <div
@@ -212,7 +212,7 @@ export default function HomePage() {
               </div>
 
               {/* Suggestion chips */}
-              <div className="home-content-item flex flex-wrap justify-center gap-2">
+              <div className="opacity-0 animate-fade-up flex flex-wrap justify-center gap-2" style={{ animationDelay: '0.4s' }}>
                 {SUGGESTIONS.map((text) => (
                   <Button
                     key={text}
@@ -239,7 +239,7 @@ export default function HomePage() {
         {hasMsg && (
           <div className="relative z-[1] flex flex-1 flex-col">
             {/* Messages area */}
-            <div className="chat-scroll flex flex-1 flex-col items-center overflow-y-auto px-11 pb-4 pt-12">
+            <div className="thin-scrollbar flex flex-1 flex-col items-center overflow-y-auto px-11 pb-4 pt-12">
               <div className="w-full max-w-[780px]">
                 {messages.map((msg, i) => (
                   <ChatMessageBubble key={i} {...msg} />
@@ -251,7 +251,7 @@ export default function HomePage() {
             {/* Bottom input */}
             <div className="flex justify-center bg-gradient-to-t from-[#F9F9FB] from-[52%] to-transparent px-11 pb-9 pt-4">
               <div className="w-full max-w-[780px]">
-                <div className="chat-bottom">
+                <div className="bg-white border border-[rgba(0,0,0,0.08)] rounded-[14px] py-3.5 pl-[18px] pr-3.5 flex items-end gap-3 shadow-[0_2px_12px_rgba(0,0,0,0.06)] transition-[border-color,box-shadow] duration-200 focus-within:border-[rgba(0,0,0,0.14)] focus-within:shadow-[0_4px_20px_rgba(0,0,0,0.08)]">
                   <textarea
                     ref={bottomInputRef}
                     value={input}
@@ -260,6 +260,7 @@ export default function HomePage() {
                     placeholder="Ask a follow-up\u2026"
                     disabled={isStreaming}
                     rows={1}
+                    className="bg-transparent border-none outline-none text-[#0F0F10] text-sm leading-[1.65] resize-none font-[inherit] w-full p-0 max-h-[180px] overflow-y-auto placeholder:text-[#9CA3AF]"
                     onInput={(e) => {
                       const target = e.target as HTMLTextAreaElement
                       target.style.height = 'auto'

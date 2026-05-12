@@ -13,15 +13,15 @@ interface StatCardProps {
 export function StatCard({ label, value, icon: Icon, trend, className }: StatCardProps) {
   return (
     <Card className={cn('relative overflow-hidden', className)}>
-      <div className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-primary to-purple-400" />
+      <div className="absolute inset-x-0 top-0 h-0.5 bg-linear-to-r from-primary to-purple-400" />
       <CardContent className="p-5">
         <div className="flex items-center justify-between">
-          <p className="text-xs font-medium uppercase tracking-wider text-[var(--text-3)]">
+          <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
             {label}
           </p>
-          {Icon && <Icon size={16} className="text-[var(--text-4)]" />}
+          {Icon && <Icon size={16} className="text-foreground-4" />}
         </div>
-        <p className="mt-2 text-2xl font-bold tracking-tight text-[var(--text-1)]">
+        <p className="mt-2 text-2xl font-bold tracking-tight text-foreground">
           {value}
         </p>
         {trend && (

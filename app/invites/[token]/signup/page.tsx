@@ -119,10 +119,10 @@ export default function InviteSignupPage({
           <div className="w-[52px] h-[52px] rounded-full bg-emerald-500/10 flex items-center justify-center mx-auto mb-4">
             <Check size={24} strokeWidth={2} className="text-emerald-500" />
           </div>
-          <h2 className="text-[20px] font-semibold text-[#1C0F36] mb-2">
+          <h2 className="text-[20px] font-semibold text-foreground mb-2">
             Welcome to {invite.workspace_name}
           </h2>
-          <p className="text-sm text-[#6B5E7B] leading-relaxed">Signing you in…</p>
+          <p className="text-sm text-muted-foreground leading-relaxed">Signing you in…</p>
         </div>
       </InviteLayout>
     )
@@ -133,13 +133,13 @@ export default function InviteSignupPage({
       <div className="px-8 pt-9 pb-7">
         {/* Header */}
         <div className="text-center mb-6">
-          <div className="w-[52px] h-[52px] rounded-xl bg-[#EDE5FE] flex items-center justify-center mx-auto mb-3">
-            <Building2 size={24} strokeWidth={1.5} className="text-[#A175FC]" />
+          <div className="w-[52px] h-[52px] rounded-xl bg-primary/10 flex items-center justify-center mx-auto mb-3">
+            <Building2 size={24} strokeWidth={1.5} className="text-primary" />
           </div>
-          <h2 className="text-[19px] font-semibold text-[#1C0F36] mb-1">
+          <h2 className="text-[19px] font-semibold text-foreground mb-1">
             Join {invite.workspace_name}
           </h2>
-          <p className="text-sm text-[#6B5E7B] m-0">
+          <p className="text-sm text-muted-foreground m-0">
             Create your account to accept the invite as{' '}
             {getRoleLabel(invite.role)}
           </p>
@@ -154,7 +154,7 @@ export default function InviteSignupPage({
               {errorBanner.code === 'email_exists' && (
                 <>
                   {' '}
-                  <Link href="/login" className="text-[#7C3AED] font-medium">
+                  <Link href="/login" className="text-primary font-medium">
                     Go to login →
                   </Link>
                 </>
@@ -172,9 +172,9 @@ export default function InviteSignupPage({
             value={invite.invite_email}
             readOnly
             disabled
-            className="bg-[#F8F7FA] text-[#6B5E7B] cursor-not-allowed opacity-100 border-[#E5E0EB] text-[14px] text-[#6B5E7B] [&]:text-[#6B5E7B]"
+            className="bg-secondary text-muted-foreground cursor-not-allowed opacity-100 border-[#E5E0EB] text-[14px] text-muted-foreground [&]:text-muted-foreground"
           />
-          <p className="text-xs text-[#9B91A8] -mt-2">Locked to your invite address</p>
+          <p className="text-xs text-foreground-4 -mt-2">Locked to your invite address</p>
 
           {/* Full name */}
           <FloatField
@@ -213,7 +213,7 @@ export default function InviteSignupPage({
           <button
             type="submit"
             disabled={signupMutation.isPending}
-            className="w-full inline-flex items-center justify-center gap-1.5 h-11 px-4 mt-1 rounded-lg border-none bg-[#A175FC] text-sm font-medium text-white cursor-pointer disabled:opacity-70 disabled:cursor-default"
+            className="w-full inline-flex items-center justify-center gap-1.5 h-11 px-4 mt-1 rounded-lg border-none bg-primary text-sm font-medium text-white cursor-pointer disabled:opacity-70 disabled:cursor-default"
           >
             {signupMutation.isPending ? (
               <>
@@ -225,11 +225,11 @@ export default function InviteSignupPage({
             )}
           </button>
 
-          <p className="text-xs text-[#9B91A8] text-center mt-4">
+          <p className="text-xs text-foreground-4 text-center mt-4">
             Already have an account?{' '}
             <Link
               href={`/login?redirect=/invites/${token}`}
-              className="text-[#7C3AED] font-medium"
+              className="text-primary font-medium"
             >
               Sign in instead
             </Link>

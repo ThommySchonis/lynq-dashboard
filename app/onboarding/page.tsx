@@ -162,7 +162,7 @@ export default function OnboardingPage() {
             </p>
             <Button
               onClick={() => setStep(2)}
-              className="bg-[#A175FC] rounded-[10px] px-10 py-3.5 text-[15px] font-semibold"
+              className="bg-primary rounded-[10px] px-10 py-3.5 text-[15px] font-semibold"
             >
               Get Started →
             </Button>
@@ -184,7 +184,7 @@ export default function OnboardingPage() {
                 id="brandName"
                 {...register('brandName')}
                 placeholder="e.g. Earthly Sheets"
-                className="bg-[#1C0F36] border-white/10 text-white placeholder:text-white/30 focus-visible:border-[#A175FC]/60 h-auto py-2.5"
+                className="bg-[#1C0F36] border-white/10 text-white placeholder:text-white/30 focus-visible:border-primary/60 h-auto py-2.5"
               />
               {errors.brandName && (
                 <p className="text-red-400 text-[12px] mt-1">{errors.brandName.message}</p>
@@ -227,7 +227,7 @@ export default function OnboardingPage() {
                         className={[
                           'px-4 py-3.5 rounded-[10px] border cursor-pointer transition-all duration-150',
                           field.value === opt.value
-                            ? 'border-[#A175FC] bg-[rgba(161,117,252,0.08)]'
+                            ? 'border-primary bg-primary/8'
                             : 'border-white/[0.07] bg-transparent',
                         ].join(' ')}
                       >
@@ -246,8 +246,8 @@ export default function OnboardingPage() {
               className={[
                 'w-full py-[13px] rounded-[10px] text-sm font-semibold text-white transition-colors',
                 !isValid || isSaving
-                  ? 'bg-[rgba(161,117,252,0.3)]'
-                  : 'bg-[#A175FC]',
+                  ? 'bg-primary/30'
+                  : 'bg-primary',
               ].join(' ')}
             >
               {isSaving ? 'Saving...' : 'Save & Continue →'}
@@ -278,7 +278,7 @@ export default function OnboardingPage() {
                     <Button
                       variant="outline"
                       onClick={() => { window.location.href = '/api/auth/gmail' }}
-                      className="w-full py-[9px] bg-transparent border-[rgba(161,117,252,0.4)] text-[#A175FC] rounded-lg text-[13px] font-medium"
+                      className="w-full py-[9px] bg-transparent border-primary/40 text-primary rounded-lg text-[13px] font-medium"
                     >
                       Connect Gmail
                     </Button>
@@ -302,7 +302,7 @@ export default function OnboardingPage() {
                       value={shopifyStore}
                       onChange={(e) => setShopifyStore(e.target.value)}
                       placeholder="yourstore"
-                      className="bg-[#1C0F36] border-white/10 text-white placeholder:text-white/30 focus-visible:border-[#A175FC]/60 mb-2 h-auto py-2"
+                      className="bg-[#1C0F36] border-white/10 text-white placeholder:text-white/30 focus-visible:border-primary/60 mb-2 h-auto py-2"
                     />
                     <div className="text-[11px] text-white/30 mb-2.5">
                       Only the store name — not the full URL
@@ -314,7 +314,7 @@ export default function OnboardingPage() {
                       className={[
                         'w-full py-[9px] rounded-lg text-[13px] font-medium transition-colors',
                         shopifyStore
-                          ? 'bg-transparent border-[rgba(161,117,252,0.4)] text-[#A175FC]'
+                          ? 'bg-transparent border-primary/40 text-primary'
                           : 'bg-transparent border-white/[0.08] text-white/20',
                       ].join(' ')}
                     >
@@ -341,7 +341,7 @@ export default function OnboardingPage() {
                       value={parcelPanelKey}
                       onChange={(e) => setParcelPanelKey(e.target.value)}
                       placeholder="API Key"
-                      className="bg-[#1C0F36] border-white/10 text-white placeholder:text-white/30 focus-visible:border-[#A175FC]/60 mb-2.5 h-auto py-2"
+                      className="bg-[#1C0F36] border-white/10 text-white placeholder:text-white/30 focus-visible:border-primary/60 mb-2.5 h-auto py-2"
                     />
                     <Button
                       variant="outline"
@@ -350,7 +350,7 @@ export default function OnboardingPage() {
                       className={[
                         'w-full py-[9px] rounded-lg text-[13px] font-medium transition-colors',
                         parcelPanelKey && !isConnectingParcel
-                          ? 'bg-transparent border-[rgba(161,117,252,0.4)] text-[#A175FC]'
+                          ? 'bg-transparent border-primary/40 text-primary'
                           : 'bg-transparent border-white/[0.08] text-white/20',
                       ].join(' ')}
                     >
@@ -364,7 +364,7 @@ export default function OnboardingPage() {
 
             <Button
               onClick={() => setStep(4)}
-              className="w-full py-[13px] bg-[#A175FC] text-white rounded-[10px] text-sm font-semibold"
+              className="w-full py-[13px] bg-primary text-white rounded-[10px] text-sm font-semibold"
             >
               Continue →
             </Button>
@@ -374,7 +374,7 @@ export default function OnboardingPage() {
         {/* ── Step 4: Done ── */}
         {step === 4 && (
           <div className="text-center">
-            <div className="w-[72px] h-[72px] rounded-full bg-[rgba(161,117,252,0.15)] border-2 border-[#A175FC] flex items-center justify-center text-[32px] mx-auto mb-6">
+            <div className="w-[72px] h-[72px] rounded-full bg-primary/15 border-2 border-primary flex items-center justify-center text-[32px] mx-auto mb-6">
               ✓
             </div>
             <h1 className="text-[26px] font-bold mb-3">You&apos;re all set!</h1>
@@ -385,7 +385,7 @@ export default function OnboardingPage() {
             <Button
               onClick={handleCompleteOnboarding}
               disabled={isCompleting}
-              className="w-full bg-[#A175FC] text-white rounded-[10px] px-10 py-3.5 text-[15px] font-semibold mb-4"
+              className="w-full bg-primary text-white rounded-[10px] px-10 py-3.5 text-[15px] font-semibold mb-4"
             >
               {isCompleting ? 'Loading...' : 'Go to Inbox →'}
             </Button>

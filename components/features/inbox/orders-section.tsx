@@ -95,7 +95,7 @@ export function OrdersSection({
       <div className="px-3 py-2.5 border-b border-border">
         <Button
           variant="outline"
-          className="w-full px-3 py-[7px] rounded-lg border border-border bg-transparent text-(--text-2) text-xs font-semibold font-inherit flex items-center justify-center gap-1.5 transition-all duration-150 hover:bg-(--bg-surface-2) hover:text-(--text-1)"
+          className="w-full px-3 py-[7px] rounded-lg border border-border bg-transparent text-foreground-2 text-xs font-semibold font-inherit flex items-center justify-center gap-1.5 transition-all duration-150 hover:bg-secondary hover:text-foreground"
         >
           <Plus size={12} />
           Create order
@@ -110,9 +110,9 @@ export function OrdersSection({
             <div className="bg-gradient-to-r from-(--skeleton-from) via-(--skeleton-to) to-(--skeleton-from) bg-[length:400%_100%] animate-[shimmer_1.8s_linear_infinite] rounded-md h-3 rounded-[5px] w-[50%]" />
           </div>
         ))}
-      {!loadingCust && !hasCustomer && <div className="py-6 text-center text-xs text-(--text-3)">No Shopify data found</div>}
+      {!loadingCust && !hasCustomer && <div className="py-6 text-center text-xs text-muted-foreground">No Shopify data found</div>}
       {!loadingCust && hasCustomer && orders.length === 0 && (
-        <div className="py-6 text-center text-xs text-(--text-3)">No orders</div>
+        <div className="py-6 text-center text-xs text-muted-foreground">No orders</div>
       )}
 
       {/* Order sections */}
@@ -131,7 +131,7 @@ export function OrdersSection({
           <div key={order.id} className="border-b border-border">
             {/* Order header */}
             <button
-              className="w-full flex items-center gap-1.5 py-2.5 px-3.5 bg-transparent cursor-pointer text-left transition-[background] duration-[120ms] hover:bg-(--bg-surface-2)"
+              className="w-full flex items-center gap-1.5 py-2.5 px-3.5 bg-transparent cursor-pointer text-left transition-[background] duration-[120ms] hover:bg-secondary"
               onClick={() =>
                 setExpandedOrders((v) => ({
                   ...v,
@@ -139,8 +139,8 @@ export function OrdersSection({
                 }))
               }
             >
-              <span className="text-[13.5px] font-bold text-(--text-1) flex-1 text-left">{order.name}</span>
-              <ChevronDown size={10} className={`transition-transform duration-200 text-(--text-3) shrink-0 ${isOpen ? 'rotate-180' : 'rotate-0'}`} />
+              <span className="text-[13.5px] font-bold text-foreground flex-1 text-left">{order.name}</span>
+              <ChevronDown size={10} className={`transition-transform duration-200 text-muted-foreground shrink-0 ${isOpen ? 'rotate-180' : 'rotate-0'}`} />
             </button>
 
             {isOpen && (
@@ -180,7 +180,7 @@ export function OrdersSection({
                 {/* Action buttons */}
                 <div className="flex gap-1 flex-wrap mb-2.5">
                   <button
-                    className="inline-flex items-center gap-1 text-[11px] font-medium px-[9px] py-1 rounded-md border border-(--border) bg-(--bg-surface) text-(--text-1) cursor-pointer transition-all hover:border-(--border-hover) hover:bg-(--bg-surface-2)"
+                    className="inline-flex items-center gap-1 text-[11px] font-medium px-[9px] py-1 rounded-md border border-border bg-card text-foreground cursor-pointer transition-all hover:border-(--border-hover) hover:bg-secondary"
                     onClick={() => setModal({ type: 'duplicate', order })}
                   >
                     <span className="flex">
@@ -190,7 +190,7 @@ export function OrdersSection({
                   </button>
                   {canRefund && (
                     <button
-                      className="inline-flex items-center gap-1 text-[11px] font-medium px-[9px] py-1 rounded-md border border-(--border) bg-(--bg-surface) text-(--text-1) cursor-pointer transition-all hover:border-(--border-hover) hover:bg-(--bg-surface-2)"
+                      className="inline-flex items-center gap-1 text-[11px] font-medium px-[9px] py-1 rounded-md border border-border bg-card text-foreground cursor-pointer transition-all hover:border-(--border-hover) hover:bg-secondary"
                       onClick={() => setModal({ type: 'refund', order })}
                     >
                       <RotateCcw size={11} />$ Refund
@@ -198,7 +198,7 @@ export function OrdersSection({
                   )}
                   {canCancel && (
                     <button
-                      className="inline-flex items-center gap-1 text-[11px] font-medium px-[9px] py-1 rounded-md border border-(--border) bg-(--bg-surface) text-(--text-1) cursor-pointer transition-all hover:border-[rgba(220,38,38,0.35)] hover:text-[#dc2626] hover:bg-[rgba(220,38,38,0.05)]"
+                      className="inline-flex items-center gap-1 text-[11px] font-medium px-[9px] py-1 rounded-md border border-border bg-card text-foreground cursor-pointer transition-all hover:border-[rgba(220,38,38,0.35)] hover:text-[#dc2626] hover:bg-[rgba(220,38,38,0.05)]"
                       onClick={() => setModal({ type: 'cancel', order })}
                     >
                       <XCircle size={11} />
@@ -206,7 +206,7 @@ export function OrdersSection({
                     </button>
                   )}
                   <button
-                    className="inline-flex items-center gap-1 text-[11px] font-medium px-[9px] py-1 rounded-md border border-(--border) bg-(--bg-surface) text-(--text-1) cursor-pointer transition-all hover:border-(--border-hover) hover:bg-(--bg-surface-2) px-[7px] py-1"
+                    className="inline-flex items-center gap-1 text-[11px] font-medium px-[9px] py-1 rounded-md border border-border bg-card text-foreground cursor-pointer transition-all hover:border-(--border-hover) hover:bg-secondary px-[7px] py-1"
                     onClick={() => setModal({ type: 'note', order })}
                   >
                     <MoreHorizontal size={13} />
@@ -216,8 +216,8 @@ export function OrdersSection({
                 {/* Key-value rows */}
                 <div className="mb-1">
                   <div className="flex items-baseline justify-between gap-4 px-3.5">
-                    <span className="text-xs text-(--text-3) shrink-0 min-w-[72px]">Created</span>
-                    <span className="text-xs font-medium text-(--text-1) text-right break-words">
+                    <span className="text-xs text-muted-foreground shrink-0 min-w-[72px]">Created</span>
+                    <span className="text-xs font-medium text-foreground text-right break-words">
                       {new Date(order.createdAt).toLocaleDateString('en-US', {
                         month: 'short',
                         day: 'numeric',
@@ -226,8 +226,8 @@ export function OrdersSection({
                     </span>
                   </div>
                   <div className="flex items-baseline justify-between gap-4 px-3.5">
-                    <span className="text-xs text-(--text-3) shrink-0 min-w-[72px]">Total</span>
-                    <span className="text-xs font-medium text-(--text-1) text-right break-words font-bold text-(--text-1)">
+                    <span className="text-xs text-muted-foreground shrink-0 min-w-[72px]">Total</span>
+                    <span className="text-xs font-medium text-foreground text-right break-words font-bold text-foreground">
                       {fmtPrice(order.totalPrice, order.currency)}
                     </span>
                   </div>
@@ -237,7 +237,7 @@ export function OrdersSection({
                 {(order.fulfillments || []).length > 0 && (
                   <>
                     <button
-                      className="w-full flex items-center gap-1.5 py-[7px] bg-transparent cursor-pointer text-[11.5px] font-semibold text-(--text-1) text-left transition-opacity border-t border-(--border) mt-1.5 hover:opacity-75"
+                      className="w-full flex items-center gap-1.5 py-[7px] bg-transparent cursor-pointer text-[11.5px] font-semibold text-foreground text-left transition-opacity border-t border-border mt-1.5 hover:opacity-75"
                       onClick={() =>
                         setExpandedSubs((v) => ({
                           ...v,
@@ -245,32 +245,32 @@ export function OrdersSection({
                         }))
                       }
                     >
-                      <span className="flex text-(--text-3)">
+                      <span className="flex text-muted-foreground">
                         <Truck size={12} />
                       </span>
-                      <span className="flex-1 font-semibold text-[11.5px] text-(--text-2)">Tracking</span>
+                      <span className="flex-1 font-semibold text-[11.5px] text-foreground-2">Tracking</span>
                       <ChevronDown
                         size={10}
-                        className={`transition-transform duration-200 text-(--text-3) ${trackOpen ? 'rotate-180' : 'rotate-0'}`}
+                        className={`transition-transform duration-200 text-muted-foreground ${trackOpen ? 'rotate-180' : 'rotate-0'}`}
                       />
                     </button>
                     {trackOpen &&
                       (order.fulfillments ?? []).slice(0, 1).map((f: OrdersFulfillment, fi: number) => (
                         <div key={fi} className="pb-1.5">
                           <div className="flex items-baseline justify-between gap-4 px-3.5">
-                            <span className="text-xs text-(--text-3) shrink-0 min-w-[72px]">Carrier</span>
-                            <span className="text-xs font-medium text-(--text-1) text-right break-words">{f.trackingCompany || '—'}</span>
+                            <span className="text-xs text-muted-foreground shrink-0 min-w-[72px]">Carrier</span>
+                            <span className="text-xs font-medium text-foreground text-right break-words">{f.trackingCompany || '—'}</span>
                           </div>
                           {f.trackingNumber && (
                             <div className="flex items-baseline justify-between gap-4 px-3.5">
-                              <span className="text-xs text-(--text-3) shrink-0 min-w-[72px]">Tracking #</span>
-                              <span className="text-xs font-medium text-(--text-1) text-right break-words font-mono text-[10.5px]">
+                              <span className="text-xs text-muted-foreground shrink-0 min-w-[72px]">Tracking #</span>
+                              <span className="text-xs font-medium text-foreground text-right break-words font-mono text-[10.5px]">
                                 {f.trackingNumber}
                               </span>
                             </div>
                           )}
                           <div className="flex items-baseline justify-between gap-4 px-3.5">
-                            <span className="text-xs text-(--text-3) shrink-0 min-w-[72px]">Status</span>
+                            <span className="text-xs text-muted-foreground shrink-0 min-w-[72px]">Status</span>
                             <span className="text-[10px] font-bold px-1.5 py-px rounded bg-[rgba(74,222,128,0.12)] text-[#16a34a] border border-[rgba(74,222,128,0.25)] tracking-[.04em] uppercase">
                               Delivered
                             </span>
@@ -281,7 +281,7 @@ export function OrdersSection({
                                 href={f.trackingUrl}
                                 target="_blank"
                                 rel="noreferrer"
-                                className="text-[11.5px] text-(--text-1) no-underline inline-flex items-center gap-[3px]"
+                                className="text-[11.5px] text-foreground no-underline inline-flex items-center gap-[3px]"
                               >
                                 Track package{' '}
                                 <span className="flex">
@@ -299,7 +299,7 @@ export function OrdersSection({
                 {sa && (
                   <>
                     <button
-                      className="w-full flex items-center gap-1.5 py-[7px] bg-transparent cursor-pointer text-[11.5px] font-semibold text-(--text-1) text-left transition-opacity border-t border-(--border) mt-1.5 hover:opacity-75"
+                      className="w-full flex items-center gap-1.5 py-[7px] bg-transparent cursor-pointer text-[11.5px] font-semibold text-foreground text-left transition-opacity border-t border-border mt-1.5 hover:opacity-75"
                       onClick={() =>
                         setExpandedSubs((v) => ({
                           ...v,
@@ -307,13 +307,13 @@ export function OrdersSection({
                         }))
                       }
                     >
-                      <span className="flex text-(--text-3)">
+                      <span className="flex text-muted-foreground">
                         <MapPin size={12} />
                       </span>
-                      <span className="flex-1 font-semibold text-[11.5px] text-(--text-2)">Shipping address</span>
+                      <span className="flex-1 font-semibold text-[11.5px] text-foreground-2">Shipping address</span>
                       <ChevronDown
                         size={10}
-                        className={`transition-transform duration-200 text-(--text-3) ${shippingOpen ? 'rotate-180' : 'rotate-0'}`}
+                        className={`transition-transform duration-200 text-muted-foreground ${shippingOpen ? 'rotate-180' : 'rotate-0'}`}
                       />
                     </button>
                     {shippingOpen && (
@@ -323,7 +323,7 @@ export function OrdersSection({
                             variant="outline"
                             size="sm"
                             onClick={() => setModal({ type: 'address', order })}
-                            className="inline-flex items-center gap-1 text-(--text-2) text-[11px] font-semibold px-2 py-[3px] rounded-[6px] border border-border bg-transparent transition-all duration-150 font-inherit hover:text-(--text-1) hover:border-(--border-hover)"
+                            className="inline-flex items-center gap-1 text-foreground-2 text-[11px] font-semibold px-2 py-[3px] rounded-[6px] border border-border bg-transparent transition-all duration-150 font-inherit hover:text-foreground hover:border-(--border-hover)"
                           >
                             <span className="flex">
                               <SquarePen size={12} />
@@ -348,8 +348,8 @@ export function OrdersSection({
                           .filter((r): r is { l: string; v: string } => r !== null)
                           .map((row) => (
                             <div key={row.l} className="flex items-baseline justify-between gap-4 px-3.5">
-                              <span className="text-xs text-(--text-3) shrink-0 min-w-[72px]">{row.l}</span>
-                              <span className="text-xs font-medium text-(--text-1) text-right break-words">{row.v}</span>
+                              <span className="text-xs text-muted-foreground shrink-0 min-w-[72px]">{row.l}</span>
+                              <span className="text-xs font-medium text-foreground text-right break-words">{row.v}</span>
                             </div>
                           ))}
                       </div>
@@ -364,7 +364,7 @@ export function OrdersSection({
                   return (
                     <div key={item.id}>
                       <button
-                        className="w-full flex items-center gap-1.5 py-[7px] bg-transparent cursor-pointer text-[11.5px] font-semibold text-(--text-1) text-left transition-opacity border-t border-(--border) mt-1.5 hover:opacity-75"
+                        className="w-full flex items-center gap-1.5 py-[7px] bg-transparent cursor-pointer text-[11.5px] font-semibold text-foreground text-left transition-opacity border-t border-border mt-1.5 hover:opacity-75"
                         onClick={() =>
                           setExpandedSubs((v) => ({
                             ...v,
@@ -372,34 +372,34 @@ export function OrdersSection({
                           }))
                         }
                       >
-                        <LayoutGrid size={12} className="text-(--text-3) shrink-0" />
-                        <span className="flex-1 text-[11px] font-semibold text-(--text-2) overflow-hidden text-ellipsis whitespace-nowrap">
+                        <LayoutGrid size={12} className="text-muted-foreground shrink-0" />
+                        <span className="flex-1 text-[11px] font-semibold text-foreground-2 overflow-hidden text-ellipsis whitespace-nowrap">
                           {item.quantity} × {item.title}
                           {item.variantTitle ? ` · ${item.variantTitle}` : ''}
                         </span>
                         <ChevronDown
                           size={10}
-                          className={`transition-transform duration-200 text-(--text-3) shrink-0 ${itemOpen ? 'rotate-180' : 'rotate-0'}`}
+                          className={`transition-transform duration-200 text-muted-foreground shrink-0 ${itemOpen ? 'rotate-180' : 'rotate-0'}`}
                         />
                       </button>
                       {itemOpen && (
                         <div className="pb-1">
                           <div className="flex items-baseline justify-between gap-4 px-3.5">
-                            <span className="text-xs text-(--text-3) shrink-0 min-w-[72px]">Amount</span>
-                            <span className="text-xs font-medium text-(--text-1) text-right break-words">
+                            <span className="text-xs text-muted-foreground shrink-0 min-w-[72px]">Amount</span>
+                            <span className="text-xs font-medium text-foreground text-right break-words">
                               {fmtPrice(Number(item.price) * item.quantity, order.currency)}
                             </span>
                           </div>
                           {item.sku && (
                             <div className="flex items-baseline justify-between gap-4 px-3.5">
-                              <span className="text-xs text-(--text-3) shrink-0 min-w-[72px]">Sku</span>
-                              <span className="text-xs font-medium text-(--text-1) text-right break-words font-mono text-[10.5px]">{item.sku}</span>
+                              <span className="text-xs text-muted-foreground shrink-0 min-w-[72px]">Sku</span>
+                              <span className="text-xs font-medium text-foreground text-right break-words font-mono text-[10.5px]">{item.sku}</span>
                             </div>
                           )}
                           {item.variantTitle && (
                             <div className="flex items-baseline justify-between gap-4 px-3.5">
-                              <span className="text-xs text-(--text-3) shrink-0 min-w-[72px]">Variant</span>
-                              <span className="text-xs font-medium text-(--text-1) text-right break-words">{item.variantTitle}</span>
+                              <span className="text-xs text-muted-foreground shrink-0 min-w-[72px]">Variant</span>
+                              <span className="text-xs font-medium text-foreground text-right break-words">{item.variantTitle}</span>
                             </div>
                           )}
                         </div>

@@ -70,7 +70,7 @@ export function WelcomeView({ passedTypes, onSelectModule, onViewCertificate }: 
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.15, duration: 0.6, ease: EASE }}
         >
-          <h1 className="mb-0 text-[clamp(36px,5vw,52px)] font-extrabold leading-[1.08] tracking-[-0.03em] text-(--text-1)">
+          <h1 className="mb-0 text-[clamp(36px,5vw,52px)] font-extrabold leading-[1.08] tracking-[-0.03em] text-foreground">
             Master E-commerce
           </h1>
           <h1 className="mb-[18px] bg-gradient-to-br from-violet-500 via-indigo-500 to-blue-500 bg-clip-text text-[clamp(36px,5vw,52px)] font-extrabold leading-[1.08] tracking-[-0.03em] text-transparent">
@@ -83,7 +83,7 @@ export function WelcomeView({ passedTypes, onSelectModule, onViewCertificate }: 
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.22, duration: 0.5, ease: EASE }}
-          className="mb-7 max-w-[440px] text-base leading-[1.65] text-(--text-3)"
+          className="mb-7 max-w-[440px] text-base leading-[1.65] text-muted-foreground"
         >
           Your complete training program for e-commerce customer service and backend operations.
         </motion.p>
@@ -104,7 +104,7 @@ export function WelcomeView({ passedTypes, onSelectModule, onViewCertificate }: 
               key={i}
               className="flex items-center gap-[7px] rounded-[20px] border border-black/8 bg-[#F5F5F5] px-4 py-2"
             >
-              <Icon className="size-3.5 text-(--text-4)" />
+              <Icon className="size-3.5 text-foreground-4" />
               <span className="text-[13px] font-medium text-[#555555]">{text}</span>
             </div>
           ))}

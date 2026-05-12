@@ -20,7 +20,7 @@ export function ClockOutModal({ session, elapsedSec, pausedSeconds, onConfirm, o
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/50 backdrop-blur-sm p-6">
       <div className="w-full max-w-[500px] rounded-xl border border-black/9 bg-white p-7">
-        <h2 className="text-base font-bold text-[#0F0F10] mb-1">End of Day Report</h2>
+        <h2 className="text-base font-bold text-foreground mb-1">End of Day Report</h2>
         <div className="text-xs text-gray-500 mb-4.5">
           Clock-in: {fmtTime(session.clocked_in_at)} &middot; Active: {fmtDur(elapsedSec)}
           {pausedSeconds > 0 && <> &middot; Paused: {fmtDur(pausedSeconds)}</>}
@@ -32,7 +32,7 @@ export function ClockOutModal({ session, elapsedSec, pausedSeconds, onConfirm, o
           What did you work on today? <span className="text-red-500">*</span>
         </label>
         <textarea
-          className="w-full min-h-[120px] resize-y rounded-lg border border-black/8 bg-gray-100 px-3.5 py-3 text-[13px] leading-relaxed text-[#0F0F10] placeholder:text-gray-400 outline-none transition-colors focus:border-black/20"
+          className="w-full min-h-[120px] resize-y rounded-lg border border-black/8 bg-gray-100 px-3.5 py-3 text-[13px] leading-relaxed text-foreground placeholder:text-gray-400 outline-none transition-colors focus:border-black/20"
           value={report}
           onChange={e => setReport(e.target.value)}
           placeholder="Describe your tasks, client work, what you completed or progressed on..."

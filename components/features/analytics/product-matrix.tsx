@@ -34,11 +34,11 @@ export function ProductMatrix({ allRefunds, loaded }: ProductMatrixProps) {
   const maxAmt = Math.max(...products.map(p => p.amount), 1)
 
   return (
-    <div className="mb-6 animate-fade-in rounded-xl border border-white/65 bg-white/80 p-[22px_24px] shadow-sm backdrop-blur-xl transition-shadow duration-200 hover:shadow-lg">
+    <div className="mb-6 animate-fade-up rounded-xl border border-white/65 bg-white/80 p-[22px_24px] shadow-sm backdrop-blur-xl transition-shadow duration-200 hover:shadow-lg">
       <div className="mb-5 flex items-center justify-between">
         <div>
-          <div className="mb-0.5 text-[13px] font-semibold text-[var(--text-1)]">Product Refund Matrix</div>
-          <div className="text-[11px] text-[var(--text-3)]">All-time &middot; products with 1+ refund &middot; sorted by count</div>
+          <div className="mb-0.5 text-[13px] font-semibold text-foreground">Product Refund Matrix</div>
+          <div className="text-[11px] text-muted-foreground">All-time &middot; products with 1+ refund &middot; sorted by count</div>
         </div>
         <div className="rounded-full border border-black/[0.08] bg-gray-100 px-3 py-0.5 text-[11px] font-semibold text-gray-600">
           {products.length} products
@@ -46,7 +46,7 @@ export function ProductMatrix({ allRefunds, loaded }: ProductMatrixProps) {
       </div>
       <table className="w-full border-collapse">
         <thead>
-          <tr className="border-b border-black/[0.07] bg-[#F9F8FF]">
+          <tr className="border-b border-black/[0.07] bg-background">
             {['#', 'Product', 'Category', 'Refunds', 'Avg %', 'Amount Lost', 'Risk'].map((h, i) => (
               <th
                 key={h}

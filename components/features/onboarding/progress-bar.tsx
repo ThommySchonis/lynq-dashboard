@@ -18,9 +18,9 @@ export function ProgressBar({ step }: ProgressBarProps) {
                 className={[
                   'w-8 h-8 rounded-full flex items-center justify-center text-[13px] font-semibold transition-all duration-300',
                   done
-                    ? 'bg-[#A175FC] text-white border-none'
+                    ? 'bg-primary text-white border-none'
                     : active
-                    ? 'bg-transparent border-2 border-[#A175FC] text-[#A175FC]'
+                    ? 'bg-transparent border-2 border-primary text-primary'
                     : 'bg-transparent border-2 border-white/15 text-white/30',
                 ].join(' ')}
               >
@@ -39,7 +39,7 @@ export function ProgressBar({ step }: ProgressBarProps) {
               <div
                 className={[
                   'w-20 h-px mb-[18px] mx-2 transition-all duration-300',
-                  step > num ? 'bg-[#A175FC]' : 'bg-white/10',
+                  step > num ? 'bg-primary' : 'bg-white/10',
                 ].join(' ')}
               />
             )}

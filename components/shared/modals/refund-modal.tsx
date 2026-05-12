@@ -86,12 +86,12 @@ export function RefundModal({ order, token, onClose, onSuccess }: RefundModalPro
           <DialogTitle>{`Refund — ${order.name}`}</DialogTitle>
         </DialogHeader>
         {/* 3-way mode toggle */}
-        <div className="flex gap-[5px] mb-[18px] p-1 bg-(--bg-input) rounded-[11px] border border-border">
+        <div className="flex gap-[5px] mb-[18px] p-1 bg-input rounded-[11px] border border-border">
           {MODES.map((o) => (
             <button
               key={o.v}
               onClick={() => setMode(o.v)}
-              className={`flex-1 px-2.5 py-2 rounded-lg text-xs font-semibold font-[inherit] cursor-pointer transition-all border border-transparent ${mode === o.v ? "bg-(--text-1) text-white" : "bg-transparent text-(--text-3)"}`}
+              className={`flex-1 px-2.5 py-2 rounded-lg text-xs font-semibold font-[inherit] cursor-pointer transition-all border border-transparent ${mode === o.v ? "bg-foreground text-white" : "bg-transparent text-muted-foreground"}`}
             >
               {o.l}
             </button>
@@ -101,12 +101,12 @@ export function RefundModal({ order, token, onClose, onSuccess }: RefundModalPro
         {/* Custom amount input */}
         {mode === "custom" && (
           <div className="mb-[18px]">
-            <label className="text-[10.5px] font-bold tracking-[.07em] uppercase text-(--text-3) mb-[7px] block">Refund amount</label>
+            <label className="text-[10.5px] font-bold tracking-[.07em] uppercase text-muted-foreground mb-[7px] block">Refund amount</label>
             <div className="relative">
-              <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm font-bold text-(--text-3) pointer-events-none">€</span>
+              <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm font-bold text-muted-foreground pointer-events-none">€</span>
               <Input
                 type="number"
-                className="w-full bg-(--bg-surface-2) border border-(--border) rounded-xl px-3.5 py-[11px] text-[13.5px] text-(--text-1) outline-none pl-7"
+                className="w-full bg-secondary border border-border rounded-xl px-3.5 py-[11px] text-[13.5px] text-foreground outline-none pl-7"
                 value={customAmount}
                 onChange={(e) => setCustomAmount(e.target.value)}
                 placeholder="0.00"
@@ -117,8 +117,8 @@ export function RefundModal({ order, token, onClose, onSuccess }: RefundModalPro
               />
             </div>
             {Number(customAmount) > 0 && (
-              <div className="mt-2 text-xs text-(--text-3)">
-                Max: <span className="text-(--text-2) font-semibold">{fmtPrice(order.totalPrice, order.currency)}</span>
+              <div className="mt-2 text-xs text-muted-foreground">
+                Max: <span className="text-foreground-2 font-semibold">{fmtPrice(order.totalPrice, order.currency)}</span>
               </div>
             )}
           </div>
@@ -128,21 +128,21 @@ export function RefundModal({ order, token, onClose, onSuccess }: RefundModalPro
         {mode !== "custom" && (
           <div className="mb-4">
             <div className="grid grid-cols-[1fr_auto_auto_auto] gap-x-3 items-center pb-2 mb-1.5 border-b border-white/[0.07]">
-              <span className="text-[10px] font-bold text-(--text-3) tracking-[.07em] uppercase">Product</span>
-              <span className="text-[10px] font-bold text-(--text-3) tracking-[.07em] uppercase">Price</span>
-              <span className="text-[10px] font-bold text-(--text-3) tracking-[.07em] uppercase text-center min-w-20">Qty</span>
-              <span className="text-[10px] font-bold text-(--text-3) tracking-[.07em] uppercase text-right">Total</span>
+              <span className="text-[10px] font-bold text-muted-foreground tracking-[.07em] uppercase">Product</span>
+              <span className="text-[10px] font-bold text-muted-foreground tracking-[.07em] uppercase">Price</span>
+              <span className="text-[10px] font-bold text-muted-foreground tracking-[.07em] uppercase text-center min-w-20">Qty</span>
+              <span className="text-[10px] font-bold text-muted-foreground tracking-[.07em] uppercase text-right">Total</span>
             </div>
             {(order.lineItems || []).map((li) => (
-              <div key={li.id} className="flex items-center gap-3 py-[11px] border-b border-(--border) last:border-b-0">
+              <div key={li.id} className="flex items-center gap-3 py-[11px] border-b border-border last:border-b-0">
                 <div className="flex-1">
-                  <div className="text-[13px] font-semibold text-(--text-1)">{li.title}</div>
-                  {li.variantTitle && <div className="text-[11.5px] text-(--text-3)">{li.variantTitle}</div>}
+                  <div className="text-[13px] font-semibold text-foreground">{li.title}</div>
+                  {li.variantTitle && <div className="text-[11.5px] text-muted-foreground">{li.variantTitle}</div>}
                 </div>
-                <span className="text-[12.5px] text-(--text-2) min-w-[60px] text-right">{fmtPrice(li.price, order.currency)}</span>
+                <span className="text-[12.5px] text-foreground-2 min-w-[60px] text-right">{fmtPrice(li.price, order.currency)}</span>
                 <div className="flex items-center gap-1.5 min-w-20 justify-center">
                   <button
-                    className="w-7 h-7 rounded-[7px] bg-(--bg-surface-2) border border-(--border) text-(--text-2) text-[15px] cursor-pointer flex items-center justify-center transition-all hover:border-(--border-hover) hover:text-(--text-1) disabled:opacity-[.28] disabled:cursor-not-allowed"
+                    className="w-7 h-7 rounded-[7px] bg-secondary border border-border text-foreground-2 text-[15px] cursor-pointer flex items-center justify-center transition-all hover:border-border-hover hover:text-foreground disabled:opacity-[.28] disabled:cursor-not-allowed"
                     onClick={() =>
                       setQtys((q) => ({
                         ...q,
@@ -153,9 +153,9 @@ export function RefundModal({ order, token, onClose, onSuccess }: RefundModalPro
                   >
                     −
                   </button>
-                  <span className="text-[13px] font-semibold text-(--text-1) min-w-5 text-center">{qtys[li.id]}</span>
+                  <span className="text-[13px] font-semibold text-foreground min-w-5 text-center">{qtys[li.id]}</span>
                   <button
-                    className="w-7 h-7 rounded-[7px] bg-(--bg-surface-2) border border-(--border) text-(--text-2) text-[15px] cursor-pointer flex items-center justify-center transition-all hover:border-(--border-hover) hover:text-(--text-1) disabled:opacity-[.28] disabled:cursor-not-allowed"
+                    className="w-7 h-7 rounded-[7px] bg-secondary border border-border text-foreground-2 text-[15px] cursor-pointer flex items-center justify-center transition-all hover:border-border-hover hover:text-foreground disabled:opacity-[.28] disabled:cursor-not-allowed"
                     onClick={() =>
                       setQtys((q) => ({
                         ...q,
@@ -166,9 +166,9 @@ export function RefundModal({ order, token, onClose, onSuccess }: RefundModalPro
                   >
                     +
                   </button>
-                  <span className="text-[11px] text-(--text-3)">/{li.quantity}</span>
+                  <span className="text-[11px] text-muted-foreground">/{li.quantity}</span>
                 </div>
-                <span className="text-[13px] font-bold text-(--text-1) min-w-[60px] text-right">
+                <span className="text-[13px] font-bold text-foreground min-w-[60px] text-right">
                   {fmtPrice((qtys[li.id] || 0) * Number(li.price), order.currency)}
                 </span>
               </div>
@@ -180,24 +180,24 @@ export function RefundModal({ order, token, onClose, onSuccess }: RefundModalPro
           {mode !== "custom" && (
             <label className="flex items-center gap-2.5 cursor-pointer select-none">
               <Checkbox checked={restock} onCheckedChange={() => setRestock((v) => !v)} />
-              <span className="text-[13px] text-(--text-2)">Restock items</span>
+              <span className="text-[13px] text-foreground-2">Restock items</span>
             </label>
           )}
           <label className="flex items-center gap-2.5 cursor-pointer select-none">
             <Checkbox checked={notify} onCheckedChange={() => setNotify((v) => !v)} />
-            <span className="text-[13px] text-(--text-2)">Notify customer</span>
+            <span className="text-[13px] text-foreground-2">Notify customer</span>
           </label>
           {mode !== "custom" && (
             <label className="flex items-center gap-2.5 cursor-pointer select-none">
               <Checkbox checked={shipping} onCheckedChange={() => setShipping((v) => !v)} />
-              <span className="text-[13px] text-(--text-2)">Refund shipping costs</span>
+              <span className="text-[13px] text-foreground-2">Refund shipping costs</span>
             </label>
           )}
         </div>
 
         <div className="mb-4">
-          <label className="text-[10.5px] font-bold tracking-[.07em] uppercase text-(--text-3) mb-[7px] block">Reason</label>
-          <select className="w-full bg-(--bg-surface-2) border border-(--border) rounded-xl px-3.5 py-[11px] text-[13.5px] text-(--text-1) outline-none cursor-pointer" value={reason} onChange={(e) => setReason(e.target.value)} required>
+          <label className="text-[10.5px] font-bold tracking-[.07em] uppercase text-muted-foreground mb-[7px] block">Reason</label>
+          <select className="w-full bg-secondary border border-border rounded-xl px-3.5 py-[11px] text-[13.5px] text-foreground outline-none cursor-pointer" value={reason} onChange={(e) => setReason(e.target.value)} required>
             <option value="" disabled>
               Select a reason…
             </option>
@@ -209,10 +209,10 @@ export function RefundModal({ order, token, onClose, onSuccess }: RefundModalPro
           </select>
         </div>
 
-        <div className="bg-(--bg-surface-2) border border-border rounded-xl px-[15px] py-[13px]">
+        <div className="bg-secondary border border-border rounded-xl px-[15px] py-[13px]">
           <div className="flex justify-between">
-            <span className="text-sm font-bold text-(--text-1)">Refund total</span>
-            <span className={`text-[15px] font-extrabold ${totalRefund > 0 ? "text-green-400" : "text-(--text-3)"}`}>
+            <span className="text-sm font-bold text-foreground">Refund total</span>
+            <span className={`text-[15px] font-extrabold ${totalRefund > 0 ? "text-green-400" : "text-muted-foreground"}`}>
               {fmtPrice(totalRefund, order.currency)}
             </span>
           </div>

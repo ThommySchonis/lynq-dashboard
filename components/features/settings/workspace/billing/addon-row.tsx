@@ -47,7 +47,7 @@ export function AddonRow({ addon, onSubscribe, isLoading, className }: AddonRowP
   return (
     <div
       className={cn(
-        'flex items-center justify-between gap-4 rounded-[10px] border-[0.5px] border-[#E5E0EB] bg-white px-5 py-[14px] transition-colors',
+        'flex min-h-14 items-center justify-between gap-4 rounded-[10px] border-[0.5px] border-[#E5E0EB] bg-white px-5 py-[14px] transition-colors',
         isComingSoon && 'opacity-95',
         className,
       )}
@@ -60,17 +60,17 @@ export function AddonRow({ addon, onSubscribe, isLoading, className }: AddonRowP
           {addon.display_name}
         </span>
         {isComingSoon && (
-          <Badge variant="secondary" className="shrink-0">Coming Soon</Badge>
+          <Badge variant="secondary" className="shrink-0 whitespace-nowrap">Coming Soon</Badge>
         )}
         {isActive && !isComingSoon && (
-          <Badge variant="default" className="shrink-0">Active</Badge>
+          <Badge variant="default" className="shrink-0 whitespace-nowrap">Active</Badge>
         )}
       </div>
 
       <div className="shrink-0">
         {isComingSoon || isActive ? (
           priceLabel && (
-            <span className="text-xs text-muted-foreground">{priceLabel}</span>
+            <span className="whitespace-nowrap text-xs text-muted-foreground">{priceLabel}</span>
           )
         ) : (
           <Button

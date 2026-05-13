@@ -43,8 +43,6 @@ export function UsagePlansTab() {
 
   const sub          = subResp?.subscription ?? null
   const plan         = subResp?.plan         ?? null
-  const usage        = subResp?.usage        ?? null
-  const percentages  = subResp?.percentages  ?? { tickets: 0, ai_suggest: 0 }
 
   const isTrial      = sub?.status === 'trial'
   const renewalDate  = sub?.current_period_end ?? null
@@ -66,9 +64,8 @@ export function UsagePlansTab() {
       <div className="grid gap-5 lg:grid-cols-[1fr_320px]">
         <div className="flex flex-col gap-5">
           <Skeleton className="h-12 w-full" />
-          <Skeleton className="h-64 w-full" />
           <div className="flex flex-col gap-2">
-            {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-14" />)}
+            {[1, 2, 3, 4, 5].map(i => <Skeleton key={i} className="h-14" />)}
           </div>
         </div>
         <Skeleton className="h-80 w-full self-start" />
@@ -125,23 +122,21 @@ export function UsagePlansTab() {
           <span className="text-xs text-muted-foreground">Billed monthly</span>
         </div>
 
-        {/* Helpdesk product card */}
-        <HelpdeskProductCard
-          plans={plans}
-          currentPlanId={currentPlanId}
-          selectedPlanId={selectedPlanId}
-          onSelectPlan={setSelectedPlanId}
-          isTrial={isTrial}
-          status={sub.status}
-          usage={usage}
-          percentages={percentages}
-          willCancel={willCancel}
-          onCancelToggle={handleCancelToggle}
-          cancelToggleBusy={cancelSub.isPending || reactivate.isPending}
-        />
-
-        {/* Add-ons — compact rows stacked under the Helpdesk card */}
+        {/* Helpdesk row + add-on rows live in one flex column so they
+            share the same compact row visual */}
         <div className="flex flex-col gap-2">
+          <HelpdeskProductCard
+            plans={plans}
+            currentPlanId={currentPlanId}
+            selectedPlanId={selectedPlanId}
+            onSelectPlan={setSelectedPlanId}
+            isTrial={isTrial}
+            status={sub.status}
+            willCancel={willCancel}
+            onCancelToggle={handleCancelToggle}
+            cancelToggleBusy={cancelSub.isPending || reactivate.isPending}
+          />
+
           {addonsLoading
             ? [1, 2, 3, 4].map(i => <Skeleton key={i} className="h-14" />)
             : addons.map(addon => (

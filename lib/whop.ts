@@ -193,11 +193,17 @@ export async function createCheckoutSession({
   successUrl?: string
   metadata?:   Record<string, unknown>
 }): Promise<WhopCheckoutSession> {
-  return await whopFetch<WhopCheckoutSession>('/checkouts', {
+  const session = await whopFetch<WhopCheckoutSession>('/checkout_configurations', {
     method: 'POST',
     body: {
-      plan_id:     whopPlanId,
-      success_url: successUrl,
+      // mode: 'payment' triggers an immediate charge for the plan.
+      // ('setup' is for Setup-Intent flows that collect a payment
+      // method without charging — not our case.)
+      mode:         'payment',
+      plan_id:      whopPlanId,
+      // Whop calls this `redirect_url` on the wire; we keep
+      // `successUrl` as the internal arg name for readability.
+      redirect_url: successUrl,
       metadata: {
         workspace_id: workspaceId,
         ...(metadata ?? {}),
@@ -205,6 +211,20 @@ export async function createCheckoutSession({
     },
     idempotencyKey: `checkout-${workspaceId}-${whopPlanId}-${Date.now()}`,
   })
+
+  // ── TEMP DIAGNOSTIC: remove after the first successful checkout ──
+  // The docs hint purchase_url might come back as a path (e.g.
+  // "/checkout/plan_xxx?session=ch_xxx") rather than a fully-qualified
+  // URL. If is_absolute === false we need to prepend "https://whop.com"
+  // before the frontend redirect. Logged once per checkout call.
+  console.log('[whop.checkout.diag] purchase_url shape:', {
+    purchase_url: session.purchase_url,
+    is_absolute:  session.purchase_url?.startsWith('https://'),
+    starts_with:  session.purchase_url?.slice(0, 30),
+  })
+  // ─────────────────────────────────────────────────────────────────
+
+  return session
 }
 
 /**

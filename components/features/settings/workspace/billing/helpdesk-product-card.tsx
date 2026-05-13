@@ -88,7 +88,15 @@ export function HelpdeskProductCard({
           </SelectTrigger>
           <SelectContent>
             {plans.map(plan => (
-              <SelectItem key={plan.id} value={plan.id}>
+              <SelectItem
+                key={plan.id}
+                value={plan.id}
+                // Tone down the dropdown highlight to a Linear-style neutral
+                // — the default shadcn `focus:bg-accent` is too purple for
+                // the brand strip. Highlighted = #F4F4F5, selected = #E5E0EB,
+                // text stays cosmic-ink (#1C0F36) in all states.
+                className="focus:!bg-[#F4F4F5] focus:!text-[#1C0F36] data-[highlighted]:!bg-[#F4F4F5] data-[highlighted]:!text-[#1C0F36] data-[selected]:!bg-[#E5E0EB] data-[selected]:!text-[#1C0F36]"
+              >
                 <span className="flex w-full items-center justify-between gap-4">
                   <span className="font-medium">{plan.display_name}</span>
                   <span className="text-xs text-muted-foreground">

@@ -1,6 +1,6 @@
 'use client'
 
-import { Zap, Phone, MessageSquare, MessageCircle, Lock } from 'lucide-react'
+import { Zap, Phone, MessageSquare, MessageCircle } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -21,9 +21,10 @@ const ICON_MAP: Record<string, typeof Zap> = {
 }
 
 /**
- * Add-on card — renders Emma / Voice / SMS / Convert with their
- * `coming_soon` state. Subscribe button is disabled with a tooltip
- * for `coming_soon` add-ons.
+ * Add-on card — renders AI Agent / Voice / SMS / Meta & Instagram
+ * comments with their `coming_soon` state. Coming-soon add-ons show
+ * only the badge in the top-right and the price as sub-text — no
+ * separate CTA button (keeps the layout calm).
  */
 export function AddonCard({ addon, onSubscribe, isLoading, className }: AddonCardProps) {
   const Icon = ICON_MAP[addon.id] ?? Zap
@@ -49,10 +50,13 @@ export function AddonCard({ addon, onSubscribe, isLoading, className }: AddonCar
           <div className="flex size-10 items-center justify-center rounded-lg bg-foreground/5">
             <Icon size={20} strokeWidth={1.75} className="text-foreground/70" />
           </div>
-          <div className="flex flex-col">
+          <div className="flex flex-col gap-0.5">
             <span className="text-[15px] font-semibold text-foreground">{addon.display_name}</span>
             {addon.description && (
               <span className="text-xs text-muted-foreground">{addon.description}</span>
+            )}
+            {priceLabel && (
+              <span className="mt-1 text-xs text-muted-foreground">{priceLabel}</span>
             )}
           </div>
         </div>
@@ -60,22 +64,21 @@ export function AddonCard({ addon, onSubscribe, isLoading, className }: AddonCar
         {isActive && !isComingSoon && <Badge variant="default">Active</Badge>}
       </div>
 
-      <div className="mt-auto flex items-end justify-between gap-3">
-        {priceLabel && (
-          <span className="text-xs text-muted-foreground">{priceLabel}</span>
-        )}
-        <Button
-          type="button"
-          size="sm"
-          variant={isComingSoon ? 'outline' : 'default'}
-          disabled={isComingSoon || isActive || isLoading}
-          onClick={() => onSubscribe?.(addon.id)}
-          title={isComingSoon ? 'Coming soon — not yet available' : undefined}
-        >
-          {isComingSoon && <Lock size={14} />}
-          {isActive ? 'Subscribed' : isComingSoon ? 'Coming Soon' : 'Subscribe'}
-        </Button>
-      </div>
+      {/* Live add-ons keep a Subscribe CTA; coming-soon add-ons don't —
+          the top-right badge is enough signal. */}
+      {!isComingSoon && !isActive && (
+        <div className="mt-auto flex justify-end">
+          <Button
+            type="button"
+            size="sm"
+            variant="default"
+            disabled={isLoading}
+            onClick={() => onSubscribe?.(addon.id)}
+          >
+            Subscribe
+          </Button>
+        </div>
+      )}
     </div>
   )
 }

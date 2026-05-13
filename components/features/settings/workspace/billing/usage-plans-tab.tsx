@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { AlertCircle } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
-import { AddonCard } from './addon-card'
+import { AddonRow } from './addon-row'
 import { HelpdeskProductCard } from './helpdesk-product-card'
 import { SummaryPanel } from './summary-panel'
 import {
@@ -67,11 +67,11 @@ export function UsagePlansTab() {
         <div className="flex flex-col gap-5">
           <Skeleton className="h-12 w-full" />
           <Skeleton className="h-64 w-full" />
-          <div className="grid gap-4 sm:grid-cols-2">
-            {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-44" />)}
+          <div className="flex flex-col gap-2">
+            {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-14" />)}
           </div>
         </div>
-        <Skeleton className="h-80 w-full" />
+        <Skeleton className="h-80 w-full self-start" />
       </div>
     )
   }
@@ -104,6 +104,10 @@ export function UsagePlansTab() {
   }
 
   return (
+    // Grid track stretches to the taller column (left, with stacked
+    // add-on rows). The SummaryPanel itself uses `self-start` so it
+    // stays at its content height while sticky has room within the
+    // stretched cell to stay pinned over the full left-column length.
     <div className="grid gap-5 lg:grid-cols-[1fr_320px]">
       {/* ── Left rail ─────────────────────────────────────────────── */}
       <div className="flex flex-col gap-5">
@@ -136,12 +140,12 @@ export function UsagePlansTab() {
           cancelToggleBusy={cancelSub.isPending || reactivate.isPending}
         />
 
-        {/* Add-ons */}
-        <div className="grid gap-4 sm:grid-cols-2">
+        {/* Add-ons — compact rows stacked under the Helpdesk card */}
+        <div className="flex flex-col gap-2">
           {addonsLoading
-            ? [1, 2, 3, 4].map(i => <Skeleton key={i} className="h-44" />)
+            ? [1, 2, 3, 4].map(i => <Skeleton key={i} className="h-14" />)
             : addons.map(addon => (
-                <AddonCard
+                <AddonRow
                   key={addon.id}
                   addon={addon}
                   isLoading={subAddon.isPending}

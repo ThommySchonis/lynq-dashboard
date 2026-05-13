@@ -53,7 +53,7 @@ export function SummaryPanel({
   if (isPending) ctaLabel = 'Processing…'
 
   return (
-    <aside className="sticky top-6 flex w-full flex-col gap-5 rounded-xl border border-border bg-card p-6">
+    <aside className="sticky top-6 flex w-full flex-col gap-5 self-start rounded-xl border border-border bg-card p-6">
       <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
         Product
       </span>

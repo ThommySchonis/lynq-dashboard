@@ -1,6 +1,6 @@
 'use client'
 
-import { Bot, Phone, MessageSquare, ShoppingBag, Lock } from 'lucide-react'
+import { Zap, Phone, MessageSquare, MessageCircle, Lock } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -13,11 +13,11 @@ interface AddonCardProps {
   className?:   string
 }
 
-const ICON_MAP: Record<string, typeof Bot> = {
-  ai_agent: Bot,
+const ICON_MAP: Record<string, typeof Zap> = {
+  ai_agent: Zap,
   voice:    Phone,
   sms:      MessageSquare,
-  convert:  ShoppingBag,
+  convert:  MessageCircle,
 }
 
 /**
@@ -26,7 +26,7 @@ const ICON_MAP: Record<string, typeof Bot> = {
  * for `coming_soon` add-ons.
  */
 export function AddonCard({ addon, onSubscribe, isLoading, className }: AddonCardProps) {
-  const Icon = ICON_MAP[addon.id] ?? Bot
+  const Icon = ICON_MAP[addon.id] ?? Zap
   const isComingSoon = addon.status === 'coming_soon'
   const isActive     = addon.workspace_status === 'active'
 

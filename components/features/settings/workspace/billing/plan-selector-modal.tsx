@@ -52,7 +52,7 @@ export function PlanSelectorModal({ open, onOpenChange }: PlanSelectorModalProps
 
   async function handleSubmit() {
     if (!selectedPlanId || !isChanging) return
-    changePlan.mutate(selectedPlanId, { onSuccess: () => onOpenChange(false) })
+    changePlan.mutate({ planId: selectedPlanId }, { onSuccess: () => onOpenChange(false) })
   }
 
   async function handleCancelToggle() {

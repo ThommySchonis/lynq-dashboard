@@ -43,11 +43,16 @@ interface ChangePlanCheckoutResponse {
 }
 type ChangePlanResponse = ChangePlanUpdatedResponse | ChangePlanCheckoutResponse
 
+interface ChangePlanVariables {
+  planId:       string
+  openInNewTab?: boolean
+}
+
 export function useChangePlan() {
   const token = useToken()
   const qc    = useQueryClient()
-  return useMutation<ChangePlanResponse, Error, string>({
-    mutationFn: async (planId: string) => {
+  return useMutation<ChangePlanResponse, Error, ChangePlanVariables>({
+    mutationFn: async ({ planId }) => {
       // Pass success_url so Whop redirects back to the billing tab
       // after the user pays. We use the current origin so it works in
       // preview deploys too.
@@ -59,12 +64,18 @@ export function useChangePlan() {
         success_url: successUrl,
       }) as ChangePlanResponse
     },
-    onSuccess: (data) => {
+    onSuccess: (data, vars) => {
       if (data.mode === 'checkout') {
-        // Redirect to Whop's hosted checkout. The user comes back to
+        // Open Whop's hosted checkout. The user comes back to
         // success_url after paying; the webhook handles DB state.
+        // openInNewTab keeps the dashboard tab alive so React Query
+        // cache is preserved when the checkout window is closed.
         if (typeof window !== 'undefined') {
-          window.location.href = data.checkout_url
+          if (vars.openInNewTab) {
+            window.open(data.checkout_url, '_blank', 'noopener,noreferrer')
+          } else {
+            window.location.href = data.checkout_url
+          }
         }
         return
       }

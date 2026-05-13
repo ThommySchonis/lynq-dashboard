@@ -76,7 +76,10 @@ export function BillingView() {
             >
               {tab.label}
               {active && (
-                <span className="absolute inset-x-0 -bottom-px h-0.5 bg-primary" />
+                // Gorgias-style 2px indicator in cosmic ink. Hardcoded
+                // (not bg-primary) because the brand strip uses the
+                // dark brand color, not the purple accent token.
+                <span className="absolute inset-x-0 -bottom-px h-[2px] bg-[#1C0F36]" />
               )}
             </button>
           )

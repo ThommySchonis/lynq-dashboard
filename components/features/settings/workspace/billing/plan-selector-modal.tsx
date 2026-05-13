@@ -19,15 +19,11 @@ interface PlanSelectorModalProps {
   onOpenChange: (open: boolean) => void
 }
 
-// Overage rates shown in the summary panel — match the cron's billing math.
-const OVERAGE_TICKET_EUR = 0.20
-const OVERAGE_AI_EUR     = 0.10
-
 /**
  * Plan-selector modal. Two-column layout matching the Gorgias reference:
  *   Left: list of plans (PlanCard each), clickable to select
- *   Right: summary panel showing price, overage rates, payment method,
- *          and the "Update Subscription" CTA
+ *   Right: summary panel showing price, upgrade-on-limit note, payment
+ *          method, and the "Update Subscription" CTA
  *
  * Includes a "Cancel auto-renewal" link top-right (replaced with
  * "Reactivate" if the user already cancelled).
@@ -130,12 +126,9 @@ export function PlanSelectorModal({ open, onOpenChange }: PlanSelectorModalProps
 
                 {!selectedPlan.is_custom && (
                   <div className="flex flex-col gap-1.5 rounded-lg bg-background p-3 text-xs">
-                    <p className="font-medium">Overage rates</p>
                     <p className="text-muted-foreground">
-                      €{OVERAGE_TICKET_EUR.toFixed(2)} per extra ticket
-                    </p>
-                    <p className="text-muted-foreground">
-                      €{OVERAGE_AI_EUR.toFixed(2)} per extra AI Suggest
+                      When you reach your plan limit, we&apos;ll prompt you to upgrade.
+                      Your current plan stays active until you switch.
                     </p>
                   </div>
                 )}

@@ -6,9 +6,6 @@ import { AlertTriangle, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useUsage } from '@/hooks/billing'
 
-const OVERAGE_TICKET_EUR = 0.20
-const OVERAGE_AI_EUR     = 0.10
-
 /**
  * Workspace usage banner shown above the inbox when the workspace
  * crosses the 80% or 100% threshold on either tickets or AI Suggest.
@@ -20,6 +17,10 @@ const OVERAGE_AI_EUR     = 0.10
  * Banners can be dismissed locally (sessionStorage) to avoid annoyance,
  * but they reappear on next session since the underlying condition
  * persists until the period rolls over.
+ *
+ * Model 3 (forced upgrade) — no overage charging. The 100%+ banner
+ * directs the customer to upgrade; the backend blocks further usage
+ * once the limit is reached. See docs/billing-model.md.
  */
 export function InboxUsageBanner() {
   const { data: usage } = useUsage()
@@ -48,10 +49,6 @@ export function InboxUsageBanner() {
     setDismissed(level)
   }
 
-  const overageTickets = usage.tickets_overage
-  const overageAI      = usage.ai_suggest_overage
-  const overageCost    = overageTickets * OVERAGE_TICKET_EUR + overageAI * OVERAGE_AI_EUR
-
   const isLimitReached = level === '100'
 
   return (
@@ -72,19 +69,12 @@ export function InboxUsageBanner() {
           {isLimitReached ? (
             <span>
               <span className="font-semibold">Plan limit reached.</span>{' '}
-              {ticketsPct  >= 100 && <>Tickets: {usage.tickets_used.toLocaleString()} / {usage.tickets_limit?.toLocaleString()} · </>}
-              {aiPct       >= 100 && <>AI Suggest: {usage.ai_suggest_used.toLocaleString()} / {usage.ai_suggest_limit?.toLocaleString()} · </>}
-              Continued usage is billed at €{OVERAGE_TICKET_EUR.toFixed(2)}/ticket and €{OVERAGE_AI_EUR.toFixed(2)}/AI Suggest.
-              {(overageTickets > 0 || overageAI > 0) && (
-                <span className="ml-1 font-medium">
-                  Current overage: €{overageCost.toFixed(2)}.
-                </span>
-              )}
+              Upgrade your plan to keep handling tickets without interruption.
             </span>
           ) : (
             <span>
               <span className="font-semibold">You&apos;re approaching your plan limit.</span>{' '}
-              Tickets: {ticketsPct}% · AI Suggest: {aiPct}%. Consider upgrading before overage rates kick in.
+              Consider upgrading.
             </span>
           )}
         </div>

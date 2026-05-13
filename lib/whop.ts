@@ -21,7 +21,7 @@
 //   - Whop "payment"     ←→ our "invoice" (invoices row, matched by metadata)
 
 import * as Sentry from '@sentry/nextjs'
-import { asciiSafe, diagnoseEnvVar } from './utils/ascii-safe'
+import { asciiSafe } from './utils/ascii-safe'
 
 // ─── Configuration ──────────────────────────────────────────────────
 
@@ -65,15 +65,6 @@ async function whopFetch<T>(path: string, options: WhopFetchOptions = {}): Promi
   if (!WHOP_API_KEY) {
     throw new WhopApiError('WHOP_API_KEY not configured', { status: 500, endpoint: path })
   }
-
-  // ── TEMP DIAGNOSTIC: remove after the U+2019 header bug is closed ──
-  // Logs first 5 + last 5 chars of the API key (never the full key)
-  // and indexes/code-points of any non-ASCII chars. Lets us identify
-  // whether the bad char came from WHOP_API_KEY (env paste smart-quote)
-  // or from somewhere else. Removed in a follow-up PR once we've
-  // observed clean output in Vercel logs across a few real upgrades.
-  diagnoseEnvVar('WHOP_API_KEY', WHOP_API_KEY, 'whop.diag')
-  // ─────────────────────────────────────────────────────────────────
 
   const url = `${WHOP_API_URL.replace(/\/$/, '')}${path.startsWith('/') ? '' : '/'}${path}`
   const headers: Record<string, string> = {
@@ -211,18 +202,6 @@ export async function createCheckoutSession({
     },
     idempotencyKey: `checkout-${workspaceId}-${whopPlanId}-${Date.now()}`,
   })
-
-  // ── TEMP DIAGNOSTIC: remove after the first successful checkout ──
-  // The docs hint purchase_url might come back as a path (e.g.
-  // "/checkout/plan_xxx?session=ch_xxx") rather than a fully-qualified
-  // URL. If is_absolute === false we need to prepend "https://whop.com"
-  // before the frontend redirect. Logged once per checkout call.
-  console.log('[whop.checkout.diag] purchase_url shape:', {
-    purchase_url: session.purchase_url,
-    is_absolute:  session.purchase_url?.startsWith('https://'),
-    starts_with:  session.purchase_url?.slice(0, 30),
-  })
-  // ─────────────────────────────────────────────────────────────────
 
   return session
 }

@@ -24,12 +24,51 @@ async function mutate(url: string, method: string, token: string, body?: unknown
 
 // ─── Plan management ─────────────────────────────────────────────────
 
+/**
+ * Change-plan response is discriminated by `mode`:
+ *   - 'updated'  → Whop membership PATCHed in place; refresh data + toast
+ *   - 'checkout' → redirect the browser to Whop-hosted checkout URL
+ *                  to complete payment. The membership.activated
+ *                  webhook updates our DB on success.
+ */
+interface ChangePlanUpdatedResponse {
+  ok:           true
+  mode:         'updated'
+  subscription: unknown
+}
+interface ChangePlanCheckoutResponse {
+  ok:           true
+  mode:         'checkout'
+  checkout_url: string
+}
+type ChangePlanResponse = ChangePlanUpdatedResponse | ChangePlanCheckoutResponse
+
 export function useChangePlan() {
   const token = useToken()
   const qc    = useQueryClient()
-  return useMutation({
-    mutationFn: (planId: string) => mutate('/api/billing/subscription/change-plan', 'POST', token, { plan_id: planId }),
-    onSuccess:  () => {
+  return useMutation<ChangePlanResponse, Error, string>({
+    mutationFn: async (planId: string) => {
+      // Pass success_url so Whop redirects back to the billing tab
+      // after the user pays. We use the current origin so it works in
+      // preview deploys too.
+      const successUrl = typeof window !== 'undefined'
+        ? `${window.location.origin}/settings/workspace/billing?tab=usage&checkout=success`
+        : undefined
+      return await mutate('/api/billing/subscription/change-plan', 'POST', token, {
+        plan_id:     planId,
+        success_url: successUrl,
+      }) as ChangePlanResponse
+    },
+    onSuccess: (data) => {
+      if (data.mode === 'checkout') {
+        // Redirect to Whop's hosted checkout. The user comes back to
+        // success_url after paying; the webhook handles DB state.
+        if (typeof window !== 'undefined') {
+          window.location.href = data.checkout_url
+        }
+        return
+      }
+      // mode === 'updated' → in-place plan change succeeded
       qc.invalidateQueries({ queryKey: billingKeys.subscription() })
       qc.invalidateQueries({ queryKey: billingKeys.usage() })
       toast.success('Plan updated')

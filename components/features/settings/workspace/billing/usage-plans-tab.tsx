@@ -10,9 +10,6 @@ import { AddonCard } from './addon-card'
 import { PlanSelectorModal } from './plan-selector-modal'
 import { useSubscription, useAddons, useSubscribeAddon } from '@/hooks/billing'
 
-const OVERAGE_TICKET_EUR = 0.20
-const OVERAGE_AI_EUR     = 0.10
-
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
 }
@@ -28,8 +25,8 @@ export function UsagePlansTab() {
   const subscribeAddon = useSubscribeAddon()
   const [planSelectorOpen, setPlanSelectorOpen]    = useState(false)
 
-  const sub  = subResp?.subscription
-  const plan = subResp?.plan
+  const sub   = subResp?.subscription
+  const plan  = subResp?.plan
   const usage = subResp?.usage
 
   const isTrial = sub?.status === 'trial'
@@ -112,17 +109,6 @@ export function UsagePlansTab() {
               pct={subResp.percentages.ai_suggest}
             />
           </div>
-
-          {(usage && (usage.tickets_overage > 0 || usage.ai_suggest_overage > 0)) && (
-            <div className="rounded-lg bg-amber-50 dark:bg-amber-950/30 p-2.5 text-[11px] text-amber-900 dark:text-amber-100">
-              {usage.tickets_overage > 0 && (
-                <p>+{usage.tickets_overage} extra tickets (€{(usage.tickets_overage * OVERAGE_TICKET_EUR).toFixed(2)})</p>
-              )}
-              {usage.ai_suggest_overage > 0 && (
-                <p>+{usage.ai_suggest_overage} extra AI Suggest (€{(usage.ai_suggest_overage * OVERAGE_AI_EUR).toFixed(2)})</p>
-              )}
-            </div>
-          )}
 
           <div className="mt-auto flex items-end justify-between gap-3">
             <span className="text-xs text-muted-foreground">

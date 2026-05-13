@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { asciiSafe, diagnoseEnvVar } from '@/lib/utils/ascii-safe'
+import { asciiSafe } from '@/lib/utils/ascii-safe'
 
 // ─── Auth bypass (geen Bearer-token vereist) ────────────────────────
 const AUTH_BYPASS_PREFIXES = [
@@ -62,16 +62,6 @@ async function checkBlockedState(token: string): Promise<BlockedState> {
   const anonKey     = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
   const secretKey   = process.env.SUPABASE_SECRET_KEY
   if (!supabaseUrl || !anonKey || !secretKey) return { blocked: false }
-
-  // ── TEMP DIAGNOSTIC: remove after the U+2019 header bug is closed ──
-  // Logs first 5 + last 5 chars (never the full value) and indices +
-  // code-points of any non-ASCII chars in the Supabase env vars used
-  // for the raw-fetch calls below. The same paste-smart-quote class
-  // of bug that hit WHOP_API_KEY can hit these. Removed in a follow-up
-  // PR once we've confirmed clean output across a few real requests.
-  diagnoseEnvVar('NEXT_PUBLIC_SUPABASE_ANON_KEY', anonKey,   'proxy.diag')
-  diagnoseEnvVar('SUPABASE_SECRET_KEY',          secretKey, 'proxy.diag')
-  // ─────────────────────────────────────────────────────────────────
 
   // 1. User uit Bearer token
   const userRes = await fetch(`${supabaseUrl}/auth/v1/user`, {

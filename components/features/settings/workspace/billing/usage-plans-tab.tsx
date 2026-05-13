@@ -11,7 +11,6 @@ import {
   useAddons,
   usePlans,
   usePaymentMethods,
-  useSubscribeAddon,
   useChangePlan,
   useCancelSubscription,
   useReactivateSubscription,
@@ -24,30 +23,33 @@ function formatDate(iso: string): string {
 const SALES_MAILTO = 'mailto:billing@lynqflow.co?subject=Elite%20plan%20inquiry'
 
 /**
- * Tab 1 — Usage & Plans. Two-column split layout (Gorgias-style):
- *   Left rail  : renewal banner, Helpdesk product card with plan-tier
- *                dropdown, four coming-soon add-ons.
- *   Right rail : sticky summary panel — selected plan, total, payment
- *                method, primary CTA. Replaces the old modal flow.
+ * Usage & Plans tab — split layout matching the Gorgias reference:
+ *
+ *   Left  : single "Select Plans" card with the Helpdesk row stacked
+ *           on top of the four add-on rows. Internal dividers via
+ *           `divide-y` — no per-row border or background.
+ *   Right : sticky Summary panel with Product/Price headers, Upgraded
+ *           badge + strikethrough old price when a pending change
+ *           exists, Total row, payment method, and the dark
+ *           Update Subscription CTA.
  */
 export function UsagePlansTab() {
-  const { data: subResp,        isLoading: subLoading     } = useSubscription()
-  const { data: plans = [],     isLoading: plansLoading   } = usePlans()
-  const { data: addons = [],    isLoading: addonsLoading  } = useAddons()
-  const { data: paymentMethods = [] }                       = usePaymentMethods()
+  const { data: subResp,        isLoading: subLoading    } = useSubscription()
+  const { data: plans = [],     isLoading: plansLoading  } = usePlans()
+  const { data: addons = [],    isLoading: addonsLoading } = useAddons()
+  const { data: paymentMethods = [] }                      = usePaymentMethods()
 
   const changePlan = useChangePlan()
   const cancelSub  = useCancelSubscription()
   const reactivate = useReactivateSubscription()
-  const subAddon   = useSubscribeAddon()
 
-  const sub          = subResp?.subscription ?? null
-  const plan         = subResp?.plan         ?? null
+  const sub  = subResp?.subscription ?? null
+  const plan = subResp?.plan         ?? null
 
-  const isTrial      = sub?.status === 'trial'
-  const renewalDate  = sub?.current_period_end ?? null
+  const isTrial       = sub?.status === 'trial'
+  const renewalDate   = sub?.current_period_end ?? null
   const currentPlanId = sub?.plan_id ?? null
-  const willCancel   = sub?.cancel_at_period_end ?? false
+  const willCancel    = sub?.cancel_at_period_end ?? false
 
   const [selectedPlanId, setSelectedPlanId] = useState<string | null>(currentPlanId)
   useEffect(() => { setSelectedPlanId(currentPlanId) }, [currentPlanId])
@@ -61,14 +63,12 @@ export function UsagePlansTab() {
 
   if (subLoading || plansLoading) {
     return (
-      <div className="grid gap-5 lg:grid-cols-[1fr_320px]">
-        <div className="flex flex-col gap-5">
+      <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
+        <div className="flex flex-col gap-6">
           <Skeleton className="h-12 w-full" />
-          <div className="flex flex-col gap-2">
-            {[1, 2, 3, 4, 5].map(i => <Skeleton key={i} className="h-14" />)}
-          </div>
+          <Skeleton className="h-[420px] w-full" />
         </div>
-        <Skeleton className="h-80 w-full self-start" />
+        <Skeleton className="h-[480px] w-full self-start" />
       </div>
     )
   }
@@ -101,13 +101,9 @@ export function UsagePlansTab() {
   }
 
   return (
-    // Grid track stretches to the taller column (left, with stacked
-    // add-on rows). The SummaryPanel itself uses `self-start` so it
-    // stays at its content height while sticky has room within the
-    // stretched cell to stay pinned over the full left-column length.
-    <div className="grid gap-5 lg:grid-cols-[1fr_320px]">
+    <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
       {/* ── Left rail ─────────────────────────────────────────────── */}
-      <div className="flex flex-col gap-5">
+      <div className="flex flex-col gap-6">
         {/* Renewal banner */}
         <div className="flex items-center justify-between rounded-xl border border-border bg-secondary/40 px-4 py-3">
           <p className="text-sm">
@@ -122,42 +118,42 @@ export function UsagePlansTab() {
           <span className="text-xs text-muted-foreground">Billed monthly</span>
         </div>
 
-        {/* Helpdesk row + add-on rows live in one flex column so they
-            share the same compact row visual */}
-        <div className="flex flex-col gap-2">
-          <HelpdeskProductCard
-            plans={plans}
-            currentPlanId={currentPlanId}
-            selectedPlanId={selectedPlanId}
-            onSelectPlan={setSelectedPlanId}
-            isTrial={isTrial}
-            status={sub.status}
-            willCancel={willCancel}
-            onCancelToggle={handleCancelToggle}
-            cancelToggleBusy={cancelSub.isPending || reactivate.isPending}
-          />
+        {/* Select Plans card — single card, divide-y between rows */}
+        <section className="overflow-hidden rounded-2xl border border-border bg-card">
+          <header className="px-6 py-5">
+            <h2 className="text-lg font-semibold text-foreground">Select Plans</h2>
+          </header>
 
-          {addonsLoading
-            ? [1, 2, 3, 4].map(i => <Skeleton key={i} className="h-14" />)
-            : addons.map(addon => (
-                <AddonRow
-                  key={addon.id}
-                  addon={addon}
-                  isLoading={subAddon.isPending}
-                  onSubscribe={id => subAddon.mutate(id)}
-                />
-              ))}
-        </div>
+          <div className="divide-y divide-border border-t border-border">
+            <HelpdeskProductCard
+              plans={plans}
+              currentPlanId={currentPlanId}
+              selectedPlanId={selectedPlanId}
+              onSelectPlan={setSelectedPlanId}
+              isTrial={isTrial}
+              status={sub.status}
+              willCancel={willCancel}
+              onCancelToggle={handleCancelToggle}
+              cancelToggleBusy={cancelSub.isPending || reactivate.isPending}
+            />
 
-        <p className="text-center text-xs text-muted-foreground">
-          Questions about your plan? <a href="mailto:billing@lynqflow.co" className="underline">Contact us</a>.
-        </p>
+            {addonsLoading
+              ? [1, 2, 3, 4].map(i => (
+                  <div key={i} className="px-6 py-4">
+                    <Skeleton className="h-6 w-full" />
+                  </div>
+                ))
+              : addons.map(addon => (
+                  <AddonRow key={addon.id} addon={addon} />
+                ))}
+          </div>
+        </section>
       </div>
 
       {/* ── Right rail (sticky summary) ───────────────────────────── */}
       <SummaryPanel
+        currentPlan={plan}
         selectedPlan={selectedPlan}
-        currentPlanId={currentPlanId}
         isTrial={isTrial}
         paymentMethod={defaultPaymentMethod}
         isPending={changePlan.isPending}

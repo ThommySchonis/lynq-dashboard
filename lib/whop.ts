@@ -21,6 +21,7 @@
 //   - Whop "payment"     ←→ our "invoice" (invoices row, matched by metadata)
 
 import * as Sentry from '@sentry/nextjs'
+import { asciiSafe, diagnoseEnvVar } from './utils/ascii-safe'
 
 // ─── Configuration ──────────────────────────────────────────────────
 
@@ -49,52 +50,6 @@ export class WhopApiError extends Error {
   }
 }
 
-// ─── Header sanitization ────────────────────────────────────────────
-//
-// HTTP headers must be ByteString (each char ≤ 0xFF). Smart-quote chars
-// (U+2018/U+2019/U+201C/U+201D etc.) routinely slip into env vars
-// pasted from docs / Notion / Slack and cause fetch() to throw
-// "Cannot convert argument to a ByteString". asciiSafe() normalizes
-// common Unicode lookalikes to ASCII equivalents and strips everything
-// else. Applied defensively to every header value built from dynamic
-// sources (env vars, user input, generated keys).
-//
-// If sanitization actually changed the input, we log to Sentry with
-// the label + offending char codes (NEVER the values themselves —
-// Authorization holds the API key). Spotting a warning in Sentry
-// production = "an env var or dynamic value somewhere has unicode
-// that needs cleaning at the source."
-
-function asciiSafe(value: string, label: string): string {
-  const sanitized = value
-    .replace(/[‘’‚‛]/g, "'")    // curly apostrophes/quotes → '
-    .replace(/[“”„‟]/g, '"')    // curly double quotes → "
-    .replace(/[–—]/g, '-')                // en/em dash → -
-    .replace(/[ ]/g, ' ')                      // non-breaking space → space
-    .replace(/[^\x20-\x7E]/g, '')                   // strip remaining non-ASCII
-
-  if (sanitized !== value) {
-    const offenders: Array<{ i: number; code: number; hex: string }> = []
-    for (let i = 0; i < value.length; i++) {
-      const code = value.charCodeAt(i)
-      if (code > 127) offenders.push({ i, code, hex: '0x' + code.toString(16) })
-    }
-    // Sentry alert — production tells us about silent header
-    // sanitization so we can clean the upstream env/data.
-    Sentry.captureMessage(`[whop] asciiSafe modified ${label}`, {
-      level: 'warning',
-      tags:  { integration: 'whop', header: label },
-      extra: {
-        original_length:  value.length,
-        sanitized_length: sanitized.length,
-        non_ascii_chars:  offenders,
-      },
-    })
-    // Vercel logs duplicate of the Sentry message — values omitted.
-    console.warn('[whop] asciiSafe modified header', { header: label, non_ascii_chars: offenders })
-  }
-  return sanitized
-}
 
 // ─── Internal fetch helper ──────────────────────────────────────────
 
@@ -117,28 +72,17 @@ async function whopFetch<T>(path: string, options: WhopFetchOptions = {}): Promi
   // whether the bad char came from WHOP_API_KEY (env paste smart-quote)
   // or from somewhere else. Removed in a follow-up PR once we've
   // observed clean output in Vercel logs across a few real upgrades.
-  const nonAsciiInKey: Array<{ i: number; code: number; hex: string }> = []
-  for (let i = 0; i < WHOP_API_KEY.length; i++) {
-    const code = WHOP_API_KEY.charCodeAt(i)
-    if (code > 127) nonAsciiInKey.push({ i, code, hex: '0x' + code.toString(16) })
-  }
-  console.log('[whop.diag] WHOP_API_KEY', {
-    first5:  WHOP_API_KEY.slice(0, 5),
-    last5:   WHOP_API_KEY.slice(-5),
-    length:  WHOP_API_KEY.length,
-    non_ascii_count: nonAsciiInKey.length,
-    non_ascii_chars: nonAsciiInKey,
-  })
+  diagnoseEnvVar('WHOP_API_KEY', WHOP_API_KEY, 'whop.diag')
   // ─────────────────────────────────────────────────────────────────
 
   const url = `${WHOP_API_URL.replace(/\/$/, '')}${path.startsWith('/') ? '' : '/'}${path}`
   const headers: Record<string, string> = {
-    'Authorization': asciiSafe(`Bearer ${WHOP_API_KEY}`, 'Authorization'),
+    'Authorization': asciiSafe(`Bearer ${WHOP_API_KEY}`, 'Authorization', 'whop'),
     'Accept':        'application/json',
   }
   if (options.body) headers['Content-Type'] = 'application/json'
   if (options.idempotencyKey) {
-    headers['Idempotency-Key'] = asciiSafe(options.idempotencyKey, 'Idempotency-Key')
+    headers['Idempotency-Key'] = asciiSafe(options.idempotencyKey, 'Idempotency-Key', 'whop')
   }
 
   let response: Response

@@ -1,177 +1,359 @@
-// Whop payment-processor stub layer.
+// Whop integration — real v1 API calls (no more stubs).
 //
-// Whop integration is intentionally last in the billing rollout —
-// build the data model + UI against this stub, then swap the bodies
-// (not the signatures) when Whop credentials land.
+// Base URL: https://api.whop.com/api/v1 (configured via WHOP_API_URL).
+// Auth: Authorization: Bearer ${WHOP_API_KEY}
 //
-// Every function:
-//   - Logs a clear "[WHOP STUB]" line so it's grep-able in Vercel logs
-//   - Returns a shape that matches Whop's expected response
-//   - Generates IDs prefixed with "whop_stub_" so they're identifiable
-//     as fake when they later coexist with real Whop IDs during the
-//     cutover
+// Whop is a checkout-driven platform — there's no "create subscription
+// via API" like Stripe. The flow is:
+//   1. Client wants to subscribe → we call createCheckoutSession()
+//   2. We return a checkout URL → frontend redirects user to Whop
+//   3. User pays on Whop's hosted page
+//   4. Whop fires `membership.activated` webhook → we set up the
+//      workspace_subscriptions row in app/api/webhooks/whop/route.ts
 //
-// Replacement plan (separate sprint):
-//   1. Add WHOP_API_KEY env var
-//   2. Replace each function body with a real fetch call against the
-//      Whop API. Keep the signatures + return shapes identical.
-//   3. Drop the "_stub" prefix on the generated IDs.
-//   4. Real Whop webhook (already exists at app/api/whop/webhook/route.ts)
-//      starts firing — its handler reads the same workspace_subscriptions
-//      table the stub flow already populates.
+// For existing memberships (plan changes, cancel, reactivate), we use
+// the membership-level endpoints directly.
+//
+// Whop's terminology vs ours:
+//   - Whop "membership"  ←→ our "subscription" (workspace_subscriptions row)
+//   - Whop "user"        ←→ our "customer" (workspace_subscriptions.whop_customer_id)
+//   - Whop "plan"        ←→ our "plan" (plans.whop_plan_id)
+//   - Whop "payment"     ←→ our "invoice" (invoices row, matched by metadata)
 
-import crypto from 'crypto'
+import * as Sentry from '@sentry/nextjs'
 
-// ─── Types ────────────────────────────────────────────────────────────
+// ─── Configuration ──────────────────────────────────────────────────
 
-export interface BillingInfoShape {
+const WHOP_API_URL = process.env.WHOP_API_URL ?? 'https://api.whop.com/api/v1'
+const WHOP_API_KEY = process.env.WHOP_API_KEY
+
+if (!WHOP_API_KEY) {
+  console.warn('[whop] WHOP_API_KEY not set — all calls will fail')
+}
+
+// ─── Error class ────────────────────────────────────────────────────
+
+export class WhopApiError extends Error {
+  status:     number
+  whopCode:   string | null
+  endpoint:   string
+  body:       unknown
+
+  constructor(message: string, opts: { status: number; whopCode?: string | null; endpoint: string; body?: unknown }) {
+    super(message)
+    this.name     = 'WhopApiError'
+    this.status   = opts.status
+    this.whopCode = opts.whopCode ?? null
+    this.endpoint = opts.endpoint
+    this.body     = opts.body
+  }
+}
+
+// ─── Internal fetch helper ──────────────────────────────────────────
+
+interface WhopFetchOptions {
+  method?: 'GET' | 'POST' | 'PATCH' | 'DELETE'
+  body?:   unknown
+  // Idempotency-Key support — Whop honors the Standard idempotency-key
+  // pattern for create endpoints (per https://docs.whop.com/).
+  idempotencyKey?: string
+}
+
+async function whopFetch<T>(path: string, options: WhopFetchOptions = {}): Promise<T> {
+  if (!WHOP_API_KEY) {
+    throw new WhopApiError('WHOP_API_KEY not configured', { status: 500, endpoint: path })
+  }
+
+  const url = `${WHOP_API_URL.replace(/\/$/, '')}${path.startsWith('/') ? '' : '/'}${path}`
+  const headers: Record<string, string> = {
+    'Authorization': `Bearer ${WHOP_API_KEY}`,
+    'Accept':        'application/json',
+  }
+  if (options.body) headers['Content-Type'] = 'application/json'
+  if (options.idempotencyKey) headers['Idempotency-Key'] = options.idempotencyKey
+
+  let response: Response
+  try {
+    response = await fetch(url, {
+      method:  options.method ?? 'GET',
+      headers,
+      body:    options.body ? JSON.stringify(options.body) : undefined,
+      // Whop API generally returns within a few seconds; failing fast
+      // beats hanging a checkout flow.
+      signal:  AbortSignal.timeout(15_000),
+    })
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : 'Network error'
+    const apiError = new WhopApiError(`Whop API network error: ${msg}`, { status: 0, endpoint: path })
+    Sentry.captureException(apiError, { tags: { integration: 'whop', endpoint: path } })
+    throw apiError
+  }
+
+  let payload: unknown = null
+  const contentType = response.headers.get('content-type') ?? ''
+  if (contentType.includes('application/json')) {
+    payload = await response.json().catch(() => null)
+  } else {
+    payload = await response.text().catch(() => null)
+  }
+
+  if (!response.ok) {
+    const errPayload = payload as { error?: { message?: string; code?: string } } | null
+    const message  = errPayload?.error?.message ?? `Whop API error ${response.status}`
+    const whopCode = errPayload?.error?.code ?? null
+    const apiError = new WhopApiError(message, {
+      status:   response.status,
+      whopCode,
+      endpoint: path,
+      body:     payload,
+    })
+    Sentry.captureException(apiError, {
+      tags:  { integration: 'whop', endpoint: path, status: String(response.status) },
+      extra: { whopCode, body: payload },
+    })
+    throw apiError
+  }
+
+  return payload as T
+}
+
+// ─── Types (defensive — Whop's response schemas are tolerated as
+// "may include these fields" rather than strict shapes) ────────────
+
+export interface WhopMembership {
+  id:                   string
+  user_id?:             string
+  plan_id?:             string
+  product_id?:          string
+  status?:              'active' | 'past_due' | 'canceled' | 'paused' | 'trialing' | string
+  valid?:               boolean
+  cancel_at_period_end?: boolean
+  current_period_start?: number | string
+  current_period_end?:   number | string
+  renewal_period_start?: number | string
+  renewal_period_end?:   number | string
+  canceled_at?:         number | string | null
+  metadata?:            Record<string, unknown>
+  [key: string]: unknown
+}
+
+export interface WhopCheckoutSession {
+  id:           string
+  purchase_url: string
+  plan_id?:     string
+  expires_at?:  number
+  metadata?:    Record<string, unknown>
+  [key: string]: unknown
+}
+
+export interface WhopPayment {
+  id:             string
+  amount?:        number
+  currency?:      string
+  status?:        'succeeded' | 'failed' | 'pending' | string
+  membership_id?: string
+  metadata?:      Record<string, unknown>
+  [key: string]: unknown
+}
+
+// ─── Public API ─────────────────────────────────────────────────────
+
+/**
+ * Create a hosted Whop checkout session for the given plan.
+ *
+ * The frontend redirects the user to `purchase_url`. On successful
+ * payment, Whop fires `membership.activated` which our webhook
+ * handler at /api/webhooks/whop processes to create the
+ * workspace_subscriptions row.
+ *
+ * We pass our workspace_id in metadata so the webhook can identify
+ * which workspace this checkout belongs to.
+ */
+export async function createCheckoutSession({
+  whopPlanId,
+  workspaceId,
+  successUrl,
+  metadata,
+}: {
+  whopPlanId:  string
+  workspaceId: string
+  successUrl?: string
+  metadata?:   Record<string, unknown>
+}): Promise<WhopCheckoutSession> {
+  return await whopFetch<WhopCheckoutSession>('/checkouts', {
+    method: 'POST',
+    body: {
+      plan_id:     whopPlanId,
+      success_url: successUrl,
+      metadata: {
+        workspace_id: workspaceId,
+        ...(metadata ?? {}),
+      },
+    },
+    idempotencyKey: `checkout-${workspaceId}-${whopPlanId}-${Date.now()}`,
+  })
+}
+
+/**
+ * Update an existing membership (plan change).
+ * Real Whop endpoint: PATCH /memberships/{id}
+ */
+export async function updateMembership({
+  membershipId,
+  newPlanId,
+}: {
+  membershipId: string
+  newPlanId:    string
+}): Promise<WhopMembership> {
+  return await whopFetch<WhopMembership>(`/memberships/${membershipId}`, {
+    method: 'PATCH',
+    body:   { plan_id: newPlanId },
+  })
+}
+
+/**
+ * Schedule a cancellation at the end of the current period.
+ * Real Whop endpoint: POST /memberships/{id}/cancel
+ *
+ * Whop semantics: this is a "soft cancel" — keeps access until
+ * current_period_end. The membership.cancel_at_period_end_changed
+ * webhook fires; our handler flips cancel_at_period_end=true.
+ */
+export async function cancelMembership({
+  membershipId,
+}: {
+  membershipId: string
+}): Promise<WhopMembership> {
+  return await whopFetch<WhopMembership>(`/memberships/${membershipId}/cancel`, {
+    method: 'POST',
+  })
+}
+
+/**
+ * Reverse a pending cancellation.
+ * Real Whop endpoint: POST /memberships/{id}/uncancel
+ */
+export async function uncancelMembership({
+  membershipId,
+}: {
+  membershipId: string
+}): Promise<WhopMembership> {
+  return await whopFetch<WhopMembership>(`/memberships/${membershipId}/uncancel`, {
+    method: 'POST',
+  })
+}
+
+/**
+ * Retrieve a single membership by id.
+ * Real Whop endpoint: GET /memberships/{id}
+ */
+export async function retrieveMembership({
+  membershipId,
+}: {
+  membershipId: string
+}): Promise<WhopMembership> {
+  return await whopFetch<WhopMembership>(`/memberships/${membershipId}`, { method: 'GET' })
+}
+
+/**
+ * One-off charge for overage at the end of a billing period.
+ * Real Whop endpoint: POST /payments
+ *
+ * `description` becomes the customer-facing line on the receipt.
+ * `metadata.invoice_id` lets the payment.succeeded webhook match the
+ * resulting Whop payment back to our invoice row.
+ */
+export async function chargeOverage({
+  membershipId,
+  amountEur,
+  description,
+  invoiceId,
+}: {
+  membershipId: string
+  amountEur:    number
+  description:  string
+  invoiceId?:   string
+}): Promise<WhopPayment> {
+  // Whop expects amounts in major units (EUR), not cents — confirmed
+  // via the payments.create-payment docs.
+  return await whopFetch<WhopPayment>('/payments', {
+    method: 'POST',
+    body: {
+      membership_id: membershipId,
+      amount:        amountEur,
+      currency:      'eur',
+      description,
+      metadata: {
+        ...(invoiceId ? { invoice_id: invoiceId } : {}),
+      },
+    },
+    idempotencyKey: invoiceId ? `overage-${invoiceId}` : undefined,
+  })
+}
+
+// ─── Legacy stub signatures — kept for backwards compatibility ──────
+// PR 1's billing-period-rollover cron + chargeOverage tests may still
+// import these. They route to the real endpoints where possible, or
+// throw a clear "not supported in checkout-driven model" error.
+
+interface BillingInfoShape {
   billing_email?:     string | null
   organization_name?: string | null
 }
 
-export interface WhopCustomer {
-  id:         string
-  email:      string | null
-  name:       string | null
-  metadata:   Record<string, unknown>
-  created_at: string
-}
-
-export interface WhopSubscription {
-  id:                    string
-  customer_id:           string
-  plan_id:               string
-  status:                'active' | 'past_due' | 'canceled' | 'paused'
-  current_period_start:  string
-  current_period_end:    string
-  cancel_at_period_end:  boolean
-}
-
-export interface WhopSubscriptionUpdate {
-  id:                    string
-  plan_id:               string
-  status:                'active' | 'past_due' | 'canceled' | 'paused'
-  proration_amount_eur:  number | null
-  effective_at:          string  // ISO timestamp or 'period_end'
-}
-
-export interface WhopSubscriptionCancel {
-  id:                   string
-  status:               'active' | 'canceled'
-  cancel_at_period_end: boolean
-  canceled_at:          string | null
-}
-
-export interface WhopCharge {
-  id:           string
-  subscription: string
-  amount_eur:   number
-  description:  string
-  status:       'pending' | 'paid' | 'failed'
-  created_at:   string
-}
-
-export interface WhopPaymentMethod {
-  id:         string
-  customer:   string
-  type:       'card' | 'sepa' | 'paypal'
-  last_four:  string | null
-  brand:      string | null
-  is_default: boolean
-}
-
-// ─── Internal helpers ────────────────────────────────────────────────
-
-function stubId(prefix: string): string {
-  return `whop_stub_${prefix}_${crypto.randomBytes(8).toString('hex')}`
-}
-
-function logStub(fn: string, payload: unknown): void {
-  console.log(`[WHOP STUB] ${fn} called with`, JSON.stringify(payload))
-}
-
-// ─── Public API — matches the future Whop SDK shape ──────────────────
-
 /**
- * Create a Whop customer record for a workspace.
- * Real Whop endpoint: POST /v5/customers
+ * @deprecated Whop is checkout-driven — users are created by Whop on
+ * checkout completion, not via an API call from us. Use
+ * createCheckoutSession() instead.
  */
-export async function createCustomer({
-  workspaceId,
-  workspaceName,
-  billingInfo,
-}: {
+export async function createCustomer(_input: {
   workspaceId: string
   workspaceName: string
   billingInfo?: BillingInfoShape | null
-}): Promise<WhopCustomer> {
-  logStub('createCustomer', { workspaceId, workspaceName, email: billingInfo?.billing_email })
-  return {
-    id:          stubId('cust'),
-    email:       billingInfo?.billing_email ?? null,
-    name:        billingInfo?.organization_name ?? workspaceName,
-    metadata:    { workspace_id: workspaceId },
-    created_at:  new Date().toISOString(),
-  }
+}): Promise<never> {
+  throw new WhopApiError(
+    'createCustomer is not supported in the checkout-driven model. Use createCheckoutSession() and let the webhook handler create the customer record on membership.activated.',
+    { status: 501, endpoint: 'createCustomer (deprecated)' },
+  )
 }
 
 /**
- * Create a subscription for a customer on a given plan.
- * Real Whop endpoint: POST /v5/subscriptions
+ * @deprecated Use createCheckoutSession() for first-time subscriptions
+ * and updateMembership() for plan changes on existing memberships.
  */
-export async function createSubscription({
-  customerId,
-  planId,
-  paymentMethodId,
-}: {
+export async function createSubscription(_input: {
   customerId: string
   planId: string
   paymentMethodId?: string | null
-}): Promise<WhopSubscription> {
-  logStub('createSubscription', { customerId, planId, paymentMethodId })
-  const now = Date.now()
-  const periodEnd = new Date(now + 30 * 24 * 60 * 60 * 1000).toISOString()
-  return {
-    id:                    stubId('sub'),
-    customer_id:           customerId,
-    plan_id:               planId,
-    status:                'active',
-    current_period_start:  new Date(now).toISOString(),
-    current_period_end:    periodEnd,
-    cancel_at_period_end:  false,
-  }
+}): Promise<never> {
+  throw new WhopApiError(
+    'createSubscription is not supported. Use createCheckoutSession() for new subscriptions or updateMembership() for plan changes.',
+    { status: 501, endpoint: 'createSubscription (deprecated)' },
+  )
 }
 
 /**
- * Update an existing subscription (e.g., plan change).
- * `prorate: true` → bill the prorated diff immediately for the rest
- * of the current period; `false` → switch at period end.
- * Real Whop endpoint: PATCH /v5/subscriptions/{id}
+ * Plan-change passthrough. Existing callers in lib/services/billing.ts
+ * already use this name; we route it to updateMembership() so the
+ * service layer doesn't need a rewrite.
  */
 export async function updateSubscription({
   subscriptionId,
   newPlanId,
-  prorate = true,
 }: {
   subscriptionId: string
   newPlanId: string
-  prorate?: boolean
-}): Promise<WhopSubscriptionUpdate> {
-  logStub('updateSubscription', { subscriptionId, newPlanId, prorate })
-  return {
-    id:                   subscriptionId,
-    plan_id:              newPlanId,
-    status:               'active',
-    proration_amount_eur: prorate ? 0 : null,
-    effective_at:         prorate ? new Date().toISOString() : 'period_end',
-  }
+  prorate?: boolean   // ignored — Whop handles proration server-side
+}): Promise<WhopMembership> {
+  return await updateMembership({ membershipId: subscriptionId, newPlanId })
 }
 
 /**
- * Cancel a subscription.
- * `atPeriodEnd: true` → grace-cancel (keeps access until period_end).
- * `atPeriodEnd: false` → immediate cancel + refund prorated remainder.
- * Real Whop endpoint: DELETE /v5/subscriptions/{id}
+ * Cancel passthrough. Whop's cancel is always at-period-end ("soft");
+ * immediate cancellation isn't directly exposed by the v1 API. If
+ * atPeriodEnd=false is requested, we still call the soft cancel — log
+ * a warning so the caller knows the immediate-cancel semantics weren't
+ * honored.
  */
 export async function cancelSubscription({
   subscriptionId,
@@ -179,93 +361,112 @@ export async function cancelSubscription({
 }: {
   subscriptionId: string
   atPeriodEnd?: boolean
-}): Promise<WhopSubscriptionCancel> {
-  logStub('cancelSubscription', { subscriptionId, atPeriodEnd })
-  return {
-    id:                   subscriptionId,
-    status:               atPeriodEnd ? 'active' : 'canceled',
-    cancel_at_period_end: atPeriodEnd,
-    canceled_at:          atPeriodEnd ? null : new Date().toISOString(),
+}): Promise<WhopMembership> {
+  if (!atPeriodEnd) {
+    console.warn('[whop] cancelSubscription called with atPeriodEnd=false — Whop only supports period-end cancellation, falling back to soft cancel')
   }
+  return await cancelMembership({ membershipId: subscriptionId })
 }
 
 /**
- * Reactivate a previously-canceled subscription (only valid before
- * the period_end if atPeriodEnd was true).
- * Real Whop endpoint: POST /v5/subscriptions/{id}/reactivate
+ * Reactivate passthrough.
  */
 export async function reactivateSubscription({
   subscriptionId,
 }: {
   subscriptionId: string
-}): Promise<WhopSubscriptionCancel> {
-  logStub('reactivateSubscription', { subscriptionId })
-  return {
-    id:                   subscriptionId,
-    status:               'active',
-    cancel_at_period_end: false,
-    canceled_at:          null,
-  }
+}): Promise<WhopMembership> {
+  return await uncancelMembership({ membershipId: subscriptionId })
 }
 
 /**
- * Charge an overage line item against a subscription. Will appear on
- * the next regular invoice as a separate line.
- * Real Whop endpoint: POST /v5/subscriptions/{id}/charges
+ * @deprecated Payment methods are managed entirely by Whop's hosted
+ * checkout. There's no API to add/remove cards from our side.
  */
-export async function chargeOverage({
-  subscriptionId,
-  amountEur,
-  description,
-}: {
-  subscriptionId: string
-  amountEur: number
-  description: string
-}): Promise<WhopCharge> {
-  logStub('chargeOverage', { subscriptionId, amountEur, description })
-  return {
-    id:           stubId('charge'),
-    subscription: subscriptionId,
-    amount_eur:   amountEur,
-    description,
-    status:       'pending',
-    created_at:   new Date().toISOString(),
-  }
-}
-
-/**
- * Attach a new payment method to a customer.
- * Real Whop endpoint: POST /v5/customers/{id}/payment_methods
- */
-export async function createPaymentMethod({
-  customerId,
-  type,
-  token,
-}: {
+export async function createPaymentMethod(_input: {
   customerId: string
   type: 'card' | 'sepa' | 'paypal'
   token: string
-}): Promise<WhopPaymentMethod> {
-  logStub('createPaymentMethod', { customerId, type, token: '<redacted>' })
-  return {
-    id:         stubId('pm'),
-    customer:   customerId,
-    type,
-    last_four:  type === 'card' ? '0001' : null,
-    brand:      type === 'card' ? 'mastercard' : null,
-    is_default: true,
-  }
+}): Promise<never> {
+  throw new WhopApiError(
+    'Payment methods are managed via Whop\'s hosted checkout. Direct the user to update their payment method in the Whop customer portal.',
+    { status: 501, endpoint: 'createPaymentMethod (deprecated)' },
+  )
 }
 
 /**
- * Remove a payment method.
- * Real Whop endpoint: DELETE /v5/payment_methods/{id}
+ * @deprecated Same as createPaymentMethod — managed by Whop.
  */
-export async function deletePaymentMethod({
-  paymentMethodId,
-}: {
+export async function deletePaymentMethod(_input: {
   paymentMethodId: string
-}): Promise<{ id: string; deleted: true }> {
-  logStub('deletePaymentMethod', { paymentMethodId })
-  return { id: paymentMethodId, deleted: true }
+}): Promise<never> {
+  throw new WhopApiError(
+    'Payment methods are managed via Whop\'s hosted checkout.',
+    { status: 501, endpoint: 'deletePaymentMethod (deprecated)' },
+  )
+}
+
+// ─── Webhook signature verification (Standard Webhooks spec) ────────
+
+/**
+ * Verify a Whop webhook signature per the Standard Webhooks spec
+ * (same as svix / Resend / Whop).
+ *
+ * Headers expected:
+ *   webhook-id:        unique event identifier (also our idempotency key)
+ *   webhook-timestamp: unix-seconds string
+ *   webhook-signature: "v1,<base64-hmac-sha256>" (may contain multiple
+ *                      signatures space-separated for rotation; we
+ *                      accept any matching one)
+ *
+ * Signed content: `${id}.${timestamp}.${rawBody}`
+ * Secret: base64-decoded WHOP_WEBHOOK_SECRET (prefix `whsec_` stripped
+ *         if present, matching the inbound-email webhook pattern)
+ */
+export function verifyWebhookSignature({
+  webhookId,
+  webhookTimestamp,
+  webhookSignature,
+  rawBody,
+  secret,
+}: {
+  webhookId:        string | null
+  webhookTimestamp: string | null
+  webhookSignature: string | null
+  rawBody:          string
+  secret:           string | undefined
+}): boolean {
+  if (!secret || !webhookId || !webhookTimestamp || !webhookSignature) return false
+
+  // Strip `whsec_` prefix and base64-decode the secret (Standard Webhooks
+  // convention). If decode fails, fall back to raw bytes — older
+  // dashboards sometimes give a plain string.
+  const secretCore = secret.startsWith('whsec_') ? secret.slice(6) : secret
+  let secretBytes: Buffer
+  try {
+    secretBytes = Buffer.from(secretCore, 'base64')
+    if (secretBytes.length === 0) secretBytes = Buffer.from(secretCore, 'utf8')
+  } catch {
+    secretBytes = Buffer.from(secretCore, 'utf8')
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const crypto: typeof import('crypto') = require('crypto')
+
+  const signedContent = `${webhookId}.${webhookTimestamp}.${rawBody}`
+  const expected      = crypto.createHmac('sha256', secretBytes).update(signedContent).digest('base64')
+
+  // Header may contain multiple "v<n>,<base64sig>" tokens space-separated
+  return webhookSignature
+    .split(' ')
+    .some(token => {
+      const trimmed   = token.trim()
+      const sigPart   = trimmed.replace(/^v\d+,/, '')
+      if (sigPart.length !== expected.length) return false
+      try {
+        return crypto.timingSafeEqual(Buffer.from(sigPart), Buffer.from(expected))
+      } catch {
+        return false
+      }
+    })
 }

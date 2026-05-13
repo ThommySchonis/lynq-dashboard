@@ -208,46 +208,90 @@ export async function getUsageBreakdown(workspaceId: string): Promise<UsageRespo
 // ─── Plan change / cancel / reactivate ───────────────────────────────
 
 /**
- * Change the workspace's plan. For v1 this is a soft change — we
- * update the DB row and stub the Whop call. The stub returns
- * proration info but no real charge happens until Whop wires up.
+ * Change the workspace's plan. Two flows depending on whether the
+ * workspace already has a Whop membership:
+ *
+ *   1. Existing membership (sub.whop_subscription_id set)
+ *      → PATCH /memberships/{id} on Whop, then update our DB row.
+ *      → Returns { mode: 'updated', subscription }.
+ *
+ *   2. No Whop membership yet (trial → first paid plan, or upgrade
+ *      after cancellation)
+ *      → Create a hosted checkout session, return its URL.
+ *      → DB row is NOT updated; the `membership.activated` webhook
+ *        will populate whop_subscription_id, whop_customer_id, and
+ *        flip status to 'active' once payment completes.
+ *      → Returns { mode: 'checkout', checkout_url }.
  *
  * Edge cases:
  *   - Custom plans (Elite) require contacting sales; cannot self-change to
- *   - Same-plan change is a no-op (returns the current sub)
+ *   - Same-plan change with an active membership is a no-op
  */
-export async function changePlan(workspaceId: string, planId: string, options: { prorate?: boolean } = {}): Promise<WorkspaceSubscription> {
+export type ChangePlanOutcome =
+  | { mode: 'updated';  subscription: WorkspaceSubscription }
+  | { mode: 'checkout'; checkout_url: string }
+
+export async function changePlan(
+  workspaceId: string,
+  planId: string,
+  options: { successUrl?: string } = {},
+): Promise<ChangePlanOutcome> {
   const sub = await getSubscription(workspaceId)
   if (!sub) throw new BillingServiceError('No subscription for this workspace', 'no_subscription', 404)
 
   const targetPlan = await getPlan(planId)
-  if (!targetPlan)        throw new BillingServiceError('Unknown plan',                 'unknown_plan',     400)
-  if (!targetPlan.is_active) throw new BillingServiceError('Plan is not active',         'inactive_plan',    400)
-  if (targetPlan.is_custom)  throw new BillingServiceError('Custom plans require contact with sales', 'custom_plan_contact_sales', 400)
+  if (!targetPlan)           throw new BillingServiceError('Unknown plan',                            'unknown_plan',              400)
+  if (!targetPlan.is_active) throw new BillingServiceError('Plan is not active',                     'inactive_plan',             400)
+  if (targetPlan.is_custom)  throw new BillingServiceError('Custom plans require contact with sales','custom_plan_contact_sales', 400)
+  if (!targetPlan.whop_plan_id) {
+    throw new BillingServiceError(
+      'Plan is missing a Whop plan ID — contact support',
+      'plan_not_provisioned',
+      500,
+    )
+  }
 
-  if (sub.plan_id === planId) return sub  // no-op
-
-  // Stub Whop call — real implementation will trigger proration
+  // Path 1 — existing membership → in-place plan change via Whop API
   if (sub.whop_subscription_id) {
-    await whop.updateSubscription({
-      subscriptionId: sub.whop_subscription_id,
-      newPlanId:      planId,
-      prorate:        options.prorate ?? true,
+    if (sub.plan_id === planId) {
+      return { mode: 'updated', subscription: sub }  // no-op
+    }
+    await whop.updateMembership({
+      membershipId: sub.whop_subscription_id,
+      newPlanId:    targetPlan.whop_plan_id,
     })
+
+    const { data, error } = await supabaseAdmin
+      .from('workspace_subscriptions')
+      .update({ plan_id: planId })
+      .eq('id', sub.id)
+      .select('*')
+      .single()
+
+    if (error) {
+      console.error('[billing.changePlan] DB update failed:', error.message)
+      throw new BillingServiceError(error.message, 'update_failed', 500)
+    }
+    return { mode: 'updated', subscription: data as WorkspaceSubscription }
   }
 
-  const { data, error } = await supabaseAdmin
-    .from('workspace_subscriptions')
-    .update({ plan_id: planId })
-    .eq('id', sub.id)
-    .select('*')
-    .single()
+  // Path 2 — no membership yet → start a checkout. Webhook completes.
+  const session = await whop.createCheckoutSession({
+    whopPlanId:  targetPlan.whop_plan_id,
+    workspaceId,
+    successUrl:  options.successUrl,
+    metadata:    { target_plan_id: planId },
+  })
 
-  if (error) {
-    console.error('[billing.changePlan] update failed:', error.message)
-    throw new BillingServiceError(error.message, 'update_failed', 500)
+  if (!session.purchase_url) {
+    throw new BillingServiceError(
+      'Whop returned no purchase URL — checkout could not be started',
+      'checkout_url_missing',
+      500,
+    )
   }
-  return data as WorkspaceSubscription
+
+  return { mode: 'checkout', checkout_url: session.purchase_url }
 }
 
 export async function cancelSubscription(workspaceId: string, atPeriodEnd = true): Promise<WorkspaceSubscription> {

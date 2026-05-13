@@ -176,9 +176,10 @@ async function rolloverOne(sub: SubscriptionRow): Promise<RolloverResult> {
     // 5. Stub Whop charge — real implementation will trigger payment
     if (sub.whop_subscription_id) {
       await whop.chargeOverage({
-        subscriptionId: sub.whop_subscription_id,
-        amountEur:      subtotal,
-        description:    `Period invoice ${invoiceNumber}`,
+        membershipId: sub.whop_subscription_id,
+        amountEur:    subtotal,
+        description:  `Period invoice ${invoiceNumber}`,
+        invoiceId,
       })
     }
   }

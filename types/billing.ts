@@ -19,6 +19,8 @@ export interface Plan {
   price_eur:        number | null
   ticket_limit:     number | null
   ai_suggest_limit: number | null
+  whop_product_id:  string | null
+  whop_plan_id:     string | null
   is_active:        boolean
   is_custom:        boolean
   sort_order:       number
@@ -177,6 +179,22 @@ export interface AddonsListResponse {
 export interface ChangePlanInput {
   plan_id: string
 }
+
+/**
+ * Response from POST /api/billing/subscription/change-plan.
+ *
+ * Discriminated by `mode`:
+ *   - 'updated'    → an existing Whop membership was PATCHed in place;
+ *                    return shape mirrors the subscription row.
+ *   - 'checkout'   → no existing membership yet (first-time purchase
+ *                    or post-trial upgrade); the client must redirect
+ *                    the user to `checkout_url` to complete payment.
+ *                    Our workspace_subscriptions row is created later
+ *                    by the `membership.activated` webhook.
+ */
+export type ChangePlanResponse =
+  | { ok: true; mode: 'updated';  subscription: WorkspaceSubscription }
+  | { ok: true; mode: 'checkout'; checkout_url: string }
 
 export interface UpdateBillingInfoInput {
   billing_email?:     string

@@ -3,21 +3,39 @@ import type { NextRequest } from 'next/server'
 import { supabaseAdmin } from '../../../../lib/supabaseAdmin'
 import * as whop from '../../../../lib/whop'
 
-// ─── Billing period rollover cron ─────────────────────────────────────
+// ─── Billing period rollover cron — DISABLED 2026-05-13 ───────────────
 //
-// Daily 04:00 UTC (after trial-expiry at 03:30). Vercel signs the
-// request with `Authorization: Bearer ${CRON_SECRET}`.
+// 🚨 DISABLED 2026-05-13: architecturaal stuk, double-charges bij
+// rollover. Zie context_notes.md voor refactor plan.
 //
-// For each subscription whose `current_period_end` is in the past:
-//   1. Generate a draft invoice for the just-ended period
-//   2. Advance the subscription's period (start = old end, end = +30d)
-//   3. Create a fresh usage_counters row for the new period
-//   4. Stub a Whop charge (logs only — Whop integration pending)
+// Root cause:
+//   Whop owns recurring billing. When a membership renews, Whop auto-
+//   charges the plan price and fires payment.succeeded. This cron also
+//   calls POST /payments for `subtotal = base + overage` at our copy
+//   of current_period_end → customer is charged twice for the base plan
+//   (and base + overage if usage exceeded plan limits).
 //
-// Idempotent: re-running on the same day for a workspace that already
-// rolled over is a no-op (period_end is already in the future). The
-// invoice INSERT uses `next_invoice_number()` so duplicates would be
-// caught by the invoice_number UNIQUE constraint.
+// What was disabled:
+//   - vercel.json: the "0 4 * * *" cron entry removed → Vercel no longer
+//     invokes this route on schedule.
+//   - handle() below: early-returns 503 so any manual curl or accidental
+//     trigger also fails safely instead of generating charges.
+//
+// Refactor plan (separate sprint):
+//   - Move overage billing into app/api/webhooks/whop/route.ts:
+//     handlePaymentSucceeded. Read the just-ended period's overage,
+//     charge ONLY the overage delta (not base + overage).
+//   - Reset usage counters in the webhook, not the cron — Whop's
+//     payment IS the period boundary.
+//   - Keep this cron file (re-enabled later) as a monitoring job only:
+//     alert when a workspace's expected renewal hasn't fired.
+//
+// Original behavior (preserved below the early-return for reference,
+// will be rewritten when the refactor sprint lands):
+//   Daily 04:00 UTC. For each subscription whose current_period_end was
+//   in the past: build invoice with subscription + overage line items,
+//   create invoice row, call whop.chargeOverage() for subtotal, advance
+//   period by 30 days, create new usage_counters row.
 // ──────────────────────────────────────────────────────────────────────
 
 const PERIOD_DAYS    = 30
@@ -219,52 +237,24 @@ async function rolloverOne(sub: SubscriptionRow): Promise<RolloverResult> {
   return { ok: true, workspace_id: sub.workspace_id, invoice_id: invoiceId, subtotal_eur: subtotal }
 }
 
-async function handle(request: NextRequest): Promise<NextResponse> {
-  const expected = process.env.CRON_SECRET
-  if (!expected) {
-    console.error('[cron/rollover] CRON_SECRET not configured')
-    return NextResponse.json({ error: 'Server misconfigured' }, { status: 500 })
-  }
-  const token = (request.headers.get('authorization') || '').replace(/^Bearer\s+/i, '')
-  if (token !== expected) return unauthorized('cron-secret-mismatch')
+async function handle(_request: NextRequest): Promise<NextResponse> {
+  // ── DEFENSIVE 503 — see file header for context ──────────────────
+  // The cron entry is also removed from vercel.json, so Vercel won't
+  // call this route on schedule. The 503 here protects against:
+  //   - Manual curl from an admin who forgot it's disabled
+  //   - A future deploy that accidentally re-adds the cron entry
+  //   - Tests or scripts that hit this route directly
+  // Returns 503 (Service Unavailable) — not 500 — so monitoring
+  // systems treat it as a known maintenance state, not a failure.
+  console.warn('[cron/rollover] DISABLED — call rejected without side effects')
+  return NextResponse.json(
+    {
+      disabled: true,
+      reason:   'Architecturaal stuk — double charges bij rollover. Refactor gepland voor payment.succeeded webhook handler.',
+    },
+    { status: 503 },
+  )
 
-  const startedAt = Date.now()
-  console.log('[cron/rollover] start')
-
-  // Find all subscriptions whose period has ended (excludes canceled)
-  const { data: due, error } = await supabaseAdmin
-    .from('workspace_subscriptions')
-    .select('*')
-    .in('status', ['trial', 'active', 'past_due'])
-    .lte('current_period_end', new Date().toISOString())
-
-  if (error) {
-    console.error('[cron/rollover] query failed:', error.message)
-    return NextResponse.json({ ok: false, error: error.message }, { status: 500 })
-  }
-
-  const results: RolloverResult[] = []
-  for (const sub of (due as SubscriptionRow[]) || []) {
-    try {
-      results.push(await rolloverOne(sub))
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err)
-      console.error('[cron/rollover] unhandled error for', sub.workspace_id, msg)
-      results.push({ ok: false, workspace_id: sub.workspace_id, reason: 'exception', error: msg })
-    }
-  }
-
-  const summary = {
-    ok:           true,
-    started_at:   new Date(startedAt).toISOString(),
-    duration_ms:  Date.now() - startedAt,
-    processed:    results.length,
-    succeeded:    results.filter(r => r.ok).length,
-    failed:       results.filter(r => !r.ok).length,
-    results,
-  }
-  console.log('[cron/rollover] done', JSON.stringify({ ...summary, results: undefined }))
-  return NextResponse.json(summary)
 }
 
 export const POST = handle

@@ -9,10 +9,6 @@
       "schedule": "30 3 * * *"
     },
     {
-      "path": "/api/cron/billing-period-rollover",
-      "schedule": "0 4 * * *"
-    },
-    {
       "path": "/api/cron/usage-warnings",
       "schedule": "0 * * * *"
     }

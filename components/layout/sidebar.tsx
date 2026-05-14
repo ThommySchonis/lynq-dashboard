@@ -2,7 +2,7 @@
 
 import Image from 'next/image'
 import {
-  Home, Inbox, BarChart3, Zap, Package, GraduationCap,
+  Home, Inbox, BarChart3, Zap, Clock, Package, GraduationCap,
   Rss, Settings, PanelLeftClose, PanelLeft, Shield,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -18,6 +18,7 @@ const NAV_ITEMS = [
   { href: '/inbox', icon: Inbox, label: 'Inbox' },
   { href: '/analytics', icon: BarChart3, label: 'Analytics' },
   { href: '/performance', icon: Zap, label: 'Performance' },
+  { href: '/time-tracking', icon: Clock, label: 'Time Tracking' },
   { href: '/supply-chain', icon: Package, label: 'Supply Chain' },
   { href: '/academy', icon: GraduationCap, label: 'Academy' },
   { href: '/value-feed', icon: Rss, label: 'Value Feed' },

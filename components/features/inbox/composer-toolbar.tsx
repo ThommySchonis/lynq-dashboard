@@ -16,6 +16,7 @@ import { EMOJIS } from '@/lib/inbox-utils'
 import { useInboxUI } from '@/stores/inbox-ui'
 import { useAIStore } from '@/stores/ai'
 import { useMacrosStore } from '@/stores/macros'
+import { useUsage } from '@/hooks/billing'
 
 interface ComposerToolbarProps {
   onFormatDoc: (cmd: string) => void
@@ -52,6 +53,20 @@ export function ComposerToolbar({
   const setAutoTranslate = useAIStore((s) => s.setAutoTranslate)
 
   const aiMacros = useMacrosStore((s) => s.aiMacros)
+
+  // Model 3 (forced upgrade) — refuse outbound when the plan limit is reached.
+  // We compute this from the existing usage query rather than reading
+  // workspace_subscriptions.write_locked directly; the comparison mirrors
+  // the server-side checkTicketLimit so the UI stays in sync without
+  // extending the /api/billing/usage response shape.
+  const { data: usage } = useUsage()
+  const planLocked =
+    usage != null &&
+    usage.tickets_limit != null &&
+    usage.tickets_used + usage.tickets_overage >= usage.tickets_limit
+  const sendDisabledReason = planLocked
+    ? 'Upgrade your plan to send more replies'
+    : undefined
 
   return (
     <div className="flex items-center gap-px px-2.5 py-[7px] border-t border-border">
@@ -158,14 +173,20 @@ export function ComposerToolbar({
       <Button
         className="px-[9px] py-[9px] text-[12.5px] font-semibold bg-[rgba(74,222,128,0.07)] border border-[rgba(74,222,128,0.2)] text-[rgba(74,222,128,0.75)] rounded-xl flex items-center gap-[5px] transition-all hover:bg-[rgba(74,222,128,0.13)] hover:border-[rgba(74,222,128,0.38)] hover:text-[#4ade80] ml-1.5"
         onClick={onSendResolve}
-        disabled={!reply.trim() || sending}
+        disabled={!reply.trim() || sending || planLocked}
+        title={sendDisabledReason}
       >
         <Check size={11} />
         Send & Close
       </Button>
-      <Button className="flex items-center gap-1.5 ml-1.5" onClick={onSend} disabled={!reply.trim() || sending}>
+      <Button
+        className="flex items-center gap-1.5 ml-1.5"
+        onClick={onSend}
+        disabled={!reply.trim() || sending || planLocked}
+        title={sendDisabledReason}
+      >
         {sending ? <Loader2 size={13} className="animate-spin text-white" /> : <Send size={13} />}
-        {sending ? 'Sending…' : 'Send'}
+        {planLocked ? 'Upgrade to send' : sending ? 'Sending…' : 'Send'}
       </Button>
     </div>
   )

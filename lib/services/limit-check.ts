@@ -24,6 +24,8 @@ export interface LimitCheckResult {
   limit: number | null
   /** Capped at 100% even when used > limit; 0 when limit is null. */
   percentageUsed: number
+  /** Workspace's current plan_id — used by callers to build upgrade-error responses. */
+  planId: string
 }
 
 export class LimitCheckError extends Error {
@@ -107,13 +109,13 @@ async function readCurrentPeriodUsage(workspaceId: string): Promise<CounterUsage
 
 // ─── Public: limit checks ─────────────────────────────────────────────
 
-function buildResult(used: number, limit: number | null): LimitCheckResult {
+function buildResult(used: number, limit: number | null, planId: string): LimitCheckResult {
   if (limit === null) {
-    return { allowed: true, used, limit: null, percentageUsed: 0 }
+    return { allowed: true, used, limit: null, percentageUsed: 0, planId }
   }
   const safeLimit = limit > 0 ? limit : 1   // guard against /0; limit=0 is malformed but shouldn't crash
   const percentageUsed = Math.min(100, Math.round((used / safeLimit) * 100))
-  return { allowed: used < limit, used, limit, percentageUsed }
+  return { allowed: used < limit, used, limit, percentageUsed, planId }
 }
 
 export async function checkTicketLimit(workspaceId: string): Promise<LimitCheckResult> {
@@ -122,7 +124,7 @@ export async function checkTicketLimit(workspaceId: string): Promise<LimitCheckR
     readCurrentPeriodUsage(workspaceId),
   ])
   const used = usage.tickets_used + usage.tickets_overage
-  return buildResult(used, sub.ticket_limit)
+  return buildResult(used, sub.ticket_limit, sub.plan_id)
 }
 
 export async function checkAiSuggestLimit(workspaceId: string): Promise<LimitCheckResult> {
@@ -131,7 +133,7 @@ export async function checkAiSuggestLimit(workspaceId: string): Promise<LimitChe
     readCurrentPeriodUsage(workspaceId),
   ])
   const used = usage.ai_suggest_used + usage.ai_suggest_overage
-  return buildResult(used, sub.ai_suggest_limit)
+  return buildResult(used, sub.ai_suggest_limit, sub.plan_id)
 }
 
 // ─── Public: lock / unlock ────────────────────────────────────────────

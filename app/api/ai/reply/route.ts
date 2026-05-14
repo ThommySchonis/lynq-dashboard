@@ -1,6 +1,8 @@
 import { generateText } from 'ai'
 import { anthropic } from '@ai-sdk/anthropic'
-import { supabaseAdmin, getUserFromToken } from '../../../../lib/supabaseAdmin'
+import { supabaseAdmin } from '../../../../lib/supabaseAdmin'
+import { getAuthContext } from '../../../../lib/auth'
+import { checkAiSuggestLimit } from '../../../../lib/services/limit-check'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
@@ -25,12 +27,27 @@ Rules:
 - Never make up order details, tracking numbers, or policies you don't have information about`
 
 export async function POST(request: NextRequest) {
-  const authHeader = request.headers.get('authorization')
-  if (!authHeader) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const ctx = await getAuthContext(request)
+  if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const user = ctx.user
 
-  const token = authHeader.replace('Bearer ', '')
-  const user = await getUserFromToken(token)
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  // Model 3 (forced upgrade) — block AI Suggest at the plan's
+  // ai_suggest_limit. Returns 429 with the structured PLAN_LIMIT_REACHED
+  // shape so the UI can show the same upgrade prompt as for ticket sends.
+  // We don't flip workspace_subscriptions.write_locked here; that flag is
+  // owned by the outbound-ticket path. See docs/billing-model.md.
+  const aiCheck = await checkAiSuggestLimit(ctx.workspaceId)
+  if (!aiCheck.allowed) {
+    return NextResponse.json({
+      error:        'PLAN_LIMIT_REACHED',
+      code:         'PLAN_LIMIT_REACHED',
+      resource:     'ai_suggest',
+      current_plan: aiCheck.planId,
+      used:         aiCheck.used,
+      limit:        aiCheck.limit,
+      upgrade_url:  '/settings/workspace/billing',
+    }, { status: 429 })
+  }
 
   const { messages, threadId, language } = await request.json() as {
     messages: ThreadMessage[]

@@ -1,7 +1,21 @@
 import { supabaseAdmin } from './supabaseAdmin'
 import { getAdapter } from './providers'
-import { checkEmailLimit, incrementEmailCount } from './emailUsage'
+import { checkTicketLimit, lockWorkspace } from './services/limit-check'
 import { recordOutboundMessage } from './services/billing'
+
+const UPGRADE_URL = '/settings/workspace/billing'
+
+function planLimitErrorResponse(check: { used: number; limit: number | null; planId: string }) {
+  return {
+    error:        'PLAN_LIMIT_REACHED',
+    code:         'PLAN_LIMIT_REACHED',
+    resource:     'tickets' as const,
+    current_plan: check.planId,
+    used:         check.used,
+    limit:        check.limit,
+    upgrade_url:  UPGRADE_URL,
+  }
+}
 
 // ---------------------------------------------------------------------------
 // Sync
@@ -289,15 +303,13 @@ export async function processInboundMessage(account: any, normalizedMessage: any
 // ---------------------------------------------------------------------------
 
 export async function sendReply(workspaceId: string, conversationId: string, userEmail: string, { to, cc, bcc, subject, bodyHtml, bodyText }: { to: any; cc: any; bcc: any; subject: any; bodyHtml: any; bodyText: any }) {
-  const limitCheck = await checkEmailLimit(userEmail)
+  const limitCheck = await checkTicketLimit(workspaceId)
   if (!limitCheck.allowed) {
-    return {
-      error: 'Email limit reached',
-      code: 'EMAIL_LIMIT_REACHED',
-      used: limitCheck.used,
-      limit: limitCheck.limit,
-      plan: limitCheck.plan,
-    }
+    // Flip the workspace flag so banners + composers can render the
+    // locked state without re-querying the limit on every render.
+    // lockWorkspace is idempotent — safe to call on every blocked attempt.
+    await lockWorkspace(workspaceId)
+    return planLimitErrorResponse(limitCheck)
   }
 
   const { data: conversation } = await supabaseAdmin
@@ -368,11 +380,6 @@ export async function sendReply(workspaceId: string, conversationId: string, use
     })
     .eq('id', conversationId)
 
-  // Legacy email-count (workspace-agnostic, user_email-keyed) — kept
-  // alongside the new billing system until Whop migration completes.
-  await incrementEmailCount(userEmail)
-
-  // New billing system — workspace_subscriptions / usage_counters path.
   // Records this outbound against the workspace's ticket counter, with
   // the spam-aware + count-once-per-conversation rules from PR 3.
   const billing = await recordOutboundMessage(workspaceId, conversationId)
@@ -388,15 +395,10 @@ export async function sendReply(workspaceId: string, conversationId: string, use
 // ---------------------------------------------------------------------------
 
 export async function sendNewEmail(workspaceId: string, userEmail: string, accountId: string, { to, cc, bcc, subject, bodyHtml, bodyText }: { to: any; cc: any; bcc: any; subject: any; bodyHtml: any; bodyText: any }) {
-  const limitCheck = await checkEmailLimit(userEmail)
+  const limitCheck = await checkTicketLimit(workspaceId)
   if (!limitCheck.allowed) {
-    return {
-      error: 'Email limit reached',
-      code: 'EMAIL_LIMIT_REACHED',
-      used: limitCheck.used,
-      limit: limitCheck.limit,
-      plan: limitCheck.plan,
-    }
+    await lockWorkspace(workspaceId)
+    return planLimitErrorResponse(limitCheck)
   }
 
   const { data: account } = await supabaseAdmin
@@ -457,11 +459,9 @@ export async function sendNewEmail(workspaceId: string, userEmail: string, accou
       })
   }
 
-  await incrementEmailCount(userEmail)
-
-  // New billing system — count this conversation against the workspace's
-  // ticket counter (this is a brand-new conversation, so counted_in_usage_period
-  // is null and the helper will count via the 'first_outbound' branch).
+  // Count this conversation against the workspace's ticket counter
+  // (this is a brand-new conversation, so counted_in_usage_period is
+  // null and the helper will count via the 'first_outbound' branch).
   const billing = conversation?.id
     ? await recordOutboundMessage(workspaceId, conversation.id)
     : null

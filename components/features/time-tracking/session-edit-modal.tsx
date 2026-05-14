@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { Loader2 } from 'lucide-react'
 import { fmtDate } from '@/lib/time-tracking-constants'
 import type { Session } from '@/types/time-tracking'
@@ -51,6 +52,12 @@ export function SessionEditModal({
   const [needsAttn, setNeedsAttn]   = useState<string>(session.needs_attention ?? '')
   const [reason, setReason]         = useState<string>('')
 
+  // Portal mount-guard. Without this, SSR would crash on document.body access.
+  // The mounted flag flips on first client-side render; before that we return
+  // null so the SSR pass and the first client render agree (no hydration mismatch).
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => { setMounted(true) }, [])
+
   const reasonValid = reason.trim().length >= 3
   const emailsParsed = emails === '' ? null : Number(emails)
   const emailsValid =
@@ -74,7 +81,13 @@ export function SessionEditModal({
     onSubmit(patch)
   }
 
-  return (
+  if (!mounted) return null
+
+  // Portaled to document.body. Without this the modal's `position: fixed`
+  // would be anchored to the nearest ancestor with a non-`none` transform
+  // (e.g. the Sessions card with `animate-fade-up forwards`) instead of
+  // the viewport — see PR notes for v1 regression.
+  const modalContent = (
     <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 sm:p-6">
       {/* Modal box: flex column, capped at 85vh so the modal never
           outgrows the viewport. Header + footer are flex-shrink-0;
@@ -185,6 +198,8 @@ export function SessionEditModal({
       </div>
     </div>
   )
+
+  return createPortal(modalContent, document.body)
 }
 
 interface FieldBlockProps {

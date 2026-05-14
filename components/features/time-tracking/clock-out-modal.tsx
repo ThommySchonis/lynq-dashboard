@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { Loader2 } from 'lucide-react'
 import { fmtTime, fmtDur } from '@/lib/time-tracking-constants'
 import type { Session, EodReport } from '@/types/time-tracking'
@@ -22,6 +23,10 @@ export function ClockOutModal({
   onCancel,
   submitting,
 }: ClockOutModalProps) {
+  // Portal mount-guard (SSR-safe access to document.body).
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => { setMounted(true) }, [])
+
   const [emailsAnswered, setEmailsAnswered] = useState<string>('')
   const [whatWentWell, setWhatWentWell] = useState('')
   const [needsAttention, setNeedsAttention] = useState('')
@@ -62,7 +67,13 @@ export function ClockOutModal({
     }
   }
 
-  return (
+  if (!mounted) return null
+
+  // Portaled to document.body. Without this the modal's `position: fixed`
+  // would be anchored to the nearest ancestor with a non-`none` transform
+  // (e.g. animate-fade-up's permanent translateY(0)) instead of the
+  // viewport — see PR notes for v1 regression.
+  const modalContent = (
     <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 sm:p-6">
       {/* Modal box: flex column, capped at 85vh so it never outgrows the
           viewport. Header + footer flex-shrink-0, body scrolls. */}
@@ -153,8 +164,8 @@ export function ClockOutModal({
       </div>
 
       {/* Inline discard-confirm overlay. Stacks at z-[201] so it sits above
-          the parent modal (z-[200]) without needing a Portal. Replaces the
-          form briefly rather than layering — cleaner than a nested Dialog. */}
+          the parent modal (z-[200]). The whole tree is portaled to body so
+          both layers anchor to the viewport, not a transformed ancestor. */}
       {discardOpen && (
         <div className="fixed inset-0 z-[201] flex items-center justify-center bg-black/40 backdrop-blur-sm p-6">
           <div className="w-full max-w-[400px] rounded-xl border border-black/9 bg-white p-6">
@@ -186,6 +197,8 @@ export function ClockOutModal({
       )}
     </div>
   )
+
+  return createPortal(modalContent, document.body)
 }
 
 interface FieldBlockProps {

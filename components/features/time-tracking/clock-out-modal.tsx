@@ -63,63 +63,70 @@ export function ClockOutModal({
   }
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/50 backdrop-blur-sm p-6">
-      <div className="w-full max-w-[520px] rounded-xl border border-black/9 bg-white p-7">
-        <h2 className="text-base font-semibold text-foreground">End of Day Report</h2>
-        <div className="mt-1 text-xs text-gray-500">
-          Clock-in: {fmtTime(session.clocked_in_at)} &middot; Active: {fmtDur(elapsedSec)}
-          {pausedSeconds > 0 && <> &middot; Paused: {fmtDur(pausedSeconds)}</>}
+    <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 sm:p-6">
+      {/* Modal box: flex column, capped at 85vh so it never outgrows the
+          viewport. Header + footer flex-shrink-0, body scrolls. */}
+      <div className="flex w-full max-w-[520px] max-h-[85vh] flex-col overflow-hidden rounded-xl border border-black/9 bg-white">
+        {/* Header — sticky */}
+        <div className="flex-shrink-0 px-7 pt-6 pb-5 border-b border-gray-200/60">
+          <h2 className="text-base font-semibold text-foreground">End of Day Report</h2>
+          <div className="mt-1 text-xs text-gray-500">
+            Clock-in: {fmtTime(session.clocked_in_at)} &middot; Active: {fmtDur(elapsedSec)}
+            {pausedSeconds > 0 && <> &middot; Paused: {fmtDur(pausedSeconds)}</>}
+          </div>
         </div>
 
-        <div className="my-5 h-px bg-black/6" />
+        {/* Body — scrolls */}
+        <div className="flex-1 overflow-y-auto px-7 py-5 [scrollbar-width:thin] [scrollbar-color:#D1D5DB_transparent] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-gray-300">
+          <div className="space-y-5">
+            <FieldBlock
+              label="Emails answered"
+              required
+              hint="Total customer emails you sent today."
+            >
+              <input
+                type="number"
+                inputMode="numeric"
+                min={0}
+                step={1}
+                value={emailsAnswered}
+                onChange={(e) => setEmailsAnswered(e.target.value)}
+                placeholder="0"
+                className="w-32 rounded-lg border border-black/8 bg-gray-100 px-3 py-2 text-[13px] text-foreground placeholder:text-gray-400 outline-none transition-colors focus:border-black/20 tabular-nums"
+                autoFocus
+              />
+            </FieldBlock>
 
-        <div className="space-y-5">
-          <FieldBlock
-            label="Emails answered"
-            required
-            hint="Total customer emails you sent today."
-          >
-            <input
-              type="number"
-              inputMode="numeric"
-              min={0}
-              step={1}
-              value={emailsAnswered}
-              onChange={(e) => setEmailsAnswered(e.target.value)}
-              placeholder="0"
-              className="w-32 rounded-lg border border-black/8 bg-gray-100 px-3 py-2 text-[13px] text-foreground placeholder:text-gray-400 outline-none transition-colors focus:border-black/20 tabular-nums"
-              autoFocus
-            />
-          </FieldBlock>
+            <FieldBlock
+              label="What went well"
+              required
+              hint="Wins, blockers cleared, customers you helped — anything that moved forward."
+            >
+              <textarea
+                value={whatWentWell}
+                onChange={(e) => setWhatWentWell(e.target.value)}
+                placeholder="Closed three tier-2 escalations from yesterday, shipped the refund-policy macro update…"
+                className="w-full min-h-[88px] resize-y rounded-lg border border-black/8 bg-gray-100 px-3.5 py-2.5 text-[13px] leading-relaxed text-foreground placeholder:text-gray-400 outline-none transition-colors focus:border-black/20"
+              />
+            </FieldBlock>
 
-          <FieldBlock
-            label="What went well"
-            required
-            hint="Wins, blockers cleared, customers you helped — anything that moved forward."
-          >
-            <textarea
-              value={whatWentWell}
-              onChange={(e) => setWhatWentWell(e.target.value)}
-              placeholder="Closed three tier-2 escalations from yesterday, shipped the refund-policy macro update…"
-              className="w-full min-h-[88px] resize-y rounded-lg border border-black/8 bg-gray-100 px-3.5 py-2.5 text-[13px] leading-relaxed text-foreground placeholder:text-gray-400 outline-none transition-colors focus:border-black/20"
-            />
-          </FieldBlock>
-
-          <FieldBlock
-            label="Needs attention"
-            required
-            hint="Open issues, customers waiting on you tomorrow, decisions you need."
-          >
-            <textarea
-              value={needsAttention}
-              onChange={(e) => setNeedsAttention(e.target.value)}
-              placeholder="Order #4821 still pending carrier response. Need a call on the EU VAT change before Friday."
-              className="w-full min-h-[88px] resize-y rounded-lg border border-black/8 bg-gray-100 px-3.5 py-2.5 text-[13px] leading-relaxed text-foreground placeholder:text-gray-400 outline-none transition-colors focus:border-black/20"
-            />
-          </FieldBlock>
+            <FieldBlock
+              label="Needs attention"
+              required
+              hint="Open issues, customers waiting on you tomorrow, decisions you need."
+            >
+              <textarea
+                value={needsAttention}
+                onChange={(e) => setNeedsAttention(e.target.value)}
+                placeholder="Order #4821 still pending carrier response. Need a call on the EU VAT change before Friday."
+                className="w-full min-h-[88px] resize-y rounded-lg border border-black/8 bg-gray-100 px-3.5 py-2.5 text-[13px] leading-relaxed text-foreground placeholder:text-gray-400 outline-none transition-colors focus:border-black/20"
+              />
+            </FieldBlock>
+          </div>
         </div>
 
-        <div className="mt-6 flex justify-end gap-2">
+        {/* Footer — sticky */}
+        <div className="flex-shrink-0 flex justify-end gap-2 border-t border-gray-200/60 bg-white px-7 py-4">
           <button
             onClick={handleCancelClick}
             disabled={submitting}

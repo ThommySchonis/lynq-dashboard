@@ -1,6 +1,7 @@
 'use client'
 
 import { fmtDur } from '@/lib/time-tracking-constants'
+import { formatRole } from '@/lib/utils'
 import type { TeamMember } from '@/types/time-tracking'
 
 interface MemberRowProps {
@@ -27,7 +28,7 @@ export function MemberRow({ member: m }: MemberRowProps) {
       {/* Name + role */}
       <div className="min-w-0 flex-1">
         <div className="text-[13px] font-medium text-foreground">{m.name}</div>
-        <div className="text-xs text-gray-500">{m.role}</div>
+        <div className="text-xs text-gray-500">{formatRole(m.role)}</div>
       </div>
 
       {/* Hours */}

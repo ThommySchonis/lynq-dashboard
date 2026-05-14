@@ -14,7 +14,20 @@ export interface Session {
   status: 'active' | 'paused' | 'ended'
   paused_at: string | null
   paused_seconds: number
+  // Legacy free-text report — populated for sessions clocked out before
+  // the structured EOD fields shipped. Kept for backwards compatibility.
   eod_report: string | null
+  // Structured EOD fields — required at clock-out time for new sessions,
+  // null for sessions that pre-date this column set.
+  emails_answered: number | null
+  what_went_well:  string | null
+  needs_attention: string | null
+}
+
+export interface EodReport {
+  emailsAnswered: number
+  whatWentWell:   string
+  needsAttention: string
 }
 
 export interface TeamMember {

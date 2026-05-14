@@ -1,9 +1,9 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { Eye, AlertCircle, X } from 'lucide-react'
+import { AlertCircle, X } from 'lucide-react'
 import { FILTERS, EMP_KPI, fmtDur } from '@/lib/time-tracking-constants'
-import type { TimeFilter, Session } from '@/types/time-tracking'
+import type { TimeFilter, Session, EodReport } from '@/types/time-tracking'
 import { useAuthStore } from '@/stores/auth'
 import {
   useClockIn,
@@ -147,10 +147,10 @@ export function PersonalView({
   }, [activeSession, resumeSession])
 
   const handleClockOut = useCallback(
-    (report: string) => {
+    (report: EodReport) => {
       if (!activeSession) return
       clockOut.mutate(
-        { sessionId: activeSession.id, eodReport: report },
+        { sessionId: activeSession.id, report },
         {
           onSuccess: () => {
             setElapsed(0)
@@ -216,22 +216,6 @@ export function PersonalView({
         <div className="mb-4 text-[13px] text-gray-500">Track your daily work hours</div>
         <FilterTabs filter={filter} onChange={onFilterChange} />
       </div>
-
-      {/* Admin preview banner */}
-      {isAdmin && (
-        <div className="mb-4 flex items-start gap-3 rounded-lg border border-[#E5E0EB] bg-[#F7F3FF] px-4 py-2.5 animate-fade-up">
-          <Eye className="mt-0.5 h-3.5 w-3.5 shrink-0 text-foreground-4" />
-          <div className="text-xs">
-            <span className="font-semibold text-foreground">Admin preview</span>
-            <span className="ml-1.5 text-muted-foreground">
-              This is exactly what team members see when they log in. View all hours in the
-            </span>
-            <a href="/admin" className="ml-1 text-primary underline">
-              Admin Panel &rarr; Time Tracking
-            </a>
-          </div>
-        </div>
-      )}
 
       {/* Error toast */}
       {error && (

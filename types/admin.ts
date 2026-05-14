@@ -94,6 +94,9 @@ export interface TimeSession {
   active_seconds: number
   paused_seconds: number
   eod_report: string | null
+  emails_answered: number | null
+  what_went_well:  string | null
+  needs_attention: string | null
 }
 
 export interface TimeMember {

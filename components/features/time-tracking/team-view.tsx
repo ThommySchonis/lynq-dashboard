@@ -80,8 +80,8 @@ export function TeamView({ data, filter, onFilterChange }: TeamViewProps) {
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-[130px_110px_60px_60px_70px_1fr] gap-3 border-b border-black/5 px-4.5 py-2.5">
-              {['Member', 'Date', 'In', 'Out', 'Hours', 'Report'].map(h => (
+            <div className="grid grid-cols-[130px_110px_60px_60px_70px_50px_1fr_24px] gap-3 border-b border-black/5 px-4.5 py-2.5">
+              {['Member', 'Date', 'In', 'Out', 'Hours', 'Emails', 'Summary', ''].map(h => (
                 <div key={h} className="text-[10px] font-bold uppercase tracking-wider text-gray-400">{h}</div>
               ))}
             </div>

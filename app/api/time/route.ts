@@ -240,7 +240,16 @@ export async function POST(request: NextRequest) {
   const ctx = await getAuthContext(request)
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const body = await request.json() as { action: string; session_id?: string; eod_report?: string }
+  const body = await request.json() as {
+    action: string
+    session_id?: string
+    // Structured EOD report — required at clock-out for new sessions.
+    report?: {
+      emails_answered: number
+      what_went_well:  string
+      needs_attention: string
+    }
+  }
   const { action } = body
 
   const { data: member } = await supabaseAdmin
@@ -333,8 +342,23 @@ export async function POST(request: NextRequest) {
 
   // ── CLOCK OUT ─────────────────────────────────────────────────────────────
   if (action === 'clock-out') {
-    const { session_id, eod_report } = body
+    const { session_id, report } = body
     if (!session_id) return NextResponse.json({ error: 'Missing session_id' }, { status: 400 })
+
+    // Structured EOD report is required for new clock-outs. The old free-text
+    // eod_report column stays NULL for new sessions; legacy sessions retain
+    // whatever was written before this migration.
+    if (!report || typeof report !== 'object') {
+      return NextResponse.json({ error: 'Missing end-of-day report' }, { status: 400 })
+    }
+    const emailsAnswered = Number(report.emails_answered)
+    if (!Number.isInteger(emailsAnswered) || emailsAnswered < 0) {
+      return NextResponse.json({ error: 'emails_answered must be a non-negative integer' }, { status: 400 })
+    }
+    const whatWentWell  = typeof report.what_went_well  === 'string' ? report.what_went_well.trim()  : ''
+    const needsAttention = typeof report.needs_attention === 'string' ? report.needs_attention.trim() : ''
+    if (!whatWentWell)   return NextResponse.json({ error: 'what_went_well is required' },   { status: 400 })
+    if (!needsAttention) return NextResponse.json({ error: 'needs_attention is required' }, { status: 400 })
 
     // Finalise any ongoing pause before closing
     const { data: current } = await supabaseAdmin
@@ -356,11 +380,15 @@ export async function POST(request: NextRequest) {
     const { data: session, error } = await supabaseAdmin
       .from('time_sessions')
       .update({
-        clocked_out_at: new Date().toISOString(),
-        status:         'completed',
-        paused_at:      null,
-        paused_seconds: finalPaused,
-        eod_report:     eod_report?.trim() || null,
+        clocked_out_at:  new Date().toISOString(),
+        status:          'completed',
+        paused_at:       null,
+        paused_seconds:  finalPaused,
+        // Legacy free-text column: NULL for new sessions.
+        eod_report:      null,
+        emails_answered: emailsAnswered,
+        what_went_well:  whatWentWell,
+        needs_attention: needsAttention,
       })
       .eq('id', session_id)
       .eq('workspace_id', ctx.workspaceId)

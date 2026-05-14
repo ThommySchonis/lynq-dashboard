@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
       bodyText: body.bodyText,
     })
 
-    if (result.error) {
+    if ('error' in result) {
       return NextResponse.json(result, { status: 429 })
     }
 

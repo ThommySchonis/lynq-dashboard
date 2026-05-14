@@ -267,46 +267,12 @@ export async function retrieveMembership({
   return await whopFetch<WhopMembership>(`/memberships/${membershipId}`, { method: 'GET' })
 }
 
-/**
- * One-off charge for overage at the end of a billing period.
- * Real Whop endpoint: POST /payments
- *
- * `description` becomes the customer-facing line on the receipt.
- * `metadata.invoice_id` lets the payment.succeeded webhook match the
- * resulting Whop payment back to our invoice row.
- */
-export async function chargeOverage({
-  membershipId,
-  amountEur,
-  description,
-  invoiceId,
-}: {
-  membershipId: string
-  amountEur:    number
-  description:  string
-  invoiceId?:   string
-}): Promise<WhopPayment> {
-  // Whop expects amounts in major units (EUR), not cents — confirmed
-  // via the payments.create-payment docs.
-  return await whopFetch<WhopPayment>('/payments', {
-    method: 'POST',
-    body: {
-      membership_id: membershipId,
-      amount:        amountEur,
-      currency:      'eur',
-      description,
-      metadata: {
-        ...(invoiceId ? { invoice_id: invoiceId } : {}),
-      },
-    },
-    idempotencyKey: invoiceId ? `overage-${invoiceId}` : undefined,
-  })
-}
+// chargeOverage removed in Model 3 (forced upgrade) — see docs/billing-model.md.
+// Overage charging is replaced by hard-cap + upgrade prompt. Whop renewal
+// payments are processed by the payment.succeeded webhook handler, which
+// also clears workspace_subscriptions.write_locked.
 
 // ─── Legacy stub signatures — kept for backwards compatibility ──────
-// PR 1's billing-period-rollover cron + chargeOverage tests may still
-// import these. They route to the real endpoints where possible, or
-// throw a clear "not supported in checkout-driven model" error.
 
 interface BillingInfoShape {
   billing_email?:     string | null

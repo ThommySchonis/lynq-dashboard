@@ -3,6 +3,7 @@ import type { NextRequest } from 'next/server'
 import * as Sentry from '@sentry/nextjs'
 import { supabaseAdmin } from '../../../../lib/supabaseAdmin'
 import { verifyWebhookSignature, type WhopMembership, type WhopPayment } from '../../../../lib/whop'
+import { unlockWorkspace } from '../../../../lib/services/limit-check'
 
 // ─── Whop webhook handler ─────────────────────────────────────────────
 //
@@ -265,10 +266,10 @@ async function handlePaymentSucceeded(payment: WhopPayment): Promise<void> {
   const invoiceIdFromMeta = (payment.metadata as Record<string, unknown> | undefined)?.invoice_id
   const amount = typeof payment.amount === 'number' ? payment.amount : 0
 
-  // Strategy: match by metadata.invoice_id first (set when chargeOverage
-  // creates a payment). For period-rollover invoices that Whop bills
-  // automatically, fall back to "most recent open invoice for the
-  // membership's workspace".
+  // Strategy: match by metadata.invoice_id first (historical — set by
+  // the now-removed chargeOverage flow; preserved for any in-flight
+  // payments). For renewal/upgrade payments that Whop bills automatically,
+  // fall back to "most recent open invoice for the membership's workspace".
   let invoiceId: string | null = null
 
   if (typeof invoiceIdFromMeta === 'string') {
@@ -320,6 +321,64 @@ async function handlePaymentSucceeded(payment: WhopPayment): Promise<void> {
   }
 
   console.log('[whop webhook] payment.succeeded: invoice=', invoiceId, 'amount=', amount)
+
+  // Model 3 (forced upgrade): a successful subscription payment is the
+  // single source of truth for unlocking a workspace + resetting its
+  // usage counters. We do this only when a membership_id is present —
+  // ad-hoc invoice payments without a membership do not represent a
+  // renewal/upgrade event.
+  if (payment.membership_id) {
+    await unlockAndResetForMembership(payment.membership_id)
+  }
+}
+
+async function unlockAndResetForMembership(membershipId: string): Promise<void> {
+  const { data: sub } = await supabaseAdmin
+    .from('workspace_subscriptions')
+    .select('workspace_id')
+    .eq('whop_subscription_id', membershipId)
+    .maybeSingle()
+
+  const workspaceId = (sub as { workspace_id: string } | null)?.workspace_id
+  if (!workspaceId) {
+    Sentry.captureMessage('[whop] payment.succeeded — workspace not found for membership', {
+      level: 'warning',
+      tags:  { integration: 'whop', event: 'payment.succeeded' },
+      extra: { membership_id: membershipId },
+    })
+    return
+  }
+
+  try {
+    await unlockWorkspace(workspaceId)
+  } catch (err) {
+    console.error('[whop webhook] unlockWorkspace failed:', err)
+    Sentry.captureException(err, { tags: { integration: 'whop', event: 'payment.succeeded' } })
+    // Continue to counter reset — the two are independent.
+  }
+
+  // Zero out the latest usage_counters row for this workspace + clear
+  // notification timestamps so the 80%/100% emails can fire again next
+  // period. We keep the row's period boundaries — Whop's renewal moves
+  // current_period_end on workspace_subscriptions, not here.
+  const { error: resetErr } = await supabaseAdmin
+    .from('usage_counters')
+    .update({
+      tickets_used:       0,
+      tickets_overage:    0,
+      ai_suggest_used:    0,
+      ai_suggest_overage: 0,
+      notified_80_at:     null,
+      notified_100_at:    null,
+    })
+    .eq('workspace_id', workspaceId)
+
+  if (resetErr) {
+    console.error('[whop webhook] usage_counters reset failed:', resetErr.message)
+    Sentry.captureException(resetErr, { tags: { integration: 'whop', event: 'payment.succeeded' } })
+  } else {
+    console.log('[whop webhook] payment.succeeded: unlocked + reset counters for workspace=', workspaceId)
+  }
 }
 
 async function handlePaymentFailed(payment: WhopPayment): Promise<void> {

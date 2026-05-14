@@ -22,28 +22,40 @@ export function SidebarItem({ href, icon: Icon, label, badge, collapsed }: Sideb
     <Link
       href={href}
       className={cn(
-        'flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+        'flex h-10 items-center rounded-xl text-sm transition-colors duration-150',
+        // Layout: centered icon (collapsed) vs icon + label (expanded).
+        collapsed ? 'justify-center px-3' : 'gap-3 px-3',
+        // Active = inverted (white tile, dark text). No hover override on active.
         isActive
-          ? 'bg-[rgba(139,92,246,0.14)] text-[#C4B5FD]'
-          : 'text-white/60 hover:bg-white/[0.04]',
-        collapsed && 'justify-center px-2',
+          ? 'bg-white font-medium text-zinc-900'
+          : 'text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200',
       )}
     >
       <Icon
-        size={18}
         className={cn(
-          isActive
-            ? 'text-[#C4B5FD]'
-            : 'text-white/40',
+          'size-5 shrink-0',
+          isActive ? 'text-zinc-900' : 'text-zinc-400',
         )}
       />
       {!collapsed && (
         <>
-          <span className="truncate">{label}</span>
+          <span
+            className={cn(
+              'truncate',
+              isActive ? 'text-zinc-900 font-medium' : 'text-zinc-300',
+            )}
+          >
+            {label}
+          </span>
           {badge !== undefined && badge > 0 && (
             <Badge
               variant="secondary"
-              className="ml-auto bg-primary/10 text-primary text-xs px-1.5 py-0"
+              className={cn(
+                'ml-auto text-xs px-1.5 py-0',
+                isActive
+                  ? 'bg-zinc-900/10 text-zinc-900'
+                  : 'bg-zinc-700/40 text-zinc-300',
+              )}
             >
               {badge}
             </Badge>

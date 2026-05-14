@@ -7,7 +7,6 @@ import { useAuthStore } from '@/stores/auth'
 import { useThemeStore } from '@/stores/theme'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
-import { cn } from '@/lib/utils'
 
 interface SidebarUserProps {
   collapsed?: boolean
@@ -40,7 +39,7 @@ export function SidebarUser({ collapsed }: SidebarUserProps) {
           variant="ghost"
           size="icon"
           onClick={toggle}
-          className="h-7 w-7 text-white/40 hover:text-white/60 hover:bg-white/[0.04]"
+          className="h-7 w-7 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800"
           aria-label={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
         >
           {theme === 'light' ? <Moon size={14} /> : <Sun size={14} />}
@@ -49,7 +48,7 @@ export function SidebarUser({ collapsed }: SidebarUserProps) {
           variant="ghost"
           size="icon"
           onClick={handleLogout}
-          className="h-7 w-7 text-white/40 hover:text-white/60 hover:bg-white/[0.04]"
+          className="h-7 w-7 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800"
           aria-label="Log out"
         >
           <LogOut size={14} />
@@ -59,17 +58,17 @@ export function SidebarUser({ collapsed }: SidebarUserProps) {
   }
 
   return (
-    <div className="flex items-center gap-2.5 rounded-lg px-3 py-2">
+    <div className="flex items-center gap-2.5 rounded-xl px-3 py-2">
       <Avatar className="h-8 w-8 shrink-0">
         <AvatarFallback className="bg-gradient-to-br from-primary to-purple-700 text-white text-xs font-semibold">
           {initials}
         </AvatarFallback>
       </Avatar>
       <div className="flex-1 min-w-0 overflow-hidden">
-        <p className="truncate text-sm font-medium text-white/80">
+        <p className="truncate text-sm font-medium text-zinc-300">
           {displayName}
         </p>
-        <p className="truncate text-xs text-white/50">
+        <p className="truncate text-xs text-zinc-500">
           {email}
         </p>
       </div>
@@ -77,7 +76,7 @@ export function SidebarUser({ collapsed }: SidebarUserProps) {
         variant="ghost"
         size="icon"
         onClick={toggle}
-        className="h-7 w-7 shrink-0 text-white/40 hover:text-white/60 hover:bg-white/[0.04]"
+        className="h-7 w-7 shrink-0 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800"
         aria-label={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
       >
         {theme === 'light' ? <Moon size={14} /> : <Sun size={14} />}
@@ -86,7 +85,7 @@ export function SidebarUser({ collapsed }: SidebarUserProps) {
         variant="ghost"
         size="icon"
         onClick={handleLogout}
-        className="h-7 w-7 shrink-0 text-white/40 hover:text-white/60 hover:bg-white/[0.04]"
+        className="h-7 w-7 shrink-0 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800"
         aria-label="Log out"
       >
         <LogOut size={14} />

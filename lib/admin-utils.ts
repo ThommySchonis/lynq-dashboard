@@ -48,17 +48,31 @@ export function getYoutubeId(url: string | null): string | null {
   return m ? m[1] : null
 }
 
+// CSV-quote helper — doubles internal quotes per RFC 4180.
+function csvSafe(value: string | number | null | undefined): string {
+  if (value == null) return ''
+  return String(value).replace(/"/g, '""')
+}
+
 export function exportTimeCSV(sessions: TimeSession[]): void {
+  // Columns split the new structured fields out of the legacy `Report`
+  // column. Old sessions that pre-date the EOD migration land their
+  // free text in the trailing "Legacy report" column; new sessions
+  // leave that empty and populate the three structured columns.
   const rows = sessions.map((s) => [
-    s.member_name,
-    fmtD(s.clocked_in_at),
-    fmtT(s.clocked_in_at),
-    s.clocked_out_at ? fmtT(s.clocked_out_at) : 'Active',
+    csvSafe(s.member_name),
+    csvSafe(fmtD(s.clocked_in_at)),
+    csvSafe(fmtT(s.clocked_in_at)),
+    csvSafe(s.clocked_out_at ? fmtT(s.clocked_out_at) : 'Active'),
     (workedSec(s) / 3600).toFixed(2),
     ((s.paused_seconds || 0) / 3600).toFixed(2),
-    (s.eod_report || '').replace(/"/g, '""'),
+    csvSafe(s.emails_answered),
+    csvSafe(s.what_went_well),
+    csvSafe(s.needs_attention),
+    csvSafe(s.eod_report),
   ])
-  const header = 'Name,Date,Clock In,Clock Out,Worked (h),Break (h),Report'
+  const header =
+    'Name,Date,Clock In,Clock Out,Worked (h),Break (h),Emails Answered,What Went Well,Needs Attention,Legacy Report'
   const csv = [header, ...rows.map((r) => r.map((c) => `"${c}"`).join(','))].join('\n')
   const blob = new Blob([csv], { type: 'text/csv' })
   const url = URL.createObjectURL(blob)

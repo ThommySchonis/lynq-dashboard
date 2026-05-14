@@ -83,14 +83,20 @@ export function useInquiries() {
 }
 
 export function useTeamMembers() {
+  const token = useToken()
   return useQuery<TeamMember[]>({
     queryKey: adminKeys.team(),
     queryFn: async () => {
-      const { data } = await supabase
-        .from('team_members').select('*')
-        .order('created_at', { ascending: false })
-      return (data as TeamMember[]) ?? []
+      // Goes through /api/admin/team which reads workspace_members joined
+      // with auth.users + user_profiles. The anon supabase client can't do
+      // that join, so server-side is the only path.
+      const res = await fetch('/api/admin/team', {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (!res.ok) return []
+      return (await res.json()) as TeamMember[]
     },
+    enabled: !!token,
   })
 }
 

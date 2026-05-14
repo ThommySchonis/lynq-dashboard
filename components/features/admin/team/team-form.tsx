@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 
-const ROLES = ['developer', 'manager'] as const
+const ROLES = ['admin', 'agent', 'observer'] as const
 
 export function TeamForm() {
   const [form, setForm] = useState<TeamMemberFormType>(INITIAL_TEAM_FORM)

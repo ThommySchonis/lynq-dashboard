@@ -1,6 +1,7 @@
 import type { NextRequest } from 'next/server'
 import { supabaseAdmin } from '../../../lib/supabaseAdmin'
 import { getAuthContext } from '../../../lib/auth'
+import { getEnrichedMembers } from '../../../lib/services/workspace-members'
 import { NextResponse } from 'next/server'
 
 const ADMIN_EMAIL = 'info@lynqagency.com'
@@ -68,13 +69,12 @@ export async function GET(request: NextRequest) {
   // table by email. clients table is empty post-migration; role-based check
   // is the new equivalent.
   if (!isLynqAdmin && isWorkspaceAdmin) {
-    const { data: members } = await supabaseAdmin
-      .from('team_members')
-      .select('id, name, email, role')
-      .eq('workspace_id', ctx.workspaceId)
-      .order('created_at')
+    // Workspace owner/admin — show all members of this workspace.
+    // Source of truth: workspace_members joined with auth.users + user_profiles
+    // via the shared service. member.id = workspace_members.user_id = auth.users.id.
+    const members = await getEnrichedMembers({ workspaceId: ctx.workspaceId })
 
-    const memberIds = (members || []).map(m => m.id)
+    const memberIds = members.map(m => m.id)
     const idFilter = memberIds.length > 0 ? memberIds : ['00000000-0000-0000-0000-000000000000']
 
     const { data: sessions } = await supabaseAdmin
@@ -129,10 +129,9 @@ export async function GET(request: NextRequest) {
 
   // ── Lynq admin view (cross-workspace global) ──────────────────────────────
   if (isLynqAdmin) {
-    const { data: members } = await supabaseAdmin
-      .from('team_members')
-      .select('id, name, email, role')
-      .order('created_at')
+    // Cross-workspace: every workspace_member across the project, enriched
+    // with email + display_name. id = workspace_members.user_id = auth.users.id.
+    const members = await getEnrichedMembers({})
 
     const { data: sessions } = await supabaseAdmin
       .from('time_sessions')
@@ -147,7 +146,7 @@ export async function GET(request: NextRequest) {
       .is('clocked_out_at', null)
 
     const memberMap: Record<string, Record<string, unknown>> = {}
-    ;(members || []).forEach(m => {
+    members.forEach(m => {
       memberMap[m.id] = { ...m, worked_seconds: 0, paused_seconds: 0, sessions_count: 0, is_active: false, is_paused: false }
     })
     ;(activeSessions || []).forEach(s => {
@@ -181,21 +180,17 @@ export async function GET(request: NextRequest) {
     })
   }
 
-  // ── Employee view (workspace-scoped lookup by email) ──────────────────────
-  const { data: member } = await supabaseAdmin
-    .from('team_members')
-    .select('id, name, role')
-    .eq('email', ctx.user.email)
-    .eq('workspace_id', ctx.workspaceId)
-    .maybeSingle()
-
-  if (!member) return NextResponse.json({ error: 'Not a team member' }, { status: 403 })
+  // ── Employee view (workspace member of this workspace) ────────────────────
+  // getAuthContext already proves workspace_members membership; ctx.role and
+  // ctx.workspaceId both come from the same row. No second lookup needed.
+  // agent_id semantics: time_sessions.agent_id = auth.users.id = ctx.user.id.
+  const agentId = ctx.user.id
 
   const { data: sessions } = await supabaseAdmin
     .from('time_sessions')
     .select('*')
     .eq('workspace_id', ctx.workspaceId)
-    .eq('agent_id', member.id)
+    .eq('agent_id', agentId)
     .gte('clocked_in_at', from.toISOString())
     .lte('clocked_in_at', to.toISOString())
     .order('clocked_in_at', { ascending: false })
@@ -204,7 +199,7 @@ export async function GET(request: NextRequest) {
     .from('time_sessions')
     .select('*')
     .eq('workspace_id', ctx.workspaceId)
-    .eq('agent_id', member.id)
+    .eq('agent_id', agentId)
     .is('clocked_out_at', null)
     .order('clocked_in_at', { ascending: false })
     .limit(1)
@@ -216,7 +211,7 @@ export async function GET(request: NextRequest) {
     .from('time_sessions')
     .select('clocked_in_at, clocked_out_at, paused_seconds')
     .eq('workspace_id', ctx.workspaceId)
-    .eq('agent_id', member.id)
+    .eq('agent_id', agentId)
     .gte('clocked_in_at', todayStart.toISOString())
     .not('clocked_out_at', 'is', null)
 
@@ -227,7 +222,7 @@ export async function GET(request: NextRequest) {
 
   return NextResponse.json({
     sessions:       sessions || [],
-    member,
+    member:         { id: agentId, role: ctx.role },
     active_session: active || null,
     today_seconds:  todayWorked,
     from: from.toISOString(),
@@ -252,14 +247,10 @@ export async function POST(request: NextRequest) {
   }
   const { action } = body
 
-  const { data: member } = await supabaseAdmin
-    .from('team_members')
-    .select('id, name, client_id')
-    .eq('email', ctx.user.email)
-    .eq('workspace_id', ctx.workspaceId)
-    .maybeSingle()
-
-  if (!member) return NextResponse.json({ error: 'Not a team member account' }, { status: 403 })
+  // No separate team_members lookup — getAuthContext already proves the
+  // requester is a workspace_member of ctx.workspaceId. We use ctx.user.id
+  // as the agent_id (matches time_sessions.agent_id semantics).
+  const agentId = ctx.user.id
 
   // ── CLOCK IN ──────────────────────────────────────────────────────────────
   if (action === 'clock-in') {
@@ -267,18 +258,19 @@ export async function POST(request: NextRequest) {
       .from('time_sessions')
       .select('id, clocked_in_at, status, paused_seconds, paused_at')
       .eq('workspace_id', ctx.workspaceId)
-      .eq('agent_id', member.id)
+      .eq('agent_id', agentId)
       .is('clocked_out_at', null)
       .maybeSingle()
 
     if (existing) return NextResponse.json({ session: existing, already_active: true })
 
-    // Transition: dual-write client_id (legacy) + workspace_id
+    // client_id was the team_members.client_id pass-through (legacy). Now
+    // null — workspace_id is the source of truth for tenant scoping.
     const { data: session, error } = await supabaseAdmin
       .from('time_sessions')
       .insert({
-        agent_id:       member.id,
-        client_id:      member.client_id || null,
+        agent_id:       agentId,
+        client_id:      null,
         workspace_id:   ctx.workspaceId,
         status:         'active',
         active_seconds: 0,
@@ -302,7 +294,7 @@ export async function POST(request: NextRequest) {
       .update({ status: 'paused', paused_at: new Date().toISOString() })
       .eq('id', session_id)
       .eq('workspace_id', ctx.workspaceId)
-      .eq('agent_id', member.id)
+      .eq("agent_id", agentId)
       .is('clocked_out_at', null)
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
@@ -319,7 +311,7 @@ export async function POST(request: NextRequest) {
       .select('paused_at, paused_seconds')
       .eq('id', session_id)
       .eq('workspace_id', ctx.workspaceId)
-      .eq('agent_id', member.id)
+      .eq("agent_id", agentId)
       .is('clocked_out_at', null)
       .maybeSingle()
 
@@ -366,7 +358,7 @@ export async function POST(request: NextRequest) {
       .select('paused_at, paused_seconds')
       .eq('id', session_id)
       .eq('workspace_id', ctx.workspaceId)
-      .eq('agent_id', member.id)
+      .eq("agent_id", agentId)
       .is('clocked_out_at', null)
       .maybeSingle()
 
@@ -392,7 +384,7 @@ export async function POST(request: NextRequest) {
       })
       .eq('id', session_id)
       .eq('workspace_id', ctx.workspaceId)
-      .eq('agent_id', member.id)
+      .eq("agent_id", agentId)
       .is('clocked_out_at', null)
       .select()
       .single()
@@ -411,7 +403,7 @@ export async function POST(request: NextRequest) {
       .select('active_seconds, status')
       .eq('id', session_id)
       .eq('workspace_id', ctx.workspaceId)
-      .eq('agent_id', member.id)
+      .eq("agent_id", agentId)
       .is('clocked_out_at', null)
       .maybeSingle()
 

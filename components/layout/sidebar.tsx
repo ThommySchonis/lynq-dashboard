@@ -29,16 +29,10 @@ const BOTTOM_ITEMS = [
   { href: '/admin',    icon: Shield,   label: 'Admin'    },
 ] as const
 
-// Iteration 1: structural redesign only.
-//   - Floating dark surface with rounded-2xl + m-3
-//   - w-16 default → w-56 on hover, hover-driven via local React state
-//     (Tailwind `group-hover` was an option; onMouseEnter/Leave keeps the
-//     existing `collapsed` prop contract for SidebarItem / SidebarUser
-//     without touching those files)
-//   - Manual toggle button removed — hover is the only expand trigger
-//
-// Iteration 2 (post-feedback): per-item hover polish, active-state white
-// circle, footer redesign with user avatar + toggle controls.
+// Iter 2: non-floating, edge-to-edge against the left viewport edge.
+// Hover-expand mechanic from iter 1 stays: w-16 default → w-56 on hover
+// via onMouseEnter/Leave + local React state, which keeps SidebarItem
+// and SidebarUser's existing `collapsed` prop contract intact.
 export function Sidebar() {
   const role = useAuthStore((s) => s.role)
   const [hovered, setHovered] = useState(false)
@@ -49,8 +43,8 @@ export function Sidebar() {
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       className={cn(
-        'fixed left-3 top-3 bottom-3 z-40 flex flex-col overflow-hidden',
-        'rounded-2xl border border-zinc-800/60 bg-zinc-900 shadow-xl shadow-black/5',
+        'fixed inset-y-0 left-0 z-40 flex flex-col overflow-hidden',
+        'border-r border-zinc-800/60 bg-zinc-900',
         'transition-[width] duration-200 ease-out',
         collapsed ? 'w-16' : 'w-56',
       )}

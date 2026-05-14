@@ -11,13 +11,10 @@ interface AppShellProps {
   children: React.ReactNode
 }
 
-// Floating sidebar redesign (iter 1):
-//   - Sidebar is fixed at left-3 with w-16 (collapsed) → w-56 on hover
-//   - Content margin is constant `ml-20` (80px) regardless of hover state
-//     — the sidebar overlays the content when it expands, no layout shift
-//   - The Zustand sidebarCollapsed state still exists (not removed in this
-//     iter) but is no longer consumed here; mobile sheet keeps its own
-//     `mobileOpen` local state
+// Iter 2: sidebar is edge-to-edge (no longer floating) at w-16 (collapsed)
+// → w-56 on hover. Content margin is constant `ml-16` (64px) so it sits
+// flush against the collapsed sidebar; the sidebar overlays the content
+// when it expands, no layout shift.
 export function AppShell({ children }: AppShellProps) {
   const [mobileOpen, setMobileOpen] = useState(false)
   const isMobile = useMediaQuery('(max-width: 767px)')
@@ -50,7 +47,7 @@ export function AppShell({ children }: AppShellProps) {
   return (
     <div className="min-h-screen bg-background">
       <Sidebar />
-      <main className="min-h-screen ml-20">
+      <main className="min-h-screen ml-16">
         {children}
       </main>
     </div>

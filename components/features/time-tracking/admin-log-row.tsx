@@ -1,9 +1,11 @@
 'use client'
 
 import { useState } from 'react'
-import { ChevronDown, AlertTriangle, Coffee } from 'lucide-react'
+import { ChevronDown, AlertTriangle, Coffee, Pencil } from 'lucide-react'
 import { fmtDate, fmtTime, fmtDur, durSec } from '@/lib/time-tracking-constants'
-import type { Session } from '@/types/time-tracking'
+import type { Session, TeamMember } from '@/types/time-tracking'
+import { SessionEditModal, type EditPatch } from './session-edit-modal'
+import { useEditSession } from '@/hooks/time-tracking/use-time-tracking-mutations'
 
 // Thresholds for the visual flags shown in admin/owner views only.
 // No auto-clock-out — these are UI hints, never actions.
@@ -34,15 +36,38 @@ function computeLongFlags(s: Session): LongFlags {
 
 interface AdminLogRowProps {
   session: Session
+  /** When true, render an Edit pencil button and enable the edit modal. */
+  canEdit?: boolean
+  /** Optional members map for resolving last_edit_by → display name. */
+  membersById?: Record<string, TeamMember>
 }
 
-export function AdminLogRow({ session: s }: AdminLogRowProps) {
+export function AdminLogRow({ session: s, canEdit = false, membersById }: AdminLogRowProps) {
   const [isExpanded, setIsExpanded] = useState(false)
+  const [editOpen, setEditOpen] = useState(false)
+  const [editError, setEditError] = useState<string | null>(null)
+  const editMutation = useEditSession()
 
   const hasStructured = !!(s.what_went_well || s.needs_attention || s.emails_answered != null)
   const hasLegacy = !hasStructured && !!s.eod_report
-  const canExpand = hasStructured || hasLegacy
+  const wasEdited = !!s.last_edit_at
+  const canExpand = hasStructured || hasLegacy || wasEdited
   const { longSession, longBreak } = computeLongFlags(s)
+
+  // Resolve editor name from the members map (if provided). Falls back to
+  // a truncated UUID when we don't have it (e.g. Lynq cross-workspace
+  // edits from a member who's been removed since).
+  const editorName = s.last_edit_by && membersById
+    ? membersById[s.last_edit_by]?.name ?? `${s.last_edit_by.slice(0, 8)}…`
+    : null
+
+  function handleEditSubmit(patch: EditPatch) {
+    setEditError(null)
+    editMutation.mutate({ sessionId: s.id, patch }, {
+      onSuccess: () => setEditOpen(false),
+      onError:   (err) => setEditError(err instanceof Error ? err.message : 'Could not save'),
+    })
+  }
   const summaryText = hasStructured
     ? s.what_went_well || '—'
     : hasLegacy
@@ -52,7 +77,7 @@ export function AdminLogRow({ session: s }: AdminLogRowProps) {
   return (
     <>
       <div
-        className={`grid grid-cols-[130px_110px_60px_60px_70px_50px_1fr_24px] items-start gap-3 border-b border-black/5 px-4.5 py-2.5 transition-colors last:border-b-0 hover:bg-background ${
+        className={`grid grid-cols-[130px_110px_60px_60px_70px_50px_1fr_52px] items-start gap-3 border-b border-black/5 px-4.5 py-2.5 transition-colors last:border-b-0 hover:bg-background ${
           canExpand ? 'cursor-pointer' : 'cursor-default'
         }`}
         onClick={canExpand ? () => setIsExpanded((v) => !v) : undefined}
@@ -88,7 +113,16 @@ export function AdminLogRow({ session: s }: AdminLogRowProps) {
         <div className="line-clamp-1 text-[12.5px] leading-relaxed text-gray-500">
           {summaryText || <span className="italic text-gray-300">No report</span>}
         </div>
-        <div className="flex items-center justify-end text-gray-400">
+        <div className="flex items-center justify-end gap-1.5 text-gray-400">
+          {canEdit && (
+            <button
+              onClick={(e) => { e.stopPropagation(); setEditOpen(true) }}
+              title="Edit session"
+              className="rounded p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-foreground"
+            >
+              <Pencil className="h-3 w-3" strokeWidth={2} />
+            </button>
+          )}
           {canExpand && (
             <ChevronDown
               className={`h-3.5 w-3.5 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
@@ -105,10 +139,29 @@ export function AdminLogRow({ session: s }: AdminLogRowProps) {
               <DetailBlock label="What went well"  text={s.what_went_well} />
               <DetailBlock label="Needs attention" text={s.needs_attention} />
             </div>
-          ) : (
+          ) : hasLegacy ? (
             <DetailBlock label="Report" text={s.eod_report} />
+          ) : null}
+          {wasEdited && s.last_edit_at && (
+            <div className={`text-[11.5px] text-gray-500 italic ${(hasStructured || hasLegacy) ? 'mt-3 border-t border-black/5 pt-3' : ''}`}>
+              Edited{editorName ? ` by ${editorName}` : ''} on{' '}
+              {new Date(s.last_edit_at).toLocaleString('en-GB', {
+                day: '2-digit', month: 'short', year: 'numeric',
+                hour: '2-digit', minute: '2-digit',
+              })}
+            </div>
           )}
         </div>
+      )}
+
+      {editOpen && (
+        <SessionEditModal
+          session={s}
+          submitting={editMutation.isPending}
+          errorMsg={editError}
+          onSubmit={handleEditSubmit}
+          onCancel={() => { setEditOpen(false); setEditError(null) }}
+        />
       )}
     </>
   )

@@ -22,6 +22,14 @@ export interface Session {
   emails_answered: number | null
   what_went_well:  string | null
   needs_attention: string | null
+  // Manual-edit audit summary — populated from time_session_edits for
+  // admin/owner views. Null when the session has never been edited.
+  last_edit_at?: string | null
+  last_edit_by?: string | null
+  // agent_id (= auth.users.id) is present in admin-view payloads; the
+  // employee-view rows from /api/time include it too. Marked optional
+  // for backwards-compat with old types.
+  agent_id?: string
 }
 
 export interface EodReport {

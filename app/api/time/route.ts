@@ -51,6 +51,29 @@ function workedSec(s: TimeSession): number {
   return Math.max(0, total - (s.paused_seconds || 0))
 }
 
+// Fetch the most-recent edit per session_id for an admin view. Returns
+// a map { sessionId → { edited_at, edited_by_user_id } } so the client
+// can show "edited by Member-Name at date" without a per-row fetch.
+async function fetchLatestEditMap(sessionIds: string[]): Promise<Map<string, { edited_at: string; edited_by_user_id: string }>> {
+  if (sessionIds.length === 0) return new Map()
+  const { data: rows, error } = await supabaseAdmin
+    .from('time_session_edits')
+    .select('session_id, edited_at, edited_by_user_id')
+    .in('session_id', sessionIds)
+    .order('edited_at', { ascending: false })
+  if (error) {
+    console.error('[time] fetchLatestEditMap failed:', error.message)
+    return new Map()
+  }
+  const latest = new Map<string, { edited_at: string; edited_by_user_id: string }>()
+  for (const r of rows ?? []) {
+    if (!latest.has(r.session_id)) {
+      latest.set(r.session_id, { edited_at: r.edited_at, edited_by_user_id: r.edited_by_user_id })
+    }
+  }
+  return latest
+}
+
 export async function GET(request: NextRequest) {
   const ctx = await getAuthContext(request)
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -111,12 +134,20 @@ export async function GET(request: NextRequest) {
       }
     })
 
+    const sessionIds = (sessions || []).map(s => s.id)
+    const latestEdits = await fetchLatestEditMap(sessionIds)
+
     return NextResponse.json({
-      sessions: (sessions || []).map(s => ({
-        ...s,
-        member_name:  (memberMap[s.agent_id]?.name as string)  || 'Unknown',
-        member_email: (memberMap[s.agent_id]?.email as string) || '',
-      })),
+      sessions: (sessions || []).map(s => {
+        const edit = latestEdits.get(s.id)
+        return {
+          ...s,
+          member_name:  (memberMap[s.agent_id]?.name as string)  || 'Unknown',
+          member_email: (memberMap[s.agent_id]?.email as string) || '',
+          last_edit_at:    edit?.edited_at ?? null,
+          last_edit_by:    edit?.edited_by_user_id ?? null,
+        }
+      }),
       members:      Object.values(memberMap),
       active_count: (activeSessions || []).filter(s => s.status !== 'paused').length,
       paused_count: (activeSessions || []).filter(s => s.status === 'paused').length,
@@ -163,11 +194,19 @@ export async function GET(request: NextRequest) {
       }
     })
 
-    const sessionsWithNames = (sessions || []).map(s => ({
-      ...s,
-      member_name:  (memberMap[s.agent_id]?.name as string)  || 'Unknown',
-      member_email: (memberMap[s.agent_id]?.email as string) || '',
-    }))
+    const sessionIds = (sessions || []).map(s => s.id)
+    const latestEdits = await fetchLatestEditMap(sessionIds)
+
+    const sessionsWithNames = (sessions || []).map(s => {
+      const edit = latestEdits.get(s.id)
+      return {
+        ...s,
+        member_name:  (memberMap[s.agent_id]?.name as string)  || 'Unknown',
+        member_email: (memberMap[s.agent_id]?.email as string) || '',
+        last_edit_at:    edit?.edited_at ?? null,
+        last_edit_by:    edit?.edited_by_user_id ?? null,
+      }
+    })
 
     return NextResponse.json({
       sessions: sessionsWithNames,

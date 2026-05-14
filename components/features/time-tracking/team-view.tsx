@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react'
 import { Clock, Search, Download } from 'lucide-react'
 import { fmtDur, TEAM_KPI } from '@/lib/time-tracking-constants'
 import { exportTimeCSV } from '@/lib/admin-utils'
-import type { TimeFilter, TeamData, Session } from '@/types/time-tracking'
+import type { TimeFilter, TeamData } from '@/types/time-tracking'
 import type { TimeSession } from '@/types/admin'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -35,6 +35,14 @@ export function TeamView({ data, filter, onFilterChange }: TeamViewProps) {
   const { members = [], sessions = [], active_count = 0, paused_count = 0, client } = data
   const totalSec = members.reduce((sum, m) => sum + (m.worked_seconds || 0), 0)
 
+  // user_id → TeamMember lookup, used by AdminLogRow to resolve
+  // s.last_edit_by into a display name.
+  const membersById = useMemo(() => {
+    const map: Record<string, typeof members[number]> = {}
+    for (const m of members) map[m.id] = m
+    return map
+  }, [members])
+
   // ─── Filter state (client-side, no extra API calls) ─────────────────
   const [agentSearch, setAgentSearch] = useState('')
   const [agentFilter, setAgentFilter] = useState<string>('all')
@@ -44,7 +52,7 @@ export function TeamView({ data, filter, onFilterChange }: TeamViewProps) {
     return sessions.filter(s => {
       const name = (s.member_name || '').toLowerCase()
       if (q && !name.includes(q)) return false
-      if (agentFilter !== 'all' && (s as Session & { agent_id?: string }).agent_id !== agentFilter) return false
+      if (agentFilter !== 'all' && s.agent_id !== agentFilter) return false
       return true
     })
   }, [sessions, agentSearch, agentFilter])
@@ -192,12 +200,19 @@ export function TeamView({ data, filter, onFilterChange }: TeamViewProps) {
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-[130px_110px_60px_60px_70px_50px_1fr_24px] gap-3 border-b border-black/5 px-4.5 py-2.5">
+            <div className="grid grid-cols-[130px_110px_60px_60px_70px_50px_1fr_52px] gap-3 border-b border-black/5 px-4.5 py-2.5">
               {['Member', 'Date', 'In', 'Out', 'Hours', 'Emails', 'Summary', ''].map(h => (
                 <div key={h} className="text-[10px] font-bold uppercase tracking-wider text-gray-400">{h}</div>
               ))}
             </div>
-            {filteredSessions.map(s => <AdminLogRow key={s.id} session={s} />)}
+            {filteredSessions.map(s => (
+              <AdminLogRow
+                key={s.id}
+                session={s}
+                canEdit
+                membersById={membersById}
+              />
+            ))}
           </>
         )}
       </div>

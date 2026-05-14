@@ -87,34 +87,32 @@ export function TeamView({ data, filter, onFilterChange }: TeamViewProps) {
   const downloadName = `time-tracking-${workspaceSlug}-${filter}.csv`
 
   return (
-    <>
+    <div className="space-y-6">
       {/* Header */}
-      <div className="mb-7 animate-fade-up">
-        <h1 className="mb-1 text-xl font-bold tracking-tight text-foreground">
+      <div className="animate-fade-up">
+        <h1 className="mb-1 text-xl font-semibold tracking-tight text-foreground">
           Team Time Tracking
         </h1>
-        <div className="mb-4 text-[13px] text-gray-500">
+        <div className="mb-5 text-sm text-gray-500">
           {client ? client.company_name : 'All clients'} &middot; {active_count + paused_count} active now
         </div>
         <FilterTabs filter={filter} onChange={onFilterChange} />
       </div>
 
       {/* KPIs */}
-      <div className="mb-4">
-        <KpiCards cards={kpiCards} columns={4} />
-      </div>
+      <KpiCards cards={kpiCards} columns={4} />
 
       {/* Team Members */}
-      <div className="mb-3.5 overflow-hidden rounded-[10px] border border-black/7 bg-white opacity-0 animate-fade-up delay-100">
-        <div className="border-b border-black/6 px-4.5 py-3.5">
+      <div className="overflow-hidden rounded-[10px] border border-gray-200/60 bg-white opacity-0 animate-fade-up delay-100">
+        <div className="border-b border-gray-200/60 px-4.5 py-3.5">
           <div className="text-[13px] font-semibold text-foreground">Team Members</div>
           <div className="mt-0.5 text-xs text-gray-500">Status and hours per member this period</div>
         </div>
         {members.length === 0 ? (
-          <div className="flex flex-col items-center gap-2.5 py-12 px-4.5">
-            <Clock className="h-3.5 w-3.5 text-gray-300" />
-            <div className="text-sm font-medium text-foreground">No team members</div>
-            <div className="text-[13px] text-gray-500">Add team members via the admin panel</div>
+          <div className="flex flex-col items-center gap-2 py-14 px-4.5">
+            <Clock className="h-10 w-10 text-gray-300" strokeWidth={1.5} />
+            <div className="mt-2 text-sm font-medium text-foreground">No team members</div>
+            <div className="text-[13px] text-gray-500">Add team members via the admin panel.</div>
           </div>
         ) : (
           members.map(m => <MemberRow key={m.id} member={m} />)
@@ -122,8 +120,8 @@ export function TeamView({ data, filter, onFilterChange }: TeamViewProps) {
       </div>
 
       {/* Sessions table */}
-      <div className="overflow-hidden rounded-[10px] border border-black/7 bg-white opacity-0 animate-fade-up delay-150">
-        <div className="flex items-center justify-between gap-3 border-b border-black/6 px-4.5 py-3.5">
+      <div className="overflow-hidden rounded-[10px] border border-gray-200/60 bg-white opacity-0 animate-fade-up delay-150">
+        <div className="flex items-center justify-between gap-3 border-b border-gray-200/60 px-4.5 py-3.5">
           <div>
             <div className="text-[13px] font-semibold text-foreground">Sessions</div>
             <div className="mt-0.5 text-xs text-gray-500">
@@ -147,7 +145,7 @@ export function TeamView({ data, filter, onFilterChange }: TeamViewProps) {
 
         {/* Filter row */}
         {sessions.length > 0 && (
-          <div className="flex flex-wrap items-center gap-3 border-b border-black/5 px-4.5 py-2.5">
+          <div className="flex flex-wrap items-center gap-3 border-b border-gray-200/40 px-4.5 py-2.5">
             <div className="relative w-full max-w-xs">
               <Search
                 size={13}
@@ -188,21 +186,22 @@ export function TeamView({ data, filter, onFilterChange }: TeamViewProps) {
         )}
 
         {sessions.length === 0 ? (
-          <div className="flex flex-col items-center gap-2.5 py-12 px-4.5">
-            <Clock className="h-3.5 w-3.5 text-gray-300" />
-            <div className="text-sm font-medium text-foreground">No sessions yet</div>
-            <div className="text-[13px] text-gray-500">Data will appear once team members clock in</div>
+          <div className="flex flex-col items-center gap-2 py-14 px-4.5">
+            <Clock className="h-10 w-10 text-gray-300" strokeWidth={1.5} />
+            <div className="mt-2 text-sm font-medium text-foreground">No sessions yet</div>
+            <div className="text-[13px] text-gray-500">Once team members start tracking time, their sessions will appear here.</div>
           </div>
         ) : filteredSessions.length === 0 ? (
-          <div className="flex flex-col items-center gap-2.5 py-12 px-4.5">
-            <div className="text-sm font-medium text-foreground">No matches</div>
+          <div className="flex flex-col items-center gap-2 py-14 px-4.5">
+            <Clock className="h-10 w-10 text-gray-300" strokeWidth={1.5} />
+            <div className="mt-2 text-sm font-medium text-foreground">No matches</div>
             <div className="text-[13px] text-gray-500">Try a different search or reset filters.</div>
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-[130px_110px_60px_60px_70px_50px_1fr_52px] gap-3 border-b border-black/5 px-4.5 py-2.5">
+            <div className="grid grid-cols-[130px_110px_60px_60px_70px_50px_1fr_52px] gap-3 border-b border-gray-200/40 px-4.5 py-2.5">
               {['Member', 'Date', 'In', 'Out', 'Hours', 'Emails', 'Summary', ''].map(h => (
-                <div key={h} className="text-[10px] font-bold uppercase tracking-wider text-gray-400">{h}</div>
+                <div key={h} className="text-xs uppercase tracking-wider text-gray-500 font-medium">{h}</div>
               ))}
             </div>
             {filteredSessions.map(s => (
@@ -216,6 +215,6 @@ export function TeamView({ data, filter, onFilterChange }: TeamViewProps) {
           </>
         )}
       </div>
-    </>
+    </div>
   )
 }

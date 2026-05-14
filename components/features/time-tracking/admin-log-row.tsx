@@ -77,7 +77,7 @@ export function AdminLogRow({ session: s, canEdit = false, membersById }: AdminL
   return (
     <>
       <div
-        className={`grid grid-cols-[130px_110px_60px_60px_70px_50px_1fr_52px] items-start gap-3 border-b border-black/5 px-4.5 py-2.5 transition-colors last:border-b-0 hover:bg-background ${
+        className={`grid grid-cols-[130px_110px_60px_60px_70px_50px_1fr_52px] items-center gap-3 border-b border-gray-200/40 px-4.5 py-3.5 transition-colors last:border-b-0 hover:bg-gray-50/60 ${
           canExpand ? 'cursor-pointer' : 'cursor-default'
         }`}
         onClick={canExpand ? () => setIsExpanded((v) => !v) : undefined}

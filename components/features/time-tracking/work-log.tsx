@@ -22,23 +22,23 @@ export function WorkLog({ sessions }: WorkLogProps) {
   }
 
   return (
-    <div className="overflow-hidden rounded-[10px] border border-black/7 bg-white opacity-0 animate-fade-up delay-150">
-      <div className="border-b border-black/6 px-4.5 py-3.5">
+    <div className="overflow-hidden rounded-[10px] border border-gray-200/60 bg-white opacity-0 animate-fade-up delay-150">
+      <div className="border-b border-gray-200/60 px-4.5 py-3.5">
         <div className="text-[13px] font-semibold text-foreground">Work Log</div>
         <div className="mt-0.5 text-xs text-gray-500">Your sessions with end-of-day reports</div>
       </div>
 
       {sessions.length === 0 ? (
-        <div className="flex flex-col items-center gap-2.5 py-12 px-4.5">
-          <Clock className="h-8 w-8 text-gray-300" strokeWidth={1.5} />
-          <div className="text-sm font-medium text-foreground">No sessions yet</div>
-          <div className="text-[13px] text-gray-500">Clock in to start tracking your time</div>
+        <div className="flex flex-col items-center gap-2 py-14 px-4.5">
+          <Clock className="h-10 w-10 text-gray-300" strokeWidth={1.5} />
+          <div className="mt-2 text-sm font-medium text-foreground">No sessions yet</div>
+          <div className="text-[13px] text-gray-500">Clock in to start tracking your time.</div>
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-[130px_140px_70px_60px_1fr_24px] gap-3 border-b border-black/5 px-4.5 py-2.5">
+          <div className="grid grid-cols-[130px_140px_70px_60px_1fr_24px] gap-3 border-b border-gray-200/40 px-4.5 py-2.5">
             {['Date', 'Time', 'Hours', 'Emails', 'Summary', ''].map((h) => (
-              <div key={h} className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
+              <div key={h} className="text-xs uppercase tracking-wider text-gray-500 font-medium">
                 {h}
               </div>
             ))}
@@ -76,7 +76,7 @@ function WorkLogRow({ session: s, isExpanded, onToggle }: WorkLogRowProps) {
   return (
     <>
       <div
-        className={`grid grid-cols-[130px_140px_70px_60px_1fr_24px] gap-3 border-b border-black/5 px-4.5 py-2.5 transition-colors last:border-b-0 hover:bg-background ${
+        className={`grid grid-cols-[130px_140px_70px_60px_1fr_24px] items-center gap-3 border-b border-gray-200/40 px-4.5 py-3.5 transition-colors last:border-b-0 hover:bg-gray-50/60 ${
           canExpand ? 'cursor-pointer' : 'cursor-default'
         }`}
         onClick={canExpand ? onToggle : undefined}
@@ -104,7 +104,7 @@ function WorkLogRow({ session: s, isExpanded, onToggle }: WorkLogRowProps) {
       </div>
 
       {isExpanded && canExpand && (
-        <div className="border-b border-black/5 bg-gray-50/60 px-4.5 py-3.5">
+        <div className="border-b border-gray-200/40 bg-gray-50/40 px-4.5 py-3.5">
           {hasStructured ? (
             <div className="space-y-3">
               <DetailBlock label="What went well" text={s.what_went_well} />

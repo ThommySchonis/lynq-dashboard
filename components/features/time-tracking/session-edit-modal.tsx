@@ -75,83 +75,91 @@ export function SessionEditModal({
   }
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/50 backdrop-blur-sm p-6">
-      <div className="w-full max-w-[560px] rounded-xl border border-black/9 bg-white p-7">
-        <h2 className="text-base font-semibold text-foreground">Edit session</h2>
-        <div className="mt-1 text-xs text-gray-500">
-          {session.member_name || 'Session'} &middot; {fmtDate(session.clocked_in_at)}
+    <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 sm:p-6">
+      {/* Modal box: flex column, capped at 85vh so the modal never
+          outgrows the viewport. Header + footer are flex-shrink-0;
+          the body in the middle scrolls. */}
+      <div className="flex w-full max-w-[560px] max-h-[85vh] flex-col overflow-hidden rounded-xl border border-black/9 bg-white">
+        {/* Header — sticky at top */}
+        <div className="flex-shrink-0 px-7 pt-6 pb-5 border-b border-gray-200/60">
+          <h2 className="text-base font-semibold text-foreground">Edit session</h2>
+          <div className="mt-1 text-xs text-gray-500">
+            {session.member_name || 'Session'} &middot; {fmtDate(session.clocked_in_at)}
+          </div>
         </div>
 
-        <div className="my-5 h-px bg-black/6" />
+        {/* Body — scrolls when content exceeds available height */}
+        <div className="flex-1 overflow-y-auto px-7 py-5 [scrollbar-width:thin] [scrollbar-color:#D1D5DB_transparent] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-gray-300">
+          {errorMsg && (
+            <div className="mb-4 rounded-lg border border-red-600/15 bg-red-50 px-3.5 py-2.5 text-[12.5px] text-red-600">
+              {errorMsg}
+            </div>
+          )}
 
-        {errorMsg && (
-          <div className="mb-4 rounded-lg border border-red-600/15 bg-red-50 px-3.5 py-2.5 text-[12.5px] text-red-600">
-            {errorMsg}
-          </div>
-        )}
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <FieldBlock label="Clock-in">
+                <input
+                  type="datetime-local"
+                  value={clockIn}
+                  onChange={(e) => setClockIn(e.target.value)}
+                  className="w-full rounded-lg border border-black/8 bg-gray-100 px-3 py-2 text-[13px] text-foreground outline-none transition-colors focus:border-black/20"
+                />
+              </FieldBlock>
+              <FieldBlock label="Clock-out">
+                <input
+                  type="datetime-local"
+                  value={clockOut}
+                  onChange={(e) => setClockOut(e.target.value)}
+                  placeholder="Leave empty for active"
+                  className="w-full rounded-lg border border-black/8 bg-gray-100 px-3 py-2 text-[13px] text-foreground outline-none transition-colors focus:border-black/20"
+                />
+              </FieldBlock>
+            </div>
 
-        <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-3">
-            <FieldBlock label="Clock-in">
+            <FieldBlock label="Emails answered">
               <input
-                type="datetime-local"
-                value={clockIn}
-                onChange={(e) => setClockIn(e.target.value)}
-                className="w-full rounded-lg border border-black/8 bg-gray-100 px-3 py-2 text-[13px] text-foreground outline-none transition-colors focus:border-black/20"
+                type="number"
+                inputMode="numeric"
+                min={0}
+                step={1}
+                value={emails}
+                onChange={(e) => setEmails(e.target.value)}
+                placeholder="0"
+                className="w-32 rounded-lg border border-black/8 bg-gray-100 px-3 py-2 text-[13px] text-foreground placeholder:text-gray-400 outline-none transition-colors focus:border-black/20 tabular-nums"
               />
             </FieldBlock>
-            <FieldBlock label="Clock-out">
-              <input
-                type="datetime-local"
-                value={clockOut}
-                onChange={(e) => setClockOut(e.target.value)}
-                placeholder="Leave empty for active"
-                className="w-full rounded-lg border border-black/8 bg-gray-100 px-3 py-2 text-[13px] text-foreground outline-none transition-colors focus:border-black/20"
+
+            <FieldBlock label="What went well">
+              <textarea
+                value={wentWell}
+                onChange={(e) => setWentWell(e.target.value)}
+                className="w-full min-h-[72px] resize-y rounded-lg border border-black/8 bg-gray-100 px-3.5 py-2.5 text-[13px] leading-relaxed text-foreground outline-none transition-colors focus:border-black/20"
+              />
+            </FieldBlock>
+
+            <FieldBlock label="Needs attention">
+              <textarea
+                value={needsAttn}
+                onChange={(e) => setNeedsAttn(e.target.value)}
+                className="w-full min-h-[72px] resize-y rounded-lg border border-black/8 bg-gray-100 px-3.5 py-2.5 text-[13px] leading-relaxed text-foreground outline-none transition-colors focus:border-black/20"
+              />
+            </FieldBlock>
+
+            <FieldBlock label="Reason for edit" required hint="Logged with the audit row. Min. 3 characters.">
+              <textarea
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                placeholder="Corrected clock-out time after agent forgot to clock out…"
+                className="w-full min-h-[64px] resize-y rounded-lg border border-black/8 bg-gray-100 px-3.5 py-2.5 text-[13px] leading-relaxed text-foreground placeholder:text-gray-400 outline-none transition-colors focus:border-black/20"
+                autoFocus
               />
             </FieldBlock>
           </div>
-
-          <FieldBlock label="Emails answered">
-            <input
-              type="number"
-              inputMode="numeric"
-              min={0}
-              step={1}
-              value={emails}
-              onChange={(e) => setEmails(e.target.value)}
-              placeholder="0"
-              className="w-32 rounded-lg border border-black/8 bg-gray-100 px-3 py-2 text-[13px] text-foreground placeholder:text-gray-400 outline-none transition-colors focus:border-black/20 tabular-nums"
-            />
-          </FieldBlock>
-
-          <FieldBlock label="What went well">
-            <textarea
-              value={wentWell}
-              onChange={(e) => setWentWell(e.target.value)}
-              className="w-full min-h-[72px] resize-y rounded-lg border border-black/8 bg-gray-100 px-3.5 py-2.5 text-[13px] leading-relaxed text-foreground outline-none transition-colors focus:border-black/20"
-            />
-          </FieldBlock>
-
-          <FieldBlock label="Needs attention">
-            <textarea
-              value={needsAttn}
-              onChange={(e) => setNeedsAttn(e.target.value)}
-              className="w-full min-h-[72px] resize-y rounded-lg border border-black/8 bg-gray-100 px-3.5 py-2.5 text-[13px] leading-relaxed text-foreground outline-none transition-colors focus:border-black/20"
-            />
-          </FieldBlock>
-
-          <FieldBlock label="Reason for edit" required hint="Logged with the audit row. Min. 3 characters.">
-            <textarea
-              value={reason}
-              onChange={(e) => setReason(e.target.value)}
-              placeholder="Corrected clock-out time after agent forgot to clock out…"
-              className="w-full min-h-[64px] resize-y rounded-lg border border-black/8 bg-gray-100 px-3.5 py-2.5 text-[13px] leading-relaxed text-foreground placeholder:text-gray-400 outline-none transition-colors focus:border-black/20"
-              autoFocus
-            />
-          </FieldBlock>
         </div>
 
-        <div className="mt-6 flex justify-end gap-2">
+        {/* Footer — sticky at bottom, always visible regardless of scroll position */}
+        <div className="flex-shrink-0 flex justify-end gap-2 border-t border-gray-200/60 bg-white px-7 py-4">
           <button
             onClick={onCancel}
             disabled={submitting}

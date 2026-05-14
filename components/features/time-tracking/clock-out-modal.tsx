@@ -25,6 +25,7 @@ export function ClockOutModal({
   const [emailsAnswered, setEmailsAnswered] = useState<string>('')
   const [whatWentWell, setWhatWentWell] = useState('')
   const [needsAttention, setNeedsAttention] = useState('')
+  const [discardOpen, setDiscardOpen] = useState(false)
 
   const emailsNumber = emailsAnswered === '' ? null : Number(emailsAnswered)
   const emailsValid =
@@ -33,6 +34,14 @@ export function ClockOutModal({
   const attentionValid = needsAttention.trim().length > 0
   const canSubmit = emailsValid && wentValid && attentionValid && !submitting
 
+  // "Dirty" = the user has typed anything. emailsAnswered > 0 OR any
+  // textarea non-empty. We don't gate on validity — even a partial entry
+  // (e.g. "5" + empty fields) is worth confirming before discarding.
+  const isDirty =
+    (emailsAnswered !== '' && Number(emailsAnswered) > 0) ||
+    whatWentWell.trim().length > 0 ||
+    needsAttention.trim().length > 0
+
   function handleConfirm() {
     if (!canSubmit || emailsNumber === null) return
     onConfirm({
@@ -40,6 +49,17 @@ export function ClockOutModal({
       whatWentWell:   whatWentWell.trim(),
       needsAttention: needsAttention.trim(),
     })
+  }
+
+  // Cancel handler that protects against accidental data loss.
+  // Empty form → cancel immediately. Dirty form → open confirm dialog.
+  function handleCancelClick() {
+    if (submitting) return
+    if (isDirty) {
+      setDiscardOpen(true)
+    } else {
+      onCancel()
+    }
   }
 
   return (
@@ -101,7 +121,7 @@ export function ClockOutModal({
 
         <div className="mt-6 flex justify-end gap-2">
           <button
-            onClick={onCancel}
+            onClick={handleCancelClick}
             disabled={submitting}
             className="h-9 rounded-[7px] border border-black/9 bg-gray-100 px-4.5 text-[13px] font-medium text-gray-700 transition-colors hover:bg-gray-200 disabled:opacity-45 disabled:cursor-not-allowed"
           >
@@ -124,6 +144,39 @@ export function ClockOutModal({
           </button>
         </div>
       </div>
+
+      {/* Inline discard-confirm overlay. Stacks at z-[201] so it sits above
+          the parent modal (z-[200]) without needing a Portal. Replaces the
+          form briefly rather than layering — cleaner than a nested Dialog. */}
+      {discardOpen && (
+        <div className="fixed inset-0 z-[201] flex items-center justify-center bg-black/40 backdrop-blur-sm p-6">
+          <div className="w-full max-w-[400px] rounded-xl border border-black/9 bg-white p-6">
+            <h3 className="text-base font-semibold text-foreground">
+              Discard your end-of-day report?
+            </h3>
+            <p className="mt-2 text-[13px] leading-relaxed text-gray-500">
+              Your work for today won&apos;t be saved. You can still clock out later.
+            </p>
+            <div className="mt-5 flex justify-end gap-2">
+              <button
+                onClick={() => setDiscardOpen(false)}
+                className="h-9 rounded-[7px] border border-black/9 bg-white px-4 text-[13px] font-medium text-foreground transition-colors hover:bg-gray-50"
+              >
+                Keep editing
+              </button>
+              <button
+                onClick={() => {
+                  setDiscardOpen(false)
+                  onCancel()
+                }}
+                className="h-9 rounded-[7px] border border-red-600/15 bg-red-50 px-4 text-[13px] font-semibold text-red-600 transition-colors hover:bg-red-100"
+              >
+                Discard report
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

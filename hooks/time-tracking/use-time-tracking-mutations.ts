@@ -113,6 +113,41 @@ export function useResumeSession() {
   })
 }
 
+interface EditSessionPatch {
+  clocked_in_at?:  string
+  clocked_out_at?: string | null
+  emails_answered?: number | null
+  what_went_well?:  string | null
+  needs_attention?: string | null
+  reason:          string
+}
+
+export function useEditSession() {
+  const token = useToken()
+  const qc = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({ sessionId, patch }: { sessionId: string; patch: EditSessionPatch }) => {
+      const res = await fetch(`/api/time/${sessionId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(patch),
+      })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error(err.error || 'Failed to update session')
+      }
+      return res.json()
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: timeTrackingKeys.all })
+    },
+  })
+}
+
 export async function sendHeartbeat(token: string, sessionId: string): Promise<void> {
   await fetch('/api/time', {
     method: 'POST',

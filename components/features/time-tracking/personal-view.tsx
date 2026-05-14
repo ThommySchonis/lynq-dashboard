@@ -209,17 +209,17 @@ export function PersonalView({
   ]
 
   return (
-    <>
+    <div className="space-y-6">
       {/* Header */}
-      <div className="mb-7 animate-fade-up">
-        <h1 className="mb-1 text-xl font-bold tracking-tight text-foreground">Time Tracking</h1>
-        <div className="mb-4 text-[13px] text-gray-500">Track your daily work hours</div>
+      <div className="animate-fade-up">
+        <h1 className="mb-1 text-xl font-semibold tracking-tight text-foreground">Time Tracking</h1>
+        <div className="mb-5 text-sm text-gray-500">Track your daily work hours</div>
         <FilterTabs filter={filter} onChange={onFilterChange} />
       </div>
 
       {/* Error toast */}
       {error && (
-        <div className="mb-4 flex items-center gap-2.5 rounded-lg border border-red-600/15 bg-red-50 px-3.5 py-2.5 text-[13px] font-medium text-red-600 animate-fade-up">
+        <div className="flex items-center gap-2.5 rounded-lg border border-red-600/15 bg-red-50 px-3.5 py-2.5 text-[13px] font-medium text-red-600 animate-fade-up">
           <AlertCircle className="h-4 w-4 shrink-0" />
           {error}
           <button
@@ -232,26 +232,22 @@ export function PersonalView({
       )}
 
       {/* Clock card */}
-      <div className="mb-3.5">
-        <ClockCard
-          activeSession={activeSession}
-          elapsed={elapsed}
-          isPaused={isPaused}
-          pausedSec={pausedSec}
-          clockingIn={clockIn.isPending}
-          isAdmin={isAdmin}
-          sessions={sessions}
-          onClockIn={handleClockIn}
-          onPause={handlePause}
-          onResume={handleResume}
-          onClockOut={() => setShowModal(true)}
-        />
-      </div>
+      <ClockCard
+        activeSession={activeSession}
+        elapsed={elapsed}
+        isPaused={isPaused}
+        pausedSec={pausedSec}
+        clockingIn={clockIn.isPending}
+        isAdmin={isAdmin}
+        sessions={sessions}
+        onClockIn={handleClockIn}
+        onPause={handlePause}
+        onResume={handleResume}
+        onClockOut={() => setShowModal(true)}
+      />
 
       {/* KPI cards */}
-      <div className="mb-3.5">
-        <KpiCards cards={empKpiCards} columns={3} />
-      </div>
+      <KpiCards cards={empKpiCards} columns={3} />
 
       {/* Work log */}
       <WorkLog sessions={sessions} />
@@ -267,6 +263,6 @@ export function PersonalView({
           submitting={clockOut.isPending}
         />
       )}
-    </>
+    </div>
   )
 }

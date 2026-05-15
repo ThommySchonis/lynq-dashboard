@@ -203,6 +203,25 @@
   transition: background-color 9999s ease-in-out 0s;
 }
 
+/* ── Float-field autofill override ──────────────────────────────────────────── */
+/* Chrome paints autofilled inputs with a light yellow / blue background plus
+ * dark text — fights the glassmorphism dark-theme auth screens. The standard
+ * trick: an inset box-shadow covers Chrome's paint without changing the
+ * developer-set bg (bg-white/[0.06]) underneath. Same shape as .cm-input
+ * above, but with a TRANSPARENT shadow so the existing translucent dark bg
+ * shows through, and white text to match the dark theme. !important is
+ * required to win against Chrome's UA stylesheet. */
+.float-field:-webkit-autofill,
+.float-field:-webkit-autofill:hover,
+.float-field:-webkit-autofill:focus,
+.float-field:-webkit-autofill:active {
+  -webkit-background-clip: text;
+  -webkit-box-shadow: 0 0 0 1000px transparent inset !important;
+  -webkit-text-fill-color: #ffffff !important;
+  caret-color: #ffffff;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
 /* ── Contenteditable placeholder ────────────────────────────────────────────── */
 .compose-ta[contenteditable=true]:empty:before {
   content: attr(data-placeholder);

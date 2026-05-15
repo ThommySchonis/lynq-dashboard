@@ -236,12 +236,24 @@
 
 /* Force the floated label state when Chrome autofills (because Chrome
  * leaves :placeholder-shown=true and the Tailwind peer rule never fires).
- * Scoped with :not(:focus) so the user's focused-state styling — driven
- * by Tailwind peer-focus classes on the label — keeps winning when active. */
-.float-field:-webkit-autofill:not(:focus) ~ .float-label {
-  top: 0.375rem;
-  font-size: 11px;
-  color: rgba(255, 255, 255, 0.6);
+ *
+ * Two selectors: :-webkit-autofill is the legacy Chrome pseudo, :autofill
+ * is the standardised form supported by newer Chrome. Both are needed
+ * for reliable triggering across versions.
+ *
+ * !important on every property because Tailwind v4's utility cascade
+ * occasionally outranks unlayered globals.css rules depending on the
+ * order Tailwind emits its compiled utilities. The previous attempt
+ * (this rule without !important) didn't take effect in the live UI —
+ * the label stayed at resting top-4 in the autofilled+unfocused state.
+ *
+ * Scoped with :not(:focus) so when the user actually clicks the field,
+ * the Tailwind peer-focus styling (purple highlight) wins as designed. */
+.float-field:-webkit-autofill:not(:focus) ~ .float-label,
+.float-field:autofill:not(:focus) ~ .float-label {
+  top: 0.375rem !important;
+  font-size: 11px !important;
+  color: rgba(255, 255, 255, 0.6) !important;
 }
 
 /* ── Contenteditable placeholder ────────────────────────────────────────────── */

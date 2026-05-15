@@ -17,6 +17,7 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [
       { source: "/dashboard.html", destination: "/home", permanent: true },
+      { source: "/settings", destination: "/settings/workspace/general", permanent: false },
     ];
   },
 };

@@ -1,12 +1,4 @@
-import { redirect } from 'next/navigation'
 import { Clock } from 'lucide-react'
-
-const VALID = new Set([
-  'workspace/billing',
-  'integrations/shopify',
-  'personal/profile',
-  'personal/security',
-])
 
 function toLabel(slug: string): string {
   return slug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
@@ -18,10 +10,6 @@ interface PageProps {
 
 export default async function SettingsCatchAll({ params }: PageProps) {
   const { category, page } = await params
-
-  if (!VALID.has(`${category}/${page}`)) {
-    redirect('/settings/workspace/general')
-  }
 
   const categoryLabel = toLabel(category)
   const pageLabel = toLabel(page)

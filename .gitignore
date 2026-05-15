@@ -43,8 +43,6 @@ next-env.d.ts
 # ai agents files
 # /docs/*
 .superpowers/*
-/tasks/*
-.superpowers/*
 
 # supabase CLI local state
 supabase/.temp/

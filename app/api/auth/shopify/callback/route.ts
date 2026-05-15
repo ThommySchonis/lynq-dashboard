@@ -135,6 +135,26 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(`${appUrl}/settings?error=save_failed`)
   }
 
+  // Insert into stores table (dual-write alongside integrations)
+  const { data: newStore } = await supabaseAdmin
+    .from('stores')
+    .upsert(
+      {
+        workspace_id: workspaceId,
+        name: oauthState.store_name || shop.replace('.myshopify.com', ''),
+        shopify_domain: shop,
+        shopify_access_token: tokenData.access_token,
+        shopify_client_secret: oauthState.client_secret || process.env.SHOPIFY_CLIENT_SECRET,
+        shopify_scope: tokenData.scope,
+        shopify_connected_at: new Date().toISOString(),
+      },
+      { onConflict: 'workspace_id,shopify_domain' }
+    )
+    .select('id')
+    .single()
+
+  const storeId = newStore?.id
+
   // Register webhooks. ?cid is now workspace_id (Block C Phase 3 Batch 5).
   // Webhook handler resolves the integration row by workspace_id and falls
   // back to legacy client_id lookup for any pre-migration subscriptions.
@@ -145,7 +165,7 @@ export async function GET(request: NextRequest) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-Shopify-Access-Token': tokenData.access_token! },
       body: JSON.stringify({
-        webhook: { topic, address: `${webhookBase}/api/webhooks/shopify?cid=${workspaceId}`, format: 'json' },
+        webhook: { topic, address: `${webhookBase}/api/webhooks/shopify?cid=${workspaceId}${storeId ? `&store_id=${storeId}` : ''}`, format: 'json' },
       }),
     })
   ))

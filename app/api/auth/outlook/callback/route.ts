@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(`${appUrl}/settings?provider=outlook&status=error`)
   }
 
-  const { userId, workspaceId } = oauthState
+  const { userId, workspaceId, storeId } = oauthState
 
   const clientId = process.env.MICROSOFT_CLIENT_ID
   const clientSecret = process.env.MICROSOFT_CLIENT_SECRET
@@ -82,6 +82,26 @@ export async function GET(request: NextRequest) {
 
   if (emailAccountError) {
     console.error('[outlook/callback] email_accounts upsert error:', emailAccountError.message)
+  }
+
+  // Store-scoped write: when storeId is present, also write to store_email_configs
+  if (storeId) {
+    const { error: storeEmailError } = await supabaseAdmin
+      .from('store_email_configs')
+      .upsert({
+        store_id: storeId,
+        workspace_id: workspaceId,
+        provider: 'outlook',
+        email_address: emailAddress,
+        access_token: encryptedAccessToken,
+        refresh_token: encryptedRefreshToken,
+        token_expiry: new Date(Date.now() + (tokens.expires_in ?? 0) * 1000).toISOString(),
+        connected_at: new Date().toISOString(),
+      }, { onConflict: 'store_id,provider' })
+
+    if (storeEmailError) {
+      console.error('[outlook/callback] store_email_configs upsert error:', storeEmailError.message)
+    }
   }
 
   // LEGACY dual-write: keep writing to outlook_tokens for backwards compatibility

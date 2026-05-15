@@ -3,6 +3,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { authFetch } from '@/lib/inbox-utils'
 import { useAuthStore } from '@/stores/auth'
+import { useStoreStore } from '@/stores/store'
 
 function useToken() {
   return useAuthStore((s) => s.session?.access_token ?? '')
@@ -10,26 +11,28 @@ function useToken() {
 
 export const inboxKeys = {
   all: ['inbox'] as const,
-  conversations: (folder: string, search?: string) =>
-    [...inboxKeys.all, 'conversations', folder, search] as const,
+  conversations: (folder: string, search?: string, storeId?: string | null) =>
+    [...inboxKeys.all, 'conversations', folder, search, storeId] as const,
   conversation: (id: string) => [...inboxKeys.all, 'conversation', id] as const,
   counts: () => [...inboxKeys.all, 'counts'] as const,
   accounts: () => [...inboxKeys.all, 'accounts'] as const,
-  customer: (query: string) => ['customer', query] as const,
+  customer: (query: string, storeId: string | null) => ['customer', query, storeId] as const,
   macros: () => [...inboxKeys.all, 'macros'] as const,
 }
 
 /** Fetch conversation list by folder + optional search */
 export function useConversations(folder: string, search: string) {
   const token = useToken()
+  const activeStoreId = useStoreStore((s) => s.activeStoreId)
   return useQuery({
-    queryKey: inboxKeys.conversations(folder, search),
+    queryKey: inboxKeys.conversations(folder, search, activeStoreId),
     queryFn: async () => {
       const params = new URLSearchParams()
       if (folder === 'unlinked') params.set('unlinked', 'true')
       else if (folder === 'trash') params.set('status', 'closed')
       else params.set('status', folder)
       if (search) params.set('search', search)
+      if (activeStoreId) params.set('store_id', activeStoreId)
       const res = await authFetch(`/api/inbox/conversations?${params}`, {}, token)
       const data = await res.json()
       return (data.conversations || []).map((c: Record<string, string | boolean | null>) => ({
@@ -92,15 +95,17 @@ export function useInboxCounts() {
 /** Fetch Shopify customer by email or order number */
 export function useCustomerSearch(query: string) {
   const token = useToken()
+  const activeStoreId = useStoreStore((s) => s.activeStoreId)
   const trimmed = query.trim()
   const isOrder = /^#?\d+$/.test(trimmed)
   const param = isOrder
     ? `order=${encodeURIComponent(trimmed.replace(/^#/, ''))}`
     : `email=${encodeURIComponent(trimmed)}`
+  const storeParam = activeStoreId ? `&store_id=${activeStoreId}` : ''
   return useQuery({
-    queryKey: inboxKeys.customer(query),
+    queryKey: inboxKeys.customer(query, activeStoreId),
     queryFn: async () => {
-      const res = await authFetch(`/api/shopify/customer?${param}`, {}, token)
+      const res = await authFetch(`/api/shopify/customer?${param}${storeParam}`, {}, token)
       return res.json()
     },
     enabled: !!trimmed && !!token,

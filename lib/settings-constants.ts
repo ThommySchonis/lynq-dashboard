@@ -24,6 +24,7 @@ export const SETTINGS_NAV: SettingsNavGroup[] = [
     { label: 'Users',    href: '/settings/workspace/members' },
     { label: 'Macros',   href: '/settings/workspace/macros' },
     { label: 'Tags',     href: '/settings/workspace/tags' },
+    { label: 'Stores',   href: '/settings/workspace/stores' },
     { label: 'Billing',  href: '/settings/workspace/billing' },
   ]},
   { label: 'EMAIL', items: [

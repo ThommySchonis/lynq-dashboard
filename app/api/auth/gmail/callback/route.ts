@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(`${appUrl}/settings?provider=gmail&status=error`)
   }
 
-  const { userId, workspaceId } = verifiedState
+  const { userId, workspaceId, storeId } = verifiedState
 
   const clientId = process.env.GOOGLE_CLIENT_ID?.trim()
   const clientSecret = process.env.GOOGLE_CLIENT_SECRET?.trim()
@@ -79,6 +79,26 @@ export async function GET(request: NextRequest) {
 
   if (emailAccountError) {
     console.error('[gmail/callback] email_accounts upsert error:', emailAccountError.message)
+  }
+
+  // Store-scoped write: when storeId is present, also write to store_email_configs
+  if (storeId) {
+    const { error: storeEmailError } = await supabaseAdmin
+      .from('store_email_configs')
+      .upsert({
+        store_id: storeId,
+        workspace_id: workspaceId,
+        provider: 'gmail',
+        email_address: emailAddress,
+        access_token: encryptedAccessToken,
+        refresh_token: encryptedRefreshToken,
+        token_expiry: new Date(Date.now() + (tokens.expires_in ?? 0) * 1000).toISOString(),
+        connected_at: new Date().toISOString(),
+      }, { onConflict: 'store_id,provider' })
+
+    if (storeEmailError) {
+      console.error('[gmail/callback] store_email_configs upsert error:', storeEmailError.message)
+    }
   }
 
   // LEGACY dual-write: keep writing to gmail_tokens for backwards compatibility

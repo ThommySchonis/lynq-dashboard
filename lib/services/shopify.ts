@@ -47,11 +47,16 @@ async function shopifyFetchJSON(credentials: any, path: string, options: any = {
 /**
  * KPIs from shopify_orders table via PostgreSQL stored function.
  */
-export async function getKPIs(workspaceId: string, dateRange: { from: string; to: string }) {
+export async function getKPIs(
+  workspaceId: string,
+  dateRange: { from: string; to: string },
+  storeId?: string
+) {
   const { data, error } = await supabaseAdmin.rpc('get_kpis', {
     p_workspace_id: workspaceId,
     p_from: dateRange.from,
     p_to: dateRange.to,
+    p_store_id: storeId || null,
   })
 
   if (error) throw new Error(`get_kpis RPC failed: ${error.message}`)
@@ -86,13 +91,18 @@ export async function getKPIs(workspaceId: string, dateRange: { from: string; to
 /**
  * Daily revenue trend via PostgreSQL stored function.
  */
-export async function getRevenueTrend(workspaceId: string, dateRange: { from: string; to: string }) {
+export async function getRevenueTrend(
+  workspaceId: string,
+  dateRange: { from: string; to: string },
+  storeId?: string
+) {
   if (!dateRange.from || !dateRange.to) return []
 
   const { data, error } = await supabaseAdmin.rpc('get_revenue_trend', {
     p_workspace_id: workspaceId,
     p_from: dateRange.from,
     p_to: dateRange.to,
+    p_store_id: storeId || null,
   })
 
   if (error) throw new Error(`get_revenue_trend RPC failed: ${error.message}`)
@@ -684,7 +694,7 @@ export async function fulfillOrder(credentials: any, orderId: any, params: any =
 /**
  * Bulk sync Shopify orders into shopify_orders table.
  */
-export async function syncOrders(workspaceId: string, credentials: any, userId: string, options: any = {}) {
+export async function syncOrders(workspaceId: string, credentials: any, userId: string, options: { full?: boolean; storeId?: string } = {}) {
   // Fetch + store currency
   const shopRes = await fetch(
     `https://${credentials.domain}/admin/api/${SHOPIFY_API_VERSION}/shop.json`,
@@ -693,9 +703,16 @@ export async function syncOrders(workspaceId: string, credentials: any, userId: 
   if (shopRes.ok) {
     const shopData = await shopRes.json()
     const currency = shopData.shop?.currency || 'EUR'
-    await supabaseAdmin.from('integrations')
-      .update({ store_currency: currency })
-      .eq('workspace_id', workspaceId)
+    if (options.storeId) {
+      await supabaseAdmin
+        .from('stores')
+        .update({ store_currency: currency })
+        .eq('id', options.storeId)
+    } else {
+      await supabaseAdmin.from('integrations')
+        .update({ store_currency: currency })
+        .eq('workspace_id', workspaceId)
+    }
   }
 
   // Paginate through orders
@@ -752,6 +769,7 @@ export async function syncOrders(workspaceId: string, credentials: any, userId: 
       processed_at: order.processed_at,
       created_at_shopify: order.created_at,
       updated_at_shopify: order.updated_at,
+      store_id: options.storeId || null,
       synced_at: new Date().toISOString(),
     }
   })

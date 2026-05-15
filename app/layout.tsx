@@ -20,6 +20,7 @@ const dmSans = DM_Sans({
 import { AuthHydrator } from '@/components/providers/auth-hydrator'
 import { ThemeSync } from '@/components/providers/theme-sync'
 import { QueryProvider } from '@/components/providers/query-provider'
+import { StoreProvider } from '@/components/providers/store-provider'
 import { Toaster } from '@/components/ui/sonner'
 import { PageTransition } from '@/components/shared/page-transition'
 import { BlockedStateGuard } from '@/components/shared/blocked-state-guard'
@@ -52,6 +53,7 @@ export default function RootLayout({
         <AuthHydrator />
         <ThemeSync />
         <QueryProvider>
+          <StoreProvider />
           <BlockedStateGuard>
             <PageTransition>{children}</PageTransition>
           </BlockedStateGuard>

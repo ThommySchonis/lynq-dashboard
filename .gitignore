@@ -44,6 +44,7 @@ next-env.d.ts
 # /docs/*
 .superpowers/*
 /tasks/*
+.superpowers/*
 
 # Sentry Config File
 .env.sentry-build-plugin

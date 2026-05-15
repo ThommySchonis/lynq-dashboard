@@ -124,14 +124,18 @@ Het dashboard gebruikt `@supabase/supabase-js` via CDN. Bij laden:
 
 ## Git Branch Management — mandatory rule
 
-**Never commit directly to `main`.** All work must happen on feature branches.
+### Dev vs. Client detection
 
-### Branch naming
+Check `git config user.email` at the start of each session:
+- **Dev (denver9523@gmail.com):** Can commit directly to `main`. Feature branches are optional.
+- **Anyone else (client):** Must use feature branches. Never commit directly to `main`.
+
+### Branch naming (when using feature branches)
 
 Use prefixes: `feature/`, `fix/`, `refactor/`, `chore/`
 Examples: `feature/refunds-table`, `fix/login-redirect`, `chore/update-deps`
 
-### Workflow
+### Workflow for clients (non-dev)
 
 1. Before starting any feature or fix, create a new branch from `main`:
    ```
@@ -144,10 +148,11 @@ Examples: `feature/refunds-table`, `fix/login-redirect`, `chore/update-deps`
 
 ### Rules for Claude (AI assistant)
 
-- **Always** check the current branch before making changes. If on `main`, create a feature branch first.
+- **First**, check `git config user.email`. If it is `denver9523@gmail.com` (dev), committing directly to `main` is allowed — skip branch creation.
+- If the git user is **not** the dev, always create a feature branch before making changes.
 - **Never** force-push or rebase `main`.
 - **Never** merge a feature branch into `main` without explicit user approval.
-- When the user (client) has committed directly to `main`, do not overwrite their work. Instead, branch from the current state and continue from there.
+- When a client has committed directly to `main`, do not overwrite their work. Instead, branch from the current state and continue from there.
 - Keep commits small and focused — one logical change per commit.
 
 ## Workflow: aanpassen en deployen

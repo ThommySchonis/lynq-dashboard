@@ -38,12 +38,20 @@ export const FloatField = forwardRef<HTMLInputElement, FloatFieldProps>(
           htmlFor={id}
           className={cn(
             'float-label',
+            // Horizontal anchor matches the input's pl-7 (28px) exactly so
+            // resting + floated label and typed text share the same left
+            // edge. NO transforms — the previous dual-system (globals.css
+            // translateY + scale plus Tailwind top/font/tracking changes)
+            // caused the floated label to render outside the input box and
+            // appear horizontally mis-aligned.
             'absolute left-7 top-4',
             'text-sm text-white/40',
             'pointer-events-none',
-            'origin-left transition-[top,font-size,color,letter-spacing] duration-[180ms] ease-[ease]',
-            'peer-focus:top-2 peer-focus:text-[11px] peer-focus:tracking-[0.05em] peer-focus:text-[#C4B0FF]',
-            'peer-[:not(:placeholder-shown)]:top-2 peer-[:not(:placeholder-shown)]:text-[11px] peer-[:not(:placeholder-shown)]:tracking-[0.05em] peer-[:not(:placeholder-shown)]:text-white/60',
+            'transition-[top,font-size,color] duration-[180ms] ease-[ease]',
+            // Floated state: sits INSIDE the input at the top, smaller font.
+            // Material-style inset label — no scale, no tracking change.
+            'peer-focus:top-1.5 peer-focus:text-[11px] peer-focus:text-[#C4B0FF]',
+            'peer-[:not(:placeholder-shown)]:top-1.5 peer-[:not(:placeholder-shown)]:text-[11px] peer-[:not(:placeholder-shown)]:text-white/60',
             error && 'text-red-400/70',
           )}
         >

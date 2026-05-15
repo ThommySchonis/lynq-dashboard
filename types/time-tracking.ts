@@ -14,7 +14,28 @@ export interface Session {
   status: 'active' | 'paused' | 'ended'
   paused_at: string | null
   paused_seconds: number
+  // Legacy free-text report — populated for sessions clocked out before
+  // the structured EOD fields shipped. Kept for backwards compatibility.
   eod_report: string | null
+  // Structured EOD fields — required at clock-out time for new sessions,
+  // null for sessions that pre-date this column set.
+  emails_answered: number | null
+  what_went_well:  string | null
+  needs_attention: string | null
+  // Manual-edit audit summary — populated from time_session_edits for
+  // admin/owner views. Null when the session has never been edited.
+  last_edit_at?: string | null
+  last_edit_by?: string | null
+  // agent_id (= auth.users.id) is present in admin-view payloads; the
+  // employee-view rows from /api/time include it too. Marked optional
+  // for backwards-compat with old types.
+  agent_id?: string
+}
+
+export interface EodReport {
+  emailsAnswered: number
+  whatWentWell:   string
+  needsAttention: string
 }
 
 export interface TeamMember {

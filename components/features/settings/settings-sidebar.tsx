@@ -5,11 +5,14 @@ import { usePathname, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Search } from 'lucide-react'
 import { Input } from '@/components/ui/input'
+import { useUIStore } from '@/stores/ui'
+import { cn } from '@/lib/utils'
 import { SETTINGS_NAV, ALL_SETTINGS_ITEMS } from '@/lib/settings-constants'
 
 export function SettingsSidebar() {
   const pathname = usePathname()
   const router = useRouter()
+  const collapsed = useUIStore((s) => s.sidebarCollapsed)
   const [query, setQuery] = useState('')
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const searchRef = useRef<HTMLDivElement>(null)
@@ -57,7 +60,7 @@ export function SettingsSidebar() {
   const personalGroupIndex = SETTINGS_NAV.findIndex(g => g.label === 'PERSONAL')
 
   return (
-    <aside className="fixed left-[208px] top-0 bottom-0 w-[260px] bg-secondary border-r border-[#E5E0EB] flex flex-col z-40">
+    <aside className={cn('fixed top-0 bottom-0 w-[260px] bg-secondary border-r border-[#E5E0EB] flex flex-col z-40 transition-[left] duration-200', collapsed ? 'left-[60px]' : 'left-[208px]')}>
       {/* Header */}
       <div className="px-4 pt-5 pb-4 border-b border-[#E5E0EB] flex-shrink-0">
         <h2 className="text-[22px] font-semibold text-foreground mb-3 mt-0 leading-tight">

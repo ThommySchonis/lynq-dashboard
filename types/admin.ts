@@ -42,11 +42,14 @@ export interface Inquiry {
   created_at: string
 }
 
+export type TeamMemberRole = 'owner' | 'admin' | 'agent' | 'observer'
+
 export interface TeamMember {
+  /** auth.users.id — matches workspace_members.user_id and time_sessions.agent_id. */
   id: string
   name: string
   email: string
-  role: 'developer' | 'manager'
+  role: TeamMemberRole
   created_at: string
 }
 
@@ -94,6 +97,9 @@ export interface TimeSession {
   active_seconds: number
   paused_seconds: number
   eod_report: string | null
+  emails_answered: number | null
+  what_went_well:  string | null
+  needs_attention: string | null
 }
 
 export interface TimeMember {
@@ -136,11 +142,15 @@ export interface NotificationForm {
   type: NotificationType
 }
 
+/** Roles assignable via the team-create form. Owner is excluded — every
+ *  workspace already has exactly one owner (the provisioner). */
+export type InvitableRole = 'admin' | 'agent' | 'observer'
+
 export interface TeamMemberForm {
   name: string
   email: string
   password: string
-  role: 'developer' | 'manager'
+  role: InvitableRole
 }
 
 export interface MasterclassForm {

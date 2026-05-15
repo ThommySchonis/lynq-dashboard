@@ -21,7 +21,7 @@ export const FloatField = forwardRef<HTMLInputElement, FloatFieldProps>(
           className={cn(
             'float-field',
             'peer w-full h-[54px] box-border',
-            'pt-5 pb-1.5 px-4',
+            'pt-5 pb-1.5 px-7',
             'bg-white/[0.06] border border-white/[0.12] rounded-xl',
             'text-[15px] text-white/95',
             'outline-none transition-[border-color,box-shadow,background-color] duration-200 ease-[ease]',
@@ -38,7 +38,7 @@ export const FloatField = forwardRef<HTMLInputElement, FloatFieldProps>(
           htmlFor={id}
           className={cn(
             'float-label',
-            'absolute left-4 top-4',
+            'absolute left-7 top-4',
             'text-sm text-white/40',
             'pointer-events-none',
             'origin-left transition-[top,font-size,color,letter-spacing] duration-[180ms] ease-[ease]',

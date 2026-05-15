@@ -4,6 +4,7 @@ import { toast } from 'sonner'
 import { Trash2 } from 'lucide-react'
 import { useTeamMembers, useDeleteTeamMember } from '@/hooks/admin'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
+import { formatRole } from '@/lib/utils'
 
 export function TeamList() {
   const { data: teamMembers = [] } = useTeamMembers()
@@ -53,7 +54,7 @@ export function TeamList() {
 
               <div className="flex items-center gap-2.5">
                 <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-violet-500/8 text-violet-600 border border-violet-500/15">
-                  {m.role}
+                  {formatRole(m.role)}
                 </span>
                 <button
                   onClick={() => handleDelete(m.id, m.email)}

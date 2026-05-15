@@ -140,7 +140,7 @@ export const INITIAL_NOTIFICATION_FORM: NotificationForm = {
 }
 
 export const INITIAL_TEAM_FORM: TeamMemberForm = {
-  name: '', email: '', password: '', role: 'developer',
+  name: '', email: '', password: '', role: 'agent',
 }
 
 export const INITIAL_MASTERCLASS_FORM: MasterclassForm = {

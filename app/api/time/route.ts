@@ -1,6 +1,7 @@
 import type { NextRequest } from 'next/server'
 import { supabaseAdmin } from '../../../lib/supabaseAdmin'
 import { getAuthContext } from '../../../lib/auth'
+import { getEnrichedMembers } from '../../../lib/services/workspace-members'
 import { NextResponse } from 'next/server'
 
 const ADMIN_EMAIL = 'info@lynqagency.com'
@@ -50,6 +51,29 @@ function workedSec(s: TimeSession): number {
   return Math.max(0, total - (s.paused_seconds || 0))
 }
 
+// Fetch the most-recent edit per session_id for an admin view. Returns
+// a map { sessionId → { edited_at, edited_by_user_id } } so the client
+// can show "edited by Member-Name at date" without a per-row fetch.
+async function fetchLatestEditMap(sessionIds: string[]): Promise<Map<string, { edited_at: string; edited_by_user_id: string }>> {
+  if (sessionIds.length === 0) return new Map()
+  const { data: rows, error } = await supabaseAdmin
+    .from('time_session_edits')
+    .select('session_id, edited_at, edited_by_user_id')
+    .in('session_id', sessionIds)
+    .order('edited_at', { ascending: false })
+  if (error) {
+    console.error('[time] fetchLatestEditMap failed:', error.message)
+    return new Map()
+  }
+  const latest = new Map<string, { edited_at: string; edited_by_user_id: string }>()
+  for (const r of rows ?? []) {
+    if (!latest.has(r.session_id)) {
+      latest.set(r.session_id, { edited_at: r.edited_at, edited_by_user_id: r.edited_by_user_id })
+    }
+  }
+  return latest
+}
+
 export async function GET(request: NextRequest) {
   const ctx = await getAuthContext(request)
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -68,13 +92,12 @@ export async function GET(request: NextRequest) {
   // table by email. clients table is empty post-migration; role-based check
   // is the new equivalent.
   if (!isLynqAdmin && isWorkspaceAdmin) {
-    const { data: members } = await supabaseAdmin
-      .from('team_members')
-      .select('id, name, email, role')
-      .eq('workspace_id', ctx.workspaceId)
-      .order('created_at')
+    // Workspace owner/admin — show all members of this workspace.
+    // Source of truth: workspace_members joined with auth.users + user_profiles
+    // via the shared service. member.id = workspace_members.user_id = auth.users.id.
+    const members = await getEnrichedMembers({ workspaceId: ctx.workspaceId })
 
-    const memberIds = (members || []).map(m => m.id)
+    const memberIds = members.map(m => m.id)
     const idFilter = memberIds.length > 0 ? memberIds : ['00000000-0000-0000-0000-000000000000']
 
     const { data: sessions } = await supabaseAdmin
@@ -111,12 +134,20 @@ export async function GET(request: NextRequest) {
       }
     })
 
+    const sessionIds = (sessions || []).map(s => s.id)
+    const latestEdits = await fetchLatestEditMap(sessionIds)
+
     return NextResponse.json({
-      sessions: (sessions || []).map(s => ({
-        ...s,
-        member_name:  (memberMap[s.agent_id]?.name as string)  || 'Unknown',
-        member_email: (memberMap[s.agent_id]?.email as string) || '',
-      })),
+      sessions: (sessions || []).map(s => {
+        const edit = latestEdits.get(s.id)
+        return {
+          ...s,
+          member_name:  (memberMap[s.agent_id]?.name as string)  || 'Unknown',
+          member_email: (memberMap[s.agent_id]?.email as string) || '',
+          last_edit_at:    edit?.edited_at ?? null,
+          last_edit_by:    edit?.edited_by_user_id ?? null,
+        }
+      }),
       members:      Object.values(memberMap),
       active_count: (activeSessions || []).filter(s => s.status !== 'paused').length,
       paused_count: (activeSessions || []).filter(s => s.status === 'paused').length,
@@ -129,10 +160,9 @@ export async function GET(request: NextRequest) {
 
   // ── Lynq admin view (cross-workspace global) ──────────────────────────────
   if (isLynqAdmin) {
-    const { data: members } = await supabaseAdmin
-      .from('team_members')
-      .select('id, name, email, role')
-      .order('created_at')
+    // Cross-workspace: every workspace_member across the project, enriched
+    // with email + display_name. id = workspace_members.user_id = auth.users.id.
+    const members = await getEnrichedMembers({})
 
     const { data: sessions } = await supabaseAdmin
       .from('time_sessions')
@@ -147,7 +177,7 @@ export async function GET(request: NextRequest) {
       .is('clocked_out_at', null)
 
     const memberMap: Record<string, Record<string, unknown>> = {}
-    ;(members || []).forEach(m => {
+    members.forEach(m => {
       memberMap[m.id] = { ...m, worked_seconds: 0, paused_seconds: 0, sessions_count: 0, is_active: false, is_paused: false }
     })
     ;(activeSessions || []).forEach(s => {
@@ -164,11 +194,19 @@ export async function GET(request: NextRequest) {
       }
     })
 
-    const sessionsWithNames = (sessions || []).map(s => ({
-      ...s,
-      member_name:  (memberMap[s.agent_id]?.name as string)  || 'Unknown',
-      member_email: (memberMap[s.agent_id]?.email as string) || '',
-    }))
+    const sessionIds = (sessions || []).map(s => s.id)
+    const latestEdits = await fetchLatestEditMap(sessionIds)
+
+    const sessionsWithNames = (sessions || []).map(s => {
+      const edit = latestEdits.get(s.id)
+      return {
+        ...s,
+        member_name:  (memberMap[s.agent_id]?.name as string)  || 'Unknown',
+        member_email: (memberMap[s.agent_id]?.email as string) || '',
+        last_edit_at:    edit?.edited_at ?? null,
+        last_edit_by:    edit?.edited_by_user_id ?? null,
+      }
+    })
 
     return NextResponse.json({
       sessions: sessionsWithNames,
@@ -181,21 +219,17 @@ export async function GET(request: NextRequest) {
     })
   }
 
-  // ── Employee view (workspace-scoped lookup by email) ──────────────────────
-  const { data: member } = await supabaseAdmin
-    .from('team_members')
-    .select('id, name, role')
-    .eq('email', ctx.user.email)
-    .eq('workspace_id', ctx.workspaceId)
-    .maybeSingle()
-
-  if (!member) return NextResponse.json({ error: 'Not a team member' }, { status: 403 })
+  // ── Employee view (workspace member of this workspace) ────────────────────
+  // getAuthContext already proves workspace_members membership; ctx.role and
+  // ctx.workspaceId both come from the same row. No second lookup needed.
+  // agent_id semantics: time_sessions.agent_id = auth.users.id = ctx.user.id.
+  const agentId = ctx.user.id
 
   const { data: sessions } = await supabaseAdmin
     .from('time_sessions')
     .select('*')
     .eq('workspace_id', ctx.workspaceId)
-    .eq('agent_id', member.id)
+    .eq('agent_id', agentId)
     .gte('clocked_in_at', from.toISOString())
     .lte('clocked_in_at', to.toISOString())
     .order('clocked_in_at', { ascending: false })
@@ -204,7 +238,7 @@ export async function GET(request: NextRequest) {
     .from('time_sessions')
     .select('*')
     .eq('workspace_id', ctx.workspaceId)
-    .eq('agent_id', member.id)
+    .eq('agent_id', agentId)
     .is('clocked_out_at', null)
     .order('clocked_in_at', { ascending: false })
     .limit(1)
@@ -216,7 +250,7 @@ export async function GET(request: NextRequest) {
     .from('time_sessions')
     .select('clocked_in_at, clocked_out_at, paused_seconds')
     .eq('workspace_id', ctx.workspaceId)
-    .eq('agent_id', member.id)
+    .eq('agent_id', agentId)
     .gte('clocked_in_at', todayStart.toISOString())
     .not('clocked_out_at', 'is', null)
 
@@ -227,7 +261,7 @@ export async function GET(request: NextRequest) {
 
   return NextResponse.json({
     sessions:       sessions || [],
-    member,
+    member:         { id: agentId, role: ctx.role },
     active_session: active || null,
     today_seconds:  todayWorked,
     from: from.toISOString(),
@@ -240,17 +274,22 @@ export async function POST(request: NextRequest) {
   const ctx = await getAuthContext(request)
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const body = await request.json() as { action: string; session_id?: string; eod_report?: string }
+  const body = await request.json() as {
+    action: string
+    session_id?: string
+    // Structured EOD report — required at clock-out for new sessions.
+    report?: {
+      emails_answered: number
+      what_went_well:  string
+      needs_attention: string
+    }
+  }
   const { action } = body
 
-  const { data: member } = await supabaseAdmin
-    .from('team_members')
-    .select('id, name, client_id')
-    .eq('email', ctx.user.email)
-    .eq('workspace_id', ctx.workspaceId)
-    .maybeSingle()
-
-  if (!member) return NextResponse.json({ error: 'Not a team member account' }, { status: 403 })
+  // No separate team_members lookup — getAuthContext already proves the
+  // requester is a workspace_member of ctx.workspaceId. We use ctx.user.id
+  // as the agent_id (matches time_sessions.agent_id semantics).
+  const agentId = ctx.user.id
 
   // ── CLOCK IN ──────────────────────────────────────────────────────────────
   if (action === 'clock-in') {
@@ -258,18 +297,19 @@ export async function POST(request: NextRequest) {
       .from('time_sessions')
       .select('id, clocked_in_at, status, paused_seconds, paused_at')
       .eq('workspace_id', ctx.workspaceId)
-      .eq('agent_id', member.id)
+      .eq('agent_id', agentId)
       .is('clocked_out_at', null)
       .maybeSingle()
 
     if (existing) return NextResponse.json({ session: existing, already_active: true })
 
-    // Transition: dual-write client_id (legacy) + workspace_id
+    // client_id was the team_members.client_id pass-through (legacy). Now
+    // null — workspace_id is the source of truth for tenant scoping.
     const { data: session, error } = await supabaseAdmin
       .from('time_sessions')
       .insert({
-        agent_id:       member.id,
-        client_id:      member.client_id || null,
+        agent_id:       agentId,
+        client_id:      null,
         workspace_id:   ctx.workspaceId,
         status:         'active',
         active_seconds: 0,
@@ -293,7 +333,7 @@ export async function POST(request: NextRequest) {
       .update({ status: 'paused', paused_at: new Date().toISOString() })
       .eq('id', session_id)
       .eq('workspace_id', ctx.workspaceId)
-      .eq('agent_id', member.id)
+      .eq("agent_id", agentId)
       .is('clocked_out_at', null)
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
@@ -310,7 +350,7 @@ export async function POST(request: NextRequest) {
       .select('paused_at, paused_seconds')
       .eq('id', session_id)
       .eq('workspace_id', ctx.workspaceId)
-      .eq('agent_id', member.id)
+      .eq("agent_id", agentId)
       .is('clocked_out_at', null)
       .maybeSingle()
 
@@ -333,8 +373,23 @@ export async function POST(request: NextRequest) {
 
   // ── CLOCK OUT ─────────────────────────────────────────────────────────────
   if (action === 'clock-out') {
-    const { session_id, eod_report } = body
+    const { session_id, report } = body
     if (!session_id) return NextResponse.json({ error: 'Missing session_id' }, { status: 400 })
+
+    // Structured EOD report is required for new clock-outs. The old free-text
+    // eod_report column stays NULL for new sessions; legacy sessions retain
+    // whatever was written before this migration.
+    if (!report || typeof report !== 'object') {
+      return NextResponse.json({ error: 'Missing end-of-day report' }, { status: 400 })
+    }
+    const emailsAnswered = Number(report.emails_answered)
+    if (!Number.isInteger(emailsAnswered) || emailsAnswered < 0) {
+      return NextResponse.json({ error: 'emails_answered must be a non-negative integer' }, { status: 400 })
+    }
+    const whatWentWell  = typeof report.what_went_well  === 'string' ? report.what_went_well.trim()  : ''
+    const needsAttention = typeof report.needs_attention === 'string' ? report.needs_attention.trim() : ''
+    if (!whatWentWell)   return NextResponse.json({ error: 'what_went_well is required' },   { status: 400 })
+    if (!needsAttention) return NextResponse.json({ error: 'needs_attention is required' }, { status: 400 })
 
     // Finalise any ongoing pause before closing
     const { data: current } = await supabaseAdmin
@@ -342,7 +397,7 @@ export async function POST(request: NextRequest) {
       .select('paused_at, paused_seconds')
       .eq('id', session_id)
       .eq('workspace_id', ctx.workspaceId)
-      .eq('agent_id', member.id)
+      .eq("agent_id", agentId)
       .is('clocked_out_at', null)
       .maybeSingle()
 
@@ -356,15 +411,19 @@ export async function POST(request: NextRequest) {
     const { data: session, error } = await supabaseAdmin
       .from('time_sessions')
       .update({
-        clocked_out_at: new Date().toISOString(),
-        status:         'completed',
-        paused_at:      null,
-        paused_seconds: finalPaused,
-        eod_report:     eod_report?.trim() || null,
+        clocked_out_at:  new Date().toISOString(),
+        status:          'completed',
+        paused_at:       null,
+        paused_seconds:  finalPaused,
+        // Legacy free-text column: NULL for new sessions.
+        eod_report:      null,
+        emails_answered: emailsAnswered,
+        what_went_well:  whatWentWell,
+        needs_attention: needsAttention,
       })
       .eq('id', session_id)
       .eq('workspace_id', ctx.workspaceId)
-      .eq('agent_id', member.id)
+      .eq("agent_id", agentId)
       .is('clocked_out_at', null)
       .select()
       .single()
@@ -383,7 +442,7 @@ export async function POST(request: NextRequest) {
       .select('active_seconds, status')
       .eq('id', session_id)
       .eq('workspace_id', ctx.workspaceId)
-      .eq('agent_id', member.id)
+      .eq("agent_id", agentId)
       .is('clocked_out_at', null)
       .maybeSingle()
 

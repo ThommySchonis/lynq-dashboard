@@ -46,5 +46,8 @@ next-env.d.ts
 /tasks/*
 .superpowers/*
 
+# supabase CLI local state
+supabase/.temp/
+
 # Sentry Config File
 .env.sentry-build-plugin

@@ -43,7 +43,7 @@ export function Sidebar() {
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       className={cn(
-        'fixed inset-y-0 left-0 z-40 flex flex-col overflow-hidden',
+        'fixed inset-y-0 left-0 z-50 flex flex-col overflow-hidden',
         'border-r border-zinc-800/60 bg-zinc-900',
         'transition-[width] duration-200 ease-out',
         collapsed ? 'w-16' : 'w-56',
@@ -68,14 +68,14 @@ export function Sidebar() {
       </Link>
 
       {/* Main nav — keeps existing SidebarItem styling for iteration 1. */}
-      <nav className="flex-1 space-y-0.5 overflow-y-auto p-2">
+      <nav className="flex-1 space-y-0.5 overflow-y-auto px-3 py-2">
         {NAV_ITEMS.map((item) => (
           <SidebarItem key={item.href} {...item} collapsed={collapsed} />
         ))}
       </nav>
 
       {/* Bottom items + user — iter 2 will polish this section. */}
-      <div className="space-y-0.5 p-2">
+      <div className="space-y-0.5 px-3 py-2">
         <Separator className="mb-2 bg-zinc-800/60" />
         {BOTTOM_ITEMS.map((item) => {
           if (item.href === '/admin' && role !== 'owner' && role !== 'admin') return null

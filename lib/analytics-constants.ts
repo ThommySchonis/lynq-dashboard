@@ -7,7 +7,6 @@ import type {
   DateRangeId,
   DateRange,
   Refund,
-  PatternAction,
   WeeklyReportRow,
   ProductMatrixRow,
   RepeatRefunder,
@@ -119,74 +118,6 @@ export function categorizeReason(raw: string): string {
 }
 
 // ── Data builders ────────────────────────────────────────────────────────────
-
-export function generateRepeatRefunderActions(allRefunds: Refund[]): PatternAction[] {
-  const map: Record<string, { customer: string; email: string; refunds: Refund[]; totalAmount: number }> = {}
-  allRefunds.forEach(r => {
-    const k = r.customerEmail || r.customer
-    if (!k) return
-    if (!map[k]) map[k] = { customer: r.customer, email: r.customerEmail, refunds: [], totalAmount: 0 }
-    map[k].refunds.push(r)
-    map[k].totalAmount += parseFloat(String(r.refundAmount || 0))
-  })
-  return Object.values(map)
-    .filter(c => c.refunds.length >= 2)
-    .sort((a, b) => b.refunds.length - a.refunds.length)
-    .slice(0, 3)
-    .map(c => {
-      const name = c.customer || c.email || 'Unknown customer'
-      const n = c.refunds.length
-      return {
-        id: `repeat-${(c.email || c.customer || String(Math.random())).toString().replace(/\s+|@|\./g, '-').toLowerCase()}`,
-        type: 'pattern' as const,
-        priority: (n >= 3 ? 'high' : 'medium') as 'high' | 'medium',
-        category: 'Customer Outreach',
-        refundCount: n,
-        totalAmount: c.totalAmount,
-        title: `Contact repeat refunder: ${name}`,
-        action: `${name} has refunded ${n} times (${fmtEur(c.totalAmount)} total lost). Reach out personally — offer store credit or a free exchange to retain the customer and eliminate chargeback risk.`,
-      }
-    })
-}
-
-export function generatePatternActions(allRefunds: Refund[]): PatternAction[] {
-  const map: Record<string, { name: string; refunds: Refund[]; catCounts: Record<string, number> }> = {}
-  allRefunds.forEach(r => {
-    const cat = categorizeReason(r.reason)
-    ;(r.products || []).forEach(p => {
-      if (!map[p]) map[p] = { name: p, refunds: [], catCounts: {} }
-      map[p].refunds.push(r)
-      map[p].catCounts[cat] = (map[p].catCounts[cat] || 0) + 1
-    })
-  })
-  const actions: PatternAction[] = []
-  Object.values(map).forEach(prod => {
-    if (prod.refunds.length < 2) return
-    const dom = Object.entries(prod.catCounts).sort((a, b) => b[1] - a[1])[0][0]
-    const amt = prod.refunds.reduce((s, r) => s + parseFloat(String(r.refundAmount || 0)), 0)
-    const n = prod.refunds.length, a = fmtEur(amt)
-    const copies: Record<string, { title: string; action: string }> = {
-      'Sizing': { title: `Fix size guide: ${prod.name}`, action: `${n} customers returned "${prod.name}" for size issues (${a} lost). Add measurements in cm and request supplier ships 1 size up on flagged orders.` },
-      'Damaged': { title: `Improve packaging: ${prod.name}`, action: `${n} items arrived damaged (${a} lost). Switch to double-walled boxes and add Fragile labels for "${prod.name}".` },
-      'Quality': { title: `Quality review: ${prod.name}`, action: `${n} refunds for quality issues on "${prod.name}" (${a} lost). Contact supplier for a formal quality review and inspect next shipment before shipping.` },
-      'Not as described': { title: `Update listing: ${prod.name}`, action: `${n} customers said "${prod.name}" looked different in person (${a} lost). Add natural-light photos and a color accuracy disclaimer.` },
-      'Changed mind': { title: `Offer exchanges: ${prod.name}`, action: `${n} changed-mind returns on "${prod.name}" (${a} lost). Auto-email before refund to offer free exchange — converts ~30% of returns.` },
-      'Other': { title: `Investigate: ${prod.name}`, action: `${n} refunds on "${prod.name}" (${a} lost). Review order notes for a root cause.` },
-    }
-    const copy = copies[dom] || copies['Other']
-    actions.push({
-      id: `pattern-${prod.name.replace(/\s+/g, '-').toLowerCase()}`,
-      type: 'pattern',
-      priority: n >= 3 ? 'high' : 'medium',
-      category: dom,
-      product: prod.name,
-      refundCount: n,
-      totalAmount: a,
-      ...copy,
-    })
-  })
-  return actions.sort((a, b) => ({ high: 0, medium: 1, low: 2 }[a.priority] || 2) - ({ high: 0, medium: 1, low: 2 }[b.priority] || 2))
-}
 
 export function buildWeeklyReport(allRefunds: Refund[]): WeeklyReportRow[] {
   const today = new Date(), dow = today.getDay()

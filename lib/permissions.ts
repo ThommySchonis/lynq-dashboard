@@ -35,4 +35,9 @@ export const can = {
   manageTags:      (role: Role) => ['owner', 'admin', 'agent'].includes(role),
   // Delete + merge are destructive (cascade through macro_tags)
   deleteTags:      (role: Role) => ['owner', 'admin'].includes(role),
+
+  // Tasks — observers can view; agents+ can manage; delete is owner/admin only
+  viewTasks:       (_role: Role) => true,
+  manageTasks:     (role: Role) => ['owner', 'admin', 'agent'].includes(role),
+  deleteTasks:     (role: Role) => ['owner', 'admin'].includes(role),
 }

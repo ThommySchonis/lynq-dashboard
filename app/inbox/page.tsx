@@ -11,6 +11,7 @@ import { DuplicateModal } from "@/components/shared/modals/duplicate-modal";
 import { EditAddressModal } from "@/components/shared/modals/edit-address-modal";
 import { FulfillModal } from "@/components/shared/modals/fulfill-modal";
 import { NoteModal } from "@/components/shared/modals/note-modal";
+import { CreateTaskModal } from "@/components/shared/modals/create-task-modal";
 import { RefundModal } from "@/components/shared/modals/refund-modal";
 import { useConversations, useEmailConnected } from "@/hooks/inbox/use-inbox-data";
 import { useAIMacros } from "@/hooks/inbox/use-inbox-mutations";
@@ -69,6 +70,9 @@ function InboxPage() {
     const view = searchParams.get("view");
     if (view) setActiveFolder(view);
   }, [searchParams, setActiveFolder]);
+
+  // Auto-select conversation matching ?customer_email param
+  const customerEmailParam = searchParams?.get("customer_email");
 
   // ── TanStack queries ──
   const { data: threads = [] } = useConversations(activeFolder, search);
@@ -133,6 +137,18 @@ function InboxPage() {
     [setSelectedThreadId, resetForNewThread, _resetAIForThread],
   );
 
+  // ── Auto-select thread from customer_email param ──
+  useEffect(() => {
+    if (customerEmailParam && threads?.length) {
+      const match = threads.find(
+        (t: Thread) => t.customer_email === customerEmailParam,
+      );
+      if (match && match.id !== selectedThreadId) {
+        openThread(match);
+      }
+    }
+  }, [customerEmailParam, threads, selectedThreadId, openThread]);
+
   // ── Keyboard shortcuts ──
   useKeyboardShortcuts({
     threads: sortedFiltered,
@@ -177,6 +193,22 @@ function InboxPage() {
       {modal?.type === "address" && <EditAddressModal order={modal.order} token={token} onClose={() => setModal(null)} onSuccess={handleModalSuccess} />}
       {modal?.type === "fulfill" && <FulfillModal order={modal.order} token={token} onClose={() => setModal(null)} onSuccess={handleModalSuccess} />}
       {modal?.type === "note" && <NoteModal order={modal.order} token={token} onClose={() => setModal(null)} onSuccess={handleModalSuccess} />}
+      {modal?.type === "create-task" && modal.order && (
+        <CreateTaskModal
+          linkedOrder={{
+            shopifyOrderId: String(modal.order.id),
+            shopifyOrderName: modal.order.name || `#${modal.order.id}`,
+            customerEmail: (modal.customerEmail as string) || undefined,
+            customerName: (modal.customerName as string) || undefined,
+          }}
+          onClose={() => setModal(null)}
+          onSuccess={(msg, type) => {
+            setModal(null);
+            if (type === "error") sonnerToast.error(msg);
+            else sonnerToast.success(msg);
+          }}
+        />
+      )}
 
       {/* Macro Manager overlay */}
       {showMacroManager && (

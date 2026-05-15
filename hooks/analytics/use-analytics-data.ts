@@ -16,7 +16,6 @@ export const analyticsKeys = {
   allRefunds: () => [...analyticsKeys.all, 'allRefunds'] as const,
   revenueTrend: (range: DateRange) => [...analyticsKeys.all, 'revenueTrend', range.from, range.to] as const,
   aiInsights: () => [...analyticsKeys.all, 'aiInsights'] as const,
-  actionStatuses: () => [...analyticsKeys.all, 'actionStatuses'] as const,
   shopifyConnected: () => [...analyticsKeys.all, 'shopifyConnected'] as const,
 }
 
@@ -118,23 +117,6 @@ export function useAiInsights(refunds: Refund[]) {
       return (d.insights as AiInsight[]) ?? []
     },
     enabled: !!token && !!refunds.length,
-  })
-}
-
-export function useActionStatuses() {
-  const token = useToken()
-  return useQuery<Record<string, unknown>>({
-    queryKey: analyticsKeys.actionStatuses(),
-    queryFn: async () => {
-      const res = await fetch('/api/analytics/actions', {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      if (!res.ok) throw new Error('Failed to fetch action statuses')
-      const d = await res.json()
-      if (d.fallback) return {}
-      return (d.actions as Record<string, unknown>) ?? {}
-    },
-    enabled: !!token,
   })
 }
 

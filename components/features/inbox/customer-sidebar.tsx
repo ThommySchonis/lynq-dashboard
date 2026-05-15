@@ -83,6 +83,7 @@ interface SidebarOrder {
 interface SidebarCustomerData {
   firstName?: string
   lastName?: string
+  email?: string
   phone?: string | null
   city?: string
   country?: string
@@ -436,6 +437,8 @@ export function CustomerSidebar() {
           setExpandedOrders={setExpandedOrders}
           setExpandedSubs={setExpandedSubs}
           setModal={setModal}
+          customerEmail={customer?.customer?.email || autoCustomerEmail}
+          customerName={customerName}
         />
       )}
     </div>

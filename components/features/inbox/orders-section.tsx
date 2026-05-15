@@ -5,6 +5,7 @@ import { ORDER_STATUS } from '@/lib/inbox-constants'
 import { fmtPrice } from '@/lib/inbox-utils'
 import {
   ChevronDown,
+  ClipboardList,
   Copy,
   ExternalLink,
   LayoutGrid,
@@ -76,7 +77,9 @@ interface OrdersSectionProps {
   expandedSubs: Record<string, boolean>
   setExpandedOrders: (fn: (v: Record<string, boolean>) => Record<string, boolean>) => void
   setExpandedSubs: (fn: (v: Record<string, boolean>) => Record<string, boolean>) => void
-  setModal: (modal: { type: string; order: OrdersOrder }) => void
+  setModal: (modal: { type: string; order: OrdersOrder; [key: string]: unknown }) => void
+  customerEmail?: string
+  customerName?: string
 }
 
 export function OrdersSection({
@@ -88,6 +91,8 @@ export function OrdersSection({
   setExpandedOrders,
   setExpandedSubs,
   setModal,
+  customerEmail,
+  customerName,
 }: OrdersSectionProps) {
   return (
     <div>
@@ -187,6 +192,18 @@ export function OrdersSection({
                       <Copy size={12} />
                     </span>
                     Duplicate
+                  </button>
+                  <button
+                    className="inline-flex items-center gap-1 text-[11px] font-medium px-[9px] py-1 rounded-md border border-border bg-card text-foreground cursor-pointer transition-all hover:border-(--border-hover) hover:bg-secondary"
+                    onClick={() => setModal({
+                      type: 'create-task',
+                      order,
+                      customerEmail,
+                      customerName,
+                    })}
+                  >
+                    <ClipboardList size={11} />
+                    Task
                   </button>
                   {canRefund && (
                     <button

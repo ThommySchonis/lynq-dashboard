@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { BarChart3, Info, Loader2, RefreshCw } from 'lucide-react'
 import { EmptyState } from '@/components/shared/empty-state'
 import { DEMO_REFUNDS, DEMO_KPIS, DEMO_TREND, DEMO_INSIGHTS } from '@/lib/demoData'
@@ -8,8 +8,6 @@ import {
   RANGES,
   getDateRange,
   getPrevDateRange,
-  generatePatternActions,
-  generateRepeatRefunderActions,
 } from '@/lib/analytics-constants'
 import {
   useKpis,
@@ -18,10 +16,9 @@ import {
   useAllRefunds,
   useRevenueTrend,
   useAiInsights,
-  useActionStatuses,
   useShopifyConnected,
 } from '@/hooks/analytics/use-analytics-data'
-import { useUpdateActionStatus } from '@/hooks/analytics/use-analytics-mutations'
+import { useGeneratePatternTasks } from '@/hooks/tasks'
 import type {
   DateRangeId,
   DateRange,
@@ -80,8 +77,11 @@ function AnalyticsContent() {
   const refundData = demoMode ? DEMO_CURRENT_REFUNDS : (refundsQuery.data ?? [])
   const allRefundData = demoMode ? DEMO_REFUND_DATA : (allRefundsQuery.data ?? [])
   const aiInsightsQuery = useAiInsights(refundData)
-  const actionStatusesQuery = useActionStatuses()
-  const updateActionStatus = useUpdateActionStatus()
+  const generateTasks = useGeneratePatternTasks()
+
+  // Generate pattern tasks from refund data on load
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { if (!demoMode) generateTasks.mutate() }, [demoMode])
 
   // Resolve data: demo overrides live
   const kpis: KpiData = demoMode ? DEMO_KPI_DATA : (kpisQuery.data ?? {} as KpiData)
@@ -90,8 +90,6 @@ function AnalyticsContent() {
   const allRefunds = allRefundData
   const trend: RevenueTrendPoint[] = demoMode ? DEMO_TREND_DATA : (trendQuery.data ?? [])
   const insights: AiInsight[] = demoMode ? DEMO_INSIGHT_DATA : (aiInsightsQuery.data ?? [])
-  const actionStatuses = (actionStatusesQuery.data ?? {}) as Record<string, { status: string; pickedUpBy?: string | null; pickedUpAt?: string | null; resultNote?: string | null }>
-
   // Loading states: in demo mode everything is "loaded"
   const loaded = {
     kpis: demoMode || !kpisQuery.isPending,
@@ -108,13 +106,6 @@ function AnalyticsContent() {
     ? `${customFrom} \u2192 ${customTo}`
     : RANGES.find(r => r.id === dateRange)?.label || 'This month'
   const noRefunds = loaded.refunds && refunds.length === 0
-  const patternActions = loaded.allRefunds
-    ? [...generatePatternActions(allRefunds), ...generateRepeatRefunderActions(allRefunds)]
-    : []
-  const actionLoaded = loaded.insights && loaded.allRefunds
-
-  // Fallback detection for action statuses
-  const usingFallback = actionStatusesQuery.isError
 
   // Range selection handlers
   function selectRange(id: DateRangeId) {
@@ -126,23 +117,6 @@ function AnalyticsContent() {
       setCustomFrom(from)
       setCustomTo(to)
     }
-  }
-
-  // Action status change handler
-  function handleStatusChange(id: string, status: string, pickedUpBy: string, resultNote: string) {
-    if (usingFallback) {
-      // Fallback to localStorage
-      const current = { ...actionStatuses }
-      current[id] = {
-        status,
-        pickedUpBy: pickedUpBy || null,
-        pickedUpAt: status === 'picked_up' ? new Date().toISOString() : null,
-        resultNote: resultNote || null,
-      }
-      try { localStorage.setItem('lynq-action-statuses', JSON.stringify(current)) } catch { /* ignore */ }
-      return
-    }
-    updateActionStatus.mutate({ id, status, pickedUpBy, resultNote })
   }
 
   return (
@@ -276,15 +250,7 @@ function AnalyticsContent() {
             <MonthlyTrendChart allRefunds={allRefunds} loaded={loaded.allRefunds} />
           </div>
 
-          <ActionBoard
-            patternActions={patternActions}
-            aiInsights={insights}
-            noRefunds={noRefunds}
-            loaded={actionLoaded}
-            onStatusChange={handleStatusChange}
-            statuses={actionStatuses}
-            usingFallback={usingFallback}
-          />
+          <ActionBoard demoMode={demoMode} />
           <RefundTable refunds={refunds} loaded={loaded.refunds} />
           <ProductMatrix allRefunds={allRefunds} loaded={loaded.allRefunds} />
 

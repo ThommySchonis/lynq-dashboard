@@ -205,21 +205,43 @@
 
 /* ── Float-field autofill override ──────────────────────────────────────────── */
 /* Chrome paints autofilled inputs with a light yellow / blue background plus
- * dark text — fights the glassmorphism dark-theme auth screens. The standard
- * trick: an inset box-shadow covers Chrome's paint without changing the
- * developer-set bg (bg-white/[0.06]) underneath. Same shape as .cm-input
- * above, but with a TRANSPARENT shadow so the existing translucent dark bg
- * shows through, and white text to match the dark theme. !important is
- * required to win against Chrome's UA stylesheet. */
+ * dark text — fights the glassmorphism dark-theme auth screens. Two issues
+ * to solve:
+ *
+ * 1. Background paint: cover Chrome's light fill with an inset box-shadow.
+ *    `transparent` does NOT work — Chrome ignores it and keeps painting.
+ *    A solid color matching the composited glassmorphism input is needed;
+ *    #181228 is approximately bg-[#0A0612] + the card tint + bg-white/[0.06]
+ *    overlaid, so it visually blends with non-autofilled inputs nearby.
+ *
+ * 2. Label-float trigger: Chrome's autofill leaves `:placeholder-shown` as
+ *    TRUE until the user interacts. That breaks the Tailwind
+ *    `peer-[:not(:placeholder-shown)]:top-1.5` rule, so the label stays at
+ *    resting position and overlaps the autofilled text. Force the floated
+ *    state via a sibling-combinator rule that fires on `:-webkit-autofill`
+ *    directly. Scoped with `:not(:focus)` so the focused-state Tailwind
+ *    rules (purple color, etc.) still win when the user clicks the field.
+ *
+ * `:-webkit-autofill` is in CLAUDE.md rule 7's pseudo-element exception
+ * list — same precedent as the `.cm-input` block above. */
 .float-field:-webkit-autofill,
 .float-field:-webkit-autofill:hover,
 .float-field:-webkit-autofill:focus,
 .float-field:-webkit-autofill:active {
-  -webkit-background-clip: text;
-  -webkit-box-shadow: 0 0 0 1000px transparent inset !important;
+  -webkit-box-shadow: 0 0 0 1000px #181228 inset !important;
   -webkit-text-fill-color: #ffffff !important;
   caret-color: #ffffff;
   transition: background-color 5000s ease-in-out 0s;
+}
+
+/* Force the floated label state when Chrome autofills (because Chrome
+ * leaves :placeholder-shown=true and the Tailwind peer rule never fires).
+ * Scoped with :not(:focus) so the user's focused-state styling — driven
+ * by Tailwind peer-focus classes on the label — keeps winning when active. */
+.float-field:-webkit-autofill:not(:focus) ~ .float-label {
+  top: 0.375rem;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.6);
 }
 
 /* ── Contenteditable placeholder ────────────────────────────────────────────── */

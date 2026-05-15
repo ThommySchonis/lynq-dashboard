@@ -45,14 +45,19 @@ export const FloatField = forwardRef<HTMLInputElement, FloatFieldProps>(
             // caused the floated label to render outside the input box and
             // appear horizontally mis-aligned.
             'absolute left-7 top-4',
+            // Resting (empty + unfocused): input bg is always dark
+            // (bg-white/[0.06] on the glassmorphism card), so soft-white reads.
             'text-sm text-white/40',
             'pointer-events-none',
             'transition-[top,font-size,color] duration-[180ms] ease-[ease]',
-            // Floated state: sits INSIDE the input at the top, smaller font.
-            // Material-style inset label — no scale, no tracking change.
-            'peer-focus:top-1.5 peer-focus:text-[11px] peer-focus:text-[#C4B0FF]',
-            'peer-[:not(:placeholder-shown)]:top-1.5 peer-[:not(:placeholder-shown)]:text-[11px] peer-[:not(:placeholder-shown)]:text-white/60',
-            error && 'text-red-400/70',
+            // Floated state: sits INSIDE the input at the top in smaller font.
+            // Optimised for Chrome autofill (which paints the input light when
+            // filling saved credentials). Brand-purple primary on focus,
+            // dark-gray on filled — both readable on the browser's autofill
+            // tint AND adequately on the dark fresh-typed input.
+            'peer-focus:top-1.5 peer-focus:text-[11px] peer-focus:text-primary',
+            'peer-[:not(:placeholder-shown)]:top-1.5 peer-[:not(:placeholder-shown)]:text-[11px] peer-[:not(:placeholder-shown)]:text-foreground-2',
+            error && 'text-red-500',
           )}
         >
           {label}

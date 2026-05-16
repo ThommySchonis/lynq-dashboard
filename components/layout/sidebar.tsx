@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import Image from 'next/image'
 import Link from 'next/link'
 import {
   Home, Inbox, BarChart3, Zap, Clock, Package, GraduationCap,
@@ -49,7 +48,7 @@ export function Sidebar() {
         collapsed ? 'w-16' : 'w-56',
       )}
     >
-      {/* Logo / brand */}
+      {/* Wordmark — Linear/Vercel-style, no icon */}
       <Link
         href="/home"
         className={cn(
@@ -57,19 +56,9 @@ export function Sidebar() {
           collapsed ? 'justify-center px-2' : 'gap-2.5 px-3',
         )}
       >
-        <Image
-          src="/brand/lynq-flow-icon.png"
-          alt="Lynq & Flow"
-          width={40}
-          height={40}
-          className="shrink-0"
-          priority
-        />
-        {!collapsed && (
-          <span className="truncate text-sm font-semibold text-white">
-            Lynq &amp; Flow
-          </span>
-        )}
+        <span className="truncate text-sm font-semibold text-white">
+          {collapsed ? 'L&F' : 'Lynq & Flow'}
+        </span>
       </Link>
 
       {/* Main nav — keeps existing SidebarItem styling for iteration 1. */}

@@ -10,7 +10,8 @@ import {
 } from '@/components/ui/dialog'
 import { useAuthStore } from '@/stores/auth'
 import { useSubmitInquiry } from '@/hooks/services'
-import { SERVICES, TRAIN_SERVICE } from '@/lib/services-constants'
+import { SERVICES, TRAIN_SERVICE, COMPANIES_SERVICES } from '@/lib/services-constants'
+import type { ServiceDef } from '@/lib/services-constants'
 import type { LucideIcon } from 'lucide-react'
 import { ServiceCard } from '@/components/features/services/service-card'
 import { InquiryForm } from '@/components/features/services/inquiry-form'
@@ -55,6 +56,14 @@ export default function ServicesPage() {
     setSubmitted(false)
   }
 
+  function openModalForService(svc: ServiceDef) {
+    const title =
+      svc.category === 'companies'
+        ? `Companies — ${svc.title.split(' — ')[0]}`
+        : svc.title
+    openModal({ id: svc.id, title, icon: svc.icon })
+  }
+
   function closeModal() {
     setActiveService(null)
   }
@@ -96,33 +105,43 @@ export default function ServicesPage() {
             </p>
           </div>
 
-          {/* 2-column grid */}
-          <div className="grid grid-cols-2 gap-4 mb-4">
+          {/* Recruitment section */}
+          <h2 className="text-[10px] font-bold text-foreground-4 uppercase tracking-[.1em] mb-3">
+            Recruitment
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
             {SERVICES.map((svc, i) => (
               <ServiceCard
                 key={svc.id}
                 svc={svc}
                 index={i}
-                onRequest={() =>
-                  openModal({ id: svc.id, title: svc.title, icon: svc.icon })
-                }
+                onRequest={() => openModalForService(svc)}
               />
             ))}
           </div>
 
           {/* Train Your Team — full width */}
-          <div className="mb-4">
+          <div className="mb-10">
             <ServiceCard
               svc={TRAIN_SERVICE}
               index={4}
-              onRequest={() =>
-                openModal({
-                  id: TRAIN_SERVICE.id,
-                  title: TRAIN_SERVICE.title,
-                  icon: TRAIN_SERVICE.icon,
-                })
-              }
+              onRequest={() => openModalForService(TRAIN_SERVICE)}
             />
+          </div>
+
+          {/* Companies section */}
+          <h2 className="text-[10px] font-bold text-foreground-4 uppercase tracking-[.1em] mb-3">
+            Companies
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
+            {COMPANIES_SERVICES.map((svc, i) => (
+              <ServiceCard
+                key={svc.id}
+                svc={svc}
+                index={i}
+                onRequest={() => openModalForService(svc)}
+              />
+            ))}
           </div>
 
           {/* Bottom CTA */}

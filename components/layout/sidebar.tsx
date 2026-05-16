@@ -57,9 +57,14 @@ export function Sidebar() {
           collapsed ? 'justify-center px-2' : 'gap-2.5 px-3',
         )}
       >
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary">
-          <Image src="/logo.png" alt="Lynq" width={20} height={20} />
-        </span>
+        <Image
+          src="/brand/lynq-flow-icon.png"
+          alt="Lynq & Flow"
+          width={40}
+          height={40}
+          className="shrink-0"
+          priority
+        />
         {!collapsed && (
           <span className="truncate text-sm font-semibold text-white">
             Lynq &amp; Flow

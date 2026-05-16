@@ -44,7 +44,7 @@ export function Sidebar() {
       onMouseLeave={() => setHovered(false)}
       className={cn(
         'fixed inset-y-0 left-0 z-50 flex flex-col overflow-hidden',
-        'border-r border-zinc-800/60 bg-zinc-900',
+        'border-r border-zinc-800/60 bg-[#1A1A1F]',
         'transition-[width] duration-200 ease-out',
         collapsed ? 'w-16' : 'w-56',
       )}

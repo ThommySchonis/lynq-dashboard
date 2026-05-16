@@ -19,18 +19,24 @@ export function ServiceCard({ svc, index, onRequest }: ServiceCardProps) {
       className="bg-white border border-black/[0.07] rounded-xl p-6 flex flex-col relative overflow-hidden transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_8px_32px_rgba(0,0,0,0.10)] hover:border-black/[0.12] opacity-0 animate-[fadeInUp_0.5s_ease_forwards]"
       style={{ animationDelay: delay }}
     >
-      {/* Badge */}
-      {svc.badge && (
-        <span
-          className="absolute top-5 right-5 inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-[.04em] uppercase"
-          style={{
-            color: svc.badge.color,
-            background: svc.badge.bg,
-            border: svc.badge.border ? `1px solid ${svc.badge.border}` : 'none',
-          }}
-        >
-          {svc.badge.label}
+      {/* Price (Companies) takes precedence over badge */}
+      {svc.price ? (
+        <span className="absolute top-5 right-5 inline-flex items-center text-[15px] font-bold text-foreground tracking-[-0.01em]">
+          {svc.price}
         </span>
+      ) : (
+        svc.badge && (
+          <span
+            className="absolute top-5 right-5 inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-[.04em] uppercase"
+            style={{
+              color: svc.badge.color,
+              background: svc.badge.bg,
+              border: svc.badge.border ? `1px solid ${svc.badge.border}` : 'none',
+            }}
+          >
+            {svc.badge.label}
+          </span>
+        )
       )}
 
       {/* Icon */}
@@ -42,6 +48,13 @@ export function ServiceCard({ svc, index, onRequest }: ServiceCardProps) {
       <h2 className="text-[17px] font-bold text-foreground tracking-[-0.01em] mb-2">
         {svc.title}
       </h2>
+
+      {/* Subtitle (Companies) */}
+      {svc.subtitle && (
+        <p className="text-sm text-muted-foreground leading-snug mb-2 -mt-1">
+          {svc.subtitle}
+        </p>
+      )}
 
       {/* Description */}
       <p className="text-[13px] text-muted-foreground leading-relaxed mb-4 flex-1">

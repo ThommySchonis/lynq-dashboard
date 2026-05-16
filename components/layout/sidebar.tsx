@@ -5,7 +5,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import {
   Home, Inbox, BarChart3, Zap, Clock, Package, GraduationCap,
-  Rss, Settings, Shield,
+  Rss, Sparkles, Settings, Shield,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/stores/auth'
@@ -22,6 +22,7 @@ const NAV_ITEMS = [
   { href: '/supply-chain',  icon: Package,        label: 'Supply Chain'  },
   { href: '/academy',       icon: GraduationCap,  label: 'Academy'       },
   { href: '/value-feed',    icon: Rss,            label: 'Value Feed'    },
+  { href: '/services',      icon: Sparkles,       label: 'Services'      },
 ] as const
 
 const BOTTOM_ITEMS = [

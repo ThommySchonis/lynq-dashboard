@@ -3,6 +3,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useAuthStore } from '@/stores/auth'
 import { parseJson } from '@/lib/utils/typed-json'
+import { useStoreStore } from '@/stores/store'
 
 export interface ShopifyContext {
   kpis: Record<string, unknown>
@@ -33,21 +34,23 @@ function useToken() {
 
 export const homeKeys = {
   all: ['home'] as const,
-  kpis: () => [...homeKeys.all, 'kpis'] as const,
+  kpis: (storeId: string | null) => [...homeKeys.all, 'kpis', storeId] as const,
   onboarding: () => [...homeKeys.all, 'onboarding'] as const,
 }
 
 export function useHomeKpis() {
   const token = useToken()
+  const activeStoreId = useStoreStore((s) => s.activeStoreId)
 
   return useQuery<ShopifyContext>({
-    queryKey: homeKeys.kpis(),
+    queryKey: homeKeys.kpis(activeStoreId),
     queryFn: async () => {
       const headers = { Authorization: `Bearer ${token}` }
+      const storeParam = activeStoreId ? `?store_id=${activeStoreId}` : ''
       const [kpisRes, ordersRes, refundsRes] = await Promise.all([
-        fetch('/api/shopify/kpis', { headers }),
-        fetch('/api/shopify/orders', { headers }),
-        fetch('/api/shopify/refunds', { headers }),
+        fetch(`/api/shopify/kpis${storeParam}`, { headers }),
+        fetch(`/api/shopify/orders${storeParam}`, { headers }),
+        fetch(`/api/shopify/refunds${storeParam}`, { headers }),
       ])
 
       const kpis = kpisRes.ok ? await parseJson<Record<string, unknown>>(kpisRes) : {}

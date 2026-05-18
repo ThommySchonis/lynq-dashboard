@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(`${appUrl}/settings?provider=outlook&status=error`)
   }
 
-  const { userId, workspaceId } = oauthState
+  const { userId, workspaceId, storeId } = oauthState
 
   const clientId = process.env.MICROSOFT_CLIENT_ID
   const clientSecret = process.env.MICROSOFT_CLIENT_SECRET
@@ -80,6 +80,7 @@ export async function GET(request: NextRequest) {
     access_token: encryptedAccessToken,
     refresh_token: encryptedRefreshToken,
     expires_at: new Date(Date.now() + (tokens.expires_in ?? 0) * 1000).toISOString(),
+    store_id: storeId || null,
     status: 'active',
     is_default: isDefault,
   }
@@ -90,22 +91,6 @@ export async function GET(request: NextRequest) {
 
   if (emailAccountError) {
     console.error('[outlook/callback] email_accounts upsert error:', emailAccountError.message)
-  }
-
-  // LEGACY dual-write: keep writing to outlook_tokens for backwards compatibility
-  const { error: legacyError } = await supabaseAdmin.from('outlook_tokens').upsert({
-    user_id: userId,
-    email: emailAddress,
-    access_token: tokens.access_token,
-    refresh_token: tokens.refresh_token,
-    expires_at: new Date(Date.now() + (tokens.expires_in ?? 0) * 1000).toISOString(),
-  }, { onConflict: 'user_id' })
-
-  if (legacyError) {
-    console.error('[outlook/callback] outlook_tokens legacy upsert error:', legacyError.message)
-  }
-
-  if (emailAccountError && legacyError) {
     return NextResponse.redirect(`${appUrl}/settings?provider=outlook&status=error&reason=save_failed`)
   }
 

@@ -1,7 +1,8 @@
 import { generateText } from 'ai'
 import { anthropic } from '@ai-sdk/anthropic'
-import { supabaseAdmin, getUserFromToken } from '../../../../lib/supabaseAdmin'
-import { getShopifyCredentials } from '../../../../lib/shopifyCredentials'
+import { getAuthContext } from '../../../../lib/auth'
+import { getStoreCredentials } from '@/lib/store-credentials'
+import { supabaseAdmin } from '../../../../lib/supabaseAdmin'
 import { DEMO_SHOP, DEMO_INSIGHTS } from '../../../../lib/demoData'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
@@ -20,15 +21,15 @@ interface RefundItem {
 }
 
 export async function POST(request: NextRequest) {
-  const authHeader = request.headers.get('authorization')
-  if (!authHeader) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const ctx = await getAuthContext(request)
+  if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const token = authHeader.replace('Bearer ', '')
-  const user = await getUserFromToken(token)
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-  const creds = await getShopifyCredentials(user.id, user.email ?? '')
-  if (creds?.domain === DEMO_SHOP) return NextResponse.json({ insights: DEMO_INSIGHTS })
+  const storeId = new URL(request.url).searchParams.get('store_id')
+  if (!storeId) {
+    return NextResponse.json({ error: 'store_id is required' }, { status: 400 })
+  }
+  const credentials = await getStoreCredentials(storeId, ctx.workspaceId)
+  if (credentials.domain === DEMO_SHOP) return NextResponse.json({ insights: DEMO_INSIGHTS })
 
   const { refunds = [] } = await parseBody<RefundInsightsBody>(request)
 
@@ -96,7 +97,7 @@ priority: "high" if product appears 3+ times or >€100 lost on one issue, "medi
         input_tokens: usage.inputTokens,
         output_tokens: usage.outputTokens,
         cost_usd: ((usage.inputTokens ?? 0) * 0.0000008) + ((usage.outputTokens ?? 0) * 0.000004),
-        user_email: user.email,
+        user_email: ctx.user.email,
       })
     } catch {
       // best-effort usage tracking

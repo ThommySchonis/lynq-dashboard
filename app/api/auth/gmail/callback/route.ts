@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(`${appUrl}/settings?provider=gmail&status=error`)
   }
 
-  const { userId, workspaceId } = verifiedState
+  const { userId, workspaceId, storeId } = verifiedState
 
   const clientId = process.env.GOOGLE_CLIENT_ID?.trim()
   const clientSecret = process.env.GOOGLE_CLIENT_SECRET?.trim()
@@ -76,6 +76,7 @@ export async function GET(request: NextRequest) {
     access_token: encryptedAccessToken,
     refresh_token: encryptedRefreshToken,
     expires_at: new Date(Date.now() + (tokens.expires_in ?? 0) * 1000).toISOString(),
+    store_id: storeId || null,
     status: 'active',
     is_default: isDefault,
   }
@@ -86,23 +87,6 @@ export async function GET(request: NextRequest) {
 
   if (emailAccountError) {
     console.error('[gmail/callback] email_accounts upsert error:', emailAccountError.message)
-  }
-
-  // LEGACY dual-write: keep writing to gmail_tokens for backwards compatibility
-  const { error: legacyError } = await supabaseAdmin.from('gmail_tokens').upsert({
-    user_id: userId,
-    email: emailAddress,
-    gmail_address: emailAddress,
-    access_token: tokens.access_token,
-    refresh_token: tokens.refresh_token,
-    expires_at: new Date(Date.now() + (tokens.expires_in ?? 0) * 1000).toISOString(),
-  }, { onConflict: 'user_id' })
-
-  if (legacyError) {
-    console.error('[gmail/callback] gmail_tokens legacy upsert error:', legacyError.message)
-  }
-
-  if (emailAccountError && legacyError) {
     return NextResponse.redirect(`${appUrl}/settings?provider=gmail&status=error&reason=save_failed`)
   }
 

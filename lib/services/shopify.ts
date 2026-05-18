@@ -192,11 +192,16 @@ interface KPIData {
 /**
  * KPIs from shopify_orders table via PostgreSQL stored function.
  */
-export async function getKPIs(workspaceId: string, dateRange: { from: string; to: string }) {
+export async function getKPIs(
+  workspaceId: string,
+  dateRange: { from: string; to: string },
+  storeId?: string
+) {
   const rpcResult = await supabaseAdmin.rpc('get_kpis', {
     p_workspace_id: workspaceId,
     p_from: dateRange.from,
     p_to: dateRange.to,
+    p_store_id: storeId || null,
   })
 
   if (rpcResult.error) throw new Error(`get_kpis RPC failed: ${rpcResult.error.message}`)
@@ -237,13 +242,18 @@ interface RevenueTrendRow {
 /**
  * Daily revenue trend via PostgreSQL stored function.
  */
-export async function getRevenueTrend(workspaceId: string, dateRange: { from: string; to: string }) {
+export async function getRevenueTrend(
+  workspaceId: string,
+  dateRange: { from: string; to: string },
+  storeId?: string
+) {
   if (!dateRange.from || !dateRange.to) return []
 
   const trendResult = await supabaseAdmin.rpc('get_revenue_trend', {
     p_workspace_id: workspaceId,
     p_from: dateRange.from,
     p_to: dateRange.to,
+    p_store_id: storeId || null,
   })
 
   if (trendResult.error) throw new Error(`get_revenue_trend RPC failed: ${trendResult.error.message}`)
@@ -900,7 +910,7 @@ export async function fulfillOrder(credentials: ShopifyCredentials, orderId: str
 /**
  * Bulk sync Shopify orders into shopify_orders table.
  */
-export async function syncOrders(workspaceId: string, credentials: ShopifyCredentials, userId: string, options: { full?: boolean } = {}) {
+export async function syncOrders(workspaceId: string, credentials: ShopifyCredentials, userId: string, options: { full?: boolean; storeId?: string } = {}) {
   // Fetch + store currency
   const shopRes = await fetch(
     `https://${credentials.domain}/admin/api/${SHOPIFY_API_VERSION}/shop.json`,
@@ -909,9 +919,20 @@ export async function syncOrders(workspaceId: string, credentials: ShopifyCreden
   if (shopRes.ok) {
     const shopData = await parseJson<ShopifyShopResponse>(shopRes)
     const currency = shopData.shop?.currency || 'EUR'
-    await supabaseAdmin.from('integrations')
-      .update({ store_currency: currency })
-      .eq('workspace_id', workspaceId)
+    // Always write store_currency to integrations
+    if (options.storeId) {
+      await supabaseAdmin
+        .from('integrations')
+        .update({ store_currency: currency })
+        .eq('store_id', options.storeId)
+        .eq('workspace_id', workspaceId)
+    } else {
+      // Fallback: workspace-level (should not happen after migration, but safe)
+      await supabaseAdmin
+        .from('integrations')
+        .update({ store_currency: currency })
+        .eq('workspace_id', workspaceId)
+    }
   }
 
   // Paginate through orders
@@ -968,6 +989,7 @@ export async function syncOrders(workspaceId: string, credentials: ShopifyCreden
       processed_at: order.processed_at,
       created_at_shopify: order.created_at,
       updated_at_shopify: order.updated_at,
+      store_id: options.storeId || null,
       synced_at: new Date().toISOString(),
     }
   })

@@ -3,7 +3,6 @@ import { hmac } from 'https://deno.land/x/hmac@v2.0.1/mod.ts'
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!
 const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-const webhookSecret = Deno.env.get('SHOPIFY_WEBHOOK_SECRET')!
 
 const supabase = createClient(supabaseUrl, supabaseKey)
 
@@ -12,26 +11,19 @@ Deno.serve(async (req) => {
     return new Response('Method not allowed', { status: 405 })
   }
 
-  // Verify HMAC signature
   const body = await req.text()
   const hmacHeader = req.headers.get('x-shopify-hmac-sha256')
   if (!hmacHeader) {
     return new Response('Missing signature', { status: 401 })
   }
 
-  const computed = hmac('sha256', webhookSecret, body, 'utf8', 'base64')
-  if (computed !== hmacHeader) {
-    return new Response('Invalid signature', { status: 401 })
-  }
-
-  const payload = JSON.parse(body)
   const topic = req.headers.get('x-shopify-topic')
   const shopDomain = req.headers.get('x-shopify-shop-domain')
 
-  // Resolve workspace by shop domain
+  // Resolve integration by shop domain
   const { data: integration } = await supabase
     .from('integrations')
-    .select('workspace_id, client_id')
+    .select('workspace_id, client_id, store_id, shopify_client_secret')
     .eq('shopify_domain', shopDomain)
     .maybeSingle()
 
@@ -40,7 +32,19 @@ Deno.serve(async (req) => {
     return new Response('Unknown shop', { status: 200 }) // 200 so Shopify doesn't retry
   }
 
-  const { workspace_id, client_id } = integration
+  // HMAC verification using per-store secret from DB
+  if (!integration.shopify_client_secret) {
+    console.error(`[shopify-webhook] No client secret configured for domain: ${shopDomain}`)
+    return new Response('Missing secret', { status: 401 })
+  }
+
+  const computed = hmac('sha256', integration.shopify_client_secret, body, 'utf8', 'base64')
+  if (computed !== hmacHeader) {
+    return new Response('Invalid signature', { status: 401 })
+  }
+
+  const payload = JSON.parse(body)
+  const { workspace_id, client_id, store_id } = integration
 
   if (topic === 'orders/create' || topic === 'orders/updated') {
     const order = payload
@@ -61,6 +65,7 @@ Deno.serve(async (req) => {
       id: order.id,
       client_id,
       workspace_id,
+      store_id,
       order_number: order.name,
       financial_status: order.financial_status,
       cancel_reason: order.cancel_reason || null,

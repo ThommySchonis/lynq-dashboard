@@ -7,6 +7,7 @@ import { parseBody } from '@/lib/utils/typed-json'
 
 interface ShopifyOAuthBody {
   shop: string
+  store_name?: string
 }
 
 const SCOPES = [
@@ -45,9 +46,12 @@ export async function POST(request: NextRequest) {
   const clientId = process.env.SHOPIFY_CLIENT_ID
   if (!clientId) return NextResponse.json({ error: 'Shopify app not configured' }, { status: 500 })
 
-  const { shop } = await parseBody<ShopifyOAuthBody>(request)
+  const { shop, store_name } = await parseBody<ShopifyOAuthBody>(request)
   if (!shop) {
     return NextResponse.json({ error: 'Shop domain is required' }, { status: 400 })
+  }
+  if (!store_name) {
+    return NextResponse.json({ error: 'Store name is required' }, { status: 400 })
   }
 
   const shopDomain = shop.includes('.myshopify.com')
@@ -63,6 +67,7 @@ export async function POST(request: NextRequest) {
     workspace_id: ctx.workspaceId,
     shop: shopDomain,
     expires_at: expiresAt,
+    store_name: store_name || null,
   })
 
   if (stateError) {

@@ -90,7 +90,7 @@ export function useConnectShopify() {
       return parseJson<unknown>(res)
     },
     onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: settingsKeys.shopify() })
+      void qc.invalidateQueries({ queryKey: [...settingsKeys.all, 'shopify'] })
       toast.success('Shopify connected')
     },
     onError: (err: Error) => {
@@ -114,7 +114,7 @@ export function useDisconnectShopify() {
       }
     },
     onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: settingsKeys.shopify() })
+      void qc.invalidateQueries({ queryKey: [...settingsKeys.all, 'shopify'] })
       toast.success('Shopify disconnected')
     },
     onError: (err: Error) => {

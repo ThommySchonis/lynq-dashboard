@@ -13,10 +13,17 @@ export async function GET(request: NextRequest) {
   const ctx = await getAuthContext(request)
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  // Get ParcelPanel API key for this workspace
+  const { searchParams } = new URL(request.url)
+  const storeId = searchParams.get('store_id')
+  if (!storeId) {
+    return NextResponse.json({ error: 'store_id is required' }, { status: 400 })
+  }
+
+  // Get ParcelPanel API key for this store
   const { data: settings } = await supabaseAdmin
     .from('integrations')
     .select('parcelpanel_api_key')
+    .eq('store_id', storeId)
     .eq('workspace_id', ctx.workspaceId)
     .maybeSingle()
 
@@ -25,7 +32,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'ParcelPanel not connected', connected: false }, { status: 200 })
   }
 
-  const { searchParams } = new URL(request.url)
   const allowedStatuses = new Set(['', 'pending', 'info_received', 'in_transit', 'out_for_delivery', 'failed_attempt', 'delivered', 'exception', 'expired', 'pickup_point'])
   const status = searchParams.get('status') || ''
   if (!allowedStatuses.has(status)) {

@@ -13,6 +13,7 @@ interface CustomEmailBody {
   smtpPort?: string | number
   email: string
   password: string
+  store_id?: string
 }
 // nodemailer ships without bundled types; suppress the implicit-any warning for this import
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
@@ -27,7 +28,7 @@ export async function POST(request: NextRequest) {
 
   const { user, workspaceId } = ctx
 
-  const { imapHost, imapPort, smtpHost, smtpPort, email, password } = await parseBody<CustomEmailBody>(request)
+  const { imapHost, imapPort, smtpHost, smtpPort, email, password, store_id: storeId } = await parseBody<CustomEmailBody>(request)
 
   if (!imapHost || !smtpHost || !email || !password) {
     return NextResponse.json({ error: 'imapHost, smtpHost, email and password are required' }, { status: 400 })
@@ -90,6 +91,7 @@ export async function POST(request: NextRequest) {
     smtp_host: smtpHost,
     smtp_port: parseInt(String(smtpPort)) || 587,
     encrypted_password: encryptedPassword,
+    store_id: storeId || null,
     status: 'active',
     is_default: isDefault,
   }
@@ -100,24 +102,6 @@ export async function POST(request: NextRequest) {
 
   if (emailAccountError) {
     console.error('[custom-email/connect] email_accounts upsert error:', emailAccountError.message)
-  }
-
-  // LEGACY dual-write: keep writing to custom_email_tokens for backwards compatibility
-  const { error: legacyError } = await supabaseAdmin.from('custom_email_tokens').upsert({
-    user_id: user.id,
-    email,
-    imap_host: imapHost,
-    imap_port: parseInt(String(imapPort)) || 993,
-    smtp_host: smtpHost,
-    smtp_port: parseInt(String(smtpPort)) || 587,
-    encrypted_password: encryptedPassword,
-  }, { onConflict: 'user_id' })
-
-  if (legacyError) {
-    console.error('[custom-email/connect] custom_email_tokens legacy upsert error:', legacyError.message)
-  }
-
-  if (emailAccountError && legacyError) {
     return NextResponse.json({ error: emailAccountError.message }, { status: 500 })
   }
 

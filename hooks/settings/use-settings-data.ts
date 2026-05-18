@@ -3,6 +3,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useAuthStore } from '@/stores/auth'
 import { parseJson } from '@/lib/utils/typed-json'
+import { useStoreStore } from '@/stores/store'
 import type { WorkspaceSettings, Member, UserProfile, MacroFilter, MacroOnboarding, Tag, EmailAccount, ShopifyIntegration, MembersPageData } from '@/types/settings'
 import type { Macro } from '@/types/inbox'
 
@@ -57,7 +58,7 @@ export const settingsKeys = {
   macroOnboarding: () => [...settingsKeys.all, 'macro-onboarding'] as const,
   tags: () => [...settingsKeys.all, 'tags'] as const,
   emailAccounts: () => [...settingsKeys.all, 'email-accounts'] as const,
-  shopify: () => [...settingsKeys.all, 'shopify'] as const,
+  shopify: (storeId: string | null) => [...settingsKeys.all, 'shopify', storeId] as const,
 }
 
 export function useWorkspace() {
@@ -206,10 +207,12 @@ export function useEmailAccounts() {
 
 export function useShopifyIntegration() {
   const token = useToken()
+  const activeStoreId = useStoreStore((s) => s.activeStoreId)
   return useQuery<ShopifyIntegration>({
-    queryKey: settingsKeys.shopify(),
+    queryKey: settingsKeys.shopify(activeStoreId),
     queryFn: async () => {
-      const res = await fetch('/api/settings/integrations/shopify', {
+      const storeParam = activeStoreId ? `?store_id=${activeStoreId}` : ''
+      const res = await fetch(`/api/settings/integrations/shopify${storeParam}`, {
         headers: { Authorization: `Bearer ${token}` },
         cache: 'no-store',
       })

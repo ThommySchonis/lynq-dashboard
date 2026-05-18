@@ -10,7 +10,7 @@ Deno.serve(async () => {
   // Fetch all workspaces with active Shopify integrations
   const { data: integrations, error: intError } = await supabase
     .from('integrations')
-    .select('workspace_id, shopify_domain, shopify_access_token, client_id')
+    .select('workspace_id, shopify_domain, shopify_access_token, client_id, store_id')
     .not('shopify_access_token', 'is', null)
 
   if (intError || !integrations) {
@@ -57,6 +57,7 @@ Deno.serve(async () => {
           id: order.id,
           client_id: int.client_id,
           workspace_id: int.workspace_id,
+          store_id: int.store_id,
           order_number: order.name,
           financial_status: order.financial_status,
           cancel_reason: order.cancel_reason || null,

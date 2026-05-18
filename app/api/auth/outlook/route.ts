@@ -29,6 +29,8 @@ export async function GET(request: NextRequest) {
 
   const workspaceId = (membership as WorkspaceMemberRow | null)?.workspace_id ?? ''
 
+  const storeId = searchParams.get('store_id')
+
   const clientId = process.env.MICROSOFT_CLIENT_ID
   const redirectUri = `${process.env.NEXT_PUBLIC_APP_URL}/api/auth/outlook/callback`
   const tenantId = 'common' // supports both personal and business accounts
@@ -47,7 +49,7 @@ export async function GET(request: NextRequest) {
   url.searchParams.set('response_type', 'code')
   url.searchParams.set('scope', scope)
   url.searchParams.set('response_mode', 'query')
-  url.searchParams.set('state', createOAuthState({ userId: user.id, workspaceId, provider: 'outlook' }))
+  url.searchParams.set('state', createOAuthState({ userId: user.id, workspaceId, provider: 'outlook', storeId: storeId || undefined }))
 
   return NextResponse.redirect(url.toString())
 }

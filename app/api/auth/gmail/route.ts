@@ -37,6 +37,8 @@ export async function GET(request: NextRequest) {
 
   const workspaceId = (membership as WorkspaceMemberRow | null)?.workspace_id ?? ''
 
+  const storeId = searchParams.get('store_id')
+
   const clientId = process.env.GOOGLE_CLIENT_ID?.trim()
   const redirectUri = `${process.env.NEXT_PUBLIC_APP_URL}/api/auth/gmail/callback`
 
@@ -54,7 +56,7 @@ export async function GET(request: NextRequest) {
   url.searchParams.set('scope', scope)
   url.searchParams.set('access_type', 'offline')
   url.searchParams.set('prompt', 'consent')
-  url.searchParams.set('state', createOAuthState({ userId: user.id, workspaceId, provider: 'gmail' }))
+  url.searchParams.set('state', createOAuthState({ userId: user.id, workspaceId, provider: 'gmail', storeId: storeId || undefined }))
 
   return NextResponse.redirect(url.toString())
 }

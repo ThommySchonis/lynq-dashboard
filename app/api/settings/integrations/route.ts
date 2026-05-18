@@ -18,20 +18,23 @@ export async function POST(request: NextRequest) {
   const ctx = await getAuthContext(request)
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
+  const { searchParams } = new URL(request.url)
+  const storeId = searchParams.get('store_id')
+  if (!storeId) {
+    return NextResponse.json({ error: 'store_id is required' }, { status: 400 })
+  }
+
   const body = await request.json() as Record<string, unknown>
   const updates = pickAllowedIntegrationFields(body)
   if (!Object.keys(updates).length) {
     return NextResponse.json({ error: 'No supported integration fields provided' }, { status: 400 })
   }
 
-  // Transition: write both client_id (legacy) AND workspace_id. Keep
-  // existing onConflict until Phase 4 swaps the unique key.
   const { error } = await supabaseAdmin
     .from('integrations')
-    .upsert(
-      { client_id: ctx.user.id, workspace_id: ctx.workspaceId, ...updates },
-      { onConflict: 'client_id' }
-    )
+    .update({ ...updates })
+    .eq('store_id', storeId)
+    .eq('workspace_id', ctx.workspaceId)
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 

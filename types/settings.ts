@@ -147,6 +147,7 @@ export interface CustomEmailConfig {
   username: string
   password: string
   use_ssl: boolean
+  store_id?: string
 }
 
 export interface ShopifyIntegration {

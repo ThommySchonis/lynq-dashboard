@@ -22,7 +22,9 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default withSentryConfig(nextConfig, {
+const isDev = process.env.NODE_ENV === "development";
+
+export default isDev ? nextConfig : withSentryConfig(nextConfig, {
   // For all available options, see:
   // https://www.npmjs.com/package/@sentry/webpack-plugin#options
 

@@ -38,7 +38,7 @@ async function resolveIntegration(cid: string): Promise<IntegrationRow | null> {
   return byClient || null
 }
 
-function upsertOrder(order: Record<string, unknown>, clientId: string, workspaceId: string) {
+function upsertOrder(order: Record<string, unknown>, clientId: string, workspaceId: string, storeId: string | null) {
   type MoneySet = { presentment_money?: { amount?: string } }
   type Transaction = { amount_set?: MoneySet; amount?: string | number }
   type Refund = { transactions?: Transaction[] }
@@ -84,6 +84,7 @@ function upsertOrder(order: Record<string, unknown>, clientId: string, workspace
     processed_at:       order.processed_at,
     created_at_shopify: order.created_at,
     updated_at_shopify: order.updated_at,
+    store_id:           storeId || null,
     synced_at:          new Date().toISOString(),
   }, { onConflict: 'workspace_id,id' })
 }
@@ -91,26 +92,59 @@ function upsertOrder(order: Record<string, unknown>, clientId: string, workspace
 export async function POST(request: NextRequest) {
   const { searchParams } = new URL(request.url)
   const cid = searchParams.get('cid')
-  if (!cid) return NextResponse.json({ ok: true })
+  const storeId = searchParams.get('store_id')
+
+  if (!cid && !storeId) return NextResponse.json({ ok: true })
 
   const rawBody = await request.text()
   const hmac    = request.headers.get('x-shopify-hmac-sha256')
   const topic   = request.headers.get('x-shopify-topic')
 
-  // Resolve the integration (workspace-keyed; legacy client_id fallback)
-  const integration = await resolveIntegration(cid)
+  let clientSecret: string | undefined
+  let workspaceId: string | undefined
+  let clientId: string | undefined
+  let shopifyDomain: string | undefined
 
-  if (!integration?.shopify_client_secret || !hmac) {
+  // When store_id is present, resolve credentials from the integrations table
+  if (storeId) {
+    const { data } = await supabaseAdmin
+      .from('integrations')
+      .select('shopify_client_secret, workspace_id')
+      .eq('store_id', storeId)
+      .single()
+
+    if (!data?.shopify_client_secret) {
+      return new Response('Store not found', { status: 404 })
+    }
+
+    clientSecret = data.shopify_client_secret
+    workspaceId = data.workspace_id
+  }
+
+  // Fall back to the existing cid-based integration lookup when store_id
+  // didn't resolve or wasn't provided
+  let integration: IntegrationRow | null = null
+  if (!clientSecret && cid) {
+    integration = await resolveIntegration(cid)
+    if (integration) {
+      clientSecret = integration.shopify_client_secret
+      workspaceId = integration.workspace_id
+      clientId = integration.client_id
+      shopifyDomain = integration.shopify_domain
+    }
+  }
+
+  if (!clientSecret || !hmac) {
     return NextResponse.json({ error: 'Webhook verification unavailable' }, { status: 401 })
   }
 
   const shopDomain = request.headers.get('x-shopify-shop-domain')
-  if (shopDomain && integration.shopify_domain && shopDomain !== integration.shopify_domain) {
+  if (shopDomain && shopifyDomain && shopDomain !== shopifyDomain) {
     return NextResponse.json({ error: 'Shop mismatch' }, { status: 401 })
   }
 
   const digest = crypto
-    .createHmac('sha256', integration.shopify_client_secret)
+    .createHmac('sha256', clientSecret)
     .update(rawBody, 'utf8')
     .digest('base64')
   if (!timingSafeCompare(digest, hmac)) {
@@ -124,10 +158,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
   }
 
-  const { client_id: clientId, workspace_id: workspaceId } = integration
+  // workspaceId is guaranteed non-empty at this point (we returned 401 above if
+  // neither store nor integration resolved)
+  const resolvedWorkspaceId = workspaceId as string
+  const resolvedClientId = clientId || ''
 
   if (topic === 'orders/create' || topic === 'orders/updated') {
-    await upsertOrder(payload, clientId, workspaceId)
+    await upsertOrder(payload, resolvedClientId, resolvedWorkspaceId, storeId)
   }
 
   if (topic === 'orders/cancelled') {
@@ -135,7 +172,7 @@ export async function POST(request: NextRequest) {
       .from('shopify_orders')
       .update({ cancel_reason: payload.cancel_reason || 'other', synced_at: new Date().toISOString() })
       .eq('id', payload.id)
-      .eq('workspace_id', workspaceId)
+      .eq('workspace_id', resolvedWorkspaceId)
   }
 
   if (topic === 'refunds/create') {
@@ -144,7 +181,7 @@ export async function POST(request: NextRequest) {
       .from('shopify_orders')
       .select('refund_amount')
       .eq('id', orderId)
-      .eq('workspace_id', workspaceId)
+      .eq('workspace_id', resolvedWorkspaceId)
       .maybeSingle()
 
     if (existing) {
@@ -153,7 +190,7 @@ export async function POST(request: NextRequest) {
         .from('shopify_orders')
         .update({ refund_amount: (existing.refund_amount || 0) + newRefund, synced_at: new Date().toISOString() })
         .eq('id', orderId)
-        .eq('workspace_id', workspaceId)
+        .eq('workspace_id', resolvedWorkspaceId)
     }
   }
 

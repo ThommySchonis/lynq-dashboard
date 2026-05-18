@@ -17,13 +17,14 @@ export async function POST(request: NextRequest) {
 
   const { user, workspaceId } = ctx
 
-  const { imapHost, imapPort, smtpHost, smtpPort, email, password } = await request.json() as {
+  const { imapHost, imapPort, smtpHost, smtpPort, email, password, store_id: storeId } = await request.json() as {
     imapHost: string
     imapPort?: string | number
     smtpHost: string
     smtpPort?: string | number
     email: string
     password: string
+    store_id?: string
   }
 
   if (!imapHost || !smtpHost || !email || !password) {
@@ -85,6 +86,7 @@ export async function POST(request: NextRequest) {
     smtp_host: smtpHost,
     smtp_port: parseInt(String(smtpPort)) || 587,
     encrypted_password: encryptedPassword,
+    store_id: storeId || null,
     status: 'active',
     is_default: isDefault,
   }
@@ -95,24 +97,6 @@ export async function POST(request: NextRequest) {
 
   if (emailAccountError) {
     console.error('[custom-email/connect] email_accounts upsert error:', emailAccountError.message)
-  }
-
-  // LEGACY dual-write: keep writing to custom_email_tokens for backwards compatibility
-  const { error: legacyError } = await supabaseAdmin.from('custom_email_tokens').upsert({
-    user_id: user.id,
-    email,
-    imap_host: imapHost,
-    imap_port: parseInt(String(imapPort)) || 993,
-    smtp_host: smtpHost,
-    smtp_port: parseInt(String(smtpPort)) || 587,
-    encrypted_password: encryptedPassword,
-  }, { onConflict: 'user_id' })
-
-  if (legacyError) {
-    console.error('[custom-email/connect] custom_email_tokens legacy upsert error:', legacyError.message)
-  }
-
-  if (emailAccountError && legacyError) {
     return NextResponse.json({ error: emailAccountError.message }, { status: 500 })
   }
 

@@ -18,7 +18,7 @@ function signPayload(payload: string, secret: string) {
   return crypto.createHmac('sha256', secret).update(payload).digest('base64url')
 }
 
-export function createOAuthState({ userId, workspaceId, provider }: { userId: any; workspaceId: any; provider: any }) {
+export function createOAuthState({ userId, workspaceId, provider, storeId }: { userId: string; workspaceId: string; provider: string; storeId?: string }) {
   const secret = getStateSecret()
   if (!secret) throw new Error('OAuth state secret is not configured')
 
@@ -26,6 +26,7 @@ export function createOAuthState({ userId, workspaceId, provider }: { userId: an
     userId,
     workspaceId,
     provider,
+    storeId: storeId || null,
     exp: Date.now() + STATE_TTL_MS,
     nonce: crypto.randomBytes(16).toString('hex'),
   }))
@@ -53,7 +54,10 @@ export function verifyOAuthState(state: any, expectedProvider: any) {
     if (data.provider !== expectedProvider) return null
     if (!data.userId || !data.exp || Date.now() > data.exp) return null
     // workspaceId is optional for backwards-compat but will be present for new flows
-    return data
+    return {
+      ...data,
+      storeId: data.storeId || null,
+    }
   } catch {
     return null
   }

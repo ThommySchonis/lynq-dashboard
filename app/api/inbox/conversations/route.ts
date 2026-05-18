@@ -11,6 +11,7 @@ export async function GET(request: NextRequest) {
   const status = searchParams.get('status')
   const unlinked = searchParams.get('unlinked') === 'true'
   const search = searchParams.get('search')
+  const storeId = searchParams.get('store_id')
   const page = parseInt(searchParams.get('page') || '0')
   const limit = 50
 
@@ -27,6 +28,10 @@ export async function GET(request: NextRequest) {
 
   if (unlinked) {
     query = query.is('shopify_customer_id', null).neq('status', 'closed')
+  }
+
+  if (storeId) {
+    query = query.eq('store_id', storeId)
   }
 
   if (search) {

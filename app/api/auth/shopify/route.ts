@@ -46,9 +46,13 @@ export async function POST(request: NextRequest) {
   const clientId = process.env.SHOPIFY_CLIENT_ID
   if (!clientId) return NextResponse.json({ error: 'Shopify app not configured' }, { status: 500 })
 
-  const { shop } = await request.json() as { shop: string }
+  const body = await request.json()
+  const { shop, store_name } = body as { shop: string; store_name?: string }
   if (!shop) {
     return NextResponse.json({ error: 'Shop domain is required' }, { status: 400 })
+  }
+  if (!store_name) {
+    return NextResponse.json({ error: 'Store name is required' }, { status: 400 })
   }
 
   const shopDomain = shop.includes('.myshopify.com')
@@ -63,6 +67,7 @@ export async function POST(request: NextRequest) {
     user_id: user.id,
     shop: shopDomain,
     expires_at: expiresAt,
+    store_name: store_name || null,
   })
 
   if (stateError) {

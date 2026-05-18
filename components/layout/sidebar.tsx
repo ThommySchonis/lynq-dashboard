@@ -12,6 +12,7 @@ import { useAuthStore } from '@/stores/auth'
 import { Separator } from '@/components/ui/separator'
 import { SidebarItem } from './sidebar-item'
 import { SidebarUser } from './sidebar-user'
+import { StoreSwitcher } from './store-switcher'
 
 const NAV_ITEMS = [
   { href: '/home',          icon: Home,           label: 'Home'          },
@@ -72,6 +73,11 @@ export function Sidebar() {
           </span>
         )}
       </Link>
+
+      {/* Store switcher */}
+      <div className="px-3 py-1">
+        <StoreSwitcher collapsed={collapsed} />
+      </div>
 
       {/* Main nav — keeps existing SidebarItem styling for iteration 1. */}
       <nav className="flex-1 space-y-0.5 overflow-y-auto px-3 py-2">

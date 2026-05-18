@@ -1,5 +1,5 @@
 import { getAuthContext } from '../../../../lib/auth'
-import { getShopifyCredentialsByWorkspace } from '../../../../lib/shopifyCredentials'
+import { getStoreCredentials } from '@/lib/store-credentials'
 import { can } from '../../../../lib/permissions'
 import { generatePatternTasks } from '../../../../lib/services/tasks'
 import { getRefunds } from '../../../../lib/services/shopify'
@@ -13,8 +13,11 @@ export async function POST(request: NextRequest) {
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   if (!can.manageTasks(ctx.role as Role)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
-  const credentials = await getShopifyCredentialsByWorkspace(ctx.workspaceId)
-  if (!credentials) return NextResponse.json({ error: 'Shopify not configured' }, { status: 400 })
+  const storeId = new URL(request.url).searchParams.get('store_id')
+  if (!storeId) {
+    return NextResponse.json({ error: 'store_id is required' }, { status: 400 })
+  }
+  const credentials = await getStoreCredentials(storeId, ctx.workspaceId)
 
   try {
     // Fetch all refunds (last 365 days) for pattern analysis

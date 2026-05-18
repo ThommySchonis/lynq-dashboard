@@ -11,6 +11,7 @@ import { EmailAccountRow } from '@/components/features/settings/integrations/ema
 import { CustomEmailModal } from '@/components/features/settings/integrations/custom-email-modal'
 import { useEmailAccounts, useDisconnectEmail } from '@/hooks/settings'
 import { useAuthStore } from '@/stores/auth'
+import { useStoreStore } from '@/stores/store'
 
 function useOAuthRedirectToast() {
   const searchParams = useSearchParams()
@@ -26,17 +27,20 @@ function useOAuthRedirectToast() {
 export function EmailSettings() {
   const [customModalOpen, setCustomModalOpen] = useState(false)
   const token = useAuthStore((s) => s.session?.access_token ?? '')
+  const activeStoreId = useStoreStore((s) => s.activeStoreId)
   const { data: accounts, isLoading } = useEmailAccounts()
   const disconnectMutation = useDisconnectEmail()
 
   useOAuthRedirectToast()
 
   function connectGmail() {
-    window.location.href = `/api/auth/gmail?t=${token}`
+    const storeParam = activeStoreId ? `&store_id=${activeStoreId}` : ''
+    window.location.href = `/api/auth/gmail?t=${token}${storeParam}`
   }
 
   function connectOutlook() {
-    window.location.href = `/api/auth/outlook?t=${token}`
+    const storeParam = activeStoreId ? `&store_id=${activeStoreId}` : ''
+    window.location.href = `/api/auth/outlook?t=${token}${storeParam}`
   }
 
   return (

@@ -2,6 +2,11 @@ import type { NextRequest } from 'next/server'
 import { supabaseAdmin } from '../../../../lib/supabaseAdmin'
 import { getAuthContext } from '../../../../lib/auth'
 import { NextResponse } from 'next/server'
+import { parseJson } from '@/lib/utils/typed-json'
+
+interface ParcelPanelSettings {
+  parcelpanel_api_key?: string
+}
 
 // GET /api/parcelpanel/shipments?status=failed_attempt&page=1
 export async function GET(request: NextRequest) {
@@ -22,7 +27,8 @@ export async function GET(request: NextRequest) {
     .eq('workspace_id', ctx.workspaceId)
     .maybeSingle()
 
-  if (!settings?.parcelpanel_api_key) {
+  const ppApiKey = (settings as ParcelPanelSettings | null)?.parcelpanel_api_key
+  if (!ppApiKey) {
     return NextResponse.json({ error: 'ParcelPanel not connected', connected: false }, { status: 200 })
   }
 
@@ -44,13 +50,14 @@ export async function GET(request: NextRequest) {
     `https://www.parcelpanel.com/api/open/v2/trackings?${params.toString()}`,
     {
       headers: {
-        'pp-api-key': settings.parcelpanel_api_key,
+        'pp-api-key': ppApiKey,
         'Content-Type': 'application/json',
       },
     }
   )
 
-  const data = await res.json()
+  interface PPResponse { message?: string; data?: { trackings?: Record<string, unknown>[]; total?: number; in_transit?: number; delivered?: number; failed_attempt?: number; pickup_point?: number; expired?: number; exception?: number; page?: number } }
+  const data = await parseJson<PPResponse>(res)
   if (!res.ok) {
     return NextResponse.json({ error: data.message || 'ParcelPanel error' }, { status: 502 })
   }

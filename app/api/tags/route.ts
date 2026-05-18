@@ -6,6 +6,12 @@ import type { Role } from '../../../types/database'
 import { supabaseAdmin } from '../../../lib/supabaseAdmin'
 import { TAG_COLORS, sanitizeTagName } from '../../../lib/tags'
 
+interface CreateTagBody {
+  name?: string
+  color?: string
+  description?: string
+}
+
 // GET /api/tags — list workspace tags + macro_count per tag
 export async function GET(request: NextRequest) {
   const ctx = await getAuthContext(request)
@@ -40,11 +46,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'You do not have permission to create tags.', code: 'permission_denied' }, { status: 403 })
   }
 
-  const body = await request.json().catch(() => ({}))
+  const body = await request.json().catch(() => ({})) as CreateTagBody
   const name = sanitizeTagName(body.name)
   if (!name) return NextResponse.json({ error: 'Name is required', code: 'name_required' }, { status: 400 })
 
-  const color = TAG_COLORS.includes(body.color) ? body.color : 'slate'
+  const color = body.color && TAG_COLORS.includes(body.color) ? body.color : 'slate'
   const description = typeof body.description === 'string' ? body.description.trim().slice(0, 200) : null
 
   const { data: tag, error } = await supabaseAdmin

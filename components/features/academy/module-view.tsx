@@ -2,7 +2,6 @@
 
 import { motion } from 'framer-motion'
 import { Check, ChevronRight, Lock, Play, Zap } from 'lucide-react'
-import { cn } from '@/lib/utils'
 import { EASE, readKey } from '@/lib/academy-constants'
 import type { Module } from '@/types/academy'
 
@@ -22,7 +21,7 @@ export function ModuleView({
   readMap,
   onSelectLesson,
   onStartQuiz,
-  onBack,
+  onBack: _onBack,
   isAdmin,
 }: ModuleViewProps) {
   const isDone = passedTypes.includes(mod.examType)

@@ -3,6 +3,10 @@ import { createOAuthState } from '../../../../lib/oauthState'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
+interface WorkspaceMemberRow {
+  workspace_id?: string
+}
+
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
   const userToken = searchParams.get('t')
@@ -23,7 +27,7 @@ export async function GET(request: NextRequest) {
     .eq('user_id', user.id)
     .maybeSingle()
 
-  const workspaceId = membership?.workspace_id ?? null
+  const workspaceId = (membership as WorkspaceMemberRow | null)?.workspace_id ?? ''
 
   const storeId = searchParams.get('store_id')
 

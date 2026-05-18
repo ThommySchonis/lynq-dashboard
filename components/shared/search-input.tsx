@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState, useCallback } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Search, X } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
@@ -23,7 +23,7 @@ export function SearchInput({
   const [internal, setInternal] = useState(controlledValue ?? '')
   const isFirstRender = useRef(true)
   const onChangeRef = useRef(onChange)
-  onChangeRef.current = onChange
+  useEffect(() => { onChangeRef.current = onChange }, [onChange])
 
   useEffect(() => {
     if (controlledValue !== undefined) setInternal(controlledValue)

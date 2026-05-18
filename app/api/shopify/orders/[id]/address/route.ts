@@ -16,7 +16,7 @@ export async function PUT(request: NextRequest, { params }: RouteContext<{ id: s
   const credentials = await getStoreCredentials(storeId, ctx.workspaceId)
 
   const { id } = await params
-  const body = await request.json()
+  const body = (await request.json() as unknown) as Parameters<typeof updateOrderAddress>[2]
 
   try {
     const shippingAddress = await updateOrderAddress(credentials, id, body)

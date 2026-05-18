@@ -5,6 +5,18 @@ import { getAuthContext } from '../../../../lib/auth'
 import { checkAiSuggestLimit } from '../../../../lib/services/limit-check'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { parseBody } from '@/lib/utils/typed-json'
+
+interface ReplyBody {
+  messages: ThreadMessage[]
+  threadId?: string
+  language?: string
+}
+
+interface AiSettingsRow {
+  system_prompt?: string
+  brand_name?: string
+}
 
 interface ThreadMessage {
   from?: string
@@ -49,23 +61,20 @@ export async function POST(request: NextRequest) {
     }, { status: 429 })
   }
 
-  const { messages, threadId, language } = await request.json() as {
-    messages: ThreadMessage[]
-    threadId?: string
-    language?: string
-  }
+  const { messages, threadId, language } = await parseBody<ReplyBody>(request)
 
   if (!messages || messages.length === 0) {
     return NextResponse.json({ error: 'messages are required' }, { status: 400 })
   }
 
   // Fetch user's custom system prompt from Supabase (if configured)
-  const { data: settings } = await supabaseAdmin
+  const { data: settingsRaw } = await supabaseAdmin
     .from('ai_settings')
     .select('system_prompt, brand_name')
     .eq('user_id', user.id)
     .single()
 
+  const settings = settingsRaw as AiSettingsRow | null
   const systemPrompt = settings?.system_prompt || DEFAULT_SYSTEM_PROMPT
   const brandName = settings?.brand_name || 'Support Team'
 

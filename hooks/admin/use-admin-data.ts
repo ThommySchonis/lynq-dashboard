@@ -3,7 +3,12 @@
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/stores/auth'
+import { parseJson } from '@/lib/utils/typed-json'
 import type { Client, Broadcast, Notification, Inquiry, TeamMember, Masterclass, BroadcastReaction, FinanceData, TimeData } from '@/types/admin'
+
+interface FeedbackCountResponse {
+  count?: unknown
+}
 
 function useToken() {
   return useAuthStore((s) => s.session?.access_token ?? '')
@@ -30,7 +35,7 @@ export function useClients() {
       const { data } = await supabase
         .from('clients').select('*')
         .order('created_at', { ascending: false })
-      return (data as Client[]) ?? []
+      return (data ?? []) as Client[]
     },
   })
 }
@@ -42,7 +47,7 @@ export function useBroadcasts() {
       const { data } = await supabase
         .from('broadcasts').select('*')
         .order('created_at', { ascending: false })
-      return (data as Broadcast[]) ?? []
+      return (data ?? []) as Broadcast[]
     },
   })
 }
@@ -53,7 +58,7 @@ export function useBroadcastReactions() {
     queryFn: async () => {
       const { data } = await supabase
         .from('broadcast_reactions').select('broadcast_id, emoji')
-      return (data as BroadcastReaction[]) ?? []
+      return (data ?? []) as BroadcastReaction[]
     },
   })
 }
@@ -65,7 +70,7 @@ export function useNotifications() {
       const { data } = await supabase
         .from('notifications').select('*')
         .order('created_at', { ascending: false })
-      return (data as Notification[]) ?? []
+      return (data ?? []) as Notification[]
     },
   })
 }
@@ -77,7 +82,7 @@ export function useInquiries() {
       const { data } = await supabase
         .from('service_inquiries').select('*')
         .order('created_at', { ascending: false })
-      return (data as Inquiry[]) ?? []
+      return (data ?? []) as Inquiry[]
     },
   })
 }
@@ -94,7 +99,7 @@ export function useTeamMembers() {
         headers: { Authorization: `Bearer ${token}` },
       })
       if (!res.ok) return []
-      return (await res.json()) as TeamMember[]
+      return parseJson<TeamMember[]>(res)
     },
     enabled: !!token,
   })
@@ -107,7 +112,7 @@ export function useMasterclasses() {
       const { data } = await supabase
         .from('masterclasses').select('*')
         .order('scheduled_at', { ascending: false })
-      return (data as Masterclass[]) ?? []
+      return (data ?? []) as Masterclass[]
     },
   })
 }
@@ -121,7 +126,7 @@ export function useTimeData(filter: string) {
         headers: { Authorization: `Bearer ${token}` },
       })
       if (!res.ok) throw new Error('Failed to fetch time data')
-      return res.json()
+      return parseJson<TimeData>(res)
     },
     enabled: !!token,
   })
@@ -140,7 +145,7 @@ export function useFinance() {
         },
       })
       if (!res.ok) throw new Error('Failed to fetch finance data')
-      return res.json()
+      return parseJson<FinanceData>(res)
     },
     enabled: !!token && !!email,
   })
@@ -156,7 +161,7 @@ export function useFeedbackCount() {
         cache: 'no-store',
       })
       if (!res.ok) return 0
-      const d = await res.json().catch(() => ({}))
+      const d = await parseJson<FeedbackCountResponse>(res).catch((): FeedbackCountResponse => ({}))
       return typeof d.count === 'number' ? d.count : 0
     },
     enabled: !!token,

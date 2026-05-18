@@ -2,6 +2,16 @@ import { supabaseAdmin, getUserFromToken } from '../../../../../../lib/supabaseA
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import type { RouteContext } from '@/types/api'
+import { parseBody } from '@/lib/utils/typed-json'
+
+interface ValidateBody {
+  action: string
+  display_code?: string
+}
+
+interface RoleRow {
+  role?: string
+}
 
 const ADMIN_EMAIL = 'info@lynqagency.com'
 
@@ -17,7 +27,7 @@ export async function PATCH(request: NextRequest, { params }: RouteContext<{ id:
   }
 
   const { id } = await params
-  const { action, display_code } = await request.json() as { action: string; display_code?: string }
+  const { action, display_code } = await parseBody<ValidateBody>(request)
 
   // action: 'call_validated' | 'make_visible' | 'hide' | 'reject'
   const VALID_ACTIONS = ['call_validated', 'make_visible', 'hide', 'reject']
@@ -86,7 +96,7 @@ async function generateDisplayCode(userId: string): Promise<string> {
     .eq('user_id', userId)
     .single()
 
-  const prefix = roleMap[profile?.role] || 'LQ'
+  const prefix = roleMap[(profile as RoleRow | null)?.role ?? ''] || 'LQ'
   const num = String(Math.floor(Math.random() * 900) + 100)
   return `${prefix}-${num}`
 }

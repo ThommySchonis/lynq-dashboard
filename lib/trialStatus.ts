@@ -8,6 +8,11 @@
 //     ...
 //   }
 
+interface WorkspaceTrialInfo {
+  subscription_status?: string
+  trial_ends_at?: string | null
+}
+
 const DAY_MS = 24 * 60 * 60 * 1000
 
 /**
@@ -19,7 +24,7 @@ const DAY_MS = 24 * 60 * 60 * 1000
  *
  * Returns null als geen trial_ends_at, of als status !== 'trial'.
  */
-export function getTrialDaysRemaining(workspace: any) {
+export function getTrialDaysRemaining(workspace: WorkspaceTrialInfo | null | undefined) {
   if (!workspace) return null
   if (workspace.subscription_status !== 'trial') return null
   if (!workspace.trial_ends_at) return null
@@ -31,7 +36,7 @@ export function getTrialDaysRemaining(workspace: any) {
  * True als status === 'trial' en trial_ends_at < now().
  * Gebruikt door BlockedStateGuard + proxy.js.
  */
-export function isTrialExpired(workspace: any) {
+export function isTrialExpired(workspace: WorkspaceTrialInfo | null | undefined) {
   if (!workspace) return false
   if (workspace.subscription_status !== 'trial') return false
   if (!workspace.trial_ends_at) return false
@@ -42,7 +47,7 @@ export function isTrialExpired(workspace: any) {
  * True wanneer er nog tijd op het trial zit, maar binnen het laatste
  * 24-uurs venster. Drijft de Day 6 soft-warning banner aan.
  */
-export function isTrialEndingSoon(workspace: any) {
+export function isTrialEndingSoon(workspace: WorkspaceTrialInfo | null | undefined) {
   if (!workspace) return false
   if (workspace.subscription_status !== 'trial') return false
   if (!workspace.trial_ends_at) return false

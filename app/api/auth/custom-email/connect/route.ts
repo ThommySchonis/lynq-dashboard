@@ -4,8 +4,19 @@ import { getAuthContext } from '../../../../../lib/auth'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { ImapFlow } from 'imapflow'
+import { parseBody } from '@/lib/utils/typed-json'
+
+interface CustomEmailBody {
+  imapHost: string
+  imapPort?: string | number
+  smtpHost: string
+  smtpPort?: string | number
+  email: string
+  password: string
+  store_id?: string
+}
 // nodemailer ships without bundled types; suppress the implicit-any warning for this import
-// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-explicit-any
+// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
 const nodemailer = require('nodemailer') as any
 
 // POST /api/auth/custom-email/connect
@@ -17,15 +28,7 @@ export async function POST(request: NextRequest) {
 
   const { user, workspaceId } = ctx
 
-  const { imapHost, imapPort, smtpHost, smtpPort, email, password, store_id: storeId } = await request.json() as {
-    imapHost: string
-    imapPort?: string | number
-    smtpHost: string
-    smtpPort?: string | number
-    email: string
-    password: string
-    store_id?: string
-  }
+  const { imapHost, imapPort, smtpHost, smtpPort, email, password, store_id: storeId } = await parseBody<CustomEmailBody>(request)
 
   if (!imapHost || !smtpHost || !email || !password) {
     return NextResponse.json({ error: 'imapHost, smtpHost, email and password are required' }, { status: 400 })
@@ -49,6 +52,7 @@ export async function POST(request: NextRequest) {
   }
 
   // Test SMTP connection
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
   const transporter = nodemailer.createTransport({
     host: smtpHost,
     port: parseInt(String(smtpPort)) || 587,
@@ -58,6 +62,7 @@ export async function POST(request: NextRequest) {
   })
 
   try {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
     await transporter.verify()
   } catch (err: unknown) {
     return NextResponse.json({ error: `SMTP connection failed: ${err instanceof Error ? err.message : 'Unknown error'}` }, { status: 400 })

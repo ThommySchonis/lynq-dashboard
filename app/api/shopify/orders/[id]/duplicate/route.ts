@@ -16,7 +16,7 @@ export async function POST(request: NextRequest, { params }: RouteContext<{ id: 
   const credentials = await getStoreCredentials(storeId, ctx.workspaceId)
 
   const { id } = await params
-  const body = await request.json()
+  const body = (await request.json() as unknown) as Parameters<typeof duplicateOrder>[2]
 
   try {
     const draftOrder = await duplicateOrder(credentials, id, body)

@@ -68,8 +68,8 @@ export default function ServicesPage() {
     setActiveService(null)
   }
 
-  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault()
+  async function handleSubmit(e?: FormEvent<HTMLFormElement>) {
+    e?.preventDefault()
     if (!userId) return
     setFormError('')
 
@@ -194,7 +194,7 @@ export default function ServicesPage() {
                   setPhone={setPhone}
                   message={message}
                   setMessage={setMessage}
-                  onSubmit={handleSubmit}
+                  onSubmit={() => { void handleSubmit() }}
                   submitting={submitInquiry.isPending}
                   formError={formError}
                 />

@@ -92,7 +92,7 @@ export function SupplyChainPage() {
               {!notConfigured && (
                 <div className="flex gap-2 items-center shrink-0 pt-1">
                   <button
-                    onClick={() => refetch()}
+                    onClick={() => void refetch()}
                     disabled={isPending}
                     className="flex items-center gap-1.5 py-2 px-3.5 rounded-[9px] bg-secondary border border-border text-foreground-2 text-[12.5px] font-semibold cursor-pointer transition-all duration-150"
                   >
@@ -106,7 +106,7 @@ export function SupplyChainPage() {
           </div>
 
           {/* Setup screen */}
-          {notConfigured && <SetupWizard onConnected={() => refetch()} />}
+          {notConfigured && <SetupWizard onConnected={() => void refetch()} />}
 
           {/* Loading skeleton */}
           {isPending && !notConfigured && <SkeletonRows />}
@@ -120,7 +120,7 @@ export function SupplyChainPage() {
               <p className="text-[15px] font-bold text-foreground mb-1.5">Could not load shipments</p>
               <p className="text-[13.5px] text-muted-foreground mb-5">{error?.message}</p>
               <button
-                onClick={() => refetch()}
+                onClick={() => void refetch()}
                 className="py-[9px] px-5 rounded-[9px] bg-[#111111] text-white border-none text-[13.5px] font-bold cursor-pointer"
               >
                 Try again

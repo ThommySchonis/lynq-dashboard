@@ -39,6 +39,17 @@ export class LimitCheckError extends Error {
 
 // ─── Internal: read subscription + plan limits in one round-trip ──────
 
+interface PlanLimits {
+  ticket_limit: number | null
+  ai_suggest_limit: number | null
+}
+
+interface SubscriptionWithPlanJoin {
+  plan_id: string
+  write_locked: boolean
+  plans: PlanLimits | PlanLimits[] | null
+}
+
 interface SubscriptionAndPlan {
   plan_id:          string
   write_locked:     boolean
@@ -63,10 +74,11 @@ async function readSubscriptionAndPlan(workspaceId: string): Promise<Subscriptio
   // Supabase's PostgREST returns the joined row as an object (or null) when
   // the FK is to a unique column; the typed shape varies by codegen, so we
   // normalize here.
-  const plan = Array.isArray(data.plans) ? data.plans[0] : data.plans
+  const row = data as SubscriptionWithPlanJoin
+  const plan = Array.isArray(row.plans) ? row.plans[0] : row.plans
   return {
-    plan_id:          data.plan_id,
-    write_locked:     data.write_locked,
+    plan_id:          row.plan_id,
+    write_locked:     row.write_locked,
     ticket_limit:     plan?.ticket_limit ?? null,
     ai_suggest_limit: plan?.ai_suggest_limit ?? null,
   }

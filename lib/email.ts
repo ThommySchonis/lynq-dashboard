@@ -15,7 +15,7 @@ const ROLE_LABELS: Record<string, string> = {
   observer: 'an Observer',
 }
 
-export async function sendInviteEmail({ to, workspaceName, inviterEmail, role, link }: { to: any; workspaceName: any; inviterEmail: any; role: any; link: any }) {
+export async function sendInviteEmail({ to, workspaceName, inviterEmail, role, link }: { to: string; workspaceName: string; inviterEmail: string; role: string; link: string | null }) {
   if (!process.env.RESEND_API_KEY) {
     console.warn('[email] RESEND_API_KEY not set — skipping send')
     return { status: 'not_configured' }
@@ -54,14 +54,14 @@ export async function sendInviteEmail({ to, workspaceName, inviterEmail, role, l
       `,
     })
     return { status: 'sent' }
-  } catch (err: any) {
-    const error = err?.message ?? 'Email send failed'
+  } catch (err: unknown) {
+    const error = err instanceof Error ? err.message : 'Email send failed'
     console.error('[email] Resend error:', error)
     return { status: 'failed', error }
   }
 }
 
-function escapeHtml(s: any) {
+function escapeHtml(s: string) {
   return String(s ?? '')
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')

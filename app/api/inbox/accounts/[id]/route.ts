@@ -26,7 +26,7 @@ export async function DELETE(request: NextRequest, { params }: RouteContext<{ id
     .select('id')
     .eq('email_account_id', id)
 
-  const conversationIds = (conversations || []).map(c => c.id)
+  const conversationIds = (conversations || []).map((c: { id: string }) => c.id)
 
   if (conversationIds.length > 0) {
     // Delete messages for those conversations

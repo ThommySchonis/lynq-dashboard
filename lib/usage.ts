@@ -141,18 +141,18 @@ export async function ensureCurrentPeriod(workspaceId: string): Promise<UsageCou
     return null
   }
 
-  const { data: existing } = await supabaseAdmin
+  const existingResult = await supabaseAdmin
     .from('usage_counters')
     .select('*')
     .eq('workspace_id', workspaceId)
     .eq('period_start', sub.current_period_start)
     .maybeSingle()
 
-  if (existing) return existing as UsageCounter
+  if (existingResult.data) return existingResult.data as UsageCounter
 
   // Lazy-create. Race-safe via the (workspace_id, period_start) unique
   // index — concurrent inserts will conflict; we re-fetch on conflict.
-  const { data: created, error: insertError } = await supabaseAdmin
+  const createResult = await supabaseAdmin
     .from('usage_counters')
     .insert({
       workspace_id:  workspaceId,
@@ -162,21 +162,22 @@ export async function ensureCurrentPeriod(workspaceId: string): Promise<UsageCou
     .select('*')
     .single()
 
-  if (insertError) {
+  if (createResult.error) {
+    const insertError = createResult.error
     // Conflict → another request just created it. Re-fetch.
     if (insertError.code === '23505') {
-      const { data: refetched } = await supabaseAdmin
+      const refetchResult = await supabaseAdmin
         .from('usage_counters')
         .select('*')
         .eq('workspace_id', workspaceId)
         .eq('period_start', sub.current_period_start)
         .single()
-      return refetched as UsageCounter | null
+      return refetchResult.data as UsageCounter | null
     }
     console.error('[usage] ensureCurrentPeriod insert failed:', insertError.message)
     return null
   }
-  return created as UsageCounter
+  return createResult.data as UsageCounter
 }
 
 /**

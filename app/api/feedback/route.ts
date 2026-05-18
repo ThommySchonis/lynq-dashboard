@@ -2,21 +2,33 @@ import { supabaseAdmin } from '../../../lib/supabaseAdmin'
 import { getAuthContext } from '../../../lib/auth'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { parseBody } from '@/lib/utils/typed-json'
+
+interface FeedbackBody {
+  type?: string
+  message?: string
+  page_url?: string
+  user_agent?: string
+}
+
+interface IdRow {
+  id: string
+}
 
 export async function POST(request: NextRequest) {
   const ctx = await getAuthContext(request)
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  let body
+  let body: FeedbackBody
   try {
-    body = await request.json()
+    body = await parseBody<FeedbackBody>(request)
   } catch {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
   }
 
-  const { type, message, page_url, user_agent } = body || {}
+  const { type, message, page_url, user_agent } = body
 
-  if (!['bug', 'feedback', 'other'].includes(type)) {
+  if (!type || !['bug', 'feedback', 'other'].includes(type)) {
     return NextResponse.json({ error: 'Invalid type' }, { status: 400 })
   }
   if (typeof message !== 'string' || message.trim().length < 5 || message.length > 5000) {
@@ -56,5 +68,5 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  return NextResponse.json({ id: data.id })
+  return NextResponse.json({ id: (data as IdRow).id })
 }

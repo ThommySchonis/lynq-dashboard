@@ -4,6 +4,15 @@ import { useMutation } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/stores/auth'
 import { toast } from 'sonner'
+import { parseJson } from '@/lib/utils/typed-json'
+
+interface ErrorResponse {
+  error?: string
+}
+
+interface ShopifyOAuthResponse {
+  url?: string
+}
 
 function useToken() {
   return useAuthStore((s) => s.session?.access_token ?? '')
@@ -32,10 +41,10 @@ export function useSaveBrand() {
         body: JSON.stringify(form),
       })
       if (!res.ok) {
-        const d = await res.json().catch(() => ({}))
-        throw new Error((d as { error?: string }).error || 'Failed to save brand setup')
+        const d = await parseJson<ErrorResponse>(res).catch((): ErrorResponse => ({}))
+        throw new Error(d.error ||'Failed to save brand setup')
       }
-      return res.json()
+      return parseJson<unknown>(res)
     },
     onError: (err: Error) => {
       toast.error(err.message)
@@ -56,10 +65,10 @@ export function useConnectParcelPanel() {
         body: JSON.stringify(form),
       })
       if (!res.ok) {
-        const d = await res.json().catch(() => ({}))
-        throw new Error((d as { error?: string }).error || 'Failed to connect ParcelPanel')
+        const d = await parseJson<ErrorResponse>(res).catch((): ErrorResponse => ({}))
+        throw new Error(d.error ||'Failed to connect ParcelPanel')
       }
-      return res.json()
+      return parseJson<unknown>(res)
     },
     onSuccess: () => {
       toast.success('ParcelPanel connected')
@@ -84,7 +93,7 @@ export function useConnectShopify() {
         body: JSON.stringify({ shop }),
       })
       if (!res.ok) throw new Error('Failed to connect Shopify')
-      return res.json() as Promise<{ url?: string }>
+      return parseJson<ShopifyOAuthResponse>(res)
     },
   })
 }

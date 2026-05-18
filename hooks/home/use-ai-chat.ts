@@ -13,7 +13,7 @@ export interface ChatMessage {
 export interface UseAiChatReturn {
   messages: ChatMessage[]
   isStreaming: boolean
-  sendMessage: (text: string, context: ShopifyContext | undefined) => void
+  sendMessage: (text: string, context: ShopifyContext | undefined) => Promise<void>
   clearMessages: () => void
 }
 

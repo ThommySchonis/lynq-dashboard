@@ -45,8 +45,8 @@ export function BroadcastList() {
               key={b.id}
               broadcast={b}
               reactions={reactions}
-              onDelete={() => handleDelete(b.id)}
-              onTogglePin={() => handleTogglePin(b.id, b.is_pinned)}
+              onDelete={() => void handleDelete(b.id)}
+              onTogglePin={() => void handleTogglePin(b.id, b.is_pinned)}
             />
           ))
         )}

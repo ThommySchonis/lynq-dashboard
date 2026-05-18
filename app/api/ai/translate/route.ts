@@ -3,6 +3,13 @@ import { anthropic } from '@ai-sdk/anthropic'
 import { getUserFromToken, supabaseAdmin } from '../../../../lib/supabaseAdmin'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { parseBody } from '@/lib/utils/typed-json'
+
+interface TranslateBody {
+  text: string
+  targetLang?: string
+  detectOnly?: boolean
+}
 
 export async function POST(request: NextRequest) {
   const authHeader = request.headers.get('authorization')
@@ -12,11 +19,7 @@ export async function POST(request: NextRequest) {
   const user = await getUserFromToken(token)
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { text, targetLang, detectOnly } = await request.json() as {
-    text: string
-    targetLang?: string
-    detectOnly?: boolean
-  }
+  const { text, targetLang, detectOnly } = await parseBody<TranslateBody>(request)
   if (!text?.trim()) return NextResponse.json({ error: 'No text provided' }, { status: 400 })
 
   let prompt: string
@@ -57,7 +60,7 @@ ${text}`
 
   try {
     const jsonMatch = result.match(/\{[\s\S]*\}/)
-    const parsed = JSON.parse(jsonMatch?.[0] || '{}')
+    const parsed = JSON.parse(jsonMatch?.[0] || '{}') as Record<string, unknown>
     return NextResponse.json(parsed)
   } catch {
     return NextResponse.json({ error: 'Parse failed' }, { status: 500 })

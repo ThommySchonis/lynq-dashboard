@@ -3,6 +3,12 @@ import { getAuthContext } from '../../../../lib/auth'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
+interface IntegrationRow {
+  shopify_domain?: string
+  shopify_connected_at?: string
+  parcelpanel_api_key?: string
+}
+
 const ALLOWED_FIELDS = [
   'parcelpanel_api_key',
 ]
@@ -51,9 +57,10 @@ export async function GET(request: NextRequest) {
     .eq('workspace_id', ctx.workspaceId)
     .maybeSingle()
 
+  const integration = data as IntegrationRow | null
   return NextResponse.json({
-    shopify: !!data?.shopify_domain,
-    shopifyDomain: data?.shopify_domain || null,
-    parcelpanel: !!data?.parcelpanel_api_key,
+    shopify: !!integration?.shopify_domain,
+    shopifyDomain: integration?.shopify_domain || null,
+    parcelpanel: !!integration?.parcelpanel_api_key,
   })
 }

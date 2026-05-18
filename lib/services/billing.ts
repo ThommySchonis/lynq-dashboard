@@ -26,6 +26,18 @@ import type {
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000
 
+// ─── Internal row shapes (avoids inline `as { … }` assertions) ──────
+
+interface PaymentMethodRef {
+  id: string
+  whop_payment_method_id: string | null
+}
+
+interface WorkspaceAddonRow {
+  addon_id: string
+  status: WorkspaceAddonStatus
+}
+
 // ─── Error class for service-layer failures ──────────────────────────
 
 export class BillingServiceError extends Error {
@@ -42,31 +54,31 @@ export class BillingServiceError extends Error {
 // ─── Subscription / usage ────────────────────────────────────────────
 
 export async function getSubscription(workspaceId: string): Promise<WorkspaceSubscription | null> {
-  const { data, error } = await supabaseAdmin
+  const result = await supabaseAdmin
     .from('workspace_subscriptions')
     .select('*')
     .eq('workspace_id', workspaceId)
     .maybeSingle()
 
-  if (error) {
-    console.error('[billing.getSubscription] failed:', error.message)
+  if (result.error) {
+    console.error('[billing.getSubscription] failed:', result.error.message)
     return null
   }
-  return data as WorkspaceSubscription | null
+  return result.data as WorkspaceSubscription | null
 }
 
 export async function getPlan(planId: string): Promise<Plan | null> {
-  const { data, error } = await supabaseAdmin
+  const result = await supabaseAdmin
     .from('plans')
     .select('*')
     .eq('id', planId)
     .maybeSingle()
 
-  if (error) {
-    console.error('[billing.getPlan] failed:', error.message)
+  if (result.error) {
+    console.error('[billing.getPlan] failed:', result.error.message)
     return null
   }
-  return data as Plan | null
+  return result.data as Plan | null
 }
 
 export async function listPlans(): Promise<Plan[]> {
@@ -91,16 +103,16 @@ async function ensureCurrentPeriod(
   workspaceId: string,
   sub: WorkspaceSubscription,
 ): Promise<UsageCounter | null> {
-  const { data: existing } = await supabaseAdmin
+  const existingResult = await supabaseAdmin
     .from('usage_counters')
     .select('*')
     .eq('workspace_id', workspaceId)
     .eq('period_start', sub.current_period_start)
     .maybeSingle()
 
-  if (existing) return existing as UsageCounter
+  if (existingResult.data) return existingResult.data as UsageCounter
 
-  const { data: created, error: insertError } = await supabaseAdmin
+  const createResult = await supabaseAdmin
     .from('usage_counters')
     .insert({
       workspace_id: workspaceId,
@@ -110,20 +122,20 @@ async function ensureCurrentPeriod(
     .select('*')
     .single()
 
-  if (insertError) {
-    if (insertError.code === '23505') {
-      const { data: refetched } = await supabaseAdmin
+  if (createResult.error) {
+    if (createResult.error.code === '23505') {
+      const refetchResult = await supabaseAdmin
         .from('usage_counters')
         .select('*')
         .eq('workspace_id', workspaceId)
         .eq('period_start', sub.current_period_start)
         .single()
-      return refetched as UsageCounter | null
+      return refetchResult.data as UsageCounter | null
     }
-    console.error('[billing.ensureCurrentPeriod] insert failed:', insertError.message)
+    console.error('[billing.ensureCurrentPeriod] insert failed:', createResult.error.message)
     return null
   }
-  return created as UsageCounter
+  return createResult.data as UsageCounter
 }
 
 /**
@@ -261,18 +273,18 @@ export async function changePlan(
       newPlanId:    targetPlan.whop_plan_id,
     })
 
-    const { data, error } = await supabaseAdmin
+    const updateResult = await supabaseAdmin
       .from('workspace_subscriptions')
       .update({ plan_id: planId })
       .eq('id', sub.id)
       .select('*')
       .single()
 
-    if (error) {
-      console.error('[billing.changePlan] DB update failed:', error.message)
-      throw new BillingServiceError(error.message, 'update_failed', 500)
+    if (updateResult.error) {
+      console.error('[billing.changePlan] DB update failed:', updateResult.error.message)
+      throw new BillingServiceError(updateResult.error.message, 'update_failed', 500)
     }
-    return { mode: 'updated', subscription: data as WorkspaceSubscription }
+    return { mode: 'updated', subscription: updateResult.data as WorkspaceSubscription }
   }
 
   // Path 2 — no membership yet → start a checkout. Webhook completes.
@@ -310,15 +322,15 @@ export async function cancelSubscription(workspaceId: string, atPeriodEnd = true
     ? { cancel_at_period_end: true }
     : { status: 'canceled' as const, cancel_at_period_end: false, canceled_at: new Date().toISOString() }
 
-  const { data, error } = await supabaseAdmin
+  const cancelResult = await supabaseAdmin
     .from('workspace_subscriptions')
     .update(updates)
     .eq('id', sub.id)
     .select('*')
     .single()
 
-  if (error) throw new BillingServiceError(error.message, 'update_failed', 500)
-  return data as WorkspaceSubscription
+  if (cancelResult.error) throw new BillingServiceError(cancelResult.error.message, 'update_failed', 500)
+  return cancelResult.data as WorkspaceSubscription
 }
 
 export async function reactivateSubscription(workspaceId: string): Promise<WorkspaceSubscription> {
@@ -332,7 +344,7 @@ export async function reactivateSubscription(workspaceId: string): Promise<Works
     await whop.reactivateSubscription({ subscriptionId: sub.whop_subscription_id })
   }
 
-  const { data, error } = await supabaseAdmin
+  const reactivateResult = await supabaseAdmin
     .from('workspace_subscriptions')
     .update({
       status:               'active',
@@ -343,24 +355,24 @@ export async function reactivateSubscription(workspaceId: string): Promise<Works
     .select('*')
     .single()
 
-  if (error) throw new BillingServiceError(error.message, 'update_failed', 500)
-  return data as WorkspaceSubscription
+  if (reactivateResult.error) throw new BillingServiceError(reactivateResult.error.message, 'update_failed', 500)
+  return reactivateResult.data as WorkspaceSubscription
 }
 
 // ─── Billing info ────────────────────────────────────────────────────
 
 export async function getBillingInfo(workspaceId: string): Promise<BillingInfo | null> {
-  const { data, error } = await supabaseAdmin
+  const infoResult = await supabaseAdmin
     .from('billing_info')
     .select('*')
     .eq('workspace_id', workspaceId)
     .maybeSingle()
 
-  if (error) {
-    console.error('[billing.getBillingInfo] failed:', error.message)
+  if (infoResult.error) {
+    console.error('[billing.getBillingInfo] failed:', infoResult.error.message)
     return null
   }
-  return data as BillingInfo | null
+  return infoResult.data as BillingInfo | null
 }
 
 /**
@@ -407,14 +419,14 @@ export async function updateBillingInfo(workspaceId: string, input: UpdateBillin
     vat_number:        merged.vat_number?.trim() ?? null,
   }
 
-  const { data, error } = await supabaseAdmin
+  const upsertResult = await supabaseAdmin
     .from('billing_info')
     .upsert(row, { onConflict: 'workspace_id' })
     .select('*')
     .single()
 
-  if (error) throw new BillingServiceError(error.message, 'upsert_failed', 500)
-  return data as BillingInfo
+  if (upsertResult.error) throw new BillingServiceError(upsertResult.error.message, 'upsert_failed', 500)
+  return upsertResult.data as BillingInfo
 }
 
 // ─── Invoices ────────────────────────────────────────────────────────
@@ -438,18 +450,18 @@ export async function listInvoices(workspaceId: string, page = 0, perPage = 25):
 }
 
 export async function getInvoice(workspaceId: string, invoiceId: string): Promise<Invoice | null> {
-  const { data, error } = await supabaseAdmin
+  const invoiceResult = await supabaseAdmin
     .from('invoices')
     .select('*')
     .eq('id', invoiceId)
     .eq('workspace_id', workspaceId)
     .maybeSingle()
 
-  if (error) {
-    console.error('[billing.getInvoice] failed:', error.message)
+  if (invoiceResult.error) {
+    console.error('[billing.getInvoice] failed:', invoiceResult.error.message)
     return null
   }
-  return data as Invoice | null
+  return invoiceResult.data as Invoice | null
 }
 
 // ─── Payment methods ─────────────────────────────────────────────────
@@ -468,13 +480,14 @@ export async function listPaymentMethods(workspaceId: string): Promise<PaymentMe
 
 export async function deletePaymentMethod(workspaceId: string, methodId: string): Promise<void> {
   // Confirm the method belongs to this workspace before deleting
-  const { data: method } = await supabaseAdmin
+  const methodResult = await supabaseAdmin
     .from('payment_methods')
     .select('id, whop_payment_method_id')
     .eq('id', methodId)
     .eq('workspace_id', workspaceId)
     .maybeSingle()
 
+  const method = methodResult.data as PaymentMethodRef | null
   if (!method) throw new BillingServiceError('Payment method not found', 'not_found', 404)
 
   if (method.whop_payment_method_id) {
@@ -505,7 +518,7 @@ export async function listAddons(workspaceId: string): Promise<SubscriptionAddon
   ])
 
   const wsStatusById: Record<string, WorkspaceAddonStatus> = Object.fromEntries(
-    ((workspaceAddons as { addon_id: string; status: WorkspaceAddonStatus }[]) ?? [])
+    ((workspaceAddons as WorkspaceAddonRow[]) ?? [])
       .map(w => [w.addon_id, w.status])
   )
 
@@ -541,6 +554,14 @@ export async function listAddons(workspaceId: string): Promise<SubscriptionAddon
 // naturally counts via rule (2) above. No special "count again in
 // new period" branch is needed.
 
+interface ConversationBillingRow {
+  id: string
+  workspace_id: string
+  status: string
+  is_spam: boolean
+  counted_in_usage_period: string | null
+}
+
 interface RecordOutboundResult {
   counted: boolean
   overage: boolean
@@ -557,7 +578,7 @@ export async function recordOutboundMessage(
     .select('id, workspace_id, status, is_spam, counted_in_usage_period')
     .eq('id', conversationId)
     .eq('workspace_id', workspaceId)
-    .maybeSingle()
+    .maybeSingle<ConversationBillingRow>()
 
   if (convError) console.error('[recordOutboundMessage] fetch failed:', convError.message)
 
@@ -568,7 +589,7 @@ export async function recordOutboundMessage(
   const nowIso = new Date().toISOString()
 
   // 2. Spam exclusion — don't count, but still stamp last_outbound_at
-  if ((conv as { is_spam: boolean }).is_spam) {
+  if (conv.is_spam) {
     await supabaseAdmin
       .from('email_conversations')
       .update({ last_outbound_at: nowIso })
@@ -577,7 +598,7 @@ export async function recordOutboundMessage(
   }
 
   // 3. Already counted in some prior period → continuation
-  if ((conv as { counted_in_usage_period: string | null }).counted_in_usage_period) {
+  if (conv.counted_in_usage_period) {
     await supabaseAdmin
       .from('email_conversations')
       .update({ last_outbound_at: nowIso })
@@ -669,5 +690,5 @@ export async function subscribeAddon(workspaceId: string, addonId: string): Prom
     .single()
 
   if (error) throw new BillingServiceError(error.message, 'upsert_failed', 500)
-  return { ok: true, status: (data as { status: WorkspaceAddonStatus }).status }
+  return { ok: true, status: (data as WorkspaceAddonRow).status }
 }

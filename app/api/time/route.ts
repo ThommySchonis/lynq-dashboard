@@ -3,6 +3,45 @@ import { supabaseAdmin } from '../../../lib/supabaseAdmin'
 import { getAuthContext } from '../../../lib/auth'
 import { getEnrichedMembers } from '../../../lib/services/workspace-members'
 import { NextResponse } from 'next/server'
+import { parseBody } from '@/lib/utils/typed-json'
+
+interface SessionEditRow {
+  session_id: string
+  edited_at: string
+  edited_by_user_id: string
+}
+
+interface ActiveSessionRow {
+  agent_id: string
+  clocked_in_at: string
+  status: string
+}
+
+interface TimeActionBody {
+  action: string
+  session_id?: string
+  report?: {
+    emails_answered: number
+    what_went_well: string
+    needs_attention: string
+  }
+}
+
+interface TodaySessionRow {
+  clocked_in_at: string
+  clocked_out_at: string
+  paused_seconds: number
+}
+
+interface PausedSessionRow {
+  paused_at: string | null
+  paused_seconds: number
+}
+
+interface HeartbeatSessionRow {
+  active_seconds: number
+  status: string
+}
 
 const ADMIN_EMAIL = 'info@lynqagency.com'
 
@@ -66,7 +105,7 @@ async function fetchLatestEditMap(sessionIds: string[]): Promise<Map<string, { e
     return new Map()
   }
   const latest = new Map<string, { edited_at: string; edited_by_user_id: string }>()
-  for (const r of rows ?? []) {
+  for (const r of (rows ?? []) as SessionEditRow[]) {
     if (!latest.has(r.session_id)) {
       latest.set(r.session_id, { edited_at: r.edited_at, edited_by_user_id: r.edited_by_user_id })
     }
@@ -100,7 +139,7 @@ export async function GET(request: NextRequest) {
     const memberIds = members.map(m => m.id)
     const idFilter = memberIds.length > 0 ? memberIds : ['00000000-0000-0000-0000-000000000000']
 
-    const { data: sessions } = await supabaseAdmin
+    const sessionsRes = await supabaseAdmin
       .from('time_sessions')
       .select('*')
       .eq('workspace_id', ctx.workspaceId)
@@ -109,36 +148,39 @@ export async function GET(request: NextRequest) {
       .lte('clocked_in_at', to.toISOString())
       .order('clocked_in_at', { ascending: false })
 
-    const { data: activeSessions } = await supabaseAdmin
+    const activeSessionsRes = await supabaseAdmin
       .from('time_sessions')
       .select('agent_id, clocked_in_at, status')
       .eq('workspace_id', ctx.workspaceId)
       .in('agent_id', idFilter)
       .is('clocked_out_at', null)
 
+    const sessions = (sessionsRes.data || []) as (TimeSession & { id: string })[]
+    const activeSessions = (activeSessionsRes.data || []) as ActiveSessionRow[]
+
     const memberMap: Record<string, Record<string, unknown>> = {}
     ;(members || []).forEach(m => {
       memberMap[m.id] = { ...m, worked_seconds: 0, paused_seconds: 0, sessions_count: 0, is_active: false, is_paused: false }
     })
-    ;(activeSessions || []).forEach(s => {
+    activeSessions.forEach(s => {
       if (memberMap[s.agent_id]) {
         memberMap[s.agent_id].is_active = true
         memberMap[s.agent_id].is_paused = s.status === 'paused'
       }
     })
-    ;(sessions || []).forEach(s => {
+    sessions.forEach(s => {
       if (memberMap[s.agent_id]) {
-        memberMap[s.agent_id].worked_seconds  = (memberMap[s.agent_id].worked_seconds as number) + workedSec(s as TimeSession)
+        memberMap[s.agent_id].worked_seconds  = (memberMap[s.agent_id].worked_seconds as number) + workedSec(s)
         memberMap[s.agent_id].paused_seconds  = (memberMap[s.agent_id].paused_seconds as number) + (s.paused_seconds || 0)
         memberMap[s.agent_id].sessions_count  = (memberMap[s.agent_id].sessions_count as number) + 1
       }
     })
 
-    const sessionIds = (sessions || []).map(s => s.id)
+    const sessionIds = sessions.map(s => s.id)
     const latestEdits = await fetchLatestEditMap(sessionIds)
 
     return NextResponse.json({
-      sessions: (sessions || []).map(s => {
+      sessions: sessions.map(s => {
         const edit = latestEdits.get(s.id)
         return {
           ...s,
@@ -149,8 +191,8 @@ export async function GET(request: NextRequest) {
         }
       }),
       members:      Object.values(memberMap),
-      active_count: (activeSessions || []).filter(s => s.status !== 'paused').length,
-      paused_count: (activeSessions || []).filter(s => s.status === 'paused').length,
+      active_count: activeSessions.filter(s => s.status !== 'paused').length,
+      paused_count: activeSessions.filter(s => s.status === 'paused').length,
       workspace:    ctx.workspace,
       from: from.toISOString(),
       to:   to.toISOString(),
@@ -164,40 +206,43 @@ export async function GET(request: NextRequest) {
     // with email + display_name. id = workspace_members.user_id = auth.users.id.
     const members = await getEnrichedMembers({})
 
-    const { data: sessions } = await supabaseAdmin
+    const sessionsRes2 = await supabaseAdmin
       .from('time_sessions')
       .select('*')
       .gte('clocked_in_at', from.toISOString())
       .lte('clocked_in_at', to.toISOString())
       .order('clocked_in_at', { ascending: false })
 
-    const { data: activeSessions } = await supabaseAdmin
+    const activeSessionsRes2 = await supabaseAdmin
       .from('time_sessions')
       .select('agent_id, clocked_in_at, status')
       .is('clocked_out_at', null)
+
+    const sessions = (sessionsRes2.data || []) as (TimeSession & { id: string })[]
+    const activeSessions = (activeSessionsRes2.data || []) as ActiveSessionRow[]
 
     const memberMap: Record<string, Record<string, unknown>> = {}
     members.forEach(m => {
       memberMap[m.id] = { ...m, worked_seconds: 0, paused_seconds: 0, sessions_count: 0, is_active: false, is_paused: false }
     })
-    ;(activeSessions || []).forEach(s => {
+    activeSessions.forEach(s => {
       if (memberMap[s.agent_id]) {
         memberMap[s.agent_id].is_active = true
         memberMap[s.agent_id].is_paused = s.status === 'paused'
       }
     })
-    ;(sessions || []).forEach(s => {
+    sessions.forEach(s => {
       if (memberMap[s.agent_id]) {
-        memberMap[s.agent_id].worked_seconds  = (memberMap[s.agent_id].worked_seconds as number) + workedSec(s as TimeSession)
+        memberMap[s.agent_id].worked_seconds  = (memberMap[s.agent_id].worked_seconds as number) + workedSec(s)
         memberMap[s.agent_id].paused_seconds  = (memberMap[s.agent_id].paused_seconds as number) + (s.paused_seconds || 0)
         memberMap[s.agent_id].sessions_count  = (memberMap[s.agent_id].sessions_count as number) + 1
       }
     })
 
-    const sessionIds = (sessions || []).map(s => s.id)
+    const sessionIds = sessions.map(s => s.id)
     const latestEdits = await fetchLatestEditMap(sessionIds)
 
-    const sessionsWithNames = (sessions || []).map(s => {
+    const sessionsWithNames = sessions.map(s => {
       const edit = latestEdits.get(s.id)
       return {
         ...s,
@@ -211,8 +256,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       sessions: sessionsWithNames,
       members:  Object.values(memberMap),
-      active_count: (activeSessions || []).filter(s => s.status !== 'paused').length,
-      paused_count: (activeSessions || []).filter(s => s.status === 'paused').length,
+      active_count: activeSessions.filter(s => s.status !== 'paused').length,
+      paused_count: activeSessions.filter(s => s.status === 'paused').length,
       from: from.toISOString(),
       to:   to.toISOString(),
       is_admin: true,
@@ -225,7 +270,7 @@ export async function GET(request: NextRequest) {
   // agent_id semantics: time_sessions.agent_id = auth.users.id = ctx.user.id.
   const agentId = ctx.user.id
 
-  const { data: sessions } = await supabaseAdmin
+  const empSessionsRes = await supabaseAdmin
     .from('time_sessions')
     .select('*')
     .eq('workspace_id', ctx.workspaceId)
@@ -234,7 +279,9 @@ export async function GET(request: NextRequest) {
     .lte('clocked_in_at', to.toISOString())
     .order('clocked_in_at', { ascending: false })
 
-  const { data: active } = await supabaseAdmin
+  const empSessions = (empSessionsRes.data || []) as (TimeSession & { id: string })[]
+
+  const activeRes = await supabaseAdmin
     .from('time_sessions')
     .select('*')
     .eq('workspace_id', ctx.workspaceId)
@@ -244,9 +291,11 @@ export async function GET(request: NextRequest) {
     .limit(1)
     .maybeSingle()
 
+  const active = activeRes.data as (TimeSession & { id: string }) | null
+
   const todayStart = new Date()
   todayStart.setHours(0, 0, 0, 0)
-  const { data: todaySessions } = await supabaseAdmin
+  const todaySessionsRes = await supabaseAdmin
     .from('time_sessions')
     .select('clocked_in_at, clocked_out_at, paused_seconds')
     .eq('workspace_id', ctx.workspaceId)
@@ -254,13 +303,15 @@ export async function GET(request: NextRequest) {
     .gte('clocked_in_at', todayStart.toISOString())
     .not('clocked_out_at', 'is', null)
 
-  const todayWorked = (todaySessions || []).reduce((sum, s) => {
-    const total = Math.round((new Date(s.clocked_out_at as string).getTime() - new Date(s.clocked_in_at).getTime()) / 1000)
+  const todaySessions = (todaySessionsRes.data || []) as TodaySessionRow[]
+
+  const todayWorked = todaySessions.reduce((sum, s) => {
+    const total = Math.round((new Date(s.clocked_out_at).getTime() - new Date(s.clocked_in_at).getTime()) / 1000)
     return sum + Math.max(0, total - (s.paused_seconds || 0))
   }, 0)
 
   return NextResponse.json({
-    sessions:       sessions || [],
+    sessions:       empSessions,
     member:         { id: agentId, role: ctx.role },
     active_session: active || null,
     today_seconds:  todayWorked,
@@ -274,16 +325,7 @@ export async function POST(request: NextRequest) {
   const ctx = await getAuthContext(request)
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const body = await request.json() as {
-    action: string
-    session_id?: string
-    // Structured EOD report — required at clock-out for new sessions.
-    report?: {
-      emails_answered: number
-      what_went_well:  string
-      needs_attention: string
-    }
-  }
+  const body = await parseBody<TimeActionBody>(request)
   const { action } = body
 
   // No separate team_members lookup — getAuthContext already proves the
@@ -301,11 +343,11 @@ export async function POST(request: NextRequest) {
       .is('clocked_out_at', null)
       .maybeSingle()
 
-    if (existing) return NextResponse.json({ session: existing, already_active: true })
+    if (existing) return NextResponse.json({ session: existing as Record<string, unknown>, already_active: true })
 
     // client_id was the team_members.client_id pass-through (legacy). Now
     // null — workspace_id is the source of truth for tenant scoping.
-    const { data: session, error } = await supabaseAdmin
+    const clockInResult = await supabaseAdmin
       .from('time_sessions')
       .insert({
         agent_id:       agentId,
@@ -319,8 +361,8 @@ export async function POST(request: NextRequest) {
       .select()
       .single()
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-    return NextResponse.json({ session })
+    if (clockInResult.error) return NextResponse.json({ error: clockInResult.error.message }, { status: 500 })
+    return NextResponse.json({ session: clockInResult.data as Record<string, unknown> })
   }
 
   // ── PAUSE ─────────────────────────────────────────────────────────────────
@@ -345,7 +387,7 @@ export async function POST(request: NextRequest) {
     const { session_id } = body
     if (!session_id) return NextResponse.json({ error: 'Missing session_id' }, { status: 400 })
 
-    const { data: current } = await supabaseAdmin
+    const resumeRes = await supabaseAdmin
       .from('time_sessions')
       .select('paused_at, paused_seconds')
       .eq('id', session_id)
@@ -354,10 +396,11 @@ export async function POST(request: NextRequest) {
       .is('clocked_out_at', null)
       .maybeSingle()
 
+    const current = resumeRes.data as PausedSessionRow | null
     if (!current) return NextResponse.json({ error: 'Session not found' }, { status: 404 })
 
     const added = current.paused_at
-      ? Math.round((Date.now() - new Date(current.paused_at as string).getTime()) / 1000)
+      ? Math.round((Date.now() - new Date(current.paused_at).getTime()) / 1000)
       : 0
     const newPaused = (current.paused_seconds || 0) + added
 
@@ -392,7 +435,7 @@ export async function POST(request: NextRequest) {
     if (!needsAttention) return NextResponse.json({ error: 'needs_attention is required' }, { status: 400 })
 
     // Finalise any ongoing pause before closing
-    const { data: current } = await supabaseAdmin
+    const clockOutLookup = await supabaseAdmin
       .from('time_sessions')
       .select('paused_at, paused_seconds')
       .eq('id', session_id)
@@ -401,14 +444,15 @@ export async function POST(request: NextRequest) {
       .is('clocked_out_at', null)
       .maybeSingle()
 
-    if (!current) return NextResponse.json({ error: 'Session not found or already closed' }, { status: 404 })
+    const currentSession = clockOutLookup.data as PausedSessionRow | null
+    if (!currentSession) return NextResponse.json({ error: 'Session not found or already closed' }, { status: 404 })
 
-    const extraPaused = current.paused_at
-      ? Math.round((Date.now() - new Date(current.paused_at as string).getTime()) / 1000)
+    const extraPaused = currentSession.paused_at
+      ? Math.round((Date.now() - new Date(currentSession.paused_at).getTime()) / 1000)
       : 0
-    const finalPaused = (current.paused_seconds || 0) + extraPaused
+    const finalPaused = (currentSession.paused_seconds || 0) + extraPaused
 
-    const { data: session, error } = await supabaseAdmin
+    const clockOutResult = await supabaseAdmin
       .from('time_sessions')
       .update({
         clocked_out_at:  new Date().toISOString(),
@@ -428,8 +472,8 @@ export async function POST(request: NextRequest) {
       .select()
       .single()
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-    return NextResponse.json({ session })
+    if (clockOutResult.error) return NextResponse.json({ error: clockOutResult.error.message }, { status: 500 })
+    return NextResponse.json({ session: clockOutResult.data as Record<string, unknown> })
   }
 
   // ── HEARTBEAT ─────────────────────────────────────────────────────────────
@@ -437,7 +481,7 @@ export async function POST(request: NextRequest) {
     const { session_id } = body
     if (!session_id) return NextResponse.json({ error: 'Missing session_id' }, { status: 400 })
 
-    const { data: current } = await supabaseAdmin
+    const heartbeatRes = await supabaseAdmin
       .from('time_sessions')
       .select('active_seconds, status')
       .eq('id', session_id)
@@ -446,13 +490,14 @@ export async function POST(request: NextRequest) {
       .is('clocked_out_at', null)
       .maybeSingle()
 
-    if (!current) return NextResponse.json({ error: 'Session not found' }, { status: 404 })
+    const heartbeatSession = heartbeatRes.data as HeartbeatSessionRow | null
+    if (!heartbeatSession) return NextResponse.json({ error: 'Session not found' }, { status: 404 })
 
     // Only accumulate active_seconds when not paused
-    if (current.status !== 'paused') {
+    if (heartbeatSession.status !== 'paused') {
       const { error } = await supabaseAdmin
         .from('time_sessions')
-        .update({ active_seconds: (current.active_seconds || 0) + 30 })
+        .update({ active_seconds: (heartbeatSession.active_seconds || 0) + 30 })
         .eq('id', session_id)
         .eq('workspace_id', ctx.workspaceId)
       if (error) return NextResponse.json({ error: error.message }, { status: 500 })

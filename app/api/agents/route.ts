@@ -1,6 +1,21 @@
 import type { NextRequest } from 'next/server'
 import { supabaseAdmin, getUserFromToken } from '../../../lib/supabaseAdmin'
 import { NextResponse } from 'next/server'
+import { parseBody } from '@/lib/utils/typed-json'
+
+interface CreateAgentBody {
+  name?: string
+  email?: string
+}
+
+interface DeleteAgentBody {
+  id?: string
+}
+
+interface SupabaseResult {
+  data: Record<string, unknown> | null
+  error: { message: string } | null
+}
 
 async function getUser(request: NextRequest) {
   const authHeader = request.headers.get('authorization')
@@ -29,7 +44,7 @@ export async function POST(request: NextRequest) {
   const user = await getUser(request)
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { name, email } = await request.json() as { name?: string; email?: string }
+  const { name, email } = await parseBody<CreateAgentBody>(request)
   if (!name || !email) return NextResponse.json({ error: 'Name and email required' }, { status: 400 })
 
   // Check if agent already exists in agents table
@@ -60,7 +75,7 @@ export async function POST(request: NextRequest) {
   const authUserId = inviteData?.user?.id || null
 
   // Insert into agents table
-  const { data: agent, error: insertError } = await supabaseAdmin
+  const { data: agentData, error: insertError } = await supabaseAdmin
     .from('agents')
     .insert({
       name,
@@ -70,11 +85,11 @@ export async function POST(request: NextRequest) {
       invited_by: user.id,
     })
     .select()
-    .single()
+    .single() as SupabaseResult
 
   if (insertError) return NextResponse.json({ error: insertError.message }, { status: 500 })
 
-  return NextResponse.json({ agent, invited: true })
+  return NextResponse.json({ agent: agentData, invited: true })
 }
 
 // DELETE — remove agent (removes from agents table + deletes auth user)
@@ -82,7 +97,7 @@ export async function DELETE(request: NextRequest) {
   const user = await getUser(request)
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { id } = await request.json() as { id?: string }
+  const { id } = await parseBody<DeleteAgentBody>(request)
   if (!id) return NextResponse.json({ error: 'Missing id' }, { status: 400 })
 
   // Get agent to find their auth user_id
@@ -100,7 +115,7 @@ export async function DELETE(request: NextRequest) {
 
   // Also remove their Supabase auth account
   if (agent?.user_id) {
-    await supabaseAdmin.auth.admin.deleteUser(agent.user_id)
+    await supabaseAdmin.auth.admin.deleteUser(agent.user_id as string)
   }
 
   return NextResponse.json({ success: true })

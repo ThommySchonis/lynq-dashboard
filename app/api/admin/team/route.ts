@@ -1,4 +1,4 @@
-import { supabaseAdmin, getUserFromToken } from '../../../../lib/supabaseAdmin'
+import { getUserFromToken } from '../../../../lib/supabaseAdmin'
 import { getAuthContext } from '../../../../lib/auth'
 import { getEnrichedMembers } from '../../../../lib/services/workspace-members'
 import { NextResponse } from 'next/server'

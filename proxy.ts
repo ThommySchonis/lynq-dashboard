@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server'
+import type { NextRequest } from 'next/server'
+import { NextResponse } from 'next/server'
 import { asciiSafe } from '@/lib/utils/ascii-safe'
 
 // ─── Auth bypass (geen Bearer-token vereist) ────────────────────────
@@ -72,7 +73,7 @@ async function checkBlockedState(token: string): Promise<BlockedState> {
     cache:   'no-store',
   })
   if (!userRes.ok) return { blocked: false }
-  const user: SupabaseUser | null = await userRes.json().catch(() => null)
+  const user = await userRes.json().catch(() => null) as SupabaseUser | null
   if (!user?.id) return { blocked: false }
 
   // 2. Workspace via workspace_members → workspaces (service-role
@@ -89,7 +90,7 @@ async function checkBlockedState(token: string): Promise<BlockedState> {
     cache:   'no-store',
   })
   if (!wsRes.ok) return { blocked: false }
-  const rows: WorkspaceMemberRow[] | null = await wsRes.json().catch(() => null)
+  const rows = await wsRes.json().catch(() => null) as WorkspaceMemberRow[] | null
   const ws   = Array.isArray(rows) ? rows[0]?.workspaces : null
   if (!ws) return { blocked: false }
 

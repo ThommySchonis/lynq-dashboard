@@ -2,6 +2,18 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { getAuthContext } from '../../../../../lib/auth'
 import { supabaseAdmin }  from '../../../../../lib/supabaseAdmin'
+import { parseBody } from '@/lib/utils/typed-json'
+
+interface EmailAccountRow {
+  provider?: string
+  status?: string
+  real_email?: string
+  connected_at?: string
+}
+
+interface EmailConnectBody {
+  provider?: string
+}
 
 // Per ONBOARDING_SPEC v1.1 §6.2: pure UI / intent-saving endpoint voor
 // /settings/integrations/email. Bewaart alleen welke provider de user
@@ -24,11 +36,12 @@ export async function GET(request: NextRequest) {
     .eq('workspace_id', ctx.workspaceId)
     .maybeSingle()
 
+  const emailAccount = data as EmailAccountRow | null
   return NextResponse.json({
-    provider:     data?.provider ?? null,
-    status:       data?.status ?? 'not_connected',
-    real_email:   data?.real_email ?? null,
-    connected_at: data?.connected_at ?? null,
+    provider:     emailAccount?.provider ?? null,
+    status:       emailAccount?.status ?? 'not_connected',
+    real_email:   emailAccount?.real_email ?? null,
+    connected_at: emailAccount?.connected_at ?? null,
   })
 }
 
@@ -36,7 +49,7 @@ export async function POST(request: NextRequest) {
   const ctx = await getAuthContext(request)
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const body     = await request.json().catch(() => ({}))
+  const body     = await parseBody<EmailConnectBody>(request).catch(() => ({}) as EmailConnectBody)
   const provider = String(body?.provider || '').trim().toLowerCase()
 
   if (!VALID_PROVIDERS.includes(provider)) {

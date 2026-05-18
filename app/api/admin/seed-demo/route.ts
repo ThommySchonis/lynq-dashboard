@@ -3,6 +3,11 @@ import { DEMO_SHOP, DEMO_EMAIL, getDemoShopifyOrderRows } from '../../../../lib/
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
+interface SeedDemoBody {
+  user_id?: string
+  email?: string
+}
+
 const ADMIN_EMAIL = 'info@lynqagency.com'
 
 export async function POST(request: NextRequest) {
@@ -15,7 +20,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Admin only' }, { status: 403 })
   }
 
-  const body = await request.json().catch(() => ({})) as { user_id?: string; email?: string }
+  const body = await request.json().catch(() => ({})) as SeedDemoBody
   let userId = body.user_id
 
   if (!userId && body.email) {

@@ -68,7 +68,7 @@ export default function InviteSignupPage({
     signupMutation.mutate(
       { full_name: fields.fullName.trim(), password: fields.password },
       {
-        onSuccess: async () => {
+        onSuccess: () => { void (async () => {
           const { error: signInError } = await supabase.auth.signInWithPassword({
             email: invite!.invite_email,
             password: fields.password,
@@ -83,7 +83,7 @@ export default function InviteSignupPage({
 
           setDone(true)
           setTimeout(() => router.push('/inbox'), 800)
-        },
+        })() },
         onError: (err: unknown) => {
           const e = err as Error & { code?: string }
           if (e.code === 'email_exists') {
@@ -163,7 +163,7 @@ export default function InviteSignupPage({
           </div>
         )}
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-3.5">
+        <form onSubmit={(e) => { void handleSubmit(onSubmit)(e) }} className="space-y-3.5">
           {/* Email — locked */}
           <FloatField
             id="signup-email"

@@ -38,7 +38,7 @@ export function NotificationForm() {
           Appears in the notification icon of all clients
         </div>
 
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={(e) => void handleSubmit(e)}>
           <Label className="mb-1.5">Type</Label>
           <div className="flex gap-2 mb-3.5">
             {NOTIFICATION_TYPES.map(({ type, label }) => {

@@ -31,7 +31,7 @@ function sectionScore(sIdx: number, answers: Record<number, number>): number {
 
 export function FinalExam() {
   const [view, setView] = useState<'loading' | 'locked' | 'intro' | 'exam' | 'results'>('loading')
-  const [session, setSession] = useState<Record<string, unknown> | null>(null)
+  const [_session, setSession] = useState<Record<string, unknown> | null>(null)
   const [passedModules, setPassedModules] = useState<string[]>([])
   const [currentQ, setCurrentQ] = useState(0)
   const [answers, setAnswers] = useState<Record<number, number>>({})
@@ -58,15 +58,16 @@ export function FinalExam() {
       setView('intro')
       return
     }
-    ;(async () => {
+    void (async () => {
       try {
-        const { data } = await supabase
+        const result = await supabase
           .from('exam_submissions')
           .select('module_id, passed')
           .eq('user_id', storeUser.id)
           .eq('passed', true)
-        const passed = (data || [])
-          .map((r) => r.module_id as string)
+        const rows = (result.data || []) as Array<{ module_id: string; passed: boolean }>
+        const passed = rows
+          .map((r) => r.module_id)
           .filter((id) => ALL_MODULE_IDS.includes(id))
         setPassedModules(passed)
         setView(ALL_MODULE_IDS.every((id) => passed.includes(id)) ? 'intro' : 'locked')
@@ -156,7 +157,7 @@ export function FinalExam() {
         {/* Progress header */}
         <div className="flex h-[52px] shrink-0 items-center gap-4 border-b border-border bg-white px-6">
           <div className="flex flex-1 items-center gap-1.5">
-            {SECTION_META.map(({ label, color }: SectionMeta, i: number) => (
+            {SECTION_META.map(({ label, color: _color }: SectionMeta, i: number) => (
               <div key={i} className="flex items-center gap-[5px]">
                 <div
                   className="flex size-[22px] shrink-0 items-center justify-center rounded-full text-[9px] font-bold transition-all duration-300"
@@ -316,7 +317,7 @@ export function FinalExam() {
                     <button
                       className="cursor-pointer rounded-[20px] border-none bg-gradient-to-br from-violet-500 to-indigo-500 px-6 py-2.5 font-[inherit] text-[13px] font-semibold text-white shadow-[0_4px_16px_rgba(99,102,241,0.3)] transition-all duration-150 hover:-translate-y-px hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
                       disabled={answeredTotal < 50 || saving}
-                      onClick={handleSubmit}
+                      onClick={() => void handleSubmit()}
                     >
                       {saving ? 'Submitting...' : 'Submit Exam \u2192'}
                     </button>

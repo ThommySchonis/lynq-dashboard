@@ -6,6 +6,13 @@ import { getAuthContext } from '../../../../../lib/auth'
 import { can } from '../../../../../lib/permissions'
 import { supabaseAdmin } from '../../../../../lib/supabaseAdmin'
 
+interface MacroSource {
+  name: string
+  body: unknown
+  language: unknown
+  tags: unknown
+}
+
 // POST /api/macros/[id]/duplicate — clone a macro with " (copy)" suffix
 export async function POST(request: NextRequest, { params }: RouteContext<{ id: string }>) {
   const ctx = await getAuthContext(request)
@@ -29,22 +36,23 @@ export async function POST(request: NextRequest, { params }: RouteContext<{ id: 
   }
   if (!source) return NextResponse.json({ error: 'Macro not found', code: 'not_found' }, { status: 404 })
 
-  const { data: copy, error: insertError } = await supabaseAdmin
+  const copyResult = await supabaseAdmin
     .from('macros')
     .insert({
       workspace_id: ctx.workspaceId,
-      name:         `${source.name} (copy)`.slice(0, 200),
-      body:         source.body,
-      language:     source.language,
-      tags:         source.tags,
+      name:         `${(source as MacroSource).name} (copy)`.slice(0, 200),
+      body:         (source as MacroSource).body,
+      language:     (source as MacroSource).language,
+      tags:         (source as MacroSource).tags,
       created_by:   ctx.user.id,
     })
     .select()
     .single()
 
-  if (insertError || !copy) {
-    console.error('[macros duplicate] insert failed:', insertError?.message)
-    return NextResponse.json({ error: insertError?.message ?? 'Failed to duplicate macro', code: 'insert_failed' }, { status: 500 })
+  const copy = copyResult.data as Record<string, unknown> | null
+  if (copyResult.error || !copy) {
+    console.error('[macros duplicate] insert failed:', copyResult.error?.message)
+    return NextResponse.json({ error: copyResult.error?.message ?? 'Failed to duplicate macro', code: 'insert_failed' }, { status: 500 })
   }
 
   console.log('[macros duplicate] cloned', id, '→', copy.id)

@@ -2,7 +2,24 @@
 
 import { useQuery } from '@tanstack/react-query'
 import { useAuthStore } from '@/stores/auth'
+import { parseJson } from '@/lib/utils/typed-json'
 import type { DateRange, KpiData, PrevKpiData, Refund, RevenueTrendPoint, AiInsight } from '@/types/analytics'
+
+interface RefundsResponse {
+  refunds?: Refund[]
+}
+
+interface RevenueTrendResponse {
+  trend?: RevenueTrendPoint[]
+}
+
+interface AiInsightsResponse {
+  insights?: AiInsight[]
+}
+
+interface ShopifyConnectedResponse {
+  shopify?: unknown
+}
 
 function useToken() {
   return useAuthStore((s) => s.session?.access_token ?? '')
@@ -28,7 +45,7 @@ export function useKpis(range: DateRange) {
         headers: { Authorization: `Bearer ${token}` },
       })
       if (!res.ok) throw new Error('Failed to fetch KPIs')
-      return res.json()
+      return parseJson<KpiData>(res)
     },
     enabled: !!token,
   })
@@ -43,7 +60,7 @@ export function usePrevKpis(range: DateRange) {
         headers: { Authorization: `Bearer ${token}` },
       })
       if (!res.ok) throw new Error('Failed to fetch previous KPIs')
-      return res.json()
+      return parseJson<PrevKpiData>(res)
     },
     enabled: !!token,
   })
@@ -58,8 +75,8 @@ export function useRefunds(range: DateRange) {
         headers: { Authorization: `Bearer ${token}` },
       })
       if (!res.ok) throw new Error('Failed to fetch refunds')
-      const d = await res.json()
-      return (d.refunds as Refund[]) ?? []
+      const d = await parseJson<RefundsResponse>(res)
+      return d.refunds ?? []
     },
     enabled: !!token,
   })
@@ -76,8 +93,8 @@ export function useAllRefunds() {
         headers: { Authorization: `Bearer ${token}` },
       })
       if (!res.ok) throw new Error('Failed to fetch all refunds')
-      const d = await res.json()
-      return (d.refunds as Refund[]) ?? []
+      const d = await parseJson<RefundsResponse>(res)
+      return d.refunds ?? []
     },
     enabled: !!token,
   })
@@ -92,8 +109,8 @@ export function useRevenueTrend(range: DateRange) {
         headers: { Authorization: `Bearer ${token}` },
       })
       if (!res.ok) throw new Error('Failed to fetch revenue trend')
-      const d = await res.json()
-      return (d.trend as RevenueTrendPoint[]) ?? []
+      const d = await parseJson<RevenueTrendResponse>(res)
+      return d.trend ?? []
     },
     enabled: !!token,
   })
@@ -113,8 +130,8 @@ export function useAiInsights(refunds: Refund[]) {
         body: JSON.stringify({ refunds }),
       })
       if (!res.ok) throw new Error('Failed to fetch AI insights')
-      const d = await res.json()
-      return (d.insights as AiInsight[]) ?? []
+      const d = await parseJson<AiInsightsResponse>(res)
+      return d.insights ?? []
     },
     enabled: !!token && !!refunds.length,
   })
@@ -130,7 +147,7 @@ export function useShopifyConnected() {
         cache: 'no-store',
       })
       if (!res.ok) return false
-      const data = await res.json()
+      const data = await parseJson<ShopifyConnectedResponse>(res)
       return Boolean(data?.shopify)
     },
     enabled: !!token,

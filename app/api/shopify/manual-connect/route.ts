@@ -2,12 +2,18 @@ import { supabaseAdmin } from '../../../../lib/supabaseAdmin'
 import { getAuthContext } from '../../../../lib/auth'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { parseBody } from '@/lib/utils/typed-json'
+
+interface ManualConnectBody {
+  shop: string
+  accessToken: string
+}
 
 export async function POST(request: NextRequest) {
   const ctx = await getAuthContext(request)
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { shop, accessToken } = await request.json() as { shop: string; accessToken: string }
+  const { shop, accessToken } = await parseBody<ManualConnectBody>(request)
   if (!shop || !accessToken) {
     return NextResponse.json({ error: 'Shop domain and access token are required' }, { status: 400 })
   }

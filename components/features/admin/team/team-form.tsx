@@ -39,7 +39,7 @@ export function TeamForm() {
           Account created instantly — no email confirmation required
         </div>
 
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={(e) => void handleSubmit(e)}>
           <Label className="mb-1.5">Name</Label>
           <Input
             className="mb-3"

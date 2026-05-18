@@ -49,7 +49,7 @@ export function useSubmitQuiz() {
       }
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: academyKeys.passedExams() })
+      void qc.invalidateQueries({ queryKey: academyKeys.passedExams() })
     },
   })
 }
@@ -86,8 +86,8 @@ export function useSubmitExam() {
       }
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: academyKeys.passedExams() })
-      qc.invalidateQueries({ queryKey: academyKeys.certificate() })
+      void qc.invalidateQueries({ queryKey: academyKeys.passedExams() })
+      void qc.invalidateQueries({ queryKey: academyKeys.certificate() })
     },
   })
 }

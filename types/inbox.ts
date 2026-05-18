@@ -111,6 +111,7 @@ export interface Macro {
   archived: boolean
   archived_at?: string | null
   created_at?: string
+  [key: string]: unknown
 }
 
 export interface TicketMeta {

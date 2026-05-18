@@ -1,7 +1,6 @@
 'use client'
 
 import { Clock, Calendar, BarChart3, Users, Timer, Coffee } from 'lucide-react'
-import type { ReactNode } from 'react'
 
 function KpiIcon({ id, className }: { id: string; className?: string }) {
   const cls = className || 'h-3.5 w-3.5 text-violet-600'

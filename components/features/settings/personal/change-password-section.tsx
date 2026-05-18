@@ -10,7 +10,6 @@ import { PasswordInput } from '@/components/features/settings/password-input'
 import { useChangePassword } from '@/hooks/settings'
 import { INITIAL_PASSWORD_FORM } from '@/lib/settings-constants'
 import type { PasswordChangeForm } from '@/types/settings'
-import { toast } from 'sonner'
 
 type PasswordErrors = Partial<Record<'current' | 'new' | 'confirm', string>>
 
@@ -133,7 +132,7 @@ export function ChangePasswordSection() {
     >
       <SettingsCard
         footer={
-          <Button onClick={handleSubmit} disabled={isBusy}>
+          <Button onClick={() => void handleSubmit()} disabled={isBusy}>
             {isBusy ? 'Updating...' : 'Update password'}
           </Button>
         }

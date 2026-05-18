@@ -7,8 +7,9 @@ import { Input } from '@/components/ui/input'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Loader2, Truck } from 'lucide-react'
 import { authFetch } from '@/lib/inbox-utils'
+import { parseJson } from '@/lib/utils/typed-json'
 
-interface FulfillOrder {
+export interface FulfillOrder {
   id: string
   name: string
   [key: string]: unknown
@@ -37,7 +38,7 @@ export function FulfillModal({ order, token, onClose, onSuccess }: FulfillModalP
       },
       token,
     );
-    const data = await res.json();
+    const data = await parseJson<{ success?: boolean; error?: string }>(res);
     setLoading(false);
     if (data.success) onSuccess("Order marked as fulfilled");
     else onSuccess(data.error || "Failed to fulfill order", "error");
@@ -75,7 +76,7 @@ export function FulfillModal({ order, token, onClose, onSuccess }: FulfillModalP
           <Button variant="outline" className="" onClick={onClose}>
             Cancel
           </Button>
-          <Button className="flex items-center gap-[7px]" onClick={handleFulfill} disabled={loading}>
+          <Button className="flex items-center gap-[7px]" onClick={() => void handleFulfill()} disabled={loading}>
             {loading ? (
               <Loader2 size={13} className="animate-spin text-white" />
             ) : (

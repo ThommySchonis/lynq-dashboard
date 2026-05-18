@@ -3,6 +3,17 @@ import { generateText } from 'ai'
 import { anthropic } from '@ai-sdk/anthropic'
 import { getUserFromToken, supabaseAdmin } from '../../../lib/supabaseAdmin'
 import { NextResponse } from 'next/server'
+import { parseBody } from '@/lib/utils/typed-json'
+
+interface TranslateBody {
+  text?: string
+  targetLanguage?: string
+}
+
+interface TranslateResult {
+  detectedLanguage?: string
+  translatedText?: string
+}
 
 // POST /api/translate
 // Body: { text: string, targetLanguage?: string }
@@ -15,7 +26,7 @@ export async function POST(request: NextRequest) {
   const user = await getUserFromToken(token)
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { text, targetLanguage = 'English' } = await request.json() as { text?: string; targetLanguage?: string }
+  const { text, targetLanguage = 'English' } = await parseBody<TranslateBody>(request)
   if (!text?.trim()) return NextResponse.json({ error: 'text required' }, { status: 400 })
 
   let raw
@@ -52,7 +63,7 @@ ${text}`,
   try {
     // Strip markdown code blocks if Claude wraps the response
     const cleaned = raw.trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim()
-    const parsed = JSON.parse(cleaned)
+    const parsed = JSON.parse(cleaned) as TranslateResult
     detectedLanguage = parsed.detectedLanguage || 'Unknown'
     translatedText = parsed.translatedText || text
   } catch {

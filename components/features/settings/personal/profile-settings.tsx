@@ -17,7 +17,6 @@ import {
   useDeleteAvatar,
 } from '@/hooks/settings'
 import type { Theme } from '@/types/settings'
-import { toast } from 'sonner'
 
 interface FormState {
   displayName: string
@@ -250,7 +249,7 @@ export function ProfileSettings() {
           <Button
             type="button"
             size="sm"
-            onClick={handleSave}
+            onClick={() => void handleSave()}
             disabled={isSaving || !form.displayName.trim()}
           >
             {isSaving ? (

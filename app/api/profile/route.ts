@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { getUserFromToken, supabaseAdmin } from '../../../lib/supabaseAdmin'
 
+interface ProfileRow { display_name?: string; bio?: string; avatar_url?: string; theme?: string; welcome_dismissed_at?: string | null; setup_checklist_dismissed_at?: string | null }
+
 const VALID_THEMES = ['system', 'dark', 'light']
 
 function sanitizeName(raw: unknown): string {
@@ -34,15 +36,16 @@ export async function GET(request: NextRequest) {
   // Fall back to auth.users.raw_user_meta_data when no profile row yet.
   // This is what existing UI (e.g. workspace_member_details view) reads,
   // so the first PATCH will sync both layers and they stay aligned.
-  const meta = user.user_metadata || {}
+  const typedRow = row as ProfileRow | null
+  const meta = (user.user_metadata || {}) as Record<string, unknown>
   const profile = {
     email:                          user.email,
-    display_name:                   row?.display_name ?? meta.name ?? null,
-    bio:                            row?.bio ?? null,
-    avatar_url:                     row?.avatar_url ?? meta.avatar_url ?? null,
-    theme:                          row?.theme ?? 'system',
-    welcome_dismissed_at:           row?.welcome_dismissed_at ?? null,
-    setup_checklist_dismissed_at:   row?.setup_checklist_dismissed_at ?? null,
+    display_name:                   typedRow?.display_name ?? meta.name ?? null,
+    bio:                            typedRow?.bio ?? null,
+    avatar_url:                     typedRow?.avatar_url ?? meta.avatar_url ?? null,
+    theme:                          typedRow?.theme ?? 'system',
+    welcome_dismissed_at:           typedRow?.welcome_dismissed_at ?? null,
+    setup_checklist_dismissed_at:   typedRow?.setup_checklist_dismissed_at ?? null,
   }
 
   return NextResponse.json({ profile })
@@ -55,7 +58,8 @@ export async function PATCH(request: NextRequest) {
   const user = await getUserFromToken(authHeader.replace('Bearer ', ''))
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const body = await request.json().catch(() => ({}))
+  interface PatchBody { display_name?: unknown; bio?: unknown; theme?: unknown; dismiss_welcome?: boolean; welcome_dismissed_at?: null; dismiss_setup_checklist?: boolean; setup_checklist_dismissed_at?: null }
+  const body = await request.json().catch(() => ({})) as PatchBody
 
   const update: Record<string, unknown> = {}
   if (body.display_name !== undefined) {
@@ -67,7 +71,7 @@ export async function PATCH(request: NextRequest) {
     update.bio = sanitizeBio(body.bio) || null
   }
   if (body.theme !== undefined) {
-    if (!VALID_THEMES.includes(body.theme)) {
+    if (!VALID_THEMES.includes(String(body.theme))) {
       return NextResponse.json({ error: 'Invalid theme', code: 'invalid_theme' }, { status: 400 })
     }
     update.theme = body.theme
@@ -91,15 +95,16 @@ export async function PATCH(request: NextRequest) {
   }
 
   // Upsert the user_profiles row
-  const { data: row, error: upsertError } = await supabaseAdmin
+  const upsertResult = await supabaseAdmin
     .from('user_profiles')
     .upsert({ user_id: user.id, ...update }, { onConflict: 'user_id' })
     .select('display_name, bio, avatar_url, theme, welcome_dismissed_at, setup_checklist_dismissed_at, updated_at')
     .single()
 
-  if (upsertError || !row) {
-    console.error('[profile PATCH] upsert failed:', upsertError?.message)
-    return NextResponse.json({ error: upsertError?.message ?? 'Failed to save profile', code: 'upsert_failed' }, { status: 500 })
+  const patchRow = upsertResult.data as ProfileRow | null
+  if (upsertResult.error || !patchRow) {
+    console.error('[profile PATCH] upsert failed:', upsertResult.error?.message)
+    return NextResponse.json({ error: upsertResult.error?.message ?? 'Failed to save profile', code: 'upsert_failed' }, { status: 500 })
   }
 
   // Mirror the display_name into auth.users.raw_user_meta_data so existing
@@ -122,12 +127,12 @@ export async function PATCH(request: NextRequest) {
   return NextResponse.json({
     profile: {
       email:                        user.email,
-      display_name:                 row.display_name,
-      bio:                          row.bio,
-      avatar_url:                   row.avatar_url,
-      theme:                        row.theme,
-      welcome_dismissed_at:         row.welcome_dismissed_at,
-      setup_checklist_dismissed_at: row.setup_checklist_dismissed_at,
+      display_name:                 patchRow.display_name,
+      bio:                          patchRow.bio,
+      avatar_url:                   patchRow.avatar_url,
+      theme:                        patchRow.theme,
+      welcome_dismissed_at:         patchRow.welcome_dismissed_at,
+      setup_checklist_dismissed_at: patchRow.setup_checklist_dismissed_at,
     },
   })
 }

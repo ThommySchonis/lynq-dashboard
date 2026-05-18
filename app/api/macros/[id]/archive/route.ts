@@ -16,7 +16,7 @@ export async function POST(request: NextRequest, { params }: RouteContext<{ id: 
 
   const { id } = await params
 
-  const { data: macro, error } = await supabaseAdmin
+  const macroResult = await supabaseAdmin
     .from('macros')
     .update({ archived_at: new Date().toISOString() })
     .eq('id', id)
@@ -24,13 +24,13 @@ export async function POST(request: NextRequest, { params }: RouteContext<{ id: 
     .select()
     .single()
 
-  if (error || !macro) {
-    const status = error?.code === 'PGRST116' ? 404 : 500
+  if (macroResult.error || !macroResult.data) {
+    const status = macroResult.error?.code === 'PGRST116' ? 404 : 500
     return NextResponse.json(
-      { error: error?.message ?? 'Failed to archive macro', code: status === 404 ? 'not_found' : 'update_failed' },
+      { error: macroResult.error?.message ?? 'Failed to archive macro', code: status === 404 ? 'not_found' : 'update_failed' },
       { status }
     )
   }
 
-  return NextResponse.json({ macro })
+  return NextResponse.json({ macro: macroResult.data as Record<string, unknown> })
 }

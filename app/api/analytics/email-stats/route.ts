@@ -2,6 +2,14 @@ import { supabaseAdmin, getUserFromToken } from '../../../../lib/supabaseAdmin'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
+interface PlanRow {
+  plan?: string
+}
+
+interface CountRow {
+  count?: number
+}
+
 const EMAIL_LIMITS: Record<string, number | null> = { starter: 200, pro: null, scale: null }
 
 export async function GET(request: NextRequest) {
@@ -28,9 +36,9 @@ export async function GET(request: NextRequest) {
       .single(),
   ])
 
-  const plan = subRes.data?.plan || 'starter'
+  const plan = (subRes.data as PlanRow | null)?.plan || 'starter'
   const limit = EMAIL_LIMITS[plan] ?? null
-  const sent = usageRes.data?.count || 0
+  const sent = (usageRes.data as CountRow | null)?.count || 0
 
   return NextResponse.json({ sent, limit, plan })
 }

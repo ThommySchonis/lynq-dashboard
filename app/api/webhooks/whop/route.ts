@@ -5,6 +5,18 @@ import { supabaseAdmin } from '../../../../lib/supabaseAdmin'
 import { verifyWebhookSignature, type WhopMembership, type WhopPayment } from '../../../../lib/whop'
 import { unlockWorkspace } from '../../../../lib/services/limit-check'
 
+interface WorkspaceIdRow {
+  workspace_id: string
+}
+
+interface IdRow {
+  id: string
+}
+
+interface PlanIdRow {
+  id: string
+}
+
 // ─── Whop webhook handler ─────────────────────────────────────────────
 //
 // Receives Standard Webhooks-spec signed events from Whop and applies
@@ -73,7 +85,7 @@ function isoFromMaybeUnix(value: number | string | null | undefined): string | n
  * Returns null if neither resolves — the caller should log a Sentry
  * warning so we can surface "orphaned membership" cases.
  */
-async function findSubscription({
+async function _findSubscription({
   membershipId,
   workspaceIdFromMetadata,
 }: {
@@ -81,21 +93,21 @@ async function findSubscription({
   workspaceIdFromMetadata?: string
 }) {
   if (membershipId) {
-    const { data } = await supabaseAdmin
+    const result = await supabaseAdmin
       .from('workspace_subscriptions')
       .select('*')
       .eq('whop_subscription_id', membershipId)
       .maybeSingle()
-    if (data) return data
+    if (result.data) return result.data as Record<string, unknown>
   }
 
   if (workspaceIdFromMetadata) {
-    const { data } = await supabaseAdmin
+    const result = await supabaseAdmin
       .from('workspace_subscriptions')
       .select('*')
       .eq('workspace_id', workspaceIdFromMetadata)
       .maybeSingle()
-    if (data) return data
+    if (result.data) return result.data as Record<string, unknown>
   }
 
   return null
@@ -115,7 +127,7 @@ async function resolveWorkspaceIdFromMembership(membership: WhopMembership): Pro
       .select('workspace_id')
       .eq('whop_subscription_id', membership.id)
       .maybeSingle()
-    if (data) return (data as { workspace_id: string }).workspace_id
+    if (data) return (data as WorkspaceIdRow).workspace_id
   }
 
   return null
@@ -171,7 +183,7 @@ async function handleMembershipActivated(membership: WhopMembership): Promise<vo
       .select('id')
       .eq('whop_plan_id', membership.plan_id)
       .maybeSingle()
-    planId = (plan as { id: string } | null)?.id ?? null
+    planId = (plan as PlanIdRow | null)?.id ?? null
   }
 
   const currentPeriodEnd = isoFromMaybeUnix(membership.current_period_end ?? membership.renewal_period_end)
@@ -237,7 +249,7 @@ async function handleMembershipDeactivated(membership: WhopMembership): Promise<
     await supabaseAdmin
       .from('workspaces')
       .update({ subscription_status: 'expired' })
-      .eq('id', (sub as { workspace_id: string }).workspace_id)
+      .eq('id', (sub as WorkspaceIdRow).workspace_id)
   }
 
   console.log('[whop webhook] membership.deactivated:', membership.id)
@@ -285,12 +297,12 @@ async function handlePaymentSucceeded(payment: WhopPayment): Promise<void> {
       const { data: invoice } = await supabaseAdmin
         .from('invoices')
         .select('id')
-        .eq('workspace_id', (sub as { workspace_id: string }).workspace_id)
+        .eq('workspace_id', (sub as WorkspaceIdRow).workspace_id)
         .eq('status', 'open')
         .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle()
-      invoiceId = (invoice as { id: string } | null)?.id ?? null
+      invoiceId = (invoice as IdRow | null)?.id ?? null
     }
   }
 
@@ -339,7 +351,7 @@ async function unlockAndResetForMembership(membershipId: string): Promise<void> 
     .eq('whop_subscription_id', membershipId)
     .maybeSingle()
 
-  const workspaceId = (sub as { workspace_id: string } | null)?.workspace_id
+  const workspaceId = (sub as WorkspaceIdRow | null)?.workspace_id
   if (!workspaceId) {
     Sentry.captureMessage('[whop] payment.succeeded — workspace not found for membership', {
       level: 'warning',
@@ -396,12 +408,12 @@ async function handlePaymentFailed(payment: WhopPayment): Promise<void> {
       const { data: invoice } = await supabaseAdmin
         .from('invoices')
         .select('id')
-        .eq('workspace_id', (sub as { workspace_id: string }).workspace_id)
+        .eq('workspace_id', (sub as WorkspaceIdRow).workspace_id)
         .eq('status', 'open')
         .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle()
-      invoiceId = (invoice as { id: string } | null)?.id ?? null
+      invoiceId = (invoice as IdRow | null)?.id ?? null
     }
   }
 

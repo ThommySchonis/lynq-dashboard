@@ -3,6 +3,11 @@ import { supabaseAdmin } from '../../../../../../lib/supabaseAdmin'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import type { RouteContext } from '@/types/api'
+import { parseBody } from '@/lib/utils/typed-json'
+
+interface NoteBody {
+  body?: string
+}
 
 export async function GET(request: NextRequest, { params }: RouteContext<{ id: string }>) {
   const ctx = await getAuthContext(request)
@@ -25,7 +30,7 @@ export async function POST(request: NextRequest, { params }: RouteContext<{ id: 
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { id } = await params
-  const body = await request.json() as { body?: string }
+  const body = await parseBody<NoteBody>(request)
 
   if (!body.body?.trim()) {
     return NextResponse.json({ error: 'Note body required' }, { status: 400 })
@@ -40,7 +45,7 @@ export async function POST(request: NextRequest, { params }: RouteContext<{ id: 
 
   if (!conv) return NextResponse.json({ error: 'Conversation not found' }, { status: 404 })
 
-  const { data: note, error } = await supabaseAdmin
+  const noteResult = await supabaseAdmin
     .from('conversation_notes')
     .insert({
       conversation_id: id,
@@ -50,7 +55,7 @@ export async function POST(request: NextRequest, { params }: RouteContext<{ id: 
     .select()
     .single()
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (noteResult.error) return NextResponse.json({ error: noteResult.error.message }, { status: 500 })
 
-  return NextResponse.json({ note })
+  return NextResponse.json({ note: noteResult.data as Record<string, unknown> })
 }

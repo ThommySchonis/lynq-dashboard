@@ -57,7 +57,7 @@ export function NotificationList() {
                   </div>
                 </div>
                 <button
-                  onClick={() => handleDelete(n.id)}
+                  onClick={() => void handleDelete(n.id)}
                   className="shrink-0 text-muted-foreground hover:text-red-500 transition-colors"
                 >
                   <X size={14} />

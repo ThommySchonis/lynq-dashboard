@@ -3,6 +3,10 @@ import { supabaseAdmin } from '../../../../lib/supabaseAdmin'
 import { NextResponse } from 'next/server'
 import crypto from 'crypto'
 
+interface PaymentFailedRow {
+  payment_failed_count?: number
+}
+
 // Map Whop plan IDs to internal plan names
 // Fill these in when you connect Whop and create your plans
 const PLAN_MAP: Record<string, string> = {
@@ -105,7 +109,7 @@ export async function POST(request: NextRequest) {
       .eq('user_email', userEmail)
       .single()
 
-    const newCount = (sub?.payment_failed_count || 0) + 1
+    const newCount = ((sub as PaymentFailedRow | null)?.payment_failed_count || 0) + 1
     const newStatus = newCount >= 3 ? 'payment_failed' : 'active'
 
     await supabaseAdmin.from('subscriptions')

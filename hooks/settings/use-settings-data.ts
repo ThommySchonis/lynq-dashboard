@@ -2,9 +2,48 @@
 
 import { useQuery } from '@tanstack/react-query'
 import { useAuthStore } from '@/stores/auth'
+import { parseJson } from '@/lib/utils/typed-json'
 import { useStoreStore } from '@/stores/store'
 import type { WorkspaceSettings, Member, UserProfile, MacroFilter, MacroOnboarding, Tag, EmailAccount, ShopifyIntegration, MembersPageData } from '@/types/settings'
 import type { Macro } from '@/types/inbox'
+
+interface WorkspaceResponse {
+  workspace: WorkspaceSettings
+}
+
+interface MembersResponse {
+  members?: Member[]
+}
+
+interface MembersPageResponse {
+  members?: MembersPageData['members']
+  invites?: MembersPageData['invites']
+  currentUserRole?: MembersPageData['currentUserRole']
+  isOwner?: boolean
+  workspaceName?: string
+  seatsUsed?: number
+  seatLimit?: number | null
+}
+
+interface ProfileResponse {
+  profile: UserProfile
+}
+
+interface MacrosResponse {
+  macros?: Macro[]
+}
+
+interface MacroOnboardingResponse {
+  onboarding: MacroOnboarding
+}
+
+interface TagsResponse {
+  tags?: Tag[]
+}
+
+interface EmailAccountsResponse {
+  accounts?: EmailAccount[]
+}
 
 function useToken() {
   return useAuthStore((s) => s.session?.access_token ?? '')
@@ -31,8 +70,8 @@ export function useWorkspace() {
         headers: { Authorization: `Bearer ${token}` },
       })
       if (!res.ok) throw new Error('Failed to load workspace')
-      const { workspace } = await res.json()
-      return workspace as WorkspaceSettings
+      const { workspace } = await parseJson<WorkspaceResponse>(res)
+      return workspace
     },
     enabled: !!token,
   })
@@ -47,8 +86,8 @@ export function useMembers() {
         headers: { Authorization: `Bearer ${token}` },
       })
       if (!res.ok) throw new Error('Failed to load members')
-      const data = await res.json()
-      return (data.members ?? data) as Member[]
+      const data = await parseJson<MembersResponse>(res)
+      return data.members ?? (data as unknown as Member[])
     },
     enabled: !!token,
   })
@@ -64,7 +103,7 @@ export function useMembersPage(search = '') {
         headers: { Authorization: `Bearer ${token}` },
       })
       if (!res.ok) throw new Error('Failed to load members')
-      const data = await res.json()
+      const data = await parseJson<MembersPageResponse>(res)
       return {
         members: data.members ?? [],
         invites: data.invites ?? [],
@@ -73,7 +112,7 @@ export function useMembersPage(search = '') {
         workspaceName: data.workspaceName ?? '',
         seatsUsed: data.seatsUsed ?? 0,
         seatLimit: data.seatLimit ?? null,
-      } as MembersPageData
+      }
     },
     enabled: !!token,
   })
@@ -88,8 +127,8 @@ export function useProfile() {
         headers: { Authorization: `Bearer ${token}` },
       })
       if (!res.ok) throw new Error('Failed to load profile')
-      const { profile } = await res.json()
-      return profile as UserProfile
+      const { profile } = await parseJson<ProfileResponse>(res)
+      return profile
     },
     enabled: !!token,
   })
@@ -110,8 +149,8 @@ export function useMacros(filter: MacroFilter) {
         headers: { Authorization: `Bearer ${token}` },
       })
       if (!res.ok) throw new Error('Failed to load macros')
-      const data = await res.json()
-      return (data.macros ?? []) as Macro[]
+      const data = await parseJson<MacrosResponse>(res)
+      return data.macros ?? []
     },
     enabled: !!token,
   })
@@ -126,8 +165,8 @@ export function useMacroOnboarding() {
         headers: { Authorization: `Bearer ${token}` },
       })
       if (!res.ok) throw new Error('Failed to load macro onboarding')
-      const { onboarding } = await res.json()
-      return onboarding as MacroOnboarding
+      const { onboarding } = await parseJson<MacroOnboardingResponse>(res)
+      return onboarding
     },
     enabled: !!token,
   })
@@ -142,8 +181,8 @@ export function useTags() {
         headers: { Authorization: `Bearer ${token}` },
       })
       if (!res.ok) throw new Error('Failed to load tags')
-      const data = await res.json()
-      return (data.tags ?? []) as Tag[]
+      const data = await parseJson<TagsResponse>(res)
+      return data.tags ?? []
     },
     enabled: !!token,
   })
@@ -159,8 +198,8 @@ export function useEmailAccounts() {
         cache: 'no-store',
       })
       if (!res.ok) throw new Error('Failed to load email accounts')
-      const data = await res.json()
-      return (Array.isArray(data) ? data : (data.accounts ?? [])) as EmailAccount[]
+      const data = await parseJson<EmailAccount[] | EmailAccountsResponse>(res)
+      return Array.isArray(data) ? data : (data.accounts ?? [])
     },
     enabled: !!token,
   })
@@ -178,7 +217,7 @@ export function useShopifyIntegration() {
         cache: 'no-store',
       })
       if (!res.ok) throw new Error('Failed to load Shopify integration')
-      return res.json() as Promise<ShopifyIntegration>
+      return parseJson<ShopifyIntegration>(res)
     },
     enabled: !!token,
   })

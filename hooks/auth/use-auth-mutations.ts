@@ -3,6 +3,7 @@
 import { useMutation } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/stores/auth'
+import { parseJson } from '@/lib/utils/typed-json'
 
 export interface SignInVariables {
   email: string
@@ -36,6 +37,12 @@ export interface InviteSignupVariables {
 
 export interface InviteSignupResult {
   ok: boolean
+}
+
+interface InviteResponse {
+  error?: string
+  code?: string
+  ok?: boolean
 }
 
 export function useSignIn() {
@@ -111,9 +118,9 @@ export function useAcceptInvite(token: string) {
         method: 'POST',
         headers: { Authorization: `Bearer ${accessToken}` },
       })
-      const data = await res.json().catch(() => ({}))
+      const data = await parseJson<InviteResponse>(res).catch((): InviteResponse => ({}))
       if (!res.ok) throw Object.assign(new Error(data.error || 'Failed to accept invite'), { code: data.code, ...data })
-      return data as AcceptInviteResult
+      return { ok: !!data.ok }
     },
   })
 }
@@ -126,9 +133,9 @@ export function useInviteSignup(token: string) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ full_name: full_name.trim(), password }),
       })
-      const data = await res.json().catch(() => ({}))
+      const data = await parseJson<InviteResponse>(res).catch((): InviteResponse => ({}))
       if (!res.ok || !data.ok) throw Object.assign(new Error(data.error || 'Could not create account'), { code: data.code, ...data })
-      return data as InviteSignupResult
+      return { ok: !!data.ok }
     },
   })
 }

@@ -3,6 +3,12 @@ import { getStoreCredentials } from '@/lib/store-credentials'
 import { updateOrderAddress, ShopifyApiError } from '../../../../lib/services/shopify'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { parseBody } from '@/lib/utils/typed-json'
+
+interface EditAddressBody {
+  orderId: string
+  [key: string]: unknown
+}
 
 export async function POST(request: NextRequest) {
   const ctx = await getAuthContext(request)
@@ -14,7 +20,7 @@ export async function POST(request: NextRequest) {
   }
   const credentials = await getStoreCredentials(storeId, ctx.workspaceId)
 
-  const { orderId, ...address } = await request.json() as { orderId: string; [key: string]: unknown }
+  const { orderId, ...address } = await parseBody<EditAddressBody>(request)
   if (!orderId) return NextResponse.json({ error: 'orderId required' }, { status: 400 })
 
   try {

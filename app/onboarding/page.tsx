@@ -171,7 +171,7 @@ export default function OnboardingPage() {
 
         {/* ── Step 2: Brand Setup ── */}
         {step === 2 && (
-          <form onSubmit={handleSubmit(onBrandSubmit)}>
+          <form onSubmit={(e) => { void handleSubmit(onBrandSubmit)(e) }}>
             <h2 className="text-[22px] font-bold mb-1.5">Brand Setup</h2>
             <p className="text-white/45 text-[13px] mb-8">
               This helps the AI write replies that match your brand voice.
@@ -345,7 +345,7 @@ export default function OnboardingPage() {
                     />
                     <Button
                       variant="outline"
-                      onClick={handleConnectParcelPanel}
+                      onClick={() => { void handleConnectParcelPanel() }}
                       disabled={!parcelPanelKey || isConnectingParcel}
                       className={[
                         'w-full py-[9px] rounded-lg text-[13px] font-medium transition-colors',
@@ -383,7 +383,7 @@ export default function OnboardingPage() {
               Start by checking your inbox.
             </p>
             <Button
-              onClick={handleCompleteOnboarding}
+              onClick={() => { void handleCompleteOnboarding() }}
               disabled={isCompleting}
               className="w-full bg-primary text-white rounded-[10px] px-10 py-3.5 text-[15px] font-semibold mb-4"
             >
@@ -391,7 +391,7 @@ export default function OnboardingPage() {
             </Button>
             <Button
               variant="ghost"
-              onClick={handleCompleteOnboarding}
+              onClick={() => { void handleCompleteOnboarding() }}
               disabled={isCompleting}
               className="bg-transparent text-white/35 text-[13px] p-2"
             >

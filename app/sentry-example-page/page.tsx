@@ -20,7 +20,7 @@ export default function Page() {
       const result = await Sentry.diagnoseSdkConnectivity();
       setIsConnected(result !== "sentry-unreachable");
     }
-    checkConnectivity();
+    void checkConnectivity();
   }, []);
 
   return (
@@ -69,7 +69,7 @@ export default function Page() {
 
         <button
           type="button"
-          onClick={async () => {
+          onClick={() => { void (async () => {
             await Sentry.startSpan(
               {
                 name: "Example Frontend/Backend Span",
@@ -85,7 +85,7 @@ export default function Page() {
             throw new SentryExampleFrontendError(
               "This error is raised on the frontend of the example page.",
             );
-          }}
+          })() }}
           disabled={!isConnected}
         >
           <span>Throw Sample Error</span>

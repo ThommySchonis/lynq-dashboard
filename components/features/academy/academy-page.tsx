@@ -15,6 +15,10 @@ import { QuizView } from './quiz-view'
 import { CertificateView } from './certificate-view'
 import type { Module } from '@/types/academy'
 
+interface SessionWithToken {
+  access_token: string
+}
+
 export function AcademyPage() {
   const [session, setSession] = useState<Record<string, unknown> | null>(null)
   const [userName, setUserName] = useState('')
@@ -27,7 +31,7 @@ export function AcademyPage() {
   const storeUser = useAuthStore((s) => s.user)
   const isLoading = useAuthStore((s) => s.isLoading)
 
-  const { view, selectedModuleId, selectedLesson, setView, selectModule, selectLesson, reset } =
+  const { view, selectedModuleId, selectedLesson, setView, selectModule, selectLesson, reset: _reset } =
     useAcademyUI()
 
   const selectedModule = MODULES.find((m) => m.id === selectedModuleId) ?? null
@@ -60,15 +64,12 @@ export function AcademyPage() {
 
     // Keep existing API call logic but use storeSession.access_token
     const token = storeSession.access_token
-    fetch('/api/exams/result', {
+    void fetch('/api/exams/result', {
       headers: { Authorization: `Bearer ${token}` },
     })
-      .then((r) => r.json())
+      .then((r) => r.json() as Promise<{ submissions?: Array<{ passed: boolean; exam_type: string }> }>)
       .then((resultData) => {
-        const submissions = (resultData.submissions || resultData || []) as Array<{
-          passed: boolean
-          exam_type: string
-        }>
+        const submissions = resultData.submissions || []
         const passed = [...new Set(submissions.filter((s) => s.passed).map((s) => s.exam_type))]
         setPassedTypes(passed)
       })
@@ -98,14 +99,11 @@ export function AcademyPage() {
 
   const handleQuizComplete = useCallback(() => {
     if (session) {
-      const s = session as unknown as { access_token: string }
-      fetch('/api/exams/result', { headers: { Authorization: `Bearer ${s.access_token}` } })
-        .then((r) => r.json())
+      const s = session as unknown as SessionWithToken
+      void fetch('/api/exams/result', { headers: { Authorization: `Bearer ${s.access_token}` } })
+        .then((r) => r.json() as Promise<{ submissions?: Array<{ passed: boolean; exam_type: string }> }>)
         .then((data) => {
-          const submissions = (data.submissions || data || []) as Array<{
-            passed: boolean
-            exam_type: string
-          }>
+          const submissions = data.submissions || []
           const passed = [...new Set(submissions.filter((s) => s.passed).map((s) => s.exam_type))]
           setPassedTypes(passed)
         })

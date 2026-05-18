@@ -2,8 +2,83 @@ import { supabaseAdmin } from './supabaseAdmin'
 import { getAdapter } from './providers'
 import { checkTicketLimit, lockWorkspace } from './services/limit-check'
 import { recordOutboundMessage } from './services/billing'
+import { parseJson } from './utils/typed-json'
 
 const UPGRADE_URL = '/settings/workspace/billing'
+
+// ── Types ────────────────────────────────────────────────────────────────────
+
+interface EmailAddress {
+  email: string
+  name?: string
+}
+
+interface NormalizedMessage {
+  providerMessageId: string
+  messageId?: string
+  from: EmailAddress
+  to: EmailAddress[]
+  cc?: EmailAddress[]
+  subject?: string
+  bodyHtml?: string
+  bodyText?: string
+  date?: string
+  isOutbound: boolean
+}
+
+interface Thread {
+  providerThreadId: string
+  subject: string
+  snippet: string
+  lastMessageAt: string
+  messages: NormalizedMessage[]
+}
+
+interface MessageConversationRef {
+  conversation_id: string
+}
+
+interface MessageIdRow {
+  message_id?: string
+}
+
+interface ShopifyClientRow {
+  shopify_domain?: string
+  shopify_api_key?: string
+}
+
+interface ShopifyCustomerSearchResponse {
+  customers?: Array<{ id: number | string }>
+}
+
+interface EmailAccountRow {
+  id: string
+  client_id?: string
+  workspace_id: string
+  provider: string
+  email_address?: string
+  display_name?: string
+  last_sync_at?: string | null
+  [key: string]: unknown
+}
+
+interface ConversationRow {
+  id: string
+  workspace_id: string
+  email_account_id: string
+  subject: string | null
+  snippet: string
+  customer_email: string
+  customer_name: string
+  status: string
+  provider_thread_id: string
+  shopify_customer_id: string | null
+  last_message_at: string
+  message_count: number
+  is_unread: boolean
+  last_outbound_at?: string | null
+  [key: string]: unknown
+}
 
 function planLimitErrorResponse(check: { used: number; limit: number | null; planId: string }) {
   return {
@@ -30,27 +105,29 @@ export async function syncAllAccounts(workspaceId: string) {
 
   if (!accounts?.length) return { synced: 0 }
 
-  const results: any[] = []
+  const results: Array<{ accountId: string; error?: string; newConversations?: number; updatedConversations?: number }> = []
   for (const account of accounts) {
     try {
-      const result = await syncAccount(account, workspaceId)
-      results.push({ accountId: account.id, ...result })
-    } catch (err: any) {
-      console.error(`Sync failed for account ${account.id}:`, err.message)
-      results.push({ accountId: account.id, error: err.message })
+      const result = await syncAccount(account as EmailAccountRow, workspaceId)
+      results.push({ accountId: (account as EmailAccountRow).id, ...result })
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err)
+      console.error(`Sync failed for account ${(account as EmailAccountRow).id}:`, message)
+      results.push({ accountId: (account as EmailAccountRow).id, error: message })
     }
   }
 
   return { synced: results.length, results }
 }
 
-async function syncAccount(account: any, workspaceId: string) {
+async function syncAccount(account: EmailAccountRow, workspaceId: string) {
   const adapter = getAdapter(account.provider)
   const refreshedAccount = await adapter.refreshTokenIfNeeded(account)
 
-  const { threads } = await adapter.fetchThreads(refreshedAccount, {
+  const fetchResult = await adapter.fetchThreads(refreshedAccount, {
     since: account.last_sync_at || undefined,
   })
+  const threads = fetchResult.threads as Thread[]
 
   let newConversations = 0
   let updatedConversations = 0
@@ -79,23 +156,23 @@ async function syncAccount(account: any, workspaceId: string) {
 }
 
 async function findConversationByThreadId(workspaceId: string, providerThreadId: string) {
-  const { data } = await supabaseAdmin
+  const result = await supabaseAdmin
     .from('email_conversations')
     .select('*')
     .eq('workspace_id', workspaceId)
     .eq('provider_thread_id', providerThreadId)
     .maybeSingle()
-  return data
+  return result.data as ConversationRow | null
 }
 
-async function createConversation(thread: any, account: any, workspaceId: string) {
-  const inboundMsg = thread.messages.find((m: any) => !m.isOutbound) || thread.messages[0]
+async function createConversation(thread: Thread, account: EmailAccountRow, workspaceId: string) {
+  const inboundMsg = thread.messages.find((m) => !m.isOutbound) || thread.messages[0]
   const customerEmail = inboundMsg?.isOutbound ? inboundMsg.to[0]?.email : inboundMsg?.from?.email
   const customerName = inboundMsg?.isOutbound ? inboundMsg.to[0]?.name : inboundMsg?.from?.name
 
   const shopifyCustomerId = await matchShopifyCustomer(workspaceId, customerEmail)
 
-  const { data: conversation, error: convError } = await supabaseAdmin
+  const insertResult = await supabaseAdmin
     .from('email_conversations')
     .insert({
       client_id: account.client_id,
@@ -115,10 +192,11 @@ async function createConversation(thread: any, account: any, workspaceId: string
     .select()
     .single()
 
-  if (convError) {
-    console.error('[engine] createConversation error:', convError.message, convError.details)
+  if (insertResult.error) {
+    console.error('[engine] createConversation error:', insertResult.error.message, insertResult.error.details)
   }
 
+  const conversation = insertResult.data as ConversationRow | null
   if (conversation) {
     await insertMessages(conversation.id, workspaceId, thread.messages)
   }
@@ -126,21 +204,23 @@ async function createConversation(thread: any, account: any, workspaceId: string
   return conversation
 }
 
-async function updateConversationWithNewMessages(conversation: any, thread: any, workspaceId: string) {
+async function updateConversationWithNewMessages(conversation: ConversationRow, thread: Thread, workspaceId: string) {
   const { data: existingMessages } = await supabaseAdmin
     .from('email_messages')
     .select('provider_message_id')
     .eq('conversation_id', conversation.id)
 
-  const existingIds = new Set((existingMessages || []).map((m: any) => m.provider_message_id))
-  const newMessages = thread.messages.filter((m: any) => !existingIds.has(m.providerMessageId))
+  const existingIds = new Set(
+    (existingMessages || []).map((m: { provider_message_id: string }) => m.provider_message_id)
+  )
+  const newMessages = thread.messages.filter((m) => !existingIds.has(m.providerMessageId))
 
   if (newMessages.length === 0) return
 
   await insertMessages(conversation.id, workspaceId, newMessages)
 
-  const hasNewInbound = newMessages.some((m: any) => !m.isOutbound)
-  const updates: any = {
+  const hasNewInbound = newMessages.some((m) => !m.isOutbound)
+  const updates: Record<string, unknown> = {
     last_message_at: thread.lastMessageAt,
     snippet: thread.snippet,
     message_count: conversation.message_count + newMessages.length,
@@ -157,8 +237,8 @@ async function updateConversationWithNewMessages(conversation: any, thread: any,
     .eq('id', conversation.id)
 }
 
-async function insertMessages(conversationId: string, workspaceId: string, messages: any[]) {
-  const rows = messages.map((m: any) => ({
+async function insertMessages(conversationId: string, workspaceId: string, messages: NormalizedMessage[]) {
+  const rows = messages.map((m) => ({
     conversation_id: conversationId,
     workspace_id: workspaceId,
     provider_message_id: m.providerMessageId,
@@ -187,10 +267,10 @@ async function insertMessages(conversationId: string, workspaceId: string, messa
 // Inbound webhook processing
 // ---------------------------------------------------------------------------
 
-export async function processInboundMessage(account: any, normalizedMessage: any) {
+export async function processInboundMessage(account: EmailAccountRow, normalizedMessage: NormalizedMessage) {
   const workspaceId = account.workspace_id
 
-  let conversation: any = null
+  let conversation: ConversationRow | null = null
 
   // 1. Try to find existing conversation via in-reply-to message_id
   if (normalizedMessage.messageId) {
@@ -201,18 +281,18 @@ export async function processInboundMessage(account: any, normalizedMessage: any
       .maybeSingle()
 
     if (relatedMsg) {
-      const { data } = await supabaseAdmin
+      const convResult = await supabaseAdmin
         .from('email_conversations')
         .select('*')
-        .eq('id', relatedMsg.conversation_id)
+        .eq('id', (relatedMsg as MessageConversationRef).conversation_id)
         .single()
-      conversation = data
+      conversation = convResult.data as ConversationRow | null
     }
   }
 
   // 2. Fall back: match by sender email + similar subject
   if (!conversation) {
-    const { data } = await supabaseAdmin
+    const fallbackResult = await supabaseAdmin
       .from('email_conversations')
       .select('*')
       .eq('workspace_id', workspaceId)
@@ -221,8 +301,9 @@ export async function processInboundMessage(account: any, normalizedMessage: any
       .limit(1)
       .maybeSingle()
 
-    if (data && data.subject && normalizedMessage.subject?.includes(data.subject.replace(/^Re:\s*/i, ''))) {
-      conversation = data
+    const row = fallbackResult.data as ConversationRow | null
+    if (row && row.subject && normalizedMessage.subject?.includes(row.subject.replace(/^Re:\s*/i, ''))) {
+      conversation = row
     }
   }
 
@@ -246,7 +327,7 @@ export async function processInboundMessage(account: any, normalizedMessage: any
   if (conversation && !shouldReactivateAsNew) {
     await insertMessages(conversation.id, workspaceId, [normalizedMessage])
 
-    const updates: any = {
+    const updates: Record<string, unknown> = {
       last_message_at: normalizedMessage.date || new Date().toISOString(),
       snippet: normalizedMessage.bodyText?.substring(0, 100) || '',
       message_count: (conversation.message_count || 0) + 1,
@@ -270,7 +351,7 @@ export async function processInboundMessage(account: any, normalizedMessage: any
     //       linked back via reactivated_from for analytics.
     const shopifyCustomerId = await matchShopifyCustomer(workspaceId, normalizedMessage.from.email)
 
-    const { data: newConv } = await supabaseAdmin
+    const newConvResult = await supabaseAdmin
       .from('email_conversations')
       .insert({
         workspace_id: workspaceId,
@@ -287,11 +368,12 @@ export async function processInboundMessage(account: any, normalizedMessage: any
         is_unread: true,
         // Attribution: if we got here via the 10-day reactivation rule,
         // record which prior conversation this one descends from.
-        reactivated_from: shouldReactivateAsNew ? conversation.id : null,
+        reactivated_from: shouldReactivateAsNew ? conversation!.id : null,
       })
       .select()
       .single()
 
+    const newConv = newConvResult.data as ConversationRow | null
     if (newConv) {
       await insertMessages(newConv.id, workspaceId, [normalizedMessage])
     }
@@ -302,7 +384,16 @@ export async function processInboundMessage(account: any, normalizedMessage: any
 // Send reply
 // ---------------------------------------------------------------------------
 
-export async function sendReply(workspaceId: string, conversationId: string, userEmail: string, { to, cc, bcc, subject, bodyHtml, bodyText }: { to: any; cc: any; bcc: any; subject: any; bodyHtml: any; bodyText: any }) {
+interface SendReplyParams {
+  to: EmailAddress[]
+  cc: EmailAddress[]
+  bcc: EmailAddress[]
+  subject: string
+  bodyHtml: string
+  bodyText: string
+}
+
+export async function sendReply(workspaceId: string, conversationId: string, _userEmail: string, { to, cc, bcc, subject, bodyHtml, bodyText }: SendReplyParams) {
   const limitCheck = await checkTicketLimit(workspaceId)
   if (!limitCheck.allowed) {
     // Flip the workspace flag so banners + composers can render the
@@ -312,16 +403,17 @@ export async function sendReply(workspaceId: string, conversationId: string, use
     return planLimitErrorResponse(limitCheck)
   }
 
-  const { data: conversation } = await supabaseAdmin
+  const convQueryResult = await supabaseAdmin
     .from('email_conversations')
     .select('*, email_accounts(*)')
     .eq('id', conversationId)
     .eq('workspace_id', workspaceId)
     .single()
 
-  if (!conversation) throw new Error('Conversation not found')
+  if (!convQueryResult.data) throw new Error('Conversation not found')
 
-  const account = (conversation as any).email_accounts
+  const convRow = convQueryResult.data as ConversationRow & { email_accounts: EmailAccountRow }
+  const account = convRow.email_accounts
   if (!account) throw new Error('Email account not found for this conversation')
 
   // Fetch last inbound message for threading headers
@@ -334,18 +426,20 @@ export async function sendReply(workspaceId: string, conversationId: string, use
     .limit(1)
     .maybeSingle()
 
+  const lastMsgRow = lastMsg as MessageIdRow | null
+
   const adapter = getAdapter(account.provider)
   const refreshedAccount = await adapter.refreshTokenIfNeeded(account)
 
   const result = await adapter.sendReply(refreshedAccount, {
-    to: to || [{ email: (conversation as any).customer_email, name: (conversation as any).customer_name }],
+    to: to || [{ email: convRow.customer_email, name: convRow.customer_name }],
     cc,
     bcc,
-    subject: subject || `Re: ${(conversation as any).subject}`,
+    subject: subject || `Re: ${convRow.subject}`,
     bodyHtml,
     bodyText,
-    inReplyTo: (lastMsg as any)?.message_id || '',
-    references: (lastMsg as any)?.message_id || '',
+    inReplyTo: lastMsgRow?.message_id || '',
+    references: lastMsgRow?.message_id || '',
   })
 
   await supabaseAdmin
@@ -357,11 +451,11 @@ export async function sendReply(workspaceId: string, conversationId: string, use
       message_id: result.messageId,
       from_email: account.email_address,
       from_name: account.display_name || '',
-      to_email: to?.[0]?.email || (conversation as any).customer_email,
-      to_name: to?.[0]?.name || (conversation as any).customer_name,
+      to_email: to?.[0]?.email || convRow.customer_email,
+      to_name: to?.[0]?.name || convRow.customer_name,
       cc: cc || [],
       bcc: bcc || [],
-      subject: subject || `Re: ${(conversation as any).subject}`,
+      subject: subject || `Re: ${convRow.subject}`,
       body_html: bodyHtml,
       body_text: bodyText,
       is_outbound: true,
@@ -376,7 +470,7 @@ export async function sendReply(workspaceId: string, conversationId: string, use
     .update({
       status: 'pending',
       last_message_at: new Date().toISOString(),
-      message_count: ((conversation as any).message_count || 0) + 1,
+      message_count: (convRow.message_count || 0) + 1,
     })
     .eq('id', conversationId)
 
@@ -394,24 +488,25 @@ export async function sendReply(workspaceId: string, conversationId: string, use
 // Send new email (outbound, creates a new conversation)
 // ---------------------------------------------------------------------------
 
-export async function sendNewEmail(workspaceId: string, userEmail: string, accountId: string, { to, cc, bcc, subject, bodyHtml, bodyText }: { to: any; cc: any; bcc: any; subject: any; bodyHtml: any; bodyText: any }) {
+export async function sendNewEmail(workspaceId: string, _userEmail: string, accountId: string, { to, cc, bcc, subject, bodyHtml, bodyText }: SendReplyParams) {
   const limitCheck = await checkTicketLimit(workspaceId)
   if (!limitCheck.allowed) {
     await lockWorkspace(workspaceId)
     return planLimitErrorResponse(limitCheck)
   }
 
-  const { data: account } = await supabaseAdmin
+  const accountResult = await supabaseAdmin
     .from('email_accounts')
     .select('*')
     .eq('id', accountId)
     .eq('workspace_id', workspaceId)
     .single()
 
-  if (!account) throw new Error('Email account not found')
+  if (!accountResult.data) throw new Error('Email account not found')
 
-  const adapter = getAdapter((account as any).provider)
-  const refreshedAccount = await adapter.refreshTokenIfNeeded(account)
+  const accountRow = accountResult.data as EmailAccountRow
+  const adapter = getAdapter(accountRow.provider)
+  const refreshedAccount = await adapter.refreshTokenIfNeeded(accountRow)
 
   const result = await adapter.sendNew(refreshedAccount, {
     to, cc, bcc, subject, bodyHtml, bodyText,
@@ -419,11 +514,11 @@ export async function sendNewEmail(workspaceId: string, userEmail: string, accou
 
   const shopifyCustomerId = await matchShopifyCustomer(workspaceId, to[0]?.email)
 
-  const { data: conversation } = await supabaseAdmin
+  const newConvInsertResult = await supabaseAdmin
     .from('email_conversations')
     .insert({
       workspace_id: workspaceId,
-      email_account_id: (account as any).id,
+      email_account_id: accountRow.id,
       subject,
       snippet: bodyText?.substring(0, 100) || '',
       customer_email: to[0]?.email || '',
@@ -438,6 +533,7 @@ export async function sendNewEmail(workspaceId: string, userEmail: string, accou
     .select()
     .single()
 
+  const conversation = newConvInsertResult.data as ConversationRow | null
   if (conversation) {
     await supabaseAdmin
       .from('email_messages')
@@ -446,8 +542,8 @@ export async function sendNewEmail(workspaceId: string, userEmail: string, accou
         workspace_id: workspaceId,
         provider_message_id: result.providerMessageId,
         message_id: result.messageId,
-        from_email: (account as any).email_address,
-        from_name: (account as any).display_name || '',
+        from_email: accountRow.email_address,
+        from_name: accountRow.display_name || '',
         to_email: to[0]?.email || '',
         to_name: to[0]?.name || '',
         cc: cc || [],
@@ -462,11 +558,12 @@ export async function sendNewEmail(workspaceId: string, userEmail: string, accou
   // Count this conversation against the workspace's ticket counter
   // (this is a brand-new conversation, so counted_in_usage_period is
   // null and the helper will count via the 'first_outbound' branch).
-  const billing = conversation?.id
-    ? await recordOutboundMessage(workspaceId, conversation.id)
+  const convRow = conversation
+  const billing = convRow?.id
+    ? await recordOutboundMessage(workspaceId, convRow.id)
     : null
 
-  return { success: true, conversationId: conversation?.id, billing }
+  return { success: true, conversationId: convRow?.id, billing }
 }
 
 // ---------------------------------------------------------------------------
@@ -492,7 +589,7 @@ export async function updateConversationStatus(workspaceId: string, conversation
 // Shopify customer linking
 // ---------------------------------------------------------------------------
 
-export async function linkCustomer(workspaceId: string, conversationId: string, shopifyCustomerId: any) {
+export async function linkCustomer(workspaceId: string, conversationId: string, shopifyCustomerId: string | number) {
   await supabaseAdmin
     .from('email_conversations')
     .update({ shopify_customer_id: shopifyCustomerId })
@@ -506,7 +603,7 @@ export async function linkCustomer(workspaceId: string, conversationId: string, 
 // Internal: Shopify customer lookup by email
 // ---------------------------------------------------------------------------
 
-async function matchShopifyCustomer(workspaceId: string, email: any) {
+async function matchShopifyCustomer(workspaceId: string, email: string | undefined | null) {
   if (!email) return null
 
   try {
@@ -516,27 +613,32 @@ async function matchShopifyCustomer(workspaceId: string, email: any) {
       .eq('workspace_id', workspaceId)
       .maybeSingle()
 
-    if (!(client as any)?.shopify_domain || !(client as any)?.shopify_api_key) return null
+    const clientRow = client as ShopifyClientRow | null
+    if (!clientRow?.shopify_domain || !clientRow?.shopify_api_key) return null
 
     const res = await fetch(
-      `https://${(client as any).shopify_domain}/admin/api/2024-01/customers/search.json?query=email:${encodeURIComponent(email)}`,
+      `https://${clientRow.shopify_domain}/admin/api/2024-01/customers/search.json?query=email:${encodeURIComponent(email)}`,
       {
         headers: {
-          'X-Shopify-Access-Token': (client as any).shopify_api_key,
+          'X-Shopify-Access-Token': clientRow.shopify_api_key,
           'Content-Type': 'application/json',
         },
       }
     )
 
     if (!res.ok) return null
-    const data = await res.json()
+    const data = await parseJson<ShopifyCustomerSearchResponse>(res)
 
-    if (data.customers?.length > 0) {
+    if (data.customers && data.customers.length > 0) {
       return String(data.customers[0].id)
     }
-  } catch (err: any) {
-    console.error('Shopify customer match failed:', err.message)
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err)
+    console.error('Shopify customer match failed:', message)
   }
 
   return null
 }
+
+// Exported for inbox service
+export { updateConversationStatus as resolveThread }

@@ -3,7 +3,12 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAuthStore } from '@/stores/auth'
 import { taskKeys } from './use-tasks-data'
+import { parseJson } from '@/lib/utils/typed-json'
 import type { CreateTaskInput, UpdateTaskInput } from '@/types/tasks'
+
+interface ErrorResponse {
+  error?: string
+}
 
 function useToken() {
   return useAuthStore((s) => s.session?.access_token ?? '')
@@ -24,13 +29,13 @@ export function useCreateTask() {
         body: JSON.stringify(input),
       })
       if (!res.ok) {
-        const d = await res.json().catch(() => ({}))
-        throw new Error(d.error || 'Failed to create task')
+        const d = await parseJson<ErrorResponse>(res).catch((): ErrorResponse => ({}))
+        throw new Error(d.error ||'Failed to create task')
       }
-      return res.json()
+      return parseJson<unknown>(res)
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: taskKeys.all })
+      void qc.invalidateQueries({ queryKey: taskKeys.all })
     },
   })
 }
@@ -50,13 +55,13 @@ export function useUpdateTask() {
         body: JSON.stringify(updates),
       })
       if (!res.ok) {
-        const d = await res.json().catch(() => ({}))
-        throw new Error(d.error || 'Failed to update task')
+        const d = await parseJson<ErrorResponse>(res).catch((): ErrorResponse => ({}))
+        throw new Error(d.error ||'Failed to update task')
       }
-      return res.json()
+      return parseJson<unknown>(res)
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: taskKeys.all })
+      void qc.invalidateQueries({ queryKey: taskKeys.all })
     },
   })
 }
@@ -72,13 +77,13 @@ export function useDeleteTask() {
         headers: { Authorization: `Bearer ${token}` },
       })
       if (!res.ok) {
-        const d = await res.json().catch(() => ({}))
-        throw new Error(d.error || 'Failed to delete task')
+        const d = await parseJson<ErrorResponse>(res).catch((): ErrorResponse => ({}))
+        throw new Error(d.error ||'Failed to delete task')
       }
-      return res.json()
+      return parseJson<unknown>(res)
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: taskKeys.all })
+      void qc.invalidateQueries({ queryKey: taskKeys.all })
     },
   })
 }
@@ -94,10 +99,10 @@ export function useGeneratePatternTasks() {
         headers: { Authorization: `Bearer ${token}` },
       })
       if (!res.ok) throw new Error('Generation failed')
-      return res.json()
+      return parseJson<unknown>(res)
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: taskKeys.all })
+      void qc.invalidateQueries({ queryKey: taskKeys.all })
     },
   })
 }

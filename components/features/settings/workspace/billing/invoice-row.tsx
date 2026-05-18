@@ -62,7 +62,7 @@ export function InvoiceRow({ invoice, token }: InvoiceRowProps) {
         <Badge variant={statusVariant(invoice.status)}>{invoice.status}</Badge>
       </td>
       <td className="px-3 py-3 text-right">
-        <Button type="button" size="sm" variant="ghost" onClick={downloadPDF}>
+        <Button type="button" size="sm" variant="ghost" onClick={() => void downloadPDF()}>
           <Download size={14} />
           PDF
         </Button>

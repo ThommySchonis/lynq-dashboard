@@ -18,8 +18,18 @@ import {
 import { SettingsField } from '@/components/features/settings/settings-field'
 import { toast } from 'sonner'
 import { copyText, downloadCodes } from './mfa-utils'
+import { parseJson } from '@/lib/utils/typed-json'
 
 type WizardStep = 'idle' | 'enrolling' | 'verifying' | 'complete'
+
+interface MfaErrorResponse {
+  error?: string
+}
+
+interface RecoveryCodesResponse {
+  recovery_codes?: string[]
+  error?: string
+}
 
 interface MfaWizardDialogProps {
   open: boolean
@@ -45,7 +55,7 @@ export function MfaWizardDialog({ open, onOpenChange, onComplete }: MfaWizardDia
 
   useEffect(() => {
     if (!open) return
-    startEnrollment()
+    void startEnrollment()
   }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function startEnrollment() {
@@ -89,8 +99,8 @@ export function MfaWizardDialog({ open, onOpenChange, onComplete }: MfaWizardDia
           headers: { Authorization: `Bearer ${token}` },
         })
         if (!res.ok) {
-          const json = await res.json().catch(() => ({}))
-          toast.error((json as { error?: string }).error || 'Could not clean up orphaned 2FA factors')
+          const json = await res.json().catch(() => ({})) as MfaErrorResponse
+          toast.error(json.error || 'Could not clean up orphaned 2FA factors')
           setEnrollBusy(false)
           onOpenChange(false)
           return
@@ -143,7 +153,7 @@ export function MfaWizardDialog({ open, onOpenChange, onComplete }: MfaWizardDia
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
       })
-      const json = (await res.json()) as { recovery_codes?: string[]; error?: string }
+      const json = await parseJson<RecoveryCodesResponse>(res)
       if (!res.ok) {
         toast.error(json.error ?? 'Failed to generate recovery codes')
         setVerifyBusy(false)
@@ -251,12 +261,12 @@ export function MfaWizardDialog({ open, onOpenChange, onComplete }: MfaWizardDia
                 className="text-center text-xl tracking-[0.3em] font-mono"
                 autoFocus
                 aria-invalid={!!verifyError}
-                onKeyDown={(e: React.KeyboardEvent) => e.key === 'Enter' && handleVerify()}
+                onKeyDown={(e: React.KeyboardEvent) => { if (e.key === 'Enter') void handleVerify() }}
               />
             </SettingsField>
             <Button
               className="w-full"
-              onClick={handleVerify}
+              onClick={() => void handleVerify()}
               disabled={verifyCode.length !== 6 || verifyBusy}
             >
               {verifyBusy ? 'Verifying...' : 'Verify code'}

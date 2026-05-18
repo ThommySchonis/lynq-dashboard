@@ -6,11 +6,24 @@
  * - calculateCost() applies Sonnet 4 pricing ($3 / $15 per Mtok)
  */
 
+interface MacroAnswers {
+  tracking_link?: string
+  extra_notes?: string
+  store_name?: string
+  what_sells?: string
+  brand_voice?: string
+  support_email?: string
+  signature?: string
+  return_days?: number
+  return_shipping?: string
+  damage_policy?: string
+}
+
 export const SYSTEM_PROMPT = `You are an expert at creating customer service email templates for Shopify e-commerce stores. You create warm, on-brand, ready-to-send responses that customer service agents apply with one click.
 
 Your output must be valid JSON only — no markdown code fences, no explanations, no preamble. Just the JSON object.`
 
-export function buildUserMessage(answers: any) {
+export function buildUserMessage(answers: MacroAnswers) {
   const trackingLink = answers.tracking_link?.trim()
     ? answers.tracking_link.trim()
     : 'none — omit tracking URL references'
@@ -97,9 +110,21 @@ OUTPUT SHAPE:
 RESPOND ONLY WITH THE JSON OBJECT. NO MARKDOWN. NO TEXT BEFORE OR AFTER. Start your response with { and end with }.`
 }
 
+interface MacroItem {
+  name: string
+  body: string
+  tags?: string[]
+}
+
+interface ParsedMacroResult {
+  macros: MacroItem[] | null
+  raw: unknown
+  parseError: string | null
+}
+
 // Strip ```json fences if Claude wrapped despite instructions. Returns
 // { macros, raw, parseError } where macros is null on failure.
-export function parseMacroJson(text: any) {
+export function parseMacroJson(text: unknown): ParsedMacroResult {
   if (typeof text !== 'string') {
     return { macros: null, raw: text, parseError: 'response was not a string' }
   }
@@ -118,19 +143,21 @@ export function parseMacroJson(text: any) {
     if (first >= 0 && last > first) cleaned = cleaned.slice(first, last + 1)
   }
 
-  let parsed: any
+  let parsed: unknown
   try {
     parsed = JSON.parse(cleaned)
-  } catch (e: any) {
-    return { macros: null, raw: text, parseError: e.message }
+  } catch (e: unknown) {
+    const message = e instanceof Error ? e.message : String(e)
+    return { macros: null, raw: text, parseError: message }
   }
 
-  if (!parsed || !Array.isArray(parsed.macros)) {
+  const parsedObj = parsed as Record<string, unknown> | null
+  if (!parsedObj || !Array.isArray(parsedObj.macros)) {
     return { macros: null, raw: text, parseError: 'response missing "macros" array' }
   }
 
   // Validate each macro has the minimum shape
-  const valid = parsed.macros.filter((m: any) =>
+  const valid = (parsedObj.macros as MacroItem[]).filter((m: MacroItem) =>
     m && typeof m.name === 'string' && m.name.trim() &&
          typeof m.body === 'string' &&
          (Array.isArray(m.tags) || m.tags === undefined)
@@ -139,8 +166,13 @@ export function parseMacroJson(text: any) {
   return { macros: valid, raw: text, parseError: null }
 }
 
+interface UsageInfo {
+  input_tokens?: number
+  output_tokens?: number
+}
+
 // Sonnet 4 pricing: $3 / Mtok input, $15 / Mtok output.
-export function calculateCost(usage: any) {
+export function calculateCost(usage: UsageInfo | null | undefined) {
   const input  = usage?.input_tokens  ?? 0
   const output = usage?.output_tokens ?? 0
   return {

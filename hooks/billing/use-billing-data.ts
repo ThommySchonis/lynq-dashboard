@@ -2,6 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query'
 import { useToken } from './utils'
+import { parseJson } from '@/lib/utils/typed-json'
 import type {
   SubscriptionResponse,
   UsageResponse,
@@ -12,6 +13,10 @@ import type {
   SubscriptionAddon,
   InvoicesListResponse,
 } from '@/types/billing'
+
+interface ErrorResponse {
+  error?: string
+}
 
 export const billingKeys = {
   all:            ['billing'] as const,
@@ -28,10 +33,10 @@ export const billingKeys = {
 async function jsonFetch<T>(url: string, token: string): Promise<T> {
   const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } })
   if (!res.ok) {
-    const d = await res.json().catch(() => ({}))
-    throw new Error((d as { error?: string }).error || `Request failed: ${url}`)
+    const d = await parseJson<ErrorResponse>(res).catch((): ErrorResponse => ({}))
+    throw new Error(d.error || `Request failed: ${url}`)
   }
-  return res.json() as Promise<T>
+  return parseJson<T>(res)
 }
 
 export function useSubscription() {

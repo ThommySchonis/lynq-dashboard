@@ -3,7 +3,16 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAuthStore } from '@/stores/auth'
 import { timeTrackingKeys } from './use-time-tracking-data'
+import { parseJson } from '@/lib/utils/typed-json'
 import type { EodReport } from '@/types/time-tracking'
+
+interface ErrorResponse {
+  error?: string
+}
+
+interface ResumeSessionResponse {
+  paused_seconds: number
+}
 
 function useToken() {
   return useAuthStore((s) => s.session?.access_token ?? '')
@@ -24,10 +33,10 @@ export function useClockIn() {
         body: JSON.stringify({ action: 'clock-in' }),
       })
       if (!res.ok) throw new Error('Failed to clock in')
-      return res.json()
+      return parseJson<unknown>(res)
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: timeTrackingKeys.all })
+      void qc.invalidateQueries({ queryKey: timeTrackingKeys.all })
     },
   })
 }
@@ -55,13 +64,13 @@ export function useClockOut() {
         }),
       })
       if (!res.ok) {
-        const err = await res.json().catch(() => ({}))
+        const err = await parseJson<ErrorResponse>(res).catch((): ErrorResponse => ({}))
         throw new Error(err.error || 'Failed to clock out')
       }
-      return res.json()
+      return parseJson<unknown>(res)
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: timeTrackingKeys.all })
+      void qc.invalidateQueries({ queryKey: timeTrackingKeys.all })
     },
   })
 }
@@ -81,10 +90,10 @@ export function usePauseSession() {
         body: JSON.stringify({ action: 'pause', session_id: sessionId }),
       })
       if (!res.ok) throw new Error('Failed to pause session')
-      return res.json()
+      return parseJson<unknown>(res)
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: timeTrackingKeys.all })
+      void qc.invalidateQueries({ queryKey: timeTrackingKeys.all })
     },
   })
 }
@@ -104,11 +113,11 @@ export function useResumeSession() {
         body: JSON.stringify({ action: 'resume', session_id: sessionId }),
       })
       if (!res.ok) throw new Error('Failed to resume session')
-      const d = await res.json()
-      return d as { paused_seconds: number }
+      const d = await parseJson<ResumeSessionResponse>(res)
+      return d
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: timeTrackingKeys.all })
+      void qc.invalidateQueries({ queryKey: timeTrackingKeys.all })
     },
   })
 }
@@ -137,13 +146,13 @@ export function useEditSession() {
         body: JSON.stringify(patch),
       })
       if (!res.ok) {
-        const err = await res.json().catch(() => ({}))
+        const err = await parseJson<ErrorResponse>(res).catch((): ErrorResponse => ({}))
         throw new Error(err.error || 'Failed to update session')
       }
-      return res.json()
+      return parseJson<unknown>(res)
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: timeTrackingKeys.all })
+      void qc.invalidateQueries({ queryKey: timeTrackingKeys.all })
     },
   })
 }

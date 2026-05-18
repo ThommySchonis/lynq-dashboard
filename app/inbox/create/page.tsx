@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { toast } from 'sonner'
 import {
   ChevronLeft,
@@ -407,12 +408,12 @@ export default function CreateTicketPage() {
               <AlertCircle className="h-[11px] w-[11px] shrink-0 text-amber-600" />
               <span className="text-[11.5px] text-amber-600">
                 Demo mode &mdash;{' '}
-                <a
+                <Link
                   href="/settings/integrations/email"
                   className="font-semibold text-foreground no-underline"
                 >
                   connect Gmail or Outlook
-                </a>{' '}
+                </Link>{' '}
                 in Settings to send real emails
               </span>
             </div>
@@ -499,7 +500,7 @@ export default function CreateTicketPage() {
             data-placeholder="Type your message here... or pick a macro above."
             onInput={(e) => setBody(e.currentTarget.textContent || '')}
             onKeyDown={(e) => {
-              if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) doSend()
+              if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) void doSend()
             }}
             className="min-h-[120px] w-full resize-none overflow-y-auto border-none bg-transparent px-4 py-3.5 text-[13.5px] leading-[1.78] tracking-[0.005em] text-foreground outline-none empty:before:pointer-events-none empty:before:block empty:before:text-muted-foreground empty:before:content-[attr(data-placeholder)]"
           />
@@ -568,7 +569,7 @@ export default function CreateTicketPage() {
             <span className="mr-2 text-[10.5px] text-muted-foreground">Cmd+Enter to send</span>
             <div className="flex shrink-0 items-stretch overflow-hidden rounded-[9px] shadow-[0_2px_12px_rgba(124,92,252,0.35)]">
               <Button
-                onClick={doSend}
+                onClick={() => { void doSend() }}
                 disabled={composeEmail.isPending}
                 className="gap-1.5 rounded-none bg-[linear-gradient(135deg,#7C5CFC_0%,#6d4af8_100%)] px-[18px] py-[7px] text-[12.5px] font-semibold text-white hover:opacity-90"
               >
@@ -586,7 +587,7 @@ export default function CreateTicketPage() {
               </Button>
               <div className="w-px shrink-0 bg-white/20" />
               <Button
-                onClick={doSend}
+                onClick={() => { void doSend() }}
                 disabled={composeEmail.isPending}
                 className="gap-[5px] rounded-none bg-[linear-gradient(135deg,#7C5CFC_0%,#6d4af8_100%)] px-[18px] py-[7px] text-[12.5px] font-semibold text-white hover:opacity-90"
               >

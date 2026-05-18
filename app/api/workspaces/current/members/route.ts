@@ -7,6 +7,20 @@ import { can } from '../../../../../lib/permissions'
 import { supabaseAdmin } from '../../../../../lib/supabaseAdmin'
 import { sendInviteEmail } from '../../../../../lib/email'
 
+interface CursorPayload {
+  joined_at: string
+  id: string
+}
+
+interface InviteBody {
+  email?: string
+  role?: string
+}
+
+interface IdRow {
+  id: string
+}
+
 const ROLE_ORDER: Record<string, number> = { owner: 0, admin: 1, agent: 2, observer: 3 }
 
 // Derive the site URL from env first, fall back to the incoming request.
@@ -42,9 +56,9 @@ export async function GET(request: NextRequest) {
 
   if (cursor) {
     try {
-      const { joined_at, id } = JSON.parse(Buffer.from(cursor, 'base64').toString())
+      const { joined_at, id } = JSON.parse(Buffer.from(cursor, 'base64').toString()) as CursorPayload
       membersQ = membersQ.or(`joined_at.gt.${joined_at},and(joined_at.eq.${joined_at},id.gt.${id})`)
-    } catch (_) {
+    } catch {
       // invalid cursor — ignore
     }
   }
@@ -65,7 +79,8 @@ export async function GET(request: NextRequest) {
   if (membersError) console.error('[members GET] members query failed:', membersError.message)
   if (invitesError) console.error('[members GET] invites query failed:', invitesError.message)
 
-  const members = rawMembers || []
+  interface MemberViewRow { id: string; role: string; joined_at: string; [key: string]: unknown }
+  const members = (rawMembers || []) as MemberViewRow[]
   members.sort((a, b) => (ROLE_ORDER[a.role] ?? 99) - (ROLE_ORDER[b.role] ?? 99))
 
   const hasMore = members.length > limit
@@ -77,8 +92,10 @@ export async function GET(request: NextRequest) {
     : null
 
   // Attach the invite link to each pending invite for the UI's copy button
+  interface InviteViewRow { id: string; email: string; role: string; token: string; created_at: string; sent_at: string | null; expires_at: string; invited_by: string; inviter_email: string | null; inviter_name: string | null }
   const siteUrl = getSiteUrl(request)
-  const invitesWithLinks = (invites || []).map(i => ({
+  const typedInvites = (invites || []) as InviteViewRow[]
+  const invitesWithLinks = typedInvites.map(i => ({
     ...i,
     inviteLink: siteUrl ? `${siteUrl}/invites/${i.token}` : null,
   }))
@@ -126,7 +143,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
-  const body = await request.json().catch(() => ({})) as { email?: string; role?: string }
+  const body = await request.json().catch(() => ({})) as InviteBody
   const { email, role = 'agent' } = body
 
   if (!email?.trim()) return NextResponse.json({ error: 'Email is required' }, { status: 400 })
@@ -187,10 +204,11 @@ export async function POST(request: NextRequest) {
   const newExpiry = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
   const nowIso    = new Date().toISOString()
 
-  let invite
+  interface InviteRow { id: string; token: string; [key: string]: unknown }
+  let invite: InviteRow
   if (existingInvite) {
-    console.log('[invite POST] refreshing pending invite', existingInvite.id)
-    const { data: updated, error: updateError } = await supabaseAdmin
+    console.log('[invite POST] refreshing pending invite', (existingInvite as IdRow).id)
+    const updateResult = await supabaseAdmin
       .from('workspace_invites')
       .update({
         role,
@@ -199,15 +217,15 @@ export async function POST(request: NextRequest) {
         sent_at:    nowIso,
         invited_by: ctx.user.id,
       })
-      .eq('id', existingInvite.id)
+      .eq('id', (existingInvite as IdRow).id)
       .select()
       .single()
 
-    if (updateError || !updated) {
-      console.error('[invite POST] update failed:', updateError?.message)
-      return NextResponse.json({ error: updateError?.message ?? 'Failed to refresh invite' }, { status: 500 })
+    if (updateResult.error || !updateResult.data) {
+      console.error('[invite POST] update failed:', updateResult.error?.message)
+      return NextResponse.json({ error: updateResult.error?.message ?? 'Failed to refresh invite' }, { status: 500 })
     }
-    invite = updated
+    invite = updateResult.data as InviteRow
   } else {
     // No pending invite — INSERT. Covers two cases:
     //   (a) brand-new email never invited
@@ -216,7 +234,7 @@ export async function POST(request: NextRequest) {
     //       blocks duplicates among rows where accepted_at IS NULL, so an
     //       old accepted row doesn't conflict)
     console.log('[invite POST] creating new invite')
-    const { data: inserted, error: insertError } = await supabaseAdmin
+    const insertResult = await supabaseAdmin
       .from('workspace_invites')
       .insert({
         workspace_id: ctx.workspaceId,
@@ -230,11 +248,11 @@ export async function POST(request: NextRequest) {
       .select()
       .single()
 
-    if (insertError || !inserted) {
-      console.error('[invite POST] insert failed:', insertError?.message)
-      return NextResponse.json({ error: insertError?.message ?? 'Failed to create invite' }, { status: 500 })
+    if (insertResult.error || !insertResult.data) {
+      console.error('[invite POST] insert failed:', insertResult.error?.message)
+      return NextResponse.json({ error: insertResult.error?.message ?? 'Failed to create invite' }, { status: 500 })
     }
-    invite = inserted
+    invite = insertResult.data as InviteRow
   }
 
   console.log('[invite POST] invite saved, id:', invite.id, 'token length:', invite.token?.length)
@@ -250,7 +268,7 @@ export async function POST(request: NextRequest) {
   const emailResult = await sendInviteEmail({
     to:            normalizedEmail,
     workspaceName: ctx.workspace.name,
-    inviterEmail:  ctx.user.email,
+    inviterEmail:  ctx.user.email ?? '',
     role,
     link:          inviteLink,
   })

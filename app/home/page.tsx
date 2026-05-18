@@ -84,7 +84,7 @@ export default function HomePage() {
     const trimmed = text.trim()
     if (!trimmed) return
     setInput('')
-    sendMessage(trimmed, shopifyContext ?? undefined)
+    void sendMessage(trimmed, shopifyContext ?? undefined)
   }
 
   function onKey(e: React.KeyboardEvent) {

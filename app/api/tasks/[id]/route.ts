@@ -12,7 +12,7 @@ export async function PATCH(request: NextRequest, { params }: RouteContext<{ id:
   if (!can.manageTasks(ctx.role as Role)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
   const { id } = await params
-  const body = await request.json()
+  const body = (await request.json() as unknown) as Parameters<typeof updateTask>[2]
 
   try {
     const task = await updateTask(ctx.workspaceId, id, body)

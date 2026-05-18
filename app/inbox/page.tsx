@@ -1,6 +1,12 @@
 "use client";
 
 import type { Thread } from "@/types/inbox";
+import type { RefundOrder } from "@/components/shared/modals/refund-modal";
+import type { DuplicateOrder } from "@/components/shared/modals/duplicate-modal";
+import type { CancelOrder } from "@/components/shared/modals/cancel-modal";
+import type { EditAddressOrder } from "@/components/shared/modals/edit-address-modal";
+import type { FulfillOrder } from "@/components/shared/modals/fulfill-modal";
+import type { NoteOrder } from "@/components/shared/modals/note-modal";
 import { MacroManager } from "@/components/features/inbox/macro-manager";
 import { ConversationPanel } from "@/components/features/inbox/conversation-panel";
 import { CustomerSidebar } from "@/components/features/inbox/customer-sidebar";
@@ -83,13 +89,13 @@ function InboxPage() {
       window.location.href = "/login";
       return;
     }
-    _fetchMacros(token);
+    void _fetchMacros(token);
   }, [session, _fetchMacros, token]);
 
   // ── Trigger AI analysis when threads change ──
   useEffect(() => {
     if (threads.length > 0 && token) {
-      _analyzeThreads(threads, token);
+      void _analyzeThreads(threads, token);
     }
   }, [threads, token, _analyzeThreads]);
 
@@ -99,14 +105,14 @@ function InboxPage() {
 
   useEffect(() => {
     if (!selectedThreadId || !selectedThread || !token) return;
-    aiMacrosMutation
+    void aiMacrosMutation
       .mutateAsync({ subject: selectedThread.subject, snippet: selectedThread.snippet })
       .then((macroList) => {
         if (macroList?.length) _setAiMacros(macroList);
       })
       .catch(() => {});
     if (selectedThread.snippet) {
-      _detectLanguage(selectedThread.snippet, token);
+      void _detectLanguage(selectedThread.snippet, token);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedThreadId, selectedThread, token]);
@@ -187,19 +193,19 @@ function InboxPage() {
       {selectedThreadId && <CustomerSidebar />}
 
       {/* ═══════════════ Modals ═══════════════ */}
-      {modal?.type === "refund" && <RefundModal order={modal.order} token={token} onClose={() => setModal(null)} onSuccess={handleModalSuccess} />}
-      {modal?.type === "cancel" && <CancelModal order={modal.order} token={token} onClose={() => setModal(null)} onSuccess={handleModalSuccess} />}
-      {modal?.type === "duplicate" && <DuplicateModal order={modal.order} token={token} onClose={() => setModal(null)} onSuccess={handleModalSuccess} />}
-      {modal?.type === "address" && <EditAddressModal order={modal.order} token={token} onClose={() => setModal(null)} onSuccess={handleModalSuccess} />}
-      {modal?.type === "fulfill" && <FulfillModal order={modal.order} token={token} onClose={() => setModal(null)} onSuccess={handleModalSuccess} />}
-      {modal?.type === "note" && <NoteModal order={modal.order} token={token} onClose={() => setModal(null)} onSuccess={handleModalSuccess} />}
-      {modal?.type === "create-task" && modal.order && (
+      {modal?.type === "refund" && <RefundModal order={modal.order as RefundOrder} token={token} onClose={() => setModal(null)} onSuccess={handleModalSuccess} />}
+      {modal?.type === "cancel" && <CancelModal order={modal.order as CancelOrder} token={token} onClose={() => setModal(null)} onSuccess={handleModalSuccess} />}
+      {modal?.type === "duplicate" && <DuplicateModal order={modal.order as DuplicateOrder} token={token} onClose={() => setModal(null)} onSuccess={handleModalSuccess} />}
+      {modal?.type === "address" && <EditAddressModal order={modal.order as EditAddressOrder} token={token} onClose={() => setModal(null)} onSuccess={handleModalSuccess} />}
+      {modal?.type === "fulfill" && <FulfillModal order={modal.order as FulfillOrder} token={token} onClose={() => setModal(null)} onSuccess={handleModalSuccess} />}
+      {modal?.type === "note" && <NoteModal order={modal.order as NoteOrder} token={token} onClose={() => setModal(null)} onSuccess={handleModalSuccess} />}
+      {modal?.type === "create-task" && (
         <CreateTaskModal
           linkedOrder={{
             shopifyOrderId: String(modal.order.id),
             shopifyOrderName: modal.order.name || `#${modal.order.id}`,
-            customerEmail: (modal.customerEmail as string) || undefined,
-            customerName: (modal.customerName as string) || undefined,
+            customerEmail: modal.customerEmail || undefined,
+            customerName: modal.customerName || undefined,
           }}
           onClose={() => setModal(null)}
           onSuccess={(msg, type) => {

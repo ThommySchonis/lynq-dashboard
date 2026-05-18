@@ -203,7 +203,7 @@ export default function InviteAcceptPage({
               Accepting as <strong className="text-foreground">{session?.user?.email}</strong>
             </div>
             <button
-              onClick={handleAccept}
+              onClick={() => { void handleAccept() }}
               disabled={acceptMutation.isPending}
               className="w-full inline-flex items-center justify-center gap-1.5 h-11 px-4 rounded-lg border-none text-sm font-medium text-white cursor-pointer disabled:cursor-default"
               style={{ background: acceptMutation.isPending ? '#D4C5F9' : '#A175FC' }}
@@ -234,7 +234,7 @@ export default function InviteAcceptPage({
               </div>
             </div>
             <button
-              onClick={handleSignOut}
+              onClick={() => { void handleSignOut() }}
               className="w-full inline-flex items-center justify-center h-11 px-4 rounded-lg border border-[#E5E0EB] bg-white text-sm font-medium text-foreground cursor-pointer"
             >
               Sign out and use {mismatchInvite}

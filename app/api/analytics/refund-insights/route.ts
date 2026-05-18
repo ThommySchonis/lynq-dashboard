@@ -6,6 +6,11 @@ import { supabaseAdmin } from '../../../../lib/supabaseAdmin'
 import { DEMO_SHOP, DEMO_INSIGHTS } from '../../../../lib/demoData'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { parseBody } from '@/lib/utils/typed-json'
+
+interface RefundInsightsBody {
+  refunds?: RefundItem[]
+}
 
 interface RefundItem {
   orderId: string
@@ -26,7 +31,7 @@ export async function POST(request: NextRequest) {
   const credentials = await getStoreCredentials(storeId, ctx.workspaceId)
   if (credentials.domain === DEMO_SHOP) return NextResponse.json({ insights: DEMO_INSIGHTS })
 
-  const { refunds = [] } = await request.json() as { refunds?: RefundItem[] }
+  const { refunds = [] } = await parseBody<RefundInsightsBody>(request)
 
   if (refunds.length === 0) return NextResponse.json({ insights: [] })
 

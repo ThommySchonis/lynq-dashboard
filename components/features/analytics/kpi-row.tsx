@@ -3,7 +3,7 @@
 import { ArrowDown, ArrowUp, BarChart3, Clock, Receipt, TrendingDown } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useCountUp } from '@/hooks/use-count-up'
-import { computeDelta, fmtEur } from '@/lib/analytics-constants'
+import { computeDelta } from '@/lib/analytics-constants'
 import type { KpiData, PrevKpiData, Refund, Delta } from '@/types/analytics'
 
 // ── Sub-components ─────────────────────────────────────────────────────────

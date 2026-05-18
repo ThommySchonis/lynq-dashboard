@@ -91,7 +91,7 @@ export function AdminTopbar() {
         </p>
       </div>
 
-      <Button variant="outline" size="sm" onClick={handleLogout}>
+      <Button variant="outline" size="sm" onClick={() => void handleLogout()}>
         <LogOut size={14} strokeWidth={1.75} className="mr-1.5" />
         Logout
       </Button>

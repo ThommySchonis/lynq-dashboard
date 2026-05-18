@@ -69,11 +69,14 @@ export async function getEnrichedMembers(opts: { workspaceId?: string } = {}): P
     query = query.eq('workspace_id', opts.workspaceId)
   }
 
-  const { data: memberships, error: memberErr } = await query
-  if (memberErr) {
-    console.error('[workspace-members] query failed:', memberErr.message)
+  const queryResult = await query
+  if (queryResult.error) {
+    console.error('[workspace-members] query failed:', queryResult.error.message)
     return []
   }
+
+  interface MembershipRow { user_id: string; workspace_id: string; role: string; joined_at: string }
+  const memberships = queryResult.data as MembershipRow[] | null
   if (!memberships || memberships.length === 0) return []
 
   const userIds = Array.from(new Set(memberships.map(m => m.user_id)))

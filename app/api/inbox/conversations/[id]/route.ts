@@ -3,6 +3,12 @@ import { supabaseAdmin } from '../../../../../lib/supabaseAdmin'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import type { RouteContext } from '@/types/api'
+import { parseBody } from '@/lib/utils/typed-json'
+
+interface ConversationPatchBody {
+  status?: string
+  is_unread?: boolean
+}
 
 export async function GET(request: NextRequest, { params }: RouteContext<{ id: string }>) {
   const ctx = await getAuthContext(request)
@@ -10,13 +16,14 @@ export async function GET(request: NextRequest, { params }: RouteContext<{ id: s
 
   const { id } = await params
 
-  const { data: conversation } = await supabaseAdmin
+  const convResult = await supabaseAdmin
     .from('email_conversations')
     .select('*')
     .eq('id', id)
     .eq('workspace_id', ctx.workspaceId)
     .single()
 
+  const conversation = convResult.data as Record<string, unknown> | null
   if (!conversation) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
   const { data: messages } = await supabaseAdmin
@@ -50,7 +57,7 @@ export async function PATCH(request: NextRequest, { params }: RouteContext<{ id:
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { id } = await params
-  const body = await request.json() as { status?: string; is_unread?: boolean }
+  const body = await parseBody<ConversationPatchBody>(request)
 
   const updates: Record<string, unknown> = {}
   if (body.status) {

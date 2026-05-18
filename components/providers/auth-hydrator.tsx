@@ -3,6 +3,7 @@
 import { useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/stores/auth'
+import type { Workspace, Role } from '@/types/database'
 
 export function AuthHydrator() {
   const setSession = useAuthStore((s) => s.setSession)
@@ -11,10 +12,10 @@ export function AuthHydrator() {
   const clearSession = useAuthStore((s) => s.clearSession)
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    void supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
         setSession(session)
-        loadWorkspace(session.user.id)
+        void loadWorkspace(session.user.id)
       } else {
         setLoading(false)
       }
@@ -24,7 +25,7 @@ export function AuthHydrator() {
       (_event, session) => {
         if (session) {
           setSession(session)
-          loadWorkspace(session.user.id)
+          void loadWorkspace(session.user.id)
         } else {
           clearSession()
         }
@@ -32,7 +33,7 @@ export function AuthHydrator() {
     )
 
     return () => subscription.unsubscribe()
-  }, [setSession, setWorkspace, setLoading, clearSession])
+  }, [setSession, setWorkspace, setLoading, clearSession]) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function loadWorkspace(userId: string) {
     const { data: member } = await supabase
@@ -43,10 +44,13 @@ export function AuthHydrator() {
       .single()
 
     if (member) {
-      const workspace = Array.isArray(member.workspaces)
-        ? member.workspaces[0]
-        : member.workspaces
-      setWorkspace(workspace, member.role, member.id)
+      const raw = member.workspaces as Record<string, unknown> | Record<string, unknown>[] | null
+      const workspace = (Array.isArray(raw) ? raw[0] : raw) as Workspace | null
+      setWorkspace(
+        workspace,
+        member.role as Role | null,
+        member.id as string | null,
+      )
     }
     setLoading(false)
   }

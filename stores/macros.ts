@@ -1,6 +1,9 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { authFetch } from '@/lib/inbox-utils'
+import { parseJson } from '@/lib/utils/typed-json'
+
+interface MacrosResponse { macros?: Macro[] }
 
 interface Macro {
   id: string
@@ -12,7 +15,7 @@ interface Macro {
   usageCount?: number
   updatedAt?: string
   archived?: boolean
-  [key: string]: any
+  [key: string]: unknown
 }
 
 interface MacrosState {
@@ -41,7 +44,7 @@ const FALLBACK_MACROS: Macro[] = [
 
 export const useMacrosStore = create<MacrosState>()(
   persist(
-    (set, get) => ({
+    (set, _get) => ({
       macros: FALLBACK_MACROS,
       aiMacros: [],
       favs: [],
@@ -72,7 +75,7 @@ export const useMacrosStore = create<MacrosState>()(
       fetchMacros: async (token) => {
         try {
           const res = await authFetch('/api/macros', {}, token)
-          const data = await res.json()
+          const data = await parseJson<MacrosResponse>(res)
           if (data.macros?.length) set({ macros: data.macros })
         } catch {}
       },

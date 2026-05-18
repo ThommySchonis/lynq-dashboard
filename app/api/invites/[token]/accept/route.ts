@@ -15,16 +15,20 @@ export async function POST(request: NextRequest, { params }: RouteContext<{ toke
   const user = await getUserFromToken(authHeader.replace('Bearer ', ''))
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { data: result, error: rpcError } = await supabaseAdmin
+  interface RpcResult { ok?: boolean; error?: string; workspace_id?: string; invite_email?: string; user_email?: string }
+
+  const rpcResponse = await supabaseAdmin
     .rpc('accept_workspace_invite', {
       p_token:   token,
       p_user_id: user.id,
     })
 
-  if (rpcError) {
-    console.error('[invite accept] RPC error:', rpcError.message)
+  if (rpcResponse.error) {
+    console.error('[invite accept] RPC error:', rpcResponse.error.message)
     return NextResponse.json({ error: 'Failed to accept invite' }, { status: 500 })
   }
+
+  const result = rpcResponse.data as RpcResult | null
 
   // The RPC returns a single jsonb object; map its error codes to HTTP statuses
   if (result?.ok) {
@@ -45,10 +49,10 @@ export async function POST(request: NextRequest, { params }: RouteContext<{ toke
     case 'email_mismatch':
       return NextResponse.json(
         {
-          error:        `This invite is for ${result.invite_email}. Sign in with that account.`,
+          error:        `This invite is for ${result?.invite_email ?? 'unknown'}. Sign in with that account.`,
           code,
-          invite_email: result.invite_email,
-          user_email:   result.user_email,
+          invite_email: result?.invite_email,
+          user_email:   result?.user_email,
         },
         { status: 409 }
       )

@@ -2,6 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query'
 import { useAuthStore } from '@/stores/auth'
+import { parseJson } from '@/lib/utils/typed-json'
 import type { TimeFilter, Session, TeamMember } from '@/types/time-tracking'
 
 export function restoreElapsed(s: Session | null): number {
@@ -46,7 +47,7 @@ export function useTimeData(filter: TimeFilter) {
         headers: { Authorization: `Bearer ${token}` },
       })
       if (!res.ok) throw new Error('Failed to fetch time data')
-      return res.json()
+      return parseJson<TimeDataResponse>(res)
     },
     enabled: !!token,
   })
@@ -61,7 +62,7 @@ export function useActiveSession(filter: TimeFilter) {
         headers: { Authorization: `Bearer ${token}` },
       })
       if (!res.ok) throw new Error('Failed to fetch active session')
-      const d: TimeDataResponse = await res.json()
+      const d = await parseJson<TimeDataResponse>(res)
       return d.active_session ?? null
     },
     enabled: !!token,

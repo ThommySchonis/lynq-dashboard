@@ -43,7 +43,7 @@ export function InquiriesView() {
             <InquiryCard
               key={inq.id}
               inquiry={inq}
-              onMarkRead={() => handleMarkRead(inq.id)}
+              onMarkRead={() => void handleMarkRead(inq.id)}
             />
           ))}
         </div>

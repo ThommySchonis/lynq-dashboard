@@ -39,7 +39,8 @@ export async function POST(request: NextRequest, { params }: RouteContext<{ id: 
   const newExpiry = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
   const now       = new Date().toISOString()
 
-  const { data: updated, error: updateError } = await supabaseAdmin
+  interface UpdatedInvite { id: string; email: string; role: string; token: string; expires_at: string; sent_at: string }
+  const updateResult = await supabaseAdmin
     .from('workspace_invites')
     .update({ expires_at: newExpiry, sent_at: now })
     .eq('id', id)
@@ -47,9 +48,10 @@ export async function POST(request: NextRequest, { params }: RouteContext<{ id: 
     .select('id, email, role, token, expires_at, sent_at')
     .single()
 
-  if (updateError || !updated) {
-    console.error('[invites resend] update failed:', updateError?.message)
-    return NextResponse.json({ error: updateError?.message ?? 'Failed to update invite' }, { status: 500 })
+  const updated = updateResult.data as UpdatedInvite | null
+  if (updateResult.error || !updated) {
+    console.error('[invites resend] update failed:', updateResult.error?.message)
+    return NextResponse.json({ error: updateResult.error?.message ?? 'Failed to update invite' }, { status: 500 })
   }
 
   const siteUrl    = getSiteUrl(request)
@@ -58,7 +60,7 @@ export async function POST(request: NextRequest, { params }: RouteContext<{ id: 
   const emailResult = await sendInviteEmail({
     to:            updated.email,
     workspaceName: ctx.workspace.name,
-    inviterEmail:  ctx.user.email,
+    inviterEmail:  ctx.user.email ?? '',
     role:          updated.role,
     link:          inviteLink,
   })

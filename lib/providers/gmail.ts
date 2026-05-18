@@ -1,9 +1,74 @@
 import { decrypt, encrypt } from '../encryption'
 import { supabaseAdmin } from '../supabaseAdmin'
+import { parseJson } from '../utils/typed-json'
 
 const GMAIL_API = 'https://gmail.googleapis.com/gmail/v1/users/me'
 
-async function getAccessToken(account: any) {
+// ── Types ────────────────────────────────────────────────────────────────────
+
+interface EmailAddress {
+  email: string
+  name: string
+}
+
+interface GmailAccount {
+  id: string
+  email_address: string
+  display_name?: string
+  access_token: string
+  refresh_token: string
+  expires_at?: string | null
+  [key: string]: unknown
+}
+
+interface GmailHeader {
+  name: string
+  value: string
+}
+
+interface GmailBodyPart {
+  mimeType?: string
+  body?: { data?: string }
+  parts?: GmailBodyPart[]
+}
+
+interface GmailMessage {
+  id: string
+  internalDate?: string
+  payload?: GmailBodyPart & { headers?: GmailHeader[] }
+}
+
+interface GmailTokenResponse {
+  access_token?: string
+  expires_in?: number
+  error?: string
+}
+
+interface GmailThreadListResponse {
+  threads?: GmailThreadListEntry[]
+  nextPageToken?: string
+}
+
+interface GmailSendResponse {
+  id: string
+}
+
+interface GmailErrorResponse {
+  error?: { message?: string }
+}
+
+interface GmailThreadListEntry {
+  id: string
+}
+
+interface GmailThreadDetail {
+  messages: GmailMessage[]
+  snippet?: string
+}
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+
+async function getAccessToken(account: GmailAccount) {
   const accessToken = decrypt(account.access_token)
   const refreshToken = decrypt(account.refresh_token)
 
@@ -22,14 +87,14 @@ async function getAccessToken(account: any) {
         grant_type: 'refresh_token',
       }),
     })
-    const data = await res.json()
+    const data = await parseJson<GmailTokenResponse>(res)
     if (!res.ok || !data.access_token) throw new Error(`Gmail token refresh failed: ${data.error}`)
 
     await supabaseAdmin
       .from('email_accounts')
       .update({
         access_token: encrypt(data.access_token),
-        expires_at: new Date(Date.now() + data.expires_in * 1000).toISOString(),
+        expires_at: new Date(Date.now() + (data.expires_in ?? 3600) * 1000).toISOString(),
       })
       .eq('id', account.id)
 
@@ -39,7 +104,7 @@ async function getAccessToken(account: any) {
   return accessToken
 }
 
-function decodeBase64(str: any) {
+function decodeBase64(str: string | undefined) {
   if (!str) return ''
   // Normalize URL-safe base64 to standard base64
   const base64 = str.replace(/-/g, '+').replace(/_/g, '/')
@@ -51,7 +116,7 @@ function decodeBase64(str: any) {
 }
 
 // Recursively extract body, preferring text/plain over text/html, with nested fallback
-function extractBodyParts(payload: any): { bodyHtml: string; bodyText: string } {
+function extractBodyParts(payload: GmailBodyPart | undefined): { bodyHtml: string; bodyText: string } {
   if (!payload) return { bodyHtml: '', bodyText: '' }
 
   // Direct single-part body
@@ -82,21 +147,21 @@ function extractBodyParts(payload: any): { bodyHtml: string; bodyText: string } 
   return { bodyHtml, bodyText }
 }
 
-function parseEmailAddress(str: any) {
+function parseEmailAddress(str: string | undefined): EmailAddress {
   if (!str) return { email: '', name: '' }
   const match = str.match(/^(.+?)\s*<(.+?)>$/)
   if (match) return { name: match[1].replace(/"/g, '').trim(), email: match[2].trim() }
   return { email: str.trim(), name: '' }
 }
 
-function parseEmailAddresses(str: any) {
+function parseEmailAddresses(str: string | undefined): EmailAddress[] {
   if (!str) return []
-  return str.split(',').map((s: any) => parseEmailAddress(s.trim())).filter((a: any) => a.email)
+  return str.split(',').map((s) => parseEmailAddress(s.trim())).filter((a) => a.email)
 }
 
-function parseGmailMessage(msg: any, accountEmail: any) {
+function parseGmailMessage(msg: GmailMessage, accountEmail: string) {
   const headers = msg.payload?.headers || []
-  const getHeader = (name: any) => headers.find((h: any) => h.name.toLowerCase() === name.toLowerCase())?.value || ''
+  const getHeader = (name: string) => headers.find((h) => h.name.toLowerCase() === name.toLowerCase())?.value || ''
 
   const from = parseEmailAddress(getHeader('From'))
   const to = parseEmailAddresses(getHeader('To'))
@@ -118,26 +183,28 @@ function parseGmailMessage(msg: any, accountEmail: any) {
     subject,
     bodyHtml,
     bodyText,
-    date: date ? new Date(date).toISOString() : new Date(parseInt(msg.internalDate)).toISOString(),
+    date: date ? new Date(date).toISOString() : new Date(parseInt(msg.internalDate || '0')).toISOString(),
     isOutbound,
   }
 }
 
-function hasHeaderInjection(value: any) {
+function hasHeaderInjection(value: string | null | undefined) {
   return /[\r\n]/.test(String(value || ''))
 }
 
-export async function refreshTokenIfNeeded(account: any) {
+// ── Exports ──────────────────────────────────────────────────────────────────
+
+export async function refreshTokenIfNeeded(account: GmailAccount): Promise<GmailAccount> {
   await getAccessToken(account)
-  const { data } = await supabaseAdmin
+  const result = await supabaseAdmin
     .from('email_accounts')
     .select('*')
     .eq('id', account.id)
     .single()
-  return data
+  return (result.data as GmailAccount) ?? account
 }
 
-export async function fetchThreads(account: any, { since, pageToken, limit = 20 }: any = {}) {
+export async function fetchThreads(account: GmailAccount, { since, pageToken, limit = 20 }: { since?: string; pageToken?: string; limit?: number } = {}) {
   const token = await getAccessToken(account)
 
   const listUrl = new URL(`${GMAIL_API}/threads`)
@@ -158,20 +225,20 @@ export async function fetchThreads(account: any, { since, pageToken, limit = 20 
     console.error('[gmail] fetchThreads failed:', res.status, errBody)
     throw new Error(`Gmail fetchThreads failed: ${res.status}`)
   }
-  const data = await res.json()
+  const data = await parseJson<GmailThreadListResponse>(res)
   console.log('[gmail] threads count:', data.threads?.length ?? 0, 'nextPage:', !!data.nextPageToken)
 
   if (!data.threads?.length) return { threads: [], nextPageToken: null }
 
   const threads = await Promise.all(
-    data.threads.map(async (t: any) => {
+    data.threads.map(async (t) => {
       const threadRes = await fetch(`${GMAIL_API}/threads/${t.id}?format=full`, {
         headers: { Authorization: `Bearer ${token}` },
       })
       if (!threadRes.ok) return null
-      const threadData = await threadRes.json()
+      const threadData = await threadRes.json() as GmailThreadDetail
 
-      const messages = threadData.messages.map((m: any) => parseGmailMessage(m, account.email_address))
+      const messages = threadData.messages.map((m) => parseGmailMessage(m, account.email_address))
       const lastMsg = messages[messages.length - 1]
 
       return {
@@ -190,21 +257,21 @@ export async function fetchThreads(account: any, { since, pageToken, limit = 20 
   }
 }
 
-export async function fetchThread(account: any, providerThreadId: string) {
+export async function fetchThread(account: GmailAccount, providerThreadId: string) {
   const token = await getAccessToken(account)
 
   const res = await fetch(`${GMAIL_API}/threads/${providerThreadId}?format=full`, {
     headers: { Authorization: `Bearer ${token}` },
   })
   if (!res.ok) throw new Error(`Gmail fetchThread failed: ${res.status}`)
-  const data = await res.json()
+  const data = await res.json() as GmailThreadDetail
 
   return {
-    messages: data.messages.map((m: any) => parseGmailMessage(m, account.email_address)),
+    messages: data.messages.map((m) => parseGmailMessage(m, account.email_address)),
   }
 }
 
-export async function sendReply(account: any, { to, cc, bcc, subject, bodyHtml, bodyText, inReplyTo, references }: { to: any; cc: any; bcc: any; subject: any; bodyHtml: any; bodyText: any; inReplyTo: any; references: any }) {
+export async function sendReply(account: GmailAccount, { to, cc, bcc: _bcc, subject, bodyHtml, bodyText, inReplyTo, references }: { to: EmailAddress[]; cc: EmailAddress[]; bcc: EmailAddress[]; subject: string; bodyHtml: string; bodyText: string; inReplyTo: string | null; references: string | null }) {
   // Guard against header injection
   if ([subject, inReplyTo, references].some(hasHeaderInjection)) {
     throw new Error('Invalid email header value: possible header injection detected')
@@ -213,8 +280,8 @@ export async function sendReply(account: any, { to, cc, bcc, subject, bodyHtml, 
   const token = await getAccessToken(account)
 
   const boundary = `lynq_${Date.now()}`
-  const toHeader = to.map((a: any) => a.name ? `"${a.name}" <${a.email}>` : a.email).join(', ')
-  const ccHeader = cc?.map((a: any) => a.name ? `"${a.name}" <${a.email}>` : a.email).join(', ') || ''
+  const toHeader = to.map((a) => a.name ? `"${a.name}" <${a.email}>` : a.email).join(', ')
+  const ccHeader = cc?.map((a) => a.name ? `"${a.name}" <${a.email}>` : a.email).join(', ') || ''
 
   // Derive plain text from HTML if not provided
   const plainText = bodyText || (bodyHtml
@@ -230,7 +297,7 @@ export async function sendReply(account: any, { to, cc, bcc, subject, bodyHtml, 
     (inReplyTo || references) ? `References: ${references || inReplyTo}` : null,
     'MIME-Version: 1.0',
     `Content-Type: multipart/alternative; boundary="${boundary}"`,
-  ].filter(line => line !== null)
+  ].filter((line): line is string => line !== null)
 
   const emailBody = [
     '',
@@ -263,10 +330,10 @@ export async function sendReply(account: any, { to, cc, bcc, subject, bodyHtml, 
     body: JSON.stringify({ raw }),
   })
   if (!res.ok) {
-    const errData = await res.json().catch(() => ({}))
-    throw new Error(`Gmail send failed: ${(errData as any).error?.message || res.status}`)
+    const errData = await parseJson<GmailErrorResponse>(res).catch((): GmailErrorResponse => ({}))
+    throw new Error(`Gmail send failed: ${errData.error?.message || res.status}`)
   }
-  const data = await res.json()
+  const data = await parseJson<GmailSendResponse>(res)
 
   return {
     providerMessageId: data.id,
@@ -274,6 +341,6 @@ export async function sendReply(account: any, { to, cc, bcc, subject, bodyHtml, 
   }
 }
 
-export async function sendNew(account: any, { to, cc, bcc, subject, bodyHtml, bodyText }: { to: any; cc: any; bcc: any; subject: any; bodyHtml: any; bodyText: any }) {
+export async function sendNew(account: GmailAccount, { to, cc, bcc, subject, bodyHtml, bodyText }: { to: EmailAddress[]; cc: EmailAddress[]; bcc: EmailAddress[]; subject: string; bodyHtml: string; bodyText: string }) {
   return sendReply(account, { to, cc, bcc, subject, bodyHtml, bodyText, inReplyTo: null, references: null })
 }

@@ -1,9 +1,69 @@
 import { decrypt, encrypt } from '../encryption'
 import { supabaseAdmin } from '../supabaseAdmin'
+import { parseJson } from '../utils/typed-json'
 
 const GRAPH_API = 'https://graph.microsoft.com/v1.0/me'
 
-async function getAccessToken(account: any) {
+// ── Types ────────────────────────────────────────────────────────────────────
+
+interface EmailAddress {
+  email: string
+  name: string
+}
+
+interface OutlookAccount {
+  id: string
+  email_address: string
+  display_name?: string
+  access_token: string
+  refresh_token: string
+  expires_at?: string | null
+  [key: string]: unknown
+}
+
+interface OutlookTokenResponse {
+  access_token?: string
+  refresh_token?: string
+  expires_in?: number
+  error?: string
+}
+
+interface OutlookMessagesResponse {
+  value?: OutlookMessage[]
+  '@odata.nextLink'?: string
+}
+
+interface OutlookErrorResponse {
+  error?: { message?: string }
+}
+
+interface OutlookEmailAddress {
+  address?: string
+  name?: string
+}
+
+interface OutlookRecipient {
+  emailAddress?: OutlookEmailAddress
+}
+
+interface OutlookMessage {
+  id: string
+  subject?: string
+  bodyPreview?: string
+  body?: { contentType?: string; content?: string }
+  from?: { emailAddress?: OutlookEmailAddress }
+  toRecipients?: OutlookRecipient[]
+  ccRecipients?: OutlookRecipient[]
+  receivedDateTime?: string
+  sentDateTime?: string
+  conversationId?: string
+  internetMessageId?: string
+  isRead?: boolean
+}
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+
+async function getAccessToken(account: OutlookAccount) {
   const accessToken = decrypt(account.access_token)
   const refreshToken = decrypt(account.refresh_token)
 
@@ -20,7 +80,7 @@ async function getAccessToken(account: any) {
         scope: 'Mail.ReadWrite Mail.Send offline_access',
       }),
     })
-    const data = await res.json()
+    const data = await parseJson<OutlookTokenResponse>(res)
     if (!res.ok || !data.access_token) {
       throw new Error(`Outlook token refresh failed: ${data.error || res.status}`)
     }
@@ -30,7 +90,7 @@ async function getAccessToken(account: any) {
       .update({
         access_token: encrypt(data.access_token),
         refresh_token: data.refresh_token ? encrypt(data.refresh_token) : account.refresh_token,
-        expires_at: new Date(Date.now() + data.expires_in * 1000).toISOString(),
+        expires_at: new Date(Date.now() + (data.expires_in ?? 3600) * 1000).toISOString(),
       })
       .eq('id', account.id)
 
@@ -40,16 +100,16 @@ async function getAccessToken(account: any) {
   return accessToken
 }
 
-function parseOutlookMessage(msg: any, accountEmail: string) {
-  const from = {
+function parseOutlookMessage(msg: OutlookMessage, accountEmail: string) {
+  const from: EmailAddress = {
     email: msg.from?.emailAddress?.address || '',
     name: msg.from?.emailAddress?.name || '',
   }
-  const to = (msg.toRecipients || []).map((r: any) => ({
+  const to: EmailAddress[] = (msg.toRecipients || []).map((r) => ({
     email: r.emailAddress?.address || '',
     name: r.emailAddress?.name || '',
   }))
-  const cc = (msg.ccRecipients || []).map((r: any) => ({
+  const cc: EmailAddress[] = (msg.ccRecipients || []).map((r) => ({
     email: r.emailAddress?.address || '',
     name: r.emailAddress?.name || '',
   }))
@@ -63,24 +123,26 @@ function parseOutlookMessage(msg: any, accountEmail: string) {
     to,
     cc,
     subject: msg.subject || '(no subject)',
-    bodyHtml: msg.body?.contentType?.toLowerCase() === 'html' ? msg.body.content : '',
-    bodyText: msg.body?.contentType?.toLowerCase() === 'text' ? msg.body.content : '',
+    bodyHtml: msg.body?.contentType?.toLowerCase() === 'html' ? (msg.body.content ?? '') : '',
+    bodyText: msg.body?.contentType?.toLowerCase() === 'text' ? (msg.body.content ?? '') : '',
     date: msg.receivedDateTime || msg.sentDateTime || new Date().toISOString(),
     isOutbound,
   }
 }
 
-export async function refreshTokenIfNeeded(account: any) {
+// ── Exports ──────────────────────────────────────────────────────────────────
+
+export async function refreshTokenIfNeeded(account: OutlookAccount): Promise<OutlookAccount> {
   await getAccessToken(account)
-  const { data } = await supabaseAdmin
+  const result = await supabaseAdmin
     .from('email_accounts')
     .select('*')
     .eq('id', account.id)
     .single()
-  return data
+  return (result.data as OutlookAccount) ?? account
 }
 
-export async function fetchThreads(account: any, { since, pageToken, limit = 20 }: any = {}) {
+export async function fetchThreads(account: OutlookAccount, { since, pageToken, limit = 20 }: { since?: string; pageToken?: string; limit?: number } = {}) {
   const token = await getAccessToken(account)
 
   let url = `${GRAPH_API}/mailFolders/inbox/messages?$top=${limit}&$orderby=receivedDateTime desc&$select=id,subject,bodyPreview,from,toRecipients,ccRecipients,receivedDateTime,sentDateTime,conversationId,internetMessageId,body,isRead`
@@ -96,19 +158,19 @@ export async function fetchThreads(account: any, { since, pageToken, limit = 20 
     headers: { Authorization: `Bearer ${token}` },
   })
   if (!res.ok) throw new Error(`Outlook fetchThreads failed: ${res.status}`)
-  const data = await res.json()
+  const data = await parseJson<OutlookMessagesResponse>(res)
 
-  const threadMap = new Map()
+  const threadMap = new Map<string, { messages: ReturnType<typeof parseOutlookMessage>[]; bodyPreview: string }>()
   for (const msg of (data.value || [])) {
     const cid = msg.conversationId || msg.id
     if (!threadMap.has(cid)) {
       threadMap.set(cid, { messages: [], bodyPreview: msg.bodyPreview || '' })
     }
-    threadMap.get(cid).messages.push(parseOutlookMessage(msg, account.email_address))
+    threadMap.get(cid)!.messages.push(parseOutlookMessage(msg, account.email_address))
   }
 
-  const threads = Array.from(threadMap.entries()).map(([cid, { messages, bodyPreview }]: [any, any]) => {
-    messages.sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime())
+  const threads = Array.from(threadMap.entries()).map(([cid, { messages, bodyPreview }]) => {
+    messages.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
     const lastMsg = messages[messages.length - 1]
     return {
       providerThreadId: cid,
@@ -125,7 +187,7 @@ export async function fetchThreads(account: any, { since, pageToken, limit = 20 
   }
 }
 
-export async function fetchThread(account: any, providerThreadId: string) {
+export async function fetchThread(account: OutlookAccount, providerThreadId: string) {
   const token = await getAccessToken(account)
 
   // Sanitize conversationId to prevent OData injection
@@ -136,17 +198,17 @@ export async function fetchThread(account: any, providerThreadId: string) {
     headers: { Authorization: `Bearer ${token}` },
   })
   if (!res.ok) {
-    const err: any = await res.json().catch(() => ({}))
+    const err = await parseJson<OutlookErrorResponse>(res).catch((): OutlookErrorResponse => ({}))
     throw new Error(`Outlook fetchThread failed: ${res.status} ${err?.error?.message || ''}`)
   }
-  const data = await res.json()
+  const data = await parseJson<OutlookMessagesResponse>(res)
 
   return {
-    messages: (data.value || []).map((m: any) => parseOutlookMessage(m, account.email_address)),
+    messages: (data.value || []).map((m) => parseOutlookMessage(m, account.email_address)),
   }
 }
 
-export async function sendReply(account: any, { to, cc, bcc, subject, bodyHtml, bodyText, inReplyTo }: { to: any; cc: any; bcc: any; subject: any; bodyHtml: any; bodyText: any; inReplyTo?: any }) {
+export async function sendReply(account: OutlookAccount, { to, cc, bcc, subject, bodyHtml, bodyText, inReplyTo }: { to: EmailAddress[]; cc: EmailAddress[]; bcc: EmailAddress[]; subject: string; bodyHtml: string; bodyText: string; inReplyTo?: string | null }) {
   const token = await getAccessToken(account)
 
   // If inReplyTo is a provider message ID, use the Graph reply endpoint to
@@ -176,9 +238,9 @@ export async function sendReply(account: any, { to, cc, bcc, subject, bodyHtml, 
   const message = {
     subject,
     body: { contentType: 'HTML', content: bodyHtml || bodyText || '' },
-    toRecipients: (to || []).map((a: any) => ({ emailAddress: { address: a.email, name: a.name } })),
-    ccRecipients: (cc || []).map((a: any) => ({ emailAddress: { address: a.email, name: a.name } })),
-    bccRecipients: (bcc || []).map((a: any) => ({ emailAddress: { address: a.email, name: a.name } })),
+    toRecipients: (to || []).map((a) => ({ emailAddress: { address: a.email, name: a.name } })),
+    ccRecipients: (cc || []).map((a) => ({ emailAddress: { address: a.email, name: a.name } })),
+    bccRecipients: (bcc || []).map((a) => ({ emailAddress: { address: a.email, name: a.name } })),
   }
 
   const res = await fetch(`${GRAPH_API}/sendMail`, {
@@ -200,6 +262,6 @@ export async function sendReply(account: any, { to, cc, bcc, subject, bodyHtml, 
   }
 }
 
-export async function sendNew(account: any, { to, cc, bcc, subject, bodyHtml, bodyText }: { to: any; cc: any; bcc: any; subject: any; bodyHtml: any; bodyText: any }) {
+export async function sendNew(account: OutlookAccount, { to, cc, bcc, subject, bodyHtml, bodyText }: { to: EmailAddress[]; cc: EmailAddress[]; bcc: EmailAddress[]; subject: string; bodyHtml: string; bodyText: string }) {
   return sendReply(account, { to, cc, bcc, subject, bodyHtml, bodyText })
 }

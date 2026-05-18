@@ -106,7 +106,7 @@ export function MacroWizard() {
 
     // Start generating
     setGenerating(true)
-    runGenerate()
+    void runGenerate()
   }
 
   async function runGenerate() {
@@ -172,7 +172,7 @@ export function MacroWizard() {
               >
                 Edit answers
               </Button>
-              <Button onClick={() => runGenerate()}>
+              <Button onClick={() => void runGenerate()}>
                 <Sparkles size={14} strokeWidth={1.75} />
                 Try again
               </Button>
@@ -236,7 +236,7 @@ export function MacroWizard() {
             <ArrowRight size={14} strokeWidth={1.75} />
           </Button>
         ) : (
-          <Button onClick={handleSubmit} disabled={saveMutation.isPending}>
+          <Button onClick={() => void handleSubmit()} disabled={saveMutation.isPending}>
             {saveMutation.isPending ? (
               <>
                 <Loader2 size={14} strokeWidth={1.75} className="animate-spin" />

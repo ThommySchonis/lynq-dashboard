@@ -53,14 +53,15 @@ export async function PATCH(request: NextRequest, ctxParam: RouteContext) {
   }
 
   // Pull the existing session — must belong to this workspace.
-  const { data: current, error: readErr } = await supabaseAdmin
+  const sessionLookup = await supabaseAdmin
     .from('time_sessions')
     .select('*')
     .eq('id', sessionId)
     .eq('workspace_id', ctx.workspaceId)
     .maybeSingle()
 
-  if (readErr || !current) {
+  const current = sessionLookup.data as Record<string, unknown> | null
+  if (sessionLookup.error || !current) {
     return NextResponse.json({ error: 'Session not found' }, { status: 404 })
   }
 
@@ -73,7 +74,7 @@ export async function PATCH(request: NextRequest, ctxParam: RouteContext) {
   for (const field of EDITABLE_FIELDS) {
     if (field in body) {
       const incoming = bodyAsRec[field]
-      const currentVal = (current as Record<string, unknown>)[field]
+      const currentVal = current[field]
       // Skip no-op fields (no value change → no audit noise).
       if (incoming === currentVal) continue
       patch[field]  = incoming as never
@@ -97,7 +98,7 @@ export async function PATCH(request: NextRequest, ctxParam: RouteContext) {
     }
   }
 
-  const { data: updated, error: updateErr } = await supabaseAdmin
+  const updateResult = await supabaseAdmin
     .from('time_sessions')
     .update(patch)
     .eq('id', sessionId)
@@ -105,8 +106,8 @@ export async function PATCH(request: NextRequest, ctxParam: RouteContext) {
     .select()
     .single()
 
-  if (updateErr) {
-    console.error('[time/[sessionId]] update failed', { message: updateErr.message, code: updateErr.code })
+  if (updateResult.error) {
+    console.error('[time/[sessionId]] update failed', { message: updateResult.error.message, code: updateResult.error.code })
     return NextResponse.json({ error: 'Could not update session' }, { status: 500 })
   }
 
@@ -125,5 +126,5 @@ export async function PATCH(request: NextRequest, ctxParam: RouteContext) {
     console.error('[time/[sessionId]] audit log insert failed', auditErr.message)
   }
 
-  return NextResponse.json({ session: updated, audited: !auditErr })
+  return NextResponse.json({ session: updateResult.data as Record<string, unknown>, audited: !auditErr })
 }

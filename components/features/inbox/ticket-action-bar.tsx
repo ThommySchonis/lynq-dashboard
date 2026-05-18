@@ -1,14 +1,16 @@
 'use client'
 
+import type { TicketMeta } from '@/types/inbox'
+
 export function TicketActionBar({ meta, status, onClose, onAddTag, onRemoveTag, onFieldChange }: {
-  meta: any;
+  meta: TicketMeta;
   status: string;
   onClose: () => void;
   onAddTag: () => void;
   onRemoveTag: (tag: string) => void;
   onFieldChange: (key: string, value: string) => void;
 }) {
-  const fieldButton = (key: string, label: string) => (
+  const fieldButton = (key: keyof TicketMeta, label: string) => (
     <button
       onClick={() => onFieldChange(key, label)}
       className="inline-flex items-center gap-1 border-none bg-transparent p-0 text-[10.5px] text-muted-foreground font-[inherit]"

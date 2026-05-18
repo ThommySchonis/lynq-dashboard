@@ -4,7 +4,17 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { settingsKeys } from './use-settings-data'
 import { useToken } from './utils'
 import { toast } from 'sonner'
+import { parseJson } from '@/lib/utils/typed-json'
 import type { MemberRole } from '@/types/settings'
+
+interface ErrorResponse {
+  error?: string
+}
+
+interface ResendInviteResponse {
+  emailStatus?: string
+  emailError?: string
+}
 
 export function useInviteMember() {
   const token = useToken()
@@ -17,13 +27,13 @@ export function useInviteMember() {
         body: JSON.stringify({ email, role }),
       })
       if (!res.ok) {
-        const d = await res.json().catch(() => ({}))
-        throw new Error((d as { error?: string }).error || 'Failed to invite member')
+        const d = await parseJson<ErrorResponse>(res).catch((): ErrorResponse => ({}))
+        throw new Error(d.error ||'Failed to invite member')
       }
-      return res.json()
+      return parseJson<unknown>(res)
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: settingsKeys.members() })
+      void qc.invalidateQueries({ queryKey: settingsKeys.members() })
       toast.success('Invitation sent')
     },
     onError: (err: Error) => {
@@ -43,13 +53,13 @@ export function useUpdateMemberRole() {
         body: JSON.stringify({ role }),
       })
       if (!res.ok) {
-        const d = await res.json().catch(() => ({}))
-        throw new Error((d as { error?: string }).error || 'Failed to update role')
+        const d = await parseJson<ErrorResponse>(res).catch((): ErrorResponse => ({}))
+        throw new Error(d.error ||'Failed to update role')
       }
-      return res.json()
+      return parseJson<unknown>(res)
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: settingsKeys.members() })
+      void qc.invalidateQueries({ queryKey: settingsKeys.members() })
       toast.success('Role updated')
     },
     onError: (err: Error) => {
@@ -68,12 +78,12 @@ export function useRemoveMember() {
         headers: { Authorization: `Bearer ${token}` },
       })
       if (!res.ok) {
-        const d = await res.json().catch(() => ({}))
-        throw new Error((d as { error?: string }).error || 'Failed to remove member')
+        const d = await parseJson<ErrorResponse>(res).catch((): ErrorResponse => ({}))
+        throw new Error(d.error ||'Failed to remove member')
       }
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: settingsKeys.members() })
+      void qc.invalidateQueries({ queryKey: settingsKeys.members() })
       toast.success('Member removed')
     },
     onError: (err: Error) => {
@@ -92,13 +102,13 @@ export function useResendInvite() {
         headers: { Authorization: `Bearer ${token}` },
       })
       if (!res.ok) {
-        const d = await res.json().catch(() => ({}))
-        throw new Error((d as { error?: string }).error || 'Failed to resend invite')
+        const d = await parseJson<ErrorResponse>(res).catch((): ErrorResponse => ({}))
+        throw new Error(d.error ||'Failed to resend invite')
       }
-      return res.json() as Promise<{ emailStatus?: string; emailError?: string }>
+      return parseJson<ResendInviteResponse>(res)
     },
     onSuccess: (data) => {
-      qc.invalidateQueries({ queryKey: settingsKeys.members() })
+      void qc.invalidateQueries({ queryKey: settingsKeys.members() })
       if (data.emailStatus === 'sent') {
         toast.success('Invite resent')
       } else if (data.emailStatus === 'not_configured') {
@@ -125,12 +135,12 @@ export function useRevokeInvite() {
         headers: { Authorization: `Bearer ${token}` },
       })
       if (!res.ok) {
-        const d = await res.json().catch(() => ({}))
-        throw new Error((d as { error?: string }).error || 'Failed to revoke invite')
+        const d = await parseJson<ErrorResponse>(res).catch((): ErrorResponse => ({}))
+        throw new Error(d.error ||'Failed to revoke invite')
       }
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: settingsKeys.members() })
+      void qc.invalidateQueries({ queryKey: settingsKeys.members() })
       toast.success('Invite revoked')
     },
     onError: (err: Error) => {

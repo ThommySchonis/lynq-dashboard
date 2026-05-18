@@ -94,7 +94,7 @@ export function PersonalView({
     if (!activeSession || isPaused) return
     heartbeatRef.current = setInterval(() => {
       if (activeSession) {
-        sendHeartbeat(token, activeSession.id)
+        void sendHeartbeat(token, activeSession.id)
       }
     }, 30000)
     return () => {

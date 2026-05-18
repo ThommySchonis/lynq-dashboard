@@ -50,16 +50,21 @@ export async function GET(request: NextRequest) {
   let agentsQuery = supabaseAdmin.from('agents').select('*').order('created_at', { ascending: true })
   if (!isAdmin) agentsQuery = agentsQuery.eq('email', user.email)
 
-  const { data: agents, error: agentsError } = await agentsQuery
+  interface AgentRow { id: string; name: string; email: string; role: string; active: boolean }
+  interface ActionRow { agent_id: string; action_type: string; response_time_seconds: number | null; thread_id: string | null }
+
+  const { data: agentsRaw, error: agentsError } = await agentsQuery
   if (agentsError) return NextResponse.json({ error: agentsError.message }, { status: 500 })
 
-  if (!agents || agents.length === 0) {
+  const agents = (agentsRaw || []) as AgentRow[]
+
+  if (agents.length === 0) {
     return NextResponse.json({ stats: [], from: from.toISOString(), to: to.toISOString() })
   }
 
   // Fetch agent_actions in date range
   const agentIds = agents.map(a => a.id)
-  const { data: actions, error: actionsError } = await supabaseAdmin
+  const { data: actionsRaw, error: actionsError } = await supabaseAdmin
     .from('agent_actions')
     .select('agent_id, action_type, response_time_seconds, thread_id')
     .in('agent_id', agentIds)
@@ -68,15 +73,17 @@ export async function GET(request: NextRequest) {
 
   if (actionsError) return NextResponse.json({ error: actionsError.message }, { status: 500 })
 
+  const actions = (actionsRaw || []) as ActionRow[]
+
   // Aggregate per agent
   const stats = agents.map(agent => {
-    const agentActions = (actions || []).filter(a => a.agent_id === agent.id)
+    const agentActions = actions.filter(a => a.agent_id === agent.id)
     const replies = agentActions.filter(a => a.action_type === 'reply')
     const closes = agentActions.filter(a => a.action_type === 'close')
     const uniqueThreads = new Set(agentActions.map(a => a.thread_id).filter(Boolean))
     const responseTimes = replies
       .filter(a => a.response_time_seconds != null)
-      .map(a => a.response_time_seconds)
+      .map(a => a.response_time_seconds as number)
     const avgResponseSeconds = responseTimes.length > 0
       ? responseTimes.reduce((a, b) => a + b, 0) / responseTimes.length
       : null

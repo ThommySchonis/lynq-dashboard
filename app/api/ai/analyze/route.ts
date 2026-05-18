@@ -3,6 +3,15 @@ import { anthropic } from '@ai-sdk/anthropic'
 import { getUserFromToken, supabaseAdmin } from '../../../../lib/supabaseAdmin'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { parseBody } from '@/lib/utils/typed-json'
+
+interface AnalyzeBody {
+  threads: ThreadInput[]
+}
+
+interface AnalyzeResult {
+  results?: Record<string, unknown>
+}
 
 interface ThreadInput {
   id: string
@@ -18,7 +27,7 @@ export async function POST(request: NextRequest) {
   const user = await getUserFromToken(token)
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { threads } = await request.json() as { threads: ThreadInput[] }
+  const { threads } = await parseBody<AnalyzeBody>(request)
   if (!threads?.length) return NextResponse.json({ analyses: {} })
 
   const prompt = `You are a customer support triage AI for an e-commerce dropshipping store. Analyze these support emails and classify each one.
@@ -57,7 +66,7 @@ ${threads.slice(0, 25).map(t => `ID: ${t.id}\nSubject: ${t.subject || '(no subje
 
   try {
     const jsonMatch = text.match(/\{[\s\S]*\}/)
-    const parsed = JSON.parse(jsonMatch?.[0] || '{}')
+    const parsed = JSON.parse(jsonMatch?.[0] || '{}') as AnalyzeResult
     return NextResponse.json({ analyses: parsed.results || {} })
   } catch {
     return NextResponse.json({ analyses: {} })

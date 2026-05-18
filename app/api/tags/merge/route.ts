@@ -5,6 +5,21 @@ import { can } from '../../../../lib/permissions'
 import type { Role } from '../../../../types/database'
 import { supabaseAdmin } from '../../../../lib/supabaseAdmin'
 
+interface MergeBody {
+  winner_id?: string
+  loser_ids?: string[]
+}
+
+interface MacroTagLink {
+  macro_id: string
+  tag_id: string
+}
+
+interface TagRow {
+  id: string
+  name: string
+}
+
 // POST /api/tags/merge — body: { winner_id, loser_ids: [] }
 // Reassigns all macro_tags from losers → winner, then deletes losers.
 export async function POST(request: NextRequest) {
@@ -14,10 +29,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Only owners and admins can merge tags.', code: 'permission_denied' }, { status: 403 })
   }
 
-  const body = await request.json().catch(() => ({}))
+  const body = await request.json().catch(() => ({})) as MergeBody
   const winnerId = typeof body.winner_id === 'string' ? body.winner_id : null
   const loserIds: string[] = Array.isArray(body.loser_ids)
-    ? body.loser_ids.filter((id: unknown): id is string => typeof id === 'string' && id !== winnerId)
+    ? body.loser_ids.filter((id): id is string => typeof id === 'string' && id !== winnerId)
     : []
 
   if (!winnerId || loserIds.length === 0) {
@@ -46,7 +61,7 @@ export async function POST(request: NextRequest) {
     .from('macro_tags')
     .select('macro_id')
     .eq('tag_id', winnerId)
-  const macrosAlreadyOnWinner = new Set((existingWinnerLinks || []).map(r => r.macro_id))
+  const macrosAlreadyOnWinner = new Set((existingWinnerLinks || []).map((r: { macro_id: string }) => r.macro_id))
 
   // Pull all loser links
   const { data: loserLinks, error: loserError } = await supabaseAdmin
@@ -60,9 +75,9 @@ export async function POST(request: NextRequest) {
   }
 
   // Insert winner links for macros that don't already have it
-  const newWinnerLinks = []
-  const seenMacros     = new Set()
-  for (const link of loserLinks || []) {
+  const newWinnerLinks: { macro_id: string; tag_id: string }[] = []
+  const seenMacros     = new Set<string>()
+  for (const link of (loserLinks || []) as MacroTagLink[]) {
     if (macrosAlreadyOnWinner.has(link.macro_id)) continue
     if (seenMacros.has(link.macro_id)) continue
     seenMacros.add(link.macro_id)
@@ -91,7 +106,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: deleteError.message, code: 'merge_failed' }, { status: 500 })
   }
 
-  const winner = workspaceTags.find(t => t.id === winnerId)
+  const winner = ((workspaceTags || []) as TagRow[]).find(t => t.id === winnerId)
   console.log(`[tags merge] workspace=${ctx.workspaceId} winner="${winner?.name}" merged=${loserIds.length}`)
 
   return NextResponse.json({

@@ -39,7 +39,7 @@ export function CreateClientForm() {
           Create account + configure API integrations
         </div>
 
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={(e) => void handleSubmit(e)}>
           <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-2">
             Account Details
           </div>

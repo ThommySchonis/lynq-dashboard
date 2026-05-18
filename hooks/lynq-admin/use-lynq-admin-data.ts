@@ -50,7 +50,7 @@ export function useFeedbackList() {
         err.status = res.status
         throw err
       }
-      return res.json()
+      return res.json() as Promise<FeedbackListResponse>
     },
     enabled: !!token,
   })

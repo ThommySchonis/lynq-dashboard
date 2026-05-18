@@ -2,6 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query'
 import { useAuthStore } from '@/stores/auth'
+import { parseJson } from '@/lib/utils/typed-json'
 import { useStoreStore } from '@/stores/store'
 
 export interface ShopifyContext {
@@ -17,6 +18,14 @@ export interface OnboardingStatus {
     first_name?: string
     welcome_dismissed_at?: string | null
   }
+}
+
+interface OrdersResponse {
+  orders?: Record<string, unknown>[]
+}
+
+interface RefundsResponse {
+  refunds?: Record<string, unknown>[]
 }
 
 function useToken() {
@@ -44,9 +53,11 @@ export function useHomeKpis() {
         fetch(`/api/shopify/refunds${storeParam}`, { headers }),
       ])
 
-      const kpis = kpisRes.ok ? await kpisRes.json() : {}
-      const { orders = [] } = ordersRes.ok ? await ordersRes.json() : {}
-      const { refunds = [] } = refundsRes.ok ? await refundsRes.json() : {}
+      const kpis = kpisRes.ok ? await parseJson<Record<string, unknown>>(kpisRes) : {}
+      const ordersBody = ordersRes.ok ? await parseJson<OrdersResponse>(ordersRes) : {}
+      const refundsBody = refundsRes.ok ? await parseJson<RefundsResponse>(refundsRes) : {}
+      const orders = ordersBody.orders ?? []
+      const refunds = refundsBody.refunds ?? []
 
       return { kpis, orders, refunds }
     },
@@ -66,7 +77,7 @@ export function useOnboardingStatus() {
         cache: 'no-store',
       })
       if (!res.ok) return null
-      return res.json()
+      return parseJson<OnboardingStatus>(res)
     },
     enabled: !!token,
     staleTime: 5 * 60 * 1000,

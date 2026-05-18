@@ -42,14 +42,14 @@ export function CertificatePage() {
     const raw = (storeUser.email || '').split('@')[0]
     setName(meta.full_name || meta.name || raw.charAt(0).toUpperCase() + raw.slice(1))
 
-    ;(async () => {
+    void (async () => {
       try {
-        const { data } = await supabase
+        const result = await supabase
           .from('certificates')
           .select('*')
           .eq('user_id', storeUser.id)
           .single()
-        setCert((data as CertData) || null)
+        setCert((result.data as CertData) || null)
       } catch {
         setCert(null)
       }

@@ -206,7 +206,7 @@ export function ConversationPanel() {
 
   // AI reply
   async function handleAiReply() {
-    if (!messages.length || !selectedThreadId) return
+    if (!messages.length || !selectedThreadId || !selectedThread) return
     const replyText = await generateReply(selectedThread, messages, token)
     if (replyText) {
       if (composerRef.current) {
@@ -270,7 +270,7 @@ export function ConversationPanel() {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 {Object.entries(STATUS).map(([k, s]) => (
-                  <DropdownMenuItem key={k} onClick={() => saveStatus(selectedThread.id, k)} style={{ color: s.color }}>
+                  <DropdownMenuItem key={k} onClick={() => void saveStatus(selectedThread.id, k)} style={{ color: s.color }}>
                     <span className="w-2 h-2 rounded-full shrink-0" style={{ background: s.color }} />
                     {s.label}
                     {getStatus(selectedThread.id) === k && <span className="ml-auto text-[10px] text-muted-foreground">&#10003;</span>}
@@ -283,7 +283,7 @@ export function ConversationPanel() {
         <TicketActionBar
           meta={getTicketMeta(selectedThread.id)}
           status={getStatus(selectedThread.id)}
-          onClose={() => saveStatus(selectedThread.id, 'closed')}
+          onClose={() => void saveStatus(selectedThread.id, 'closed')}
           onAddTag={() => addTicketTag(selectedThread.id)}
           onRemoveTag={(tag) => removeTag(selectedThread.id, tag)}
           onFieldChange={(field, labelOrValue) =>
@@ -409,7 +409,7 @@ export function ConversationPanel() {
                 data-placeholder={composerTab === 'reply' ? 'Click here to reply, or press r.' : 'Internal note — not visible to customer…'}
                 onInput={(e) => setReply(e.currentTarget.textContent)}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) handleSend()
+                  if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) void handleSend()
                 }}
                 className={`compose-ta w-full resize-none outline-none bg-transparent px-4 py-3 text-sm text-foreground leading-relaxed min-h-[90px] tracking-[.005em] min-h-[150px] ${composerTab === 'note' ? 'bg-[rgba(251,191,36,0.03)]' : 'bg-transparent'}`}
               />
@@ -461,9 +461,9 @@ export function ConversationPanel() {
                 onImageUpload={() => imgUploadRef.current?.click()}
                 onFileAttach={() => fileUploadRef.current?.click()}
                 onInsertEmoji={insertEmoji}
-                onAiReply={handleAiReply}
-                onSend={handleSend}
-                onSendResolve={handleSendResolve}
+                onAiReply={() => void handleAiReply()}
+                onSend={() => void handleSend()}
+                onSendResolve={() => void handleSendResolve()}
                 hasMessages={messages.length > 0}
               />
             </div>

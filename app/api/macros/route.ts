@@ -7,6 +7,15 @@ import { supabaseAdmin } from '../../../lib/supabaseAdmin'
 import { sanitizeMacroInput, relativeTime } from '../../../lib/macros'
 import { ensureTagsByName, syncMacroTags } from '../../../lib/tags'
 
+interface TagLink {
+  tag: unknown
+}
+
+interface MacroInputError {
+  message?: string
+  code?: string
+}
+
 // GET /api/macros — list macros for the current workspace
 // Filters: ?archived=true|false (default false), ?search=, ?language=, ?tags=tag1,tag2
 export async function GET(request: NextRequest) {
@@ -43,16 +52,16 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: error.message, code: 'lookup_failed' }, { status: 500 })
   }
 
-  const macros = (rows || []).map(m => {
+  const macros = ((rows || []) as Record<string, unknown>[]).map(m => {
     const tagObjects = Array.isArray(m.tag_links)
-      ? m.tag_links.map((l: { tag: unknown }) => l.tag).filter(Boolean)
+      ? (m.tag_links as TagLink[]).map((l: TagLink) => l.tag).filter(Boolean)
       : []
-    const { tag_links, ...rest } = m
+    const { tag_links: _tag_links, ...rest } = m
     return {
       ...rest,
       tagObjects,
-      last_updated_relative: relativeTime(m.updated_at),
-      last_used_relative:    relativeTime(m.last_used_at),
+      last_updated_relative: relativeTime(m.updated_at as string | null | undefined),
+      last_used_relative:    relativeTime(m.last_used_at as string | null | undefined),
     }
   })
 
@@ -73,11 +82,11 @@ export async function POST(request: NextRequest) {
   try {
     payload = sanitizeMacroInput(body)
   } catch (err: unknown) {
-    const e = err as { message?: string; code?: string }
+    const e = err as MacroInputError
     return NextResponse.json({ error: e.message, code: e.code }, { status: 400 })
   }
 
-  const { data: macro, error } = await supabaseAdmin
+  const macroResult = await supabaseAdmin
     .from('macros')
     .insert({
       workspace_id: ctx.workspaceId,
@@ -90,9 +99,11 @@ export async function POST(request: NextRequest) {
     .select()
     .single()
 
-  if (error || !macro) {
-    console.error('[macros POST] insert failed:', error?.message)
-    return NextResponse.json({ error: error?.message ?? 'Failed to create macro', code: 'insert_failed' }, { status: 500 })
+  const macro = macroResult.data as Record<string, unknown> | null
+
+  if (macroResult.error || !macro) {
+    console.error('[macros POST] insert failed:', macroResult.error?.message)
+    return NextResponse.json({ error: macroResult.error?.message ?? 'Failed to create macro', code: 'insert_failed' }, { status: 500 })
   }
 
   // Sync macro_tags (new join table) — ensures the tags exist as rows
@@ -101,9 +112,9 @@ export async function POST(request: NextRequest) {
   let tagObjects: unknown[] = []
   if (Array.isArray(payload.tags) && payload.tags.length > 0) {
     try {
-      const tagMap = await ensureTagsByName(supabaseAdmin, ctx.workspaceId, payload.tags, ctx.user.id)
-      const tagIds = Array.from(tagMap.values())
-      await syncMacroTags(supabaseAdmin, macro.id, tagIds)
+      const tagMap = await ensureTagsByName(supabaseAdmin, ctx.workspaceId, payload.tags as string[], ctx.user.id)
+      const tagIds = Array.from(tagMap.values()) as string[]
+      await syncMacroTags(supabaseAdmin, macro.id as string, tagIds)
       // Fetch the linked tags so the response includes id+color (UI needs it)
       const { data: linked } = await supabaseAdmin
         .from('tags')

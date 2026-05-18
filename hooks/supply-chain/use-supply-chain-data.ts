@@ -2,7 +2,12 @@
 
 import { useQuery } from '@tanstack/react-query'
 import { useAuthStore } from '@/stores/auth'
+import { parseJson } from '@/lib/utils/typed-json'
 import type { Order } from '@/types/supply-chain'
+
+interface ShipmentsResponse {
+  orders?: Order[]
+}
 
 function useToken() {
   return useAuthStore((s) => s.session?.access_token ?? '')
@@ -23,8 +28,8 @@ export function useShipments() {
       })
       if (res.status === 404) return []
       if (!res.ok) throw new Error('Could not load shipments')
-      const data = await res.json()
-      return (data.orders as Order[]) ?? []
+      const data = await parseJson<ShipmentsResponse>(res)
+      return data.orders ?? []
     },
     enabled: !!token,
   })

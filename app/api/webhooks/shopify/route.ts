@@ -105,18 +105,20 @@ export async function POST(request: NextRequest) {
   let clientId: string | undefined
   let shopifyDomain: string | undefined
 
-  // When store_id is present, resolve credentials from the stores table (preferred path)
+  // When store_id is present, resolve credentials from the integrations table
   if (storeId) {
-    const { data: store } = await supabaseAdmin
-      .from('stores')
+    const { data } = await supabaseAdmin
+      .from('integrations')
       .select('shopify_client_secret, workspace_id')
-      .eq('id', storeId)
-      .maybeSingle()
+      .eq('store_id', storeId)
+      .single()
 
-    if (store) {
-      clientSecret = store.shopify_client_secret
-      workspaceId = store.workspace_id
+    if (!data?.shopify_client_secret) {
+      return new Response('Store not found', { status: 404 })
     }
+
+    clientSecret = data.shopify_client_secret
+    workspaceId = data.workspace_id
   }
 
   // Fall back to the existing cid-based integration lookup when store_id

@@ -1,29 +1,63 @@
 import { supabaseAdmin } from '../supabaseAdmin'
-import type { StorePublic, StoreEmailConfig } from '@/types/stores'
-
-const PUBLIC_COLUMNS = 'id, name, shopify_domain, shopify_connected_at, store_currency, created_at'
+import type { StorePublic } from '@/types/stores'
 
 export async function listStores(workspaceId: string): Promise<StorePublic[]> {
   const { data, error } = await supabaseAdmin
     .from('stores')
-    .select(PUBLIC_COLUMNS)
+    .select('id, name, created_at')
     .eq('workspace_id', workspaceId)
     .order('created_at', { ascending: true })
 
-  if (error) throw new Error(`Failed to list stores: ${error.message}`)
-  return (data ?? []) as StorePublic[]
+  if (error) throw error
+
+  const storeIds = (data || []).map(s => s.id)
+  const { data: integrations } = await supabaseAdmin
+    .from('integrations')
+    .select('store_id, shopify_domain, shopify_connected_at, store_currency')
+    .in('store_id', storeIds)
+
+  const integrationMap = new Map(
+    (integrations || []).map(i => [i.store_id, i])
+  )
+
+  return (data || []).map(store => {
+    const integration = integrationMap.get(store.id)
+    return {
+      id: store.id,
+      name: store.name,
+      shopify_domain: integration?.shopify_domain ?? null,
+      shopify_connected_at: integration?.shopify_connected_at ?? null,
+      store_currency: integration?.store_currency ?? null,
+      created_at: store.created_at,
+    }
+  })
 }
 
 export async function getStore(storeId: string, workspaceId: string): Promise<StorePublic | null> {
   const { data, error } = await supabaseAdmin
     .from('stores')
-    .select(PUBLIC_COLUMNS)
+    .select('id, name, created_at')
     .eq('id', storeId)
     .eq('workspace_id', workspaceId)
     .maybeSingle()
 
-  if (error) throw new Error(`Failed to get store: ${error.message}`)
-  return data as StorePublic | null
+  if (error) throw error
+  if (!data) return null
+
+  const { data: integration } = await supabaseAdmin
+    .from('integrations')
+    .select('shopify_domain, shopify_connected_at, store_currency')
+    .eq('store_id', storeId)
+    .maybeSingle()
+
+  return {
+    id: data.id,
+    name: data.name,
+    shopify_domain: integration?.shopify_domain ?? null,
+    shopify_connected_at: integration?.shopify_connected_at ?? null,
+    store_currency: integration?.store_currency ?? null,
+    created_at: data.created_at,
+  }
 }
 
 export async function updateStore(
@@ -36,118 +70,126 @@ export async function updateStore(
     .update({ name: fields.name })
     .eq('id', storeId)
     .eq('workspace_id', workspaceId)
-    .select(PUBLIC_COLUMNS)
+    .select('id, name, created_at')
     .single()
 
   if (error) throw new Error(`Failed to update store: ${error.message}`)
-  return data as StorePublic
-}
 
-export async function disconnectStore(storeId: string, workspaceId: string): Promise<void> {
-  // 1. Read current token + domain for revocation
-  const { data: store } = await supabaseAdmin
-    .from('stores')
-    .select('shopify_domain, shopify_access_token')
-    .eq('id', storeId)
-    .eq('workspace_id', workspaceId)
+  const { data: integration } = await supabaseAdmin
+    .from('integrations')
+    .select('shopify_domain, shopify_connected_at, store_currency')
+    .eq('store_id', storeId)
     .maybeSingle()
 
-  // 2. Revoke the access token at Shopify (best-effort)
-  if (store?.shopify_access_token && store?.shopify_domain) {
+  return {
+    id: data.id,
+    name: data.name,
+    shopify_domain: integration?.shopify_domain ?? null,
+    shopify_connected_at: integration?.shopify_connected_at ?? null,
+    store_currency: integration?.store_currency ?? null,
+    created_at: data.created_at,
+  }
+}
+
+export async function disconnectStore(storeId: string, workspaceId: string) {
+  const { data: integration, error } = await supabaseAdmin
+    .from('integrations')
+    .select('shopify_domain, shopify_access_token')
+    .eq('store_id', storeId)
+    .eq('workspace_id', workspaceId)
+    .single()
+
+  if (error || !integration) throw new Error('Integration not found')
+
+  if (integration.shopify_access_token) {
     try {
       await fetch(
-        `https://${store.shopify_domain}/admin/api/2025-04/api_tokens/current.json`,
+        `https://${integration.shopify_domain}/admin/api/2024-01/api_tokens/current.json`,
         {
           method: 'DELETE',
-          headers: { 'X-Shopify-Access-Token': store.shopify_access_token },
+          headers: {
+            'X-Shopify-Access-Token': integration.shopify_access_token,
+          },
         }
       )
     } catch {
-      // Token revocation is best-effort; continue even if it fails
+      // Token revocation is best-effort
     }
   }
 
-  // 3. Null the access token in DB — store record is kept
-  const { error } = await supabaseAdmin
-    .from('stores')
-    .update({ shopify_access_token: null, shopify_connected_at: null })
-    .eq('id', storeId)
+  const { error: updateError } = await supabaseAdmin
+    .from('integrations')
+    .update({
+      shopify_access_token: null,
+      shopify_client_secret: null,
+      shopify_scope: null,
+      shopify_connected_at: null,
+    })
+    .eq('store_id', storeId)
     .eq('workspace_id', workspaceId)
 
-  if (error) throw new Error(`Failed to disconnect store: ${error.message}`)
+  if (updateError) throw updateError
 }
 
-export async function deleteStore(storeId: string, workspaceId: string): Promise<void> {
-  // Best-effort token revocation before deleting (once row is gone, token is lost)
+export async function deleteStore(storeId: string, workspaceId: string) {
+  // Best-effort token revocation before deleting
   try {
     await disconnectStore(storeId, workspaceId)
   } catch {
     // Continue with deletion even if revocation fails
   }
 
-  // Orphan shopify_orders (set store_id to null, preserve data)
+  // Orphan shopify_orders (set store_id to null)
   await supabaseAdmin
     .from('shopify_orders')
     .update({ store_id: null })
     .eq('store_id', storeId)
 
-  // Orphan shopify_customers if table exists (set store_id to null)
+  // Orphan shopify_customers (set store_id to null)
   await supabaseAdmin
     .from('shopify_customers')
     .update({ store_id: null })
     .eq('store_id', storeId)
-    .then(() => {}, () => {}) // Ignore if table doesn't exist
 
-  // Orphan email_threads if table exists (set store_id to null)
+  // Orphan email_conversations (set store_id to null)
   await supabaseAdmin
-    .from('email_threads')
+    .from('email_conversations')
     .update({ store_id: null })
     .eq('store_id', storeId)
-    .then(() => {}, () => {}) // Ignore if table doesn't exist
 
-  // Delete email configs (cascade from stores FK handles this, but be explicit)
-  await supabaseAdmin
-    .from('store_email_configs')
-    .delete()
-    .eq('store_id', storeId)
-    .eq('workspace_id', workspaceId)
-
-  // Delete the store
+  // Delete the store — cascades to integrations and email_accounts
   const { error } = await supabaseAdmin
     .from('stores')
     .delete()
     .eq('id', storeId)
     .eq('workspace_id', workspaceId)
 
-  if (error) throw new Error(`Failed to delete store: ${error.message}`)
+  if (error) throw error
 }
 
-export async function listStoreEmailConfigs(
-  storeId: string,
-  workspaceId: string
-): Promise<StoreEmailConfig[]> {
+export async function listStoreEmailAccounts(storeId: string, workspaceId: string) {
   const { data, error } = await supabaseAdmin
-    .from('store_email_configs')
-    .select('id, store_id, workspace_id, provider, email_address, connected_at, watch_expiry')
+    .from('email_accounts')
+    .select('id, provider, email_address, status, connected_at, watch_expiry')
     .eq('store_id', storeId)
     .eq('workspace_id', workspaceId)
     .order('connected_at', { ascending: true })
 
-  if (error) throw new Error(`Failed to list email configs: ${error.message}`)
-  return (data ?? []) as StoreEmailConfig[]
+  if (error) throw error
+  return data || []
 }
 
-export async function deleteStoreEmailConfig(
-  configId: string,
+export async function deleteStoreEmailAccount(
+  accountId: string,
   storeId: string,
   workspaceId: string
-): Promise<void> {
+) {
   const { error } = await supabaseAdmin
-    .from('store_email_configs')
+    .from('email_accounts')
     .delete()
-    .eq('id', configId)
+    .eq('id', accountId)
     .eq('store_id', storeId)
     .eq('workspace_id', workspaceId)
 
-  if (error) throw new Error(`Failed to delete email config: ${error.message}`)
+  if (error) throw error
 }

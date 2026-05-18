@@ -1,5 +1,5 @@
 import { getAuthContext } from '../../../../lib/auth'
-import { resolveCredentials } from '@/lib/store-credentials'
+import { getStoreCredentials } from '@/lib/store-credentials'
 import { getCustomer, ShopifyApiError } from '../../../../lib/services/shopify'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
@@ -8,11 +8,13 @@ export async function GET(request: NextRequest) {
   const ctx = await getAuthContext(request)
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const storeId = new URL(request.url).searchParams.get('store_id')
-  const credentials = await resolveCredentials(storeId, ctx.workspaceId)
-  if (!credentials) return NextResponse.json({ error: 'Shopify not configured' }, { status: 400 })
-
   const { searchParams } = new URL(request.url)
+  const storeId = searchParams.get('store_id')
+  if (!storeId) {
+    return NextResponse.json({ error: 'store_id is required' }, { status: 400 })
+  }
+  const credentials = await getStoreCredentials(storeId, ctx.workspaceId)
+
   const email = searchParams.get('email')
   const order = searchParams.get('order')
 

@@ -51,6 +51,9 @@ export async function POST(request: NextRequest) {
   if (!shop) {
     return NextResponse.json({ error: 'Shop domain is required' }, { status: 400 })
   }
+  if (!store_name) {
+    return NextResponse.json({ error: 'Store name is required' }, { status: 400 })
+  }
 
   const shopDomain = shop.includes('.myshopify.com')
     ? shop.toLowerCase().trim()

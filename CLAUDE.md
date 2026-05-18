@@ -63,7 +63,7 @@ lib/
   auth.js            — getAuthContext() — workspace-scoped auth for all API routes
   supabase.js        — Supabase client (use client, public key)
   supabaseAdmin.js   — Supabase admin client (secret key, server-only)
-  shopifyCredentials.js — getShopifyCredentialsByWorkspace()
+  store-credentials.ts — getStoreCredentials(storeId, workspaceId)
   db.js              — scoped() helper for workspace-scoped queries
   permissions.js     — Role-based access control (can.* checks)
 supabase/
@@ -101,7 +101,7 @@ Staan lokaal in .env.local en in Vercel onder Settings → Environment Variables
 1. Client connects Shopify via OAuth (`/api/auth/shopify`) or manual API key (`/api/shopify/manual-connect`)
 2. Credentials are stored in the `integrations` table, scoped to `workspace_id`
 3. Frontend sends Bearer token → API route calls `getAuthContext()` → resolves workspace
-4. Route calls `getShopifyCredentialsByWorkspace(workspaceId)` → gets `{ domain, accessToken }`
+4. Route calls `getStoreCredentials(storeId, workspaceId)` → gets `{ domain, accessToken }`
 5. Route delegates to service function in `lib/services/shopify.js` → data returned as JSON
 6. Orders are synced to `shopify_orders` table via `/api/shopify/sync` or the `shopify-sync` Edge Function (cron)
 7. KPIs and revenue trends are computed from `shopify_orders` via PostgreSQL stored functions (`get_kpis`, `get_revenue_trend`)
@@ -171,7 +171,7 @@ Every Shopify API route must follow this exact pattern:
 
 ```js
 import { getAuthContext } from '../../../../lib/auth'
-import { getShopifyCredentialsByWorkspace } from '../../../../lib/shopifyCredentials'
+import { getStoreCredentials } from '../../../../lib/store-credentials'
 import { someServiceFn, ShopifyApiError } from '../../../../lib/services/shopify'
 import { NextResponse } from 'next/server'
 
@@ -179,7 +179,7 @@ export async function GET(request) {
   const ctx = await getAuthContext(request)
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const credentials = await getShopifyCredentialsByWorkspace(ctx.workspaceId)
+  const credentials = await getStoreCredentials(storeId, ctx.workspaceId)
   if (!credentials) return NextResponse.json({ error: 'Shopify not configured' }, { status: 400 })
 
   try {
@@ -203,7 +203,7 @@ export async function GET(request) {
 - Service functions **throw** on errors. Routes catch and map to HTTP responses.
 - Use `ShopifyApiError` for Shopify API failures (exported from `lib/services/shopify.js`).
 - Demo data is handled in the **route**, not the service: check `credentials.domain === DEMO_SHOP` before calling the service function.
-- Credential shape is `{ domain: string, accessToken: string }` from `getShopifyCredentialsByWorkspace()`.
+- Credential shape is `{ domain: string, accessToken: string }` from `getStoreCredentials()`.
 
 ### Adding new Shopify functionality
 

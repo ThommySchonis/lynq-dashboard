@@ -21,6 +21,7 @@ import type { CustomEmailConfig } from '@/types/settings'
 interface CustomEmailModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
+  storeId?: string
 }
 
 function validate(fields: CustomEmailForm): string | null {
@@ -35,7 +36,7 @@ function validate(fields: CustomEmailForm): string | null {
   return null
 }
 
-export function CustomEmailModal({ open, onOpenChange }: CustomEmailModalProps) {
+export function CustomEmailModal({ open, onOpenChange, storeId }: CustomEmailModalProps) {
   const [fields, setFields] = useState<CustomEmailForm>({ ...INITIAL_CUSTOM_EMAIL_FORM })
   const [error, setError] = useState('')
   const connectMutation = useConnectCustomEmail()
@@ -72,7 +73,7 @@ export function CustomEmailModal({ open, onOpenChange }: CustomEmailModalProps) 
       use_ssl: true,
     }
 
-    connectMutation.mutate(config, {
+    connectMutation.mutate({ ...config, store_id: storeId }, {
       onSuccess: () => handleOpenChange(false),
       onError: (err) => setError(err.message),
     })

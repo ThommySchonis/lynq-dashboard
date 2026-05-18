@@ -1,5 +1,5 @@
 import { getAuthContext } from '../../../../lib/auth'
-import { resolveCredentials } from '@/lib/store-credentials'
+import { getStoreCredentials } from '@/lib/store-credentials'
 import { DEMO_SHOP, DEMO_KPIS } from '../../../../lib/demoData'
 import { getKPIs } from '../../../../lib/services/shopify'
 import { parseDateRange } from '../../../../lib/utils/request'
@@ -11,12 +11,15 @@ export async function GET(request: NextRequest) {
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const storeId = new URL(request.url).searchParams.get('store_id')
-  const creds = await resolveCredentials(storeId, ctx.workspaceId)
-  if (creds?.domain === DEMO_SHOP) return NextResponse.json(DEMO_KPIS)
+  if (!storeId) {
+    return NextResponse.json({ error: 'store_id is required' }, { status: 400 })
+  }
+  const credentials = await getStoreCredentials(storeId, ctx.workspaceId)
+  if (credentials.domain === DEMO_SHOP) return NextResponse.json(DEMO_KPIS)
 
   try {
     const dateRange = parseDateRange(request)
-    const kpis = await getKPIs(ctx.workspaceId, dateRange, storeId || undefined)
+    const kpis = await getKPIs(ctx.workspaceId, dateRange, storeId)
     // Signal to frontend that initial sync is needed
     const response = kpis.totalOrders === 0 ? { ...kpis, needsSync: true } : kpis
     return NextResponse.json(response)

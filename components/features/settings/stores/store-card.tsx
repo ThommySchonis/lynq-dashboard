@@ -1,15 +1,17 @@
 'use client'
 
 import { useState } from 'react'
-import { ChevronDown, Loader2, Mail, Pencil, Trash2, Unplug, X } from 'lucide-react'
+import Image from 'next/image'
+import { ArrowUpRight, ChevronDown, Loader2, Mail, Pencil, Plus, Trash2, Unplug, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { SettingsCard } from '@/components/features/settings/settings-section'
 import { StatusBadge } from '@/components/features/settings/status-badge'
 import { ConfirmDialog } from '@/components/features/settings/confirm-dialog'
-import { useUpdateStore, useDisconnectStore, useDeleteStore, useDeleteStoreEmailConfig } from '@/hooks/stores'
-import { useStoreEmailConfigs } from '@/hooks/stores'
+import { CustomEmailModal } from '@/components/features/settings/integrations/custom-email-modal'
+import { useUpdateStore, useDisconnectStore, useDeleteStore, useDeleteStoreEmailAccount } from '@/hooks/stores'
+import { useStoreEmailAccounts } from '@/hooks/stores'
 import { useAuthStore } from '@/stores/auth'
 import type { StorePublic } from '@/types/stores'
 
@@ -24,12 +26,13 @@ export function StoreCard({ store }: StoreCardProps) {
   const [deleteOpen, setDeleteOpen] = useState(false)
 
   const [emailsExpanded, setEmailsExpanded] = useState(false)
+  const [customModalOpen, setCustomModalOpen] = useState(false)
 
   const updateMutation = useUpdateStore()
   const disconnectMutation = useDisconnectStore()
   const deleteMutation = useDeleteStore()
-  const deleteEmailMutation = useDeleteStoreEmailConfig()
-  const { data: emailConfigs } = useStoreEmailConfigs(store.id)
+  const deleteEmailMutation = useDeleteStoreEmailAccount()
+  const { data: emailConfigs } = useStoreEmailAccounts(store.id)
   const token = useAuthStore((s) => s.session?.access_token ?? '')
 
   const isConnected = !!store.shopify_connected_at
@@ -149,25 +152,49 @@ export function StoreCard({ store }: StoreCardProps) {
                 </div>
               ))}
 
-              <div className="flex gap-2">
-                <Button
-                  size="sm"
-                  variant="outline"
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                {/* Gmail */}
+                <button
+                  type="button"
                   onClick={() => {
                     window.location.href = `/api/auth/gmail?t=${token}&store_id=${store.id}`
                   }}
+                  className="flex items-center gap-2.5 rounded-lg border border-border bg-card px-3 py-2.5 text-left text-xs font-semibold text-foreground transition-colors hover:border-primary/50 hover:shadow-sm"
                 >
-                  Add Gmail
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
+                  <span className="flex size-5 items-center justify-center flex-shrink-0">
+                    <Image src="/icons/gmail.svg" alt="Gmail" width={18} height={14} />
+                  </span>
+                  <span className="flex-1">Gmail</span>
+                  <ArrowUpRight className="size-3 text-muted-foreground flex-shrink-0" />
+                </button>
+
+                {/* Outlook */}
+                <button
+                  type="button"
                   onClick={() => {
                     window.location.href = `/api/auth/outlook?t=${token}&store_id=${store.id}`
                   }}
+                  className="flex items-center gap-2.5 rounded-lg border border-border bg-card px-3 py-2.5 text-left text-xs font-semibold text-foreground transition-colors hover:border-primary/50 hover:shadow-sm"
                 >
-                  Add Outlook
-                </Button>
+                  <span className="flex size-5 items-center justify-center flex-shrink-0">
+                    <Image src="/icons/outlook.svg" alt="Outlook" width={18} height={18} />
+                  </span>
+                  <span className="flex-1">Outlook</span>
+                  <ArrowUpRight className="size-3 text-muted-foreground flex-shrink-0" />
+                </button>
+
+                {/* Custom IMAP */}
+                <button
+                  type="button"
+                  onClick={() => setCustomModalOpen(true)}
+                  className="flex items-center gap-2.5 rounded-lg border border-border bg-card px-3 py-2.5 text-left text-xs font-semibold text-foreground transition-colors hover:border-primary/50 hover:shadow-sm"
+                >
+                  <span className="flex size-5 items-center justify-center flex-shrink-0">
+                    <Mail className="size-4 text-muted-foreground" />
+                  </span>
+                  <span className="flex-1">Custom (IMAP)</span>
+                  <Plus className="size-3 text-muted-foreground flex-shrink-0" />
+                </button>
               </div>
             </div>
           )}
@@ -198,6 +225,12 @@ export function StoreCard({ store }: StoreCardProps) {
         onConfirm={() => {
           deleteMutation.mutate(store.id, { onSuccess: () => setDeleteOpen(false) })
         }}
+      />
+
+      <CustomEmailModal
+        open={customModalOpen}
+        onOpenChange={setCustomModalOpen}
+        storeId={store.id}
       />
     </SettingsCard>
   )

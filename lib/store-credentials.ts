@@ -1,40 +1,24 @@
 import { supabaseAdmin } from './supabaseAdmin'
-import { getShopifyCredentialsByWorkspace } from './shopifyCredentials'
 
 /**
- * Resolve Shopify credentials for a specific store.
- * Falls back to workspace-level integrations if store not found.
+ * Get Shopify credentials for a specific store.
+ * Reads from integrations table where store_id matches.
+ * No fallback — store_id is required.
  */
 export async function getStoreCredentials(
   storeId: string,
   workspaceId: string
-): Promise<{ domain: string; accessToken: string } | null> {
-  // 1. Try stores table
-  const { data: store } = await supabaseAdmin
-    .from('stores')
+): Promise<{ domain: string; accessToken: string }> {
+  const { data, error } = await supabaseAdmin
+    .from('integrations')
     .select('shopify_domain, shopify_access_token')
-    .eq('id', storeId)
+    .eq('store_id', storeId)
     .eq('workspace_id', workspaceId)
-    .maybeSingle()
+    .single()
 
-  if (store?.shopify_access_token) {
-    return { domain: store.shopify_domain, accessToken: store.shopify_access_token }
+  if (error || !data?.shopify_access_token) {
+    throw new Error('Store not connected or credentials missing')
   }
 
-  // 2. Fallback to integrations (removed after full migration)
-  return getShopifyCredentialsByWorkspace(workspaceId)
-}
-
-/**
- * Resolve credentials: if store_id is provided use getStoreCredentials,
- * otherwise fall back to workspace-level credentials.
- */
-export async function resolveCredentials(
-  storeId: string | null,
-  workspaceId: string
-): Promise<{ domain: string; accessToken: string } | null> {
-  if (storeId) {
-    return getStoreCredentials(storeId, workspaceId)
-  }
-  return getShopifyCredentialsByWorkspace(workspaceId)
+  return { domain: data.shopify_domain, accessToken: data.shopify_access_token }
 }

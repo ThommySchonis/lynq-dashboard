@@ -24,11 +24,18 @@ export async function GET(request: NextRequest) {
   const ctx = await getAuthContext(request)
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { data } = await supabaseAdmin
+  const storeId = request.nextUrl.searchParams.get('store_id')
+
+  let query = supabaseAdmin
     .from('integrations')
     .select('shopify_domain, shopify_connected_at, status')
     .eq('workspace_id', ctx.workspaceId)
-    .maybeSingle()
+
+  if (storeId) {
+    query = query.eq('store_id', storeId)
+  }
+
+  const { data } = await query.maybeSingle()
 
   return NextResponse.json({
     domain:       data?.shopify_domain ?? null,

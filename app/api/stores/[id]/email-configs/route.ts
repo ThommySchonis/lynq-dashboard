@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { getAuthContext } from '@/lib/auth'
-import { listStoreEmailConfigs } from '@/lib/services/stores'
+import { listStoreEmailAccounts } from '@/lib/services/stores'
 
 export async function GET(
   request: NextRequest,
@@ -13,7 +13,7 @@ export async function GET(
   const { id } = await params
 
   try {
-    const configs = await listStoreEmailConfigs(id, ctx.workspaceId)
+    const configs = await listStoreEmailAccounts(id, ctx.workspaceId)
     return NextResponse.json({ configs })
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Internal error'

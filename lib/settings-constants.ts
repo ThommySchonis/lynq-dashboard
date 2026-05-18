@@ -27,12 +27,6 @@ export const SETTINGS_NAV: SettingsNavGroup[] = [
     { label: 'Stores',   href: '/settings/workspace/stores' },
     { label: 'Billing',  href: '/settings/workspace/billing' },
   ]},
-  { label: 'EMAIL', items: [
-    { label: 'Email integration', href: '/settings/integrations/email' },
-  ]},
-  { label: 'INTEGRATIONS', items: [
-    { label: 'Shopify', href: '/settings/integrations/shopify' },
-  ]},
   { label: 'PERSONAL', items: [
     { label: 'Profile',        href: '/settings/personal/profile' },
     { label: 'Password & 2FA', href: '/settings/personal/security' },

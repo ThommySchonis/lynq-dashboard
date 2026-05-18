@@ -77,7 +77,7 @@ export function useDeleteStore() {
   })
 }
 
-export function useDeleteStoreEmailConfig() {
+export function useDeleteStoreEmailAccount() {
   const token = useToken()
   const qc = useQueryClient()
   return useMutation({
@@ -92,7 +92,7 @@ export function useDeleteStoreEmailConfig() {
       }
     },
     onSuccess: (_data, vars) => {
-      qc.invalidateQueries({ queryKey: storeKeys.emailConfigs(vars.storeId) })
+      qc.invalidateQueries({ queryKey: storeKeys.emailAccounts(vars.storeId) })
       toast.success('Email account removed')
     },
     onError: (err: Error) => toast.error(err.message),

@@ -1,5 +1,5 @@
 import { getAuthContext } from '../../../../../../lib/auth'
-import { resolveCredentials } from '@/lib/store-credentials'
+import { getStoreCredentials } from '@/lib/store-credentials'
 import { createRefund, ShopifyApiError } from '../../../../../../lib/services/shopify'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
@@ -10,8 +10,10 @@ export async function POST(request: NextRequest, { params }: RouteContext<{ id: 
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const storeId = new URL(request.url).searchParams.get('store_id')
-  const credentials = await resolveCredentials(storeId, ctx.workspaceId)
-  if (!credentials) return NextResponse.json({ error: 'Shopify not configured' }, { status: 400 })
+  if (!storeId) {
+    return NextResponse.json({ error: 'store_id is required' }, { status: 400 })
+  }
+  const credentials = await getStoreCredentials(storeId, ctx.workspaceId)
 
   const { id } = await params
   const body = await request.json()

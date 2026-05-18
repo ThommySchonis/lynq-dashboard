@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { getAuthContext } from '@/lib/auth'
-import { deleteStoreEmailConfig } from '@/lib/services/stores'
+import { deleteStoreEmailAccount } from '@/lib/services/stores'
 
 export async function DELETE(
   request: NextRequest,
@@ -13,7 +13,7 @@ export async function DELETE(
   const { id, configId } = await params
 
   try {
-    await deleteStoreEmailConfig(configId, id, ctx.workspaceId)
+    await deleteStoreEmailAccount(configId, id, ctx.workspaceId)
     return NextResponse.json({ success: true })
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Internal error'

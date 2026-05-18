@@ -703,13 +703,17 @@ export async function syncOrders(workspaceId: string, credentials: any, userId: 
   if (shopRes.ok) {
     const shopData = await shopRes.json()
     const currency = shopData.shop?.currency || 'EUR'
+    // Always write store_currency to integrations
     if (options.storeId) {
       await supabaseAdmin
-        .from('stores')
+        .from('integrations')
         .update({ store_currency: currency })
-        .eq('id', options.storeId)
+        .eq('store_id', options.storeId)
+        .eq('workspace_id', workspaceId)
     } else {
-      await supabaseAdmin.from('integrations')
+      // Fallback: workspace-level (should not happen after migration, but safe)
+      await supabaseAdmin
+        .from('integrations')
         .update({ store_currency: currency })
         .eq('workspace_id', workspaceId)
     }

@@ -1,4 +1,5 @@
 import { supabaseAdmin } from '../../../../../lib/supabaseAdmin'
+import { syncOrders } from '@/lib/services/shopify'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import crypto from 'crypto'
@@ -7,61 +8,6 @@ function timingSafeCompare(a: string, b: string): boolean {
   const left = Buffer.from(a || '')
   const right = Buffer.from(b || '')
   return left.length === right.length && crypto.timingSafeEqual(left, right)
-}
-
-async function syncOrders(userId: string, workspaceId: string, shop: string, accessToken: string) {
-  const since = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString()
-  let orders: unknown[] = []
-  let url: string | null = `https://${shop}/admin/api/2025-04/orders.json?status=any&limit=250&processed_at_min=${since}`
-
-  while (url) {
-    const fetchRes: Response = await fetch(url, { headers: { 'X-Shopify-Access-Token': accessToken } })
-    if (!fetchRes.ok) break
-    const data = await fetchRes.json() as { orders?: Record<string, unknown>[] }
-    orders = orders.concat(data.orders || [])
-    const linkHeader: string | null = fetchRes.headers.get('link')
-    const nextMatch: RegExpMatchArray | null = linkHeader?.match(/<([^>]+)>;\s*rel="next"/) ?? null
-    url = nextMatch ? nextMatch[1] : null
-  }
-
-  const rows = (orders as Record<string, unknown>[]).map(order => {
-    const subtotal = parseFloat((order.subtotal_price_set as Record<string, Record<string, string>> | undefined)?.presentment_money?.amount || order.subtotal_price as string || '0')
-    const totalPrice = parseFloat((order.total_price_set as Record<string, Record<string, string>> | undefined)?.presentment_money?.amount || order.total_price as string || '0')
-    const totalDiscounts = parseFloat((order.total_discounts_set as Record<string, Record<string, string>> | undefined)?.presentment_money?.amount || order.total_discounts as string || '0')
-    const refundAmount = ((order.refunds as Record<string, unknown>[] | undefined) || []).reduce((sum, r) =>
-      sum + ((r.transactions as Record<string, unknown>[] | undefined) || []).reduce((ts, t) =>
-        ts + parseFloat((t.amount_set as Record<string, Record<string, string>> | undefined)?.presentment_money?.amount || t.amount as string || '0'), 0), 0)
-
-    // Transition: dual-write client_id (legacy) + workspace_id
-    return {
-      id:                   order.id,
-      client_id:            userId,
-      workspace_id:         workspaceId,
-      order_number:         order.name,
-      financial_status:     order.financial_status,
-      cancel_reason:        order.cancel_reason || null,
-      subtotal_price:       subtotal,
-      total_price:          totalPrice,
-      total_discounts:      totalDiscounts,
-      refund_amount:        refundAmount,
-      presentment_currency: order.presentment_currency || order.currency || null,
-      source_name:          order.source_name || null,
-      customer_email:       (order.customer as Record<string, string> | undefined)?.email || order.email || null,
-      customer_name:        order.customer
-        ? `${(order.customer as Record<string, string>).first_name || ''} ${(order.customer as Record<string, string>).last_name || ''}`.trim()
-        : null,
-      processed_at:         order.processed_at,
-      created_at_shopify:   order.created_at,
-      updated_at_shopify:   order.updated_at,
-      synced_at:            new Date().toISOString(),
-    }
-  })
-
-  // onConflict on (workspace_id, id) — the unique constraint added in Phase 4.
-  // (id is the Shopify-side order id, bigint.)
-  for (let i = 0; i < rows.length; i += 100) {
-    await supabaseAdmin.from('shopify_orders').upsert(rows.slice(i, i + 100), { onConflict: 'workspace_id,id' })
-  }
 }
 
 export async function GET(request: NextRequest) {
@@ -104,6 +50,9 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(`${appUrl}/settings?error=token_exchange_failed`)
   }
 
+  const accessToken = tokenData.access_token
+  const scope = tokenData.scope
+
   // Resolve workspace_id from the user who initiated OAuth. If the user
   // somehow has no workspace at this point, fail loudly — the OAuth flow
   // shouldn't be reachable without a logged-in user who already has one.
@@ -119,53 +68,61 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(`${appUrl}/settings?error=no_workspace`)
   }
 
-  // Transition: dual-write client_id (legacy) + workspace_id
-  const { error: upsertError } = await supabaseAdmin.from('integrations').upsert({
-    client_id:             oauthState.user_id,
-    workspace_id:          workspaceId,
-    shopify_domain:        shop,
-    shopify_access_token:  tokenData.access_token,
-    shopify_scope:         tokenData.scope,
-    shopify_client_secret: clientSecret,
-    shopify_connected_at:  new Date().toISOString(),
-  }, { onConflict: 'client_id' })
+  const userId = oauthState.user_id
+  const storeName = oauthState.store_name || shop.replace('.myshopify.com', '')
+
+  // 1. Create store (name only — no Shopify creds in stores table)
+  const { data: store } = await supabaseAdmin
+    .from('stores')
+    .upsert(
+      { workspace_id: workspaceId, name: storeName },
+      { onConflict: 'workspace_id,name' }
+    )
+    .select('id')
+    .single()
+
+  const storeId = store!.id
+
+  // 2. Fetch shop metadata for store_currency
+  const shopRes = await fetch(`https://${shop}/admin/api/2025-04/shop.json`, {
+    headers: { 'X-Shopify-Access-Token': accessToken },
+  })
+  const shopData = await shopRes.json()
+  const storeCurrency = shopData?.shop?.currency || null
+
+  // 3. Write credentials to integrations (not stores)
+  const { error: upsertError } = await supabaseAdmin
+    .from('integrations')
+    .upsert(
+      {
+        workspace_id: workspaceId,
+        client_id: userId,
+        store_id: storeId,
+        shopify_domain: shop,
+        shopify_access_token: accessToken,
+        shopify_client_secret: process.env.SHOPIFY_CLIENT_SECRET,
+        shopify_scope: scope,
+        shopify_connected_at: new Date().toISOString(),
+        store_currency: storeCurrency,
+        status: 'connected',
+      },
+      { onConflict: 'workspace_id,store_id' }
+    )
 
   if (upsertError) {
     console.error('integrations upsert failed:', JSON.stringify(upsertError))
     return NextResponse.redirect(`${appUrl}/settings?error=save_failed`)
   }
 
-  // Insert into stores table (dual-write alongside integrations)
-  const { data: newStore } = await supabaseAdmin
-    .from('stores')
-    .upsert(
-      {
-        workspace_id: workspaceId,
-        name: oauthState.store_name || shop.replace('.myshopify.com', ''),
-        shopify_domain: shop,
-        shopify_access_token: tokenData.access_token,
-        shopify_client_secret: oauthState.client_secret || process.env.SHOPIFY_CLIENT_SECRET,
-        shopify_scope: tokenData.scope,
-        shopify_connected_at: new Date().toISOString(),
-      },
-      { onConflict: 'workspace_id,shopify_domain' }
-    )
-    .select('id')
-    .single()
-
-  const storeId = newStore?.id
-
-  // Register webhooks. ?cid is now workspace_id (Block C Phase 3 Batch 5).
-  // Webhook handler resolves the integration row by workspace_id and falls
-  // back to legacy client_id lookup for any pre-migration subscriptions.
+  // Register webhooks with store_id in URLs
   const webhookBase = process.env.NEXT_PUBLIC_APP_URL
   const webhookTopics = ['orders/create', 'orders/updated', 'orders/cancelled', 'refunds/create']
   await Promise.all(webhookTopics.map(topic =>
     fetch(`https://${shop}/admin/api/2025-04/webhooks.json`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-Shopify-Access-Token': tokenData.access_token! },
+      headers: { 'Content-Type': 'application/json', 'X-Shopify-Access-Token': accessToken },
       body: JSON.stringify({
-        webhook: { topic, address: `${webhookBase}/api/webhooks/shopify?cid=${workspaceId}${storeId ? `&store_id=${storeId}` : ''}`, format: 'json' },
+        webhook: { topic, address: `${webhookBase}/api/webhooks/shopify?store_id=${storeId}&cid=${workspaceId}`, format: 'json' },
       }),
     })
   ))
@@ -174,7 +131,8 @@ export async function GET(request: NextRequest) {
 
   // Sync last 90 days of orders immediately after connecting
   try {
-    await syncOrders(oauthState.user_id, workspaceId, shop, tokenData.access_token)
+    const credentials = { domain: shop, accessToken }
+    await syncOrders(workspaceId, credentials, userId, { storeId })
   } catch (e: unknown) {
     console.error('Initial sync failed:', e)
   }

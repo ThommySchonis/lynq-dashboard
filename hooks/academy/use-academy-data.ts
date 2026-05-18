@@ -36,12 +36,12 @@ export function useCertificate() {
   return useQuery<Certificate | null>({
     queryKey: academyKeys.certificate(),
     queryFn: async () => {
-      const { data } = await supabase
+      const result = await supabase
         .from('certificates')
         .select('*')
         .eq('user_id', userId)
         .single()
-      return (data as Certificate) ?? null
+      return (result.data as unknown as Certificate) ?? null
     },
     enabled: !!userId,
   })

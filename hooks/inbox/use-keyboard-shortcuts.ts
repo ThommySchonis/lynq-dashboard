@@ -2,11 +2,12 @@
 
 import { useEffect } from 'react'
 import type { RefObject } from 'react'
+import type { Thread } from '@/types/inbox'
 
 interface UseKeyboardShortcutsOptions {
-  threads: any[]
+  threads: Thread[]
   selectedThreadId: string | null
-  onSelectThread: (thread: any) => void
+  onSelectThread: (thread: Thread) => void
   composerRef: RefObject<HTMLDivElement | null>
 }
 

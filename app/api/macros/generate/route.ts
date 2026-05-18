@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import type { Role } from '@/types/database'
 import Anthropic from '@anthropic-ai/sdk'
-import type { Message } from '@anthropic-ai/sdk/resources/messages'
+import type { Message, TextBlock } from '@anthropic-ai/sdk/resources/messages'
 import { getAuthContext } from '../../../../lib/auth'
 import { can } from '../../../../lib/permissions'
 import { supabaseAdmin } from '../../../../lib/supabaseAdmin'
@@ -14,6 +14,11 @@ import {
   sleep,
 } from '../../../../lib/aiMacros'
 import { ensureTagsByName } from '../../../../lib/tags'
+
+interface AnthropicStatusError {
+  status?: number
+  message?: string
+}
 
 const CLAUDE_MODEL = 'claude-sonnet-4-20250514'
 const MAX_TOKENS   = 16000
@@ -40,7 +45,9 @@ export async function POST(request: NextRequest) {
     console.error('[macros generate] onboarding lookup failed:', lookupError.message)
     return NextResponse.json({ error: lookupError.message, code: 'lookup_failed' }, { status: 500 })
   }
-  if (!onboarding || !onboarding.completed_at || !onboarding.answers || Object.keys(onboarding.answers).length === 0) {
+  interface OnboardingRow { id: string; answers: Record<string, unknown>; completed_at: string | null; generation_count: number }
+  const ob = onboarding as OnboardingRow | null
+  if (!ob || !ob.completed_at || !ob.answers || Object.keys(ob.answers).length === 0) {
     return NextResponse.json(
       { error: 'Complete the onboarding wizard first.', code: 'onboarding_incomplete' },
       { status: 400 }
@@ -49,7 +56,7 @@ export async function POST(request: NextRequest) {
 
   // Call Claude (retry once on 429 / 5xx with 2s delay)
   const client       = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
-  const userMessage  = buildUserMessage(onboarding.answers)
+  const userMessage  = buildUserMessage(ob.answers as Parameters<typeof buildUserMessage>[0])
 
   let response: Message
   try {
@@ -60,7 +67,7 @@ export async function POST(request: NextRequest) {
 
   // Extract text content
   const text = Array.isArray(response.content)
-    ? response.content.filter(b => b.type === 'text').map(b => (b as { type: 'text'; text: string }).text).join('')
+    ? response.content.filter(b => b.type === 'text').map(b => (b as TextBlock).text).join('')
     : ''
 
   // If Claude was cut off mid-response by max_tokens, the JSON will be
@@ -105,7 +112,7 @@ export async function POST(request: NextRequest) {
 
   // Build rows for bulk insert (single statement = atomic in Postgres)
   // Defensive: prepend "{store_name} | " if Claude forgot the prefix.
-  const storeName = (onboarding.answers?.store_name ?? '').trim()
+  const storeName = (String(ob.answers?.store_name ?? '')).trim()
   const prefix    = storeName ? `${storeName} | ` : ''
 
   const rows = parsed.map((m: { name: unknown; body?: unknown; tags?: unknown[] }) => {
@@ -126,10 +133,14 @@ export async function POST(request: NextRequest) {
     }
   })
 
-  const { data: inserted, error: insertError } = await supabaseAdmin
+  interface InsertedMacro { id: string; name: string; language: string; tags: string[]; created_at: string }
+  const insertResult = await supabaseAdmin
     .from('macros')
     .insert(rows)
     .select('id, name, language, tags, created_at')
+
+  const inserted = (insertResult.data || []) as InsertedMacro[]
+  const insertError = insertResult.error
 
   if (insertError) {
     console.error('[macros generate] bulk insert failed:', insertError.message)
@@ -147,7 +158,7 @@ export async function POST(request: NextRequest) {
     const allTagNames = Array.from(
       new Set(rows.flatMap((r: { tags: string[] }) => Array.isArray(r.tags) ? r.tags : []))
     )
-    if (allTagNames.length > 0 && inserted && inserted.length > 0) {
+    if (allTagNames.length > 0 && inserted.length > 0) {
       const tagMap = await ensureTagsByName(supabaseAdmin, ctx.workspaceId, allTagNames, ctx.user.id)
       const links  = []
       for (const row of inserted) {
@@ -171,19 +182,19 @@ export async function POST(request: NextRequest) {
     .from('macro_onboarding')
     .update({
       last_generated_at: new Date().toISOString(),
-      generation_count:  (onboarding.generation_count ?? 0) + 1,
+      generation_count:  (ob.generation_count ?? 0) + 1,
     })
-    .eq('id', onboarding.id)
+    .eq('id', ob.id)
     .eq('workspace_id', ctx.workspaceId)
 
   const cost = calculateCost(response.usage)
   console.log(
-    `[macros][generate] workspace=${ctx.workspaceId} input=${cost.input_tokens} output=${cost.output_tokens} cost=$${cost.estimated_cost_usd.toFixed(4)} count=${inserted?.length ?? 0}`
+    `[macros][generate] workspace=${ctx.workspaceId} input=${cost.input_tokens} output=${cost.output_tokens} cost=$${cost.estimated_cost_usd.toFixed(4)} count=${inserted.length}`
   )
 
   return NextResponse.json({
     ok:    true,
-    count: inserted?.length ?? 0,
+    count: inserted.length,
     cost,
   })
 }
@@ -200,7 +211,7 @@ async function callClaudeWithRetry(client: Anthropic, userMessage: string): Prom
     })
   } catch (err: unknown) {
     if (isRetryable(err)) {
-      const e = err as { status?: number }
+      const e = err as AnthropicStatusError
       console.warn('[macros generate] retrying after 2s, status =', e?.status)
       await sleep(2000)
       return await client.messages.create({
@@ -215,12 +226,12 @@ async function callClaudeWithRetry(client: Anthropic, userMessage: string): Prom
 }
 
 function isRetryable(err: unknown): boolean {
-  const s = (err as { status?: number })?.status ?? 0
+  const s = (err as AnthropicStatusError)?.status ?? 0
   return s === 429 || (s >= 500 && s < 600)
 }
 
 function mapAnthropicError(err: unknown) {
-  const e      = err as { status?: number; message?: string }
+  const e      = err as AnthropicStatusError
   const status = e?.status ?? 0
   const msg    = e?.message ?? 'Unknown error'
   console.error('[macros generate] Anthropic error:', status, msg)

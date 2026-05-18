@@ -102,7 +102,7 @@ export function InviteModal({ open, onOpenChange }: InviteModalProps) {
               </DialogDescription>
             </DialogHeader>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={(e: React.FormEvent) => void handleSubmit(e)} className="space-y-4">
               <div className="space-y-1.5">
                 <label htmlFor="invite-email" className="text-sm font-medium">
                   Email address
@@ -199,7 +199,7 @@ export function InviteModal({ open, onOpenChange }: InviteModalProps) {
                       <Button
                         type="button"
                         variant="outline"
-                        onClick={() => copyToClipboard(inviteResult.inviteLink!)}
+                        onClick={() => void copyToClipboard(inviteResult.inviteLink!)}
                       >
                         {linkCopied ? (
                           <>

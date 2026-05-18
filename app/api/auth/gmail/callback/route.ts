@@ -3,6 +3,17 @@ import { encrypt } from '../../../../../lib/encryption'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { verifyOAuthState } from '../../../../../lib/oauthState'
+import { parseJson } from '@/lib/utils/typed-json'
+
+interface OAuthTokenResponse {
+  access_token?: string
+  refresh_token?: string
+  expires_in?: number
+}
+
+interface GoogleProfileResponse {
+  email?: string
+}
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
@@ -29,11 +40,7 @@ export async function GET(request: NextRequest) {
     body: new URLSearchParams({ code, client_id: clientId!, client_secret: clientSecret!, redirect_uri: redirectUri!, grant_type: 'authorization_code' }),
   })
 
-  const tokens = await tokenRes.json() as {
-    access_token?: string
-    refresh_token?: string
-    expires_in?: number
-  }
+  const tokens = await parseJson<OAuthTokenResponse>(tokenRes)
   if (!tokens.access_token) {
     return NextResponse.redirect(`${appUrl}/settings?provider=gmail&status=error&reason=token_failed`)
   }
@@ -42,7 +49,7 @@ export async function GET(request: NextRequest) {
   const profileRes = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
     headers: { Authorization: `Bearer ${tokens.access_token}` },
   })
-  const profile = await profileRes.json() as { email?: string }
+  const profile = await parseJson<GoogleProfileResponse>(profileRes)
   const emailAddress = profile.email
 
   // Encrypt tokens

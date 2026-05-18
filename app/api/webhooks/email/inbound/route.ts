@@ -4,6 +4,11 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import crypto from 'crypto'
 
+interface EmailFromObj {
+  email?: string
+  name?: string
+}
+
 function timingSafeCompare(a: string, b: string): boolean {
   const left = Buffer.from(a || '')
   const right = Buffer.from(b || '')
@@ -63,7 +68,7 @@ export async function POST(request: NextRequest) {
 
   // Resend sends parsed email fields
   const to = (payload.to as Array<{ email: string }> | undefined)?.[0]?.email || payload.to as string | undefined
-  const fromObj = payload.from as { email?: string; name?: string } | string | undefined
+  const fromObj = payload.from as EmailFromObj | string | undefined
   const fromEmail = typeof fromObj === 'object' && fromObj?.email ? fromObj.email : fromObj as string | undefined
   const fromName = (typeof fromObj === 'object' && fromObj?.name ? fromObj.name : fromEmail) as string | undefined
   const subject = (payload.subject as string | undefined) || '(no subject)'
@@ -76,19 +81,20 @@ export async function POST(request: NextRequest) {
   if (!to) return NextResponse.json({ ok: true })
 
   // Look up email account by forwarding address
-  const { data: account } = await supabaseAdmin
+  const accountResult = await supabaseAdmin
     .from('email_accounts')
     .select('*')
     .eq('forwarding_address', to)
     .maybeSingle()
 
+  const account = accountResult.data as Parameters<typeof processInboundMessage>[0] | null
   if (!account) return NextResponse.json({ ok: true })
 
   // Normalize the inbound email into a NormalizedMessage shape
   const normalizedMessage = {
     providerMessageId: messageId || `inbound_${Date.now()}`,
-    messageId: inReplyTo || messageId || null,
-    from: { email: fromEmail, name: fromName },
+    messageId: inReplyTo || messageId || undefined,
+    from: { email: fromEmail ?? '', name: fromName },
     to: [{ email: to, name: '' }],
     cc: [],
     subject,

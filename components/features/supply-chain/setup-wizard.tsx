@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Package, AlertCircle, Copy, Check } from 'lucide-react'
+import { Package, AlertCircle } from 'lucide-react'
 import { useConnectParcelPanel } from '@/hooks/supply-chain/use-supply-chain-mutations'
 
 interface SetupWizardProps {

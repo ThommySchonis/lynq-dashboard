@@ -27,7 +27,7 @@ export function MacroEditor({ macro, onSave, onDuplicate, onDelete, onBack }: {
   const isNew = !macro?.id;
   const [name, setName] = useState(macro?.name || "");
   const [body, setBody] = useState(macro?.body || "");
-  const [tags, setTags] = useState((macro?.tags || []).join(", "));
+  const [_tags, _setTags] = useState((macro?.tags || []).join(", "));
   const [language, setLang] = useState(macro?.language || "English");
   const [tagInput, setTagInput] = useState((macro?.tags || []).join(", "));
   const bodyRef = useRef<HTMLTextAreaElement>(null);

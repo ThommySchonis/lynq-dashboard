@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
   let formData: FormData
   try {
     formData = await request.formData()
-  } catch (_) {
+  } catch {
     return NextResponse.json({ error: 'Invalid upload', code: 'invalid_upload' }, { status: 400 })
   }
 

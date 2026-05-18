@@ -3,7 +3,6 @@
 import { Button } from '@/components/ui/button'
 import {
   Check,
-  ChevronDown,
   Mail,
   MoreHorizontal,
   MoreVertical,
@@ -84,7 +83,7 @@ export function ThreadListPanel() {
       await syncInboxMutation.mutateAsync()
     } catch {}
     setSyncing(false)
-    refetchThreads()
+    void refetchThreads()
   }, [setSyncing, syncInboxMutation, refetchThreads])
 
   const onCreateTicket = useCallback(() => {
@@ -148,7 +147,7 @@ export function ThreadListPanel() {
             <Button
               variant="ghost"
               size="icon"
-              onClick={onSync}
+              onClick={() => void onSync()}
               className={`p-[5px] rounded-[7px] transition-all duration-150 ${syncing ? 'text-foreground-2' : 'text-muted-foreground'}`}
               title="Sync & Refresh"
             >
@@ -286,10 +285,10 @@ export function ThreadListPanel() {
         {sortedFiltered.map((thread) => {
           const active = selectedThreadId === thread.id
           const name = extractName(thread.from)
-          const status = getStatus(thread.id)
+          const _status = getStatus(thread.id)
           const analysis = analyses[thread.id]
           const urg = analysis?.urgency
-          const urgUI = URGENCY_UI[urg]
+          const _urgUI = URGENCY_UI[urg]
           return (
             <div key={thread.id} className={`py-[10px] px-[14px] cursor-pointer border-b border-border border-l-[3px] transition-[background] duration-150 relative flex items-start gap-[9px] ${active ? 'bg-secondary border-l-accent dark:bg-[rgba(255,255,255,0.06)] after:absolute after:left-0 after:top-0 after:bottom-0 after:w-[3px] after:bg-accent after:rounded-r-sm after:content-[\'\']' : 'border-l-transparent hover:bg-secondary dark:hover:bg-[rgba(255,255,255,0.03)]'}`} onClick={() => onSelectThread(thread)}>
               {/* Checkbox */}

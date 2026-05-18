@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   if (!can.manageTasks(ctx.role as Role)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
-  const body = await request.json()
+  const body = (await request.json() as unknown) as Parameters<typeof createTask>[2]
   if (!body.title?.trim()) return NextResponse.json({ error: 'Title is required' }, { status: 400 })
 
   try {

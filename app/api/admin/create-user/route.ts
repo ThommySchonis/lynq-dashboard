@@ -2,6 +2,14 @@ import { supabaseAdmin, getUserFromToken } from '../../../../lib/supabaseAdmin'
 import { getAuthContext } from '../../../../lib/auth'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { parseBody } from '@/lib/utils/typed-json'
+
+interface CreateUserBody {
+  name: string
+  email: string
+  password: string
+  role?: string
+}
 
 const ADMIN_EMAIL = 'info@lynqagency.com'
 
@@ -23,12 +31,7 @@ export async function POST(request: NextRequest) {
   const ctx = await getAuthContext(request)
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { name, email, password, role = 'agent' } = await request.json() as {
-    name:     string
-    email:    string
-    password: string
-    role?:    string
-  }
+  const { name, email, password, role = 'agent' } = await parseBody<CreateUserBody>(request)
   if (!name || !email || !password) {
     return NextResponse.json({ error: 'Name, email and password are required' }, { status: 400 })
   }

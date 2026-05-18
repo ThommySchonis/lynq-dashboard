@@ -1,6 +1,18 @@
 import type { NextRequest } from 'next/server'
 import { supabaseAdmin, getUserFromToken } from '../../../lib/supabaseAdmin'
 import { NextResponse } from 'next/server'
+import { parseBody } from '@/lib/utils/typed-json'
+
+interface AgentActionBody {
+  thread_id?: string
+  action_type?: string
+  response_time_seconds?: number
+}
+
+interface SupabaseResult {
+  data: Record<string, unknown> | null
+  error: { message: string } | null
+}
 
 async function getUser(request: NextRequest) {
   const authHeader = request.headers.get('authorization')
@@ -14,11 +26,7 @@ export async function POST(request: NextRequest) {
   const user = await getUser(request)
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { thread_id, action_type, response_time_seconds } = await request.json() as {
-    thread_id?: string
-    action_type?: string
-    response_time_seconds?: number
-  }
+  const { thread_id, action_type, response_time_seconds } = await parseBody<AgentActionBody>(request)
   if (!action_type) {
     return NextResponse.json({ error: 'action_type is required' }, { status: 400 })
   }
@@ -41,7 +49,7 @@ export async function POST(request: NextRequest) {
     .from('agent_actions')
     .insert({ agent_id: agent.id, thread_id, action_type, response_time_seconds: response_time_seconds || null })
     .select()
-    .single()
+    .single() as SupabaseResult
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json({ action: data })

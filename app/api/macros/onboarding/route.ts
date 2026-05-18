@@ -102,7 +102,7 @@ export async function POST(request: NextRequest) {
   const v = validate(answers)
   if (!v.ok) return NextResponse.json({ error: v.error, code: v.code }, { status: 400 })
 
-  const { data, error } = await supabaseAdmin
+  const upsertResult = await supabaseAdmin
     .from('macro_onboarding')
     .upsert(
       {
@@ -116,10 +116,10 @@ export async function POST(request: NextRequest) {
     .select()
     .single()
 
-  if (error || !data) {
-    console.error('[onboarding POST] upsert failed:', error?.message)
-    return NextResponse.json({ error: error?.message ?? 'Failed to save onboarding', code: 'upsert_failed' }, { status: 500 })
+  if (upsertResult.error || !upsertResult.data) {
+    console.error('[onboarding POST] upsert failed:', upsertResult.error?.message)
+    return NextResponse.json({ error: upsertResult.error?.message ?? 'Failed to save onboarding', code: 'upsert_failed' }, { status: 500 })
   }
 
-  return NextResponse.json({ onboarding: data })
+  return NextResponse.json({ onboarding: upsertResult.data as Record<string, unknown> })
 }

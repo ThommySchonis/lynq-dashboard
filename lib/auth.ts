@@ -2,6 +2,22 @@ import { supabaseAdmin, getUserFromToken } from './supabaseAdmin'
 import type { NextRequest } from 'next/server'
 import type { User } from '@supabase/supabase-js'
 
+interface MembershipRow {
+  id: string
+  workspace_id: string
+  role: string
+  workspaces: unknown
+}
+
+interface MemberIdRow {
+  id: string
+}
+
+interface ProvisionResult {
+  workspace_id?: string
+  member_id?: string
+}
+
 export interface AuthWorkspace {
   id: string
   name: string
@@ -52,13 +68,14 @@ export async function getAuthContext(request: NextRequest): Promise<AuthContext 
   }
 
   if (membership) {
-    console.log('[auth] path A — membership found, workspace:', membership.workspace_id, 'role:', membership.role)
+    const m = membership as MembershipRow
+    console.log('[auth] path A — membership found, workspace:', m.workspace_id, 'role:', m.role)
     return {
       user,
-      workspace:   membership.workspaces as unknown as AuthWorkspace,
-      workspaceId: membership.workspace_id,
-      role:        membership.role,
-      memberId:    membership.id,
+      workspace:   m.workspaces as AuthWorkspace,
+      workspaceId: m.workspace_id,
+      role:        m.role,
+      memberId:    m.id,
     }
   }
 
@@ -75,11 +92,12 @@ export async function getAuthContext(request: NextRequest): Promise<AuthContext 
   }
 
   if (ownedWorkspace) {
-    console.log('[auth] path B — backfilling missing owner membership for workspace', ownedWorkspace.id)
+    const ws = ownedWorkspace as AuthWorkspace
+    console.log('[auth] path B — backfilling missing owner membership for workspace', ws.id)
     const { data: backfilled, error: backfillError } = await supabaseAdmin
       .from('workspace_members')
       .upsert(
-        { workspace_id: ownedWorkspace.id, user_id: user.id, role: 'owner' },
+        { workspace_id: ws.id, user_id: user.id, role: 'owner' },
         { onConflict: 'workspace_id,user_id', ignoreDuplicates: false }
       )
       .select('id')
@@ -90,32 +108,36 @@ export async function getAuthContext(request: NextRequest): Promise<AuthContext 
       return null
     }
 
-    console.log('[auth] path B — backfill complete, member id:', backfilled.id)
+    const bf = backfilled as MemberIdRow
+    console.log('[auth] path B — backfill complete, member id:', bf.id)
     return {
       user,
-      workspace:   ownedWorkspace,
-      workspaceId: ownedWorkspace.id,
+      workspace:   ws,
+      workspaceId: ws.id,
       role:        'owner',
-      memberId:    backfilled.id,
+      memberId:    bf.id,
     }
   }
 
   // ── Path C: provision — new user, no workspace yet ───────────────────────
   // Prefer company_name from signup form (ONBOARDING_SPEC v1.1 §3.2),
   // fall back to legacy .name (older signups), then email-prefix.
+  const meta = user.user_metadata as Record<string, unknown> | undefined
   const workspaceName =
-    user.user_metadata?.company_name ||
-    user.user_metadata?.name ||
+    (meta?.company_name as string) ||
+    (meta?.name as string) ||
     user.email?.split('@')[0] ||
     'My Workspace'
   console.log('[auth] path C — provisioning new workspace for', user.email, 'name:', workspaceName)
 
-  const { data: result, error: rpcError } = await supabaseAdmin
+  const provisionResult = await supabaseAdmin
     .rpc('provision_workspace', {
       p_user_id:        user.id,
       p_workspace_name: workspaceName,
     })
 
+  const rpcError = provisionResult.error
+  const result = provisionResult.data as ProvisionResult | null
   console.log('[auth] provision_workspace result:', JSON.stringify(result), 'error:', rpcError?.message ?? null)
 
   if (rpcError || !result?.workspace_id) {
@@ -123,12 +145,13 @@ export async function getAuthContext(request: NextRequest): Promise<AuthContext 
     return null
   }
 
-  const { data: newWorkspace } = await supabaseAdmin
+  const { data: newWorkspaceData } = await supabaseAdmin
     .from('workspaces')
     .select('id, name, owner_id')
     .eq('id', result.workspace_id)
     .single()
 
+  const newWorkspace = newWorkspaceData as AuthWorkspace | null
   console.log('[auth] path C — provisioning complete, workspace:', result.workspace_id)
   return {
     user,

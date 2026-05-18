@@ -4,7 +4,12 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { settingsKeys } from './use-settings-data'
 import { useToken } from './utils'
 import { toast } from 'sonner'
+import { parseJson } from '@/lib/utils/typed-json'
 import type { TagForm } from '@/types/settings'
+
+interface ErrorResponse {
+  error?: string
+}
 
 export function useCreateTag() {
   const token = useToken()
@@ -17,13 +22,13 @@ export function useCreateTag() {
         body: JSON.stringify({ name: form.name, color: form.color }),
       })
       if (!res.ok) {
-        const d = await res.json().catch(() => ({}))
-        throw new Error((d as { error?: string }).error || 'Failed to create tag')
+        const d = await parseJson<ErrorResponse>(res).catch((): ErrorResponse => ({}))
+        throw new Error(d.error ||'Failed to create tag')
       }
-      return res.json()
+      return parseJson<unknown>(res)
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: settingsKeys.tags() })
+      void qc.invalidateQueries({ queryKey: settingsKeys.tags() })
       toast.success('Tag created')
     },
     onError: (err: Error) => {
@@ -43,13 +48,13 @@ export function useUpdateTag() {
         body: JSON.stringify({ name: form.name, color: form.color }),
       })
       if (!res.ok) {
-        const d = await res.json().catch(() => ({}))
-        throw new Error((d as { error?: string }).error || 'Failed to update tag')
+        const d = await parseJson<ErrorResponse>(res).catch((): ErrorResponse => ({}))
+        throw new Error(d.error ||'Failed to update tag')
       }
-      return res.json()
+      return parseJson<unknown>(res)
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: settingsKeys.tags() })
+      void qc.invalidateQueries({ queryKey: settingsKeys.tags() })
       toast.success('Tag updated')
     },
     onError: (err: Error) => {
@@ -68,12 +73,12 @@ export function useDeleteTag() {
         headers: { Authorization: `Bearer ${token}` },
       })
       if (!res.ok) {
-        const d = await res.json().catch(() => ({}))
-        throw new Error((d as { error?: string }).error || 'Failed to delete tag')
+        const d = await parseJson<ErrorResponse>(res).catch((): ErrorResponse => ({}))
+        throw new Error(d.error ||'Failed to delete tag')
       }
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: settingsKeys.tags() })
+      void qc.invalidateQueries({ queryKey: settingsKeys.tags() })
       toast.success('Tag deleted')
     },
     onError: (err: Error) => {
@@ -93,13 +98,13 @@ export function useMergeTags() {
         body: JSON.stringify({ winner_id, loser_ids }),
       })
       if (!res.ok) {
-        const d = await res.json().catch(() => ({}))
-        throw new Error((d as { error?: string }).error || 'Merge failed')
+        const d = await parseJson<ErrorResponse>(res).catch((): ErrorResponse => ({}))
+        throw new Error(d.error ||'Merge failed')
       }
-      return res.json()
+      return parseJson<unknown>(res)
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: settingsKeys.tags() })
+      void qc.invalidateQueries({ queryKey: settingsKeys.tags() })
       toast.success('Tags merged')
     },
     onError: (err: Error) => {

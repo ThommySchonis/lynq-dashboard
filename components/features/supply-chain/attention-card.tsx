@@ -39,7 +39,7 @@ function CopyBtn({ text }: { text: string }) {
 }
 
 export function AttentionCard({ item, onDismiss }: AttentionCardProps) {
-  const { order, shipment, type, daysSince, lastDetail, cfg } = item
+  const { order, shipment, type: _type, daysSince, lastDetail, cfg } = item
   const firstName = order.customer?.name?.split(' ')[0] || 'there'
   const orderNum = order.order_number || '\u2014'
   const carrier = shipment.last_mile?.carrier_name || shipment.carrier?.name

@@ -1,3 +1,5 @@
+import type { SupabaseClient } from '@supabase/supabase-js'
+
 /**
  * Shared helpers for the tags system (Phase 1).
  *
@@ -36,9 +38,14 @@ export function paletteFor(color: string) {
   return TAG_PALETTE[color] || TAG_PALETTE.slate
 }
 
-export function sanitizeTagName(raw: any) {
+export function sanitizeTagName(raw: unknown) {
   if (typeof raw !== 'string') return ''
   return raw.trim().slice(0, 40)
+}
+
+interface TagRow {
+  id: string
+  name: string
 }
 
 /**
@@ -48,12 +55,12 @@ export function sanitizeTagName(raw: any) {
  *
  * @returns {Promise<Map<string, string>>}  lower(name) -> id
  */
-export async function ensureTagsByName(supabaseAdmin: any, workspaceId: string, names: any[], createdBy?: string) {
-  if (!Array.isArray(names) || names.length === 0) return new Map()
+export async function ensureTagsByName(supabaseAdmin: SupabaseClient, workspaceId: string, names: unknown[], createdBy?: string) {
+  if (!Array.isArray(names) || names.length === 0) return new Map<string, string>()
   const cleaned = names
     .map(sanitizeTagName)
     .filter(Boolean)
-  if (cleaned.length === 0) return new Map()
+  if (cleaned.length === 0) return new Map<string, string>()
 
   // Pull all workspace tags once; small per-workspace list so a full fetch
   // is cheaper than building an OR-filter for every call.
@@ -67,12 +74,12 @@ export async function ensureTagsByName(supabaseAdmin: any, workspaceId: string, 
     throw lookupError
   }
 
-  const byLower = new Map()
-  for (const t of existing || []) byLower.set(t.name.toLowerCase(), t.id)
+  const byLower = new Map<string, string>()
+  for (const t of (existing as TagRow[] | null) || []) byLower.set(t.name.toLowerCase(), t.id)
 
   // Determine which need creation, preserving original casing of the first
   // occurrence we see (mirrors how a typed tag would persist).
-  const toCreateMap = new Map()  // lower -> original
+  const toCreateMap = new Map<string, string>()  // lower -> original
   for (const name of cleaned) {
     const lc = name.toLowerCase()
     if (!byLower.has(lc) && !toCreateMap.has(lc)) toCreateMap.set(lc, name)
@@ -94,7 +101,7 @@ export async function ensureTagsByName(supabaseAdmin: any, workspaceId: string, 
       console.error('[tags] bulk-insert failed in ensureTagsByName:', insertError.message)
       throw insertError
     }
-    for (const t of created || []) byLower.set(t.name.toLowerCase(), t.id)
+    for (const t of (created as TagRow[] | null) || []) byLower.set(t.name.toLowerCase(), t.id)
   }
 
   return byLower
@@ -106,7 +113,7 @@ export async function ensureTagsByName(supabaseAdmin: any, workspaceId: string, 
  * checks + workspace scoping (verifies tag IDs belong to the workspace
  * before calling this — this helper trusts its inputs).
  */
-export async function syncMacroTags(supabaseAdmin: any, macroId: string, tagIds: string[]) {
+export async function syncMacroTags(supabaseAdmin: SupabaseClient, macroId: string, tagIds: string[]) {
   // Replace strategy: delete existing, insert new. Simple + correct for
   // small N (<= ~25 tags per macro). For large N we'd diff instead.
   const { error: delError } = await supabaseAdmin

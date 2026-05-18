@@ -1,6 +1,5 @@
 'use client'
 
-import { Check } from 'lucide-react'
 import type { WizardStep } from '@/lib/settings-constants'
 
 interface WizardProgressProps {

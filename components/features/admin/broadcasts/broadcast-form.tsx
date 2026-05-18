@@ -41,7 +41,7 @@ export function BroadcastForm() {
           Published to the Value Feed of all clients
         </div>
 
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={(e) => void handleSubmit(e)}>
           <Label className="mb-1.5">Content type</Label>
           <div className="grid grid-cols-2 gap-2 mb-4">
             {(Object.entries(BROADCAST_TYPES) as [BroadcastType, typeof cfg][]).map(

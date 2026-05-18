@@ -100,7 +100,7 @@ function addressLine(addr: CamelAddress): string {
 
 // ── Inline order row (camelCase shape) ───────────────────────────────────────
 
-function InlineOrderRow({ order, token }: { order: CamelOrder; token: string }) {
+function InlineOrderRow({ order, token: _token }: { order: CamelOrder; token: string }) {
   const [expanded, setExpanded] = useState(false)
 
   const isCancelled = order.cancelledAt != null
@@ -250,14 +250,14 @@ export function CustomerPanel() {
   function handleSearch() {
     const q = query.trim()
     if (!q) return
-    inbox.custSearch(q)
+    void inbox.custSearch(q)
   }
 
   function handleSearchChange(val: string) {
     setQuery(val)
   }
 
-  function handleOrderSuccess(msg: string) {
+  function _handleOrderSuccess(msg: string) {
     toast.success(msg)
   }
 

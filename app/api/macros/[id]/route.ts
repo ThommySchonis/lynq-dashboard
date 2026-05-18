@@ -8,6 +8,15 @@ import { supabaseAdmin } from '../../../../lib/supabaseAdmin'
 import { sanitizeMacroInput, relativeTime } from '../../../../lib/macros'
 import { ensureTagsByName, syncMacroTags } from '../../../../lib/tags'
 
+interface TagLink {
+  tag: unknown
+}
+
+interface MacroInputError {
+  message?: string
+  code?: string
+}
+
 // GET /api/macros/[id] — single macro detail
 export async function GET(request: NextRequest, { params }: RouteContext<{ id: string }>) {
   const ctx = await getAuthContext(request)
@@ -32,17 +41,18 @@ export async function GET(request: NextRequest, { params }: RouteContext<{ id: s
   }
   if (!macro) return NextResponse.json({ error: 'Macro not found', code: 'not_found' }, { status: 404 })
 
-  const tagObjects = Array.isArray(macro.tag_links)
-    ? macro.tag_links.map((l: { tag: unknown }) => l.tag).filter(Boolean)
+  const macroTyped = macro as Record<string, unknown>
+  const tagObjects = Array.isArray(macroTyped.tag_links)
+    ? (macroTyped.tag_links as TagLink[]).map((l: TagLink) => l.tag).filter(Boolean)
     : []
-  const { tag_links, ...rest } = macro
+  const { tag_links: _tag_links, ...rest } = macroTyped
 
   return NextResponse.json({
     macro: {
       ...rest,
       tagObjects,
-      last_updated_relative: relativeTime(macro.updated_at),
-      last_used_relative:    relativeTime(macro.last_used_at),
+      last_updated_relative: relativeTime(macroTyped.updated_at as string | null | undefined),
+      last_used_relative:    relativeTime(macroTyped.last_used_at as string | null | undefined),
     },
     currentUserRole: ctx.role,
   })
@@ -63,7 +73,7 @@ export async function PATCH(request: NextRequest, { params }: RouteContext<{ id:
   try {
     payload = sanitizeMacroInput(body, { partial: true })
   } catch (err: unknown) {
-    const e = err as { message?: string; code?: string }
+    const e = err as MacroInputError
     return NextResponse.json({ error: e.message, code: e.code }, { status: 400 })
   }
 
@@ -71,7 +81,7 @@ export async function PATCH(request: NextRequest, { params }: RouteContext<{ id:
     return NextResponse.json({ error: 'Nothing to update', code: 'no_changes' }, { status: 400 })
   }
 
-  const { data: macro, error } = await supabaseAdmin
+  const macroResult = await supabaseAdmin
     .from('macros')
     .update(payload)
     .eq('id', id)
@@ -79,11 +89,13 @@ export async function PATCH(request: NextRequest, { params }: RouteContext<{ id:
     .select()
     .single()
 
-  if (error || !macro) {
-    console.error('[macros PATCH] update failed:', error?.message)
-    const status = error?.code === 'PGRST116' ? 404 : 500
+  const macro = macroResult.data as Record<string, unknown> | null
+
+  if (macroResult.error || !macro) {
+    console.error('[macros PATCH] update failed:', macroResult.error?.message)
+    const status = macroResult.error?.code === 'PGRST116' ? 404 : 500
     return NextResponse.json(
-      { error: error?.message ?? 'Failed to update macro', code: status === 404 ? 'not_found' : 'update_failed' },
+      { error: macroResult.error?.message ?? 'Failed to update macro', code: status === 404 ? 'not_found' : 'update_failed' },
       { status }
     )
   }
@@ -94,9 +106,9 @@ export async function PATCH(request: NextRequest, { params }: RouteContext<{ id:
   let tagObjects: unknown[] = []
   if (Array.isArray(payload.tags)) {
     try {
-      const tagMap = await ensureTagsByName(supabaseAdmin, ctx.workspaceId, payload.tags, ctx.user.id)
+      const tagMap = await ensureTagsByName(supabaseAdmin, ctx.workspaceId, payload.tags as string[], ctx.user.id)
       const tagIds = Array.from(tagMap.values())
-      await syncMacroTags(supabaseAdmin, macro.id, tagIds)
+      await syncMacroTags(supabaseAdmin, macro.id as string, tagIds)
       const { data: linked } = await supabaseAdmin
         .from('tags')
         .select('id, name, color')

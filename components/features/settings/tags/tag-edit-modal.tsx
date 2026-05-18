@@ -144,7 +144,7 @@ export function TagEditModal({ open, onOpenChange, tag }: TagEditModalProps) {
           >
             Cancel
           </Button>
-          <Button onClick={handleSave} disabled={saving}>
+          <Button onClick={() => void handleSave()} disabled={saving}>
             {saving ? (
               <>
                 <Loader2 size={14} strokeWidth={1.75} className="animate-spin" />

@@ -128,7 +128,7 @@ export function SetupChecklist({ status, onDismissed }: SetupChecklistProps) {
         </span>
         <button
           type="button"
-          onClick={handleDismiss}
+          onClick={() => void handleDismiss()}
           disabled={dismissing}
           aria-label="Hide setup checklist"
           title="Hide setup checklist"

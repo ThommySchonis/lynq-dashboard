@@ -2,6 +2,15 @@ import type { NextRequest } from 'next/server'
 import { supabaseAdmin } from '../../../../lib/supabaseAdmin'
 import { getAuthContext } from '../../../../lib/auth'
 import { NextResponse } from 'next/server'
+import { parseJson } from '@/lib/utils/typed-json'
+
+interface ParcelPanelIntegration {
+  parcelpanel_api_key?: string
+}
+
+interface TrackingOrderResponse {
+  order?: Record<string, unknown>
+}
 
 const PP_BASE = 'https://open.parcelwill.com'
 
@@ -18,12 +27,12 @@ export async function GET(request: NextRequest) {
     .eq('workspace_id', ctx.workspaceId)
     .maybeSingle()
 
-  const apiKey = integration?.parcelpanel_api_key
+  const apiKey = (integration as ParcelPanelIntegration | null)?.parcelpanel_api_key
   if (!apiKey) {
     return NextResponse.json({ error: 'Parcel Panel not configured' }, { status: 404 })
   }
 
-  const ppHeaders = { 'x-parcelpanel-api-key': apiKey, 'Accept': 'application/json' }
+  const ppHeaders = { 'x-parcelpanel-api-key': apiKey as string, 'Accept': 'application/json' }
 
   // ── Mode A: specific order numbers ────────────────────────────────────────
   const ordersParam = request.nextUrl.searchParams.get('orders') || ''
@@ -38,14 +47,14 @@ export async function GET(request: NextRequest) {
             { headers: ppHeaders, cache: 'no-store' }
           )
           if (!res.ok) return null
-          const data = await res.json()
+          const data = await parseJson<TrackingOrderResponse>(res)
           return data.order || null
         } catch { return null }
       })
     )
     const orders = results
-      .filter((r): r is PromiseFulfilledResult<unknown> => r.status === 'fulfilled' && r.value != null)
-      .map(r => r.value)
+      .filter((r): r is PromiseFulfilledResult<Record<string, unknown> | null> => r.status === 'fulfilled' && r.value != null)
+      .map(r => r.value as Record<string, unknown>)
     return NextResponse.json({ orders })
   }
 

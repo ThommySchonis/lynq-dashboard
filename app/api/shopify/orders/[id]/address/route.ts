@@ -13,7 +13,7 @@ export async function PUT(request: NextRequest, { params }: RouteContext<{ id: s
   if (!credentials) return NextResponse.json({ error: 'Shopify not configured' }, { status: 400 })
 
   const { id } = await params
-  const body = await request.json()
+  const body = (await request.json() as unknown) as Parameters<typeof updateOrderAddress>[2]
 
   try {
     const shippingAddress = await updateOrderAddress(credentials, id, body)

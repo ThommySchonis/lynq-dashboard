@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
     const dateRange = parseDateRange(request)
     const result = await getAnalytics(credentials, dateRange)
     return NextResponse.json(result)
-  } catch (err: unknown) {
+  } catch {
     return NextResponse.json({ error: 'Failed to fetch analytics' }, { status: 500 })
   }
 }

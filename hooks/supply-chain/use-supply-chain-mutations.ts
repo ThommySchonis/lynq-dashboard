@@ -3,6 +3,11 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAuthStore } from '@/stores/auth'
 import { supplyChainKeys } from './use-supply-chain-data'
+import { parseJson } from '@/lib/utils/typed-json'
+
+interface ErrorResponse {
+  error?: string
+}
 
 function useToken() {
   return useAuthStore((s) => s.session?.access_token ?? '')
@@ -23,13 +28,13 @@ export function useConnectParcelPanel() {
         body: JSON.stringify({ apiKey }),
       })
       if (!res.ok) {
-        const d = await res.json().catch(() => ({}))
+        const d = await parseJson<ErrorResponse>(res).catch((): ErrorResponse => ({}))
         throw new Error(d.error || 'Failed to connect Parcel Panel')
       }
-      return res.json()
+      return parseJson<unknown>(res)
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: supplyChainKeys.shipments() })
+      void qc.invalidateQueries({ queryKey: supplyChainKeys.shipments() })
     },
   })
 }

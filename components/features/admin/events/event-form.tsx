@@ -40,7 +40,7 @@ export function EventForm() {
           Appears in the Value Feed of all clients
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={(e) => void handleSubmit(e)} className="space-y-4">
           <div>
             <Label>Title</Label>
             <Input

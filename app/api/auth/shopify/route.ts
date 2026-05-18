@@ -1,7 +1,13 @@
-import { getUserFromToken, supabaseAdmin } from '../../../../lib/supabaseAdmin'
+import { getAuthContext } from '../../../../lib/auth'
+import { supabaseAdmin } from '../../../../lib/supabaseAdmin'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import crypto from 'crypto'
+import { parseBody } from '@/lib/utils/typed-json'
+
+interface ShopifyOAuthBody {
+  shop: string
+}
 
 const SCOPES = [
   // Orders — read, write, cancel, refund, note
@@ -32,21 +38,14 @@ export async function OPTIONS() {
   return new Response(null, { status: 204 })
 }
 
-// POST /api/auth/shopify
-// Body: { shop }
-// Uses shared Lynq Partner App credentials — no per-client credentials needed
 export async function POST(request: NextRequest) {
-  const authHeader = request.headers.get('authorization')
-  if (!authHeader) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-  const token = authHeader.replace('Bearer ', '')
-  const user = await getUserFromToken(token)
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const ctx = await getAuthContext(request)
+  if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const clientId = process.env.SHOPIFY_CLIENT_ID
   if (!clientId) return NextResponse.json({ error: 'Shopify app not configured' }, { status: 500 })
 
-  const { shop } = await request.json() as { shop: string }
+  const { shop } = await parseBody<ShopifyOAuthBody>(request)
   if (!shop) {
     return NextResponse.json({ error: 'Shop domain is required' }, { status: 400 })
   }
@@ -60,7 +59,8 @@ export async function POST(request: NextRequest) {
 
   const { error: stateError } = await supabaseAdmin.from('oauth_states').insert({
     state,
-    user_id: user.id,
+    user_id: ctx.user.id,
+    workspace_id: ctx.workspaceId,
     shop: shopDomain,
     expires_at: expiresAt,
   })

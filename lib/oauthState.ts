@@ -18,7 +18,15 @@ function signPayload(payload: string, secret: string) {
   return crypto.createHmac('sha256', secret).update(payload).digest('base64url')
 }
 
-export function createOAuthState({ userId, workspaceId, provider }: { userId: any; workspaceId: any; provider: any }) {
+interface OAuthStatePayload {
+  userId: string
+  workspaceId: string
+  provider: string
+  exp: number
+  nonce: string
+}
+
+export function createOAuthState({ userId, workspaceId, provider }: { userId: string; workspaceId: string; provider: string }) {
   const secret = getStateSecret()
   if (!secret) throw new Error('OAuth state secret is not configured')
 
@@ -34,7 +42,7 @@ export function createOAuthState({ userId, workspaceId, provider }: { userId: an
   return `${payload}.${signature}`
 }
 
-export function verifyOAuthState(state: any, expectedProvider: any) {
+export function verifyOAuthState(state: string | null | undefined, expectedProvider: string): OAuthStatePayload | null {
   const secret = getStateSecret()
   if (!secret || !state) return null
 
@@ -49,7 +57,7 @@ export function verifyOAuthState(state: any, expectedProvider: any) {
   }
 
   try {
-    const data = JSON.parse(base64UrlDecode(payload))
+    const data = JSON.parse(base64UrlDecode(payload)) as OAuthStatePayload
     if (data.provider !== expectedProvider) return null
     if (!data.userId || !data.exp || Date.now() > data.exp) return null
     // workspaceId is optional for backwards-compat but will be present for new flows

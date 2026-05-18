@@ -4,7 +4,17 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { settingsKeys } from './use-settings-data'
 import { useToken } from './utils'
 import { toast } from 'sonner'
+import { parseJson } from '@/lib/utils/typed-json'
 import type { MacroOnboarding } from '@/types/settings'
+
+interface ErrorResponse {
+  error?: string
+}
+
+interface GenerateMacrosResponse {
+  ok: boolean
+  count: number
+}
 
 export function useDuplicateMacro() {
   const token = useToken()
@@ -16,13 +26,13 @@ export function useDuplicateMacro() {
         headers: { Authorization: `Bearer ${token}` },
       })
       if (!res.ok) {
-        const d = await res.json().catch(() => ({}))
-        throw new Error((d as { error?: string }).error || 'Failed to duplicate macro')
+        const d = await parseJson<ErrorResponse>(res).catch((): ErrorResponse => ({}))
+        throw new Error(d.error ||'Failed to duplicate macro')
       }
-      return res.json()
+      return parseJson<unknown>(res)
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: settingsKeys.macros({ search: '', language: '', tags: [], archived: false }) })
+      void qc.invalidateQueries({ queryKey: settingsKeys.macros({ search: '', language: '', tags: [], archived: false }) })
       toast.success('Macro duplicated')
     },
     onError: (err: Error) => {
@@ -41,13 +51,13 @@ export function useArchiveMacro() {
         headers: { Authorization: `Bearer ${token}` },
       })
       if (!res.ok) {
-        const d = await res.json().catch(() => ({}))
-        throw new Error((d as { error?: string }).error || 'Failed to archive macro')
+        const d = await parseJson<ErrorResponse>(res).catch((): ErrorResponse => ({}))
+        throw new Error(d.error ||'Failed to archive macro')
       }
-      return res.json()
+      return parseJson<unknown>(res)
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: [...settingsKeys.all, 'macros'] })
+      void qc.invalidateQueries({ queryKey: [...settingsKeys.all, 'macros'] })
       toast.success('Macro archived')
     },
     onError: (err: Error) => {
@@ -66,13 +76,13 @@ export function useRestoreMacro() {
         headers: { Authorization: `Bearer ${token}` },
       })
       if (!res.ok) {
-        const d = await res.json().catch(() => ({}))
-        throw new Error((d as { error?: string }).error || 'Failed to restore macro')
+        const d = await parseJson<ErrorResponse>(res).catch((): ErrorResponse => ({}))
+        throw new Error(d.error ||'Failed to restore macro')
       }
-      return res.json()
+      return parseJson<unknown>(res)
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: [...settingsKeys.all, 'macros'] })
+      void qc.invalidateQueries({ queryKey: [...settingsKeys.all, 'macros'] })
       toast.success('Macro restored')
     },
     onError: (err: Error) => {
@@ -91,12 +101,12 @@ export function useDeleteMacro() {
         headers: { Authorization: `Bearer ${token}` },
       })
       if (!res.ok) {
-        const d = await res.json().catch(() => ({}))
-        throw new Error((d as { error?: string }).error || 'Failed to delete macro')
+        const d = await parseJson<ErrorResponse>(res).catch((): ErrorResponse => ({}))
+        throw new Error(d.error ||'Failed to delete macro')
       }
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: [...settingsKeys.all, 'macros'] })
+      void qc.invalidateQueries({ queryKey: [...settingsKeys.all, 'macros'] })
       toast.success('Macro deleted')
     },
     onError: (err: Error) => {
@@ -116,13 +126,13 @@ export function useSaveMacroOnboarding() {
         body: JSON.stringify({ answers }),
       })
       if (!res.ok) {
-        const d = await res.json().catch(() => ({}))
-        throw new Error((d as { error?: string }).error || 'Failed to save onboarding')
+        const d = await parseJson<ErrorResponse>(res).catch((): ErrorResponse => ({}))
+        throw new Error(d.error ||'Failed to save onboarding')
       }
-      return res.json()
+      return parseJson<unknown>(res)
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: settingsKeys.macroOnboarding() })
+      void qc.invalidateQueries({ queryKey: settingsKeys.macroOnboarding() })
       toast.success('Onboarding saved')
     },
     onError: (err: Error) => {
@@ -144,13 +154,13 @@ export function useGenerateMacros() {
         body: body ? JSON.stringify(body) : undefined,
       })
       if (!res.ok) {
-        const d = await res.json().catch(() => ({}))
-        throw new Error((d as { error?: string }).error || 'Generation failed')
+        const d = await parseJson<ErrorResponse>(res).catch((): ErrorResponse => ({}))
+        throw new Error(d.error ||'Generation failed')
       }
-      return res.json() as Promise<{ ok: boolean; count: number }>
+      return parseJson<GenerateMacrosResponse>(res)
     },
     onSuccess: (data) => {
-      qc.invalidateQueries({ queryKey: [...settingsKeys.all, 'macros'] })
+      void qc.invalidateQueries({ queryKey: [...settingsKeys.all, 'macros'] })
       toast.success(`${data.count} macros created`)
     },
     onError: (err: Error) => {

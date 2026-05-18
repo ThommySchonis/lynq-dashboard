@@ -56,7 +56,7 @@ export function WelcomeBanner({ firstName, onDismissed }: WelcomeBannerProps) {
         </Button>
         <button
           type="button"
-          onClick={handleDismiss}
+          onClick={() => void handleDismiss()}
           disabled={dismissing}
           className="cursor-pointer rounded-md border-none bg-transparent px-3 py-2 text-xs font-medium text-[#6B5E7B] disabled:cursor-wait"
         >

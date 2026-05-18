@@ -254,7 +254,7 @@ export function GeneralSettings() {
             setIdentity((prev) => ({ ...prev, ...patch }))
             if ('slug' in patch) setSlugError('')
           }}
-          onSave={handleSaveIdentity}
+          onSave={() => void handleSaveIdentity()}
         />
 
         <RegionalSection
@@ -263,7 +263,7 @@ export function GeneralSettings() {
           isSaving={savingRegional}
           isDirty={regionalDirty}
           onChange={(patch) => setRegional((prev) => ({ ...prev, ...patch }))}
-          onSave={handleSaveRegional}
+          onSave={() => void handleSaveRegional()}
         />
 
         <PreferencesSection
@@ -272,7 +272,7 @@ export function GeneralSettings() {
           isSaving={savingPreferences}
           isDirty={preferencesDirty}
           onChange={(patch) => setPreferences((prev) => ({ ...prev, ...patch }))}
-          onSave={handleSavePreferences}
+          onSave={() => void handleSavePreferences()}
         />
 
         <DangerZoneSection

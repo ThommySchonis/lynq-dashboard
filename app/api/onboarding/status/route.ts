@@ -56,31 +56,41 @@ export async function GET(request: NextRequest) {
       .eq('workspace_id', ctx.workspaceId),
   ])
 
+  interface ProfileRow { display_name?: string; welcome_dismissed_at?: string | null; setup_checklist_dismissed_at?: string | null }
+  interface WorkspaceRow { id: string; name?: string; subscription_status?: string; trial_ends_at?: string }
+  interface EmailRow { status?: string }
+  interface IntegrationRow { shopify_domain?: string; status?: string }
+
+  const profileData = profileRes.data as ProfileRow | null
+  const wsData = workspaceRes.data as WorkspaceRow | null
+  const emailData = emailRes.data as EmailRow | null
+  const integrationData = integrationRes.data as IntegrationRow | null
+
   const fullName =
-    profileRes.data?.display_name ||
-    ctx.user.user_metadata?.name ||
+    profileData?.display_name ||
+    (ctx.user.user_metadata as Record<string, unknown> | undefined)?.name as string ||
     ctx.user.email?.split('@')[0] ||
     ''
-  const firstName = fullName.split(/\s+/)[0]
+  const firstName = String(fullName).split(/\s+/)[0]
 
   return NextResponse.json({
     // Spec-required counts/flags. status === 'connected' is the new
     // truth signal — pending intents (typed shop URL / picked Gmail
     // but no OAuth yet) blijven 'pending' en tellen niet als done.
     macros_count:      macrosRes.count ?? 0,
-    email_connected:   emailRes.data?.status === 'connected',
-    shopify_connected: integrationRes.data?.status === 'connected'
-                       && !!integrationRes.data?.shopify_domain,
+    email_connected:   emailData?.status === 'connected',
+    shopify_connected: integrationData?.status === 'connected'
+                       && !!integrationData?.shopify_domain,
     team_member_count: membersRes.count ?? 0,
 
     // Meta for trial-only gating + UI copy
-    subscription_status: workspaceRes.data?.subscription_status ?? null,
-    trial_ends_at:       workspaceRes.data?.trial_ends_at ?? null,
-    workspace_name:      workspaceRes.data?.name ?? null,
+    subscription_status: wsData?.subscription_status ?? null,
+    trial_ends_at:       wsData?.trial_ends_at ?? null,
+    workspace_name:      wsData?.name ?? null,
     user: {
       first_name:                   firstName,
-      welcome_dismissed_at:         profileRes.data?.welcome_dismissed_at ?? null,
-      setup_checklist_dismissed_at: profileRes.data?.setup_checklist_dismissed_at ?? null,
+      welcome_dismissed_at:         profileData?.welcome_dismissed_at ?? null,
+      setup_checklist_dismissed_at: profileData?.setup_checklist_dismissed_at ?? null,
     },
   })
 }

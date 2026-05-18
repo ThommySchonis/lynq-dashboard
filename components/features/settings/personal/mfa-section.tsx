@@ -44,8 +44,8 @@ export function MfaSection() {
   const [rcOpen, setRcOpen] = useState(false)
 
   useEffect(() => {
-    loadFactors()
-  }, [])
+    void loadFactors()
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function loadFactors() {
     setLoadingFactors(true)
@@ -156,7 +156,7 @@ export function MfaSection() {
       <MfaWizardDialog
         open={wizardOpen}
         onOpenChange={setWizardOpen}
-        onComplete={() => loadFactors()}
+        onComplete={() => void loadFactors()}
       />
 
       <RecoveryCodesDialog open={rcOpen} onOpenChange={setRcOpen} />
@@ -168,7 +168,7 @@ export function MfaSection() {
         description="This will reduce your account security. You won't need a code when signing in."
         confirmLabel="Disable 2FA"
         typeToConfirm="DISABLE"
-        onConfirm={handleDisable}
+        onConfirm={() => void handleDisable()}
         variant="danger"
         loading={unenrollMfa.isPending}
       />

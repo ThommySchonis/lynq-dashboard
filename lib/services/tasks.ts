@@ -58,20 +58,24 @@ export async function getTasks(workspaceId: string, filters: TaskFilters = {}): 
   if (filters.priority) q = q.eq('priority', filters.priority)
   if (filters.assignee) q = q.eq('assigned_to', filters.assignee)
 
-  const { data, error } = await q
+  const queryResult = await q
 
-  if (error) throw new Error(`Failed to fetch tasks: ${error.message}`)
+  if (queryResult.error) throw new Error(`Failed to fetch tasks: ${queryResult.error.message}`)
+
+  type TaskRow = Record<string, unknown>
+  const rows = (queryResult.data as TaskRow[]) || []
 
   // Resolve member display names via workspace_member_details view
-  const memberIds = [...new Set((data || []).map(r => r.assigned_to).filter(Boolean))]
+  const memberIds = [...new Set(rows.map(r => r.assigned_to as string | null).filter(Boolean))] as string[]
   let memberNameMap: Record<string, string> = {}
 
   if (memberIds.length > 0) {
-    const { data: members } = await supabaseAdmin
+    const membersResult = await supabaseAdmin
       .from('workspace_member_details')
       .select('id, display_name, email')
       .in('id', memberIds)
 
+    const members = membersResult.data as Array<{ id: string; display_name?: string; email?: string }> | null
     if (members) {
       memberNameMap = Object.fromEntries(
         members.map(m => [m.id, m.display_name || m.email || 'Unknown'])
@@ -79,9 +83,9 @@ export async function getTasks(workspaceId: string, filters: TaskFilters = {}): 
     }
   }
 
-  return (data || []).map(row => ({
+  return rows.map(row => ({
     ...rowToTask(row),
-    assignedMemberName: row.assigned_to ? (memberNameMap[row.assigned_to] ?? null) : null,
+    assignedMemberName: (row.assigned_to as string | null) ? (memberNameMap[row.assigned_to as string] ?? null) : null,
   }))
 }
 
@@ -90,7 +94,7 @@ export async function createTask(
   createdBy: string | null,
   input: CreateTaskInput
 ): Promise<Task> {
-  const { data, error } = await supabaseAdmin
+  const createResult = await supabaseAdmin
     .from('tasks')
     .insert({
       workspace_id: workspaceId,
@@ -110,8 +114,8 @@ export async function createTask(
     .select()
     .single()
 
-  if (error) throw new Error(`Failed to create task: ${error.message}`)
-  return rowToTask(data)
+  if (createResult.error) throw new Error(`Failed to create task: ${createResult.error.message}`)
+  return rowToTask(createResult.data as Record<string, unknown>)
 }
 
 export async function updateTask(
@@ -138,7 +142,7 @@ export async function updateTask(
     }
   }
 
-  const { data, error } = await supabaseAdmin
+  const updateResult = await supabaseAdmin
     .from('tasks')
     .update(row)
     .eq('id', taskId)
@@ -147,8 +151,8 @@ export async function updateTask(
     .select()
     .single()
 
-  if (error) throw new Error(`Failed to update task: ${error.message}`)
-  return rowToTask(data)
+  if (updateResult.error) throw new Error(`Failed to update task: ${updateResult.error.message}`)
+  return rowToTask(updateResult.data as Record<string, unknown>)
 }
 
 export async function deleteTask(workspaceId: string, taskId: string): Promise<void> {
@@ -164,6 +168,10 @@ export async function deleteTask(workspaceId: string, taskId: string): Promise<v
 
 // ── Pattern Generation ───────────────────────────────────────────────────────
 
+interface WorkspaceCooldownRow {
+  last_tasks_generated_at?: string | null
+}
+
 const GENERATION_COOLDOWN_MS = 5 * 60 * 1000 // 5 minutes
 
 export async function generatePatternTasks(
@@ -171,12 +179,13 @@ export async function generatePatternTasks(
   refunds: Refund[]
 ): Promise<{ generated: number; skipped: boolean }> {
   // Check cooldown
-  const { data: ws } = await supabaseAdmin
+  const wsResult = await supabaseAdmin
     .from('workspaces')
     .select('last_tasks_generated_at')
     .eq('id', workspaceId)
     .single()
 
+  const ws = wsResult.data as WorkspaceCooldownRow | null
   if (ws?.last_tasks_generated_at) {
     const elapsed = Date.now() - new Date(ws.last_tasks_generated_at).getTime()
     if (elapsed < GENERATION_COOLDOWN_MS) {

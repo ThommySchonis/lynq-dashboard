@@ -16,6 +16,14 @@ import {
   Zap,
 } from 'lucide-react'
 import { authFetch, normalizeSafeUrl, plainTextToSafeHtml, sanitizeHtml } from '@/lib/inbox-utils'
+import { parseJson } from '@/lib/utils/typed-json'
+
+interface ComposeResponse {
+  success?: boolean
+  id?: string
+  conversationId?: string
+  error?: string
+}
 
 interface TicketMacro {
   id: string
@@ -102,7 +110,7 @@ export function CreateTicketView({ token, connectedEmail, onClose, onSuccess, ma
       },
       token,
     );
-    const data = await res.json();
+    const data = await parseJson<ComposeResponse>(res);
     setSending(false);
     if (data.success || data.id || data.conversationId) {
       onSuccess("Message sent!");
@@ -323,7 +331,7 @@ export function CreateTicketView({ token, connectedEmail, onClose, onSuccess, ma
           data-placeholder="Click here to reply, or press r."
           onInput={(e) => setBody(e.currentTarget.textContent)}
           onKeyDown={(e) => {
-            if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) doSend();
+            if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) void doSend();
           }}
           className="compose-ta w-full resize-none outline-none bg-transparent px-4 py-3 text-sm text-foreground leading-relaxed min-h-[90px] tracking-[.005em] min-h-[130px] px-4 py-3 text-[13.5px] leading-[1.75] overflow-y-auto"
         />
@@ -372,7 +380,7 @@ export function CreateTicketView({ token, connectedEmail, onClose, onSuccess, ma
           {/* Send button group */}
           <div className="flex items-stretch rounded-[9px] overflow-hidden gap-px shrink-0">
             <button
-              onClick={doSend}
+              onClick={() => void doSend()}
               disabled={sending}
               className={`flex items-center gap-1.5 px-4 py-[7px] bg-foreground text-white border-none text-[12.5px] font-semibold font-[inherit] transition-[background] ${sending ? "cursor-not-allowed opacity-70" : "cursor-pointer opacity-100"}`}
             >
@@ -387,7 +395,7 @@ export function CreateTicketView({ token, connectedEmail, onClose, onSuccess, ma
             </button>
             <div className="w-px bg-white/15 shrink-0" />
             <button
-              onClick={doSend}
+              onClick={() => void doSend()}
               disabled={sending}
               className={`flex items-center gap-[5px] px-4 py-[7px] bg-foreground text-white border-none text-[12.5px] font-semibold font-[inherit] transition-[background] whitespace-nowrap ${sending ? "cursor-not-allowed opacity-70" : "cursor-pointer opacity-100"}`}
             >

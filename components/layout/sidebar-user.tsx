@@ -47,7 +47,7 @@ export function SidebarUser({ collapsed }: SidebarUserProps) {
         <Button
           variant="ghost"
           size="icon"
-          onClick={handleLogout}
+          onClick={() => void handleLogout()}
           className="h-7 w-7 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800"
           aria-label="Log out"
         >
@@ -84,7 +84,7 @@ export function SidebarUser({ collapsed }: SidebarUserProps) {
       <Button
         variant="ghost"
         size="icon"
-        onClick={handleLogout}
+        onClick={() => void handleLogout()}
         className="h-7 w-7 shrink-0 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800"
         aria-label="Log out"
       >

@@ -4,7 +4,16 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { settingsKeys } from './use-settings-data'
 import { useToken } from './utils'
 import { toast } from 'sonner'
+import { parseJson } from '@/lib/utils/typed-json'
 import type { CustomEmailConfig } from '@/types/settings'
+
+interface ErrorResponse {
+  error?: string
+}
+
+interface ShopifyOAuthResponse {
+  url: string
+}
 
 /* ─────────────────────────────────────────────
    Email mutations
@@ -21,13 +30,13 @@ export function useConnectCustomEmail() {
         body: JSON.stringify(config),
       })
       if (!res.ok) {
-        const d = await res.json().catch(() => ({}))
-        throw new Error((d as { error?: string }).error || 'Failed to connect email')
+        const d = await parseJson<ErrorResponse>(res).catch((): ErrorResponse => ({}))
+        throw new Error(d.error || 'Failed to connect email')
       }
-      return res.json()
+      return parseJson<unknown>(res)
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: settingsKeys.emailAccounts() })
+      void qc.invalidateQueries({ queryKey: settingsKeys.emailAccounts() })
       toast.success('Email account connected')
     },
     onError: (err: Error) => {
@@ -46,12 +55,12 @@ export function useDisconnectEmail() {
         headers: { Authorization: `Bearer ${token}` },
       })
       if (!res.ok) {
-        const d = await res.json().catch(() => ({}))
-        throw new Error((d as { error?: string }).error || 'Failed to disconnect email')
+        const d = await parseJson<ErrorResponse>(res).catch((): ErrorResponse => ({}))
+        throw new Error(d.error || 'Failed to disconnect email')
       }
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: settingsKeys.emailAccounts() })
+      void qc.invalidateQueries({ queryKey: settingsKeys.emailAccounts() })
       toast.success('Email account disconnected')
     },
     onError: (err: Error) => {
@@ -75,13 +84,13 @@ export function useConnectShopify() {
         body: JSON.stringify({ shop: domain, accessToken: access_token }),
       })
       if (!res.ok) {
-        const d = await res.json().catch(() => ({}))
-        throw new Error((d as { error?: string }).error || 'Failed to connect Shopify')
+        const d = await parseJson<ErrorResponse>(res).catch((): ErrorResponse => ({}))
+        throw new Error(d.error || 'Failed to connect Shopify')
       }
-      return res.json()
+      return parseJson<unknown>(res)
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: settingsKeys.shopify() })
+      void qc.invalidateQueries({ queryKey: settingsKeys.shopify() })
       toast.success('Shopify connected')
     },
     onError: (err: Error) => {
@@ -100,16 +109,34 @@ export function useDisconnectShopify() {
         headers: { Authorization: `Bearer ${token}` },
       })
       if (!res.ok) {
-        const d = await res.json().catch(() => ({}))
-        throw new Error((d as { error?: string }).error || 'Failed to disconnect Shopify')
+        const d = await parseJson<ErrorResponse>(res).catch((): ErrorResponse => ({}))
+        throw new Error(d.error || 'Failed to disconnect Shopify')
       }
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: settingsKeys.shopify() })
+      void qc.invalidateQueries({ queryKey: settingsKeys.shopify() })
       toast.success('Shopify disconnected')
     },
     onError: (err: Error) => {
       toast.error(err.message)
     },
   })
+}
+
+/* ─────────────────────────────────────────────
+   Shopify OAuth
+───────────────────────────────────────────── */
+
+export async function startShopifyOAuth(token: string, shop: string): Promise<string> {
+  const res = await fetch('/api/auth/shopify', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ shop }),
+  })
+  if (!res.ok) {
+    const d = await parseJson<ErrorResponse>(res).catch((): ErrorResponse => ({}))
+    throw new Error(d.error || 'Failed to start Shopify OAuth')
+  }
+  const data = await parseJson<ShopifyOAuthResponse>(res)
+  return data.url
 }

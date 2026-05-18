@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Loader2 } from 'lucide-react'
 import { authFetch } from '@/lib/inbox-utils'
+import { parseJson } from '@/lib/utils/typed-json'
 
 interface AddressFields {
   firstName?: string
@@ -20,7 +21,7 @@ interface AddressFields {
   [key: string]: unknown
 }
 
-interface EditAddressOrder {
+export interface EditAddressOrder {
   id: string
   name: string
   shippingAddress?: AddressFields | null
@@ -53,7 +54,7 @@ export function EditAddressModal({ order, token, onClose, onSuccess }: EditAddre
   async function handleSave() {
     setLoading(true);
     const res = await authFetch(`/api/shopify/orders/${order.id}/address`, { method: "PUT", body: JSON.stringify(form) }, token);
-    const data = await res.json();
+    const data = await parseJson<{ success?: boolean; error?: string }>(res);
     setLoading(false);
     if (data.success) onSuccess("Address updated");
     else onSuccess(data.error || "Failed to save address", "error");
@@ -114,7 +115,7 @@ export function EditAddressModal({ order, token, onClose, onSuccess }: EditAddre
           <Button variant="outline" className="" onClick={onClose}>
             Cancel
           </Button>
-          <Button className="" onClick={handleSave} disabled={loading}>
+          <Button className="" onClick={() => void handleSave()} disabled={loading}>
             {loading ? <Loader2 size={13} className="animate-spin text-white" /> : "Save"}
           </Button>
         </DialogFooter>

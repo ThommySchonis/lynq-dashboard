@@ -2,6 +2,17 @@ import { supabaseAdmin } from '../../../../lib/supabaseAdmin'
 import { getAuthContext } from '../../../../lib/auth'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { parseBody } from '@/lib/utils/typed-json'
+
+interface LinkShopBody {
+  shop: unknown
+}
+
+interface PendingToken {
+  access_token?: string
+  scope?: string
+  expires_at?: string
+}
 
 function normalizeShopDomain(shop: unknown): string {
   const value = String(shop || '').trim().toLowerCase()
@@ -15,17 +26,19 @@ export async function POST(request: NextRequest) {
   const ctx = await getAuthContext(request)
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { shop } = await request.json() as { shop: unknown }
+  const { shop } = await parseBody<LinkShopBody>(request)
   const shopDomain = normalizeShopDomain(shop)
   if (!shopDomain) return NextResponse.json({ error: 'Invalid shop' }, { status: 400 })
 
-  const { data: pending } = await supabaseAdmin
+  const pendingResult = await supabaseAdmin
     .from('pending_shopify_tokens')
     .select('*')
     .eq('shop', shopDomain)
     .maybeSingle()
 
-  if (!pending || new Date(pending.expires_at) < new Date()) {
+  const pending = pendingResult.data as PendingToken | null
+
+  if (!pending || new Date(pending.expires_at ?? 0) < new Date()) {
     return NextResponse.json({ error: 'No pending token found or it expired. Please reconnect.' }, { status: 404 })
   }
 

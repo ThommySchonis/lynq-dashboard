@@ -57,7 +57,7 @@ export function TeamList() {
                   {formatRole(m.role)}
                 </span>
                 <button
-                  onClick={() => handleDelete(m.id, m.email)}
+                  onClick={() => void handleDelete(m.id, m.email)}
                   className="text-muted-foreground hover:text-red-500 transition-colors"
                 >
                   <Trash2 size={14} />

@@ -3,6 +3,8 @@
 import { useQuery } from '@tanstack/react-query'
 import { authFetch } from '@/lib/inbox-utils'
 import { useAuthStore } from '@/stores/auth'
+import { parseJson } from '@/lib/utils/typed-json'
+import type { Thread, Message, Note } from '@/types/inbox'
 
 function useToken() {
   return useAuthStore((s) => s.session?.access_token ?? '')
@@ -19,10 +21,36 @@ export const inboxKeys = {
   macros: () => [...inboxKeys.all, 'macros'] as const,
 }
 
+interface ConversationsResponse {
+  conversations?: Array<Record<string, string | boolean | null>>
+}
+
+interface ConversationDetailResponse {
+  conversation?: Record<string, unknown>
+  messages?: Array<Record<string, string | null>>
+  notes?: Note[]
+}
+
+interface InboxCountsResponse {
+  open?: number
+  pending?: number
+  resolved?: number
+  unlinked?: number
+  trash?: number
+}
+
+interface ComposeMacrosResponse {
+  macros?: ComposeMacro[]
+}
+
+interface AccountsResponse {
+  accounts?: AccountRecord[]
+}
+
 /** Fetch conversation list by folder + optional search */
 export function useConversations(folder: string, search: string) {
   const token = useToken()
-  return useQuery({
+  return useQuery<Thread[]>({
     queryKey: inboxKeys.conversations(folder, search),
     queryFn: async () => {
       const params = new URLSearchParams()
@@ -31,39 +59,49 @@ export function useConversations(folder: string, search: string) {
       else params.set('status', folder)
       if (search) params.set('search', search)
       const res = await authFetch(`/api/inbox/conversations?${params}`, {}, token)
-      const data = await res.json()
-      return (data.conversations || []).map((c: Record<string, string | boolean | null>) => ({
+      const data = await parseJson<ConversationsResponse>(res)
+      return ((data.conversations || []) as Array<Record<string, string | boolean | null>>).map((c) => ({
         ...c,
         from: c.customer_name
           ? `${c.customer_name} <${c.customer_email || ''}>`
-          : c.customer_email || 'Unknown',
-        subject: c.subject || '(no subject)',
-        snippet: c.snippet || c.preview || '',
-        date: c.last_message_at || c.created_at,
-        unread: c.is_unread || false,
-      }))
+          : (c.customer_email as string) || 'Unknown',
+        subject: (c.subject as string) || '(no subject)',
+        snippet: (c.snippet || c.preview || '') as string,
+        date: (c.last_message_at || c.created_at) as string,
+        unread: (c.is_unread || false) as boolean,
+      })) as Thread[]
     },
     enabled: !!token,
   })
 }
 
+export interface ConversationData {
+  conversation: Thread | null
+  messages: Message[]
+  notes: Note[]
+}
+
 /** Fetch a single conversation with messages and notes */
 export function useConversation(threadId: string | null) {
   const token = useToken()
-  return useQuery({
+  return useQuery<ConversationData>({
     queryKey: inboxKeys.conversation(threadId || ''),
-    queryFn: async () => {
+    queryFn: async (): Promise<ConversationData> => {
       const res = await authFetch(`/api/inbox/conversations/${threadId}`, {}, token)
-      const data = await res.json()
-      const messages = (data.messages || []).map((m: Record<string, string | null>) => ({
+      const data = await parseJson<ConversationDetailResponse>(res)
+      const messages: Message[] = (data.messages || []).map((m: Record<string, string | null>) => ({
         ...m,
         from: m.from_name
           ? `${m.from_name} <${m.from_email || ''}>`
           : m.from_email || m.from || '',
-        date: m.sent_at || m.created_at || m.date,
+        date: m.sent_at || m.created_at || m.date || '',
         body: m.body_html || m.body_text || m.body || '',
-      }))
-      return { conversation: data.conversation, messages, notes: data.notes || [] }
+      })) as Message[]
+      return {
+        conversation: (data.conversation ?? null) as Thread | null,
+        messages,
+        notes: (data.notes || []) as Note[],
+      }
     },
     enabled: !!threadId && !!token,
   })
@@ -76,7 +114,7 @@ export function useInboxCounts() {
     queryKey: inboxKeys.counts(),
     queryFn: async () => {
       const res = await authFetch('/api/inbox/counts', {}, token)
-      const data = await res.json()
+      const data = await parseJson<InboxCountsResponse>(res)
       return {
         open: data.open || 0,
         pending: data.pending || 0,
@@ -101,36 +139,44 @@ export function useCustomerSearch(query: string) {
     queryKey: inboxKeys.customer(query),
     queryFn: async () => {
       const res = await authFetch(`/api/shopify/customer?${param}`, {}, token)
-      return res.json()
+      return parseJson<Record<string, unknown>>(res)
     },
     enabled: !!trimmed && !!token,
   })
 }
 
+interface ComposeMacro {
+  id: string
+  name: string
+  body?: string
+  tags?: string[]
+  archived?: boolean
+}
+
 /** Fetch macros for compose (with localStorage fallback) */
 export function useComposeMacros() {
   const token = useToken()
-  return useQuery({
+  return useQuery<ComposeMacro[]>({
     queryKey: inboxKeys.macros(),
-    queryFn: async () => {
+    queryFn: async (): Promise<ComposeMacro[]> => {
       const res = await authFetch('/api/macros', {}, token)
-      const data = await res.json()
-      if (data.macros?.length) return data.macros as Array<{
-        id: string
-        name: string
-        body?: string
-        tags?: string[]
-        archived?: boolean
-      }>
+      const data = await parseJson<ComposeMacrosResponse>(res)
+      if (data.macros?.length) return data.macros
       // Fallback to localStorage
       try {
-        const stored = JSON.parse(localStorage.getItem('lynq_macros') || 'null')
-        if (Array.isArray(stored) && stored.length) return stored
+        const stored: unknown = JSON.parse(localStorage.getItem('lynq_macros') || 'null')
+        if (Array.isArray(stored) && stored.length) return stored as ComposeMacro[]
       } catch { /* ignore */ }
       return []
     },
     enabled: !!token,
   })
+}
+
+interface AccountRecord {
+  status?: string
+  provider?: string
+  email_address?: string
 }
 
 /** Check if email account is connected */
@@ -140,8 +186,8 @@ export function useEmailConnected() {
     queryKey: inboxKeys.accounts(),
     queryFn: async () => {
       const res = await authFetch('/api/inbox/accounts', {}, token)
-      const data = await res.json().catch(() => ({}))
-      return Boolean(data?.accounts?.length > 0)
+      const data = await parseJson<AccountsResponse>(res).catch((): AccountsResponse => ({}))
+      return Boolean(data?.accounts && data.accounts.length > 0)
     },
     enabled: !!token,
   })
@@ -154,14 +200,14 @@ export function useEmailAccountInfo() {
     queryKey: [...inboxKeys.accounts(), 'info'] as const,
     queryFn: async () => {
       const res = await authFetch('/api/inbox/accounts', {}, token)
-      const data = await res.json().catch(() => ({ accounts: [] }))
+      const data = await parseJson<AccountsResponse>(res).catch((): AccountsResponse => ({ accounts: [] }))
       const accounts = data?.accounts || []
-      const active = accounts.find((a: Record<string, unknown>) => a.status === 'active')
+      const active = accounts.find((a) => a.status === 'active')
       if (active) {
         return {
           connected: true,
-          provider: active.provider as string,
-          email: (active.email_address || null) as string | null,
+          provider: active.provider ?? null,
+          email: active.email_address ?? null,
         }
       }
       return { connected: false, provider: null, email: null }

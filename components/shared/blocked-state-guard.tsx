@@ -4,6 +4,12 @@ import { useEffect, useState, type ReactNode } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { isTrialExpired } from "@/lib/trialStatus";
+import { parseJson } from "@/lib/utils/typed-json";
+
+interface OnboardingStatus {
+  subscription_status?: string
+  trial_ends_at?: string | null
+}
 
 const ALLOW_PATHS = [
   "/pricing-required",
@@ -56,18 +62,20 @@ export function BlockedStateGuard({ children }: { children: ReactNode }) {
           return;
         }
 
-        const data = await res.json();
+        const data = await parseJson<OnboardingStatus>(res);
 
         if (data?.subscription_status === "paying") {
           if (!cancelled) setChecked(true);
           return;
         }
 
+        const subStatus = data?.subscription_status;
+        const trialEndsAt = data?.trial_ends_at;
         const blocked =
-          data?.subscription_status === "expired" ||
+          subStatus === "expired" ||
           isTrialExpired({
-            subscription_status: data?.subscription_status,
-            trial_ends_at: data?.trial_ends_at,
+            subscription_status: subStatus,
+            trial_ends_at: trialEndsAt,
           });
 
         if (blocked && !cancelled) {
@@ -80,7 +88,7 @@ export function BlockedStateGuard({ children }: { children: ReactNode }) {
       }
     }
 
-    check();
+    void check();
     return () => {
       cancelled = true;
     };

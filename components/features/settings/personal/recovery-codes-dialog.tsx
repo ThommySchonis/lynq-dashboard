@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/dialog'
 import { toast } from 'sonner'
 import { copyText, downloadCodes } from './mfa-utils'
+import { parseJson } from '@/lib/utils/typed-json'
 
 interface RecoveryCodesDialogProps {
   open: boolean
@@ -27,7 +28,7 @@ export function RecoveryCodesDialog({ open, onOpenChange }: RecoveryCodesDialogP
 
   useEffect(() => {
     if (!open) return
-    loadCodes()
+    void loadCodes()
   }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function loadCodes() {
@@ -36,7 +37,7 @@ export function RecoveryCodesDialog({ open, onOpenChange }: RecoveryCodesDialogP
       const res = await fetch('/api/auth/recovery-codes', {
         headers: { Authorization: `Bearer ${token}` },
       })
-      const json = (await res.json()) as { recovery_codes?: string[] }
+      const json = await parseJson<{ recovery_codes?: string[] }>(res)
       setCodes(json.recovery_codes ?? [])
     } catch {
       setCodes([])
@@ -51,7 +52,7 @@ export function RecoveryCodesDialog({ open, onOpenChange }: RecoveryCodesDialogP
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
       })
-      const json = (await res.json()) as { recovery_codes?: string[] }
+      const json = await parseJson<{ recovery_codes?: string[] }>(res)
       setCodes(json.recovery_codes ?? [])
       toast.success('New recovery codes generated')
     } catch {
@@ -105,7 +106,7 @@ export function RecoveryCodesDialog({ open, onOpenChange }: RecoveryCodesDialogP
           <p className="text-xs text-muted-foreground mb-2.5">
             Generate a new set of codes -- your old ones will stop working immediately.
           </p>
-          <Button variant="ghost" size="sm" className="text-destructive" onClick={handleRegenerate} disabled={loading}>
+          <Button variant="ghost" size="sm" className="text-destructive" onClick={() => void handleRegenerate()} disabled={loading}>
             {loading ? 'Generating...' : 'Generate new codes'}
           </Button>
         </div>

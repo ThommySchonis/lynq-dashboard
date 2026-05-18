@@ -13,6 +13,11 @@ const TYPES = [
 
 type FeedbackType = (typeof TYPES)[number]["key"];
 
+interface FeedbackErrorResponse {
+  code?: string
+  error?: string
+}
+
 const MAX_LEN = 5000;
 const MIN_LEN = 5;
 
@@ -84,7 +89,7 @@ export function FeedbackModal({ open, onClose, onSuccess, onError }: FeedbackMod
         }),
       });
       if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
+        const err = await res.json().catch(() => ({})) as FeedbackErrorResponse;
         const detail = err.code ? ` (${err.code})` : "";
         onError?.((err.error || "Something went wrong. Please try again.") + detail);
         setSubmitting(false);
@@ -190,7 +195,7 @@ export function FeedbackModal({ open, onClose, onSuccess, onError }: FeedbackMod
             </Button>
             <Button
               size="sm"
-              onClick={submit}
+              onClick={() => void submit()}
               disabled={!canSubmit}
               className="gap-1.5 bg-primary text-white hover:bg-[#8B5CF6] disabled:opacity-50"
             >

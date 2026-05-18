@@ -7,8 +7,9 @@ import { Input } from '@/components/ui/input'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Copy, Loader2 } from 'lucide-react'
 import { authFetch, fmtPrice } from '@/lib/inbox-utils'
+import { parseJson } from '@/lib/utils/typed-json'
 
-interface DuplicateLineItem {
+export interface DuplicateLineItem {
   id: string
   title: string
   quantity: number
@@ -17,7 +18,7 @@ interface DuplicateLineItem {
   [key: string]: unknown
 }
 
-interface DuplicateOrder {
+export interface DuplicateOrder {
   id: string
   name: string
   totalPrice: string | number
@@ -65,7 +66,7 @@ export function DuplicateModal({ order, token, onClose, onSuccess }: DuplicateMo
       },
       token,
     );
-    const data = await res.json();
+    const data = await parseJson<{ success?: boolean; error?: string; draftOrder?: { name?: string } }>(res);
     setLoading(false);
     if (data.success) onSuccess(`Draft ${data.draftOrder?.name || ""} created!`);
     else onSuccess(data.error || "Duplicate failed", "error");
@@ -162,7 +163,7 @@ export function DuplicateModal({ order, token, onClose, onSuccess }: DuplicateMo
           <Button variant="outline" className="" onClick={onClose}>
             Cancel
           </Button>
-          <Button className="flex items-center gap-[7px]" onClick={handleDuplicate} disabled={loading}>
+          <Button className="flex items-center gap-[7px]" onClick={() => void handleDuplicate()} disabled={loading}>
             {loading ? (
               <Loader2 size={13} className="animate-spin text-white" />
             ) : (

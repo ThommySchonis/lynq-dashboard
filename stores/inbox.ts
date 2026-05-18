@@ -7,9 +7,76 @@ import type {
   ShopifyCustomer,
   FolderCounts,
   InboxFolder,
+  Macro,
 } from '@/types'
 import { useAIStore } from './ai'
 import { useMacrosStore } from './macros'
+
+// Raw API response shapes
+interface RawConversation {
+  customer_name?: string
+  customer_email?: string
+  subject?: string
+  snippet?: string
+  preview?: string
+  last_message_at?: string
+  created_at?: string
+  is_unread?: boolean
+  [key: string]: unknown
+}
+
+interface RawMessage {
+  from_name?: string
+  from_email?: string
+  from?: string
+  sent_at?: string
+  created_at?: string
+  date?: string
+  body_html?: string
+  body_text?: string
+  body?: string
+  [key: string]: unknown
+}
+
+interface ConversationsResponse {
+  conversations?: RawConversation[]
+}
+
+interface ThreadDetailResponse {
+  messages?: RawMessage[]
+  notes?: Note[]
+  conversation?: { customer_email?: string }
+}
+
+interface ReplyResponse {
+  success?: boolean
+  messageId?: string
+  id?: string
+}
+
+interface NoteResponse {
+  note?: Note
+}
+
+interface TranslationResponse {
+  translated?: string
+}
+
+interface CountsResponse {
+  open?: number
+  pending?: number
+  resolved?: number
+  unlinked?: number
+  trash?: number
+}
+
+interface AccountsResponse {
+  accounts?: unknown[]
+}
+
+interface MacroSuggestionsResponse {
+  macros?: Macro[]
+}
 
 interface InboxState {
   // Thread list
@@ -108,20 +175,20 @@ export const useInboxStore = create<InboxState>()((set, get) => ({
     if (search) params.set('search', search)
     try {
       const res = await authFetch(`/api/inbox/conversations?${params}`, {}, token)
-      const data = await res.json()
-      const convs: Thread[] = (data.conversations || []).map((c: Record<string, unknown>) => ({
+      const data = (await res.json()) as ConversationsResponse
+      const convs: Thread[] = (data.conversations ?? []).map((c: RawConversation) => ({
         ...c,
         from: c.customer_name
-          ? `${c.customer_name} <${c.customer_email || ''}>`
-          : ((c.customer_email as string) || 'Unknown'),
+          ? `${c.customer_name} <${c.customer_email ?? ''}>`
+          : (c.customer_email ?? 'Unknown'),
         subject: (c.subject as string) || '(no subject)',
         snippet: (c.snippet as string) || (c.preview as string) || '',
         date: (c.last_message_at as string) || (c.created_at as string),
         unread: (c.is_unread as boolean) || false,
-      }))
+      })) as Thread[]
       set({ threads: convs })
       // Trigger AI analysis in background
-      useAIStore.getState().analyzeThreads(convs, token)
+      void useAIStore.getState().analyzeThreads(convs, token)
     } catch {
       set({ threads: [] })
     }
@@ -138,18 +205,18 @@ export const useInboxStore = create<InboxState>()((set, get) => ({
     })
     try {
       const res = await authFetch(`/api/inbox/conversations/${thread.id}`, {}, token)
-      const data = await res.json()
-      const msgs: Message[] = (data.messages || []).map((m: Record<string, unknown>) => ({
+      const data = (await res.json()) as ThreadDetailResponse
+      const msgs: Message[] = (data.messages ?? []).map((m: RawMessage) => ({
         ...m,
         from: m.from_name
-          ? `${m.from_name} <${m.from_email || ''}>`
-          : ((m.from_email as string) || (m.from as string) || ''),
-        date: (m.sent_at as string) || (m.created_at as string) || (m.date as string),
-        body: (m.body_html as string) || (m.body_text as string) || (m.body as string) || '',
-      }))
+          ? `${m.from_name} <${m.from_email ?? ''}>`
+          : (m.from_email ?? m.from ?? ''),
+        date: m.sent_at ?? m.created_at ?? m.date ?? '',
+        body: m.body_html ?? m.body_text ?? m.body ?? '',
+      })) as Message[]
       set({
         messages: msgs,
-        notes: data.notes || [],
+        notes: data.notes ?? [],
         loadingMessages: false,
       })
 
@@ -173,26 +240,27 @@ export const useInboxStore = create<InboxState>()((set, get) => ({
             {},
             token,
           )
-          const cd = await cr.json()
+          const cd = (await cr.json()) as ShopifyCustomer
           set({ customer: cd, loadingCustomer: false })
         } catch {
           set({ loadingCustomer: false })
         }
 
         // AI macro suggestions (fire and forget)
-        authFetch('/api/ai/macros', {
+        void authFetch('/api/ai/macros', {
           method: 'POST',
           body: JSON.stringify({ subject: thread.subject, snippet: thread.snippet }),
         }, token)
           .then(r => r.json())
-          .then(d => {
-            if (d.macros?.length) useMacrosStore.getState().setAiMacros(d.macros)
+          .then((d: unknown) => {
+            const resp = d as MacroSuggestionsResponse
+            if (resp.macros?.length) useMacrosStore.getState().setAiMacros(resp.macros)
           })
           .catch(() => {})
 
         // Detect customer language from snippet
         if (thread.snippet) {
-          useAIStore.getState().detectLanguage(thread.snippet, token)
+          void useAIStore.getState().detectLanguage(thread.snippet, token)
         }
       }
     } catch {
@@ -217,7 +285,7 @@ export const useInboxStore = create<InboxState>()((set, get) => ({
           },
           token,
         )
-        const td = await tres.json()
+        const td = (await tres.json()) as TranslationResponse
         if (td.translated) {
           bodyHtml = plainTextToSafeHtml(td.translated)
           bodyText = td.translated
@@ -233,11 +301,11 @@ export const useInboxStore = create<InboxState>()((set, get) => ({
         { method: 'POST', body: JSON.stringify({ bodyHtml, bodyText }) },
         token,
       )
-      const data = await res.json()
+      const data = (await res.json()) as ReplyResponse
       if (data.success || data.messageId || data.id) {
         // Reload conversations and counts
-        get().loadConversations(token)
-        get().fetchCounts(token)
+        void get().loadConversations(token)
+        void get().fetchCounts(token)
         set({ sending: false })
         return true
       }
@@ -258,7 +326,7 @@ export const useInboxStore = create<InboxState>()((set, get) => ({
         { method: 'POST', body: JSON.stringify({ body: text.trim() }) },
         token,
       )
-      const data = await res.json()
+      const data = (await res.json()) as NoteResponse
       if (data.note) {
         set({ notes: [...get().notes, data.note] })
       }
@@ -281,7 +349,7 @@ export const useInboxStore = create<InboxState>()((set, get) => ({
       { method: 'PATCH', body: JSON.stringify({ status }) },
       token,
     )
-    get().fetchCounts(token)
+    void get().fetchCounts(token)
   },
 
   triggerSync: async (token) => {
@@ -297,14 +365,14 @@ export const useInboxStore = create<InboxState>()((set, get) => ({
   fetchCounts: async (token) => {
     try {
       const res = await authFetch('/api/inbox/counts', {}, token)
-      const data = await res.json()
+      const data = (await res.json()) as CountsResponse
       set({
         counts: {
-          open: data.open || 0,
-          pending: data.pending || 0,
-          resolved: data.resolved || 0,
-          unlinked: data.unlinked || 0,
-          trash: data.trash || 0,
+          open: data.open ?? 0,
+          pending: data.pending ?? 0,
+          resolved: data.resolved ?? 0,
+          unlinked: data.unlinked ?? 0,
+          trash: data.trash ?? 0,
         },
       })
     } catch {
@@ -321,7 +389,7 @@ export const useInboxStore = create<InboxState>()((set, get) => ({
       : `email=${encodeURIComponent(query.trim())}`
     try {
       const res = await authFetch(`/api/shopify/customer?${param}`, {}, token)
-      const data = await res.json()
+      const data = (await res.json()) as ShopifyCustomer
       set({ customer: data, loadingCustomer: false })
     } catch {
       set({ customer: null, loadingCustomer: false })
@@ -331,8 +399,8 @@ export const useInboxStore = create<InboxState>()((set, get) => ({
   checkEmailConnected: async (token) => {
     try {
       const res = await authFetch('/api/inbox/accounts', {}, token)
-      const data = await res.json().catch(() => ({}))
-      set({ emailConnected: Boolean(data?.accounts?.length > 0) })
+      const data = (await res.json().catch(() => ({}))) as AccountsResponse
+      set({ emailConnected: Boolean(data?.accounts && data.accounts.length > 0) })
     } catch {
       set({ emailConnected: false })
     }

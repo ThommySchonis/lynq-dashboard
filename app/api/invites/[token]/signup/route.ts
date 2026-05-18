@@ -3,6 +3,11 @@ import type { NextRequest } from 'next/server'
 import type { RouteContext } from '../../../../../types/api'
 import { supabaseAdmin } from '../../../../../lib/supabaseAdmin'
 
+interface SignupBody {
+  full_name?: unknown
+  password?: unknown
+}
+
 function sanitizeName(raw: unknown): string {
   if (typeof raw !== 'string') return ''
   // Strip control chars + collapse whitespace + trim + cap to 100
@@ -19,7 +24,7 @@ function sanitizeName(raw: unknown): string {
 export async function POST(request: NextRequest, { params }: RouteContext<{ token: string }>) {
   const { token } = await params
 
-  const body = await request.json().catch(() => ({})) as { full_name?: unknown; password?: unknown }
+  const body = await request.json().catch(() => ({})) as SignupBody
   const { full_name, password } = body
 
   const cleanName = sanitizeName(full_name)
@@ -31,16 +36,20 @@ export async function POST(request: NextRequest, { params }: RouteContext<{ toke
   }
 
   // Lookup + validate invite (re-validation: prevents stale-page exploits)
-  const { data: invite, error: lookupError } = await supabaseAdmin
+  interface InviteRow { id: string; workspace_id: string; email: string; role: string; expires_at: string; accepted_at: string | null }
+
+  const inviteResult = await supabaseAdmin
     .from('workspace_invites')
     .select('id, workspace_id, email, role, expires_at, accepted_at')
     .eq('token', token)
     .maybeSingle()
 
-  if (lookupError) {
-    console.error('[invite signup] lookup failed:', lookupError.message)
+  if (inviteResult.error) {
+    console.error('[invite signup] lookup failed:', inviteResult.error.message)
     return NextResponse.json({ error: 'Lookup failed', code: 'lookup_failed' }, { status: 500 })
   }
+
+  const invite = inviteResult.data as InviteRow | null
   if (!invite) {
     return NextResponse.json({ error: 'Invite not found', code: 'not_found' }, { status: 404 })
   }
@@ -86,15 +95,18 @@ export async function POST(request: NextRequest, { params }: RouteContext<{ toke
   }
 
   // Accept the invite atomically via the existing RPC
-  const { data: acceptResult, error: rpcError } = await supabaseAdmin.rpc('accept_workspace_invite', {
+  interface RpcResult { ok?: boolean; error?: string }
+  const rpcResponse = await supabaseAdmin.rpc('accept_workspace_invite', {
     p_token:   token,
     p_user_id: newUserId,
   })
 
-  if (rpcError) {
-    console.error('[invite signup] accept RPC failed:', rpcError.message)
-    return NextResponse.json({ error: rpcError.message, code: 'accept_failed' }, { status: 500 })
+  if (rpcResponse.error) {
+    console.error('[invite signup] accept RPC failed:', rpcResponse.error.message)
+    return NextResponse.json({ error: rpcResponse.error.message, code: 'accept_failed' }, { status: 500 })
   }
+
+  const acceptResult = rpcResponse.data as RpcResult | null
   if (!acceptResult?.ok) {
     console.error('[invite signup] accept RPC returned non-ok:', JSON.stringify(acceptResult))
     return NextResponse.json(

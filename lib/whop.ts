@@ -1,3 +1,4 @@
+import crypto from 'crypto'
 // Whop integration — real v1 API calls (no more stubs).
 //
 // Base URL: https://api.whop.com/api/v1 (configured via WHOP_API_URL).
@@ -30,6 +31,10 @@ const WHOP_API_KEY = process.env.WHOP_API_KEY
 
 if (!WHOP_API_KEY) {
   console.warn('[whop] WHOP_API_KEY not set — all calls will fail')
+}
+
+interface WhopErrorPayload {
+  error?: { message?: string; code?: string }
 }
 
 // ─── Error class ────────────────────────────────────────────────────
@@ -102,7 +107,7 @@ async function whopFetch<T>(path: string, options: WhopFetchOptions = {}): Promi
   }
 
   if (!response.ok) {
-    const errPayload = payload as { error?: { message?: string; code?: string } } | null
+    const errPayload = payload as WhopErrorPayload | null
     const message  = errPayload?.error?.message ?? `Whop API error ${response.status}`
     const whopCode = errPayload?.error?.code ?? null
     const apiError = new WhopApiError(message, {
@@ -428,8 +433,7 @@ export function verifyWebhookSignature({
     secretBytes = Buffer.from(secretCore, 'utf8')
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const crypto: typeof import('crypto') = require('crypto')
+  // crypto imported at top level
 
   const signedContent = `${webhookId}.${webhookTimestamp}.${rawBody}`
   const expected      = crypto.createHmac('sha256', secretBytes).update(signedContent).digest('base64')

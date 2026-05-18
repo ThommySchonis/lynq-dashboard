@@ -1,6 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
+import { toast } from 'sonner'
 import { Loader2, ShoppingBag } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { SettingsSection, SettingsCard } from '@/components/features/settings/settings-section'
@@ -8,6 +10,31 @@ import { StatusBadge } from '@/components/features/settings/status-badge'
 import { ConfirmDialog } from '@/components/features/settings/confirm-dialog'
 import { ShopifyConnectModal } from '@/components/features/settings/integrations/shopify-connect-modal'
 import { useShopifyIntegration, useDisconnectShopify } from '@/hooks/settings'
+
+const OAUTH_ERROR_MESSAGES: Record<string, string> = {
+  invalid_state: 'Authorization failed. Please try again.',
+  invalid_hmac: 'Authorization failed. Please try again.',
+  token_exchange_failed: 'Could not complete Shopify authorization. Please try again.',
+  no_workspace: 'No workspace found. Please contact support.',
+  save_failed: 'Failed to save connection. Please try again.',
+}
+
+function useShopifyOAuthRedirectToast() {
+  const searchParams = useSearchParams()
+
+  useEffect(() => {
+    const shopify = searchParams.get('shopify')
+    const error = searchParams.get('error')
+
+    if (shopify === 'connected') {
+      toast.success('Shopify connected')
+      window.history.replaceState({}, '', window.location.pathname)
+    } else if (error) {
+      toast.error(OAUTH_ERROR_MESSAGES[error] || 'Something went wrong. Please try again.')
+      window.history.replaceState({}, '', window.location.pathname)
+    }
+  }, [searchParams])
+}
 
 const REQUIRED_SCOPES = [
   { label: 'read_orders', desc: 'Access order history and status' },
@@ -22,6 +49,7 @@ export function ShopifySettings() {
 
   const { data: integration, isLoading } = useShopifyIntegration()
   const disconnectMutation = useDisconnectShopify()
+  useShopifyOAuthRedirectToast()
 
   const isConnected =
     integration?.status === 'active' ||

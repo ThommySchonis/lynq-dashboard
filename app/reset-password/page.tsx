@@ -58,7 +58,7 @@ export default function ResetPasswordPage() {
       }
     })
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    void supabase.auth.getSession().then(({ data: { session } }) => {
       if (cancelled) return
       if (session) {
         setSessionValid(true)
@@ -67,7 +67,7 @@ export default function ResetPasswordPage() {
         // (hash-parsing can be async). Then decide definitively.
         setTimeout(() => {
           if (cancelled) return
-          supabase.auth.getSession().then(({ data: { session: s2 } }) => {
+          void supabase.auth.getSession().then(({ data: { session: s2 } }) => {
             if (!cancelled) setSessionValid(!!s2)
           })
         }, 500)
@@ -201,7 +201,7 @@ export default function ResetPasswordPage() {
         </>
       }
     >
-      <form onSubmit={handleSubmit(onSubmit)} autoComplete="on" noValidate>
+      <form onSubmit={(e) => { void handleSubmit(onSubmit)(e) }} autoComplete="on" noValidate>
         <PasswordField
           id="new-password"
           label="New password"

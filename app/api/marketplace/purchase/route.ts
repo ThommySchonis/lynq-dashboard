@@ -1,6 +1,20 @@
 import type { NextRequest } from 'next/server'
 import { supabaseAdmin, getUserFromToken } from '../../../../lib/supabaseAdmin'
 import { NextResponse } from 'next/server'
+import { parseBody } from '@/lib/utils/typed-json'
+
+interface PurchaseBody {
+  talent_profile_id?: string
+  include_trainer?: boolean
+  company_name?: string
+  contact_name?: string
+  contact_phone?: string
+  notes?: string
+}
+
+interface IdRow {
+  id: string
+}
 
 const PLACEMENT_FEE = 299
 const TRAINER_FEE = 199
@@ -13,14 +27,7 @@ export async function POST(request: NextRequest) {
   const user = await getUserFromToken(token)
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { talent_profile_id, include_trainer, company_name, contact_name, contact_phone, notes } = await request.json() as {
-    talent_profile_id?: string
-    include_trainer?: boolean
-    company_name?: string
-    contact_name?: string
-    contact_phone?: string
-    notes?: string
-  }
+  const { talent_profile_id, include_trainer, company_name, contact_name, contact_phone, notes } = await parseBody<PurchaseBody>(request)
 
   if (!talent_profile_id) return NextResponse.json({ error: 'talent_profile_id required' }, { status: 400 })
 
@@ -67,7 +74,7 @@ export async function POST(request: NextRequest) {
 
   return NextResponse.json({
     success: true,
-    purchase_id: purchase.id,
+    purchase_id: (purchase as IdRow).id,
     total_amount: totalAmount,
     placement_fee: PLACEMENT_FEE,
     trainer_fee: include_trainer ? TRAINER_FEE : 0,

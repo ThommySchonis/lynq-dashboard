@@ -7,7 +7,6 @@ import { Loader2 } from 'lucide-react'
 import AuthLayout from '@/components/features/auth/auth-layout'
 import { FloatField } from '@/components/features/auth/float-field'
 import { PasswordField } from '@/components/features/auth/password-field'
-import { Button } from '@/components/ui/button'
 import { useSignIn } from '@/hooks/auth/use-auth-mutations'
 import { WORD_REVEAL_DELAY_MS } from '@/lib/auth-constants'
 

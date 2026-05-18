@@ -3,7 +3,7 @@
  * Falls back to start-of-current-month to today in Amsterdam timezone.
  * Returns bare YYYY-MM-DD strings — callers add time boundaries if needed.
  */
-export function parseDateRange(request: any) {
+export function parseDateRange(request: { url: string }) {
   const { searchParams } = new URL(request.url)
   const fromParam = searchParams.get('from')
   const toParam = searchParams.get('to')
@@ -12,7 +12,7 @@ export function parseDateRange(request: any) {
     return { from: fromParam, to: toParam }
   }
 
-  // Default: start of current month → today in Amsterdam timezone
+  // Default: start of current month -> today in Amsterdam timezone
   const now = new Date()
   const amsterdamNow = new Date(
     now.toLocaleString('en-US', { timeZone: 'Europe/Amsterdam' })

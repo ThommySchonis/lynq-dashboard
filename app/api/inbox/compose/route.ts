@@ -3,20 +3,27 @@ import { sendNewEmail } from '../../../../lib/conversationEngine'
 import { supabaseAdmin } from '../../../../lib/supabaseAdmin'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { parseBody } from '@/lib/utils/typed-json'
+
+interface ComposeBody {
+  to?: string[]
+  cc?: string[]
+  bcc?: string[]
+  subject?: string
+  bodyHtml?: string
+  bodyText?: string
+  accountId?: string
+}
+
+interface EmailAccountId {
+  id: string
+}
 
 export async function POST(request: NextRequest) {
   const ctx = await getAuthContext(request)
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const body = await request.json() as {
-    to?: string[]
-    cc?: string[]
-    bcc?: string[]
-    subject?: string
-    bodyHtml?: string
-    bodyText?: string
-    accountId?: string
-  }
+  const body = await parseBody<ComposeBody>(request)
 
   if (!body.to?.length) {
     return NextResponse.json({ error: 'Recipient required' }, { status: 400 })
@@ -50,20 +57,20 @@ export async function POST(request: NextRequest) {
       if (!anyAccount) {
         return NextResponse.json({ error: 'No connected email account' }, { status: 400 })
       }
-      accountId = anyAccount.id
+      accountId = (anyAccount as EmailAccountId).id
     } else {
-      accountId = defaultAccount.id
+      accountId = (defaultAccount as EmailAccountId).id
     }
   }
 
   try {
     const result = await sendNewEmail(ctx.workspaceId, ctx.user.email ?? '', accountId as string, {
-      to: body.to,
-      cc: body.cc,
-      bcc: body.bcc,
-      subject: body.subject,
-      bodyHtml: body.bodyHtml,
-      bodyText: body.bodyText,
+      to: (body.to ?? []).map(e => ({ email: e })),
+      cc: (body.cc ?? []).map(e => ({ email: e })),
+      bcc: (body.bcc ?? []).map(e => ({ email: e })),
+      subject: body.subject ?? '',
+      bodyHtml: body.bodyHtml ?? '',
+      bodyText: body.bodyText ?? '',
     })
 
     if ('error' in result) {

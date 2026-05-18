@@ -3,10 +3,54 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { authFetch } from '@/lib/inbox-utils'
 import { useAuthStore } from '@/stores/auth'
+import { parseJson } from '@/lib/utils/typed-json'
 import { inboxKeys } from './use-inbox-data'
 
 function useToken() {
   return useAuthStore((s) => s.session?.access_token ?? '')
+}
+
+interface ComposeEmailResponse {
+  success?: boolean
+  conversationId?: string
+  id?: string
+  error?: string
+}
+
+interface ReplyResponse {
+  success?: boolean
+  messageId?: string
+  id?: string
+  error?: string
+}
+
+interface StatusResponse {
+  success?: boolean
+  error?: string
+}
+
+interface AIReplyResponse {
+  reply?: string
+}
+
+interface TranslateResponse {
+  translated?: string
+  detected?: { code: string; name: string }
+}
+
+interface AnalyzeResponse {
+  analyses?: Record<string, { urgency: string }>
+}
+
+interface MacroSuggestion {
+  id: string
+  name: string
+  body?: string
+  [key: string]: unknown
+}
+
+interface AIMacrosResponse {
+  macros?: MacroSuggestion[]
 }
 
 /** Compose and send a new email */
@@ -37,14 +81,14 @@ export function useComposeEmail() {
         },
         token,
       )
-      const data = await res.json()
+      const data = await parseJson<ComposeEmailResponse>(res)
       if (!data.success && !data.conversationId) {
         throw new Error(data.error || 'Failed to send')
       }
       return data
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: inboxKeys.all })
+      void qc.invalidateQueries({ queryKey: inboxKeys.all })
     },
   })
 }
@@ -68,10 +112,10 @@ export function useSendReply() {
         { method: 'POST', body: JSON.stringify({ bodyHtml, bodyText }) },
         token,
       )
-      return res.json()
+      return parseJson<ReplyResponse>(res)
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: inboxKeys.all })
+      void qc.invalidateQueries({ queryKey: inboxKeys.all })
     },
   })
 }
@@ -93,10 +137,10 @@ export function useUpdateStatus() {
         { method: 'PATCH', body: JSON.stringify({ status }) },
         token,
       )
-      return res.json()
+      return parseJson<StatusResponse>(res)
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: inboxKeys.all })
+      void qc.invalidateQueries({ queryKey: inboxKeys.all })
     },
   })
 }
@@ -118,10 +162,10 @@ export function useAddNote() {
         { method: 'POST', body: JSON.stringify({ body }) },
         token,
       )
-      return res.json()
+      return parseJson<StatusResponse>(res)
     },
     onSuccess: (_, { threadId }) => {
-      qc.invalidateQueries({ queryKey: inboxKeys.conversation(threadId) })
+      void qc.invalidateQueries({ queryKey: inboxKeys.conversation(threadId) })
     },
   })
 }
@@ -135,7 +179,7 @@ export function useSyncInbox() {
       await authFetch('/api/inbox/sync', { method: 'POST' }, token)
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: inboxKeys.all })
+      void qc.invalidateQueries({ queryKey: inboxKeys.all })
     },
   })
 }
@@ -156,7 +200,7 @@ export function useAIReply() {
         { method: 'POST', body: JSON.stringify({ messages, threadId }) },
         token,
       )
-      const data = await res.json()
+      const data = await parseJson<AIReplyResponse>(res)
       return data.reply || null
     },
   })
@@ -181,7 +225,7 @@ export function useTranslateMessage() {
         },
         token,
       )
-      return res.json()
+      return parseJson<TranslateResponse>(res)
     },
   })
 }
@@ -203,7 +247,7 @@ export function useAnalyzeThreads() {
         },
         token,
       )
-      const data = await res.json()
+      const data = await parseJson<AnalyzeResponse>(res)
       return data.analyses || {}
     },
   })
@@ -219,7 +263,7 @@ export function useDetectLanguage() {
         { method: 'POST', body: JSON.stringify({ text, detectOnly: true }) },
         token,
       )
-      return res.json()
+      return parseJson<TranslateResponse>(res)
     },
   })
 }
@@ -240,7 +284,7 @@ export function useAIMacros() {
         { method: 'POST', body: JSON.stringify({ subject, snippet }) },
         token,
       )
-      const data = await res.json()
+      const data = await parseJson<AIMacrosResponse>(res)
       return data.macros || []
     },
   })

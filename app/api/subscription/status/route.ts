@@ -12,11 +12,14 @@ export async function GET(request: NextRequest) {
   const user = await getUserFromToken(token)
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { data: sub } = await supabaseAdmin
+  interface SubRow { plan: string; status: string; activated_at: string; expires_at: string }
+  const subResult = await supabaseAdmin
     .from('subscriptions')
     .select('plan, status, activated_at, expires_at')
     .eq('user_email', user.email)
     .single()
+
+  const sub = subResult.data as SubRow | null
 
   if (!sub || sub.status !== 'active') {
     return NextResponse.json({ plan: null, status: 'inactive', hasAccess: false })

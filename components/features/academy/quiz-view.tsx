@@ -7,7 +7,21 @@ import { cn } from '@/lib/utils'
 import { EASE, PASS_THRESHOLD } from '@/lib/academy-constants'
 import { useAuthStore } from '@/stores/auth'
 import { useSubmitQuiz } from '@/hooks/academy/use-academy-mutations'
+import { parseJson } from '@/lib/utils/typed-json'
 import type { Module } from '@/types/academy'
+
+interface QuizQuestionsResponse {
+  error?: string
+  canAttempt?: boolean
+  questions?: Array<Record<string, unknown>>
+}
+
+interface QuizSubmitResponse {
+  error?: string
+  score?: number
+  passed?: boolean
+  [key: string]: unknown
+}
 
 interface QuizViewProps {
   mod: Module
@@ -52,7 +66,7 @@ export function QuizView({
         const res = await fetch(`/api/exams/questions?type=${mod.examType}`, {
           headers: { Authorization: `Bearer ${session!.access_token}` },
         })
-        const data = await res.json()
+        const data = await parseJson<QuizQuestionsResponse>(res)
         if (!res.ok) throw new Error(data.error || 'Failed to load questions')
         setCanAttempt(data.canAttempt ?? true)
         setApiQuestions(data.questions || [])
@@ -62,7 +76,7 @@ export function QuizView({
         setLoading(false)
       }
     }
-    load()
+    void load()
   }, [mod.examType, session, variant])
 
   // ── Inline quiz submit ──
@@ -107,7 +121,7 @@ export function QuizView({
         },
         body: JSON.stringify({ exam_type: mod.examType, answers: formattedAnswers }),
       })
-      const data = await res.json()
+      const data = await parseJson<QuizSubmitResponse>(res)
       if (!res.ok) throw new Error(data.error || 'Submission failed')
       setResult(data)
       setSubmitted(true)
@@ -288,7 +302,7 @@ export function QuizView({
           ) : (
             <button
               className="cursor-pointer rounded-[20px] border-none bg-gradient-to-br from-violet-500 to-indigo-500 px-6 py-2.5 font-[inherit] text-[13px] font-semibold text-white shadow-[0_4px_16px_rgba(99,102,241,0.3)] transition-all duration-150 hover:-translate-y-px hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
-              onClick={submitInline}
+              onClick={() => void submitInline()}
               disabled={!allAnswered || submitting}
             >
               {submitting ? 'Saving...' : 'Submit Quiz'}
@@ -575,7 +589,7 @@ export function QuizView({
         ) : (
           <button
             className="cursor-pointer rounded-[20px] border-none bg-gradient-to-br from-violet-500 to-indigo-500 px-6 py-2.5 font-[inherit] text-[13px] font-semibold text-white shadow-[0_4px_16px_rgba(99,102,241,0.3)] transition-all duration-150 hover:-translate-y-px hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
-            onClick={submitStandalone}
+            onClick={() => void submitStandalone()}
             disabled={submitting || Object.keys(answers).length < apiQuestions.length}
           >
             {submitting ? 'Submitting...' : 'Submit Quiz'}

@@ -6,6 +6,10 @@ import { getAuthContext } from '../../../../../../lib/auth'
 import { can } from '../../../../../../lib/permissions'
 import { supabaseAdmin } from '../../../../../../lib/supabaseAdmin'
 
+interface InviteRow {
+  email: string
+}
+
 // DELETE — revoke a pending invite
 export async function DELETE(request: NextRequest, { params }: RouteContext<{ id: string }>) {
   const ctx = await getAuthContext(request)
@@ -38,6 +42,6 @@ export async function DELETE(request: NextRequest, { params }: RouteContext<{ id
     return NextResponse.json({ error: deleteError.message }, { status: 500 })
   }
 
-  console.log('[invites DELETE] revoked invite', id, 'for', invite.email, 'in workspace', ctx.workspaceId)
-  return NextResponse.json({ ok: true, email: invite.email })
+  console.log('[invites DELETE] revoked invite', id, 'for', (invite as InviteRow).email, 'in workspace', ctx.workspaceId)
+  return NextResponse.json({ ok: true, email: (invite as InviteRow).email })
 }

@@ -10,7 +10,6 @@ import {
   Paperclip,
   Send,
   Smile,
-  X,
 } from 'lucide-react'
 import { EMOJIS } from '@/lib/inbox-utils'
 import { useInboxUI } from '@/stores/inbox-ui'
@@ -52,7 +51,7 @@ export function ComposerToolbar({
   const autoTranslate = useAIStore((s) => s.autoTranslate)
   const setAutoTranslate = useAIStore((s) => s.setAutoTranslate)
 
-  const aiMacros = useMacrosStore((s) => s.aiMacros)
+  const _aiMacros = useMacrosStore((s) => s.aiMacros)
 
   // Model 3 (forced upgrade) — refuse outbound when the plan limit is reached.
   // We compute this from the existing usage query rather than reading

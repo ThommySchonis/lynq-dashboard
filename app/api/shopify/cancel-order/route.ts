@@ -3,6 +3,12 @@ import { getShopifyCredentialsByWorkspace } from '../../../../lib/shopifyCredent
 import { cancelOrder, ShopifyApiError } from '../../../../lib/services/shopify'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { parseBody } from '@/lib/utils/typed-json'
+
+interface CancelOrderBody {
+  orderId: string
+  [key: string]: unknown
+}
 
 export async function POST(request: NextRequest) {
   const ctx = await getAuthContext(request)
@@ -11,7 +17,7 @@ export async function POST(request: NextRequest) {
   const credentials = await getShopifyCredentialsByWorkspace(ctx.workspaceId)
   if (!credentials) return NextResponse.json({ error: 'Shopify not configured' }, { status: 400 })
 
-  const { orderId, ...params } = await request.json() as { orderId: string; [key: string]: unknown }
+  const { orderId, ...params } = await parseBody<CancelOrderBody>(request)
   if (!orderId) return NextResponse.json({ error: 'orderId required' }, { status: 400 })
 
   try {

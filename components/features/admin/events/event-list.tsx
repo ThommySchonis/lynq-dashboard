@@ -129,14 +129,14 @@ export function EventList() {
                         className="h-7 flex-1 text-[11.5px]"
                         autoFocus
                         onKeyDown={(e) => {
-                          if (e.key === 'Enter') saveZoom(mc.id)
+                          if (e.key === 'Enter') void saveZoom(mc.id)
                           if (e.key === 'Escape') cancelEditing()
                         }}
                       />
                       <Button
                         size="sm"
                         className="h-7 px-2.5 text-[11px]"
-                        onClick={() => saveZoom(mc.id)}
+                        onClick={() => void saveZoom(mc.id)}
                       >
                         <Check size={12} className="mr-1" />
                         Save
@@ -169,7 +169,7 @@ export function EventList() {
 
                 {/* Delete button */}
                 <button
-                  onClick={() => handleDelete(mc.id)}
+                  onClick={() => void handleDelete(mc.id)}
                   className="shrink-0 rounded p-1 text-muted-foreground transition-colors hover:text-red-500"
                 >
                   <Trash2 size={13} />

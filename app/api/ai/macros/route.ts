@@ -3,6 +3,12 @@ import { anthropic } from '@ai-sdk/anthropic'
 import { supabaseAdmin, getUserFromToken } from '../../../../lib/supabaseAdmin'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { parseBody } from '@/lib/utils/typed-json'
+
+interface MacroSuggestBody {
+  subject?: string
+  snippet?: string
+}
 
 interface Macro {
   id: string
@@ -29,7 +35,7 @@ export async function POST(request: NextRequest) {
   const user = await getUserFromToken(token)
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { subject, snippet } = await request.json() as { subject?: string; snippet?: string }
+  const { subject, snippet } = await parseBody<MacroSuggestBody>(request)
 
   if (!process.env.ANTHROPIC_API_KEY) {
     return NextResponse.json({ macros: MACROS.slice(0, 3) })

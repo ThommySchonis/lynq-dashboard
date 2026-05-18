@@ -1,7 +1,7 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { CONFETTI, CONFETTI_COLORS, EASE, SECTION_META } from '@/lib/academy-constants'
+import { CONFETTI, EASE, SECTION_META } from '@/lib/academy-constants'
 import type { SectionMeta } from '@/types/academy'
 
 interface ExamResultsViewProps {

@@ -7,6 +7,12 @@ import type { Role } from '../../../../types/database'
 import { supabaseAdmin } from '../../../../lib/supabaseAdmin'
 import { TAG_COLORS, sanitizeTagName } from '../../../../lib/tags'
 
+interface UpdateTagBody {
+  name?: string
+  color?: string
+  description?: string
+}
+
 // GET /api/tags/[id]
 export async function GET(request: NextRequest, { params }: RouteContext<{ id: string }>) {
   const ctx = await getAuthContext(request)
@@ -44,7 +50,7 @@ export async function PATCH(request: NextRequest, { params }: RouteContext<{ id:
   }
 
   const { id } = await params
-  const body = await request.json().catch(() => ({}))
+  const body = await request.json().catch(() => ({})) as UpdateTagBody
 
   const update: Record<string, unknown> = {}
   if (body.name !== undefined) {

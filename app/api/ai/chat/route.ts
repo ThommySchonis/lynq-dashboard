@@ -3,6 +3,7 @@ import { anthropic } from '@ai-sdk/anthropic'
 import { supabaseAdmin, getUserFromToken } from '../../../../lib/supabaseAdmin'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { parseBody } from '@/lib/utils/typed-json'
 
 interface ChatMessage {
   role: 'user' | 'assistant'
@@ -47,11 +48,8 @@ export async function POST(request: NextRequest) {
   const user = await getUserFromToken(token)
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { message, history = [], context } = await request.json() as {
-    message: string
-    history?: ChatMessage[]
-    context?: StoreContext
-  }
+  interface ChatBody { message: string; history?: ChatMessage[]; context?: StoreContext }
+  const { message, history = [], context } = await parseBody<ChatBody>(request)
   if (!message?.trim()) return NextResponse.json({ error: 'Message required' }, { status: 400 })
 
   // Context block is only injected on the first message to avoid sending

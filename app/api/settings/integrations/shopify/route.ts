@@ -2,6 +2,15 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { getAuthContext } from '../../../../../lib/auth'
 import { supabaseAdmin }  from '../../../../../lib/supabaseAdmin'
+interface ShopifyIntegrationRow {
+  shopify_domain?: string
+  status?: string
+  shopify_connected_at?: string
+}
+
+interface ShopifyConnectBody {
+  domain?: string
+}
 
 // Per ONBOARDING_SPEC v1.1 §6.1: pure UI / intent-saving endpoint voor
 // /settings/integrations/shopify. Slaat alleen het store-domein op met
@@ -30,10 +39,11 @@ export async function GET(request: NextRequest) {
     .eq('workspace_id', ctx.workspaceId)
     .maybeSingle()
 
+  const shopifyData = data as ShopifyIntegrationRow | null
   return NextResponse.json({
-    domain:       data?.shopify_domain ?? null,
-    status:       data?.status ?? 'not_connected',
-    connected_at: data?.shopify_connected_at ?? null,
+    domain:       shopifyData?.shopify_domain ?? null,
+    status:       shopifyData?.status ?? 'not_connected',
+    connected_at: shopifyData?.shopify_connected_at ?? null,
   })
 }
 
@@ -41,7 +51,7 @@ export async function POST(request: NextRequest) {
   const ctx = await getAuthContext(request)
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const body   = await request.json().catch(() => ({}))
+  const body   = await request.json().catch(() => ({})) as ShopifyConnectBody
   const domain = normalizeShopDomain(body?.domain)
   if (!domain) {
     return NextResponse.json(

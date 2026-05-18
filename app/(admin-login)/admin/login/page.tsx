@@ -42,7 +42,7 @@ export default function AdminLoginPage() {
           <div className="text-[13px] text-[#4a7fb5]">Admin access only</div>
         </div>
 
-        <form onSubmit={handleLogin}>
+        <form onSubmit={(e) => { void handleLogin(e) }}>
           <div className="mb-4">
             <Label className="text-[#4a7fb5] text-xs mb-1.5">Email</Label>
             <Input

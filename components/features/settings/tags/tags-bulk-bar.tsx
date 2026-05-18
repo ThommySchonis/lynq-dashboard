@@ -92,7 +92,7 @@ export function TagsBulkBar({ tags, canDelete }: TagsBulkBarProps) {
         confirmLabel="Delete"
         variant="danger"
         loading={deleteTag.isPending}
-        onConfirm={handleBulkDelete}
+        onConfirm={() => void handleBulkDelete()}
       />
     </>
   )

@@ -73,7 +73,7 @@ export function CreateTaskModal({ linkedOrder, onClose, onSuccess }: CreateTaskM
         <DialogHeader>
           <DialogTitle>Create task</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-3.5">
+        <form onSubmit={(e) => void handleSubmit(onSubmit)(e)} className="flex flex-col gap-3.5">
           {/* Title */}
           <div>
             <label className="text-[10.5px] font-bold tracking-[.07em] uppercase text-muted-foreground mb-[7px] block">

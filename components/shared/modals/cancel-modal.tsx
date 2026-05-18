@@ -6,8 +6,9 @@ import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Loader2 } from 'lucide-react'
 import { authFetch, CANCEL_REASONS } from '@/lib/inbox-utils'
+import { parseJson } from '@/lib/utils/typed-json'
 
-interface CancelOrder {
+export interface CancelOrder {
   id: string
   name: string
   [key: string]: unknown
@@ -37,7 +38,7 @@ export function CancelModal({ order, token, onClose, onSuccess }: CancelModalPro
       },
       token,
     );
-    const data = await res.json();
+    const data = await parseJson<{ success?: boolean; error?: string }>(res);
     setLoading(false);
     if (data.success) onSuccess("Order cancelled");
     else onSuccess(data.error || "Failed to cancel order", "error");
@@ -82,7 +83,7 @@ export function CancelModal({ order, token, onClose, onSuccess }: CancelModalPro
           <Button variant="outline" className="" onClick={onClose}>
             Keep order
           </Button>
-          <Button variant="destructive" onClick={handleCancel} disabled={loading}>
+          <Button variant="destructive" onClick={() => void handleCancel()} disabled={loading}>
             {loading ? <Loader2 size={13} className="animate-spin text-white" /> : "Cancel order"}
           </Button>
         </DialogFooter>

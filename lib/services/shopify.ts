@@ -1,4 +1,5 @@
 import { supabaseAdmin } from '../supabaseAdmin'
+import { parseJson } from '../utils/typed-json'
 
 // ── Error class ──────────────────────────────────────────────────────────────
 export class ShopifyApiError extends Error {
@@ -13,10 +14,143 @@ export class ShopifyApiError extends Error {
   }
 }
 
+// ── Shopify credential shape ────────────────────────────────────────────────
+interface ShopifyCredentials {
+  domain: string
+  accessToken: string
+}
+
+// ── Shopify API response interfaces ─────────────────────────────────────────
+
+interface ShopifyCustomerRef {
+  id: number
+  first_name?: string
+  last_name?: string
+  email?: string
+  phone?: string
+  orders_count?: number
+  total_spent?: string
+  default_address?: {
+    city?: string
+    country?: string
+    country_code?: string
+  }
+  currency?: string
+  tags?: string
+  note?: string
+  created_at?: string
+}
+
+interface ShopifyAddress {
+  first_name?: string
+  last_name?: string
+  address1?: string
+  address2?: string
+  city?: string
+  zip?: string
+  country?: string
+  country_code?: string
+  phone?: string
+}
+
+interface ShopifyLineItem {
+  id: number
+  title: string
+  variant_title?: string
+  sku?: string
+  quantity: number
+  price: string
+  variant_id?: number
+  discount_allocations?: Array<{ amount?: string }>
+}
+
+interface ShopifyFulfillment {
+  id: number
+  status: string
+  tracking_number?: string
+  tracking_url?: string
+  tracking_company?: string
+}
+
+interface ShopifyTransaction {
+  id: number
+  kind: string
+  gateway?: string
+  amount: string
+  parent_id?: number
+  amount_set?: { presentment_money?: { amount?: string } }
+}
+
+interface ShopifyRefund {
+  id?: number
+  created_at: string
+  note?: string
+  transactions?: ShopifyTransaction[]
+  refund_line_items?: Array<{
+    quantity?: number
+    line_item?: { title?: string }
+  }>
+}
+
+interface ShopifyOrder {
+  id: number
+  name: string
+  created_at: string
+  updated_at?: string
+  processed_at?: string
+  financial_status: string
+  fulfillment_status?: string | null
+  cancel_reason?: string | null
+  cancelled_at?: string | null
+  customer?: ShopifyCustomerRef | null
+  email?: string
+  shipping_address?: ShopifyAddress | null
+  billing_address?: ShopifyAddress | null
+  line_items?: ShopifyLineItem[]
+  subtotal_price?: string
+  total_price?: string
+  total_tax?: string
+  total_price_set?: { presentment_money?: { amount?: string } }
+  subtotal_price_set?: { presentment_money?: { amount?: string } }
+  total_discounts?: string
+  total_discounts_set?: { presentment_money?: { amount?: string } }
+  total_shipping_price_set?: { shop_money?: { amount?: string } }
+  currency?: string
+  presentment_currency?: string
+  source_name?: string
+  refunds?: ShopifyRefund[]
+  fulfillments?: ShopifyFulfillment[]
+  tags?: string
+  note?: string
+}
+
+interface ShopifyFulfillmentOrder {
+  id: number
+  status: string
+}
+
+// ── Shopify API response shapes (used as generics for shopifyFetchJSON) ──────
+
+interface ShopifyOrdersResponse { orders?: ShopifyOrder[] }
+interface ShopifySingleOrderResponse { order: ShopifyOrder }
+interface ShopifyCustomersResponse { customers?: ShopifyCustomerRef[] }
+interface ShopifySingleCustomerResponse { customer?: ShopifyCustomerRef }
+interface ShopifyTransactionsResponse { transactions?: ShopifyTransaction[] }
+interface ShopifyRefundResponse { refund?: unknown }
+interface ShopifyRefundCalcResponse { refund?: { transactions?: ShopifyTransaction[] } }
+interface ShopifyCancelResponse { order?: { id?: number; cancel_reason?: string } }
+interface ShopifyEditResponse { order_edit?: { id?: number } }
+interface ShopifyEditCommitResponse { order_edit?: unknown }
+interface ShopifyDraftOrderResponse { draft_order?: { id?: number; name?: string; invoice_url?: string } }
+interface ShopifyUpdateAddressResponse { order?: { shipping_address?: unknown } }
+interface ShopifyFulfillmentOrdersResponse { fulfillment_orders?: ShopifyFulfillmentOrder[] }
+interface ShopifyFulfillmentResponse { fulfillment?: { id?: number; status?: string } }
+interface ShopifyShopResponse { shop?: { currency?: string } }
+
 // ── Internal Shopify REST helper ─────────────────────────────────────────────
 const SHOPIFY_API_VERSION = '2025-04'
 
-async function shopifyFetch(credentials: any, path: string, options: any = {}) {
+async function shopifyFetch(credentials: ShopifyCredentials, path: string, options: RequestInit = {}) {
   const url = `https://${credentials.domain}/admin/api/${SHOPIFY_API_VERSION}${path}`
   const res = await fetch(url, {
     ...options,
@@ -29,34 +163,45 @@ async function shopifyFetch(credentials: any, path: string, options: any = {}) {
   return res
 }
 
-async function shopifyFetchJSON(credentials: any, path: string, options: any = {}) {
+async function shopifyFetchJSON<T = Record<string, unknown>>(credentials: ShopifyCredentials, path: string, options: RequestInit = {}): Promise<T> {
   const res = await shopifyFetch(credentials, path, options)
-  const data = await res.json()
+  const data: unknown = await res.json()
   if (!res.ok) {
+    const errorData = data as Record<string, unknown>
     throw new ShopifyApiError(
-      data.errors || `Shopify API error on ${path}`,
+      (errorData.errors as string) || `Shopify API error on ${path}`,
       res.status,
       path
     )
   }
-  return data
+  return data as T
 }
 
 // ── Supabase-backed functions ────────────────────────────────────────────────
+
+// Shape returned by the get_kpis RPC
+interface KPIData {
+  totalOrders: number
+  totalRefunds: number
+  netRevenue: number
+  returns: number
+  cancelledOrders: number
+  discounts: number
+}
 
 /**
  * KPIs from shopify_orders table via PostgreSQL stored function.
  */
 export async function getKPIs(workspaceId: string, dateRange: { from: string; to: string }) {
-  const { data, error } = await supabaseAdmin.rpc('get_kpis', {
+  const rpcResult = await supabaseAdmin.rpc('get_kpis', {
     p_workspace_id: workspaceId,
     p_from: dateRange.from,
     p_to: dateRange.to,
   })
 
-  if (error) throw new Error(`get_kpis RPC failed: ${error.message}`)
+  if (rpcResult.error) throw new Error(`get_kpis RPC failed: ${rpcResult.error.message}`)
 
-  const d = data as any
+  const d = rpcResult.data as KPIData
   const totalOrders = d.totalOrders || 0
   const totalRefunds = d.totalRefunds || 0
   const netRevenue = d.netRevenue || 0
@@ -83,21 +228,27 @@ export async function getKPIs(workspaceId: string, dateRange: { from: string; to
   }
 }
 
+// Shape returned by the get_revenue_trend RPC
+interface RevenueTrendRow {
+  date: string
+  revenue: number | string
+}
+
 /**
  * Daily revenue trend via PostgreSQL stored function.
  */
 export async function getRevenueTrend(workspaceId: string, dateRange: { from: string; to: string }) {
   if (!dateRange.from || !dateRange.to) return []
 
-  const { data, error } = await supabaseAdmin.rpc('get_revenue_trend', {
+  const trendResult = await supabaseAdmin.rpc('get_revenue_trend', {
     p_workspace_id: workspaceId,
     p_from: dateRange.from,
     p_to: dateRange.to,
   })
 
-  if (error) throw new Error(`get_revenue_trend RPC failed: ${error.message}`)
+  if (trendResult.error) throw new Error(`get_revenue_trend RPC failed: ${trendResult.error.message}`)
 
-  return ((data as any[]) || []).map((row: any) => ({
+  return ((trendResult.data as RevenueTrendRow[]) || []).map((row: RevenueTrendRow) => ({
     date: row.date,
     revenue: Math.max(0, Number(row.revenue) || 0),
   }))
@@ -107,14 +258,14 @@ export async function getRevenueTrend(workspaceId: string, dateRange: { from: st
  * Check if Shopify credentials exist for a workspace. No API call.
  */
 export async function checkConnectionStatus(workspaceId: string) {
-  const { data: integration } = await supabaseAdmin
+  const { data: integrationRow } = await supabaseAdmin
     .from('integrations')
     .select('shopify_domain')
     .eq('workspace_id', workspaceId)
-    .maybeSingle()
+    .maybeSingle<{ shopify_domain?: string }>()
 
-  if ((integration as any)?.shopify_domain) {
-    return { connected: true, shop: (integration as any).shopify_domain }
+  if (integrationRow?.shopify_domain) {
+    return { connected: true, shop: integrationRow.shopify_domain }
   }
   return { connected: false }
 }
@@ -122,7 +273,7 @@ export async function checkConnectionStatus(workspaceId: string) {
 /**
  * Monthly analytics via Shopify GraphQL (ShopifyQL).
  */
-export async function getAnalytics(credentials: any, dateRange: { from: string; to: string }) {
+export async function getAnalytics(credentials: ShopifyCredentials, dateRange: { from: string; to: string }) {
   const query = `
     FROM orders
     SHOW
@@ -161,7 +312,7 @@ export async function getAnalytics(credentials: any, dateRange: { from: string; 
   )
 
   const text = await res.text()
-  let data: any
+  let data: unknown
   try { data = JSON.parse(text) } catch { data = text }
 
   return { status: res.status, raw: data }
@@ -172,24 +323,24 @@ export async function getAnalytics(credentials: any, dateRange: { from: string; 
 /**
  * Fetch recent orders from Shopify REST API.
  */
-export async function getOrders(credentials: any, options: any = {}) {
+export async function getOrders(credentials: ShopifyCredentials, options: { limit?: number } = {}) {
   const limit = options.limit || 50
-  const data = await shopifyFetchJSON(
+  const data = await shopifyFetchJSON<ShopifyOrdersResponse>(
     credentials,
     `/orders.json?status=any&limit=${limit}`
   )
 
-  return (data.orders || []).map((o: any) => ({
+  return (data.orders || []).map((o: ShopifyOrder) => ({
     id: o.id,
     name: o.name,
     customer: o.customer
       ? `${o.customer.first_name} ${o.customer.last_name}`.trim()
       : 'Unknown',
-    total: parseFloat(o.total_price || 0).toFixed(2),
+    total: parseFloat(o.total_price || '0').toFixed(2),
     financialStatus: o.financial_status,
     fulfillmentStatus: o.fulfillment_status || 'unfulfilled',
     cancelReason: o.cancel_reason || null,
-    hasRefund: o.refunds && o.refunds.length > 0,
+    hasRefund: o.refunds != null && o.refunds.length > 0,
     createdAt: o.created_at,
   }))
 }
@@ -197,8 +348,8 @@ export async function getOrders(credentials: any, options: any = {}) {
 /**
  * Fetch a single order with full details.
  */
-export async function getOrderDetail(credentials: any, orderId: any) {
-  const { order } = await shopifyFetchJSON(credentials, `/orders/${orderId}.json`)
+export async function getOrderDetail(credentials: ShopifyCredentials, orderId: string | number) {
+  const { order } = await shopifyFetchJSON<ShopifySingleOrderResponse>(credentials, `/orders/${orderId}.json`)
 
   return {
     id: order.id,
@@ -219,7 +370,7 @@ export async function getOrderDetail(credentials: any, orderId: any) {
     } : null,
     shippingAddress: order.shipping_address || null,
     billingAddress: order.billing_address || null,
-    lineItems: (order.line_items || []).map((item: any) => ({
+    lineItems: (order.line_items || []).map((item: ShopifyLineItem) => ({
       id: item.id,
       title: item.title,
       variantTitle: item.variant_title,
@@ -234,7 +385,7 @@ export async function getOrderDetail(credentials: any, orderId: any) {
     totalPrice: order.total_price,
     currency: order.currency,
     refunds: order.refunds || [],
-    fulfillments: (order.fulfillments || []).map((f: any) => ({
+    fulfillments: (order.fulfillments || []).map((f: ShopifyFulfillment) => ({
       id: f.id,
       status: f.status,
       trackingNumber: f.tracking_number,
@@ -249,7 +400,7 @@ export async function getOrderDetail(credentials: any, orderId: any) {
 /**
  * Fetch refunds from Shopify with pagination and date filtering.
  */
-export async function getRefunds(credentials: any, dateRange: { from: string; to: string }) {
+export async function getRefunds(credentials: ShopifyCredentials, dateRange: { from: string; to: string }) {
   const from = dateRange.from
   const to = dateRange.to
 
@@ -257,7 +408,7 @@ export async function getRefunds(credentials: any, dateRange: { from: string; to
   if (from) nextUrl += `&updated_at_min=${from}T00:00:00`
   if (to) nextUrl += `&updated_at_max=${to}T23:59:59`
 
-  const allOrders: any[] = []
+  const allOrders: ShopifyOrder[] = []
 
   while (nextUrl) {
     const res: Response = await fetch(nextUrl, {
@@ -274,7 +425,7 @@ export async function getRefunds(credentials: any, dateRange: { from: string; to
       throw new ShopifyApiError('Failed to fetch orders for refunds', res.status, nextUrl)
     }
 
-    const data = await res.json()
+    const data = await parseJson<ShopifyOrdersResponse>(res)
     allOrders.push(...(data.orders || []))
 
     const link: string | null = res.headers.get('link')
@@ -286,13 +437,13 @@ export async function getRefunds(credentials: any, dateRange: { from: string; to
   const toTs = to ? `${to}T23:59:59` : null
 
   return allOrders
-    .filter((o: any) => o.refunds && o.refunds.length > 0)
-    .flatMap((o: any) => {
+    .filter((o: ShopifyOrder) => o.refunds && o.refunds.length > 0)
+    .flatMap((o: ShopifyOrder) => {
       const orderTotal = parseFloat(
-        o.total_price_set?.presentment_money?.amount || o.total_price || 0
+        o.total_price_set?.presentment_money?.amount || o.total_price || '0'
       )
 
-      const inRange = (o.refunds || []).filter((r: any) => {
+      const inRange = (o.refunds || []).filter((r: ShopifyRefund) => {
         if (!fromTs && !toTs) return true
         if (fromTs && r.created_at < fromTs) return false
         if (toTs && r.created_at > toTs) return false
@@ -301,17 +452,17 @@ export async function getRefunds(credentials: any, dateRange: { from: string; to
 
       if (inRange.length === 0) return []
 
-      const refundTotal = inRange.reduce((sum: number, r: any) =>
-        sum + (r.transactions || []).reduce((ts: number, t: any) =>
-          ts + parseFloat(t.amount_set?.presentment_money?.amount || t.amount || 0), 0), 0)
+      const refundTotal = inRange.reduce((sum: number, r: ShopifyRefund) =>
+        sum + (r.transactions || []).reduce((ts: number, t: ShopifyTransaction) =>
+          ts + parseFloat(t.amount_set?.presentment_money?.amount || t.amount || '0'), 0), 0)
 
       if (refundTotal <= 0) return []
 
-      const items = inRange.flatMap((r: any) => r.refund_line_items || [])
-      const productNames = [...new Set(items.map((i: any) => i.line_item?.title).filter(Boolean))]
-      const refundNote = inRange.map((r: any) => r.note).filter(Boolean).join('; ')
+      const items = inRange.flatMap((r: ShopifyRefund) => r.refund_line_items || [])
+      const productNames = [...new Set(items.map((i) => i.line_item?.title).filter(Boolean))]
+      const refundNote = inRange.map((r: ShopifyRefund) => r.note).filter(Boolean).join('; ')
       const reason = refundNote || o.cancel_reason || null
-      const refundedAt = inRange.map((r: any) => r.created_at).sort().at(-1)
+      const refundedAt = inRange.map((r: ShopifyRefund) => r.created_at).sort().at(-1)
 
       return [{
         orderId: o.name,
@@ -323,51 +474,51 @@ export async function getRefunds(credentials: any, dateRange: { from: string; to
         refundAmount: refundTotal.toFixed(2),
         orderTotal: orderTotal.toFixed(2),
         refundPct: orderTotal > 0 ? ((refundTotal / orderTotal) * 100).toFixed(1) : '0.0',
-        itemCount: items.reduce((s: number, i: any) => s + (i.quantity || 0), 0),
+        itemCount: items.reduce((s: number, i) => s + (i.quantity || 0), 0),
         products: productNames,
         reason,
         refundedAt,
       }]
     })
-    .sort((a: any, b: any) => new Date(b.refundedAt).getTime() - new Date(a.refundedAt).getTime())
+    .sort((a, b) => new Date(b.refundedAt ?? '').getTime() - new Date(a.refundedAt ?? '').getTime())
 }
 
 /**
  * Look up customer by email or order number, including recent orders.
  */
-export async function getCustomer(credentials: any, query: { email?: string; order?: string }) {
-  let customer: any = null
+export async function getCustomer(credentials: ShopifyCredentials, query: { email?: string; order?: string }) {
+  let customer: ShopifyCustomerRef | null = null
 
   if (query.email) {
-    const searchData = await shopifyFetchJSON(
+    const searchData = await shopifyFetchJSON<ShopifyCustomersResponse>(
       credentials,
       `/customers/search.json?query=email:${encodeURIComponent(query.email)}&limit=1`
     )
-    customer = searchData.customers?.[0]
+    customer = searchData.customers?.[0] ?? null
   } else if (query.order) {
     const orderName = query.order.replace(/^#/, '')
-    const orderData = await shopifyFetchJSON(
+    const orderData = await shopifyFetchJSON<ShopifyOrdersResponse>(
       credentials,
       `/orders.json?name=${encodeURIComponent(orderName)}&status=any&limit=1`
     )
     const matchedOrder = orderData.orders?.[0]
     if (matchedOrder?.customer?.id) {
-      const custData = await shopifyFetchJSON(
+      const custData = await shopifyFetchJSON<ShopifySingleCustomerResponse>(
         credentials,
         `/customers/${matchedOrder.customer.id}.json`
       )
-      customer = custData.customer
+      customer = custData.customer ?? null
     }
   }
 
   if (!customer) return { customer: null, orders: [] }
 
-  const ordersData = await shopifyFetchJSON(
+  const ordersData = await shopifyFetchJSON<ShopifyOrdersResponse>(
     credentials,
     `/orders.json?customer_id=${customer.id}&status=any&limit=50`
   )
 
-  const orders = (ordersData.orders || []).map((o: any) => ({
+  const orders = (ordersData.orders || []).map((o: ShopifyOrder) => ({
     id: o.id,
     name: o.name,
     createdAt: o.created_at,
@@ -377,7 +528,7 @@ export async function getCustomer(credentials: any, query: { email?: string; ord
     cancelledAt: o.cancelled_at || null,
     totalPrice: o.total_price,
     currency: o.currency,
-    lineItems: (o.line_items || []).map((item: any) => ({
+    lineItems: (o.line_items || []).map((item: ShopifyLineItem) => ({
       id: item.id,
       title: item.title,
       variantTitle: item.variant_title,
@@ -385,7 +536,7 @@ export async function getCustomer(credentials: any, query: { email?: string; ord
       quantity: item.quantity,
       price: item.price,
     })),
-    fulfillments: (o.fulfillments || []).map((f: any) => ({
+    fulfillments: (o.fulfillments || []).map((f: ShopifyFulfillment) => ({
       trackingNumber: f.tracking_number,
       trackingUrl: f.tracking_url,
       trackingCompany: f.tracking_company,
@@ -428,24 +579,38 @@ export async function getCustomer(credentials: any, query: { email?: string; ord
 
 // ── Order action functions ───────────────────────────────────────────────────
 
+interface RefundLineItemInput {
+  lineItemId: number
+  quantity: number
+}
+
+interface CreateRefundParams {
+  lineItems?: RefundLineItemInput[]
+  restock?: boolean
+  notify?: boolean
+  reason?: string
+  shipping?: boolean
+  customAmount?: string | number
+}
+
 /**
  * Create a refund on an order (custom amount or line-item based).
  */
-export async function createRefund(credentials: any, orderId: any, params: any) {
+export async function createRefund(credentials: ShopifyCredentials, orderId: string | number, params: CreateRefundParams) {
   const { lineItems, restock, notify, reason, shipping, customAmount } = params
 
   // Custom amount refund
   if (customAmount && Number(customAmount) > 0) {
-    const txData = await shopifyFetchJSON(credentials, `/orders/${orderId}/transactions.json`)
+    const txData = await shopifyFetchJSON<ShopifyTransactionsResponse>(credentials, `/orders/${orderId}/transactions.json`)
     const originalTx = (txData.transactions || []).find(
-      (t: any) => t.kind === 'capture' || t.kind === 'sale' || t.kind === 'authorization'
+      (t: ShopifyTransaction) => t.kind === 'capture' || t.kind === 'sale' || t.kind === 'authorization'
     )
 
     const transaction = originalTx
       ? { parent_id: originalTx.id, kind: 'refund', gateway: originalTx.gateway, amount: String(Number(customAmount).toFixed(2)) }
       : { kind: 'refund', amount: String(Number(customAmount).toFixed(2)) }
 
-    const refundData = await shopifyFetchJSON(credentials, `/orders/${orderId}/refunds.json`, {
+    const refundData = await shopifyFetchJSON<ShopifyRefundResponse>(credentials, `/orders/${orderId}/refunds.json`, {
       method: 'POST',
       body: JSON.stringify({
         refund: { notify: notify !== false, note: reason || '', transactions: [transaction] },
@@ -455,24 +620,24 @@ export async function createRefund(credentials: any, orderId: any, params: any) 
   }
 
   // Line-item based refund
-  const refundLineItems = (lineItems || []).map((item: any) => ({
+  const refundLineItems = (lineItems || []).map((item: RefundLineItemInput) => ({
     line_item_id: item.lineItemId,
     quantity: item.quantity,
     restock_type: restock ? 'return' : 'no_restock',
   }))
 
-  const calcData = await shopifyFetchJSON(credentials, `/orders/${orderId}/refunds/calculate.json`, {
+  const calcData = await shopifyFetchJSON<ShopifyRefundCalcResponse>(credentials, `/orders/${orderId}/refunds/calculate.json`, {
     method: 'POST',
     body: JSON.stringify({
       refund: { shipping: { full_refund: !!shipping }, refund_line_items: refundLineItems },
     }),
   })
 
-  const transactions = (calcData.refund?.transactions || []).map((t: any) => ({
+  const transactions = (calcData.refund?.transactions || []).map((t: ShopifyTransaction) => ({
     parent_id: t.parent_id, amount: t.amount, kind: 'refund', gateway: t.gateway,
   }))
 
-  const refundData = await shopifyFetchJSON(credentials, `/orders/${orderId}/refunds.json`, {
+  const refundData = await shopifyFetchJSON<ShopifyRefundResponse>(credentials, `/orders/${orderId}/refunds.json`, {
     method: 'POST',
     body: JSON.stringify({
       refund: {
@@ -487,13 +652,20 @@ export async function createRefund(credentials: any, orderId: any, params: any) 
   return refundData.refund
 }
 
+interface CancelOrderParams {
+  reason?: string
+  restock?: boolean
+  refund?: boolean
+  notify?: boolean
+}
+
 /**
  * Cancel an order.
  */
-export async function cancelOrder(credentials: any, orderId: any, params: any) {
+export async function cancelOrder(credentials: ShopifyCredentials, orderId: string | number, params: CancelOrderParams) {
   const { reason, restock, refund, notify } = params
 
-  const body: any = {
+  const body: Record<string, unknown> = {
     reason: reason || 'customer',
     restock: restock !== false,
     email: notify !== false,
@@ -503,7 +675,7 @@ export async function cancelOrder(credentials: any, orderId: any, params: any) {
     body.refund = { shipping: { full_refund: true }, refund_line_items: [] }
   }
 
-  const data = await shopifyFetchJSON(credentials, `/orders/${orderId}/cancel.json`, {
+  const data = await shopifyFetchJSON<ShopifyCancelResponse>(credentials, `/orders/${orderId}/cancel.json`, {
     method: 'POST',
     body: JSON.stringify(body),
   })
@@ -511,14 +683,25 @@ export async function cancelOrder(credentials: any, orderId: any, params: any) {
   return { id: data.order?.id, cancelReason: data.order?.cancel_reason }
 }
 
+interface EditLineItemInput {
+  lineItemId: number
+  quantity: number
+}
+
+interface EditOrderParams {
+  lineItems?: EditLineItemInput[]
+  reason?: string
+  notify?: boolean
+}
+
 /**
  * Edit an order (three-step: begin -> set quantities -> commit).
  */
-export async function editOrder(credentials: any, orderId: any, params: any) {
+export async function editOrder(credentials: ShopifyCredentials, orderId: string | number, params: EditOrderParams) {
   const { lineItems, reason, notify } = params
 
   // Step 1: begin edit
-  const beginData = await shopifyFetchJSON(credentials, `/orders/${orderId}/edits.json`, {
+  const beginData = await shopifyFetchJSON<ShopifyEditResponse>(credentials, `/orders/${orderId}/edits.json`, {
     method: 'POST',
     body: JSON.stringify({}),
   })
@@ -534,13 +717,13 @@ export async function editOrder(credentials: any, orderId: any, params: any) {
       { method: 'POST', body: JSON.stringify({ quantity: item.quantity, restock: true }) }
     )
     if (!setRes.ok) {
-      const err = await setRes.json()
+      const err: unknown = await setRes.json()
       console.error('[edit order] set_quantity failed:', err)
     }
   }
 
   // Step 3: commit
-  const commitData = await shopifyFetchJSON(credentials, `/order_edits/${editId}/commit.json`, {
+  const commitData = await shopifyFetchJSON<ShopifyEditCommitResponse>(credentials, `/order_edits/${editId}/commit.json`, {
     method: 'POST',
     body: JSON.stringify({
       order_edit: {
@@ -553,17 +736,26 @@ export async function editOrder(credentials: any, orderId: any, params: any) {
   return commitData.order_edit
 }
 
+interface DuplicateOrderParams {
+  keepAddress?: boolean
+  note?: string
+  tags?: string
+  discountType?: string
+  discountValue?: string | number
+  applyDiscount?: boolean
+}
+
 /**
  * Duplicate an order by creating a draft order with copied line items.
  */
-export async function duplicateOrder(credentials: any, orderId: any, params: any = {}) {
+export async function duplicateOrder(credentials: ShopifyCredentials, orderId: string | number, params: DuplicateOrderParams = {}) {
   const { keepAddress, note, tags, discountType, discountValue, applyDiscount } = params
 
-  const { order } = await shopifyFetchJSON(credentials, `/orders/${orderId}.json`)
+  const { order } = await shopifyFetchJSON<ShopifySingleOrderResponse>(credentials, `/orders/${orderId}.json`)
 
   const lineItems = (order.line_items || [])
-    .map((item: any) => {
-      const base: any = { variant_id: item.variant_id, quantity: item.quantity }
+    .map((item: ShopifyLineItem) => {
+      const base: Record<string, unknown> = { variant_id: item.variant_id, quantity: item.quantity }
       // Per-line-item discount copying (flat wrapper's applyDiscount behavior)
       if (applyDiscount && item.discount_allocations?.length) {
         base.applied_discount = {
@@ -574,9 +766,9 @@ export async function duplicateOrder(credentials: any, orderId: any, params: any
       }
       return base
     })
-    .filter((item: any) => item.variant_id)
+    .filter((item) => item.variant_id)
 
-  const draftOrder: any = {
+  const draftOrder: Record<string, unknown> = {
     line_items: lineItems,
     customer: order.customer ? { id: order.customer.id } : undefined,
     note: note || `Duplicate of ${order.name}`,
@@ -596,7 +788,7 @@ export async function duplicateOrder(credentials: any, orderId: any, params: any
     draftOrder.shipping_address = order.shipping_address
   }
 
-  const data = await shopifyFetchJSON(credentials, '/draft_orders.json', {
+  const data = await shopifyFetchJSON<ShopifyDraftOrderResponse>(credentials, '/draft_orders.json', {
     method: 'POST',
     body: JSON.stringify({ draft_order: draftOrder }),
   })
@@ -608,11 +800,16 @@ export async function duplicateOrder(credentials: any, orderId: any, params: any
   }
 }
 
+interface UpdateOrderNoteFields {
+  note?: string
+  tags?: string
+}
+
 /**
  * Update order note and/or tags.
  */
-export async function updateOrderNote(credentials: any, orderId: any, fields: any) {
-  const body: any = { order: { id: Number(orderId) } }
+export async function updateOrderNote(credentials: ShopifyCredentials, orderId: string | number, fields: UpdateOrderNoteFields) {
+  const body: { order: Record<string, unknown> } = { order: { id: Number(orderId) } }
   if (fields.note !== undefined) body.order.note = fields.note
   if (fields.tags !== undefined) body.order.tags = fields.tags
 
@@ -622,11 +819,23 @@ export async function updateOrderNote(credentials: any, orderId: any, fields: an
   })
 }
 
+interface UpdateAddressInput {
+  firstName?: string
+  lastName?: string
+  address1?: string
+  address2?: string
+  city?: string
+  zip?: string
+  country?: string
+  countryCode?: string
+  phone?: string
+}
+
 /**
  * Update order shipping address.
  */
-export async function updateOrderAddress(credentials: any, orderId: any, address: any) {
-  const data = await shopifyFetchJSON(credentials, `/orders/${orderId}.json`, {
+export async function updateOrderAddress(credentials: ShopifyCredentials, orderId: string | number, address: UpdateAddressInput) {
+  const data = await shopifyFetchJSON<ShopifyUpdateAddressResponse>(credentials, `/orders/${orderId}.json`, {
     method: 'PUT',
     body: JSON.stringify({
       order: {
@@ -649,21 +858,28 @@ export async function updateOrderAddress(credentials: any, orderId: any, address
   return data.order?.shipping_address
 }
 
+interface FulfillOrderParams {
+  trackingNumber?: string
+  trackingCompany?: string
+  trackingUrl?: string
+  notify?: boolean
+}
+
 /**
  * Fulfill an order by creating a fulfillment with tracking info.
  */
-export async function fulfillOrder(credentials: any, orderId: any, params: any = {}) {
+export async function fulfillOrder(credentials: ShopifyCredentials, orderId: string | number, params: FulfillOrderParams = {}) {
   const { trackingNumber, trackingCompany, trackingUrl, notify } = params
 
-  const foData = await shopifyFetchJSON(credentials, `/orders/${orderId}/fulfillment_orders.json`)
+  const foData = await shopifyFetchJSON<ShopifyFulfillmentOrdersResponse>(credentials, `/orders/${orderId}/fulfillment_orders.json`)
   const open = (foData.fulfillment_orders || []).filter(
-    (fo: any) => fo.status === 'open' || fo.status === 'in_progress'
+    (fo: ShopifyFulfillmentOrder) => fo.status === 'open' || fo.status === 'in_progress'
   )
   if (!open.length) throw new Error('No open fulfillment found')
 
   const body = {
     fulfillment: {
-      line_items_by_fulfillment_order: open.map((fo: any) => ({ fulfillment_order_id: fo.id })),
+      line_items_by_fulfillment_order: open.map((fo: ShopifyFulfillmentOrder) => ({ fulfillment_order_id: fo.id })),
       notify_customer: notify !== false,
       tracking_info: trackingNumber ? {
         number: trackingNumber,
@@ -673,7 +889,7 @@ export async function fulfillOrder(credentials: any, orderId: any, params: any =
     },
   }
 
-  const data = await shopifyFetchJSON(credentials, '/fulfillments.json', {
+  const data = await shopifyFetchJSON<ShopifyFulfillmentResponse>(credentials, '/fulfillments.json', {
     method: 'POST',
     body: JSON.stringify(body),
   })
@@ -684,14 +900,14 @@ export async function fulfillOrder(credentials: any, orderId: any, params: any =
 /**
  * Bulk sync Shopify orders into shopify_orders table.
  */
-export async function syncOrders(workspaceId: string, credentials: any, userId: string, options: any = {}) {
+export async function syncOrders(workspaceId: string, credentials: ShopifyCredentials, userId: string, options: { full?: boolean } = {}) {
   // Fetch + store currency
   const shopRes = await fetch(
     `https://${credentials.domain}/admin/api/${SHOPIFY_API_VERSION}/shop.json`,
     { headers: { 'X-Shopify-Access-Token': credentials.accessToken } }
   )
   if (shopRes.ok) {
-    const shopData = await shopRes.json()
+    const shopData = await parseJson<ShopifyShopResponse>(shopRes)
     const currency = shopData.shop?.currency || 'EUR'
     await supabaseAdmin.from('integrations')
       .update({ store_currency: currency })
@@ -703,7 +919,7 @@ export async function syncOrders(workspaceId: string, credentials: any, userId: 
     ? ''
     : `&processed_at_min=${new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString()}`
 
-  let orders: any[] = []
+  let orders: ShopifyOrder[] = []
   let url: string | null = `https://${credentials.domain}/admin/api/${SHOPIFY_API_VERSION}/orders.json?status=any&limit=250${since}`
 
   while (url) {
@@ -711,26 +927,26 @@ export async function syncOrders(workspaceId: string, credentials: any, userId: 
       headers: { 'X-Shopify-Access-Token': credentials.accessToken },
     })
     if (!res.ok) break
-    const data = await res.json()
-    orders = orders.concat(data.orders)
+    const data = await parseJson<ShopifyOrdersResponse>(res)
+    orders = orders.concat(data.orders || [])
     const link: string | null = res.headers.get('link')
     const next: RegExpMatchArray | null | undefined = link?.match(/<([^>]+)>;\s*rel="next"/)
     url = next ? next[1] : null
   }
 
-  const rows = orders.map((order: any) => {
+  const rows = orders.map((order: ShopifyOrder) => {
     const subtotal = parseFloat(
-      order.subtotal_price_set?.presentment_money?.amount || order.subtotal_price || 0
+      order.subtotal_price_set?.presentment_money?.amount || order.subtotal_price || '0'
     )
     const totalPrice = parseFloat(
-      order.total_price_set?.presentment_money?.amount || order.total_price || 0
+      order.total_price_set?.presentment_money?.amount || order.total_price || '0'
     )
     const totalDiscounts = parseFloat(
-      order.total_discounts_set?.presentment_money?.amount || order.total_discounts || 0
+      order.total_discounts_set?.presentment_money?.amount || order.total_discounts || '0'
     )
-    const refundAmount = (order.refunds || []).reduce((sum: number, r: any) =>
-      sum + (r.transactions || []).reduce((ts: number, t: any) =>
-        ts + parseFloat(t.amount_set?.presentment_money?.amount || t.amount || 0), 0), 0)
+    const refundAmount = (order.refunds || []).reduce((sum: number, r: ShopifyRefund) =>
+      sum + (r.transactions || []).reduce((ts: number, t: ShopifyTransaction) =>
+        ts + parseFloat(t.amount_set?.presentment_money?.amount || t.amount || '0'), 0), 0)
 
     return {
       id: order.id,

@@ -6,6 +6,10 @@ import { getAuthContext } from '../../../../../../lib/auth'
 import { can } from '../../../../../../lib/permissions'
 import { supabaseAdmin } from '../../../../../../lib/supabaseAdmin'
 
+interface MemberRow { id: string; user_id: string; role: string }
+
+interface RoleUpdateBody { role?: string }
+
 const VALID_ROLES = ['owner', 'admin', 'agent', 'observer']
 
 // PATCH — change a member's role. See spec in PR for the full rule matrix.
@@ -24,24 +28,25 @@ export async function PATCH(request: NextRequest, { params }: RouteContext<{ id:
   }
 
   const { id } = await params
-  const body = await request.json().catch(() => ({})) as { role?: string }
+  const body = await request.json().catch(() => ({})) as RoleUpdateBody
   const { role: newRole } = body
 
   if (!newRole || !VALID_ROLES.includes(newRole)) {
     return NextResponse.json({ error: 'Invalid role', code: 'invalid_role' }, { status: 400 })
   }
 
-  const { data: target, error: lookupError } = await supabaseAdmin
+  const targetResult = await supabaseAdmin
     .from('workspace_members')
     .select('id, user_id, role')
     .eq('id', id)
     .eq('workspace_id', ctx.workspaceId)
     .maybeSingle()
 
-  if (lookupError) {
-    console.error('[role PATCH] target lookup failed:', lookupError.message)
-    return NextResponse.json({ error: lookupError.message, code: 'lookup_failed' }, { status: 500 })
+  if (targetResult.error) {
+    console.error('[role PATCH] target lookup failed:', targetResult.error.message)
+    return NextResponse.json({ error: targetResult.error.message, code: 'lookup_failed' }, { status: 500 })
   }
+  const target = targetResult.data as MemberRow | null
   if (!target) {
     return NextResponse.json({ error: 'Member not found', code: 'not_found' }, { status: 404 })
   }
@@ -96,7 +101,7 @@ export async function PATCH(request: NextRequest, { params }: RouteContext<{ id:
     }
   }
 
-  const { data: member, error: updateError } = await supabaseAdmin
+  const memberUpdateResult = await supabaseAdmin
     .from('workspace_members')
     .update({ role: newRole })
     .eq('id', id)
@@ -104,13 +109,13 @@ export async function PATCH(request: NextRequest, { params }: RouteContext<{ id:
     .select('id, user_id, role, joined_at')
     .single()
 
-  if (updateError) {
-    console.error('[role PATCH] update failed:', updateError.message)
-    return NextResponse.json({ error: updateError.message, code: 'update_failed' }, { status: 500 })
+  if (memberUpdateResult.error) {
+    console.error('[role PATCH] update failed:', memberUpdateResult.error.message)
+    return NextResponse.json({ error: memberUpdateResult.error.message, code: 'update_failed' }, { status: 500 })
   }
 
   console.log('[role PATCH]', { workspaceId: ctx.workspaceId, target: target.id, from: target.role, to: newRole })
-  return NextResponse.json({ ok: true, member })
+  return NextResponse.json({ ok: true, member: memberUpdateResult.data as Record<string, unknown> })
 }
 
 // DELETE — remove a member OR revoke a pending invite (?type=invite)
@@ -149,17 +154,18 @@ export async function DELETE(request: NextRequest, { params }: RouteContext<{ id
     )
   }
 
-  const { data: target, error: lookupError } = await supabaseAdmin
+  const delTargetResult = await supabaseAdmin
     .from('workspace_members')
     .select('id, user_id, role')
     .eq('id', id)
     .eq('workspace_id', ctx.workspaceId)
     .maybeSingle()
 
-  if (lookupError) {
-    console.error('[member DELETE] lookup failed:', lookupError.message)
-    return NextResponse.json({ error: lookupError.message, code: 'lookup_failed' }, { status: 500 })
+  if (delTargetResult.error) {
+    console.error('[member DELETE] lookup failed:', delTargetResult.error.message)
+    return NextResponse.json({ error: delTargetResult.error.message, code: 'lookup_failed' }, { status: 500 })
   }
+  const target = delTargetResult.data as MemberRow | null
   if (!target) {
     return NextResponse.json({ error: 'Member not found', code: 'not_found' }, { status: 404 })
   }

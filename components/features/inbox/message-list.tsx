@@ -110,7 +110,7 @@ export function MessageList({ msgEndRef }: MessageListProps) {
                   ) : (
                     <button
                       className="text-[10px] font-semibold text-muted-foreground bg-transparent cursor-pointer px-[7px] py-[2px] rounded-[5px] transition-all hover:text-foreground hover:bg-secondary"
-                      onClick={() => translateMessage(msg.id, msg.body || msg.snippet || '', token)}
+                      onClick={() => void translateMessage(msg.id, msg.body || msg.snippet || '', token)}
                     >
                       Translate
                     </button>

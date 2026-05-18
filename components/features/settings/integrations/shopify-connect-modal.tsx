@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Loader2 } from 'lucide-react'
+import { Loader2, ExternalLink } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -14,7 +14,9 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog'
 import { PasswordInput } from '@/components/features/settings/password-input'
-import { useConnectShopify } from '@/hooks/settings'
+import { useConnectShopify, startShopifyOAuth } from '@/hooks/settings'
+import { useAuthStore } from '@/stores/auth'
+import { toast } from 'sonner'
 
 interface ShopifyConnectModalProps {
   open: boolean
@@ -24,17 +26,33 @@ interface ShopifyConnectModalProps {
 export function ShopifyConnectModal({ open, onOpenChange }: ShopifyConnectModalProps) {
   const [domain, setDomain] = useState('')
   const [accessToken, setAccessToken] = useState('')
+  const [oauthLoading, setOauthLoading] = useState(false)
 
+  const token = useAuthStore((s) => s.session?.access_token ?? '')
   const connectMutation = useConnectShopify()
 
+  const isBusy = connectMutation.isPending || oauthLoading
+
   function handleClose() {
-    if (connectMutation.isPending) return
+    if (isBusy) return
     setDomain('')
     setAccessToken('')
     onOpenChange(false)
   }
 
-  async function handleConnect() {
+  async function handleOAuth() {
+    if (!domain.trim()) return
+    setOauthLoading(true)
+    try {
+      const url = await startShopifyOAuth(token, domain.trim())
+      window.location.href = url
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to start Shopify OAuth')
+      setOauthLoading(false)
+    }
+  }
+
+  async function handleManualConnect() {
     if (!domain.trim() || !accessToken.trim()) return
     await connectMutation.mutateAsync(
       { domain: domain.trim(), access_token: accessToken.trim() },
@@ -49,62 +67,94 @@ export function ShopifyConnectModal({ open, onOpenChange }: ShopifyConnectModalP
   }
 
   function handleKeyDown(e: React.KeyboardEvent) {
-    if (e.key === 'Enter') handleConnect()
+    if (e.key === 'Enter' && accessToken.trim()) void handleManualConnect()
   }
 
-  const canSubmit = domain.trim().length > 0 && accessToken.trim().length > 0
+  const canOAuth = domain.trim().length > 0
+  const canManual = domain.trim().length > 0 && accessToken.trim().length > 0
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent showCloseButton={!connectMutation.isPending}>
+      <DialogContent showCloseButton={!isBusy}>
         <DialogHeader>
           <DialogTitle>Connect Shopify</DialogTitle>
           <DialogDescription>
-            Enter your Shopify store domain and Admin API access token.
+            Connect your store via Shopify or enter credentials manually.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex flex-col gap-4" onKeyDown={handleKeyDown}>
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="shopify-domain">Store domain</Label>
-            <Input
-              id="shopify-domain"
-              type="text"
-              value={domain}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDomain(e.target.value)}
-              placeholder="your-store.myshopify.com"
-              autoFocus
-              autoComplete="off"
-              spellCheck={false}
-              disabled={connectMutation.isPending}
-            />
-            <p className="text-xs text-muted-foreground">
-              Must end with <span className="font-medium text-foreground">.myshopify.com</span>
+        <div className="flex flex-col gap-5">
+          {/* ── OAuth section ── */}
+          <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="shopify-domain-oauth">Store domain</Label>
+              <Input
+                id="shopify-domain-oauth"
+                type="text"
+                value={domain}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDomain(e.target.value)}
+                placeholder="your-store.myshopify.com"
+                autoFocus
+                autoComplete="off"
+                spellCheck={false}
+                disabled={isBusy}
+              />
+            </div>
+            <Button
+              onClick={() => void handleOAuth()}
+              disabled={!canOAuth || isBusy}
+              className="w-full"
+            >
+              {oauthLoading ? (
+                <Loader2 className="size-3.5 animate-spin" />
+              ) : (
+                <ExternalLink className="size-3.5" />
+              )}
+              {oauthLoading ? 'Redirecting…' : 'Connect with Shopify'}
+            </Button>
+            <p className="text-xs text-muted-foreground text-center">
+              We'll redirect you to Shopify to authorize access
             </p>
           </div>
 
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="shopify-token">Access token</Label>
-            <PasswordInput
-              id="shopify-token"
-              value={accessToken}
-              onChange={setAccessToken}
-              placeholder="shpat_..."
-              disabled={connectMutation.isPending}
-            />
-            <p className="text-xs text-muted-foreground">
-              Found in Shopify Admin → Apps → Develop apps → API credentials
-            </p>
+          {/* ── Divider ── */}
+          <div className="flex items-center gap-3">
+            <div className="h-px flex-1 bg-border" />
+            <span className="text-xs text-muted-foreground">or</span>
+            <div className="h-px flex-1 bg-border" />
+          </div>
+
+          {/* ── Manual section ── */}
+          <div className="flex flex-col gap-3" onKeyDown={handleKeyDown}>
+            {domain.trim() && (
+              <p className="text-xs text-muted-foreground">
+                Store: <span className="font-medium text-foreground">{domain.trim()}</span>
+              </p>
+            )}
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="shopify-token">Access token</Label>
+              <PasswordInput
+                id="shopify-token"
+                value={accessToken}
+                onChange={setAccessToken}
+                placeholder="shpat_..."
+                disabled={isBusy}
+              />
+              <p className="text-xs text-muted-foreground">
+                Found in Shopify Admin → Apps → Develop apps → API credentials
+              </p>
+            </div>
           </div>
         </div>
 
-        <DialogFooter showCloseButton={!connectMutation.isPending}>
+        <DialogFooter showCloseButton={!isBusy}>
           <Button
-            onClick={handleConnect}
-            disabled={!canSubmit || connectMutation.isPending}
+            onClick={() => void handleManualConnect()}
+            disabled={!canManual || isBusy}
+            variant="secondary"
           >
             {connectMutation.isPending && <Loader2 className="size-3.5 animate-spin" />}
-            {connectMutation.isPending ? 'Connecting…' : 'Connect Shopify'}
+            {connectMutation.isPending ? 'Connecting…' : 'Connect with token'}
           </Button>
         </DialogFooter>
       </DialogContent>

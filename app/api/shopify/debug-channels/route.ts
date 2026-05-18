@@ -17,6 +17,8 @@ export async function GET(request: NextRequest) {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
   // Group by source_name
+  interface OrderRow { source_name?: string; subtotal_price?: number; total_price?: number; refund_amount?: number; cancel_reason?: string }
+  const typedOrders = (orders || []) as OrderRow[]
   const channelMap: Record<string, {
     count: number
     subtotal_sum: number
@@ -25,7 +27,7 @@ export async function GET(request: NextRequest) {
     cancelled_count: number
     sample: unknown
   }> = {}
-  for (const o of orders) {
+  for (const o of typedOrders) {
     const ch = o.source_name || 'web'
     if (!channelMap[ch]) {
       channelMap[ch] = {

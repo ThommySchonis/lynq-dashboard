@@ -13,7 +13,7 @@ export async function POST(request: NextRequest, { params }: RouteContext<{ id: 
   if (!credentials) return NextResponse.json({ error: 'Shopify not configured' }, { status: 400 })
 
   const { id } = await params
-  const body = await request.json()
+  const body = (await request.json() as unknown) as Parameters<typeof editOrder>[2]
 
   try {
     const orderEdit = await editOrder(credentials, id, body)

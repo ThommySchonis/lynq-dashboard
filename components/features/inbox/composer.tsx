@@ -99,7 +99,7 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(
         },
         handleKeyDown: (_view, event) => {
           if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) {
-            handleSend()
+            void handleSend()
             return true
           }
           return false
@@ -429,7 +429,7 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(
             variant="ghost"
             size="xs"
             disabled={aiLoading}
-            onClick={handleAiReply}
+            onClick={() => void handleAiReply()}
             className="gap-1"
           >
             {aiLoading ? (
@@ -447,7 +447,7 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(
             variant="secondary"
             size="xs"
             disabled={!hasContent() || sending}
-            onClick={handleSendResolve}
+            onClick={() => void handleSendResolve()}
             className="ml-1.5 gap-1"
           >
             <Check className="size-3" />
@@ -459,7 +459,7 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(
             variant="default"
             size="xs"
             disabled={!hasContent() || sending}
-            onClick={handleSend}
+            onClick={() => void handleSend()}
             className="ml-1.5 gap-1"
           >
             {sending ? (

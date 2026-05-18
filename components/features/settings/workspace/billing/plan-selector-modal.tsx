@@ -73,7 +73,7 @@ export function PlanSelectorModal({ open, onOpenChange }: PlanSelectorModalProps
             </div>
             <button
               type="button"
-              onClick={handleCancelToggle}
+              onClick={() => void handleCancelToggle()}
               disabled={cancelSub.isPending || reactivate.isPending}
               className="text-xs underline-offset-2 hover:underline text-muted-foreground hover:text-foreground transition-colors"
             >
@@ -144,7 +144,7 @@ export function PlanSelectorModal({ open, onOpenChange }: PlanSelectorModalProps
 
             <Button
               type="button"
-              onClick={handleSubmit}
+              onClick={() => void handleSubmit()}
               disabled={submitDisabled}
               className="mt-auto w-full"
             >

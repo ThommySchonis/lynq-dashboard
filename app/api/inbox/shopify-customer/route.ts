@@ -2,6 +2,17 @@ import { getAuthContext } from '../../../../lib/auth'
 import { supabaseAdmin } from '../../../../lib/supabaseAdmin'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { parseJson } from '@/lib/utils/typed-json'
+
+interface ShopifyClient {
+  shopify_domain?: string
+  shopify_api_key?: string
+}
+
+interface ShopifyCustomerResponse {
+  customer?: Record<string, unknown>
+  customers?: Record<string, unknown>[]
+}
 
 export async function GET(request: NextRequest) {
   const ctx = await getAuthContext(request)
@@ -11,11 +22,13 @@ export async function GET(request: NextRequest) {
   const query = searchParams.get('q')
   const customerId = searchParams.get('id')
 
-  const { data: client } = await supabaseAdmin
+  const { data: clientRaw } = await supabaseAdmin
     .from('clients')
     .select('shopify_domain, shopify_api_key')
     .eq('workspace_id', ctx.workspaceId)
     .maybeSingle()
+
+  const client = clientRaw as ShopifyClient | null
 
   if (!client?.shopify_domain || !client?.shopify_api_key) {
     return NextResponse.json({ customers: [] })
@@ -35,10 +48,7 @@ export async function GET(request: NextRequest) {
       headers: { 'X-Shopify-Access-Token': client.shopify_api_key },
     })
     if (!res.ok) return NextResponse.json({ customers: [] })
-    const data = await res.json() as {
-      customer?: Record<string, unknown>
-      customers?: Record<string, unknown>[]
-    }
+    const data = await parseJson<ShopifyCustomerResponse>(res)
 
     const customers = customerId ? [data.customer] : (data.customers || [])
     return NextResponse.json({

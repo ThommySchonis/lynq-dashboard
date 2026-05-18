@@ -52,7 +52,7 @@ export function FinanceView() {
   ]
 
   const handleRefresh = () => {
-    qc.invalidateQueries({ queryKey: adminKeys.finance() })
+    void qc.invalidateQueries({ queryKey: adminKeys.finance() })
   }
 
   return (

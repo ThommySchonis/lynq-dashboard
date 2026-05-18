@@ -5,8 +5,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Button } from '@/components/ui/button'
 import { Loader2 } from 'lucide-react'
 import { authFetch } from '@/lib/inbox-utils'
+import { parseJson } from '@/lib/utils/typed-json'
 
-interface NoteOrder {
+export interface NoteOrder {
   id: string
   name: string
   note?: string | null
@@ -27,7 +28,7 @@ export function NoteModal({ order, token, onClose, onSuccess }: NoteModalProps) 
   async function handleSave() {
     setLoading(true);
     const res = await authFetch(`/api/shopify/orders/${order.id}/note`, { method: "PUT", body: JSON.stringify({ note }) }, token);
-    const data = await res.json();
+    const data = await parseJson<{ success?: boolean; error?: string }>(res);
     setLoading(false);
     if (data.success) onSuccess("Note saved");
     else onSuccess(data.error || "Failed to save note", "error");
@@ -57,7 +58,7 @@ export function NoteModal({ order, token, onClose, onSuccess }: NoteModalProps) 
           <Button variant="outline" className="" onClick={onClose}>
             Cancel
           </Button>
-          <Button className="" onClick={handleSave} disabled={loading}>
+          <Button className="" onClick={() => void handleSave()} disabled={loading}>
             {loading ? <Loader2 size={13} className="animate-spin text-white" /> : "Save"}
           </Button>
         </DialogFooter>

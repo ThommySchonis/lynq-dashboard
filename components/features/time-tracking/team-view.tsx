@@ -37,11 +37,8 @@ export function TeamView({ data, filter, onFilterChange }: TeamViewProps) {
 
   // user_id → TeamMember lookup, used by AdminLogRow to resolve
   // s.last_edit_by into a display name.
-  const membersById = useMemo(() => {
-    const map: Record<string, typeof members[number]> = {}
-    for (const m of members) map[m.id] = m
-    return map
-  }, [members])
+  const membersById: Record<string, TeamData['members'][number]> = {}
+  for (const m of members) membersById[m.id] = m
 
   // ─── Filter state (client-side, no extra API calls) ─────────────────
   const [agentSearch, setAgentSearch] = useState('')

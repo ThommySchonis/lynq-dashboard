@@ -77,8 +77,8 @@ export default function PricingRequiredPage() {
   useEffect(() => {
     if (!isLoading && !session) { router.push('/login'); return }
     if (user) {
-      const meta = user.user_metadata ?? {}
-      const raw = (meta.name || meta.full_name || user.email?.split('@')[0] || '').split(/\s+/)[0]
+      const meta = (user.user_metadata ?? {}) as Record<string, unknown>
+      const raw = String(meta.name || meta.full_name || user.email?.split('@')[0] || '').split(/\s+/)[0]
       setFirstName(raw || '')
     }
   }, [isLoading, session, user, router])

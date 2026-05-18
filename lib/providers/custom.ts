@@ -1,9 +1,78 @@
 import { ImapFlow } from 'imapflow'
-// @ts-ignore — no @types/nodemailer installed
+// @ts-expect-error — no @types/nodemailer installed
 import nodemailer from 'nodemailer'
 import { decrypt } from '../encryption'
 
-function getImapConfig(account: any) {
+// ── Types ────────────────────────────────────────────────────────────────────
+
+interface EmailAddress {
+  email: string
+  name: string
+}
+
+interface CustomAccount {
+  id: string
+  email: string
+  email_address?: string
+  display_name?: string
+  encrypted_password: string
+  imap_host: string
+  imap_port?: number
+  smtp_host: string
+  smtp_port?: number
+  [key: string]: unknown
+}
+
+interface ImapMailboxStatus {
+  exists?: number
+}
+
+interface ImapEnvelopeAddress {
+  address?: string
+  name?: string
+}
+
+interface ImapEnvelope {
+  from?: ImapEnvelopeAddress[]
+  to?: ImapEnvelopeAddress[]
+  cc?: ImapEnvelopeAddress[]
+  subject?: string
+  messageId?: string
+  date?: string
+}
+
+interface ImapMessage {
+  uid: number
+  envelope?: ImapEnvelope
+  flags?: Set<string>
+  source?: Buffer | string
+}
+
+interface NormalizedMessage {
+  providerMessageId: string
+  messageId: string
+  from: EmailAddress
+  to: EmailAddress[]
+  cc: EmailAddress[]
+  subject: string
+  bodyHtml: string
+  bodyText: string
+  date: string
+  isOutbound: boolean
+  unread?: boolean
+}
+
+interface Thread {
+  providerThreadId: string
+  messages: NormalizedMessage[]
+  subject: string
+  snippet: string
+  lastMessageAt: string
+}
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+
+function getImapConfig(account: CustomAccount) {
   return {
     host: account.imap_host,
     port: account.imap_port || 993,
@@ -17,7 +86,7 @@ function getImapConfig(account: any) {
   }
 }
 
-function getSmtpConfig(account: any) {
+function getSmtpConfig(account: CustomAccount) {
   const port = account.smtp_port || 465
   return {
     host: account.smtp_host,
@@ -30,23 +99,23 @@ function getSmtpConfig(account: any) {
   }
 }
 
-function hasHeaderInjection(value: any) {
+function hasHeaderInjection(value: string | null | undefined) {
   return /[\r\n]/.test(String(value || ''))
 }
 
-function normalizeSubject(subject: any) {
+function normalizeSubject(subject: string) {
   return (subject || '').replace(/^(re|fwd?|fw):\s*/gi, '').trim().toLowerCase()
 }
 
-function parseImapAddress(addr: any) {
+function parseImapAddress(addr: ImapEnvelopeAddress[] | undefined): EmailAddress[] {
   if (!addr || !addr.length) return []
-  return addr.map((a: any) => ({
+  return addr.map((a) => ({
     email: a.address || '',
     name: a.name || '',
   }))
 }
 
-function extractBodyFromSource(source: any) {
+function extractBodyFromSource(source: Buffer | string) {
   const raw = Buffer.isBuffer(source) ? source.toString('utf-8') : String(source)
 
   // Extract text/plain first (preferred for bodyText)
@@ -64,7 +133,7 @@ function extractBodyFromSource(source: any) {
   return { bodyText, bodyHtml }
 }
 
-function parseImapMessage(msg: any, accountEmail: any, mailboxLabel: any) {
+function parseImapMessage(msg: ImapMessage, accountEmail: string, mailboxLabel: string): NormalizedMessage {
   const envelope = msg.envelope || {}
   const fromRaw = envelope.from?.[0]
   const from = fromRaw
@@ -92,35 +161,38 @@ function parseImapMessage(msg: any, accountEmail: any, mailboxLabel: any) {
   }
 }
 
-export async function refreshTokenIfNeeded(account: any) {
+// ── Exports ──────────────────────────────────────────────────────────────────
+
+export async function refreshTokenIfNeeded(account: CustomAccount) {
   // IMAP/SMTP uses static credentials — no token refresh needed
   return account
 }
 
-export async function fetchThreads(account: any, { limit = 20 }: any = {}) {
+export async function fetchThreads(account: CustomAccount, { limit = 20 }: { limit?: number } = {}) {
   const client = new ImapFlow(getImapConfig(account))
 
   try {
     await client.connect()
     const lock = await client.getMailboxLock('INBOX')
-    const rawMessages: any[] = []
+    const rawMessages: ImapMessage[] = []
 
     try {
-      const exists = (client.mailbox as any)?.exists || 0
+      const mailbox = client.mailbox as ImapMailboxStatus | undefined
+      const exists = mailbox?.exists || 0
       const seqStart = Math.max(1, exists - limit + 1)
 
       for await (const msg of client.fetch(
         { seq: `${seqStart}:*` },
         { envelope: true, flags: true }
       )) {
-        rawMessages.push(msg)
+        rawMessages.push(msg as ImapMessage)
       }
     } finally {
       lock.release()
     }
 
     // Group into threads by normalised subject
-    const threadMap = new Map()
+    const threadMap = new Map<string, { messages: NormalizedMessage[]; subject: string }>()
     for (const msg of rawMessages) {
       const subject = msg.envelope?.subject || '(no subject)'
       const threadKey = normalizeSubject(subject)
@@ -128,7 +200,7 @@ export async function fetchThreads(account: any, { limit = 20 }: any = {}) {
       if (!threadMap.has(threadKey)) {
         threadMap.set(threadKey, { messages: [], subject })
       }
-      threadMap.get(threadKey).messages.push({
+      threadMap.get(threadKey)!.messages.push({
         providerMessageId: `imap_${msg.uid}`,
         messageId: msg.envelope?.messageId || `imap_${msg.uid}`,
         from: msg.envelope?.from?.[0]
@@ -149,11 +221,11 @@ export async function fetchThreads(account: any, { limit = 20 }: any = {}) {
       })
     }
 
-    const threads = Array.from(threadMap.entries()).map(([_threadKey, { messages: msgs, subject }]: [any, any]) => {
-      msgs.sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime())
+    const threads: Thread[] = Array.from(threadMap.entries()).map(([threadKey, { messages: msgs, subject }]) => {
+      msgs.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
       const lastMsg = msgs[msgs.length - 1]
       return {
-        providerThreadId: _threadKey,
+        providerThreadId: threadKey,
         messages: msgs,
         subject,
         snippet: lastMsg?.bodyText?.substring(0, 100) || '',
@@ -161,7 +233,7 @@ export async function fetchThreads(account: any, { limit = 20 }: any = {}) {
       }
     })
 
-    threads.sort((a: any, b: any) => new Date(b.lastMessageAt).getTime() - new Date(a.lastMessageAt).getTime())
+    threads.sort((a, b) => new Date(b.lastMessageAt).getTime() - new Date(a.lastMessageAt).getTime())
 
     return { threads, nextPageToken: null }
   } finally {
@@ -169,17 +241,17 @@ export async function fetchThreads(account: any, { limit = 20 }: any = {}) {
   }
 }
 
-export async function fetchThread(account: any, providerThreadId: string) {
+export async function fetchThread(account: CustomAccount, providerThreadId: string) {
   const client = new ImapFlow(getImapConfig(account))
 
   try {
     await client.connect()
-    const messages: any[] = []
+    const messages: NormalizedMessage[] = []
 
     // Search across INBOX and common Sent mailbox names
     const mailboxes = ['INBOX', 'Sent', 'Sent Messages', 'Sent Items', '[Gmail]/Sent Mail']
     for (const mailbox of mailboxes) {
-      let lock: any
+      let lock: { release: () => void }
       try {
         lock = await client.getMailboxLock(mailbox)
       } catch {
@@ -189,14 +261,14 @@ export async function fetchThread(account: any, providerThreadId: string) {
       try {
         // providerThreadId is the normalised subject key
         const uids = await client.search({ subject: providerThreadId })
-        if (!uids || !(uids as any[]).length) continue
+        if (!uids || !(uids as number[]).length) continue
 
-        for await (const msg of client.fetch((uids as any[]).slice(0, 50), {
+        for await (const msg of client.fetch((uids as number[]).slice(0, 50), {
           envelope: true,
           source: true,
           flags: true,
         })) {
-          messages.push(parseImapMessage(msg, account.email, mailbox))
+          messages.push(parseImapMessage(msg as ImapMessage, account.email, mailbox))
         }
       } finally {
         lock.release()
@@ -204,11 +276,11 @@ export async function fetchThread(account: any, providerThreadId: string) {
     }
 
     // Sort ascending so conversation reads top-to-bottom
-    messages.sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime())
+    messages.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
 
     // Deduplicate: same message can appear in both INBOX and Sent
-    const seen = new Set()
-    const deduped = messages.filter((m: any) => {
+    const seen = new Set<string>()
+    const deduped = messages.filter((m) => {
       const key = `${m.date}|${m.from.email}`
       if (seen.has(key)) return false
       seen.add(key)
@@ -221,15 +293,17 @@ export async function fetchThread(account: any, providerThreadId: string) {
   }
 }
 
-export async function sendReply(account: any, { to, cc, bcc, subject, bodyHtml, bodyText, inReplyTo, references }: { to: any; cc: any; bcc: any; subject: any; bodyHtml: any; bodyText: any; inReplyTo: any; references: any }) {
+export async function sendReply(account: CustomAccount, { to, cc, bcc, subject, bodyHtml, bodyText, inReplyTo, references }: { to: EmailAddress[]; cc: EmailAddress[]; bcc: EmailAddress[]; subject: string; bodyHtml: string; bodyText: string; inReplyTo: string | null; references: string | null }) {
   if ([subject, inReplyTo].some(hasHeaderInjection)) {
     throw new Error('Invalid email header value')
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access -- nodemailer has no type declarations
   const transporter = nodemailer.createTransport(getSmtpConfig(account))
 
-  const formatAddr = (a: any) => (a.name ? `"${a.name}" <${a.email}>` : a.email)
+  const formatAddr = (a: EmailAddress) => (a.name ? `"${a.name}" <${a.email}>` : a.email)
 
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment -- nodemailer has no type declarations
   const info = await transporter.sendMail({
     from: account.display_name
       ? `"${account.display_name}" <${account.email}>`
@@ -244,13 +318,14 @@ export async function sendReply(account: any, { to, cc, bcc, subject, bodyHtml, 
     references: references || undefined,
   })
 
-  const rawId = info.messageId || `<smtp_${Date.now()}@${account.smtp_host}>`
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- nodemailer has no type declarations
+  const rawId = (info.messageId as string) || `<smtp_${Date.now()}@${account.smtp_host}>`
   return {
     providerMessageId: rawId.replace(/[<>]/g, ''),
     messageId: rawId,
   }
 }
 
-export async function sendNew(account: any, { to, cc, bcc, subject, bodyHtml, bodyText }: { to: any; cc: any; bcc: any; subject: any; bodyHtml: any; bodyText: any }) {
+export async function sendNew(account: CustomAccount, { to, cc, bcc, subject, bodyHtml, bodyText }: { to: EmailAddress[]; cc: EmailAddress[]; bcc: EmailAddress[]; subject: string; bodyHtml: string; bodyText: string }) {
   return sendReply(account, { to, cc, bcc, subject, bodyHtml, bodyText, inReplyTo: null, references: null })
 }

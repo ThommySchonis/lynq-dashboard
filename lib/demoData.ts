@@ -37,12 +37,12 @@ export const DEMO_ORDERS = [
 
 // Refunds format — rich, realistic, spread across 6 months for full chart coverage
 // Patterns built in:
-//   • Premium Denim Jacket → 4× Quality  → HIGH pattern action + supplier task
-//   • Classic Polo Shirt   → 3× Sizing   → HIGH pattern action + listing fix
-//   • Minimalist Leather Watch → 2× Damaged → MEDIUM pattern action
-//   • Thomas Mueller       → 2× refunds  → repeat-refunder action
+//   * Premium Denim Jacket -> 4x Quality  -> HIGH pattern action + supplier task
+//   * Classic Polo Shirt   -> 3x Sizing   -> HIGH pattern action + listing fix
+//   * Minimalist Leather Watch -> 2x Damaged -> MEDIUM pattern action
+//   * Thomas Mueller       -> 2x refunds  -> repeat-refunder action
 export const DEMO_REFUNDS = [
-  // ── April 2026 (current month) ──────────────────────────────────────────────
+  // -- April 2026 (current month) --------------------------------------------
   {
     orderId: '#1026',
     orderIdNumeric: 5504586930026,
@@ -161,7 +161,7 @@ export const DEMO_REFUNDS = [
     refundedAt: '2026-04-04T10:15:00Z',
   },
 
-  // ── March 2026 ──────────────────────────────────────────────────────────────
+  // -- March 2026 -------------------------------------------------------------
   {
     orderId: '#0931',
     orderIdNumeric: 5504586920931,
@@ -202,7 +202,7 @@ export const DEMO_REFUNDS = [
     refundedAt: '2026-03-06T11:00:00Z',
   },
 
-  // ── February 2026 ───────────────────────────────────────────────────────────
+  // -- February 2026 ----------------------------------------------------------
   {
     orderId: '#0842',
     orderIdNumeric: 5504586920842,
@@ -230,7 +230,7 @@ export const DEMO_REFUNDS = [
     refundedAt: '2026-02-10T10:20:00Z',
   },
 
-  // ── January 2026 ────────────────────────────────────────────────────────────
+  // -- January 2026 -----------------------------------------------------------
   {
     orderId: '#0764',
     orderIdNumeric: 5504586920764,
@@ -258,7 +258,7 @@ export const DEMO_REFUNDS = [
     refundedAt: '2026-01-15T09:10:00Z',
   },
 
-  // ── November 2025 ───────────────────────────────────────────────────────────
+  // -- November 2025 ----------------------------------------------------------
   {
     orderId: '#0612',
     orderIdNumeric: 5504586920612,
@@ -348,7 +348,7 @@ export const DEMO_INSIGHTS = [
 ]
 
 // shopify_orders table rows (used by /api/shopify/kpis via Supabase)
-export function getDemoShopifyOrderRows(userId: any) {
+export function getDemoShopifyOrderRows(userId: string) {
   const synced = new Date().toISOString()
   return [
     { id: 5504586930001, client_id: userId, order_number: '#1001', financial_status: 'paid', cancel_reason: null, subtotal_price: 89.95, total_price: 94.95, total_discounts: 0, refund_amount: 0, presentment_currency: 'EUR', source_name: 'web', customer_email: 'sophie@example.com', customer_name: 'Sophie van der Berg', processed_at: '2026-04-01T09:15:00Z', created_at_shopify: '2026-04-01T09:15:00Z', updated_at_shopify: '2026-04-01T09:15:00Z', synced_at: synced },

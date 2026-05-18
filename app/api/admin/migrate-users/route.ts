@@ -10,6 +10,10 @@ interface MigrateUser {
   password: string
 }
 
+interface MigrateUsersBody {
+  users: MigrateUser[]
+}
+
 // POST body: { users: [{ id, email, password }] }
 // Creates each user in the main Supabase project with the same UUID
 // so all existing data (integrations, shopify_orders, etc.) stays linked
@@ -23,7 +27,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Admin only' }, { status: 403 })
   }
 
-  const { users } = await request.json().catch(() => ({ users: [] })) as { users: MigrateUser[] }
+  const { users } = await request.json().catch(() => ({ users: [] as MigrateUser[] })) as MigrateUsersBody
   if (!users?.length) return NextResponse.json({ error: 'No users provided' }, { status: 400 })
 
   const results = []

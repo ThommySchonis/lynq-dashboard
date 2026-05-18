@@ -2,6 +2,11 @@ import type { NextRequest } from 'next/server'
 import { supabaseAdmin, getUserFromToken } from '../../../../lib/supabaseAdmin'
 import { NextResponse } from 'next/server'
 
+interface PassedSubmission {
+  submitted_at?: string
+  percentage?: number
+}
+
 const VALID_TYPES = ['customer_service', 'supply_chain', 'dispute_management', 'overall_manager']
 const MAX_ATTEMPTS = 3
 const PASSING_SCORE = 75
@@ -49,8 +54,8 @@ export async function GET(request: NextRequest) {
     total_questions: questionsRes.data?.length || 0,
     passing_score: PASSING_SCORE,
     already_passed: !!passRes.data,
-    passed_at: passRes.data?.submitted_at || null,
-    passed_score: passRes.data?.percentage || null,
+    passed_at: (passRes.data as PassedSubmission | null)?.submitted_at || null,
+    passed_score: (passRes.data as PassedSubmission | null)?.percentage || null,
     attempts_used: attemptsUsed,
     max_attempts: MAX_ATTEMPTS,
     can_attempt: !passRes.data && attemptsUsed < MAX_ATTEMPTS,

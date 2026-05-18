@@ -1,6 +1,11 @@
 import type { NextRequest } from 'next/server'
 import { getUserFromToken, supabaseAdmin } from '../../../../lib/supabaseAdmin'
 import { NextResponse } from 'next/server'
+import { parseBody } from '@/lib/utils/typed-json'
+
+interface ConnectBody {
+  apiKey?: string
+}
 
 const PP_BASE = 'https://open.parcelwill.com'
 
@@ -14,7 +19,7 @@ export async function POST(request: NextRequest) {
 
   let apiKey: string | undefined
   try {
-    const body = await request.json() as { apiKey?: string }
+    const body = await parseBody<ConnectBody>(request)
     apiKey = body.apiKey?.trim()
   } catch {
     return NextResponse.json({ error: 'Invalid request body' }, { status: 400 })

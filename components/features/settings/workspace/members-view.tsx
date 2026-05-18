@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/button'
 import { useMembersPage } from '@/hooks/settings'
 import { useAuthStore } from '@/stores/auth'
 import { can } from '@/lib/permissions'
+import type { Role } from '@/types'
+import type { MembersPageData } from '@/types/settings'
 import { MembersTable } from './members-table'
 import { InviteModal } from './invite-modal'
 
@@ -23,11 +25,12 @@ export function MembersView() {
   const debouncedSearch = useDebounce(search, 250)
   const [showInvite, setShowInvite] = useState(false)
 
-  const { data, isLoading } = useMembersPage(debouncedSearch)
+  const { data: rawData, isLoading } = useMembersPage(debouncedSearch)
+  const data = rawData as MembersPageData | undefined
 
-  const currentUserRole = data?.currentUserRole ?? useAuthStore.getState().role ?? null
+  const currentUserRole: Role | null = data?.currentUserRole ?? useAuthStore.getState().role ?? null
   const isOwner = data?.isOwner ?? false
-  const canManage = (currentUserRole && can.inviteMembers(currentUserRole)) || isOwner
+  const canManage = (currentUserRole != null && can.inviteMembers(currentUserRole)) || isOwner
 
   const seatsUsed = data?.seatsUsed ?? 0
   const seatLimit = data?.seatLimit ?? null

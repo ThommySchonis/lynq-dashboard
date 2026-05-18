@@ -3,6 +3,18 @@ import { encrypt } from '../../../../../lib/encryption'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { verifyOAuthState } from '../../../../../lib/oauthState'
+import { parseJson } from '@/lib/utils/typed-json'
+
+interface OAuthTokenResponse {
+  access_token?: string
+  refresh_token?: string
+  expires_in?: number
+}
+
+interface OutlookProfileResponse {
+  mail?: string
+  userPrincipalName?: string
+}
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
@@ -33,11 +45,7 @@ export async function GET(request: NextRequest) {
     }),
   })
 
-  const tokens = await tokenRes.json() as {
-    access_token?: string
-    refresh_token?: string
-    expires_in?: number
-  }
+  const tokens = await parseJson<OAuthTokenResponse>(tokenRes)
   if (!tokens.access_token) {
     return NextResponse.redirect(`${appUrl}/settings?provider=outlook&status=error&reason=token_failed`)
   }
@@ -45,7 +53,7 @@ export async function GET(request: NextRequest) {
   const profileRes = await fetch('https://graph.microsoft.com/v1.0/me', {
     headers: { Authorization: `Bearer ${tokens.access_token}` },
   })
-  const profile = await profileRes.json() as { mail?: string; userPrincipalName?: string }
+  const profile = await parseJson<OutlookProfileResponse>(profileRes)
   const emailAddress = profile.mail || profile.userPrincipalName
 
   // Encrypt tokens

@@ -89,7 +89,7 @@ function AnalyticsContent() {
   const refunds = refundData
   const allRefunds = allRefundData
   const trend: RevenueTrendPoint[] = demoMode ? DEMO_TREND_DATA : (trendQuery.data ?? [])
-  const insights: AiInsight[] = demoMode ? DEMO_INSIGHT_DATA : (aiInsightsQuery.data ?? [])
+  const _insights: AiInsight[] = demoMode ? DEMO_INSIGHT_DATA : (aiInsightsQuery.data ?? [])
   // Loading states: in demo mode everything is "loaded"
   const loaded = {
     kpis: demoMode || !kpisQuery.isPending,

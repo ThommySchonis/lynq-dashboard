@@ -9,7 +9,7 @@ interface WizardStepFinalProps {
   errors: Record<string, string>
 }
 
-export function WizardStepFinal({ form, onChange, errors }: WizardStepFinalProps) {
+export function WizardStepFinal({ form, onChange, errors: _errors }: WizardStepFinalProps) {
   return (
     <div className="mb-4.5">
       <label htmlFor="q-extra" className="block text-[13px] font-medium text-foreground mb-1.5">

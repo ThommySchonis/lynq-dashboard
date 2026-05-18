@@ -1,16 +1,43 @@
 import { supabaseAdmin } from './supabaseAdmin'
 
-export async function getSubscription(userEmail: string) {
+interface SubscriptionRow {
+  plan: string
+  status: string
+  activated_at: string | null
+  expires_at: string | null
+}
+
+export async function getSubscription(userEmail: string): Promise<SubscriptionRow | null> {
   const { data } = await supabaseAdmin
     .from('subscriptions')
     .select('plan, status, activated_at, expires_at')
     .eq('user_email', userEmail)
-    .single()
+    .single<SubscriptionRow>()
   return data || null
 }
 
+interface FeatureSet {
+  inbox: boolean
+  aiReplySuggestions: boolean
+  autoDrafts: boolean
+  refundDashboard: boolean
+  macros: boolean
+  advancedShopify: boolean
+  performanceDashboard: boolean
+  automationRules: boolean
+  timeTracking: boolean
+  supplyChain: boolean
+  valueFeed: boolean
+  multipleStores: boolean
+  analytics: boolean
+  agentPerformance: boolean
+  strategyCall: boolean
+  academy: boolean
+  creditsPerMonth: number
+}
+
 export function hasFeature(plan: string, feature: string) {
-  const features: Record<string, Record<string, any>> = {
+  const features: Record<string, FeatureSet> = {
     starter: {
       inbox: true,
       aiReplySuggestions: true,
@@ -69,7 +96,9 @@ export function hasFeature(plan: string, feature: string) {
       creditsPerMonth: 1000,
     },
   }
-  return features[plan]?.[feature] ?? false
+  const planFeatures = features[plan]
+  if (!planFeatures) return false
+  return planFeatures[feature as keyof FeatureSet] ?? false
 }
 
 export function requirePlan(plan: string, requiredPlan: string) {
@@ -90,7 +119,8 @@ export async function hasAddon(userEmail: string, addon: string) {
 
 export async function hasAcademyAccess(userEmail: string) {
   const sub = await getSubscription(userEmail)
-  if (!sub || (sub as any).status !== 'active') return false
-  if (hasFeature((sub as any).plan, 'academy')) return true
+  if (!sub) return false
+  if (sub.status !== 'active') return false
+  if (hasFeature(sub.plan, 'academy')) return true
   return hasAddon(userEmail, 'academy')
 }

@@ -2,7 +2,21 @@
 
 import { useQuery } from '@tanstack/react-query'
 import { useAuthStore } from '@/stores/auth'
+import { parseJson } from '@/lib/utils/typed-json'
 import type { Task, TaskFilters } from '@/types/tasks'
+
+interface TasksResponse {
+  tasks?: Task[]
+}
+
+interface WorkspaceMembersResponse {
+  members?: Array<{
+    id: string
+    display_name?: string
+    email?: string
+    role?: string
+  }>
+}
 
 function useToken() {
   return useAuthStore((s) => s.session?.access_token ?? '')
@@ -30,8 +44,8 @@ export function useTasksQuery(filters?: TaskFilters) {
         headers: { Authorization: `Bearer ${token}` },
       })
       if (!res.ok) throw new Error('Failed to fetch tasks')
-      const d = await res.json()
-      return (d.tasks as Task[]) ?? []
+      const d = await parseJson<TasksResponse>(res)
+      return d.tasks ?? []
     },
     enabled: !!token,
   })
@@ -46,12 +60,12 @@ export function useWorkspaceMembers() {
         headers: { Authorization: `Bearer ${token}` },
       })
       if (!res.ok) throw new Error('Failed to fetch members')
-      const d = await res.json()
-      return (d.members || []).map((m: Record<string, unknown>) => ({
-        id: m.id as string,
-        displayName: (m.display_name as string) || (m.email as string) || 'Unknown',
-        email: m.email as string,
-        role: m.role as string,
+      const d = await parseJson<WorkspaceMembersResponse>(res)
+      return (d.members || []).map((m) => ({
+        id: m.id,
+        displayName: m.display_name || m.email || 'Unknown',
+        email: m.email || '',
+        role: m.role || '',
       }))
     },
     enabled: !!token,

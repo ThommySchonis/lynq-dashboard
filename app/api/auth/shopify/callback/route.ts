@@ -2,6 +2,20 @@ import { supabaseAdmin } from '../../../../../lib/supabaseAdmin'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import crypto from 'crypto'
+import { parseJson } from '@/lib/utils/typed-json'
+
+interface ShopifyOrdersResponse {
+  orders?: Record<string, unknown>[]
+}
+
+interface ShopifyTokenResponse {
+  access_token?: string
+  scope?: string
+}
+
+interface WorkspaceMemberRow {
+  workspace_id?: string
+}
 
 function timingSafeCompare(a: string, b: string): boolean {
   const left = Buffer.from(a || '')
@@ -17,7 +31,7 @@ async function syncOrders(userId: string, workspaceId: string, shop: string, acc
   while (url) {
     const fetchRes: Response = await fetch(url, { headers: { 'X-Shopify-Access-Token': accessToken } })
     if (!fetchRes.ok) break
-    const data = await fetchRes.json() as { orders?: Record<string, unknown>[] }
+    const data = await parseJson<ShopifyOrdersResponse>(fetchRes)
     orders = orders.concat(data.orders || [])
     const linkHeader: string | null = fetchRes.headers.get('link')
     const nextMatch: RegExpMatchArray | null = linkHeader?.match(/<([^>]+)>;\s*rel="next"/) ?? null
@@ -64,25 +78,40 @@ async function syncOrders(userId: string, workspaceId: string, shop: string, acc
   }
 }
 
+interface OAuthStateRow {
+  state: string
+  shop: string
+  user_id: string
+  workspace_id: string | null
+  client_id: string | null
+  client_secret: string | null
+  expires_at: string
+}
+
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
-  const { code, hmac, shop, state } = Object.fromEntries(searchParams)
+  const code = searchParams.get('code') ?? ''
+  const hmac = searchParams.get('hmac') ?? ''
+  const shop = searchParams.get('shop') ?? ''
+  const state = searchParams.get('state') ?? ''
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL
 
-  const { data: oauthState } = await supabaseAdmin
+  const oauthStateResult = await supabaseAdmin
     .from('oauth_states')
     .select('*')
     .eq('state', state)
     .eq('shop', shop)
     .maybeSingle()
 
+  const oauthState = oauthStateResult.data as OAuthStateRow | null
+
   if (!oauthState || new Date(oauthState.expires_at) < new Date()) {
-    return NextResponse.redirect(`${appUrl}/settings?error=invalid_state`)
+    return NextResponse.redirect(`${appUrl}/settings/integrations/shopify?error=invalid_state`)
   }
 
-  const clientId = oauthState.client_id || process.env.SHOPIFY_CLIENT_ID
-  const clientSecret = oauthState.client_secret || process.env.SHOPIFY_CLIENT_SECRET
+  const clientId = oauthState.client_id || process.env.SHOPIFY_CLIENT_ID || ''
+  const clientSecret = oauthState.client_secret || process.env.SHOPIFY_CLIENT_SECRET || ''
 
   const params = Object.fromEntries(searchParams.entries())
   delete params.hmac
@@ -90,7 +119,7 @@ export async function GET(request: NextRequest) {
   const digest = crypto.createHmac('sha256', clientSecret).update(message).digest('hex')
 
   if (!timingSafeCompare(digest, hmac)) {
-    return NextResponse.redirect(`${appUrl}/settings?error=invalid_hmac`)
+    return NextResponse.redirect(`${appUrl}/settings/integrations/shopify?error=invalid_hmac`)
   }
 
   const tokenRes = await fetch(`https://${shop}/admin/oauth/access_token`, {
@@ -99,24 +128,25 @@ export async function GET(request: NextRequest) {
     body: JSON.stringify({ client_id: clientId, client_secret: clientSecret, code }),
   })
 
-  const tokenData = await tokenRes.json() as { access_token?: string; scope?: string }
+  const tokenData = await parseJson<ShopifyTokenResponse>(tokenRes)
   if (!tokenData.access_token) {
-    return NextResponse.redirect(`${appUrl}/settings?error=token_exchange_failed`)
+    return NextResponse.redirect(`${appUrl}/settings/integrations/shopify?error=token_exchange_failed`)
   }
 
-  // Resolve workspace_id from the user who initiated OAuth. If the user
-  // somehow has no workspace at this point, fail loudly — the OAuth flow
-  // shouldn't be reachable without a logged-in user who already has one.
-  const { data: membership } = await supabaseAdmin
-    .from('workspace_members')
-    .select('workspace_id')
-    .eq('user_id', oauthState.user_id)
-    .maybeSingle()
-
-  const workspaceId = membership?.workspace_id
+  // workspace_id is stored in oauth_states at initiation time (via getAuthContext).
+  // Fall back to workspace_members lookup for any pre-migration oauth_states rows.
+  let workspaceId = oauthState.workspace_id as string | null
+  if (!workspaceId) {
+    const { data: membership } = await supabaseAdmin
+      .from('workspace_members')
+      .select('workspace_id')
+      .eq('user_id', oauthState.user_id)
+      .maybeSingle()
+    workspaceId = (membership as WorkspaceMemberRow | null)?.workspace_id ?? null
+  }
   if (!workspaceId) {
     console.error('[shopify oauth callback] no workspace found for user', oauthState.user_id)
-    return NextResponse.redirect(`${appUrl}/settings?error=no_workspace`)
+    return NextResponse.redirect(`${appUrl}/settings/integrations/shopify?error=no_workspace`)
   }
 
   // Transition: dual-write client_id (legacy) + workspace_id
@@ -132,7 +162,7 @@ export async function GET(request: NextRequest) {
 
   if (upsertError) {
     console.error('integrations upsert failed:', JSON.stringify(upsertError))
-    return NextResponse.redirect(`${appUrl}/settings?error=save_failed`)
+    return NextResponse.redirect(`${appUrl}/settings/integrations/shopify?error=save_failed`)
   }
 
   // Register webhooks. ?cid is now workspace_id (Block C Phase 3 Batch 5).
@@ -159,5 +189,5 @@ export async function GET(request: NextRequest) {
     console.error('Initial sync failed:', e)
   }
 
-  return NextResponse.redirect(`${appUrl}/settings?shopify=connected`)
+  return NextResponse.redirect(`${appUrl}/settings/integrations/shopify?shopify=connected`)
 }

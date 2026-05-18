@@ -1,6 +1,12 @@
 import { create } from 'zustand'
 import { authFetch } from '@/lib/inbox-utils'
+import { parseJson } from '@/lib/utils/typed-json'
 import type { Thread, Message } from '@/types'
+
+interface AnalyzeResponse { analyses?: Record<string, ThreadAnalysis> }
+interface ReplyResponse { reply?: string }
+interface TranslateResponse { translated?: string }
+interface DetectLanguageResponse { code?: string; name?: string }
 
 interface ThreadAnalysis {
   urgency: string
@@ -79,7 +85,7 @@ export const useAIStore = create<AIState>()((set, get) => ({
         },
         token,
       )
-      const data = await res.json()
+      const data = await parseJson<AnalyzeResponse>(res)
       if (data.analyses) {
         set({ analyses: data.analyses })
       }
@@ -100,7 +106,7 @@ export const useAIStore = create<AIState>()((set, get) => ({
         },
         token,
       )
-      const data = await res.json()
+      const data = await parseJson<ReplyResponse>(res)
       set({ aiLoading: false })
       if (data.reply) return data.reply
       return null
@@ -119,7 +125,7 @@ export const useAIStore = create<AIState>()((set, get) => ({
         { method: 'POST', body: JSON.stringify({ text }) },
         token,
       )
-      const data = await res.json()
+      const data = await parseJson<TranslateResponse>(res)
       set({
         translations: {
           ...get().translations,
@@ -143,7 +149,7 @@ export const useAIStore = create<AIState>()((set, get) => ({
         { method: 'POST', body: JSON.stringify({ text, detectOnly: true }) },
         token,
       )
-      const data = await res.json()
+      const data = await parseJson<DetectLanguageResponse>(res)
       if (data.code && data.name) {
         set({
           customerLang: { code: data.code, name: data.name },

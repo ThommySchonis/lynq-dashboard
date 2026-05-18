@@ -3,6 +3,21 @@ import { generateText } from 'ai'
 import { anthropic } from '@ai-sdk/anthropic'
 import { supabaseAdmin, getUserFromToken } from '../../../../lib/supabaseAdmin'
 import { NextResponse } from 'next/server'
+import { parseBody } from '@/lib/utils/typed-json'
+
+interface GradeResult {
+  score?: number
+  feedback?: string
+}
+
+interface ExamSubmitBody {
+  exam_type: string
+  answers: Record<string, string>
+}
+
+interface IdRow {
+  id: string
+}
 
 const PASSING_SCORE = 75
 const MAX_ATTEMPTS = 3
@@ -37,7 +52,7 @@ Return ONLY this JSON (no markdown, no other text):
     })
 
     const cleaned = text.trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim()
-    const parsed = JSON.parse(cleaned)
+    const parsed = JSON.parse(cleaned) as GradeResult
     return {
       score: Math.min(Math.max(Number(parsed.score) || 0, 0), question.max_points),
       feedback: parsed.feedback || '',
@@ -55,7 +70,7 @@ export async function POST(request: NextRequest) {
   const user = await getUserFromToken(token)
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { exam_type, answers } = await request.json() as { exam_type: string; answers: Record<string, string> }
+  const { exam_type, answers } = await parseBody<ExamSubmitBody>(request)
 
   const VALID_TYPES = ['customer_service', 'supply_chain', 'dispute_management', 'overall_manager']
   if (!VALID_TYPES.includes(exam_type)) {
@@ -91,13 +106,15 @@ export async function POST(request: NextRequest) {
   }
 
   // Load questions with correct answers (server-side only)
-  const { data: questions } = await supabaseAdmin
+  const { data: questionsRaw } = await supabaseAdmin
     .from('exam_questions')
     .select('*')
     .eq('exam_type', exam_type)
     .order('question_order')
 
-  if (!questions?.length) {
+  const questions = (questionsRaw || []) as ExamQuestion[]
+
+  if (!questions.length) {
     return NextResponse.json({ error: 'Exam not found' }, { status: 404 })
   }
 
@@ -140,7 +157,7 @@ export async function POST(request: NextRequest) {
   const passed = percentage >= PASSING_SCORE
 
   // Save submission
-  const { data: submission } = await supabaseAdmin
+  const { data: submissionRaw } = await supabaseAdmin
     .from('exam_submissions')
     .insert({
       user_id: user.id,
@@ -157,6 +174,8 @@ export async function POST(request: NextRequest) {
     })
     .select('id')
     .single()
+
+  const submission = submissionRaw as IdRow | null
 
   // Update profile status if passed
   if (passed) {

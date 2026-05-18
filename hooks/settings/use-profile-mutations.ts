@@ -5,6 +5,15 @@ import { supabase } from '@/lib/supabase'
 import { settingsKeys } from './use-settings-data'
 import { useToken } from './utils'
 import { toast } from 'sonner'
+import { parseJson } from '@/lib/utils/typed-json'
+
+interface ErrorResponse {
+  error?: string
+}
+
+interface AvatarUploadResponse {
+  avatar_url: string
+}
 
 export function useUpdateProfile() {
   const token = useToken()
@@ -17,13 +26,13 @@ export function useUpdateProfile() {
         body: JSON.stringify(body),
       })
       if (!res.ok) {
-        const d = await res.json().catch(() => ({}))
-        throw new Error((d as { error?: string }).error || 'Failed to save profile')
+        const d = await parseJson<ErrorResponse>(res).catch((): ErrorResponse => ({}))
+        throw new Error(d.error ||'Failed to save profile')
       }
-      return res.json()
+      return parseJson<unknown>(res)
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: settingsKeys.profile() })
+      void qc.invalidateQueries({ queryKey: settingsKeys.profile() })
       toast.success('Profile updated')
     },
     onError: (err: Error) => {
@@ -45,13 +54,13 @@ export function useUploadAvatar() {
         body: fd,
       })
       if (!res.ok) {
-        const d = await res.json().catch(() => ({}))
-        throw new Error((d as { error?: string }).error || 'Failed to upload avatar')
+        const d = await parseJson<ErrorResponse>(res).catch((): ErrorResponse => ({}))
+        throw new Error(d.error ||'Failed to upload avatar')
       }
-      return res.json() as Promise<{ avatar_url: string }>
+      return parseJson<AvatarUploadResponse>(res)
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: settingsKeys.profile() })
+      void qc.invalidateQueries({ queryKey: settingsKeys.profile() })
       toast.success('Avatar updated')
     },
     onError: (err: Error) => {
@@ -70,12 +79,12 @@ export function useDeleteAvatar() {
         headers: { Authorization: `Bearer ${token}` },
       })
       if (!res.ok) {
-        const d = await res.json().catch(() => ({}))
-        throw new Error((d as { error?: string }).error || 'Failed to remove avatar')
+        const d = await parseJson<ErrorResponse>(res).catch((): ErrorResponse => ({}))
+        throw new Error(d.error ||'Failed to remove avatar')
       }
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: settingsKeys.profile() })
+      void qc.invalidateQueries({ queryKey: settingsKeys.profile() })
       toast.success('Avatar removed')
     },
     onError: (err: Error) => {

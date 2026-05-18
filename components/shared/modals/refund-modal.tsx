@@ -7,8 +7,9 @@ import { Input } from '@/components/ui/input'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Loader2 } from 'lucide-react'
 import { authFetch, fmtPrice, REFUND_REASONS } from '@/lib/inbox-utils'
+import { parseJson } from '@/lib/utils/typed-json'
 
-interface RefundLineItem {
+export interface RefundLineItem {
   id: string
   title: string
   quantity: number
@@ -17,7 +18,7 @@ interface RefundLineItem {
   [key: string]: unknown
 }
 
-interface RefundOrder {
+export interface RefundOrder {
   id: string
   name: string
   totalPrice: string | number
@@ -62,7 +63,7 @@ export function RefundModal({ order, token, onClose, onSuccess }: RefundModalPro
       body = { lineItems, restock, notify, reason, shipping };
     }
     const res = await authFetch(`/api/shopify/orders/${order.id}/refund`, { method: "POST", body: JSON.stringify(body) }, token);
-    const data = await res.json();
+    const data = await parseJson<{ success?: boolean; error?: string }>(res);
     setLoading(false);
     if (data.success) onSuccess("Refund processed!");
     else onSuccess(data.error || "Refund failed", "error");
@@ -221,7 +222,7 @@ export function RefundModal({ order, token, onClose, onSuccess }: RefundModalPro
           <Button variant="outline" className="" onClick={onClose}>
             Cancel
           </Button>
-          <Button variant="destructive" onClick={handleRefund} disabled={loading || !canSubmit}>
+          <Button variant="destructive" onClick={() => void handleRefund()} disabled={loading || !canSubmit}>
             {loading ? <Loader2 size={13} className="animate-spin text-white" /> : "Process refund"}
           </Button>
         </DialogFooter>

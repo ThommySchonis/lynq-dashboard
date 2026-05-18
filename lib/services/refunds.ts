@@ -9,23 +9,41 @@ const REASON_MAP: Record<string, string> = {
   other: 'other',
 }
 
-export function classifyRefundReason(cancelReason: any) {
+export function classifyRefundReason(cancelReason: string | null | undefined) {
   if (!cancelReason) return 'other'
   return REASON_MAP[cancelReason.toLowerCase()] || 'other'
+}
+
+// ── Shopify order shape for refund aggregation ──────────────────────────────
+
+interface ShopifyRefundTransaction {
+  amount?: string | number
+}
+
+interface ShopifyRefund {
+  created_at: string
+  transactions?: ShopifyRefundTransaction[]
+}
+
+interface ShopifyOrderForRefunds {
+  name: string
+  total_price?: string | number
+  cancel_reason?: string | null
+  refunds?: ShopifyRefund[]
 }
 
 /**
  * Group refund line items by order and calculate refund percentages.
  */
-export function aggregateRefunds(orders: any[], dateRange: { from?: string; to?: string }) {
+export function aggregateRefunds(orders: ShopifyOrderForRefunds[], dateRange: { from?: string; to?: string }) {
   const fromTs = dateRange.from ? `${dateRange.from}T00:00:00` : null
   const toTs = dateRange.to ? `${dateRange.to}T23:59:59` : null
 
   return orders
-    .filter((o: any) => o.refunds && o.refunds.length > 0)
-    .flatMap((o: any) => {
-      const orderTotal = parseFloat(o.total_price || 0)
-      const inRange = (o.refunds || []).filter((r: any) => {
+    .filter((o) => o.refunds && o.refunds.length > 0)
+    .flatMap((o) => {
+      const orderTotal = parseFloat(String(o.total_price || 0))
+      const inRange = (o.refunds || []).filter((r) => {
         if (!fromTs && !toTs) return true
         if (fromTs && r.created_at < fromTs) return false
         if (toTs && r.created_at > toTs) return false
@@ -33,9 +51,9 @@ export function aggregateRefunds(orders: any[], dateRange: { from?: string; to?:
       })
       if (inRange.length === 0) return []
 
-      const refundTotal = inRange.reduce((sum: number, r: any) =>
-        sum + (r.transactions || []).reduce((ts: number, t: any) =>
-          ts + parseFloat(t.amount || 0), 0), 0)
+      const refundTotal = inRange.reduce((sum: number, r) =>
+        sum + (r.transactions || []).reduce((ts: number, t) =>
+          ts + parseFloat(String(t.amount || 0)), 0), 0)
 
       if (refundTotal <= 0) return []
 
@@ -49,10 +67,20 @@ export function aggregateRefunds(orders: any[], dateRange: { from?: string; to?:
     })
 }
 
+// ── Refund insight shape ────────────────────────────────────────────────────
+
+interface RefundRecord {
+  reason?: string | null
+  products?: string[]
+  refundAmount: string | number
+  orderId?: string
+  customer?: string
+}
+
 /**
  * Aggregate refund data for AI analysis: top reasons, products, high-value.
  */
-export function getRefundInsights(refunds: any[]) {
+export function getRefundInsights(refunds: RefundRecord[]) {
   if (!refunds || refunds.length === 0) return { reasons: [], products: [], highValue: [] }
 
   // Top reasons
@@ -80,7 +108,7 @@ export function getRefundInsights(refunds: any[]) {
 
   // High-value refunds
   const highValue = [...refunds]
-    .sort((a, b) => parseFloat(b.refundAmount) - parseFloat(a.refundAmount))
+    .sort((a, b) => parseFloat(String(b.refundAmount)) - parseFloat(String(a.refundAmount)))
     .slice(0, 3)
     .map(r => ({
       orderId: r.orderId,

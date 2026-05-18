@@ -17,7 +17,6 @@ import {
   View,
   StyleSheet,
   renderToBuffer,
-  Font,
 } from '@react-pdf/renderer'
 import React from 'react'
 import { ISSUER, isEUCountry } from './issuer'

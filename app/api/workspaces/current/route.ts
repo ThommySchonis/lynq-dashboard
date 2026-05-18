@@ -104,13 +104,13 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ error: 'No valid fields to update' }, { status: 400 })
   }
 
-  const { data: workspace, error } = await supabaseAdmin
+  const wsUpdateResult = await supabaseAdmin
     .from('workspaces')
     .update(updates)
     .eq('id', ctx.workspaceId)
     .select()
     .single()
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json({ workspace })
+  if (wsUpdateResult.error) return NextResponse.json({ error: wsUpdateResult.error.message }, { status: 500 })
+  return NextResponse.json({ workspace: wsUpdateResult.data as Record<string, unknown> })
 }

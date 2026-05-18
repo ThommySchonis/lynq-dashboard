@@ -22,13 +22,6 @@ import { useConversations, useCustomerSearch } from '@/hooks/inbox/use-inbox-dat
 import { CustomerStats } from './customer-stats'
 import { OrdersSection } from './orders-section'
 
-interface SidebarThread {
-  id: string
-  from: string
-  subject: string
-  [key: string]: unknown
-}
-
 interface SidebarFulfillment {
   trackingCompany?: string
   trackingNumber?: string
@@ -123,17 +116,18 @@ export function CustomerSidebar() {
   const setModal = useInboxUI((s) => s.setModal)
 
   // TanStack data
-  const { data: threads = [] } = useConversations(activeFolder, search) as { data?: SidebarThread[] }
+  const { data: threads = [] } = useConversations(activeFolder, search)
 
   const selectedThread = useMemo(
-    () => (threads || []).find((t: SidebarThread) => t.id === selectedThreadId) || null,
+    () => (threads || []).find((t) => t.id === selectedThreadId) || null,
     [threads, selectedThreadId],
   )
 
   // Customer search: auto-fetch when a thread is selected
   const autoCustomerEmail = selectedThread ? extractEmail(selectedThread.from) || '' : ''
   const customerQuery = custSearch || autoCustomerEmail
-  const { data: customer, isLoading: loadingCust } = useCustomerSearch(customerQuery) as { data?: SidebarCustomerResult; isLoading: boolean }
+  const { data: rawCustomer, isLoading: loadingCust } = useCustomerSearch(customerQuery)
+  const customer = rawCustomer as SidebarCustomerResult | undefined
 
   // Manual customer search handler
   const handleCustSearch = useCallback(

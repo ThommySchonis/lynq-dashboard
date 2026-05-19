@@ -2,13 +2,16 @@
 
 import type { TicketMeta } from '@/types/inbox'
 
-export function TicketActionBar({ meta, status, onClose, onAddTag, onRemoveTag, onFieldChange }: {
+export function TicketActionBar({ meta, status, onClose, onAddTag, onRemoveTag, onFieldChange, assignedTo, onAssign, members }: {
   meta: TicketMeta;
   status: string;
   onClose: () => void;
   onAddTag: () => void;
   onRemoveTag: (tag: string) => void;
   onFieldChange: (key: string, value: string) => void;
+  assignedTo: string | null;
+  onAssign: (memberId: string | null) => void;
+  members: { id: string; name: string }[];
 }) {
   const fieldButton = (key: keyof TicketMeta, label: string) => (
     <button
@@ -55,8 +58,19 @@ export function TicketActionBar({ meta, status, onClose, onAddTag, onRemoveTag, 
       </div>
 
       <select
-        value={meta.assignee || "Unassigned"}
-        onChange={(e) => onFieldChange("assignee", e.target.value)}
+        value={assignedTo || ""}
+        onChange={(e) => onAssign(e.target.value || null)}
+        className="border border-border rounded-lg bg-card text-foreground-2 text-[11px] py-1 px-2 font-[inherit] outline-none"
+      >
+        <option value="">Unassigned</option>
+        {members.map((m) => (
+          <option key={m.id} value={m.id}>{m.name}</option>
+        ))}
+      </select>
+
+      <select
+        value={meta.tier || "Unassigned"}
+        onChange={(e) => onFieldChange("tier", e.target.value)}
         className="ml-auto border border-border rounded-lg bg-card text-foreground-2 text-[11px] py-1 px-2 font-[inherit] outline-none"
       >
         <option>Unassigned</option>

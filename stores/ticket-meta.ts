@@ -13,7 +13,7 @@ interface TicketMetaState {
 
 const DEFAULT_META: TicketMeta = {
   tags: [],
-  assignee: 'Unassigned',
+  tier: 'Unassigned',
   contactReason: '',
   product: '',
   resolution: '',

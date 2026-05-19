@@ -29,7 +29,7 @@ import {
   X,
   Zap,
 } from 'lucide-react'
-import { useRef, useCallback, useEffect, useMemo } from 'react'
+import { useRef, useCallback, useEffect, useMemo, useState } from 'react'
 import { toast as sonnerToast } from 'sonner'
 import { useInboxUI } from '@/stores/inbox-ui'
 import { useAuthStore } from '@/stores/auth'
@@ -44,12 +44,28 @@ import {
 } from '@/hooks/inbox/use-inbox-mutations'
 import { useComposerActions } from '@/hooks/inbox/use-composer-actions'
 
+const REFUND_REASONS = [
+  { value: 'customer', label: 'Customer changed mind' },
+  { value: 'fraud', label: 'Fraudulent order' },
+  { value: 'inventory', label: 'Item out of stock' },
+  { value: 'declined', label: 'Payment declined' },
+  { value: 'quality', label: 'Product quality issue' },
+  { value: 'shipping', label: 'Shipping problem' },
+  { value: 'wrong_item', label: 'Wrong item received' },
+  { value: 'other', label: 'Other' },
+] as const
+
 export function ConversationPanel() {
   // Refs (local to this component)
   const composerRef = useRef<HTMLDivElement>(null)
   const imgUploadRef = useRef<HTMLInputElement>(null)
   const fileUploadRef = useRef<HTMLInputElement>(null)
   const msgEndRef = useRef<HTMLDivElement>(null)
+
+  // Refund reason picker state
+  const [showReasonPicker, setShowReasonPicker] = useState(false)
+  const [pendingResolveId, setPendingResolveId] = useState<string | null>(null)
+  const [pendingNextThreadId, setPendingNextThreadId] = useState<string | null | undefined>(undefined)
 
   // Auth
   const session = useAuthStore((s) => s.session)
@@ -132,7 +148,34 @@ export function ConversationPanel() {
   )
 
   async function saveStatus(id: string, s: string) {
+    if (s === 'resolved') {
+      setPendingResolveId(id)
+      setShowReasonPicker(true)
+      return
+    }
     await updateStatusMutation.mutateAsync({ threadId: id, status: s })
+  }
+
+  async function handleResolveWithReason(reason: string | null) {
+    if (!pendingResolveId) return
+    const metadata = reason ? { refund_reason: reason } : undefined
+    await updateStatusMutation.mutateAsync({
+      threadId: pendingResolveId,
+      status: 'resolved',
+      metadata,
+    })
+    setShowReasonPicker(false)
+    setPendingResolveId(null)
+    if (pendingNextThreadId !== undefined) {
+      sonnerToast.success('Resolved & closed')
+      if (pendingNextThreadId) {
+        setSelectedThreadId(pendingNextThreadId)
+        useInboxUI.getState().resetForNewThread()
+      } else {
+        setSelectedThreadId(null)
+      }
+      setPendingNextThreadId(undefined)
+    }
   }
 
   function addTicketTag(id: string) {
@@ -195,12 +238,9 @@ export function ConversationPanel() {
     const nextThread = sortedFiltered.find((_t: Thread, i: number) => i !== currentIdx)
     const ok = await handleSend()
     if (ok) {
-      await saveStatus(currentId, 'resolved')
-      sonnerToast.success('Resolved & closed')
-      if (nextThread) {
-        setSelectedThreadId(nextThread.id)
-        useInboxUI.getState().resetForNewThread()
-      } else setSelectedThreadId(null)
+      setPendingNextThreadId(nextThread?.id ?? null)
+      setPendingResolveId(currentId)
+      setShowReasonPicker(true)
     }
   }
 
@@ -287,10 +327,13 @@ export function ConversationPanel() {
           onAddTag={() => addTicketTag(selectedThread.id)}
           onRemoveTag={(tag) => removeTag(selectedThread.id, tag)}
           onFieldChange={(field, labelOrValue) =>
-            field === 'assignee'
-              ? updateMeta(selectedThread.id, { assignee: labelOrValue })
+            field === 'tier'
+              ? updateMeta(selectedThread.id, { tier: labelOrValue })
               : updateTicketField(selectedThread.id, field, labelOrValue)
           }
+          assignedTo={null}
+          onAssign={() => {}}
+          members={[]}
         />
       </div>
 
@@ -470,6 +513,41 @@ export function ConversationPanel() {
           </>
         )}
       </div>
+
+      {/* Refund reason picker modal */}
+      {showReasonPicker && pendingResolveId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-card rounded-xl border border-border p-6 w-[360px] shadow-lg">
+            <h3 className="text-sm font-semibold text-foreground mb-1">Resolve conversation</h3>
+            <p className="text-xs text-muted-foreground mb-4">Was this related to a refund?</p>
+            <div className="flex flex-col gap-1.5 mb-4">
+              {REFUND_REASONS.map((r) => (
+                <button
+                  key={r.value}
+                  onClick={() => void handleResolveWithReason(r.value)}
+                  className="text-left px-3 py-2 rounded-lg text-sm text-foreground hover:bg-muted transition-colors"
+                >
+                  {r.label}
+                </button>
+              ))}
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => void handleResolveWithReason(null)}
+                className="flex-1 px-3 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:bg-muted transition-colors"
+              >
+                Skip — not a refund
+              </button>
+              <button
+                onClick={() => { setShowReasonPicker(false); setPendingResolveId(null); setPendingNextThreadId(undefined) }}
+                className="px-3 py-2 rounded-lg text-sm text-muted-foreground hover:bg-muted transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

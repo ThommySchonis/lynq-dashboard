@@ -116,7 +116,7 @@ export interface Macro {
 
 export interface TicketMeta {
   tags: string[]
-  assignee: string | null
+  tier: string | null
   contactReason: string | null
   product: string | null
   resolution: string | null

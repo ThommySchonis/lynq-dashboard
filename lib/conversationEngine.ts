@@ -3,6 +3,8 @@ import { getAdapter } from './providers'
 import { checkTicketLimit, lockWorkspace } from './services/limit-check'
 import { recordOutboundMessage } from './services/billing'
 import { parseJson } from './utils/typed-json'
+import { trackEvent } from '@/lib/analytics/track'
+import { EVENT_TYPES } from '@/lib/analytics/events'
 
 const UPGRADE_URL = '/settings/workspace/billing'
 
@@ -59,6 +61,7 @@ interface EmailAccountRow {
   email_address?: string
   display_name?: string
   last_sync_at?: string | null
+  store_id?: string | null
   [key: string]: unknown
 }
 
@@ -178,6 +181,7 @@ async function createConversation(thread: Thread, account: EmailAccountRow, work
       client_id: account.client_id,
       workspace_id: workspaceId,
       email_account_id: account.id,
+      store_id: account.store_id || null,
       subject: thread.subject,
       snippet: thread.snippet,
       customer_email: customerEmail || '',
@@ -199,6 +203,7 @@ async function createConversation(thread: Thread, account: EmailAccountRow, work
   const conversation = insertResult.data as ConversationRow | null
   if (conversation) {
     await insertMessages(conversation.id, workspaceId, thread.messages)
+    void trackEvent(workspaceId, EVENT_TYPES.TICKET_OPENED, conversation.id, account.provider)
   }
 
   return conversation
@@ -326,6 +331,7 @@ export async function processInboundMessage(account: EmailAccountRow, normalized
 
   if (conversation && !shouldReactivateAsNew) {
     await insertMessages(conversation.id, workspaceId, [normalizedMessage])
+    void trackEvent(workspaceId, EVENT_TYPES.MESSAGE_RECEIVED, conversation.id, account.provider)
 
     const updates: Record<string, unknown> = {
       last_message_at: normalizedMessage.date || new Date().toISOString(),
@@ -356,6 +362,7 @@ export async function processInboundMessage(account: EmailAccountRow, normalized
       .insert({
         workspace_id: workspaceId,
         email_account_id: account.id,
+        store_id: account.store_id || null,
         subject: normalizedMessage.subject || '(no subject)',
         snippet: normalizedMessage.bodyText?.substring(0, 100) || '',
         customer_email: normalizedMessage.from.email,
@@ -376,6 +383,8 @@ export async function processInboundMessage(account: EmailAccountRow, normalized
     const newConv = newConvResult.data as ConversationRow | null
     if (newConv) {
       await insertMessages(newConv.id, workspaceId, [normalizedMessage])
+      void trackEvent(workspaceId, EVENT_TYPES.TICKET_OPENED, newConv.id, account.provider)
+      void trackEvent(workspaceId, EVENT_TYPES.MESSAGE_RECEIVED, newConv.id, account.provider)
     }
   }
 }
@@ -393,7 +402,7 @@ interface SendReplyParams {
   bodyText: string
 }
 
-export async function sendReply(workspaceId: string, conversationId: string, _userEmail: string, { to, cc, bcc, subject, bodyHtml, bodyText }: SendReplyParams) {
+export async function sendReply(workspaceId: string, conversationId: string, _userEmail: string, { to, cc, bcc, subject, bodyHtml, bodyText }: SendReplyParams, memberId?: string | null) {
   const limitCheck = await checkTicketLimit(workspaceId)
   if (!limitCheck.allowed) {
     // Flip the workspace flag so banners + composers can render the
@@ -474,6 +483,8 @@ export async function sendReply(workspaceId: string, conversationId: string, _us
     })
     .eq('id', conversationId)
 
+  void trackEvent(workspaceId, EVENT_TYPES.MESSAGE_SENT, conversationId, account.provider, memberId)
+
   // Records this outbound against the workspace's ticket counter, with
   // the spam-aware + count-once-per-conversation rules from PR 3.
   const billing = await recordOutboundMessage(workspaceId, conversationId)
@@ -488,7 +499,7 @@ export async function sendReply(workspaceId: string, conversationId: string, _us
 // Send new email (outbound, creates a new conversation)
 // ---------------------------------------------------------------------------
 
-export async function sendNewEmail(workspaceId: string, _userEmail: string, accountId: string, { to, cc, bcc, subject, bodyHtml, bodyText }: SendReplyParams) {
+export async function sendNewEmail(workspaceId: string, _userEmail: string, accountId: string, { to, cc, bcc, subject, bodyHtml, bodyText }: SendReplyParams, memberId?: string | null) {
   const limitCheck = await checkTicketLimit(workspaceId)
   if (!limitCheck.allowed) {
     await lockWorkspace(workspaceId)
@@ -519,6 +530,7 @@ export async function sendNewEmail(workspaceId: string, _userEmail: string, acco
     .insert({
       workspace_id: workspaceId,
       email_account_id: accountRow.id,
+      store_id: accountRow.store_id || null,
       subject,
       snippet: bodyText?.substring(0, 100) || '',
       customer_email: to[0]?.email || '',
@@ -553,6 +565,8 @@ export async function sendNewEmail(workspaceId: string, _userEmail: string, acco
         body_text: bodyText,
         is_outbound: true,
       })
+    void trackEvent(workspaceId, EVENT_TYPES.TICKET_OPENED, conversation.id, accountRow.provider, memberId)
+    void trackEvent(workspaceId, EVENT_TYPES.MESSAGE_SENT, conversation.id, accountRow.provider, memberId)
   }
 
   // Count this conversation against the workspace's ticket counter

@@ -128,13 +128,17 @@ export function useUpdateStatus() {
     mutationFn: async ({
       threadId,
       status,
+      metadata,
     }: {
       threadId: string
       status: string
+      metadata?: Record<string, string>
     }) => {
+      const body: { status: string; metadata?: Record<string, string> } = { status }
+      if (metadata) body.metadata = metadata
       const res = await authFetch(
         `/api/inbox/conversations/${threadId}`,
-        { method: 'PATCH', body: JSON.stringify({ status }) },
+        { method: 'PATCH', body: JSON.stringify(body) },
         token,
       )
       return parseJson<StatusResponse>(res)

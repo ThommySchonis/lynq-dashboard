@@ -33,7 +33,7 @@ export async function POST(request: NextRequest, { params }: RouteContext<{ id: 
       subject: body.subject ?? '',
       bodyHtml: body.bodyHtml ?? '',
       bodyText: body.bodyText ?? '',
-    })
+    }, ctx.memberId)
 
     if ('error' in result) {
       return NextResponse.json(result, { status: 429 })

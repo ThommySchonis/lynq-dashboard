@@ -4,10 +4,14 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import type { RouteContext } from '@/types/api'
 import { parseBody } from '@/lib/utils/typed-json'
+import { trackEvent } from '@/lib/analytics/track'
+import { EVENT_TYPES } from '@/lib/analytics/events'
 
 interface ConversationPatchBody {
   status?: string
   is_unread?: boolean
+  assigned_to?: string | null
+  metadata?: Record<string, unknown>
 }
 
 export async function GET(request: NextRequest, { params }: RouteContext<{ id: string }>) {
@@ -70,6 +74,9 @@ export async function PATCH(request: NextRequest, { params }: RouteContext<{ id:
   if (typeof body.is_unread === 'boolean') {
     updates.is_unread = body.is_unread
   }
+  if (body.assigned_to !== undefined) {
+    updates.assigned_to = body.assigned_to || null
+  }
 
   if (Object.keys(updates).length === 0) {
     return NextResponse.json({ error: 'No valid fields to update' }, { status: 400 })
@@ -82,6 +89,25 @@ export async function PATCH(request: NextRequest, { params }: RouteContext<{ id:
     .eq('workspace_id', ctx.workspaceId)
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  // Resolve source from conversation's email account
+  const sourceResult = await supabaseAdmin
+    .from('email_conversations')
+    .select('email_accounts(provider)')
+    .eq('id', id)
+    .single()
+  const emailAccounts = (sourceResult.data as Record<string, unknown>)?.email_accounts as Record<string, string> | null
+  const source = emailAccounts?.provider || 'custom'
+
+  // Emit analytics events (fire-and-forget, no await)
+  if (body.status === 'resolved') {
+    void trackEvent(ctx.workspaceId, EVENT_TYPES.TICKET_RESOLVED, id, source, ctx.memberId, body.metadata)
+  } else if (body.status === 'closed') {
+    void trackEvent(ctx.workspaceId, EVENT_TYPES.TICKET_CLOSED, id, source, ctx.memberId)
+  }
+  if (body.assigned_to !== undefined) {
+    void trackEvent(ctx.workspaceId, EVENT_TYPES.TICKET_ASSIGNED, id, source, body.assigned_to)
+  }
 
   return NextResponse.json({ success: true })
 }

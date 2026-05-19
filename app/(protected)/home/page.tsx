@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { useRouter } from 'next/navigation'
 import { useAuthStore } from '@/stores/auth'
 import { WelcomeBanner } from '@/components/shared/welcome-banner'
 import { TrialEndingBanner } from '@/components/shared/trial-ending-banner'
@@ -19,9 +18,6 @@ import { ChatMessageBubble } from '@/components/features/home/chat-message-bubbl
 // ---------------------------------------------------------------------------
 
 export default function HomePage() {
-  const router = useRouter()
-  const session = useAuthStore((s) => s.session)
-  const isLoading = useAuthStore((s) => s.isLoading)
   const user = useAuthStore((s) => s.user)
   const [mounted, setMounted] = useState(false)
   const [input, setInput] = useState('')
@@ -47,10 +43,6 @@ export default function HomePage() {
   const { messages, isStreaming, sendMessage } = useAiChat()
 
   useEffect(() => { setMounted(true) }, [])
-
-  useEffect(() => {
-    if (!isLoading && !session) router.push('/login')
-  }, [isLoading, session, router])
 
   // Auto-scroll on new messages
   useEffect(() => {

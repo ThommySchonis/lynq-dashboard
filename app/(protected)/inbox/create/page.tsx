@@ -21,7 +21,6 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select'
-import { useAuthStore } from '@/stores/auth'
 import { useComposeMacros, useEmailAccountInfo } from '@/hooks/inbox/use-inbox-data'
 import { useComposeEmail } from '@/hooks/inbox/use-inbox-mutations'
 import { sanitizeHtml, plainTextToSafeHtml, normalizeSafeUrl } from '@/lib/inbox-utils'
@@ -32,17 +31,6 @@ import { ComposeAvatar } from '@/components/features/inbox/compose-avatar'
 // ── Page ──
 export default function CreateTicketPage() {
   const router = useRouter()
-
-  // Auth
-  const session = useAuthStore((s) => s.session)
-  const isLoading = useAuthStore((s) => s.isLoading)
-
-  // Redirect if not authenticated
-  useEffect(() => {
-    if (!isLoading && !session) {
-      router.replace('/login')
-    }
-  }, [isLoading, session, router])
 
   // Hooks
   const { data: fetchedMacros } = useComposeMacros()
@@ -62,7 +50,6 @@ export default function CreateTicketPage() {
   const [macroSearch, setMacroSearch] = useState('')
   const [showMacroDD, setShowMacroDD] = useState(false)
   const [priority, setPriority] = useState('normal')
-  const [ready, setReady] = useState(false)
 
   const bodyRef = useRef<HTMLDivElement>(null)
 
@@ -80,18 +67,11 @@ export default function CreateTicketPage() {
     : []
   const suggested = liveMacros.slice(0, 5)
 
-  // Mark ready once session is available
+  // Focus body on mount
   useEffect(() => {
-    if (session) setReady(true)
-  }, [session])
-
-  // Focus body on ready
-  useEffect(() => {
-    if (ready) {
-      const timer = setTimeout(() => bodyRef.current?.focus(), 160)
-      return () => clearTimeout(timer)
-    }
-  }, [ready])
+    const timer = setTimeout(() => bodyRef.current?.focus(), 160)
+    return () => clearTimeout(timer)
+  }, [])
 
   // Escape to go back
   useEffect(() => {
@@ -162,15 +142,6 @@ export default function CreateTicketPage() {
           toast.error(err instanceof Error ? err.message : 'Failed to send')
         },
       },
-    )
-  }
-
-  // Loading state
-  if (isLoading || !session || !ready) {
-    return (
-      <div className="flex h-full items-center justify-center bg-background">
-        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-      </div>
     )
   }
 

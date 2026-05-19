@@ -2,6 +2,13 @@ import { withSentryConfig } from "@sentry/nextjs";
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  webpack: (config: { ignoreWarnings?: Array<{ module: RegExp }> }) => {
+    config.ignoreWarnings = [
+      ...(config.ignoreWarnings ?? []),
+      { module: /@opentelemetry\/instrumentation/ },
+    ];
+    return config;
+  },
   async headers() {
     return [
       {

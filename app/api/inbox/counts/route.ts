@@ -8,13 +8,20 @@ export async function GET(request: NextRequest) {
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const wsId = ctx.workspaceId
+  const { searchParams } = new URL(request.url)
+  const storeId = searchParams.get('store_id')
+
+  const baseQuery = () => {
+    const q = supabaseAdmin.from('email_conversations').select('id', { count: 'exact', head: true }).eq('workspace_id', wsId)
+    return storeId ? q.eq('store_id', storeId) : q
+  }
 
   const [open, pending, resolved, unlinked, trash] = await Promise.all([
-    supabaseAdmin.from('email_conversations').select('id', { count: 'exact', head: true }).eq('workspace_id', wsId).eq('status', 'open'),
-    supabaseAdmin.from('email_conversations').select('id', { count: 'exact', head: true }).eq('workspace_id', wsId).eq('status', 'pending'),
-    supabaseAdmin.from('email_conversations').select('id', { count: 'exact', head: true }).eq('workspace_id', wsId).eq('status', 'resolved'),
-    supabaseAdmin.from('email_conversations').select('id', { count: 'exact', head: true }).eq('workspace_id', wsId).is('shopify_customer_id', null).neq('status', 'closed'),
-    supabaseAdmin.from('email_conversations').select('id', { count: 'exact', head: true }).eq('workspace_id', wsId).eq('status', 'closed'),
+    baseQuery().eq('status', 'open'),
+    baseQuery().eq('status', 'pending'),
+    baseQuery().eq('status', 'resolved'),
+    baseQuery().is('shopify_customer_id', null).neq('status', 'closed'),
+    baseQuery().eq('status', 'closed'),
   ])
 
   return NextResponse.json({

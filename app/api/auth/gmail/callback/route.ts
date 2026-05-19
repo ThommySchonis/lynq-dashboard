@@ -4,6 +4,7 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { verifyOAuthState } from '../../../../../lib/oauthState'
 import { parseJson } from '@/lib/utils/typed-json'
+import { syncAllAccounts } from '@/lib/conversationEngine'
 
 interface OAuthTokenResponse {
   access_token?: string
@@ -88,6 +89,14 @@ export async function GET(request: NextRequest) {
   if (emailAccountError) {
     console.error('[gmail/callback] email_accounts upsert error:', emailAccountError.message)
     return NextResponse.redirect(`${appUrl}/settings?provider=gmail&status=error&reason=save_failed`)
+  }
+
+  // Fire-and-forget: sync emails in the background so inbox is populated after redirect
+  if (workspaceId) {
+    syncAllAccounts(workspaceId).catch((err: unknown) => {
+      const msg = err instanceof Error ? err.message : String(err)
+      console.error('[gmail/callback] background sync failed:', msg)
+    })
   }
 
   return NextResponse.redirect(`${appUrl}/settings?provider=gmail&status=connected`)

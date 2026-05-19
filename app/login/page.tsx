@@ -1,23 +1,44 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Loader2 } from 'lucide-react'
 import AuthLayout from '@/components/features/auth/auth-layout'
 import { FloatField } from '@/components/features/auth/float-field'
 import { PasswordField } from '@/components/features/auth/password-field'
 import { useSignIn } from '@/hooks/auth/use-auth-mutations'
+import { useAuthStore } from '@/stores/auth'
 import { WORD_REVEAL_DELAY_MS } from '@/lib/auth-constants'
+
+function getSafeRedirect(raw: string | null): string {
+  if (!raw || !raw.startsWith('/') || raw.startsWith('//') || raw.includes('\\')) {
+    return '/inbox'
+  }
+  try {
+    const url = new URL(raw, window.location.origin)
+    return url.origin === window.location.origin ? url.pathname + url.search + url.hash : '/inbox'
+  } catch {
+    return '/inbox'
+  }
+}
 
 const HEADLINE_WORDS = ['Welcome', 'back']
 
 export default function LoginPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const redirectTo = getSafeRedirect(searchParams.get('redirect'))
+  const session = useAuthStore((s) => s.session)
+  const isLoading = useAuthStore((s) => s.isLoading)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
 
   const signIn = useSignIn()
+
+  useEffect(() => {
+    if (!isLoading && session) router.replace(redirectTo)
+  }, [isLoading, session, router, redirectTo])
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -25,7 +46,7 @@ export default function LoginPage() {
       { email, password },
       {
         onSuccess: () => {
-          router.push('/inbox')
+          router.push(redirectTo)
         },
       },
     )

@@ -26,10 +26,10 @@ import { URGENCY_SCORE } from "@/lib/inbox-constants";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useMemo, useRef } from "react";
 import { toast as sonnerToast } from "sonner";
-import { useAuthStore } from "../../stores/auth";
-import { useAIStore } from "../../stores/ai";
-import { useMacrosStore } from "../../stores/macros";
-import { useInboxUI } from "../../stores/inbox-ui";
+import { useAuthStore } from "@/stores/auth";
+import { useAIStore } from "@/stores/ai";
+import { useMacrosStore } from "@/stores/macros";
+import { useInboxUI } from "@/stores/inbox-ui";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Mail } from "lucide-react";
 

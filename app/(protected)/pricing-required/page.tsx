@@ -70,18 +70,15 @@ export default function PricingRequiredPage() {
   const [firstName, setFirstName] = useState('')
   const router = useRouter()
   const signOut = useSignOut()
-  const session = useAuthStore((s) => s.session)
   const user = useAuthStore((s) => s.user)
-  const isLoading = useAuthStore((s) => s.isLoading)
 
   useEffect(() => {
-    if (!isLoading && !session) { router.push('/login'); return }
     if (user) {
       const meta = (user.user_metadata ?? {}) as Record<string, unknown>
       const raw = String(meta.name || meta.full_name || user.email?.split('@')[0] || '').split(/\s+/)[0]
       setFirstName(raw || '')
     }
-  }, [isLoading, session, user, router])
+  }, [user])
 
   function handleLogout() {
     signOut.mutate(undefined, {

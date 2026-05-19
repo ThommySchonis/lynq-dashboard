@@ -38,7 +38,6 @@ export default function OnboardingPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
 
-  const session = useAuthStore((s) => s.session)
   const user = useAuthStore((s) => s.user)
   const isLoading = useAuthStore((s) => s.isLoading)
   const [step, setStep] = useState(1)
@@ -73,7 +72,6 @@ export default function OnboardingPage() {
   // Session check + OAuth callback detection
   useEffect(() => {
     if (isLoading) return
-    if (!session) { router.replace('/login'); return }
 
     // Detect OAuth callbacks via search params
     if (searchParams.get('shopify') === 'connected') {
@@ -91,7 +89,7 @@ export default function OnboardingPage() {
         setStep(parsed)
       }
     }
-  }, [isLoading, session, router, searchParams])
+  }, [isLoading, searchParams])
 
   async function onBrandSubmit(values: BrandFormData) {
     await saveBrandMutation.mutateAsync({

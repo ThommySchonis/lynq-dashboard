@@ -16,7 +16,7 @@ export const inboxKeys = {
   conversations: (folder: string, search?: string, storeId?: string | null) =>
     [...inboxKeys.all, 'conversations', folder, search, storeId] as const,
   conversation: (id: string) => [...inboxKeys.all, 'conversation', id] as const,
-  counts: () => [...inboxKeys.all, 'counts'] as const,
+  counts: (storeId?: string | null) => [...inboxKeys.all, 'counts', storeId] as const,
   accounts: () => [...inboxKeys.all, 'accounts'] as const,
   customer: (query: string, storeId: string | null) => ['customer', query, storeId] as const,
   macros: () => [...inboxKeys.all, 'macros'] as const,
@@ -113,10 +113,12 @@ export function useConversation(threadId: string | null) {
 /** Fetch folder counts */
 export function useInboxCounts() {
   const token = useToken()
+  const activeStoreId = useStoreStore((s) => s.activeStoreId)
+  const params = activeStoreId ? `?store_id=${activeStoreId}` : ''
   return useQuery({
-    queryKey: inboxKeys.counts(),
+    queryKey: inboxKeys.counts(activeStoreId),
     queryFn: async () => {
-      const res = await authFetch('/api/inbox/counts', {}, token)
+      const res = await authFetch(`/api/inbox/counts${params}`, {}, token)
       const data = await parseJson<InboxCountsResponse>(res)
       return {
         open: data.open || 0,

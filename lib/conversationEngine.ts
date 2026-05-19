@@ -59,6 +59,7 @@ interface EmailAccountRow {
   email_address?: string
   display_name?: string
   last_sync_at?: string | null
+  store_id?: string | null
   [key: string]: unknown
 }
 
@@ -178,6 +179,7 @@ async function createConversation(thread: Thread, account: EmailAccountRow, work
       client_id: account.client_id,
       workspace_id: workspaceId,
       email_account_id: account.id,
+      store_id: account.store_id || null,
       subject: thread.subject,
       snippet: thread.snippet,
       customer_email: customerEmail || '',
@@ -356,6 +358,7 @@ export async function processInboundMessage(account: EmailAccountRow, normalized
       .insert({
         workspace_id: workspaceId,
         email_account_id: account.id,
+        store_id: account.store_id || null,
         subject: normalizedMessage.subject || '(no subject)',
         snippet: normalizedMessage.bodyText?.substring(0, 100) || '',
         customer_email: normalizedMessage.from.email,
@@ -519,6 +522,7 @@ export async function sendNewEmail(workspaceId: string, _userEmail: string, acco
     .insert({
       workspace_id: workspaceId,
       email_account_id: accountRow.id,
+      store_id: accountRow.store_id || null,
       subject,
       snippet: bodyText?.substring(0, 100) || '',
       customer_email: to[0]?.email || '',

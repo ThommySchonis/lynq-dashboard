@@ -2,19 +2,16 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import type { Role } from '@/types/database'
 import { randomBytes } from 'node:crypto'
-import { getAuthContext } from '../../../../../lib/auth'
-import { can } from '../../../../../lib/permissions'
-import { supabaseAdmin } from '../../../../../lib/supabaseAdmin'
-import { sendInviteEmail } from '../../../../../lib/email'
+import { getAuthContext } from '@/lib/auth'
+import { can } from '@/lib/permissions'
+import { supabaseAdmin } from '@/lib/supabaseAdmin'
+import { sendInviteEmail } from '@/lib/email'
+import { validateBody, validateQuery } from '@/lib/validation'
+import { getMembersQuery, inviteMemberBody } from '@/lib/schemas/workspaces'
 
 interface CursorPayload {
   joined_at: string
   id: string
-}
-
-interface InviteBody {
-  email?: string
-  role?: string
 }
 
 interface IdRow {
@@ -37,11 +34,13 @@ export async function GET(request: NextRequest) {
   const ctx = await getAuthContext(request)
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { searchParams } = new URL(request.url)
-  const search    = searchParams.get('q')?.trim().toLowerCase() || ''
-  const roleParam = searchParams.get('role') || ''
-  const cursor    = searchParams.get('cursor') || null
-  const limit     = Math.min(parseInt(searchParams.get('limit') || '50', 10), 100)
+  const [query, queryErr] = validateQuery(request, getMembersQuery)
+  if (queryErr) return queryErr
+
+  const search    = query.q?.trim().toLowerCase() || ''
+  const roleParam = query.role || ''
+  const cursor    = query.cursor || null
+  const limit     = Math.min(query.limit ?? 50, 100)
 
   let membersQ = supabaseAdmin
     .from('workspace_member_details')
@@ -143,14 +142,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
-  const body = await request.json().catch(() => ({})) as InviteBody
-  const { email, role = 'agent' } = body
+  const [body, bodyErr] = await validateBody(request, inviteMemberBody)
+  if (bodyErr) return bodyErr
 
-  if (!email?.trim()) return NextResponse.json({ error: 'Email is required' }, { status: 400 })
-  if (!['admin', 'agent', 'observer'].includes(role)) {
-    return NextResponse.json({ error: 'Invalid role' }, { status: 400 })
-  }
-
+  const { email, role } = body
   const normalizedEmail = email.toLowerCase().trim()
   console.log('[invite POST] starting invite for', normalizedEmail, 'role:', role, 'workspace:', ctx.workspaceId)
 

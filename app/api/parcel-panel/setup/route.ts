@@ -1,11 +1,8 @@
 import type { NextRequest } from 'next/server'
-import { getUserFromToken, supabaseAdmin } from '../../../../lib/supabaseAdmin'
+import { getUserFromToken, supabaseAdmin } from '@/lib/supabaseAdmin'
 import { NextResponse } from 'next/server'
-import { parseBody } from '@/lib/utils/typed-json'
-
-interface SetupBody {
-  apiKey?: string
-}
+import { validateBody } from '@/lib/validation'
+import { setupBody } from '@/lib/schemas/parcel-panel'
 
 const PP_BASE = 'https://open.parcelpanel.com'
 
@@ -17,17 +14,9 @@ export async function POST(request: NextRequest) {
   const user = await getUserFromToken(token)
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  let apiKey: string | undefined
-  try {
-    const body = await parseBody<SetupBody>(request)
-    apiKey = body.apiKey?.trim()
-  } catch {
-    return NextResponse.json({ error: 'Invalid request body' }, { status: 400 })
-  }
-
-  if (!apiKey || apiKey.length < 10) {
-    return NextResponse.json({ error: 'Invalid API key format' }, { status: 400 })
-  }
+  const [body, err] = await validateBody(request, setupBody)
+  if (err) return err
+  const apiKey = body.apiKey.trim()
 
   // Verify key with Parcel Panel
   try {

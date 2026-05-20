@@ -1,6 +1,6 @@
 import type { NextRequest } from 'next/server'
-import { getUserFromToken, supabaseAdmin } from '../../../../lib/supabaseAdmin'
-import { getSubscription, hasAcademyAccess } from '../../../../lib/subscription'
+import { getUserFromToken, supabaseAdmin } from '@/lib/supabaseAdmin'
+import { getSubscription, hasAcademyAccess } from '@/lib/subscription'
 import { NextResponse } from 'next/server'
 
 const ACADEMY_PRICE = 100

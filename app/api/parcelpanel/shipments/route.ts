@@ -1,8 +1,10 @@
 import type { NextRequest } from 'next/server'
-import { supabaseAdmin } from '../../../../lib/supabaseAdmin'
-import { getAuthContext } from '../../../../lib/auth'
+import { supabaseAdmin } from '@/lib/supabaseAdmin'
+import { getAuthContext } from '@/lib/auth'
 import { NextResponse } from 'next/server'
 import { parseJson } from '@/lib/utils/typed-json'
+import { validateQuery } from '@/lib/validation'
+import { shipmentsQuery } from '@/lib/schemas/parcel-panel'
 
 interface ParcelPanelSettings {
   parcelpanel_api_key?: string
@@ -13,11 +15,10 @@ export async function GET(request: NextRequest) {
   const ctx = await getAuthContext(request)
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { searchParams } = new URL(request.url)
-  const storeId = searchParams.get('store_id')
-  if (!storeId) {
-    return NextResponse.json({ error: 'store_id is required' }, { status: 400 })
-  }
+  const [query, queryErr] = validateQuery(request, shipmentsQuery)
+  if (queryErr) return queryErr
+
+  const storeId = query.store_id
 
   // Get ParcelPanel API key for this store
   const { data: settings } = await supabaseAdmin
@@ -33,12 +34,12 @@ export async function GET(request: NextRequest) {
   }
 
   const allowedStatuses = new Set(['', 'pending', 'info_received', 'in_transit', 'out_for_delivery', 'failed_attempt', 'delivered', 'exception', 'expired', 'pickup_point'])
-  const status = searchParams.get('status') || ''
+  const status = query.status || ''
   if (!allowedStatuses.has(status)) {
     return NextResponse.json({ error: 'Invalid status' }, { status: 400 })
   }
-  const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10) || 1)
-  const limit = Math.min(Math.max(parseInt(searchParams.get('limit') || '20', 10) || 20, 1), 100)
+  const page = query.page ?? 1
+  const limit = Math.min(Math.max(query.limit ?? 20, 1), 100)
 
   const params = new URLSearchParams({
     page: String(page),

@@ -1,16 +1,13 @@
-import { getAuthContext } from '../../../../../../lib/auth'
-import { supabaseAdmin } from '../../../../../../lib/supabaseAdmin'
+import { getAuthContext } from '@/lib/auth'
+import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import type { RouteContext } from '@/types/api'
-import { parseBody } from '@/lib/utils/typed-json'
+import { validateBody, validateParams } from '@/lib/validation'
+import { conversationParams, createNoteBody } from '@/lib/schemas/inbox'
 import { checkRateLimit } from '@/lib/rate-limit'
 
-interface NoteBody {
-  body?: string
-}
-
-export async function GET(request: NextRequest, { params }: RouteContext<{ id: string }>) {
+export async function GET(request: NextRequest, { params: routeParams }: RouteContext<{ id: string }>) {
   const ctx = await getAuthContext(request)
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
@@ -29,19 +26,20 @@ export async function GET(request: NextRequest, { params }: RouteContext<{ id: s
     )
   }
 
-  const { id } = await params
+  const [params, paramErr] = validateParams(await routeParams, conversationParams)
+  if (paramErr) return paramErr
 
   const { data: notes } = await supabaseAdmin
     .from('conversation_notes')
     .select('*')
-    .eq('conversation_id', id)
+    .eq('conversation_id', params.id)
     .eq('workspace_id', ctx.workspaceId)
     .order('created_at', { ascending: true })
 
   return NextResponse.json({ notes: notes || [] })
 }
 
-export async function POST(request: NextRequest, { params }: RouteContext<{ id: string }>) {
+export async function POST(request: NextRequest, { params: routeParams }: RouteContext<{ id: string }>) {
   const ctx = await getAuthContext(request)
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
@@ -60,17 +58,16 @@ export async function POST(request: NextRequest, { params }: RouteContext<{ id: 
     )
   }
 
-  const { id } = await params
-  const body = await parseBody<NoteBody>(request)
+  const [params, paramErr] = validateParams(await routeParams, conversationParams)
+  if (paramErr) return paramErr
 
-  if (!body.body?.trim()) {
-    return NextResponse.json({ error: 'Note body required' }, { status: 400 })
-  }
+  const [body, bodyErr] = await validateBody(request, createNoteBody)
+  if (bodyErr) return bodyErr
 
   const { data: conv } = await supabaseAdmin
     .from('email_conversations')
     .select('id')
-    .eq('id', id)
+    .eq('id', params.id)
     .eq('workspace_id', ctx.workspaceId)
     .maybeSingle()
 
@@ -79,7 +76,7 @@ export async function POST(request: NextRequest, { params }: RouteContext<{ id: 
   const noteResult = await supabaseAdmin
     .from('conversation_notes')
     .insert({
-      conversation_id: id,
+      conversation_id: params.id,
       workspace_id: ctx.workspaceId,
       body: body.body.trim(),
     })

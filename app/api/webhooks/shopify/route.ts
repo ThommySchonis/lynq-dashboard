@@ -1,7 +1,9 @@
-import { supabaseAdmin } from '../../../../lib/supabaseAdmin'
+import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import crypto from 'crypto'
+import { validateQuery } from '@/lib/validation'
+import { shopifyWebhookQuery } from '@/lib/schemas/webhooks'
 
 interface IntegrationRow {
   client_id: string
@@ -90,9 +92,10 @@ function upsertOrder(order: Record<string, unknown>, clientId: string, workspace
 }
 
 export async function POST(request: NextRequest) {
-  const { searchParams } = new URL(request.url)
-  const cid = searchParams.get('cid')
-  const storeId = searchParams.get('store_id')
+  const [query, queryErr] = validateQuery(request, shopifyWebhookQuery)
+  if (queryErr) return queryErr
+  const cid = query.cid ?? null
+  const storeId = query.store_id ?? null
 
   if (!cid && !storeId) return NextResponse.json({ ok: true })
 

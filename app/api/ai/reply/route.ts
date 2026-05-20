@@ -6,24 +6,11 @@ import { checkAiSuggestLimit } from '../../../../lib/services/limit-check'
 import { checkRateLimit } from '@/lib/rate-limit'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { parseBody } from '@/lib/utils/typed-json'
-
-interface ReplyBody {
-  messages: ThreadMessage[]
-  threadId?: string
-  language?: string
-}
+import { aiReplyBody } from '@/lib/schemas/ai'
 
 interface AiSettingsRow {
   system_prompt?: string
   brand_name?: string
-}
-
-interface ThreadMessage {
-  from?: string
-  date?: string
-  body?: string
-  snippet?: string
 }
 
 const DEFAULT_SYSTEM_PROMPT = `You are a professional customer support agent. Write a helpful, empathetic reply to the customer.
@@ -77,11 +64,12 @@ export async function POST(request: NextRequest) {
     }, { status: 429 })
   }
 
-  const { messages, threadId, language } = await parseBody<ReplyBody>(request)
-
-  if (!messages || messages.length === 0) {
-    return NextResponse.json({ error: 'messages are required' }, { status: 400 })
+  const raw: unknown = await request.json().catch(() => ({}))
+  const parsed = aiReplyBody.safeParse(raw)
+  if (!parsed.success) {
+    return NextResponse.json({ error: 'Validation failed', details: parsed.error.flatten() }, { status: 400 })
   }
+  const { messages, threadId, language } = parsed.data
 
   // Fetch user's custom system prompt from Supabase (if configured)
   const { data: settingsRaw } = await supabaseAdmin

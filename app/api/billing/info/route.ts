@@ -1,14 +1,15 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { getAuthContext } from '../../../../lib/auth'
-import { can } from '../../../../lib/permissions'
+import { getAuthContext } from '@/lib/auth'
+import { can } from '@/lib/permissions'
 import {
   BillingServiceError,
   getBillingInfo,
   updateBillingInfo,
-} from '../../../../lib/services/billing'
+} from '@/lib/services/billing'
 import type { Role } from '@/types/database'
-import type { UpdateBillingInfoInput } from '@/types/billing'
+import { validateBody } from '@/lib/validation'
+import { updateBillingInfoBody } from '@/lib/schemas/billing'
 
 // GET /api/billing/info — read billing address + VAT
 export async function GET(request: NextRequest) {
@@ -28,7 +29,8 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ error: 'Only owners can edit billing info', code: 'permission_denied' }, { status: 403 })
   }
 
-  const body = await request.json().catch(() => ({})) as UpdateBillingInfoInput
+  const [body, bodyErr] = await validateBody(request, updateBillingInfoBody)
+  if (bodyErr) return bodyErr
 
   try {
     const info = await updateBillingInfo(ctx.workspaceId, body)

@@ -1,20 +1,14 @@
 import type { NextRequest } from 'next/server'
 import { NextResponse } from 'next/server'
-import { supabaseAdmin } from '../../../../lib/supabaseAdmin'
-import { getAuthContext } from '../../../../lib/auth'
+import type { RouteContext } from '@/types/api'
+import { supabaseAdmin } from '@/lib/supabaseAdmin'
+import { getAuthContext } from '@/lib/auth'
+import { validateBody, validateParams } from '@/lib/validation'
+import { timeSessionParams, editSessionBody } from '@/lib/schemas/time'
 
 // PATCH /api/time/[sessionId]
 // Manual edit by an owner/admin of the workspace this session lives in.
 // Every edit lands an immutable audit row in time_session_edits.
-
-interface EditPayload {
-  clocked_in_at?:  string
-  clocked_out_at?: string | null
-  emails_answered?: number | null
-  what_went_well?:  string | null
-  needs_attention?: string | null
-  reason:          string
-}
 
 // Fields the editor is allowed to touch. Anything else in the body is ignored.
 const EDITABLE_FIELDS = [
@@ -26,11 +20,7 @@ const EDITABLE_FIELDS = [
 ] as const
 type EditableField = (typeof EDITABLE_FIELDS)[number]
 
-interface RouteContext {
-  params: Promise<{ sessionId: string }>
-}
-
-export async function PATCH(request: NextRequest, ctxParam: RouteContext) {
+export async function PATCH(request: NextRequest, { params: routeParams }: RouteContext<{ sessionId: string }>) {
   const ctx = await getAuthContext(request)
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
@@ -38,19 +28,13 @@ export async function PATCH(request: NextRequest, ctxParam: RouteContext) {
     return NextResponse.json({ error: 'Only owners and admins can edit sessions' }, { status: 403 })
   }
 
-  const { sessionId } = await ctxParam.params
-  if (!sessionId) return NextResponse.json({ error: 'Missing sessionId' }, { status: 400 })
+  const [params, paramErr] = validateParams(await routeParams, timeSessionParams)
+  if (paramErr) return paramErr
 
-  let body: EditPayload
-  try {
-    body = (await request.json()) as EditPayload
-  } catch {
-    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
-  }
+  const [body, bodyErr] = await validateBody(request, editSessionBody)
+  if (bodyErr) return bodyErr
 
-  if (!body.reason || body.reason.trim().length < 3) {
-    return NextResponse.json({ error: 'Reason for edit is required (min. 3 characters)' }, { status: 400 })
-  }
+  const { sessionId } = params
 
   // Pull the existing session — must belong to this workspace.
   const sessionLookup = await supabaseAdmin
@@ -85,17 +69,6 @@ export async function PATCH(request: NextRequest, ctxParam: RouteContext) {
 
   if (Object.keys(patch).length === 0) {
     return NextResponse.json({ error: 'No fields to update' }, { status: 400 })
-  }
-
-  // Type-narrow before validation.
-  if ('clocked_out_at' in patch && patch.clocked_out_at != null && typeof patch.clocked_out_at !== 'string') {
-    return NextResponse.json({ error: 'clocked_out_at must be an ISO string or null' }, { status: 400 })
-  }
-  if ('emails_answered' in patch && patch.emails_answered != null) {
-    const n = patch.emails_answered
-    if (typeof n !== 'number' || !Number.isInteger(n) || n < 0) {
-      return NextResponse.json({ error: 'emails_answered must be a non-negative integer' }, { status: 400 })
-    }
   }
 
   const updateResult = await supabaseAdmin

@@ -2,18 +2,16 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import type { RouteContext } from '@/types/api'
 import type { Role } from '@/types/database'
-import { getAuthContext } from '../../../../../../lib/auth'
-import { can } from '../../../../../../lib/permissions'
-import { supabaseAdmin } from '../../../../../../lib/supabaseAdmin'
+import { getAuthContext } from '@/lib/auth'
+import { can } from '@/lib/permissions'
+import { supabaseAdmin } from '@/lib/supabaseAdmin'
+import { validateBody, validateParams } from '@/lib/validation'
+import { memberParams, updateMemberBody } from '@/lib/schemas/workspaces'
 
 interface MemberRow { id: string; user_id: string; role: string }
 
-interface RoleUpdateBody { role?: string }
-
-const VALID_ROLES = ['owner', 'admin', 'agent', 'observer']
-
 // PATCH — change a member's role. See spec in PR for the full rule matrix.
-export async function PATCH(request: NextRequest, { params }: RouteContext<{ id: string }>) {
+export async function PATCH(request: NextRequest, { params: routeParams }: RouteContext<{ id: string }>) {
   const ctx = await getAuthContext(request)
   if (!ctx) {
     return NextResponse.json({ error: 'Unauthorized', code: 'unauthorized' }, { status: 401 })
@@ -27,18 +25,18 @@ export async function PATCH(request: NextRequest, { params }: RouteContext<{ id:
     )
   }
 
-  const { id } = await params
-  const body = await request.json().catch(() => ({})) as RoleUpdateBody
-  const { role: newRole } = body
+  const [params, paramErr] = validateParams(await routeParams, memberParams)
+  if (paramErr) return paramErr
 
-  if (!newRole || !VALID_ROLES.includes(newRole)) {
-    return NextResponse.json({ error: 'Invalid role', code: 'invalid_role' }, { status: 400 })
-  }
+  const [body, bodyErr] = await validateBody(request, updateMemberBody)
+  if (bodyErr) return bodyErr
+
+  const { role: newRole } = body
 
   const targetResult = await supabaseAdmin
     .from('workspace_members')
     .select('id, user_id, role')
-    .eq('id', id)
+    .eq('id', params.id)
     .eq('workspace_id', ctx.workspaceId)
     .maybeSingle()
 
@@ -104,7 +102,7 @@ export async function PATCH(request: NextRequest, { params }: RouteContext<{ id:
   const memberUpdateResult = await supabaseAdmin
     .from('workspace_members')
     .update({ role: newRole })
-    .eq('id', id)
+    .eq('id', params.id)
     .eq('workspace_id', ctx.workspaceId)
     .select('id, user_id, role, joined_at')
     .single()
@@ -121,13 +119,15 @@ export async function PATCH(request: NextRequest, { params }: RouteContext<{ id:
 // DELETE — remove a member OR revoke a pending invite (?type=invite)
 // Kept for backwards compat; the UI now uses /api/workspaces/current/invites/[id]
 // for invite revocation. Member removal still routes through here.
-export async function DELETE(request: NextRequest, { params }: RouteContext<{ id: string }>) {
+export async function DELETE(request: NextRequest, { params: routeParams }: RouteContext<{ id: string }>) {
   const ctx = await getAuthContext(request)
   if (!ctx) {
     return NextResponse.json({ error: 'Unauthorized', code: 'unauthorized' }, { status: 401 })
   }
 
-  const { id } = await params
+  const [params, paramErr] = validateParams(await routeParams, memberParams)
+  if (paramErr) return paramErr
+
   const { searchParams } = new URL(request.url)
   const type = searchParams.get('type')
 
@@ -139,7 +139,7 @@ export async function DELETE(request: NextRequest, { params }: RouteContext<{ id
     const { error } = await supabaseAdmin
       .from('workspace_invites')
       .delete()
-      .eq('id', id)
+      .eq('id', params.id)
       .eq('workspace_id', ctx.workspaceId)
 
     if (error) return NextResponse.json({ error: error.message, code: 'delete_failed' }, { status: 500 })
@@ -157,7 +157,7 @@ export async function DELETE(request: NextRequest, { params }: RouteContext<{ id
   const delTargetResult = await supabaseAdmin
     .from('workspace_members')
     .select('id, user_id, role')
-    .eq('id', id)
+    .eq('id', params.id)
     .eq('workspace_id', ctx.workspaceId)
     .maybeSingle()
 
@@ -210,7 +210,7 @@ export async function DELETE(request: NextRequest, { params }: RouteContext<{ id
   const { error: deleteError } = await supabaseAdmin
     .from('workspace_members')
     .delete()
-    .eq('id', id)
+    .eq('id', params.id)
     .eq('workspace_id', ctx.workspaceId)
 
   if (deleteError) {

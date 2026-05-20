@@ -1,15 +1,12 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import type { RouteContext } from '../../../../../types/api'
-import { supabaseAdmin } from '../../../../../lib/supabaseAdmin'
+import type { RouteContext } from '@/types/api'
+import { supabaseAdmin } from '@/lib/supabaseAdmin'
+import { validateBody, validateParams } from '@/lib/validation'
+import { tokenParams } from '@/lib/schemas/common'
+import { inviteSignupBody } from '@/lib/schemas/auth'
 
-interface SignupBody {
-  full_name?: unknown
-  password?: unknown
-}
-
-function sanitizeName(raw: unknown): string {
-  if (typeof raw !== 'string') return ''
+function sanitizeName(raw: string): string {
   // Strip control chars + collapse whitespace + trim + cap to 100
   return raw
     .replace(/[\x00-\x1F\x7F]/g, '')
@@ -22,17 +19,20 @@ function sanitizeName(raw: unknown): string {
 // invite's locked email, then accepts the invite. The frontend signs the
 // user in client-side using the password they just typed.
 export async function POST(request: NextRequest, { params }: RouteContext<{ token: string }>) {
-  const { token } = await params
+  const resolvedParams = await params
+  const [validatedParams, paramErr] = validateParams(resolvedParams, tokenParams)
+  if (paramErr) return paramErr
 
-  const body = await request.json().catch(() => ({})) as SignupBody
+  const { token } = validatedParams
+
+  const [body, bodyErr] = await validateBody(request, inviteSignupBody)
+  if (bodyErr) return bodyErr
+
   const { full_name, password } = body
 
   const cleanName = sanitizeName(full_name)
   if (!cleanName) {
     return NextResponse.json({ error: 'Full name is required', code: 'name_required' }, { status: 400 })
-  }
-  if (typeof password !== 'string' || password.length < 8) {
-    return NextResponse.json({ error: 'Password must be at least 8 characters', code: 'weak_password' }, { status: 400 })
   }
 
   // Lookup + validate invite (re-validation: prevents stale-page exploits)

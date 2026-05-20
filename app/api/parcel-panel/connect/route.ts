@@ -1,11 +1,8 @@
 import type { NextRequest } from 'next/server'
-import { getUserFromToken, supabaseAdmin } from '../../../../lib/supabaseAdmin'
+import { getUserFromToken, supabaseAdmin } from '@/lib/supabaseAdmin'
 import { NextResponse } from 'next/server'
-import { parseBody } from '@/lib/utils/typed-json'
-
-interface ConnectBody {
-  apiKey?: string
-}
+import { validateBody } from '@/lib/validation'
+import { connectBody } from '@/lib/schemas/parcel-panel'
 
 const PP_BASE = 'https://open.parcelwill.com'
 
@@ -17,15 +14,9 @@ export async function POST(request: NextRequest) {
   const user = await getUserFromToken(token)
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  let apiKey: string | undefined
-  try {
-    const body = await parseBody<ConnectBody>(request)
-    apiKey = body.apiKey?.trim()
-  } catch {
-    return NextResponse.json({ error: 'Invalid request body' }, { status: 400 })
-  }
-
-  if (!apiKey) return NextResponse.json({ error: 'API key is required' }, { status: 400 })
+  const [body, err] = await validateBody(request, connectBody)
+  if (err) return err
+  const apiKey = body.apiKey.trim()
 
   // Verify key — a 401 means invalid key, anything else means the key is accepted
   try {

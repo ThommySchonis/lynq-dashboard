@@ -2,9 +2,11 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import type { RouteContext } from '@/types/api'
 import type { Role } from '@/types/database'
-import { getAuthContext } from '../../../../../lib/auth'
-import { can } from '../../../../../lib/permissions'
-import { supabaseAdmin } from '../../../../../lib/supabaseAdmin'
+import { getAuthContext } from '@/lib/auth'
+import { can } from '@/lib/permissions'
+import { supabaseAdmin } from '@/lib/supabaseAdmin'
+import { validateParams } from '@/lib/validation'
+import { macroParams } from '@/lib/schemas/macros'
 
 // POST /api/macros/[id]/restore — clear archived_at
 export async function POST(request: NextRequest, { params }: RouteContext<{ id: string }>) {
@@ -14,7 +16,9 @@ export async function POST(request: NextRequest, { params }: RouteContext<{ id: 
     return NextResponse.json({ error: 'You do not have permission to restore macros.', code: 'permission_denied' }, { status: 403 })
   }
 
-  const { id } = await params
+  const [p, pErr] = validateParams(await params, macroParams)
+  if (pErr) return pErr
+  const { id } = p
 
   const macroResult = await supabaseAdmin
     .from('macros')

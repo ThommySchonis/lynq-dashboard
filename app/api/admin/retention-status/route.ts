@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { supabaseAdmin, getUserFromToken } from '../../../../lib/supabaseAdmin'
+import { supabaseAdmin, getUserFromToken } from '@/lib/supabaseAdmin'
 
 const ADMIN_EMAIL = 'info@lynqagency.com'
 const TRIAL_RETENTION_DAYS = 60
@@ -22,7 +22,7 @@ const TRIAL_RETENTION_DAYS = 60
 // 13 admin routes to `is_current_user_lynq_admin()` is tracked as
 // audit item #18 — out of scope for this PR.
 
-// ─── Types ────────────────────────────────────────────────────────────
+// --- Types ---
 
 type DeletionEvent = 'scheduled' | 'deleted' | 'cancelled' | 'error'
 
@@ -61,7 +61,7 @@ interface RetentionAnnotated extends WorkspaceRow {
   days_until_scheduling: number
 }
 
-// ─── Handler ──────────────────────────────────────────────────────────
+// --- Handler ---
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const authHeader = request.headers.get('authorization')

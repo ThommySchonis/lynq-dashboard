@@ -1,19 +1,16 @@
 import { generateText } from 'ai'
 import { anthropic } from '@ai-sdk/anthropic'
-import { getAuthContext } from '../../../../lib/auth'
+import { getAuthContext } from '@/lib/auth'
 import { getStoreCredentials } from '@/lib/store-credentials'
-import { supabaseAdmin } from '../../../../lib/supabaseAdmin'
-import { DEMO_SHOP, DEMO_INSIGHTS } from '../../../../lib/demoData'
+import { supabaseAdmin } from '@/lib/supabaseAdmin'
+import { DEMO_SHOP, DEMO_INSIGHTS } from '@/lib/demoData'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { parseBody } from '@/lib/utils/typed-json'
-
-interface RefundInsightsBody {
-  refunds?: RefundItem[]
-}
+import { validateBody, validateQuery } from '@/lib/validation'
+import { refundInsightsBody, refundInsightsQuery } from '@/lib/schemas/analytics'
 
 interface RefundItem {
-  orderId: string
+  orderId: string | number
   refundAmount: string | number
   refundPct: string | number
   reason?: string
@@ -24,14 +21,16 @@ export async function POST(request: NextRequest) {
   const ctx = await getAuthContext(request)
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const storeId = new URL(request.url).searchParams.get('store_id')
-  if (!storeId) {
-    return NextResponse.json({ error: 'store_id is required' }, { status: 400 })
-  }
-  const credentials = await getStoreCredentials(storeId, ctx.workspaceId)
+  const [query, qErr] = validateQuery(request, refundInsightsQuery)
+  if (qErr) return qErr
+
+  const credentials = await getStoreCredentials(query.store_id, ctx.workspaceId)
   if (credentials.domain === DEMO_SHOP) return NextResponse.json({ insights: DEMO_INSIGHTS })
 
-  const { refunds = [] } = await parseBody<RefundInsightsBody>(request)
+  const [body, bErr] = await validateBody(request, refundInsightsBody)
+  if (bErr) return bErr
+
+  const { refunds } = body
 
   if (refunds.length === 0) return NextResponse.json({ insights: [] })
 

@@ -1,24 +1,13 @@
 import type { NextRequest } from 'next/server'
-import { supabaseAdmin, getUserFromToken } from '../../../../lib/supabaseAdmin'
+import { supabaseAdmin, getUserFromToken } from '@/lib/supabaseAdmin'
 import { NextResponse } from 'next/server'
-import { parseBody } from '@/lib/utils/typed-json'
+import { validateBody } from '@/lib/validation'
+import { updateProfileBody } from '@/lib/schemas/marketplace'
 
 interface ExamProfile {
   exam_status?: string
   exam_type_taken?: string
   exam_score?: number
-}
-
-interface TalentProfileBody {
-  photo_url?: string
-  experience_years?: number
-  previous_industries?: string[]
-  skills?: string[]
-  languages?: string[]
-  hourly_rate?: number
-  availability?: string
-  tools_experience?: string[]
-  about?: string
 }
 
 interface IdRow {
@@ -65,7 +54,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'You must pass an exam before creating a profile.' }, { status: 403 })
   }
 
-  const { photo_url, experience_years, previous_industries, skills, languages, hourly_rate, availability, tools_experience, about } = await parseBody<TalentProfileBody>(request)
+  const [body, bErr] = await validateBody(request, updateProfileBody)
+  if (bErr) return bErr
+
+  const { photo_url, experience_years, previous_industries, skills, languages, hourly_rate, availability, tools_experience, about } = body
 
   const { data, error } = await supabaseAdmin
     .from('talent_profiles')

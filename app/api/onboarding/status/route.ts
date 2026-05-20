@@ -1,7 +1,7 @@
 import type { NextRequest } from 'next/server'
 import { NextResponse } from 'next/server'
-import { getAuthContext } from '../../../../lib/auth'
-import { supabaseAdmin } from '../../../../lib/supabaseAdmin'
+import { getAuthContext } from '@/lib/auth'
+import { supabaseAdmin } from '@/lib/supabaseAdmin'
 
 // GET /api/onboarding/status
 //

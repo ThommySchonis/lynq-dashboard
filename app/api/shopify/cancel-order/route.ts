@@ -1,27 +1,24 @@
-import { getAuthContext } from '../../../../lib/auth'
+import { getAuthContext } from '@/lib/auth'
 import { getStoreCredentials } from '@/lib/store-credentials'
-import { cancelOrder, ShopifyApiError } from '../../../../lib/services/shopify'
+import { cancelOrder, ShopifyApiError } from '@/lib/services/shopify'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { parseBody } from '@/lib/utils/typed-json'
-
-interface CancelOrderBody {
-  orderId: string
-  [key: string]: unknown
-}
+import { validateQuery, validateBody } from '@/lib/validation'
+import { shopifyStoreQuery, legacyCancelOrderBody } from '@/lib/schemas/shopify'
 
 export async function POST(request: NextRequest) {
   const ctx = await getAuthContext(request)
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const storeId = new URL(request.url).searchParams.get('store_id')
-  if (!storeId) {
-    return NextResponse.json({ error: 'store_id is required' }, { status: 400 })
-  }
-  const credentials = await getStoreCredentials(storeId, ctx.workspaceId)
+  const [query, qErr] = validateQuery(request, shopifyStoreQuery)
+  if (qErr) return qErr
 
-  const { orderId, ...params } = await parseBody<CancelOrderBody>(request)
-  if (!orderId) return NextResponse.json({ error: 'orderId required' }, { status: 400 })
+  const credentials = await getStoreCredentials(query.store_id, ctx.workspaceId)
+
+  const [body, bErr] = await validateBody(request, legacyCancelOrderBody)
+  if (bErr) return bErr
+
+  const { orderId, ...params } = body
 
   try {
     const order = await cancelOrder(credentials, orderId, params)

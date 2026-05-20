@@ -1,12 +1,9 @@
-import { supabaseAdmin, getUserFromToken } from '../../../../lib/supabaseAdmin'
-import { DEMO_SHOP, DEMO_EMAIL, getDemoShopifyOrderRows } from '../../../../lib/demoData'
+import { supabaseAdmin, getUserFromToken } from '@/lib/supabaseAdmin'
+import { DEMO_SHOP, DEMO_EMAIL, getDemoShopifyOrderRows } from '@/lib/demoData'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-
-interface SeedDemoBody {
-  user_id?: string
-  email?: string
-}
+import { validateBody } from '@/lib/validation'
+import { seedDemoBody } from '@/lib/schemas/admin'
 
 const ADMIN_EMAIL = 'info@lynqagency.com'
 
@@ -20,7 +17,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Admin only' }, { status: 403 })
   }
 
-  const body = await request.json().catch(() => ({})) as SeedDemoBody
+  const [body, err] = await validateBody(request, seedDemoBody)
+  if (err) return err
+
   let userId = body.user_id
 
   if (!userId && body.email) {

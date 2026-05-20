@@ -1,11 +1,13 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import type { Role } from '@/types/database'
-import { getAuthContext } from '../../../lib/auth'
-import { can } from '../../../lib/permissions'
-import { supabaseAdmin } from '../../../lib/supabaseAdmin'
-import { sanitizeMacroInput, relativeTime } from '../../../lib/macros'
-import { ensureTagsByName, syncMacroTags } from '../../../lib/tags'
+import { getAuthContext } from '@/lib/auth'
+import { can } from '@/lib/permissions'
+import { supabaseAdmin } from '@/lib/supabaseAdmin'
+import { sanitizeMacroInput, relativeTime } from '@/lib/macros'
+import { ensureTagsByName, syncMacroTags } from '@/lib/tags'
+import { validateQuery } from '@/lib/validation'
+import { getMacrosQuery } from '@/lib/schemas/macros'
 
 interface TagLink {
   tag: unknown
@@ -23,11 +25,13 @@ export async function GET(request: NextRequest) {
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   if (!can.viewMacros(ctx.role as Role)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
-  const { searchParams } = new URL(request.url)
-  const archived = searchParams.get('archived') === 'true'
-  const search   = searchParams.get('search')?.trim() ?? ''
-  const language = searchParams.get('language') ?? ''
-  const tagsCsv  = searchParams.get('tags') ?? ''
+  const [query, qErr] = validateQuery(request, getMacrosQuery)
+  if (qErr) return qErr
+
+  const archived = query.archived === 'true'
+  const search   = query.search?.trim() ?? ''
+  const language = query.language ?? ''
+  const tagsCsv  = query.tags ?? ''
   const tagList  = tagsCsv ? tagsCsv.split(',').map(t => t.trim()).filter(Boolean) : []
 
   let q = supabaseAdmin

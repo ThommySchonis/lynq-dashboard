@@ -1,14 +1,11 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { getAuthContext } from '../../../../lib/auth'
-import { can } from '../../../../lib/permissions'
-import type { Role } from '../../../../types/database'
-import { supabaseAdmin } from '../../../../lib/supabaseAdmin'
-
-interface MergeBody {
-  winner_id?: string
-  loser_ids?: string[]
-}
+import { getAuthContext } from '@/lib/auth'
+import { can } from '@/lib/permissions'
+import type { Role } from '@/types/database'
+import { supabaseAdmin } from '@/lib/supabaseAdmin'
+import { validateBody } from '@/lib/validation'
+import { mergeTagsBody } from '@/lib/schemas/tags'
 
 interface MacroTagLink {
   macro_id: string
@@ -21,7 +18,7 @@ interface TagRow {
 }
 
 // POST /api/tags/merge — body: { winner_id, loser_ids: [] }
-// Reassigns all macro_tags from losers → winner, then deletes losers.
+// Reassigns all macro_tags from losers -> winner, then deletes losers.
 export async function POST(request: NextRequest) {
   const ctx = await getAuthContext(request)
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -29,13 +26,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Only owners and admins can merge tags.', code: 'permission_denied' }, { status: 403 })
   }
 
-  const body = await request.json().catch(() => ({})) as MergeBody
-  const winnerId = typeof body.winner_id === 'string' ? body.winner_id : null
-  const loserIds: string[] = Array.isArray(body.loser_ids)
-    ? body.loser_ids.filter((id): id is string => typeof id === 'string' && id !== winnerId)
-    : []
+  const [body, err] = await validateBody(request, mergeTagsBody)
+  if (err) return err
 
-  if (!winnerId || loserIds.length === 0) {
+  const winnerId = body.winner_id
+  const loserIds = body.loser_ids.filter(id => id !== winnerId)
+
+  if (loserIds.length === 0) {
     return NextResponse.json({ error: 'winner_id and at least one loser_id required', code: 'invalid_input' }, { status: 400 })
   }
 

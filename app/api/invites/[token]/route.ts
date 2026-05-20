@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import type { RouteContext } from '../../../../types/api'
-import { supabaseAdmin } from '../../../../lib/supabaseAdmin'
+import type { RouteContext } from '@/types/api'
+import { supabaseAdmin } from '@/lib/supabaseAdmin'
+import { validateParams } from '@/lib/validation'
+import { tokenParams } from '@/lib/schemas/common'
 
 interface WorkspaceNameRow {
   name?: string
@@ -11,7 +13,11 @@ interface WorkspaceNameRow {
 // No auth required — the token IS the credential. Tokens are 32 bytes
 // of random data (256-bit entropy) so enumeration is not practical.
 export async function GET(request: NextRequest, { params }: RouteContext<{ token: string }>) {
-  const { token } = await params
+  const resolvedParams = await params
+  const [validated, paramErr] = validateParams(resolvedParams, tokenParams)
+  if (paramErr) return paramErr
+
+  const { token } = validated
 
   interface InviteRow { id: string; email: string; role: string; expires_at: string; accepted_at: string | null; workspace_id: string; inviter_email: string | null; inviter_name: string | null }
 

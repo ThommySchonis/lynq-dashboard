@@ -1,21 +1,15 @@
-import { getAuthContext } from '../../../../../lib/auth'
-import { supabaseAdmin } from '../../../../../lib/supabaseAdmin'
+import { getAuthContext } from '@/lib/auth'
+import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import type { RouteContext } from '@/types/api'
-import { parseBody } from '@/lib/utils/typed-json'
+import { validateBody, validateParams } from '@/lib/validation'
+import { conversationParams, updateConversationBody } from '@/lib/schemas/inbox'
 import { trackEvent } from '@/lib/analytics/track'
 import { EVENT_TYPES } from '@/lib/analytics/events'
 import { checkRateLimit } from '@/lib/rate-limit'
 
-interface ConversationPatchBody {
-  status?: string
-  is_unread?: boolean
-  assigned_to?: string | null
-  metadata?: Record<string, unknown>
-}
-
-export async function GET(request: NextRequest, { params }: RouteContext<{ id: string }>) {
+export async function GET(request: NextRequest, { params: routeParams }: RouteContext<{ id: string }>) {
   const ctx = await getAuthContext(request)
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
@@ -34,12 +28,13 @@ export async function GET(request: NextRequest, { params }: RouteContext<{ id: s
     )
   }
 
-  const { id } = await params
+  const [params, paramErr] = validateParams(await routeParams, conversationParams)
+  if (paramErr) return paramErr
 
   const convResult = await supabaseAdmin
     .from('email_conversations')
     .select('*')
-    .eq('id', id)
+    .eq('id', params.id)
     .eq('workspace_id', ctx.workspaceId)
     .single()
 
@@ -49,20 +44,20 @@ export async function GET(request: NextRequest, { params }: RouteContext<{ id: s
   const { data: messages } = await supabaseAdmin
     .from('email_messages')
     .select('*')
-    .eq('conversation_id', id)
+    .eq('conversation_id', params.id)
     .order('created_at', { ascending: true })
 
   const { data: notes } = await supabaseAdmin
     .from('conversation_notes')
     .select('*')
-    .eq('conversation_id', id)
+    .eq('conversation_id', params.id)
     .order('created_at', { ascending: true })
 
   if (conversation.is_unread) {
     await supabaseAdmin
       .from('email_conversations')
       .update({ is_unread: false })
-      .eq('id', id)
+      .eq('id', params.id)
   }
 
   return NextResponse.json({
@@ -72,7 +67,7 @@ export async function GET(request: NextRequest, { params }: RouteContext<{ id: s
   })
 }
 
-export async function PATCH(request: NextRequest, { params }: RouteContext<{ id: string }>) {
+export async function PATCH(request: NextRequest, { params: routeParams }: RouteContext<{ id: string }>) {
   const ctx = await getAuthContext(request)
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
@@ -91,15 +86,14 @@ export async function PATCH(request: NextRequest, { params }: RouteContext<{ id:
     )
   }
 
-  const { id } = await params
-  const body = await parseBody<ConversationPatchBody>(request)
+  const [params, paramErr] = validateParams(await routeParams, conversationParams)
+  if (paramErr) return paramErr
+
+  const [body, bodyErr] = await validateBody(request, updateConversationBody)
+  if (bodyErr) return bodyErr
 
   const updates: Record<string, unknown> = {}
   if (body.status) {
-    const validStatuses = ['open', 'pending', 'resolved', 'closed']
-    if (!validStatuses.includes(body.status)) {
-      return NextResponse.json({ error: 'Invalid status' }, { status: 400 })
-    }
     updates.status = body.status
   }
   if (typeof body.is_unread === 'boolean') {
@@ -116,7 +110,7 @@ export async function PATCH(request: NextRequest, { params }: RouteContext<{ id:
   const { error } = await supabaseAdmin
     .from('email_conversations')
     .update(updates)
-    .eq('id', id)
+    .eq('id', params.id)
     .eq('workspace_id', ctx.workspaceId)
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
@@ -125,19 +119,19 @@ export async function PATCH(request: NextRequest, { params }: RouteContext<{ id:
   const sourceResult = await supabaseAdmin
     .from('email_conversations')
     .select('email_accounts(provider)')
-    .eq('id', id)
+    .eq('id', params.id)
     .single()
   const emailAccounts = (sourceResult.data as Record<string, unknown>)?.email_accounts as Record<string, string> | null
   const source = emailAccounts?.provider || 'custom'
 
   // Emit analytics events (fire-and-forget, no await)
   if (body.status === 'resolved') {
-    void trackEvent(ctx.workspaceId, EVENT_TYPES.TICKET_RESOLVED, id, source, ctx.memberId, body.metadata)
+    void trackEvent(ctx.workspaceId, EVENT_TYPES.TICKET_RESOLVED, params.id, source, ctx.memberId, body.metadata)
   } else if (body.status === 'closed') {
-    void trackEvent(ctx.workspaceId, EVENT_TYPES.TICKET_CLOSED, id, source, ctx.memberId)
+    void trackEvent(ctx.workspaceId, EVENT_TYPES.TICKET_CLOSED, params.id, source, ctx.memberId)
   }
   if (body.assigned_to !== undefined) {
-    void trackEvent(ctx.workspaceId, EVENT_TYPES.TICKET_ASSIGNED, id, source, body.assigned_to)
+    void trackEvent(ctx.workspaceId, EVENT_TYPES.TICKET_ASSIGNED, params.id, source, body.assigned_to)
   }
 
   return NextResponse.json({ success: true })

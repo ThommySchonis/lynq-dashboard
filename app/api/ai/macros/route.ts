@@ -4,12 +4,7 @@ import { supabaseAdmin, getUserFromToken } from '../../../../lib/supabaseAdmin'
 import { checkRateLimit } from '@/lib/rate-limit'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { parseBody } from '@/lib/utils/typed-json'
-
-interface MacroSuggestBody {
-  subject?: string
-  snippet?: string
-}
+import { aiMacrosBody } from '@/lib/schemas/ai'
 
 interface Macro {
   id: string
@@ -51,7 +46,12 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  const { subject, snippet } = await parseBody<MacroSuggestBody>(request)
+  const raw: unknown = await request.json().catch(() => ({}))
+  const parsed = aiMacrosBody.safeParse(raw)
+  if (!parsed.success) {
+    return NextResponse.json({ error: 'Validation failed', details: parsed.error.flatten() }, { status: 400 })
+  }
+  const { subject, snippet } = parsed.data
 
   if (!process.env.ANTHROPIC_API_KEY) {
     return NextResponse.json({ macros: MACROS.slice(0, 3) })

@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import type { Role } from '@/types/database'
-import { getAuthContext } from '../../../../lib/auth'
-import { can } from '../../../../lib/permissions'
-import { BillingServiceError, listPaymentMethods } from '../../../../lib/services/billing'
+import { getAuthContext } from '@/lib/auth'
+import { can } from '@/lib/permissions'
+import { BillingServiceError, listPaymentMethods } from '@/lib/services/billing'
 
 // GET /api/billing/payment-methods — list (empty until Whop wires up)
 export async function GET(request: NextRequest) {

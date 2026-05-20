@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { getUserFromToken, supabaseAdmin } from '../../../../lib/supabaseAdmin'
+import { getUserFromToken, supabaseAdmin } from '@/lib/supabaseAdmin'
 
 const MAX_BYTES = 500 * 1024  // 500 KB
 const ALLOWED: Record<string, string>   = { 'image/png': 'png', 'image/jpeg': 'jpg' }

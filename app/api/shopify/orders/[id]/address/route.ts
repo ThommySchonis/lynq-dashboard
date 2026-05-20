@@ -1,25 +1,29 @@
-import { getAuthContext } from '../../../../../../lib/auth'
+import { getAuthContext } from '@/lib/auth'
 import { getStoreCredentials } from '@/lib/store-credentials'
-import { updateOrderAddress, ShopifyApiError } from '../../../../../../lib/services/shopify'
+import { updateOrderAddress, ShopifyApiError } from '@/lib/services/shopify'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import type { RouteContext } from '@/types/api'
+import { validateQuery, validateParams, validateBody } from '@/lib/validation'
+import { shopifyStoreQuery, shopifyOrderParams, updateAddressBody } from '@/lib/schemas/shopify'
 
 export async function PUT(request: NextRequest, { params }: RouteContext<{ id: string }>) {
   const ctx = await getAuthContext(request)
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const storeId = new URL(request.url).searchParams.get('store_id')
-  if (!storeId) {
-    return NextResponse.json({ error: 'store_id is required' }, { status: 400 })
-  }
-  const credentials = await getStoreCredentials(storeId, ctx.workspaceId)
+  const [query, qErr] = validateQuery(request, shopifyStoreQuery)
+  if (qErr) return qErr
 
-  const { id } = await params
-  const body = (await request.json() as unknown) as Parameters<typeof updateOrderAddress>[2]
+  const [p, pErr] = validateParams(await params, shopifyOrderParams)
+  if (pErr) return pErr
+
+  const [body, bErr] = await validateBody(request, updateAddressBody)
+  if (bErr) return bErr
+
+  const credentials = await getStoreCredentials(query.store_id, ctx.workspaceId)
 
   try {
-    const shippingAddress = await updateOrderAddress(credentials, id, body)
+    const shippingAddress = await updateOrderAddress(credentials, p.id, body as Parameters<typeof updateOrderAddress>[2])
     return NextResponse.json({ success: true, shippingAddress })
   } catch (err: unknown) {
     if (err instanceof ShopifyApiError) {

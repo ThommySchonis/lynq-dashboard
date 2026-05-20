@@ -1,17 +1,15 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { getUserFromToken, supabaseAdmin } from '../../../lib/supabaseAdmin'
+import { getUserFromToken, supabaseAdmin } from '@/lib/supabaseAdmin'
+import { validateBody } from '@/lib/validation'
+import { updateProfileBody } from '@/lib/schemas/profile'
 
 interface ProfileRow { display_name?: string; bio?: string; avatar_url?: string; theme?: string; welcome_dismissed_at?: string | null; setup_checklist_dismissed_at?: string | null }
 
-const VALID_THEMES = ['system', 'dark', 'light']
-
-function sanitizeName(raw: unknown): string {
-  if (typeof raw !== 'string') return ''
+function sanitizeName(raw: string): string {
   return raw.replace(/[\x00-\x1F\x7F]/g, '').replace(/\s+/g, ' ').trim().slice(0, 50)
 }
-function sanitizeBio(raw: unknown): string {
-  if (typeof raw !== 'string') return ''
+function sanitizeBio(raw: string): string {
   return raw.replace(/[\x00-\x1F\x7F]/g, '').trim().slice(0, 200)
 }
 
@@ -58,8 +56,8 @@ export async function PATCH(request: NextRequest) {
   const user = await getUserFromToken(authHeader.replace('Bearer ', ''))
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  interface PatchBody { display_name?: unknown; bio?: unknown; theme?: unknown; dismiss_welcome?: boolean; welcome_dismissed_at?: null; dismiss_setup_checklist?: boolean; setup_checklist_dismissed_at?: null }
-  const body = await request.json().catch(() => ({})) as PatchBody
+  const [body, bodyErr] = await validateBody(request, updateProfileBody)
+  if (bodyErr) return bodyErr
 
   const update: Record<string, unknown> = {}
   if (body.display_name !== undefined) {
@@ -71,9 +69,6 @@ export async function PATCH(request: NextRequest) {
     update.bio = sanitizeBio(body.bio) || null
   }
   if (body.theme !== undefined) {
-    if (!VALID_THEMES.includes(String(body.theme))) {
-      return NextResponse.json({ error: 'Invalid theme', code: 'invalid_theme' }, { status: 400 })
-    }
     update.theme = body.theme
   }
 

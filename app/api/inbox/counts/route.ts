@@ -1,7 +1,9 @@
-import { getAuthContext } from '../../../../lib/auth'
-import { supabaseAdmin } from '../../../../lib/supabaseAdmin'
+import { getAuthContext } from '@/lib/auth'
+import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { validateQuery } from '@/lib/validation'
+import { getCountsQuery } from '@/lib/schemas/inbox'
 import { checkRateLimit } from '@/lib/rate-limit'
 
 export async function GET(request: NextRequest) {
@@ -23,9 +25,11 @@ export async function GET(request: NextRequest) {
     )
   }
 
+  const [query, queryErr] = validateQuery(request, getCountsQuery)
+  if (queryErr) return queryErr
+
   const wsId = ctx.workspaceId
-  const { searchParams } = new URL(request.url)
-  const storeId = searchParams.get('store_id')
+  const storeId = query.store_id
 
   const baseQuery = () => {
     const q = supabaseAdmin.from('email_conversations').select('id', { count: 'exact', head: true }).eq('workspace_id', wsId)

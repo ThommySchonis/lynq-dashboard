@@ -1,6 +1,8 @@
-import { getAuthContext } from '../../../../lib/auth'
-import { can } from '../../../../lib/permissions'
-import { updateTask, deleteTask } from '../../../../lib/services/tasks'
+import { getAuthContext } from '@/lib/auth'
+import { can } from '@/lib/permissions'
+import { updateTask, deleteTask } from '@/lib/services/tasks'
+import { validateBody, validateParams } from '@/lib/validation'
+import { taskParams, updateTaskBody } from '@/lib/schemas/tasks'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import type { Role } from '@/types/database'
@@ -11,11 +13,14 @@ export async function PATCH(request: NextRequest, { params }: RouteContext<{ id:
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   if (!can.manageTasks(ctx.role as Role)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
-  const { id } = await params
-  const body = (await request.json() as unknown) as Parameters<typeof updateTask>[2]
+  const [p, pErr] = validateParams(await params, taskParams)
+  if (pErr) return pErr
+
+  const [body, bErr] = await validateBody(request, updateTaskBody)
+  if (bErr) return bErr
 
   try {
-    const task = await updateTask(ctx.workspaceId, id, body)
+    const task = await updateTask(ctx.workspaceId, p.id, body)
     return NextResponse.json({ task })
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Failed to update task'
@@ -28,10 +33,11 @@ export async function DELETE(request: NextRequest, { params }: RouteContext<{ id
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   if (!can.deleteTasks(ctx.role as Role)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
-  const { id } = await params
+  const [p, pErr] = validateParams(await params, taskParams)
+  if (pErr) return pErr
 
   try {
-    await deleteTask(ctx.workspaceId, id)
+    await deleteTask(ctx.workspaceId, p.id)
     return NextResponse.json({ success: true })
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Failed to delete task'

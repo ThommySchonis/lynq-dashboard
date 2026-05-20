@@ -1,16 +1,11 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import type { Role } from '@/types/database'
-import { getAuthContext } from '../../../../lib/auth'
-import { can } from '../../../../lib/permissions'
-import { supabaseAdmin } from '../../../../lib/supabaseAdmin'
-
-const ALLOWED_TIMEZONES = [
-  'Europe/Amsterdam', 'Europe/London', 'Europe/Berlin', 'Europe/Paris',
-  'Europe/Madrid', 'America/New_York', 'America/Chicago', 'America/Denver',
-  'America/Los_Angeles', 'America/Sao_Paulo', 'Asia/Tokyo', 'Asia/Singapore',
-  'Asia/Shanghai', 'Australia/Sydney', 'Pacific/Auckland',
-]
+import { getAuthContext } from '@/lib/auth'
+import { can } from '@/lib/permissions'
+import { supabaseAdmin } from '@/lib/supabaseAdmin'
+import { validateBody } from '@/lib/validation'
+import { updateWorkspaceBody } from '@/lib/schemas/workspaces'
 
 export async function GET(request: NextRequest) {
   const ctx = await getAuthContext(request)
@@ -31,16 +26,17 @@ export async function PATCH(request: NextRequest) {
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   if (!can.manageWorkspace(ctx.role as Role)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
-  const body = await request.json() as Record<string, unknown>
+  const [body, bodyErr] = await validateBody(request, updateWorkspaceBody)
+  if (bodyErr) return bodyErr
+
   const updates: Record<string, unknown> = {}
 
-  if ('name' in body) {
-    if (!(body.name as string)?.trim()) return NextResponse.json({ error: 'Name is required' }, { status: 400 })
-    updates.name = (body.name as string).trim()
+  if (body.name !== undefined) {
+    updates.name = body.name.trim()
   }
 
-  if ('slug' in body) {
-    const slug = ((body.slug as string) ?? '').toLowerCase().replace(/[^a-z0-9-]/g, '')
+  if (body.slug !== undefined) {
+    const slug = body.slug
     if (slug && !/^[a-z0-9][a-z0-9-]{1,}[a-z0-9]$/.test(slug)) {
       return NextResponse.json({ error: 'Slug must be 3–40 characters, lowercase letters, numbers, and hyphens' }, { status: 400 })
     }
@@ -57,48 +53,15 @@ export async function PATCH(request: NextRequest) {
     updates.slug = slug || null
   }
 
-  if ('logo_url' in body) {
-    updates.logo_url = (body.logo_url as string) ?? null
-  }
-
-  if ('timezone' in body) {
-    if (!ALLOWED_TIMEZONES.includes(body.timezone as string)) {
-      return NextResponse.json({ error: 'Invalid timezone' }, { status: 400 })
-    }
-    updates.timezone = body.timezone
-  }
-
-  if ('locale' in body) {
-    if (!['en', 'nl', 'de', 'fr', 'es'].includes(body.locale as string)) {
-      return NextResponse.json({ error: 'Invalid locale' }, { status: 400 })
-    }
-    updates.locale = body.locale
-  }
-
-  if ('date_format' in body) {
-    if (!['MM/DD/YYYY', 'DD/MM/YYYY', 'YYYY-MM-DD'].includes(body.date_format as string)) {
-      return NextResponse.json({ error: 'Invalid date format' }, { status: 400 })
-    }
-    updates.date_format = body.date_format
-  }
-
-  if ('time_format' in body) {
-    if (!['12h', '24h'].includes(body.time_format as string)) {
-      return NextResponse.json({ error: 'Invalid time format' }, { status: 400 })
-    }
-    updates.time_format = body.time_format
-  }
-
-  if ('first_day_of_week' in body) {
-    if (!['Sunday', 'Monday'].includes(body.first_day_of_week as string)) {
-      return NextResponse.json({ error: 'Invalid first day of week' }, { status: 400 })
-    }
-    updates.first_day_of_week = body.first_day_of_week
-  }
-
-  if ('show_order_data' in body)  updates.show_order_data  = Boolean(body.show_order_data)
-  if ('auto_translate' in body)   updates.auto_translate   = Boolean(body.auto_translate)
-  if ('allow_deletion' in body)   updates.allow_deletion   = Boolean(body.allow_deletion)
+  if (body.logo_url !== undefined)        updates.logo_url = body.logo_url ?? null
+  if (body.timezone !== undefined)        updates.timezone = body.timezone
+  if (body.locale !== undefined)          updates.locale = body.locale
+  if (body.date_format !== undefined)     updates.date_format = body.date_format
+  if (body.time_format !== undefined)     updates.time_format = body.time_format
+  if (body.first_day_of_week !== undefined) updates.first_day_of_week = body.first_day_of_week
+  if (body.show_order_data !== undefined) updates.show_order_data = body.show_order_data
+  if (body.auto_translate !== undefined)  updates.auto_translate = body.auto_translate
+  if (body.allow_deletion !== undefined)  updates.allow_deletion = body.allow_deletion
 
   if (Object.keys(updates).length === 0) {
     return NextResponse.json({ error: 'No valid fields to update' }, { status: 400 })

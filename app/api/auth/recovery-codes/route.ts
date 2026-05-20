@@ -1,14 +1,11 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { getUserFromToken, supabaseAdmin } from '../../../../lib/supabaseAdmin'
+import { getUserFromToken, supabaseAdmin } from '@/lib/supabaseAdmin'
 import crypto from 'crypto'
+import { recoveryClearBody } from '@/lib/schemas/auth'
 
 interface RecoveryCodesRow {
   recovery_codes?: string[]
-}
-
-interface RecoveryCodesBody {
-  clear?: boolean
 }
 
 function generateCodes(count = 10): string[] {
@@ -42,11 +39,16 @@ export async function POST(request: NextRequest) {
   const user = await getUserFromToken(bearer(request))
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const body = await request.json().catch(() => ({})) as RecoveryCodesBody
-  const codes = body.clear ? [] : generateCodes(10)
+  const raw: unknown = await request.json().catch(() => ({}))
+  const result = recoveryClearBody.safeParse(raw)
+  if (!result.success) {
+    return NextResponse.json({ error: 'Validation failed' }, { status: 400 })
+  }
+
+  const codes = result.data.clear ? [] : generateCodes(10)
 
   const update: Record<string, unknown> = { user_id: user.id, recovery_codes: codes }
-  if (!body.clear) update.mfa_enabled_at = new Date().toISOString()
+  if (!result.data.clear) update.mfa_enabled_at = new Date().toISOString()
 
   const { error } = await supabaseAdmin
     .from('user_profiles')

@@ -1,18 +1,14 @@
 import type { NextRequest } from 'next/server'
 import { generateText } from 'ai'
 import { anthropic } from '@ai-sdk/anthropic'
-import { supabaseAdmin, getUserFromToken } from '../../../../lib/supabaseAdmin'
+import { supabaseAdmin, getUserFromToken } from '@/lib/supabaseAdmin'
 import { NextResponse } from 'next/server'
-import { parseBody } from '@/lib/utils/typed-json'
+import { validateBody } from '@/lib/validation'
+import { submitExamBody } from '@/lib/schemas/exams'
 
 interface GradeResult {
   score?: number
   feedback?: string
-}
-
-interface ExamSubmitBody {
-  exam_type: string
-  answers: Record<string, string>
 }
 
 interface IdRow {
@@ -70,15 +66,11 @@ export async function POST(request: NextRequest) {
   const user = await getUserFromToken(token)
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { exam_type, answers } = await parseBody<ExamSubmitBody>(request)
+  const [body, bErr] = await validateBody(request, submitExamBody)
+  if (bErr) return bErr
 
-  const VALID_TYPES = ['customer_service', 'supply_chain', 'dispute_management', 'overall_manager']
-  if (!VALID_TYPES.includes(exam_type)) {
-    return NextResponse.json({ error: 'Invalid exam type' }, { status: 400 })
-  }
-  if (!answers || typeof answers !== 'object') {
-    return NextResponse.json({ error: 'answers object required' }, { status: 400 })
-  }
+  const { exam_type, answers } = body
+
   if (Object.keys(answers).length > 100) {
     return NextResponse.json({ error: 'Too many answers submitted' }, { status: 400 })
   }

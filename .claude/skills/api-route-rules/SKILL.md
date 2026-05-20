@@ -12,6 +12,18 @@ Every API route must follow this thin wrapper pattern:
 3. Call service function from `lib/services/`
 4. Return `NextResponse.json()`
 
+## Input Validation (Required)
+All API routes must validate user input using Zod schemas and the validation helpers in `lib/validation.ts`:
+
+- **Request bodies:** Use `validateBody(request, schema)` from `@/lib/validation`
+- **Query params:** Use `validateQuery(request, schema)` from `@/lib/validation`
+- **Route params:** Use `validateParams(params, schema)` from `@/lib/validation`
+- **Schemas:** Define in `lib/schemas/<domain>.ts` (e.g., `lib/schemas/tags.ts`). Import shared primitives from `lib/schemas/common.ts`
+- **Naming:** `{action}{Domain}Body` for bodies, `{action}{Domain}Query` for queries, `{domain}Params` for params
+- **Never** cast `request.json()` to a TypeScript interface without runtime Zod validation
+- Validation goes after auth but before business logic
+- FormData routes (file uploads) skip `validateBody` — validate manually
+
 ## Rules
 - Never call Shopify API directly from route handlers — use `lib/services/shopify.ts`
 - Never import `lib/shopify.js` (deleted) — use `lib/services/shopify.ts`
@@ -28,26 +40,41 @@ Every API route must follow this thin wrapper pattern:
 
 ```typescript
 import type { NextRequest } from 'next/server'
-import { getAuthContext } from '@/lib/auth'
-import { getShopifyCredentialsByWorkspace } from '@/lib/shopifyCredentials'
-import { someServiceFn, ShopifyApiError } from '@/lib/services/shopify'
 import { NextResponse } from 'next/server'
+import { getAuthContext } from '@/lib/auth'
+import { validateBody, validateQuery } from '@/lib/validation'
+import { createItemBody, getItemsQuery } from '@/lib/schemas/items'
+import { createItem, getItems } from '@/lib/services/items'
 
 export async function GET(request: NextRequest) {
   const ctx = await getAuthContext(request)
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const credentials = await getShopifyCredentialsByWorkspace(ctx.workspaceId)
-  if (!credentials) return NextResponse.json({ error: 'Shopify not configured' }, { status: 400 })
+  const [query, qErr] = validateQuery(request, getItemsQuery)
+  if (qErr) return qErr
 
   try {
-    const result = await someServiceFn(credentials)
-    return NextResponse.json(result)
+    const items = await getItems(ctx.workspaceId, query)
+    return NextResponse.json({ items })
   } catch (err) {
-    if (err instanceof ShopifyApiError) {
-      return NextResponse.json({ error: err.message }, { status: err.statusCode })
-    }
-    return NextResponse.json({ error: 'Internal error' }, { status: 500 })
+    const message = err instanceof Error ? err.message : 'Internal error'
+    return NextResponse.json({ error: message }, { status: 500 })
+  }
+}
+
+export async function POST(request: NextRequest) {
+  const ctx = await getAuthContext(request)
+  if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const [body, bErr] = await validateBody(request, createItemBody)
+  if (bErr) return bErr
+
+  try {
+    const item = await createItem(ctx.workspaceId, body)
+    return NextResponse.json({ item }, { status: 201 })
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Internal error'
+    return NextResponse.json({ error: message }, { status: 500 })
   }
 }
 ```

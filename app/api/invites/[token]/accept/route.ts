@@ -1,13 +1,19 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import type { RouteContext } from '../../../../../types/api'
-import { getUserFromToken, supabaseAdmin } from '../../../../../lib/supabaseAdmin'
+import type { RouteContext } from '@/types/api'
+import { getUserFromToken, supabaseAdmin } from '@/lib/supabaseAdmin'
+import { validateParams } from '@/lib/validation'
+import { tokenParams } from '@/lib/schemas/common'
 
 // POST — accept an invite (requires auth).
 // All validation (token, expiry, accepted, email-match) happens atomically
 // inside accept_workspace_invite RPC — see Feature 4 SQL migration.
 export async function POST(request: NextRequest, { params }: RouteContext<{ token: string }>) {
-  const { token } = await params
+  const resolvedParams = await params
+  const [validated, paramErr] = validateParams(resolvedParams, tokenParams)
+  if (paramErr) return paramErr
+
+  const { token } = validated
 
   const authHeader = request.headers.get('authorization')
   if (!authHeader) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })

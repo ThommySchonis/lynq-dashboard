@@ -1,14 +1,10 @@
-import { getAuthContext } from '../../../../lib/auth'
-import { supabaseAdmin } from '../../../../lib/supabaseAdmin'
+import { getAuthContext } from '@/lib/auth'
+import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import crypto from 'crypto'
-import { parseBody } from '@/lib/utils/typed-json'
-
-interface ShopifyOAuthBody {
-  shop: string
-  store_name?: string
-}
+import { validateBody } from '@/lib/validation'
+import { shopifyAuthBody } from '@/lib/schemas/auth'
 
 const SCOPES = [
   // Orders — read, write, cancel, refund, note
@@ -46,13 +42,10 @@ export async function POST(request: NextRequest) {
   const clientId = process.env.SHOPIFY_CLIENT_ID
   if (!clientId) return NextResponse.json({ error: 'Shopify app not configured' }, { status: 500 })
 
-  const { shop, store_name } = await parseBody<ShopifyOAuthBody>(request)
-  if (!shop) {
-    return NextResponse.json({ error: 'Shop domain is required' }, { status: 400 })
-  }
-  if (!store_name) {
-    return NextResponse.json({ error: 'Store name is required' }, { status: 400 })
-  }
+  const [body, bodyErr] = await validateBody(request, shopifyAuthBody)
+  if (bodyErr) return bodyErr
+
+  const { shop, store_name } = body
 
   const shopDomain = shop.includes('.myshopify.com')
     ? shop.toLowerCase().trim()

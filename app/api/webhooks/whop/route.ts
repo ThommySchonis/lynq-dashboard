@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import * as Sentry from '@sentry/nextjs'
-import { supabaseAdmin } from '../../../../lib/supabaseAdmin'
-import { verifyWebhookSignature, type WhopMembership, type WhopPayment } from '../../../../lib/whop'
-import { unlockWorkspace } from '../../../../lib/services/limit-check'
+import { supabaseAdmin } from '@/lib/supabaseAdmin'
+import { verifyWebhookSignature, type WhopMembership, type WhopPayment } from '@/lib/whop'
+import { unlockWorkspace } from '@/lib/services/limit-check'
 
 interface WorkspaceIdRow {
   workspace_id: string

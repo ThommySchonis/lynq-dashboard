@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { getAuthContext } from '../../../../lib/auth'
-import { getSubscriptionWithUsage } from '../../../../lib/services/billing'
+import { getAuthContext } from '@/lib/auth'
+import { getSubscriptionWithUsage } from '@/lib/services/billing'
 
 // GET /api/billing/subscription
 // Composite read powering the Usage & Plans tab.

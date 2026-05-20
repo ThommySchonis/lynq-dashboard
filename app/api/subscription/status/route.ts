@@ -1,5 +1,5 @@
 import type { NextRequest } from 'next/server'
-import { supabaseAdmin, getUserFromToken } from '../../../../lib/supabaseAdmin'
+import { supabaseAdmin, getUserFromToken } from '@/lib/supabaseAdmin'
 import { NextResponse } from 'next/server'
 
 // GET /api/subscription/status

@@ -1,20 +1,18 @@
-import { supabaseAdmin } from '../../../../lib/supabaseAdmin'
-import { getAuthContext } from '../../../../lib/auth'
+import { supabaseAdmin } from '@/lib/supabaseAdmin'
+import { getAuthContext } from '@/lib/auth'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { parseBody } from '@/lib/utils/typed-json'
-
-interface BrandSettingsBody {
-  brandName: string
-  language: string
-  tone: string
-}
+import { validateBody } from '@/lib/validation'
+import { updateBrandBody } from '@/lib/schemas/settings'
 
 export async function POST(request: NextRequest) {
   const ctx = await getAuthContext(request)
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { brandName, language, tone } = await parseBody<BrandSettingsBody>(request)
+  const [body, bErr] = await validateBody(request, updateBrandBody)
+  if (bErr) return bErr
+
+  const { brandName, language, tone } = body
 
   // Transition: write both user_id (legacy) AND workspace_id. Keep
   // existing onConflict until Phase 4 swaps the unique key.

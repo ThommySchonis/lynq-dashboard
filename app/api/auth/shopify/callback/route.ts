@@ -1,9 +1,11 @@
-import { supabaseAdmin } from '../../../../../lib/supabaseAdmin'
+import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import { syncOrders } from '@/lib/services/shopify'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import crypto from 'crypto'
 import { parseJson } from '@/lib/utils/typed-json'
+import { validateQuery } from '@/lib/validation'
+import { shopifyCallbackQuery } from '@/lib/schemas/auth'
 
 interface ShopifyShopDataResponse {
   shop?: { currency?: string }
@@ -38,12 +40,12 @@ interface OAuthStateRow {
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
-  const code = searchParams.get('code') ?? ''
-  const hmac = searchParams.get('hmac') ?? ''
-  const shop = searchParams.get('shop') ?? ''
-  const state = searchParams.get('state') ?? ''
-
   const appUrl = process.env.NEXT_PUBLIC_APP_URL
+
+  const [query, queryErr] = validateQuery(request, shopifyCallbackQuery)
+  if (queryErr) return NextResponse.redirect(`${appUrl}/settings/integrations/shopify?error=missing_params`)
+
+  const { code, hmac, shop, state } = query
 
   const oauthStateResult = await supabaseAdmin
     .from('oauth_states')

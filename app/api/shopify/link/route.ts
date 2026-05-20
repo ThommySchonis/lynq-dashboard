@@ -1,12 +1,9 @@
-import { supabaseAdmin } from '../../../../lib/supabaseAdmin'
-import { getAuthContext } from '../../../../lib/auth'
+import { supabaseAdmin } from '@/lib/supabaseAdmin'
+import { getAuthContext } from '@/lib/auth'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { parseBody } from '@/lib/utils/typed-json'
-
-interface LinkShopBody {
-  shop: unknown
-}
+import { validateBody } from '@/lib/validation'
+import { shopifyLinkBody } from '@/lib/schemas/shopify'
 
 interface PendingToken {
   access_token?: string
@@ -26,8 +23,10 @@ export async function POST(request: NextRequest) {
   const ctx = await getAuthContext(request)
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { shop } = await parseBody<LinkShopBody>(request)
-  const shopDomain = normalizeShopDomain(shop)
+  const [body, bErr] = await validateBody(request, shopifyLinkBody)
+  if (bErr) return bErr
+
+  const shopDomain = normalizeShopDomain(body.shop)
   if (!shopDomain) return NextResponse.json({ error: 'Invalid shop' }, { status: 400 })
 
   const pendingResult = await supabaseAdmin

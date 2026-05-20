@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import type { Role } from '@/types/database'
-import { getAuthContext } from '../../../../../lib/auth'
-import { can } from '../../../../../lib/permissions'
-import { BillingServiceError, reactivateSubscription } from '../../../../../lib/services/billing'
+import { getAuthContext } from '@/lib/auth'
+import { can } from '@/lib/permissions'
+import { BillingServiceError, reactivateSubscription } from '@/lib/services/billing'
 
 // POST /api/billing/subscription/reactivate
 // Owner-only. Undoes a pending cancel (cancel_at_period_end=true).

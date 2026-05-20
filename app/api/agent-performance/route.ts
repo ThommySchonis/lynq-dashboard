@@ -1,6 +1,8 @@
 import type { NextRequest } from 'next/server'
-import { supabaseAdmin, getUserFromToken } from '../../../lib/supabaseAdmin'
+import { supabaseAdmin, getUserFromToken } from '@/lib/supabaseAdmin'
 import { NextResponse } from 'next/server'
+import { validateQuery } from '@/lib/validation'
+import { agentPerformanceQuery } from '@/lib/schemas/agents'
 
 async function getUser(request: NextRequest) {
   const authHeader = request.headers.get('authorization')
@@ -13,10 +15,12 @@ export async function GET(request: NextRequest) {
   const user = await getUser(request)
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { searchParams } = new URL(request.url)
-  const filter = searchParams.get('filter') || 'month'
-  const customFrom = searchParams.get('from')
-  const customTo = searchParams.get('to')
+  const [query, qErr] = validateQuery(request, agentPerformanceQuery)
+  if (qErr) return qErr
+
+  const filter = query.filter || 'month'
+  const customFrom = query.from
+  const customTo = query.to
 
   const now = new Date()
   let from: Date

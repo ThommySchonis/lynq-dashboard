@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { getAuthContext } from '../../../../lib/auth'
-import { listPlans } from '../../../../lib/services/billing'
+import { getAuthContext } from '@/lib/auth'
+import { listPlans } from '@/lib/services/billing'
 
 // GET /api/billing/plans
 // All active plans for the plan-selector modal. Catalog is public-ish

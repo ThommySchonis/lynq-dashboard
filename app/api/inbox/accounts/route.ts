@@ -1,7 +1,9 @@
-import { getAuthContext } from '../../../../lib/auth'
-import { supabaseAdmin } from '../../../../lib/supabaseAdmin'
+import { getAuthContext } from '@/lib/auth'
+import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { validateQuery } from '@/lib/validation'
+import { getAccountsQuery } from '@/lib/schemas/inbox'
 import { checkRateLimit } from '@/lib/rate-limit'
 
 export async function GET(request: NextRequest) {
@@ -23,19 +25,19 @@ export async function GET(request: NextRequest) {
     )
   }
 
-  const { searchParams } = new URL(request.url)
-  const storeId = searchParams.get('store_id')
+  const [query, queryErr] = validateQuery(request, getAccountsQuery)
+  if (queryErr) return queryErr
 
-  let query = supabaseAdmin
+  let dbQuery = supabaseAdmin
     .from('email_accounts')
     .select('id, provider, email_address, display_name, status, is_default, last_sync_at, connected_at')
     .eq('workspace_id', ctx.workspaceId)
 
-  if (storeId) {
-    query = query.eq('store_id', storeId)
+  if (query.store_id) {
+    dbQuery = dbQuery.eq('store_id', query.store_id)
   }
 
-  const { data, error } = await query.order('connected_at', { ascending: true })
+  const { data, error } = await dbQuery.order('connected_at', { ascending: true })
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 

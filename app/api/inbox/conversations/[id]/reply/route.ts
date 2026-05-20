@@ -1,21 +1,13 @@
-import { getAuthContext } from '../../../../../../lib/auth'
-import { sendReply } from '../../../../../../lib/conversationEngine'
+import { getAuthContext } from '@/lib/auth'
+import { sendReply } from '@/lib/conversationEngine'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import type { RouteContext } from '@/types/api'
-import { parseBody } from '@/lib/utils/typed-json'
+import { validateBody, validateParams } from '@/lib/validation'
+import { conversationParams, replyBody } from '@/lib/schemas/inbox'
 import { checkRateLimit } from '@/lib/rate-limit'
 
-interface ReplyBody {
-  to?: string[]
-  cc?: string[]
-  bcc?: string[]
-  subject?: string
-  bodyHtml?: string
-  bodyText?: string
-}
-
-export async function POST(request: NextRequest, { params }: RouteContext<{ id: string }>) {
+export async function POST(request: NextRequest, { params: routeParams }: RouteContext<{ id: string }>) {
   const ctx = await getAuthContext(request)
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
@@ -34,15 +26,14 @@ export async function POST(request: NextRequest, { params }: RouteContext<{ id: 
     )
   }
 
-  const { id } = await params
-  const body = await parseBody<ReplyBody>(request)
+  const [params, paramErr] = validateParams(await routeParams, conversationParams)
+  if (paramErr) return paramErr
 
-  if (!body.bodyHtml && !body.bodyText) {
-    return NextResponse.json({ error: 'Message body required' }, { status: 400 })
-  }
+  const [body, bodyErr] = await validateBody(request, replyBody)
+  if (bodyErr) return bodyErr
 
   try {
-    const result = await sendReply(ctx.workspaceId, id, ctx.user.email ?? '', {
+    const result = await sendReply(ctx.workspaceId, params.id, ctx.user.email ?? '', {
       to: (body.to ?? []).map(e => ({ email: e })),
       cc: (body.cc ?? []).map(e => ({ email: e })),
       bcc: (body.bcc ?? []).map(e => ({ email: e })),

@@ -2,21 +2,21 @@ import { getAuthContext } from '@/lib/auth'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { validateQuery } from '@/lib/validation'
+import { supportAnalyticsQuery } from '@/lib/schemas/analytics'
 
 export async function GET(request: NextRequest) {
   const ctx = await getAuthContext(request)
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const url = new URL(request.url)
-  const agentId = url.searchParams.get('agent_id') || null
-  const dateFrom = url.searchParams.get('date_from') || null
-  const dateTo = url.searchParams.get('date_to') || null
+  const [query, qErr] = validateQuery(request, supportAnalyticsQuery)
+  if (qErr) return qErr
 
   const rpcResult = await supabaseAdmin.rpc('get_ticket_volume', {
     p_workspace_id: ctx.workspaceId,
-    p_agent_id: agentId,
-    p_date_from: dateFrom,
-    p_date_to: dateTo,
+    p_agent_id: query.agent_id ?? null,
+    p_date_from: query.date_from ?? null,
+    p_date_to: query.date_to ?? null,
   })
 
   if (rpcResult.error) {

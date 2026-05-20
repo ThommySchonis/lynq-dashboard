@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { getAuthContext } from '../../../../lib/auth'
-import { BillingServiceError, listInvoices } from '../../../../lib/services/billing'
+import { getAuthContext } from '@/lib/auth'
+import { BillingServiceError, listInvoices } from '@/lib/services/billing'
+import { validateQuery } from '@/lib/validation'
+import { invoicesQuery } from '@/lib/schemas/billing'
 
 // GET /api/billing/invoices?page=N&per_page=M
 // Paginated invoice list for the current workspace.
@@ -9,9 +11,11 @@ export async function GET(request: NextRequest) {
   const ctx = await getAuthContext(request)
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { searchParams } = new URL(request.url)
-  const page    = parseInt(searchParams.get('page')     || '0', 10)
-  const perPage = Math.min(parseInt(searchParams.get('per_page') || '25', 10), 100)
+  const [query, queryErr] = validateQuery(request, invoicesQuery)
+  if (queryErr) return queryErr
+
+  const page = query.page ?? 0
+  const perPage = query.per_page ?? 25
 
   try {
     const { invoices, total } = await listInvoices(ctx.workspaceId, page, perPage)

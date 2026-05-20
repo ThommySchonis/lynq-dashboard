@@ -1,18 +1,10 @@
-import { supabaseAdmin, getUserFromToken } from '../../../../lib/supabaseAdmin'
+import { supabaseAdmin, getUserFromToken } from '@/lib/supabaseAdmin'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { validateBody } from '@/lib/validation'
+import { migrateUsersBody } from '@/lib/schemas/admin'
 
 const ADMIN_EMAIL = 'info@lynqagency.com'
-
-interface MigrateUser {
-  id?: string
-  email: string
-  password: string
-}
-
-interface MigrateUsersBody {
-  users: MigrateUser[]
-}
 
 // POST body: { users: [{ id, email, password }] }
 // Creates each user in the main Supabase project with the same UUID
@@ -27,11 +19,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Admin only' }, { status: 403 })
   }
 
-  const { users } = await request.json().catch(() => ({ users: [] as MigrateUser[] })) as MigrateUsersBody
-  if (!users?.length) return NextResponse.json({ error: 'No users provided' }, { status: 400 })
+  const [body, err] = await validateBody(request, migrateUsersBody)
+  if (err) return err
 
   const results = []
-  for (const u of users) {
+  for (const u of body.users) {
     const { data, error } = await supabaseAdmin.auth.admin.createUser({
       user_metadata: {},
       email: u.email,

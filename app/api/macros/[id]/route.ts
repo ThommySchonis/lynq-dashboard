@@ -2,11 +2,13 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import type { RouteContext } from '@/types/api'
 import type { Role } from '@/types/database'
-import { getAuthContext } from '../../../../lib/auth'
-import { can } from '../../../../lib/permissions'
-import { supabaseAdmin } from '../../../../lib/supabaseAdmin'
-import { sanitizeMacroInput, relativeTime } from '../../../../lib/macros'
-import { ensureTagsByName, syncMacroTags } from '../../../../lib/tags'
+import { getAuthContext } from '@/lib/auth'
+import { can } from '@/lib/permissions'
+import { supabaseAdmin } from '@/lib/supabaseAdmin'
+import { sanitizeMacroInput, relativeTime } from '@/lib/macros'
+import { ensureTagsByName, syncMacroTags } from '@/lib/tags'
+import { validateParams } from '@/lib/validation'
+import { macroParams } from '@/lib/schemas/macros'
 
 interface TagLink {
   tag: unknown
@@ -23,7 +25,9 @@ export async function GET(request: NextRequest, { params }: RouteContext<{ id: s
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   if (!can.viewMacros(ctx.role as Role)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
-  const { id } = await params
+  const [p, pErr] = validateParams(await params, macroParams)
+  if (pErr) return pErr
+  const { id } = p
 
   const { data: macro, error } = await supabaseAdmin
     .from('macros')
@@ -66,7 +70,9 @@ export async function PATCH(request: NextRequest, { params }: RouteContext<{ id:
     return NextResponse.json({ error: 'You do not have permission to edit macros.', code: 'permission_denied' }, { status: 403 })
   }
 
-  const { id } = await params
+  const [p2, p2Err] = validateParams(await params, macroParams)
+  if (p2Err) return p2Err
+  const { id } = p2
   const body = await request.json().catch(() => ({})) as Record<string, unknown>
 
   let payload
@@ -130,7 +136,9 @@ export async function DELETE(request: NextRequest, { params }: RouteContext<{ id
     return NextResponse.json({ error: 'Only owners and admins can delete macros.', code: 'permission_denied' }, { status: 403 })
   }
 
-  const { id } = await params
+  const [p3, p3Err] = validateParams(await params, macroParams)
+  if (p3Err) return p3Err
+  const { id } = p3
 
   const { data: target, error: lookupError } = await supabaseAdmin
     .from('macros')

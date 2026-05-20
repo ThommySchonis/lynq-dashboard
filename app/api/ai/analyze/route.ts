@@ -4,20 +4,10 @@ import { getUserFromToken, supabaseAdmin } from '../../../../lib/supabaseAdmin'
 import { checkRateLimit } from '@/lib/rate-limit'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { parseBody } from '@/lib/utils/typed-json'
-
-interface AnalyzeBody {
-  threads: ThreadInput[]
-}
+import { aiAnalyzeBody } from '@/lib/schemas/ai'
 
 interface AnalyzeResult {
   results?: Record<string, unknown>
-}
-
-interface ThreadInput {
-  id: string
-  subject?: string
-  snippet?: string
 }
 
 export async function POST(request: NextRequest) {
@@ -43,8 +33,12 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  const { threads } = await parseBody<AnalyzeBody>(request)
-  if (!threads?.length) return NextResponse.json({ analyses: {} })
+  const raw: unknown = await request.json().catch(() => ({}))
+  const parsed = aiAnalyzeBody.safeParse(raw)
+  if (!parsed.success) {
+    return NextResponse.json({ analyses: {} })
+  }
+  const { threads } = parsed.data
 
   const prompt = `You are a customer support triage AI for an e-commerce dropshipping store. Analyze these support emails and classify each one.
 

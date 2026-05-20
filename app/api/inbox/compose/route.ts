@@ -1,20 +1,11 @@
-import { getAuthContext } from '../../../../lib/auth'
-import { sendNewEmail } from '../../../../lib/conversationEngine'
-import { supabaseAdmin } from '../../../../lib/supabaseAdmin'
+import { getAuthContext } from '@/lib/auth'
+import { sendNewEmail } from '@/lib/conversationEngine'
+import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { parseBody } from '@/lib/utils/typed-json'
+import { validateBody } from '@/lib/validation'
+import { composeBody } from '@/lib/schemas/inbox'
 import { checkRateLimit } from '@/lib/rate-limit'
-
-interface ComposeBody {
-  to?: string[]
-  cc?: string[]
-  bcc?: string[]
-  subject?: string
-  bodyHtml?: string
-  bodyText?: string
-  accountId?: string
-}
 
 interface EmailAccountId {
   id: string
@@ -39,17 +30,8 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  const body = await parseBody<ComposeBody>(request)
-
-  if (!body.to?.length) {
-    return NextResponse.json({ error: 'Recipient required' }, { status: 400 })
-  }
-  if (!body.subject) {
-    return NextResponse.json({ error: 'Subject required' }, { status: 400 })
-  }
-  if (!body.bodyHtml && !body.bodyText) {
-    return NextResponse.json({ error: 'Message body required' }, { status: 400 })
-  }
+  const [body, bodyErr] = await validateBody(request, composeBody)
+  if (bodyErr) return bodyErr
 
   let accountId = body.accountId
   if (!accountId) {
@@ -81,10 +63,10 @@ export async function POST(request: NextRequest) {
 
   try {
     const result = await sendNewEmail(ctx.workspaceId, ctx.user.email ?? '', accountId as string, {
-      to: (body.to ?? []).map(e => ({ email: e })),
+      to: body.to.map(e => ({ email: e })),
       cc: (body.cc ?? []).map(e => ({ email: e })),
       bcc: (body.bcc ?? []).map(e => ({ email: e })),
-      subject: body.subject ?? '',
+      subject: body.subject,
       bodyHtml: body.bodyHtml ?? '',
       bodyText: body.bodyText ?? '',
     })

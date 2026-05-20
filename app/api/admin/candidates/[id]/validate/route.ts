@@ -1,13 +1,9 @@
-import { supabaseAdmin, getUserFromToken } from '../../../../../../lib/supabaseAdmin'
+import { supabaseAdmin, getUserFromToken } from '@/lib/supabaseAdmin'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import type { RouteContext } from '@/types/api'
-import { parseBody } from '@/lib/utils/typed-json'
-
-interface ValidateBody {
-  action: string
-  display_code?: string
-}
+import { validateBody, validateParams } from '@/lib/validation'
+import { adminCandidateParams, validateCandidateBody } from '@/lib/schemas/admin'
 
 interface RoleRow {
   role?: string
@@ -26,14 +22,15 @@ export async function PATCH(request: NextRequest, { params }: RouteContext<{ id:
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const { id } = await params
-  const { action, display_code } = await parseBody<ValidateBody>(request)
+  const resolvedParams = await params
+  const [validated, paramErr] = validateParams(resolvedParams, adminCandidateParams)
+  if (paramErr) return paramErr
 
-  // action: 'call_validated' | 'make_visible' | 'hide' | 'reject'
-  const VALID_ACTIONS = ['call_validated', 'make_visible', 'hide', 'reject']
-  if (!VALID_ACTIONS.includes(action)) {
-    return NextResponse.json({ error: 'Invalid action' }, { status: 400 })
-  }
+  const [body, bodyErr] = await validateBody(request, validateCandidateBody)
+  if (bodyErr) return bodyErr
+
+  const { id } = validated
+  const { action, display_code } = body
 
   const { data: candidate } = await supabaseAdmin
     .from('profiles')

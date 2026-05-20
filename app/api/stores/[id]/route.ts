@@ -1,24 +1,26 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import type { RouteContext } from '@/types/api'
 import { getAuthContext } from '@/lib/auth'
 import { updateStore, deleteStore } from '@/lib/services/stores'
+import { validateBody, validateParams } from '@/lib/validation'
+import { storeParams, updateStoreBody } from '@/lib/schemas/stores'
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params: routeParams }: RouteContext<{ id: string }>
 ) {
   const ctx = await getAuthContext(request)
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { id } = await params
-  const body = await request.json()
-  const name = (body as { name?: string }).name
-  if (!name || typeof name !== 'string') {
-    return NextResponse.json({ error: 'name is required' }, { status: 400 })
-  }
+  const [params, paramErr] = validateParams(await routeParams, storeParams)
+  if (paramErr) return paramErr
+
+  const [body, bodyErr] = await validateBody(request, updateStoreBody)
+  if (bodyErr) return bodyErr
 
   try {
-    const store = await updateStore(id, ctx.workspaceId, { name })
+    const store = await updateStore(params.id, ctx.workspaceId, { name: body.name })
     return NextResponse.json({ store })
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Internal error'
@@ -28,15 +30,16 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params: routeParams }: RouteContext<{ id: string }>
 ) {
   const ctx = await getAuthContext(request)
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { id } = await params
+  const [params, paramErr] = validateParams(await routeParams, storeParams)
+  if (paramErr) return paramErr
 
   try {
-    await deleteStore(id, ctx.workspaceId)
+    await deleteStore(params.id, ctx.workspaceId)
     return NextResponse.json({ success: true })
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Internal error'

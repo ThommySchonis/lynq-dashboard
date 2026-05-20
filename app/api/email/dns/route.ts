@@ -1,6 +1,8 @@
-import { getUserFromToken } from '../../../../lib/supabaseAdmin'
+import { getUserFromToken } from '@/lib/supabaseAdmin'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { validateQuery } from '@/lib/validation'
+import { emailDnsQuery } from '@/lib/schemas/webhooks'
 
 // GET /api/email/dns?domain=yourdomain.com&provider=google|microsoft|custom
 // Returns the exact DNS records the customer needs to add for email deliverability
@@ -12,11 +14,10 @@ export async function GET(request: NextRequest) {
   const user = await getUserFromToken(token)
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { searchParams } = new URL(request.url)
-  const domain = searchParams.get('domain')?.toLowerCase().trim()
-  const provider = searchParams.get('provider') || 'google'
-
-  if (!domain) return NextResponse.json({ error: 'domain required' }, { status: 400 })
+  const [query, queryErr] = validateQuery(request, emailDnsQuery)
+  if (queryErr) return queryErr
+  const domain = query.domain.toLowerCase().trim()
+  const provider = query.provider || 'google'
 
   const spfRecords: Record<string, string> = {
     google: `v=spf1 include:_spf.google.com ~all`,

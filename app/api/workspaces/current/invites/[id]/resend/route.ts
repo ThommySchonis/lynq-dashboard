@@ -2,10 +2,12 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import type { RouteContext } from '@/types/api'
 import type { Role } from '@/types/database'
-import { getAuthContext } from '../../../../../../../lib/auth'
-import { can } from '../../../../../../../lib/permissions'
-import { supabaseAdmin } from '../../../../../../../lib/supabaseAdmin'
-import { sendInviteEmail } from '../../../../../../../lib/email'
+import { getAuthContext } from '@/lib/auth'
+import { can } from '@/lib/permissions'
+import { supabaseAdmin } from '@/lib/supabaseAdmin'
+import { sendInviteEmail } from '@/lib/email'
+import { validateParams } from '@/lib/validation'
+import { inviteParams } from '@/lib/schemas/workspaces'
 
 function getSiteUrl(request: NextRequest) {
   if (process.env.NEXT_PUBLIC_SITE_URL) return process.env.NEXT_PUBLIC_SITE_URL.replace(/\/$/, '')
@@ -15,17 +17,18 @@ function getSiteUrl(request: NextRequest) {
 }
 
 // POST — resend invite email + extend expiry by 7 days. Idempotent.
-export async function POST(request: NextRequest, { params }: RouteContext<{ id: string }>) {
+export async function POST(request: NextRequest, { params: routeParams }: RouteContext<{ id: string }>) {
   const ctx = await getAuthContext(request)
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   if (!can.inviteMembers(ctx.role as Role)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
-  const { id } = await params
+  const [params, paramErr] = validateParams(await routeParams, inviteParams)
+  if (paramErr) return paramErr
 
   const { data: invite, error: lookupError } = await supabaseAdmin
     .from('workspace_invites')
     .select('id, email, role, token, accepted_at')
-    .eq('id', id)
+    .eq('id', params.id)
     .eq('workspace_id', ctx.workspaceId)
     .maybeSingle()
 
@@ -43,7 +46,7 @@ export async function POST(request: NextRequest, { params }: RouteContext<{ id: 
   const updateResult = await supabaseAdmin
     .from('workspace_invites')
     .update({ expires_at: newExpiry, sent_at: now })
-    .eq('id', id)
+    .eq('id', params.id)
     .eq('workspace_id', ctx.workspaceId)
     .select('id, email, role, token, expires_at, sent_at')
     .single()

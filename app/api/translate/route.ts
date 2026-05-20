@@ -1,14 +1,10 @@
 import type { NextRequest } from 'next/server'
 import { generateText } from 'ai'
 import { anthropic } from '@ai-sdk/anthropic'
-import { getUserFromToken, supabaseAdmin } from '../../../lib/supabaseAdmin'
+import { getUserFromToken, supabaseAdmin } from '@/lib/supabaseAdmin'
 import { NextResponse } from 'next/server'
-import { parseBody } from '@/lib/utils/typed-json'
-
-interface TranslateBody {
-  text?: string
-  targetLanguage?: string
-}
+import { validateBody } from '@/lib/validation'
+import { translateBody } from '@/lib/schemas/translate'
 
 interface TranslateResult {
   detectedLanguage?: string
@@ -26,8 +22,9 @@ export async function POST(request: NextRequest) {
   const user = await getUserFromToken(token)
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { text, targetLanguage = 'English' } = await parseBody<TranslateBody>(request)
-  if (!text?.trim()) return NextResponse.json({ error: 'text required' }, { status: 400 })
+  const [body, err] = await validateBody(request, translateBody)
+  if (err) return err
+  const { text, targetLanguage } = body
 
   let raw
   try {

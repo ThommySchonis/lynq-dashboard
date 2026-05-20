@@ -1,6 +1,8 @@
-import { supabaseAdmin, getUserFromToken } from '../../../../lib/supabaseAdmin'
+import { supabaseAdmin, getUserFromToken } from '@/lib/supabaseAdmin'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { validateQuery } from '@/lib/validation'
+import { getCandidatesQuery } from '@/lib/schemas/admin'
 
 const ADMIN_EMAIL = 'info@lynqagency.com'
 
@@ -14,18 +16,18 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const { searchParams } = new URL(request.url)
-  const status = searchParams.get('status') // exam_passed | call_scheduled | call_validated | certified
+  const [query, err] = validateQuery(request, getCandidatesQuery)
+  if (err) return err
 
-  let query = supabaseAdmin
+  let dbQuery = supabaseAdmin
     .from('profiles')
     .select('id, full_name, exam_status, exam_type_taken, exam_score, is_certified, created_at')
     .eq('user_role', 'agent_candidate')
     .order('created_at', { ascending: false })
 
-  if (status) query = query.eq('exam_status', status)
+  if (query.status) dbQuery = dbQuery.eq('exam_status', query.status)
 
-  const { data: candidates } = await query
+  const { data: candidates } = await dbQuery
 
   // Enrich with talent_profiles and purchase data
   const enriched = await Promise.all((candidates || []).map(async (c) => {

@@ -1,12 +1,8 @@
 import type { NextRequest } from 'next/server'
-import { supabaseAdmin, getUserFromToken } from '../../../../lib/supabaseAdmin'
+import { supabaseAdmin, getUserFromToken } from '@/lib/supabaseAdmin'
 import { NextResponse } from 'next/server'
-import { parseBody } from '@/lib/utils/typed-json'
-
-interface ActivateBody {
-  plan?: string
-  email?: string
-}
+import { validateBody } from '@/lib/validation'
+import { activateSubscriptionBody } from '@/lib/schemas/subscription'
 
 const ADMIN_EMAIL = 'info@lynqagency.com'
 
@@ -28,15 +24,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
   }
 
-  const { plan = 'starter', email } = await parseBody<ActivateBody>(request)
+  const [body, validationErr] = await validateBody(request, activateSubscriptionBody)
+  if (validationErr) return validationErr
+  const { plan, email } = body
   const targetEmail = String(email || user.email).trim().toLowerCase()
-  const validPlans = ['starter', 'pro', 'scale']
-  if (!validPlans.includes(plan)) {
-    return NextResponse.json({ error: 'Invalid plan' }, { status: 400 })
-  }
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(targetEmail)) {
-    return NextResponse.json({ error: 'Invalid email' }, { status: 400 })
-  }
 
   const { error } = await supabaseAdmin.from('subscriptions').upsert({
     user_email: targetEmail,

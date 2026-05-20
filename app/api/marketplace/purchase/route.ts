@@ -1,16 +1,8 @@
 import type { NextRequest } from 'next/server'
-import { supabaseAdmin, getUserFromToken } from '../../../../lib/supabaseAdmin'
+import { supabaseAdmin, getUserFromToken } from '@/lib/supabaseAdmin'
 import { NextResponse } from 'next/server'
-import { parseBody } from '@/lib/utils/typed-json'
-
-interface PurchaseBody {
-  talent_profile_id?: string
-  include_trainer?: boolean
-  company_name?: string
-  contact_name?: string
-  contact_phone?: string
-  notes?: string
-}
+import { validateBody } from '@/lib/validation'
+import { purchaseBody } from '@/lib/schemas/marketplace'
 
 interface IdRow {
   id: string
@@ -27,9 +19,10 @@ export async function POST(request: NextRequest) {
   const user = await getUserFromToken(token)
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { talent_profile_id, include_trainer, company_name, contact_name, contact_phone, notes } = await parseBody<PurchaseBody>(request)
+  const [body, bErr] = await validateBody(request, purchaseBody)
+  if (bErr) return bErr
 
-  if (!talent_profile_id) return NextResponse.json({ error: 'talent_profile_id required' }, { status: 400 })
+  const { talent_profile_id, include_trainer, company_name, contact_name, contact_phone, notes } = body
 
   // Verify candidate exists and is visible
   const { data: candidate } = await supabaseAdmin

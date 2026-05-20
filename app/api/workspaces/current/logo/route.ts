@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import type { Role } from '@/types/database'
-import { getAuthContext } from '../../../../../lib/auth'
-import { can } from '../../../../../lib/permissions'
-import { supabaseAdmin } from '../../../../../lib/supabaseAdmin'
+import { getAuthContext } from '@/lib/auth'
+import { can } from '@/lib/permissions'
+import { supabaseAdmin } from '@/lib/supabaseAdmin'
 
 const MAX_BYTES = 2 * 1024 * 1024 // 2 MB
 const ALLOWED_TYPES = ['image/png', 'image/jpeg', 'image/webp']

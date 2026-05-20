@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import type { Role } from '@/types/database'
-import { getAuthContext } from '../../../../../lib/auth'
-import { can } from '../../../../../lib/permissions'
-import { BillingServiceError, cancelSubscription } from '../../../../../lib/services/billing'
+import { getAuthContext } from '@/lib/auth'
+import { can } from '@/lib/permissions'
+import { BillingServiceError, cancelSubscription } from '@/lib/services/billing'
 
 // POST /api/billing/subscription/cancel
 // Owner-only. Sets cancel_at_period_end=true (grace cancel).

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { getAuthContext } from '../../../../../lib/auth'
-import { supabaseAdmin } from '../../../../../lib/supabaseAdmin'
+import { getAuthContext } from '@/lib/auth'
+import { supabaseAdmin } from '@/lib/supabaseAdmin'
 
 // Forcibly remove orphaned (status='unverified') MFA factors for the
 // authenticated user. Required because the user-scoped

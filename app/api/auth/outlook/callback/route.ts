@@ -1,10 +1,12 @@
-import { supabaseAdmin } from '../../../../../lib/supabaseAdmin'
-import { encrypt } from '../../../../../lib/encryption'
+import { supabaseAdmin } from '@/lib/supabaseAdmin'
+import { encrypt } from '@/lib/encryption'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { verifyOAuthState } from '../../../../../lib/oauthState'
+import { verifyOAuthState } from '@/lib/oauthState'
 import { parseJson } from '@/lib/utils/typed-json'
 import { syncAllAccounts } from '@/lib/conversationEngine'
+import { validateQuery } from '@/lib/validation'
+import { outlookCallbackQuery } from '@/lib/schemas/auth'
 
 interface OAuthTokenResponse {
   access_token?: string
@@ -18,12 +20,14 @@ interface OutlookProfileResponse {
 }
 
 export async function GET(request: NextRequest) {
-  const { searchParams } = new URL(request.url)
-  const code = searchParams.get('code')
-  const oauthState = verifyOAuthState(searchParams.get('state'), 'outlook')
   const appUrl = process.env.NEXT_PUBLIC_APP_URL
 
-  if (!code || !oauthState) {
+  const [query, queryErr] = validateQuery(request, outlookCallbackQuery)
+  if (queryErr) return NextResponse.redirect(`${appUrl}/settings?provider=outlook&status=error`)
+
+  const oauthState = verifyOAuthState(query.state, 'outlook')
+
+  if (!oauthState) {
     return NextResponse.redirect(`${appUrl}/settings?provider=outlook&status=error`)
   }
 
@@ -38,7 +42,7 @@ export async function GET(request: NextRequest) {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: new URLSearchParams({
-      code,
+      code: query.code,
       client_id: clientId!,
       client_secret: clientSecret!,
       redirect_uri: redirectUri!,

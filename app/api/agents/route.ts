@@ -1,16 +1,8 @@
 import type { NextRequest } from 'next/server'
-import { supabaseAdmin, getUserFromToken } from '../../../lib/supabaseAdmin'
+import { supabaseAdmin, getUserFromToken } from '@/lib/supabaseAdmin'
 import { NextResponse } from 'next/server'
-import { parseBody } from '@/lib/utils/typed-json'
-
-interface CreateAgentBody {
-  name?: string
-  email?: string
-}
-
-interface DeleteAgentBody {
-  id?: string
-}
+import { validateBody } from '@/lib/validation'
+import { createAgentBody, deleteAgentBody } from '@/lib/schemas/agents'
 
 interface SupabaseResult {
   data: Record<string, unknown> | null
@@ -44,8 +36,10 @@ export async function POST(request: NextRequest) {
   const user = await getUser(request)
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { name, email } = await parseBody<CreateAgentBody>(request)
-  if (!name || !email) return NextResponse.json({ error: 'Name and email required' }, { status: 400 })
+  const [body, bErr] = await validateBody(request, createAgentBody)
+  if (bErr) return bErr
+
+  const { name, email } = body
 
   // Check if agent already exists in agents table
   const { data: existing } = await supabaseAdmin
@@ -58,7 +52,7 @@ export async function POST(request: NextRequest) {
   if (existing) return NextResponse.json({ error: 'An agent with this email already exists' }, { status: 400 })
 
   // Send invite email via Supabase — agent receives link to set their password
-  // redirectTo must be listed in Supabase Auth → URL Configuration → Redirect URLs
+  // redirectTo must be listed in Supabase Auth -> URL Configuration -> Redirect URLs
   const { data: inviteData, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
     data: { name, role: 'agent', is_agent: true },
     redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/login`,
@@ -97,8 +91,10 @@ export async function DELETE(request: NextRequest) {
   const user = await getUser(request)
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { id } = await parseBody<DeleteAgentBody>(request)
-  if (!id) return NextResponse.json({ error: 'Missing id' }, { status: 400 })
+  const [body, bErr] = await validateBody(request, deleteAgentBody)
+  if (bErr) return bErr
+
+  const { id } = body
 
   // Get agent to find their auth user_id
   const { data: agent } = await supabaseAdmin

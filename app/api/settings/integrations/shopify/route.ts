@@ -1,15 +1,14 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { getAuthContext } from '../../../../../lib/auth'
-import { supabaseAdmin }  from '../../../../../lib/supabaseAdmin'
+import { getAuthContext } from '@/lib/auth'
+import { supabaseAdmin }  from '@/lib/supabaseAdmin'
+import { validateBody, validateQuery } from '@/lib/validation'
+import { shopifyIntegrationQuery, shopifyIntegrationBody } from '@/lib/schemas/settings'
+
 interface ShopifyIntegrationRow {
   shopify_domain?: string
   status?: string
   shopify_connected_at?: string
-}
-
-interface ShopifyConnectBody {
-  domain?: string
 }
 
 // Per ONBOARDING_SPEC v1.1 §6.1: pure UI / intent-saving endpoint voor
@@ -17,9 +16,9 @@ interface ShopifyConnectBody {
 // status='pending'. Echte OAuth + access_token komt via /api/auth/shopify
 // callback later.
 //
-// GET  → huidige integration row voor deze workspace ({ domain, status,
+// GET  -> huidige integration row voor deze workspace ({ domain, status,
 //        shopify_connected_at })
-// POST → upsert { domain }; zet status='pending', wist eventuele oude
+// POST -> upsert { domain }; zet status='pending', wist eventuele oude
 //        access_token fields zodat een nieuwe connect-flow volgt.
 
 function normalizeShopDomain(shop: unknown): string {
@@ -33,18 +32,19 @@ export async function GET(request: NextRequest) {
   const ctx = await getAuthContext(request)
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const storeId = request.nextUrl.searchParams.get('store_id')
+  const [query, qErr] = validateQuery(request, shopifyIntegrationQuery)
+  if (qErr) return qErr
 
-  let query = supabaseAdmin
+  let q = supabaseAdmin
     .from('integrations')
     .select('shopify_domain, shopify_connected_at, status')
     .eq('workspace_id', ctx.workspaceId)
 
-  if (storeId) {
-    query = query.eq('store_id', storeId)
+  if (query.store_id) {
+    q = q.eq('store_id', query.store_id)
   }
 
-  const { data } = await query.maybeSingle()
+  const { data } = await q.maybeSingle()
 
   const shopifyData = data as ShopifyIntegrationRow | null
   return NextResponse.json({
@@ -58,8 +58,10 @@ export async function POST(request: NextRequest) {
   const ctx = await getAuthContext(request)
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const body   = await request.json().catch(() => ({})) as ShopifyConnectBody
-  const domain = normalizeShopDomain(body?.domain)
+  const [body, bErr] = await validateBody(request, shopifyIntegrationBody)
+  if (bErr) return bErr
+
+  const domain = normalizeShopDomain(body.domain)
   if (!domain) {
     return NextResponse.json(
       { error: 'Valid Shopify store URL is required (e.g. your-store.myshopify.com)' },

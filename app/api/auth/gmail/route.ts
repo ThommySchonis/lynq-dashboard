@@ -1,14 +1,18 @@
-import { getUserFromToken, supabaseAdmin } from '../../../../lib/supabaseAdmin'
-import { createOAuthState } from '../../../../lib/oauthState'
+import { getUserFromToken, supabaseAdmin } from '@/lib/supabaseAdmin'
+import { createOAuthState } from '@/lib/oauthState'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { validateQuery } from '@/lib/validation'
+import { oauthStartQuery } from '@/lib/schemas/auth'
 
 interface WorkspaceMemberRow {
   workspace_id?: string
 }
 
 export async function GET(request: NextRequest) {
-  const { searchParams } = new URL(request.url)
+  const [query, queryErr] = validateQuery(request, oauthStartQuery)
+  if (queryErr) return queryErr
+
   const authHeader = request.headers.get('authorization')
 
   // Support both Authorization header and ?t= query param (for direct browser redirects)
@@ -16,7 +20,7 @@ export async function GET(request: NextRequest) {
   if (authHeader) {
     userToken = authHeader.replace('Bearer ', '')
   } else {
-    userToken = searchParams.get('t')
+    userToken = query.t ?? null
   }
 
   if (!userToken) {
@@ -37,7 +41,7 @@ export async function GET(request: NextRequest) {
 
   const workspaceId = (membership as WorkspaceMemberRow | null)?.workspace_id ?? ''
 
-  const storeId = searchParams.get('store_id')
+  const storeId = query.store_id ?? null
 
   const clientId = process.env.GOOGLE_CLIENT_ID?.trim()
   const redirectUri = `${process.env.NEXT_PUBLIC_APP_URL}/api/auth/gmail/callback`

@@ -1,10 +1,12 @@
-import { supabaseAdmin } from '../../../../../lib/supabaseAdmin'
-import { encrypt } from '../../../../../lib/encryption'
+import { supabaseAdmin } from '@/lib/supabaseAdmin'
+import { encrypt } from '@/lib/encryption'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { verifyOAuthState } from '../../../../../lib/oauthState'
+import { verifyOAuthState } from '@/lib/oauthState'
 import { parseJson } from '@/lib/utils/typed-json'
 import { syncAllAccounts } from '@/lib/conversationEngine'
+import { validateQuery } from '@/lib/validation'
+import { gmailCallbackQuery } from '@/lib/schemas/auth'
 
 interface OAuthTokenResponse {
   access_token?: string
@@ -17,14 +19,14 @@ interface GoogleProfileResponse {
 }
 
 export async function GET(request: NextRequest) {
-  const { searchParams } = new URL(request.url)
-  const code = searchParams.get('code')
-  const state = searchParams.get('state')
   const appUrl = process.env.NEXT_PUBLIC_APP_URL
 
-  const verifiedState = verifyOAuthState(state, 'gmail')
+  const [query, queryErr] = validateQuery(request, gmailCallbackQuery)
+  if (queryErr) return NextResponse.redirect(`${appUrl}/settings?provider=gmail&status=error`)
 
-  if (!code || !verifiedState) {
+  const verifiedState = verifyOAuthState(query.state, 'gmail')
+
+  if (!verifiedState) {
     return NextResponse.redirect(`${appUrl}/settings?provider=gmail&status=error`)
   }
 
@@ -38,7 +40,7 @@ export async function GET(request: NextRequest) {
   const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({ code, client_id: clientId!, client_secret: clientSecret!, redirect_uri: redirectUri!, grant_type: 'authorization_code' }),
+    body: new URLSearchParams({ code: query.code, client_id: clientId!, client_secret: clientSecret!, redirect_uri: redirectUri!, grant_type: 'authorization_code' }),
   })
 
   const tokens = await parseJson<OAuthTokenResponse>(tokenRes)

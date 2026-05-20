@@ -1,5 +1,5 @@
-import { getAuthContext } from '../../../../lib/auth'
-import { checkConnectionStatus } from '../../../../lib/services/shopify'
+import { getAuthContext } from '@/lib/auth'
+import { checkConnectionStatus } from '@/lib/services/shopify'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 

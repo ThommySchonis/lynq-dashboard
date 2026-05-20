@@ -1,6 +1,6 @@
 import type { NextRequest } from 'next/server'
-import { getUserFromToken } from '../../../../lib/supabaseAdmin'
-import { hasAcademyAccess, getSubscription } from '../../../../lib/subscription'
+import { getUserFromToken } from '@/lib/supabaseAdmin'
+import { hasAcademyAccess, getSubscription } from '@/lib/subscription'
 import { NextResponse } from 'next/server'
 
 export async function GET(request: NextRequest) {

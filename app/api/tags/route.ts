@@ -1,16 +1,11 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { getAuthContext } from '../../../lib/auth'
-import { can } from '../../../lib/permissions'
-import type { Role } from '../../../types/database'
-import { supabaseAdmin } from '../../../lib/supabaseAdmin'
-import { TAG_COLORS, sanitizeTagName } from '../../../lib/tags'
-
-interface CreateTagBody {
-  name?: string
-  color?: string
-  description?: string
-}
+import { getAuthContext } from '@/lib/auth'
+import { can } from '@/lib/permissions'
+import type { Role } from '@/types/database'
+import { supabaseAdmin } from '@/lib/supabaseAdmin'
+import { validateBody } from '@/lib/validation'
+import { createTagBody } from '@/lib/schemas/tags'
 
 // GET /api/tags — list workspace tags + macro_count per tag
 export async function GET(request: NextRequest) {
@@ -46,20 +41,16 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'You do not have permission to create tags.', code: 'permission_denied' }, { status: 403 })
   }
 
-  const body = await request.json().catch(() => ({})) as CreateTagBody
-  const name = sanitizeTagName(body.name)
-  if (!name) return NextResponse.json({ error: 'Name is required', code: 'name_required' }, { status: 400 })
-
-  const color = body.color && TAG_COLORS.includes(body.color) ? body.color : 'slate'
-  const description = typeof body.description === 'string' ? body.description.trim().slice(0, 200) : null
+  const [body, err] = await validateBody(request, createTagBody)
+  if (err) return err
 
   const { data: tag, error } = await supabaseAdmin
     .from('tags')
     .insert({
       workspace_id: ctx.workspaceId,
-      name,
-      color,
-      description: description || null,
+      name: body.name,
+      color: body.color,
+      description: body.description || null,
       created_by:  ctx.user.id,
     })
     .select('id, name, color, description, created_at, updated_at')
@@ -67,7 +58,7 @@ export async function POST(request: NextRequest) {
 
   if (error) {
     if (error.code === '23505') {
-      return NextResponse.json({ error: `A tag named "${name}" already exists.`, code: 'duplicate' }, { status: 409 })
+      return NextResponse.json({ error: `A tag named "${body.name}" already exists.`, code: 'duplicate' }, { status: 409 })
     }
     console.error('[tags POST] insert failed:', error.message)
     return NextResponse.json({ error: error.message, code: 'insert_failed' }, { status: 500 })

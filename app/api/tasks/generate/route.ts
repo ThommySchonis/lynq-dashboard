@@ -1,8 +1,10 @@
-import { getAuthContext } from '../../../../lib/auth'
+import { getAuthContext } from '@/lib/auth'
 import { getStoreCredentials } from '@/lib/store-credentials'
-import { can } from '../../../../lib/permissions'
-import { generatePatternTasks } from '../../../../lib/services/tasks'
-import { getRefunds } from '../../../../lib/services/shopify'
+import { can } from '@/lib/permissions'
+import { generatePatternTasks } from '@/lib/services/tasks'
+import { getRefunds } from '@/lib/services/shopify'
+import { validateQuery } from '@/lib/validation'
+import { generateTasksQuery } from '@/lib/schemas/tasks'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import type { Role } from '@/types/database'
@@ -13,11 +15,10 @@ export async function POST(request: NextRequest) {
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   if (!can.manageTasks(ctx.role as Role)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
-  const storeId = new URL(request.url).searchParams.get('store_id')
-  if (!storeId) {
-    return NextResponse.json({ error: 'store_id is required' }, { status: 400 })
-  }
-  const credentials = await getStoreCredentials(storeId, ctx.workspaceId)
+  const [query, qErr] = validateQuery(request, generateTasksQuery)
+  if (qErr) return qErr
+
+  const credentials = await getStoreCredentials(query.store_id, ctx.workspaceId)
 
   try {
     // Fetch all refunds (last 365 days) for pattern analysis

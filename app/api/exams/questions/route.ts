@@ -1,13 +1,14 @@
 import type { NextRequest } from 'next/server'
-import { supabaseAdmin, getUserFromToken } from '../../../../lib/supabaseAdmin'
+import { supabaseAdmin, getUserFromToken } from '@/lib/supabaseAdmin'
 import { NextResponse } from 'next/server'
+import { validateQuery } from '@/lib/validation'
+import { examQuestionsQuery } from '@/lib/schemas/exams'
 
 interface PassedSubmission {
   submitted_at?: string
   percentage?: number
 }
 
-const VALID_TYPES = ['customer_service', 'supply_chain', 'dispute_management', 'overall_manager']
 const MAX_ATTEMPTS = 3
 const PASSING_SCORE = 75
 
@@ -19,12 +20,10 @@ export async function GET(request: NextRequest) {
   const user = await getUserFromToken(token)
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { searchParams } = new URL(request.url)
-  const examType = searchParams.get('type')
+  const [query, qErr] = validateQuery(request, examQuestionsQuery)
+  if (qErr) return qErr
 
-  if (!examType || !VALID_TYPES.includes(examType)) {
-    return NextResponse.json({ error: 'Invalid exam type. Use: ' + VALID_TYPES.join(', ') }, { status: 400 })
-  }
+  const examType = query.type
 
   const [questionsRes, passRes, attemptRes] = await Promise.all([
     supabaseAdmin

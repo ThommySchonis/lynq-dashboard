@@ -1,16 +1,13 @@
-import { getAuthContext } from '../../../../../../lib/auth'
-import { linkCustomer } from '../../../../../../lib/conversationEngine'
+import { getAuthContext } from '@/lib/auth'
+import { linkCustomer } from '@/lib/conversationEngine'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import type { RouteContext } from '@/types/api'
-import { parseBody } from '@/lib/utils/typed-json'
+import { validateBody, validateParams } from '@/lib/validation'
+import { conversationParams, linkCustomerBody } from '@/lib/schemas/inbox'
 import { checkRateLimit } from '@/lib/rate-limit'
 
-interface LinkCustomerBody {
-  shopifyCustomerId?: string
-}
-
-export async function POST(request: NextRequest, { params }: RouteContext<{ id: string }>) {
+export async function POST(request: NextRequest, { params: routeParams }: RouteContext<{ id: string }>) {
   const ctx = await getAuthContext(request)
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
@@ -29,15 +26,14 @@ export async function POST(request: NextRequest, { params }: RouteContext<{ id: 
     )
   }
 
-  const { id } = await params
-  const body = await parseBody<LinkCustomerBody>(request)
+  const [params, paramErr] = validateParams(await routeParams, conversationParams)
+  if (paramErr) return paramErr
 
-  if (!body.shopifyCustomerId) {
-    return NextResponse.json({ error: 'shopifyCustomerId required' }, { status: 400 })
-  }
+  const [body, bodyErr] = await validateBody(request, linkCustomerBody)
+  if (bodyErr) return bodyErr
 
   try {
-    const result = await linkCustomer(ctx.workspaceId, id, body.shopifyCustomerId)
+    const result = await linkCustomer(ctx.workspaceId, params.id, body.shopifyCustomerId)
     return NextResponse.json(result)
   } catch (err: unknown) {
     return NextResponse.json({ error: err instanceof Error ? err.message : 'Unknown error' }, { status: 500 })

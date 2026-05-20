@@ -1,20 +1,11 @@
-import { supabaseAdmin } from '../../../../../lib/supabaseAdmin'
-import { encrypt } from '../../../../../lib/encryption'
-import { getAuthContext } from '../../../../../lib/auth'
+import { supabaseAdmin } from '@/lib/supabaseAdmin'
+import { encrypt } from '@/lib/encryption'
+import { getAuthContext } from '@/lib/auth'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { ImapFlow } from 'imapflow'
-import { parseBody } from '@/lib/utils/typed-json'
-
-interface CustomEmailBody {
-  imapHost: string
-  imapPort?: string | number
-  smtpHost: string
-  smtpPort?: string | number
-  email: string
-  password: string
-  store_id?: string
-}
+import { validateBody } from '@/lib/validation'
+import { customEmailConnectBody } from '@/lib/schemas/auth'
 // nodemailer ships without bundled types; suppress the implicit-any warning for this import
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
 const nodemailer = require('nodemailer') as any
@@ -28,11 +19,10 @@ export async function POST(request: NextRequest) {
 
   const { user, workspaceId } = ctx
 
-  const { imapHost, imapPort, smtpHost, smtpPort, email, password, store_id: storeId } = await parseBody<CustomEmailBody>(request)
+  const [body, bodyErr] = await validateBody(request, customEmailConnectBody)
+  if (bodyErr) return bodyErr
 
-  if (!imapHost || !smtpHost || !email || !password) {
-    return NextResponse.json({ error: 'imapHost, smtpHost, email and password are required' }, { status: 400 })
-  }
+  const { imapHost, imapPort, smtpHost, smtpPort, email, password, store_id: storeId } = body
 
   // Test IMAP connection
   const imapClient = new ImapFlow({

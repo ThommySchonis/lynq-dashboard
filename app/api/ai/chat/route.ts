@@ -4,42 +4,7 @@ import { supabaseAdmin, getUserFromToken } from '../../../../lib/supabaseAdmin'
 import { checkRateLimit } from '@/lib/rate-limit'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { parseBody } from '@/lib/utils/typed-json'
-
-interface ChatMessage {
-  role: 'user' | 'assistant'
-  content: string
-}
-
-interface StoreKPIs {
-  totalOrders?: number
-  netRevenue?: number
-  refundRate?: number
-  cancelledOrders?: number
-}
-
-interface StoreOrder {
-  name: string
-  total: number
-  financialStatus: string
-  fulfillmentStatus: string
-  customer: string
-  hasRefund?: boolean
-  cancelReason?: string
-}
-
-interface StoreRefund {
-  orderId: string
-  refundAmount: number
-  products?: string[]
-  customer: string
-}
-
-interface StoreContext {
-  kpis?: StoreKPIs
-  orders?: StoreOrder[]
-  refunds?: StoreRefund[]
-}
+import { aiChatBody } from '@/lib/schemas/ai'
 
 export async function POST(request: NextRequest) {
   const authHeader = request.headers.get('authorization')
@@ -64,9 +29,12 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  interface ChatBody { message: string; history?: ChatMessage[]; context?: StoreContext }
-  const { message, history = [], context } = await parseBody<ChatBody>(request)
-  if (!message?.trim()) return NextResponse.json({ error: 'Message required' }, { status: 400 })
+  const raw: unknown = await request.json().catch(() => ({}))
+  const parsed = aiChatBody.safeParse(raw)
+  if (!parsed.success) {
+    return NextResponse.json({ error: 'Validation failed', details: parsed.error.flatten() }, { status: 400 })
+  }
+  const { message, history, context } = parsed.data
 
   // Context block is only injected on the first message to avoid sending
   // the full dataset on every follow-up question in the conversation.

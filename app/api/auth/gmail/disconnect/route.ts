@@ -1,4 +1,4 @@
-import { getUserFromToken, supabaseAdmin } from '../../../../../lib/supabaseAdmin'
+import { getUserFromToken, supabaseAdmin } from '@/lib/supabaseAdmin'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 

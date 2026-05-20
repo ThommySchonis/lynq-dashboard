@@ -1,31 +1,25 @@
-import { supabaseAdmin } from '../../../../lib/supabaseAdmin'
-import { getAuthContext } from '../../../../lib/auth'
+import { supabaseAdmin } from '@/lib/supabaseAdmin'
+import { getAuthContext } from '@/lib/auth'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { parseBody } from '@/lib/utils/typed-json'
-
-interface ManualConnectBody {
-  shop: string
-  accessToken: string
-}
+import { validateBody } from '@/lib/validation'
+import { shopifyManualConnectBody } from '@/lib/schemas/shopify'
 
 export async function POST(request: NextRequest) {
   const ctx = await getAuthContext(request)
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { shop, accessToken } = await parseBody<ManualConnectBody>(request)
-  if (!shop || !accessToken) {
-    return NextResponse.json({ error: 'Shop domain and access token are required' }, { status: 400 })
-  }
+  const [body, bErr] = await validateBody(request, shopifyManualConnectBody)
+  if (bErr) return bErr
 
-  const shopDomain = shop.includes('.myshopify.com')
-    ? shop.toLowerCase().trim()
-    : `${shop.toLowerCase().trim()}.myshopify.com`
+  const shopDomain = body.shop.includes('.myshopify.com')
+    ? body.shop.toLowerCase().trim()
+    : `${body.shop.toLowerCase().trim()}.myshopify.com`
 
   // Verify the token actually works before saving
   const testRes = await fetch(
     `https://${shopDomain}/admin/api/2025-04/shop.json`,
-    { headers: { 'X-Shopify-Access-Token': accessToken } }
+    { headers: { 'X-Shopify-Access-Token': body.accessToken } }
   )
 
   if (!testRes.ok) {
@@ -37,7 +31,7 @@ export async function POST(request: NextRequest) {
     client_id:            ctx.user.id,
     workspace_id:         ctx.workspaceId,
     shopify_domain:       shopDomain,
-    shopify_access_token: accessToken,
+    shopify_access_token: body.accessToken,
     shopify_connected_at: new Date().toISOString(),
   }, { onConflict: 'client_id' })
 

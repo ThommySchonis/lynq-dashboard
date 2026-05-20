@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { getAuthContext } from '../../../../../lib/auth'
-import { supabaseAdmin }  from '../../../../../lib/supabaseAdmin'
-import { parseBody } from '@/lib/utils/typed-json'
+import { getAuthContext } from '@/lib/auth'
+import { supabaseAdmin }  from '@/lib/supabaseAdmin'
+import { validateBody } from '@/lib/validation'
+import { emailIntegrationBody } from '@/lib/schemas/settings'
 
 interface EmailAccountRow {
   provider?: string
@@ -11,20 +12,14 @@ interface EmailAccountRow {
   connected_at?: string
 }
 
-interface EmailConnectBody {
-  provider?: string
-}
-
 // Per ONBOARDING_SPEC v1.1 §6.2: pure UI / intent-saving endpoint voor
 // /settings/integrations/email. Bewaart alleen welke provider de user
 // heeft geklikt (gmail | outlook). Echte OAuth + forwarding flow volgt
 // later via aparte routes.
 //
-// GET  → { provider, status, real_email, connected_at }
-// POST → upsert { provider }; zet status='pending', wist eventuele
+// GET  -> { provider, status, real_email, connected_at }
+// POST -> upsert { provider }; zet status='pending', wist eventuele
 //        eerdere connection-fields zodat een nieuwe connect-flow volgt.
-
-const VALID_PROVIDERS = ['gmail', 'outlook']
 
 export async function GET(request: NextRequest) {
   const ctx = await getAuthContext(request)
@@ -49,15 +44,10 @@ export async function POST(request: NextRequest) {
   const ctx = await getAuthContext(request)
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const body     = await parseBody<EmailConnectBody>(request).catch(() => ({}) as EmailConnectBody)
-  const provider = String(body?.provider || '').trim().toLowerCase()
+  const [body, bErr] = await validateBody(request, emailIntegrationBody)
+  if (bErr) return bErr
 
-  if (!VALID_PROVIDERS.includes(provider)) {
-    return NextResponse.json(
-      { error: `Invalid provider. Must be one of: ${VALID_PROVIDERS.join(', ')}` },
-      { status: 400 }
-    )
-  }
+  const { provider } = body
 
   // Intent-only upsert. real_email + display_name + forwarding_address +
   // connected_at worden expliciet null gezet — pre-existing real connect

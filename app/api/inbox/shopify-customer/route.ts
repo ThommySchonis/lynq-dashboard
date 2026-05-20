@@ -1,8 +1,10 @@
-import { getAuthContext } from '../../../../lib/auth'
-import { supabaseAdmin } from '../../../../lib/supabaseAdmin'
+import { getAuthContext } from '@/lib/auth'
+import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { parseJson } from '@/lib/utils/typed-json'
+import { validateQuery } from '@/lib/validation'
+import { shopifyCustomerQuery } from '@/lib/schemas/inbox'
 import { checkRateLimit } from '@/lib/rate-limit'
 
 interface ShopifyClient {
@@ -34,9 +36,8 @@ export async function GET(request: NextRequest) {
     )
   }
 
-  const { searchParams } = new URL(request.url)
-  const query = searchParams.get('q')
-  const customerId = searchParams.get('id')
+  const [query, queryErr] = validateQuery(request, shopifyCustomerQuery)
+  if (queryErr) return queryErr
 
   const { data: clientRaw } = await supabaseAdmin
     .from('clients')
@@ -51,10 +52,10 @@ export async function GET(request: NextRequest) {
   }
 
   let url: string
-  if (customerId) {
-    url = `https://${client.shopify_domain}/admin/api/2024-01/customers/${customerId}.json`
-  } else if (query) {
-    url = `https://${client.shopify_domain}/admin/api/2024-01/customers/search.json?query=${encodeURIComponent(query)}`
+  if (query.id) {
+    url = `https://${client.shopify_domain}/admin/api/2024-01/customers/${query.id}.json`
+  } else if (query.q) {
+    url = `https://${client.shopify_domain}/admin/api/2024-01/customers/search.json?query=${encodeURIComponent(query.q)}`
   } else {
     return NextResponse.json({ error: 'q or id parameter required' }, { status: 400 })
   }
@@ -66,7 +67,7 @@ export async function GET(request: NextRequest) {
     if (!res.ok) return NextResponse.json({ customers: [] })
     const data = await parseJson<ShopifyCustomerResponse>(res)
 
-    const customers = customerId ? [data.customer] : (data.customers || [])
+    const customers = query.id ? [data.customer] : (data.customers || [])
     return NextResponse.json({
       customers: customers.filter(Boolean).map(c => ({
         id: String((c as Record<string, unknown>).id),

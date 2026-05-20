@@ -1,21 +1,11 @@
-import { supabaseAdmin, getUserFromToken } from '../../../../lib/supabaseAdmin'
-import { getAuthContext } from '../../../../lib/auth'
+import { supabaseAdmin, getUserFromToken } from '@/lib/supabaseAdmin'
+import { getAuthContext } from '@/lib/auth'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { parseBody } from '@/lib/utils/typed-json'
-
-interface CreateUserBody {
-  name: string
-  email: string
-  password: string
-  role?: string
-}
+import { validateBody } from '@/lib/validation'
+import { createUserBody } from '@/lib/schemas/admin'
 
 const ADMIN_EMAIL = 'info@lynqagency.com'
-
-// Roles an admin can assign via the team-create flow. Owner is excluded
-// — every workspace already has exactly one owner (the provisioner).
-const INVITABLE_ROLES = ['admin', 'agent', 'observer'] as const
 
 export async function POST(request: NextRequest) {
   const authHeader = request.headers.get('authorization')
@@ -31,16 +21,10 @@ export async function POST(request: NextRequest) {
   const ctx = await getAuthContext(request)
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { name, email, password, role = 'agent' } = await parseBody<CreateUserBody>(request)
-  if (!name || !email || !password) {
-    return NextResponse.json({ error: 'Name, email and password are required' }, { status: 400 })
-  }
-  if (password.length < 6) {
-    return NextResponse.json({ error: 'Password must be at least 6 characters' }, { status: 400 })
-  }
-  if (!INVITABLE_ROLES.includes(role as (typeof INVITABLE_ROLES)[number])) {
-    return NextResponse.json({ error: `Invalid role. Must be one of: ${INVITABLE_ROLES.join(', ')}` }, { status: 400 })
-  }
+  const [body, err] = await validateBody(request, createUserBody)
+  if (err) return err
+
+  const { name, email, password, role } = body
 
   // Create auth user — auto-confirms, no email verification.
   const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({

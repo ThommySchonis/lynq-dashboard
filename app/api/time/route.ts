@@ -1,9 +1,10 @@
 import type { NextRequest } from 'next/server'
-import { supabaseAdmin } from '../../../lib/supabaseAdmin'
-import { getAuthContext } from '../../../lib/auth'
-import { getEnrichedMembers } from '../../../lib/services/workspace-members'
+import { supabaseAdmin } from '@/lib/supabaseAdmin'
+import { getAuthContext } from '@/lib/auth'
+import { getEnrichedMembers } from '@/lib/services/workspace-members'
 import { NextResponse } from 'next/server'
-import { parseBody } from '@/lib/utils/typed-json'
+import { validateBody, validateQuery } from '@/lib/validation'
+import { getTimeQuery, timeActionBody } from '@/lib/schemas/time'
 
 interface SessionEditRow {
   session_id: string
@@ -15,16 +16,6 @@ interface ActiveSessionRow {
   agent_id: string
   clocked_in_at: string
   status: string
-}
-
-interface TimeActionBody {
-  action: string
-  session_id?: string
-  report?: {
-    emails_answered: number
-    what_went_well: string
-    needs_attention: string
-  }
 }
 
 interface TodaySessionRow {
@@ -117,10 +108,12 @@ export async function GET(request: NextRequest) {
   const ctx = await getAuthContext(request)
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { searchParams } = new URL(request.url)
-  const filter     = searchParams.get('filter') || 'week'
-  const customFrom = searchParams.get('from')
-  const customTo   = searchParams.get('to')
+  const [query, queryErr] = validateQuery(request, getTimeQuery)
+  if (queryErr) return queryErr
+
+  const filter     = query.filter || 'week'
+  const customFrom = query.date_from || null
+  const customTo   = query.date_to || null
   const { from, to } = getDateRange(filter, customFrom, customTo)
 
   const isLynqAdmin       = ctx.user.email === ADMIN_EMAIL
@@ -325,7 +318,9 @@ export async function POST(request: NextRequest) {
   const ctx = await getAuthContext(request)
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const body = await parseBody<TimeActionBody>(request)
+  const [body, bodyErr] = await validateBody(request, timeActionBody)
+  if (bodyErr) return bodyErr
+
   const { action } = body
 
   // No separate team_members lookup — getAuthContext already proves the

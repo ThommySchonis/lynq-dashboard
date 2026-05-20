@@ -1,30 +1,26 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import type { RouteContext } from '../../../../types/api'
-import { getAuthContext } from '../../../../lib/auth'
-import { can } from '../../../../lib/permissions'
-import type { Role } from '../../../../types/database'
-import { supabaseAdmin } from '../../../../lib/supabaseAdmin'
-import { TAG_COLORS, sanitizeTagName } from '../../../../lib/tags'
-
-interface UpdateTagBody {
-  name?: string
-  color?: string
-  description?: string
-}
+import type { RouteContext } from '@/types/api'
+import { getAuthContext } from '@/lib/auth'
+import { can } from '@/lib/permissions'
+import type { Role } from '@/types/database'
+import { supabaseAdmin } from '@/lib/supabaseAdmin'
+import { validateBody, validateParams } from '@/lib/validation'
+import { tagParams, updateTagBody } from '@/lib/schemas/tags'
 
 // GET /api/tags/[id]
-export async function GET(request: NextRequest, { params }: RouteContext<{ id: string }>) {
+export async function GET(request: NextRequest, { params: routeParams }: RouteContext<{ id: string }>) {
   const ctx = await getAuthContext(request)
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   if (!can.viewTags(ctx.role as Role)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
-  const { id } = await params
+  const [params, paramErr] = validateParams(await routeParams, tagParams)
+  if (paramErr) return paramErr
 
   const { data: tag, error } = await supabaseAdmin
     .from('tags')
     .select('id, name, color, description, created_at, updated_at, macro_count:macro_tags(count)')
-    .eq('id', id)
+    .eq('id', params.id)
     .eq('workspace_id', ctx.workspaceId)
     .maybeSingle()
 
@@ -42,33 +38,23 @@ export async function GET(request: NextRequest, { params }: RouteContext<{ id: s
 }
 
 // PATCH /api/tags/[id] — update name/color/description
-export async function PATCH(request: NextRequest, { params }: RouteContext<{ id: string }>) {
+export async function PATCH(request: NextRequest, { params: routeParams }: RouteContext<{ id: string }>) {
   const ctx = await getAuthContext(request)
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   if (!can.manageTags(ctx.role as Role)) {
     return NextResponse.json({ error: 'You do not have permission to edit tags.', code: 'permission_denied' }, { status: 403 })
   }
 
-  const { id } = await params
-  const body = await request.json().catch(() => ({})) as UpdateTagBody
+  const [params, paramErr] = validateParams(await routeParams, tagParams)
+  if (paramErr) return paramErr
+
+  const [body, bodyErr] = await validateBody(request, updateTagBody)
+  if (bodyErr) return bodyErr
 
   const update: Record<string, unknown> = {}
-  if (body.name !== undefined) {
-    const name = sanitizeTagName(body.name)
-    if (!name) return NextResponse.json({ error: 'Name cannot be empty', code: 'name_required' }, { status: 400 })
-    update.name = name
-  }
-  if (body.color !== undefined) {
-    if (!TAG_COLORS.includes(body.color)) {
-      return NextResponse.json({ error: 'Invalid color', code: 'invalid_color' }, { status: 400 })
-    }
-    update.color = body.color
-  }
-  if (body.description !== undefined) {
-    update.description = typeof body.description === 'string'
-      ? body.description.trim().slice(0, 200) || null
-      : null
-  }
+  if (body.name !== undefined) update.name = body.name
+  if (body.color !== undefined) update.color = body.color
+  if (body.description !== undefined) update.description = body.description || null
 
   if (Object.keys(update).length === 0) {
     return NextResponse.json({ error: 'Nothing to update', code: 'no_changes' }, { status: 400 })
@@ -77,7 +63,7 @@ export async function PATCH(request: NextRequest, { params }: RouteContext<{ id:
   const { data: tag, error } = await supabaseAdmin
     .from('tags')
     .update(update)
-    .eq('id', id)
+    .eq('id', params.id)
     .eq('workspace_id', ctx.workspaceId)
     .select('id, name, color, description, created_at, updated_at')
     .single()
@@ -96,19 +82,20 @@ export async function PATCH(request: NextRequest, { params }: RouteContext<{ id:
 }
 
 // DELETE /api/tags/[id] — hard delete (cascades to macro_tags)
-export async function DELETE(request: NextRequest, { params }: RouteContext<{ id: string }>) {
+export async function DELETE(request: NextRequest, { params: routeParams }: RouteContext<{ id: string }>) {
   const ctx = await getAuthContext(request)
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   if (!can.deleteTags(ctx.role as Role)) {
     return NextResponse.json({ error: 'Only owners and admins can delete tags.', code: 'permission_denied' }, { status: 403 })
   }
 
-  const { id } = await params
+  const [params, paramErr] = validateParams(await routeParams, tagParams)
+  if (paramErr) return paramErr
 
   const { data: target } = await supabaseAdmin
     .from('tags')
     .select('id, name')
-    .eq('id', id)
+    .eq('id', params.id)
     .eq('workspace_id', ctx.workspaceId)
     .maybeSingle()
 
@@ -117,7 +104,7 @@ export async function DELETE(request: NextRequest, { params }: RouteContext<{ id
   const { error } = await supabaseAdmin
     .from('tags')
     .delete()
-    .eq('id', id)
+    .eq('id', params.id)
     .eq('workspace_id', ctx.workspaceId)
 
   if (error) {

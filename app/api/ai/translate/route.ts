@@ -4,13 +4,7 @@ import { getUserFromToken, supabaseAdmin } from '../../../../lib/supabaseAdmin'
 import { checkRateLimit } from '@/lib/rate-limit'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { parseBody } from '@/lib/utils/typed-json'
-
-interface TranslateBody {
-  text: string
-  targetLang?: string
-  detectOnly?: boolean
-}
+import { aiTranslateBody } from '@/lib/schemas/ai'
 
 export async function POST(request: NextRequest) {
   const authHeader = request.headers.get('authorization')
@@ -35,8 +29,12 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  const { text, targetLang, detectOnly } = await parseBody<TranslateBody>(request)
-  if (!text?.trim()) return NextResponse.json({ error: 'No text provided' }, { status: 400 })
+  const raw: unknown = await request.json().catch(() => ({}))
+  const parsed = aiTranslateBody.safeParse(raw)
+  if (!parsed.success) {
+    return NextResponse.json({ error: 'Validation failed', details: parsed.error.flatten() }, { status: 400 })
+  }
+  const { text, targetLang, detectOnly } = parsed.data
 
   let prompt: string
 

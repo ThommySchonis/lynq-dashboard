@@ -1,8 +1,10 @@
 import type { NextRequest } from 'next/server'
-import { supabaseAdmin } from '../../../../lib/supabaseAdmin'
-import { getAuthContext } from '../../../../lib/auth'
+import { supabaseAdmin } from '@/lib/supabaseAdmin'
+import { getAuthContext } from '@/lib/auth'
 import { NextResponse } from 'next/server'
 import { parseJson } from '@/lib/utils/typed-json'
+import { validateQuery } from '@/lib/validation'
+import { trackingQuery } from '@/lib/schemas/parcel-panel'
 
 interface ParcelPanelIntegration {
   parcelpanel_api_key?: string
@@ -17,6 +19,9 @@ const PP_BASE = 'https://open.parcelwill.com'
 export async function GET(request: NextRequest) {
   const ctx = await getAuthContext(request)
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const [query, queryErr] = validateQuery(request, trackingQuery)
+  if (queryErr) return queryErr
 
   // Replace legacy clients.email lookup with workspace-scoped integrations row.
   // Note column name: integrations.parcelpanel_api_key (no underscore between
@@ -35,7 +40,7 @@ export async function GET(request: NextRequest) {
   const ppHeaders = { 'x-parcelpanel-api-key': apiKey as string, 'Accept': 'application/json' }
 
   // ── Mode A: specific order numbers ────────────────────────────────────────
-  const ordersParam = request.nextUrl.searchParams.get('orders') || ''
+  const ordersParam = query.orders || ''
   if (ordersParam) {
     const orderNumbers = ordersParam.split(',').map(o => o.trim()).filter(Boolean).slice(0, 20)
     const results = await Promise.allSettled(

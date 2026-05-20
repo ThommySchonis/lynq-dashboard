@@ -1,15 +1,19 @@
-import { getUserFromToken, supabaseAdmin } from '../../../../lib/supabaseAdmin'
-import { createOAuthState } from '../../../../lib/oauthState'
+import { getUserFromToken, supabaseAdmin } from '@/lib/supabaseAdmin'
+import { createOAuthState } from '@/lib/oauthState'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { validateQuery } from '@/lib/validation'
+import { oauthStartQuery } from '@/lib/schemas/auth'
 
 interface WorkspaceMemberRow {
   workspace_id?: string
 }
 
 export async function GET(request: NextRequest) {
-  const { searchParams } = new URL(request.url)
-  const userToken = searchParams.get('t')
+  const [query, queryErr] = validateQuery(request, oauthStartQuery)
+  if (queryErr) return queryErr
+
+  const userToken = query.t ?? null
 
   if (!userToken) {
     return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/settings?provider=outlook&status=error`)
@@ -29,7 +33,7 @@ export async function GET(request: NextRequest) {
 
   const workspaceId = (membership as WorkspaceMemberRow | null)?.workspace_id ?? ''
 
-  const storeId = searchParams.get('store_id')
+  const storeId = query.store_id ?? null
 
   const clientId = process.env.MICROSOFT_CLIENT_ID
   const redirectUri = `${process.env.NEXT_PUBLIC_APP_URL}/api/auth/outlook/callback`

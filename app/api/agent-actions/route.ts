@@ -1,13 +1,8 @@
 import type { NextRequest } from 'next/server'
-import { supabaseAdmin, getUserFromToken } from '../../../lib/supabaseAdmin'
+import { supabaseAdmin, getUserFromToken } from '@/lib/supabaseAdmin'
 import { NextResponse } from 'next/server'
-import { parseBody } from '@/lib/utils/typed-json'
-
-interface AgentActionBody {
-  thread_id?: string
-  action_type?: string
-  response_time_seconds?: number
-}
+import { validateBody } from '@/lib/validation'
+import { agentActionBody } from '@/lib/schemas/agents'
 
 interface SupabaseResult {
   data: Record<string, unknown> | null
@@ -26,15 +21,10 @@ export async function POST(request: NextRequest) {
   const user = await getUser(request)
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { thread_id, action_type, response_time_seconds } = await parseBody<AgentActionBody>(request)
-  if (!action_type) {
-    return NextResponse.json({ error: 'action_type is required' }, { status: 400 })
-  }
+  const [body, bErr] = await validateBody(request, agentActionBody)
+  if (bErr) return bErr
 
-  const validTypes = ['reply', 'close', 'refund_processed']
-  if (!validTypes.includes(action_type)) {
-    return NextResponse.json({ error: 'Invalid action_type' }, { status: 400 })
-  }
+  const { thread_id, action_type, response_time_seconds } = body
 
   const { data: agent, error: agentError } = await supabaseAdmin
     .from('agents')

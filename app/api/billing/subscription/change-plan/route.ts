@@ -1,14 +1,11 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import type { Role } from '@/types/database'
-import { getAuthContext } from '../../../../../lib/auth'
-import { can } from '../../../../../lib/permissions'
-import { BillingServiceError, changePlan } from '../../../../../lib/services/billing'
-
-interface ChangePlanBody {
-  plan_id?: string
-  success_url?: string
-}
+import { getAuthContext } from '@/lib/auth'
+import { can } from '@/lib/permissions'
+import { BillingServiceError, changePlan } from '@/lib/services/billing'
+import { validateBody } from '@/lib/validation'
+import { changePlanBody } from '@/lib/schemas/billing'
 
 // POST /api/billing/subscription/change-plan
 // Body: { plan_id, success_url? }. Owner-only.
@@ -26,10 +23,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Only owners can change plans', code: 'permission_denied' }, { status: 403 })
   }
 
-  const body = await request.json().catch(() => ({})) as ChangePlanBody
-  if (!body.plan_id) {
-    return NextResponse.json({ error: 'plan_id is required', code: 'plan_id_required' }, { status: 400 })
-  }
+  const [body, bodyErr] = await validateBody(request, changePlanBody)
+  if (bodyErr) return bodyErr
 
   try {
     const outcome = await changePlan(ctx.workspaceId, body.plan_id, { successUrl: body.success_url })

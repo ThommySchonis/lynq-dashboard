@@ -23,9 +23,7 @@ export const macroOnboardingBody = z.object({
     ], { message: 'Invalid brand voice' }),
     support_email: z.string().email('Invalid support email').max(200),
     signature: z.string().min(1, 'Signature is required').max(300),
-    return_days: z.union([z.string(), z.number()]).pipe(
-      z.coerce.number().int().min(1).max(365)
-    ),
+    return_days: z.coerce.number().int().min(1).max(365),
     return_shipping: z.enum([
       'Customer pays return shipping',
       'We cover all return shipping',

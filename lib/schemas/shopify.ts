@@ -57,7 +57,7 @@ export const legacyRefundOrderBody = z.object({
 }).passthrough()
 
 // [id] action routes: passthrough bodies sent to Shopify service functions
-export const shopifyPassthroughBody = z.record(z.unknown())
+export const shopifyPassthroughBody = z.record(z.string(), z.unknown())
 
 // Note update has a constrained shape
 export const updateNoteBody = z.object({

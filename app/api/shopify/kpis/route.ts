@@ -15,14 +15,18 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'store_id is required' }, { status: 400 })
   }
   const credentials = await getStoreCredentials(storeId, ctx.workspaceId)
-  if (credentials.domain === DEMO_SHOP) return NextResponse.json(DEMO_KPIS)
+  if (credentials.domain === DEMO_SHOP) return NextResponse.json(DEMO_KPIS, {
+    headers: { 'Cache-Control': 'private, max-age=300' },
+  })
 
   try {
     const dateRange = parseDateRange(request)
     const kpis = await getKPIs(ctx.workspaceId, dateRange, storeId)
     // Signal to frontend that initial sync is needed
     const response = kpis.totalOrders === 0 ? { ...kpis, needsSync: true } : kpis
-    return NextResponse.json(response)
+    return NextResponse.json(response, {
+      headers: { 'Cache-Control': 'private, max-age=300' },
+    })
   } catch (err: unknown) {
     console.error('[kpis] error:', err)
     return NextResponse.json({ error: 'Failed to fetch data' }, { status: 500 })

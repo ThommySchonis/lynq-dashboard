@@ -1,6 +1,7 @@
 import { generateText } from 'ai'
 import { anthropic } from '@ai-sdk/anthropic'
 import { supabaseAdmin, getUserFromToken } from '../../../../lib/supabaseAdmin'
+import { checkRateLimit } from '@/lib/rate-limit'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { parseBody } from '@/lib/utils/typed-json'
@@ -34,6 +35,21 @@ export async function POST(request: NextRequest) {
   const token = authHeader.replace('Bearer ', '')
   const user = await getUserFromToken(token)
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const rl = checkRateLimit(`user:${user.id}:ai`, 10, 60_000)
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { error: 'Rate limit exceeded', retryAfterMs: rl.resetMs },
+      {
+        status: 429,
+        headers: {
+          'Retry-After': String(Math.ceil(rl.resetMs / 1000)),
+          'X-RateLimit-Limit': '10',
+          'X-RateLimit-Remaining': '0',
+        },
+      }
+    )
+  }
 
   const { subject, snippet } = await parseBody<MacroSuggestBody>(request)
 
@@ -80,7 +96,12 @@ Return exactly 3 IDs, comma-separated:`,
       if (!used.has(macro.id)) { suggested.push(macro); used.add(macro.id) }
     }
 
-    return NextResponse.json({ macros: suggested.slice(0, 3) })
+    return NextResponse.json({ macros: suggested.slice(0, 3) }, {
+      headers: {
+        'X-RateLimit-Limit': '10',
+        'X-RateLimit-Remaining': String(rl.remaining),
+      },
+    })
   } catch {
     // Fallback to first 3 macros when AI call fails (e.g. insufficient credits)
     return NextResponse.json({ macros: MACROS.slice(0, 3) })

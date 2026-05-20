@@ -129,6 +129,7 @@ export function useInboxCounts() {
       }
     },
     enabled: !!token,
+    staleTime: 60_000,
   })
 }
 

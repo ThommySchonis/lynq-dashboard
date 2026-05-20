@@ -74,6 +74,7 @@ export function useWorkspace() {
       return workspace
     },
     enabled: !!token,
+    staleTime: 5 * 60_000,
   })
 }
 
@@ -90,6 +91,7 @@ export function useMembers() {
       return data.members ?? (data as unknown as Member[])
     },
     enabled: !!token,
+    staleTime: 5 * 60_000,
   })
 }
 
@@ -115,6 +117,7 @@ export function useMembersPage(search = '') {
       }
     },
     enabled: !!token,
+    staleTime: 5 * 60_000,
   })
 }
 
@@ -131,6 +134,7 @@ export function useProfile() {
       return profile
     },
     enabled: !!token,
+    staleTime: 5 * 60_000,
   })
 }
 
@@ -153,6 +157,7 @@ export function useMacros(filter: MacroFilter) {
       return data.macros ?? []
     },
     enabled: !!token,
+    staleTime: 5 * 60_000,
   })
 }
 
@@ -169,6 +174,7 @@ export function useMacroOnboarding() {
       return onboarding
     },
     enabled: !!token,
+    staleTime: 5 * 60_000,
   })
 }
 
@@ -185,6 +191,7 @@ export function useTags() {
       return data.tags ?? []
     },
     enabled: !!token,
+    staleTime: 5 * 60_000,
   })
 }
 
@@ -202,6 +209,7 @@ export function useEmailAccounts() {
       return Array.isArray(data) ? data : (data.accounts ?? [])
     },
     enabled: !!token,
+    staleTime: 5 * 60_000,
   })
 }
 
@@ -220,5 +228,6 @@ export function useShopifyIntegration() {
       return parseJson<ShopifyIntegration>(res)
     },
     enabled: !!token,
+    staleTime: 5 * 60_000,
   })
 }

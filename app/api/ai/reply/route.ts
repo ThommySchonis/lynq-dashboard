@@ -3,6 +3,7 @@ import { anthropic } from '@ai-sdk/anthropic'
 import { supabaseAdmin } from '../../../../lib/supabaseAdmin'
 import { getAuthContext } from '../../../../lib/auth'
 import { checkAiSuggestLimit } from '../../../../lib/services/limit-check'
+import { checkRateLimit } from '@/lib/rate-limit'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { parseBody } from '@/lib/utils/typed-json'
@@ -48,6 +49,21 @@ export async function POST(request: NextRequest) {
   // shape so the UI can show the same upgrade prompt as for ticket sends.
   // We don't flip workspace_subscriptions.write_locked here; that flag is
   // owned by the outbound-ticket path. See docs/billing-model.md.
+  const rl = checkRateLimit(`ws:${ctx.workspaceId}:ai`, 10, 60_000)
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { error: 'Rate limit exceeded', retryAfterMs: rl.resetMs },
+      {
+        status: 429,
+        headers: {
+          'Retry-After': String(Math.ceil(rl.resetMs / 1000)),
+          'X-RateLimit-Limit': '10',
+          'X-RateLimit-Remaining': '0',
+        },
+      }
+    )
+  }
+
   const aiCheck = await checkAiSuggestLimit(ctx.workspaceId)
   if (!aiCheck.allowed) {
     return NextResponse.json({
@@ -114,5 +130,10 @@ Write only the reply body. Do not include subject lines, metadata, or explanatio
     user_email: user.email,
   })
 
-  return NextResponse.json({ reply: text.trim(), threadId })
+  return NextResponse.json({ reply: text.trim(), threadId }, {
+    headers: {
+      'X-RateLimit-Limit': '10',
+      'X-RateLimit-Remaining': String(rl.remaining),
+    },
+  })
 }

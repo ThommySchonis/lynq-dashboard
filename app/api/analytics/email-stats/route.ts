@@ -40,5 +40,7 @@ export async function GET(request: NextRequest) {
   const limit = EMAIL_LIMITS[plan] ?? null
   const sent = (usageRes.data as CountRow | null)?.count || 0
 
-  return NextResponse.json({ sent, limit, plan })
+  return NextResponse.json({ sent, limit, plan }, {
+    headers: { 'Cache-Control': 'private, max-age=300' },
+  })
 }

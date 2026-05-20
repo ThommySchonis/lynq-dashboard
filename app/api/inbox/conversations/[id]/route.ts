@@ -6,6 +6,7 @@ import type { RouteContext } from '@/types/api'
 import { parseBody } from '@/lib/utils/typed-json'
 import { trackEvent } from '@/lib/analytics/track'
 import { EVENT_TYPES } from '@/lib/analytics/events'
+import { checkRateLimit } from '@/lib/rate-limit'
 
 interface ConversationPatchBody {
   status?: string
@@ -17,6 +18,21 @@ interface ConversationPatchBody {
 export async function GET(request: NextRequest, { params }: RouteContext<{ id: string }>) {
   const ctx = await getAuthContext(request)
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const rl = checkRateLimit(`ws:${ctx.workspaceId}:inbox`, 60, 60_000)
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { error: 'Rate limit exceeded', retryAfterMs: rl.resetMs },
+      {
+        status: 429,
+        headers: {
+          'Retry-After': String(Math.ceil(rl.resetMs / 1000)),
+          'X-RateLimit-Limit': '60',
+          'X-RateLimit-Remaining': '0',
+        },
+      }
+    )
+  }
 
   const { id } = await params
 
@@ -59,6 +75,21 @@ export async function GET(request: NextRequest, { params }: RouteContext<{ id: s
 export async function PATCH(request: NextRequest, { params }: RouteContext<{ id: string }>) {
   const ctx = await getAuthContext(request)
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const rl = checkRateLimit(`ws:${ctx.workspaceId}:inbox`, 60, 60_000)
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { error: 'Rate limit exceeded', retryAfterMs: rl.resetMs },
+      {
+        status: 429,
+        headers: {
+          'Retry-After': String(Math.ceil(rl.resetMs / 1000)),
+          'X-RateLimit-Limit': '60',
+          'X-RateLimit-Remaining': '0',
+        },
+      }
+    )
+  }
 
   const { id } = await params
   const body = await parseBody<ConversationPatchBody>(request)

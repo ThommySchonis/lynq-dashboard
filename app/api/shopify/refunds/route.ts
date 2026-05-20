@@ -15,12 +15,16 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'store_id is required' }, { status: 400 })
   }
   const credentials = await getStoreCredentials(storeId, ctx.workspaceId)
-  if (credentials.domain === DEMO_SHOP) return NextResponse.json({ refunds: DEMO_REFUNDS })
+  if (credentials.domain === DEMO_SHOP) return NextResponse.json({ refunds: DEMO_REFUNDS }, {
+    headers: { 'Cache-Control': 'private, max-age=300' },
+  })
 
   try {
     const dateRange = parseDateRange(request)
     const refunds = await getRefunds(credentials, dateRange)
-    return NextResponse.json({ refunds })
+    return NextResponse.json({ refunds }, {
+      headers: { 'Cache-Control': 'private, max-age=300' },
+    })
   } catch (err: unknown) {
     if (err instanceof ShopifyApiError) {
       return NextResponse.json({ error: err.message }, { status: err.statusCode })

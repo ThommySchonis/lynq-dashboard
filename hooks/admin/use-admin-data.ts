@@ -37,6 +37,7 @@ export function useClients() {
         .order('created_at', { ascending: false })
       return (data ?? []) as Client[]
     },
+    staleTime: 5 * 60_000,
   })
 }
 
@@ -49,6 +50,7 @@ export function useBroadcasts() {
         .order('created_at', { ascending: false })
       return (data ?? []) as Broadcast[]
     },
+    staleTime: 5 * 60_000,
   })
 }
 
@@ -60,6 +62,7 @@ export function useBroadcastReactions() {
         .from('broadcast_reactions').select('broadcast_id, emoji')
       return (data ?? []) as BroadcastReaction[]
     },
+    staleTime: 5 * 60_000,
   })
 }
 
@@ -72,6 +75,7 @@ export function useNotifications() {
         .order('created_at', { ascending: false })
       return (data ?? []) as Notification[]
     },
+    staleTime: 5 * 60_000,
   })
 }
 
@@ -84,6 +88,7 @@ export function useInquiries() {
         .order('created_at', { ascending: false })
       return (data ?? []) as Inquiry[]
     },
+    staleTime: 5 * 60_000,
   })
 }
 
@@ -102,6 +107,7 @@ export function useTeamMembers() {
       return parseJson<TeamMember[]>(res)
     },
     enabled: !!token,
+    staleTime: 5 * 60_000,
   })
 }
 
@@ -114,6 +120,7 @@ export function useMasterclasses() {
         .order('scheduled_at', { ascending: false })
       return (data ?? []) as Masterclass[]
     },
+    staleTime: 5 * 60_000,
   })
 }
 
@@ -129,6 +136,7 @@ export function useTimeData(filter: string) {
       return parseJson<TimeData>(res)
     },
     enabled: !!token,
+    staleTime: 5 * 60_000,
   })
 }
 
@@ -148,6 +156,7 @@ export function useFinance() {
       return parseJson<FinanceData>(res)
     },
     enabled: !!token && !!email,
+    staleTime: 5 * 60_000,
   })
 }
 
@@ -165,5 +174,6 @@ export function useFeedbackCount() {
       return typeof d.count === 'number' ? d.count : 0
     },
     enabled: !!token,
+    staleTime: 5 * 60_000,
   })
 }

@@ -25,5 +25,7 @@ export async function GET(request: NextRequest) {
   }
 
   const rows = rpcResult.data as unknown[]
-  return NextResponse.json({ data: rows?.[0] ?? null })
+  return NextResponse.json({ data: rows?.[0] ?? null }, {
+    headers: { 'Cache-Control': 'private, max-age=300' },
+  })
 }

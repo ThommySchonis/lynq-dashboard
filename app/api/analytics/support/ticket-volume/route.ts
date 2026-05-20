@@ -24,5 +24,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ data: null, error: 'analytics_unavailable' })
   }
 
-  return NextResponse.json({ data: rpcResult.data as unknown })
+  return NextResponse.json({ data: rpcResult.data as unknown }, {
+    headers: { 'Cache-Control': 'private, max-age=300' },
+  })
 }

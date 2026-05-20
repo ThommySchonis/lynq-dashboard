@@ -51,6 +51,7 @@ export function useResponseTime(range: SupportAnalyticsDateRange, agentId?: stri
       return json.data
     },
     enabled: !!token,
+    staleTime: 5 * 60_000,
   })
 }
 
@@ -67,6 +68,7 @@ export function useResolutionTime(range: SupportAnalyticsDateRange, agentId?: st
       return json.data
     },
     enabled: !!token,
+    staleTime: 5 * 60_000,
   })
 }
 
@@ -83,6 +85,7 @@ export function useTicketVolume(range: SupportAnalyticsDateRange, agentId?: stri
       return json.data
     },
     enabled: !!token,
+    staleTime: 5 * 60_000,
   })
 }
 
@@ -99,6 +102,7 @@ export function useAgentProductivity(range: SupportAnalyticsDateRange, agentId?:
       return json.data
     },
     enabled: !!token,
+    staleTime: 5 * 60_000,
   })
 }
 
@@ -115,5 +119,6 @@ export function useRefundReasons(range: SupportAnalyticsDateRange, agentId?: str
       return json.data
     },
     enabled: !!token,
+    staleTime: 5 * 60_000,
   })
 }

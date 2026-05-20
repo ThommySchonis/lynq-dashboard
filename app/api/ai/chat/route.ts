@@ -1,6 +1,7 @@
 import { streamText } from 'ai'
 import { anthropic } from '@ai-sdk/anthropic'
 import { supabaseAdmin, getUserFromToken } from '../../../../lib/supabaseAdmin'
+import { checkRateLimit } from '@/lib/rate-limit'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { parseBody } from '@/lib/utils/typed-json'
@@ -47,6 +48,21 @@ export async function POST(request: NextRequest) {
   const token = authHeader.replace('Bearer ', '')
   const user = await getUserFromToken(token)
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const rl = checkRateLimit(`user:${user.id}:ai`, 10, 60_000)
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { error: 'Rate limit exceeded', retryAfterMs: rl.resetMs },
+      {
+        status: 429,
+        headers: {
+          'Retry-After': String(Math.ceil(rl.resetMs / 1000)),
+          'X-RateLimit-Limit': '10',
+          'X-RateLimit-Remaining': '0',
+        },
+      }
+    )
+  }
 
   interface ChatBody { message: string; history?: ChatMessage[]; context?: StoreContext }
   const { message, history = [], context } = await parseBody<ChatBody>(request)
@@ -106,5 +122,8 @@ Be concise, confident, and data-driven. Reference specific numbers when availabl
     },
   })
 
-  return result.toTextStreamResponse()
+  const streamResponse = result.toTextStreamResponse()
+  streamResponse.headers.set('X-RateLimit-Limit', '10')
+  streamResponse.headers.set('X-RateLimit-Remaining', String(rl.remaining))
+  return streamResponse
 }

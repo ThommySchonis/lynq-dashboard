@@ -72,6 +72,7 @@ export function useKpis(range: DateRange) {
       return parseJson<KpiData>(res);
     },
     enabled: !!token && !!activeStoreId,
+    staleTime: 5 * 60_000,
   });
 }
 
@@ -92,6 +93,7 @@ export function usePrevKpis(range: DateRange) {
       return parseJson<PrevKpiData>(res);
     },
     enabled: !!token && !!activeStoreId,
+    staleTime: 5 * 60_000,
   });
 }
 
@@ -113,6 +115,7 @@ export function useRefunds(range: DateRange) {
       return d.refunds ?? [];
     },
     enabled: !!token && !!activeStoreId,
+    staleTime: 5 * 60_000,
   });
 }
 
@@ -138,6 +141,7 @@ export function useAllRefunds() {
       return d.refunds ?? [];
     },
     enabled: !!token && !!activeStoreId,
+    staleTime: 5 * 60_000,
   });
 }
 
@@ -159,6 +163,7 @@ export function useRevenueTrend(range: DateRange) {
       return d.trend ?? [];
     },
     enabled: !!token && !!activeStoreId,
+    staleTime: 5 * 60_000,
   });
 }
 
@@ -180,6 +185,7 @@ export function useAiInsights(refunds: Refund[]) {
       return d.insights ?? [];
     },
     enabled: !!token && !!refunds.length,
+    staleTime: 10 * 60_000,
   });
 }
 
@@ -197,5 +203,6 @@ export function useShopifyConnected() {
       return Boolean(data?.shopify);
     },
     enabled: !!token,
+    staleTime: 5 * 60_000,
   });
 }

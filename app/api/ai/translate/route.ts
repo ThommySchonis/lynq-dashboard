@@ -1,6 +1,7 @@
 import { generateText } from 'ai'
 import { anthropic } from '@ai-sdk/anthropic'
 import { getUserFromToken, supabaseAdmin } from '../../../../lib/supabaseAdmin'
+import { checkRateLimit } from '@/lib/rate-limit'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { parseBody } from '@/lib/utils/typed-json'
@@ -18,6 +19,21 @@ export async function POST(request: NextRequest) {
   const token = authHeader.replace('Bearer ', '')
   const user = await getUserFromToken(token)
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const rl = checkRateLimit(`user:${user.id}:ai`, 10, 60_000)
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { error: 'Rate limit exceeded', retryAfterMs: rl.resetMs },
+      {
+        status: 429,
+        headers: {
+          'Retry-After': String(Math.ceil(rl.resetMs / 1000)),
+          'X-RateLimit-Limit': '10',
+          'X-RateLimit-Remaining': '0',
+        },
+      }
+    )
+  }
 
   const { text, targetLang, detectOnly } = await parseBody<TranslateBody>(request)
   if (!text?.trim()) return NextResponse.json({ error: 'No text provided' }, { status: 400 })
@@ -61,7 +77,12 @@ ${text}`
   try {
     const jsonMatch = result.match(/\{[\s\S]*\}/)
     const parsed = JSON.parse(jsonMatch?.[0] || '{}') as Record<string, unknown>
-    return NextResponse.json(parsed)
+    return NextResponse.json(parsed, {
+      headers: {
+        'X-RateLimit-Limit': '10',
+        'X-RateLimit-Remaining': String(rl.remaining),
+      },
+    })
   } catch {
     return NextResponse.json({ error: 'Parse failed' }, { status: 500 })
   }

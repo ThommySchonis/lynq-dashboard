@@ -45,7 +45,7 @@ export function useSubscription() {
     queryKey: billingKeys.subscription(),
     queryFn:  () => jsonFetch<SubscriptionResponse>('/api/billing/subscription', token),
     enabled:  !!token,
-    staleTime: 30_000,
+    staleTime: 60_000,
   })
 }
 
@@ -55,7 +55,7 @@ export function useUsage() {
     queryKey: billingKeys.usage(),
     queryFn:  () => jsonFetch<UsageResponse>('/api/billing/usage', token),
     enabled:  !!token,
-    staleTime: 30_000,
+    staleTime: 60_000,
   })
 }
 
@@ -78,6 +78,7 @@ export function useInvoices(page = 0, perPage = 25) {
     queryKey: billingKeys.invoices(page),
     queryFn:  () => jsonFetch<InvoicesListResponse>(`/api/billing/invoices?page=${page}&per_page=${perPage}`, token),
     enabled:  !!token,
+    staleTime: 5 * 60_000,
   })
 }
 
@@ -90,6 +91,7 @@ export function useBillingInfo() {
       return data.billing_info
     },
     enabled:  !!token,
+    staleTime: 5 * 60_000,
   })
 }
 
@@ -102,6 +104,7 @@ export function usePaymentMethods() {
       return data.payment_methods ?? []
     },
     enabled:  !!token,
+    staleTime: 5 * 60_000,
   })
 }
 
@@ -128,5 +131,6 @@ export function useInvoice(id: string | null) {
       return data.invoice
     },
     enabled:  !!token && !!id,
+    staleTime: 5 * 60_000,
   })
 }

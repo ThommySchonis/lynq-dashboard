@@ -12,5 +12,7 @@ export async function GET(request: NextRequest) {
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const plans = await listPlans()
-  return NextResponse.json({ plans })
+  return NextResponse.json({ plans }, {
+    headers: { 'Cache-Control': 'private, max-age=300' },
+  })
 }

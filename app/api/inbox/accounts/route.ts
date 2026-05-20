@@ -2,10 +2,26 @@ import { getAuthContext } from '../../../../lib/auth'
 import { supabaseAdmin } from '../../../../lib/supabaseAdmin'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { checkRateLimit } from '@/lib/rate-limit'
 
 export async function GET(request: NextRequest) {
   const ctx = await getAuthContext(request)
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const rl = checkRateLimit(`ws:${ctx.workspaceId}:inbox`, 60, 60_000)
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { error: 'Rate limit exceeded', retryAfterMs: rl.resetMs },
+      {
+        status: 429,
+        headers: {
+          'Retry-After': String(Math.ceil(rl.resetMs / 1000)),
+          'X-RateLimit-Limit': '60',
+          'X-RateLimit-Remaining': '0',
+        },
+      }
+    )
+  }
 
   const { searchParams } = new URL(request.url)
   const storeId = searchParams.get('store_id')

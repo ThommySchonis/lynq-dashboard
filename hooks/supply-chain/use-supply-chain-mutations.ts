@@ -9,6 +9,11 @@ interface ErrorResponse {
   error?: string
 }
 
+interface ConnectResponse {
+  success: boolean
+  webhookToken: string
+}
+
 function useToken() {
   return useAuthStore((s) => s.session?.access_token ?? '')
 }
@@ -18,7 +23,7 @@ export function useConnectParcelPanel() {
   const qc = useQueryClient()
 
   return useMutation({
-    mutationFn: async (apiKey: string) => {
+    mutationFn: async (apiKey: string): Promise<ConnectResponse> => {
       const res = await fetch('/api/parcel-panel/connect', {
         method: 'POST',
         headers: {
@@ -31,7 +36,7 @@ export function useConnectParcelPanel() {
         const d = await parseJson<ErrorResponse>(res).catch((): ErrorResponse => ({}))
         throw new Error(d.error || 'Failed to connect Parcel Panel')
       }
-      return parseJson<unknown>(res)
+      return parseJson<ConnectResponse>(res)
     },
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: supplyChainKeys.shipments() })

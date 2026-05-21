@@ -1,27 +1,53 @@
-import { getUserFromToken, supabaseAdmin } from '@/lib/supabaseAdmin'
+import { getAuthContext } from '@/lib/auth'
+import { supabaseAdmin } from '@/lib/supabaseAdmin'
+import { decrypt } from '@/lib/encryption'
+import { validateBody } from '@/lib/validation'
+import { disconnectGmailBody } from '@/lib/schemas/auth'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
 export async function POST(request: NextRequest) {
-  const authHeader = request.headers.get('authorization')
-  if (!authHeader) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const ctx = await getAuthContext(request)
+  if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const token = authHeader.replace('Bearer ', '')
-  const user = await getUserFromToken(token)
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const [body, bErr] = await validateBody(request, disconnectGmailBody)
+  if (bErr) return bErr
 
-  // Revoke token at Google before deleting
-  const { data: gmailToken } = await supabaseAdmin
-    .from('gmail_tokens')
-    .select('access_token, refresh_token')
-    .eq('user_id', user.id)
+  // Fetch the email account — scoped to workspace + gmail provider
+  const { data: account, error: fetchError } = await supabaseAdmin
+    .from('email_accounts')
+    .select('id, access_token')
+    .eq('id', body.account_id)
+    .eq('workspace_id', ctx.workspaceId)
+    .eq('provider', 'gmail')
     .maybeSingle()
 
-  if (gmailToken?.access_token) {
-    await fetch(`https://oauth2.googleapis.com/revoke?token=${gmailToken.access_token}`, { method: 'POST' }).catch(() => {})
+  if (fetchError || !account) {
+    return NextResponse.json({ error: 'Email account not found' }, { status: 404 })
   }
 
-  await supabaseAdmin.from('gmail_tokens').delete().eq('user_id', user.id)
+  // Revoke token at Google (must decrypt — tokens are stored encrypted)
+  if (account.access_token) {
+    try {
+      const plainToken = decrypt(account.access_token as string)
+      await fetch(`https://oauth2.googleapis.com/revoke?token=${plainToken}`, {
+        method: 'POST',
+      }).catch(() => {})
+    } catch {
+      // Decryption failure — token may already be invalid, proceed with disconnect
+    }
+  }
+
+  // Update the account: disconnect, clear tokens
+  await supabaseAdmin
+    .from('email_accounts')
+    .update({
+      status: 'disconnected',
+      access_token: null,
+      refresh_token: null,
+      watch_expiry: null,
+    })
+    .eq('id', account.id)
 
   return NextResponse.json({ success: true })
 }

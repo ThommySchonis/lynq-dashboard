@@ -5,6 +5,7 @@ import { authFetch } from '@/lib/inbox-utils'
 import { useAuthStore } from '@/stores/auth'
 import { parseJson } from '@/lib/utils/typed-json'
 import { useStoreStore } from '@/stores/store'
+import { useInboxUI } from '@/stores/inbox-ui'
 import type { Thread, Message, Note } from '@/types/inbox'
 
 function useToken() {
@@ -52,15 +53,17 @@ interface AccountsResponse {
 export function useConversations(folder: string, search: string) {
   const token = useToken()
   const activeStoreId = useStoreStore((s) => s.activeStoreId)
+  const showAllStores = useInboxUI((s) => s.showAllStores)
+  const effectiveStoreId = showAllStores ? null : activeStoreId
   return useQuery<Thread[]>({
-    queryKey: inboxKeys.conversations(folder, search, activeStoreId),
+    queryKey: inboxKeys.conversations(folder, search, showAllStores ? 'all' : activeStoreId),
     queryFn: async () => {
       const params = new URLSearchParams()
       if (folder === 'unlinked') params.set('unlinked', 'true')
       else if (folder === 'trash') params.set('status', 'closed')
       else params.set('status', folder)
       if (search) params.set('search', search)
-      if (activeStoreId) params.set('store_id', activeStoreId)
+      if (effectiveStoreId) params.set('store_id', effectiveStoreId)
       const res = await authFetch(`/api/inbox/conversations?${params}`, {}, token)
       const data = await parseJson<ConversationsResponse>(res)
       return ((data.conversations || []) as Array<Record<string, string | boolean | null>>).map((c) => ({
@@ -114,9 +117,11 @@ export function useConversation(threadId: string | null) {
 export function useInboxCounts() {
   const token = useToken()
   const activeStoreId = useStoreStore((s) => s.activeStoreId)
-  const params = activeStoreId ? `?store_id=${activeStoreId}` : ''
+  const showAllStores = useInboxUI((s) => s.showAllStores)
+  const effectiveStoreId = showAllStores ? null : activeStoreId
+  const params = effectiveStoreId ? `?store_id=${effectiveStoreId}` : ''
   return useQuery({
-    queryKey: inboxKeys.counts(activeStoreId),
+    queryKey: inboxKeys.counts(showAllStores ? 'all' : activeStoreId),
     queryFn: async () => {
       const res = await authFetch(`/api/inbox/counts${params}`, {}, token)
       const data = await parseJson<InboxCountsResponse>(res)

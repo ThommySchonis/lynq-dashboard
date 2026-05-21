@@ -53,7 +53,7 @@ export const linkCustomerBody = z.object({
 export const getConversationsQuery = z.object({
   status: z.string().optional(),
   unlinked: z.enum(['true', 'false']).optional(),
-  search: z.string().max(200).optional(),
+  search: z.string().trim().min(1).max(200).optional(),
   store_id: z.string().optional(),
   page: z.coerce.number().int().min(0).optional(),
 })

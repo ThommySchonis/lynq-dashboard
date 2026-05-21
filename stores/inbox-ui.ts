@@ -23,6 +23,7 @@ interface InboxUIState {
   sending: boolean
   addingNote: boolean
   syncing: boolean
+  showAllStores: boolean
 
   // Actions
   setSelectedThreadId: (id: string | null) => void
@@ -47,6 +48,7 @@ interface InboxUIState {
   setSending: (v: boolean) => void
   setAddingNote: (v: boolean) => void
   setSyncing: (v: boolean) => void
+  setShowAllStores: (v: boolean) => void
   resetForNewThread: () => void
 }
 
@@ -73,6 +75,7 @@ export const useInboxUI = create<InboxUIState>()((set) => ({
   sending: false,
   addingNote: false,
   syncing: false,
+  showAllStores: false,
 
   setSelectedThreadId: (id) => set({ selectedThreadId: id }),
   setReply: (v) => set({ reply: v }),
@@ -96,6 +99,7 @@ export const useInboxUI = create<InboxUIState>()((set) => ({
   setSending: (v) => set({ sending: v }),
   setAddingNote: (v) => set({ addingNote: v }),
   setSyncing: (v) => set({ syncing: v }),
+  setShowAllStores: (v) => set({ showAllStores: v }),
   resetForNewThread: () => set({
     reply: '',
     showMacros: false,

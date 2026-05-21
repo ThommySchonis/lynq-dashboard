@@ -16,6 +16,8 @@ export interface Thread {
   date: string
   unread: boolean
   is_unread?: boolean
+  store_id?: string | null
+  store_name?: string | null
 }
 
 export interface Message {

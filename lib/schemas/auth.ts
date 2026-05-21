@@ -51,3 +51,7 @@ export const inviteSignupBody = z.object({
   full_name: z.string().min(1, 'Full name is required').max(100),
   password: z.string().min(8, 'Password must be at least 8 characters'),
 })
+
+export const disconnectGmailBody = z.object({
+  account_id: z.string().min(1, 'account_id is required'),
+})

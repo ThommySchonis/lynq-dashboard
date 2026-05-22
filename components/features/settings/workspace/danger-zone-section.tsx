@@ -11,17 +11,16 @@ import {
 } from '@/hooks/settings/use-ownership-transfer'
 import { useMembers } from '@/hooks/settings/use-settings-data'
 import { useAuthStore } from '@/stores/auth'
+import { useDeleteWorkspace } from '@/hooks/settings/use-workspace-mutations'
 
 interface DangerZoneSectionProps {
   role: string | null
   currentUserId?: string
-  onDelete?: () => void
 }
 
 export function DangerZoneSection({
   role,
   currentUserId,
-  onDelete,
 }: DangerZoneSectionProps) {
   const [transferOpen, setTransferOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
@@ -29,6 +28,7 @@ export function DangerZoneSection({
   const { data: pendingTransfer } = usePendingTransfer()
   const cancelTransfer = useCancelTransfer()
   const { data: members } = useMembers()
+  const deleteWorkspace = useDeleteWorkspace()
 
   const isSuspended = useAuthStore((s) => s.isSuspended)
   const isOwner = role === 'owner'
@@ -40,11 +40,6 @@ export function DangerZoneSection({
         { display_name?: string; email?: string } | undefined)
     : null
   const targetMemberName = targetMember?.display_name ?? targetMember?.email ?? 'a member'
-
-  function handleDeleteConfirm() {
-    setDeleteOpen(false)
-    onDelete?.()
-  }
 
   const transferExpiresAt = pendingTransfer
     ? new Date(pendingTransfer.expires_at).toLocaleDateString(undefined, {
@@ -68,7 +63,12 @@ export function DangerZoneSection({
         description="This will permanently delete the workspace and all associated data. This action cannot be undone."
         confirmLabel="Delete workspace"
         typeToConfirm="DELETE"
-        onConfirm={handleDeleteConfirm}
+        onConfirm={() => {
+          deleteWorkspace.mutate(undefined, {
+            onSuccess: () => setDeleteOpen(false),
+          })
+        }}
+        loading={deleteWorkspace.isPending}
         variant="danger"
       />
 

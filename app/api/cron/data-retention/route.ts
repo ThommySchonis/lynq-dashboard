@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
+import { executeAccountDeletion } from '@/lib/services/account-deletion'
 
 // ─── Data retention cleanup job ───────────────────────────────────────
 //
@@ -319,6 +320,45 @@ async function handle(request: NextRequest): Promise<NextResponse> {
   const schedule = await runSchedulePhase()
   const del      = await runDeletePhase()
 
+  // Phase 3 — Account Deletion
+  const accountPhase: PhaseSummary = { deleted: 0, errors: 0 }
+
+  const { data: accountsToDelete, error: accountFetchError } = await supabaseAdmin
+    .from('user_profiles')
+    .select('user_id')
+    .not('scheduled_for_deletion_at', 'is', null)
+    .lte('scheduled_for_deletion_at', new Date().toISOString())
+
+  if (accountFetchError) {
+    console.error('[data-retention] Phase 3 fetch error:', accountFetchError.message)
+    accountPhase.errors++
+  } else {
+    for (const account of accountsToDelete ?? []) {
+      const userId = (account as { user_id: string }).user_id
+      try {
+        // Look up email before deletion
+        const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(userId)
+        const email = authUser?.user?.email ?? 'unknown'
+
+        await executeAccountDeletion(userId, email)
+        accountPhase.deleted = (accountPhase.deleted ?? 0) + 1
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Unknown error'
+        console.error(`[data-retention] Phase 3 error for user ${userId}:`, message)
+
+        // Log error to account_deletion_log
+        await supabaseAdmin.from('account_deletion_log').insert({
+          user_id:    userId,
+          user_email: 'unknown',
+          event:      'error',
+          metadata:   { error: message },
+        })
+
+        accountPhase.errors++
+      }
+    }
+  }
+
   const summary = {
     ok:          true,
     started_at:  new Date(startedAt).toISOString(),
@@ -326,7 +366,8 @@ async function handle(request: NextRequest): Promise<NextResponse> {
     phases: {
       cancel,
       schedule,
-      delete: del,
+      delete:        del,
+      accountDelete: accountPhase,
     },
   }
 

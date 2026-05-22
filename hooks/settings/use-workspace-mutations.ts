@@ -91,3 +91,24 @@ export function useDeleteLogo() {
     },
   })
 }
+
+export function useDeleteWorkspace() {
+  const token = useToken()
+  return useMutation({
+    mutationFn: async () => {
+      const res = await fetch('/api/workspaces/current/delete', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (!res.ok) {
+        const data = await parseJson<{ error: string }>(res)
+        throw new Error(data.error)
+      }
+      return parseJson<{ scheduledFor: string }>(res)
+    },
+    onSuccess: () => {
+      toast.success('Workspace deletion scheduled')
+    },
+    onError: (err: Error) => toast.error(err.message),
+  })
+}

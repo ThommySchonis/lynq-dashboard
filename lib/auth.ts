@@ -27,6 +27,7 @@ export interface AuthContext {
   role: string
   memberId: string | null
   isSuspended: boolean
+  scheduledForDeletion: string | null
 }
 
 /**
@@ -66,13 +67,21 @@ export async function getAuthContext(request: NextRequest): Promise<AuthContext 
   if (membership) {
     const m = membership as MembershipRow
     console.log('[auth] path A — membership found, workspace:', m.workspace_id, 'role:', m.role)
+
+    const { data: profile } = await supabaseAdmin
+      .from('user_profiles')
+      .select('scheduled_for_deletion_at')
+      .eq('user_id', user.id)
+      .maybeSingle()
+
     return {
       user,
-      workspace:   m.workspaces as AuthWorkspace,
-      workspaceId: m.workspace_id,
-      role:        m.role,
-      memberId:    m.id,
-      isSuspended: !!(m.workspaces as AuthWorkspace).suspended_at,
+      workspace:            m.workspaces as AuthWorkspace,
+      workspaceId:          m.workspace_id,
+      role:                 m.role,
+      memberId:             m.id,
+      isSuspended:          !!(m.workspaces as AuthWorkspace).suspended_at,
+      scheduledForDeletion: (profile?.scheduled_for_deletion_at as string | null) ?? null,
     }
   }
 
@@ -112,11 +121,12 @@ export async function getAuthContext(request: NextRequest): Promise<AuthContext 
   console.log('[auth] path B — provisioning complete, workspace:', result.workspace_id)
   return {
     user,
-    workspace:   newWorkspace ?? { id: result.workspace_id, name: workspaceName, suspended_at: null },
-    workspaceId: result.workspace_id,
-    role:        'owner',
-    memberId:    result.member_id ?? null,
-    isSuspended: false,
+    workspace:            newWorkspace ?? { id: result.workspace_id, name: workspaceName, suspended_at: null },
+    workspaceId:          result.workspace_id,
+    role:                 'owner',
+    memberId:             result.member_id ?? null,
+    isSuspended:          false,
+    scheduledForDeletion: null,
   }
 }
 

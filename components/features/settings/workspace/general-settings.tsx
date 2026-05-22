@@ -207,10 +207,6 @@ export function GeneralSettings() {
     }
   }
 
-  function handleDelete() {
-    toast.error('Workspace deletion scheduled')
-  }
-
   // ── Loading skeleton ─────────────────────────────────────────────────────────
   if (isLoading) {
     return (
@@ -288,7 +284,6 @@ export function GeneralSettings() {
         <DangerZoneSection
           role={role}
           currentUserId={currentUserId}
-          onDelete={handleDelete}
         />
       </div>
     </div>

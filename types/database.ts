@@ -64,3 +64,19 @@ export interface OwnershipTransfer {
   expires_at: string
   resolved_at: string | null
 }
+
+export interface AccountDeletionLog {
+  id: string
+  user_id: string
+  user_email: string
+  event: 'scheduled' | 'cancelled' | 'deleted' | 'error'
+  metadata: Record<string, unknown>
+  created_at: string
+}
+
+export interface AnonymizedMember {
+  id: string
+  workspace_id: string
+  original_user_id: string
+  anonymized_at: string
+}

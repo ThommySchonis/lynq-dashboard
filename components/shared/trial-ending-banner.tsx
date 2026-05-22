@@ -16,7 +16,7 @@ export function TrialEndingBanner({ onDismissed }: TrialEndingBannerProps) {
   useEffect(() => {
     try {
       const ts = window.localStorage.getItem(DISMISS_KEY);
-      if (ts && Number.parseInt(ts, 10) > Date.now()) setHidden(true);
+      if (ts && Number.parseInt(ts, 10) > Date.now()) setHidden(true); // eslint-disable-line react-hooks/set-state-in-effect
     } catch {
       // ignore
     }

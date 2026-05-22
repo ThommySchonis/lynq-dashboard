@@ -1,11 +1,10 @@
-import { supabaseAdmin, getUserFromToken } from '@/lib/supabaseAdmin'
+import { supabaseAdmin } from '@/lib/supabaseAdmin'
+import { getAuthContext } from '@/lib/auth'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
-const ADMIN_EMAIL = 'info@lynqagency.com'
-
-// Fixed monthly subscriptions (update these as needed)
-const SUBSCRIPTIONS = [
+// Fixed monthly infrastructure costs (update these as needed)
+const INFRA_COSTS = [
   { name: 'Anthropic (Claude)', cost: 0, note: 'Pay-as-you-go' },
   { name: 'Supabase Pro', cost: 25 },
   { name: 'Vercel Pro', cost: 20 },
@@ -14,13 +13,10 @@ const SUBSCRIPTIONS = [
 ]
 
 export async function GET(request: NextRequest) {
-  const authHeader = request.headers.get('authorization')
-  if (!authHeader) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-  const token = authHeader.replace('Bearer ', '')
-  const user = await getUserFromToken(token)
-  if (!user || user.email !== ADMIN_EMAIL) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const ctx = await getAuthContext(request)
+  if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (ctx.user.email !== 'info@lynqagency.com') {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
   const now = new Date()
@@ -36,7 +32,10 @@ export async function GET(request: NextRequest) {
     supabaseAdmin.from('ai_usage').select('cost_usd, input_tokens, output_tokens, created_at').gte('created_at', monthStart),
     supabaseAdmin.from('ai_usage').select('cost_usd').gte('created_at', lastMonthStart).lte('created_at', lastMonthEnd),
     supabaseAdmin.from('ai_usage').select('route, cost_usd, input_tokens, output_tokens').gte('created_at', monthStart),
-    supabaseAdmin.from('subscriptions').select('plan, status').eq('status', 'active'),
+    supabaseAdmin
+      .from('workspace_subscriptions')
+      .select('plan_id, plans!inner(price_eur)')
+      .eq('status', 'active'),
   ])
 
   const sum = (rows: Array<Record<string, unknown>> | null | undefined, field: string) =>
@@ -66,13 +65,13 @@ export async function GET(request: NextRequest) {
   }
 
   // MRR calculation
-  const planPrices: Record<string, number> = { starter: 29, pro: 59, scale: 119 }
-  const mrr = ((activeSubsRes.data || []) as Array<Record<string, unknown>>).reduce(
-    (acc, s) => acc + (planPrices[s.plan as string] || 0),
-    0
-  )
+  const mrr = (activeSubsRes.data ?? []).reduce((total, sub) => {
+    const plans = sub.plans as unknown as { price_eur: number | null } | Array<{ price_eur: number | null }>
+    const price = Array.isArray(plans) ? (plans[0]?.price_eur ?? 0) : (plans?.price_eur ?? 0)
+    return total + price
+  }, 0)
 
-  const fixedCosts = SUBSCRIPTIONS.filter(s => s.cost > 0).reduce((acc, s) => acc + s.cost, 0)
+  const fixedCosts = INFRA_COSTS.filter(s => s.cost > 0).reduce((acc, s) => acc + s.cost, 0)
   const aiCostMonth = sum(monthRes.data as Array<Record<string, unknown>>, 'cost_usd')
   const totalCostMonth = fixedCosts + aiCostMonth
   const netMargin = mrr - totalCostMonth
@@ -86,7 +85,7 @@ export async function GET(request: NextRequest) {
       byRoute: routeMap,
       daily: dailyBreakdown,
     },
-    subscriptions: SUBSCRIPTIONS,
+    subscriptions: INFRA_COSTS,
     finance: {
       mrr,
       activeClients: activeSubsRes.data?.length || 0,

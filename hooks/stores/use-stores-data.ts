@@ -23,7 +23,7 @@ export function useStores() {
         headers: { Authorization: `Bearer ${token}` },
       })
       if (!res.ok) throw new Error('Failed to load stores')
-      const data = await res.json()
+      const data = await res.json() as { stores?: StorePublic[] }
       return (data.stores ?? []) as StorePublic[]
     },
     enabled: !!token,
@@ -39,7 +39,7 @@ export function useStoreEmailAccounts(storeId: string) {
         headers: { Authorization: `Bearer ${token}` },
       })
       if (!res.ok) throw new Error('Failed to load email configs')
-      const data = await res.json()
+      const data = await res.json() as { configs?: StoreEmailAccount[] }
       return (data.configs ?? []) as StoreEmailAccount[]
     },
     enabled: !!token && !!storeId,

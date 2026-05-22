@@ -11,7 +11,7 @@ export function useCountUp(end: number, duration = 1200): number {
 
   useEffect(() => {
     if (!end || end === 0) {
-      setCount(0)
+      setCount(0) // eslint-disable-line react-hooks/set-state-in-effect
       return
     }
     let start = 0

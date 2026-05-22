@@ -54,7 +54,7 @@ export function MacroWizard() {
   // Prefill from existing onboarding data
   useEffect(() => {
     if (onboarding) {
-      setForm((prev) => ({ ...prev, ...onboarding }))
+      setForm((prev) => ({ ...prev, ...onboarding })) // eslint-disable-line react-hooks/set-state-in-effect
     }
   }, [onboarding])
 

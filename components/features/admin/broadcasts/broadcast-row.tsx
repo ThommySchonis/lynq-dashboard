@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import { Pin, Trash2 } from 'lucide-react'
 import { BROADCAST_TYPES } from '@/lib/admin-constants'
 import { getYoutubeId } from '@/lib/admin-utils'
@@ -28,11 +29,12 @@ export function BroadcastRow({ broadcast, reactions, onDelete, onTogglePin }: Br
   return (
     <div className="flex gap-3 items-start px-4 py-3 border-b border-border/50">
       {ytId ? (
-        <div className="w-[60px] h-[38px] rounded-md overflow-hidden shrink-0 bg-muted">
-          <img
+        <div className="w-[60px] h-[38px] rounded-md overflow-hidden shrink-0 bg-muted relative">
+          <Image
             src={`https://img.youtube.com/vi/${ytId}/mqdefault.jpg`}
             alt=""
-            className="w-full h-full object-cover"
+            fill
+            className="object-cover"
           />
         </div>
       ) : (

@@ -1,6 +1,7 @@
 'use client'
 
 import { useRef, useState } from 'react'
+import Image from 'next/image'
 import { Camera, Trash2, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
@@ -54,9 +55,9 @@ export function AvatarUpload({
     <div className="flex flex-col items-center gap-3">
       {/* Avatar circle */}
       <div className="relative size-24 shrink-0">
-        <div className="size-24 rounded-full bg-primary/15 flex items-center justify-center overflow-hidden text-primary text-2xl font-semibold select-none">
+        <div className="relative size-24 rounded-full bg-primary/15 flex items-center justify-center overflow-hidden text-primary text-2xl font-semibold select-none">
           {avatarUrl ? (
-            <img src={avatarUrl} alt="" className="size-full object-cover" />
+            <Image src={avatarUrl} alt="" fill className="object-cover" />
           ) : (
             getInitials(displayName, email)
           )}

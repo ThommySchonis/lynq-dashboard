@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { Check, ChevronDown, Plus, Store } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useStoreStore } from '@/stores/store'
@@ -22,7 +23,7 @@ export function StoreSwitcher({ collapsed }: StoreSwitcherProps) {
 
   if (stores.length === 0) {
     return (
-      <a
+      <Link
         href="/settings/workspace/stores"
         className={cn(
           'flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left',
@@ -38,7 +39,7 @@ export function StoreSwitcher({ collapsed }: StoreSwitcherProps) {
             Add store
           </p>
         )}
-      </a>
+      </Link>
     )
   }
 
@@ -124,13 +125,13 @@ export function StoreSwitcher({ collapsed }: StoreSwitcherProps) {
             )
           })}
 
-          <a
+          <Link
             href="/settings/workspace/stores"
             className="mt-1 flex items-center gap-2 rounded-md border-t border-border px-2.5 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
           >
             <Plus className="size-3.5" />
             Add store
-          </a>
+          </Link>
         </div>
       </PopoverContent>
     </Popover>

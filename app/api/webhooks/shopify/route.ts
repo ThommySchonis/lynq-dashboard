@@ -12,6 +12,11 @@ interface IntegrationRow {
   shopify_domain: string
 }
 
+interface IntegrationByStoreRow {
+  shopify_client_secret: string
+  workspace_id: string
+}
+
 function timingSafeCompare(a: string, b: string): boolean {
   const left = Buffer.from(a || '')
   const right = Buffer.from(b || '')
@@ -120,8 +125,8 @@ export async function POST(request: NextRequest) {
       return new Response('Store not found', { status: 404 })
     }
 
-    clientSecret = data.shopify_client_secret
-    workspaceId = data.workspace_id
+    clientSecret = (data as IntegrationByStoreRow).shopify_client_secret
+    workspaceId = (data as IntegrationByStoreRow).workspace_id
   }
 
   // Fall back to the existing cid-based integration lookup when store_id

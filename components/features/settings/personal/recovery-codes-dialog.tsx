@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useAuthStore } from '@/stores/auth'
 import { Copy, Download } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -26,12 +26,7 @@ export function RecoveryCodesDialog({ open, onOpenChange }: RecoveryCodesDialogP
   const [codes, setCodes] = useState<string[]>([])
   const [loading, setLoading] = useState(false)
 
-  useEffect(() => {
-    if (!open) return
-    void loadCodes()
-  }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
-
-  async function loadCodes() {
+  const loadCodes = useCallback(async () => {
     setLoading(true)
     try {
       const res = await fetch('/api/auth/recovery-codes', {
@@ -43,7 +38,12 @@ export function RecoveryCodesDialog({ open, onOpenChange }: RecoveryCodesDialogP
       setCodes([])
     }
     setLoading(false)
-  }
+  }, [token])
+
+  useEffect(() => {
+    if (!open) return
+    void loadCodes() // eslint-disable-line react-hooks/set-state-in-effect
+  }, [open, loadCodes])
 
   async function handleRegenerate() {
     setLoading(true)

@@ -37,6 +37,10 @@ interface OAuthStateRow {
   store_name?: string
 }
 
+interface StoreRow {
+  id: string
+}
+
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
@@ -115,7 +119,7 @@ export async function GET(request: NextRequest) {
     .select('id')
     .single()
 
-  const storeId = store!.id
+  const storeId = (store as StoreRow).id
 
   // 2. Fetch shop metadata for store_currency
   const shopRes = await fetch(`https://${shop}/admin/api/2025-04/shop.json`, {

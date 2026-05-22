@@ -56,7 +56,7 @@ export function SessionEditModal({
   // The mounted flag flips on first client-side render; before that we return
   // null so the SSR pass and the first client render agree (no hydration mismatch).
   const [mounted, setMounted] = useState(false)
-  useEffect(() => { setMounted(true) }, [])
+  useEffect(() => { setMounted(true) }, []) // eslint-disable-line react-hooks/set-state-in-effect
 
   const reasonValid = reason.trim().length >= 3
   const emailsParsed = emails === '' ? null : Number(emails)

@@ -42,14 +42,14 @@ export function AddStoreModal({ open, onOpenChange }: AddStoreModalProps) {
     })
 
     if (!res.ok) {
-      const d = await res.json().catch(() => ({}))
-      throw new Error((d as { error?: string }).error || 'Failed to initiate connection')
+      const d = (await res.json().catch(() => ({}))) as { error?: string }
+      throw new Error(d.error ?? 'Failed to initiate connection')
     }
 
-    const { authUrl } = await res.json()
+    const json = (await res.json()) as { authUrl: string }
     reset()
     onOpenChange(false)
-    window.location.href = authUrl
+    window.location.href = json.authUrl
   }
 
   return (
@@ -62,7 +62,7 @@ export function AddStoreModal({ open, onOpenChange }: AddStoreModalProps) {
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
+        <form onSubmit={(e) => { void handleSubmit(onSubmit)(e) }} className="flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="store-name">Store name</Label>
             <Input

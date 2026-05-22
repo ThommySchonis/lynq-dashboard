@@ -6,7 +6,6 @@ import { asciiSafe } from '@/lib/utils/ascii-safe'
 const AUTH_BYPASS_PREFIXES = [
   '/api/auth/',
   '/api/webhooks/',
-  '/api/whop/webhook',
   // Invite flow: GET metadata + POST signup zijn pre-session.
   // De /accept sub-route enforced zelf nog Bearer auth in zijn handler.
   '/api/invites/',
@@ -21,12 +20,9 @@ const BLOCKED_BYPASS_PREFIXES = [
   ...AUTH_BYPASS_PREFIXES,
   '/api/onboarding/status',  // BlockedStateGuard moet status kunnen ophalen
   '/api/profile',            // banner/checklist dismiss + profile read
-  '/api/subscription/',      // legacy user_email-keyed subscription endpoints
-  '/api/billing/',           // PR 2 billing routes — same self-rescue semantics:
-                             // a trial-expired user MUST be able to call
+  '/api/billing/',           // billing routes — a trial-expired user MUST be able to call
                              // /api/billing/subscription/change-plan to upgrade
-                             // themselves out of the blocked state. Mirrors the
-                             // /api/subscription/ bypass above.
+                             // themselves out of the blocked state.
   '/api/workspaces/current', // basis workspace info voor billing page
 ]
 

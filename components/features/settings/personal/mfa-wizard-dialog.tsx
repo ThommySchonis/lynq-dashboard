@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
+import Image from 'next/image'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/stores/auth'
 import { Copy, Download } from 'lucide-react'
@@ -53,12 +54,7 @@ export function MfaWizardDialog({ open, onOpenChange, onComplete }: MfaWizardDia
 
   const stepIndex = step === 'enrolling' ? 1 : step === 'verifying' ? 2 : step === 'complete' ? 3 : 0
 
-  useEffect(() => {
-    if (!open) return
-    void startEnrollment()
-  }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
-
-  async function startEnrollment() {
+  const startEnrollment = useCallback(async () => {
     setStep('enrolling')
     setVerifyCode('')
     setVerifyError('')
@@ -128,7 +124,12 @@ export function MfaWizardDialog({ open, onOpenChange, onComplete }: MfaWizardDia
     setFactorId(data.id)
     setQrCode(data.totp.qr_code)
     setSecret(data.totp.secret)
-  }
+  }, [token, onOpenChange])
+
+  useEffect(() => {
+    if (!open) return
+    void startEnrollment() // eslint-disable-line react-hooks/set-state-in-effect
+  }, [open, startEnrollment])
 
   async function handleVerify() {
     if (verifyCode.length !== 6) {
@@ -220,7 +221,7 @@ export function MfaWizardDialog({ open, onOpenChange, onComplete }: MfaWizardDia
                 <div className="size-[180px] border border-border rounded-xl overflow-hidden flex items-center justify-center bg-white">
                   {qrCode && (
                     qrCode.startsWith('data:') || qrCode.startsWith('http')
-                      ? <img src={qrCode} alt="2FA QR Code" width={160} height={160} />
+                      ? <Image src={qrCode} alt="2FA QR Code" width={160} height={160} unoptimized />
                       : <div dangerouslySetInnerHTML={{ __html: qrCode }} className="size-[160px] flex items-center justify-center" />
                   )}
                 </div>

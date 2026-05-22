@@ -123,6 +123,7 @@ export function IdentitySection({
             <div className="flex items-center gap-5 mt-1">
               <div className="size-20 rounded-xl border border-border overflow-hidden shrink-0 flex items-center justify-center bg-muted/40">
                 {displayLogo ? (
+                  // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={displayLogo}
                     alt="Workspace logo"

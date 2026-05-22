@@ -52,10 +52,11 @@ export function FinalExam() {
     }
 
     // Set session for downstream use (double-cast is tech debt)
-    setSession(storeSession as unknown as Record<string, unknown>)
+    const sessionRecord = storeSession as unknown as Record<string, unknown>
+    setTimeout(() => setSession(sessionRecord), 0)
     const isAdmin = storeUser.email === 'info@lynqagency.com'
     if (isAdmin) {
-      setView('intro')
+      setTimeout(() => setView('intro'), 0)
       return
     }
     void (async () => {

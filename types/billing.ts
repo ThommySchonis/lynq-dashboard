@@ -11,6 +11,14 @@ export type PaymentMethodType  = 'card' | 'sepa' | 'paypal'
 export type AddonStatus        = 'coming_soon' | 'beta' | 'live'
 export type WorkspaceAddonStatus = 'active' | 'inactive' | 'pending'
 
+// ─── Feature gates (JSONB in plans table) ────────────────────────────
+
+export interface PlanFeatures {
+  academy_access: boolean
+  email_limit: number | null // null = unlimited
+  priority_support: boolean
+}
+
 // ─── DB row shapes ───────────────────────────────────────────────────
 
 export interface Plan {
@@ -24,6 +32,7 @@ export interface Plan {
   is_active:        boolean
   is_custom:        boolean
   sort_order:       number
+  features:         PlanFeatures
 }
 
 export interface WorkspaceSubscription {

@@ -12,6 +12,7 @@ import * as whop from '../whop'
 import { isEUCountry, isValidVATFormat } from '../billing/issuer'
 import type {
   Plan,
+  PlanFeatures,
   WorkspaceSubscription,
   UsageCounter,
   Invoice,
@@ -65,6 +66,25 @@ export async function getSubscription(workspaceId: string): Promise<WorkspaceSub
     return null
   }
   return result.data as WorkspaceSubscription | null
+}
+
+const DEFAULT_FEATURES: PlanFeatures = {
+  academy_access: false,
+  email_limit: null,
+  priority_support: false,
+}
+
+export async function getWorkspaceFeatures(workspaceId: string): Promise<PlanFeatures> {
+  const sub = await getSubscription(workspaceId)
+  if (!sub) return DEFAULT_FEATURES
+
+  const plan = await getPlan(sub.plan_id)
+  if (!plan) return DEFAULT_FEATURES
+
+  return {
+    ...DEFAULT_FEATURES,
+    ...plan.features,
+  }
 }
 
 export async function getPlan(planId: string): Promise<Plan | null> {

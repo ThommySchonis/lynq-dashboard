@@ -20,13 +20,13 @@ export function useUpdateStore() {
         body: JSON.stringify({ name }),
       })
       if (!res.ok) {
-        const d = await res.json().catch(() => ({}))
-        throw new Error((d as { error?: string }).error || 'Failed to update store')
+        const d = await (res.json() as Promise<{ error?: string }>).catch(() => ({} as { error?: string }))
+        throw new Error(d.error ?? 'Failed to update store')
       }
-      return res.json()
+      await res.json()
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: storeKeys.list() })
+      void qc.invalidateQueries({ queryKey: storeKeys.list() })
       toast.success('Store updated')
     },
     onError: (err: Error) => toast.error(err.message),
@@ -43,12 +43,12 @@ export function useDisconnectStore() {
         headers: { Authorization: `Bearer ${token}` },
       })
       if (!res.ok) {
-        const d = await res.json().catch(() => ({}))
-        throw new Error((d as { error?: string }).error || 'Failed to disconnect store')
+        const d = await (res.json() as Promise<{ error?: string }>).catch(() => ({} as { error?: string }))
+        throw new Error(d.error ?? 'Failed to disconnect store')
       }
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: storeKeys.list() })
+      void qc.invalidateQueries({ queryKey: storeKeys.list() })
       toast.success('Store disconnected')
     },
     onError: (err: Error) => toast.error(err.message),
@@ -65,12 +65,12 @@ export function useDeleteStore() {
         headers: { Authorization: `Bearer ${token}` },
       })
       if (!res.ok) {
-        const d = await res.json().catch(() => ({}))
-        throw new Error((d as { error?: string }).error || 'Failed to delete store')
+        const d = await (res.json() as Promise<{ error?: string }>).catch(() => ({} as { error?: string }))
+        throw new Error(d.error ?? 'Failed to delete store')
       }
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: storeKeys.list() })
+      void qc.invalidateQueries({ queryKey: storeKeys.list() })
       toast.success('Store deleted')
     },
     onError: (err: Error) => toast.error(err.message),
@@ -87,12 +87,12 @@ export function useDeleteStoreEmailAccount() {
         headers: { Authorization: `Bearer ${token}` },
       })
       if (!res.ok) {
-        const d = await res.json().catch(() => ({}))
-        throw new Error((d as { error?: string }).error || 'Failed to remove email config')
+        const d = await (res.json() as Promise<{ error?: string }>).catch(() => ({} as { error?: string }))
+        throw new Error(d.error ?? 'Failed to remove email config')
       }
     },
     onSuccess: (_data, vars) => {
-      qc.invalidateQueries({ queryKey: storeKeys.emailAccounts(vars.storeId) })
+      void qc.invalidateQueries({ queryKey: storeKeys.emailAccounts(vars.storeId) })
       toast.success('Email account removed')
     },
     onError: (err: Error) => toast.error(err.message),

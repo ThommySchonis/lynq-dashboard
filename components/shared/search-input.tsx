@@ -26,7 +26,7 @@ export function SearchInput({
   useEffect(() => { onChangeRef.current = onChange }, [onChange])
 
   useEffect(() => {
-    if (controlledValue !== undefined) setInternal(controlledValue)
+    if (controlledValue !== undefined) setInternal(controlledValue) // eslint-disable-line react-hooks/set-state-in-effect
   }, [controlledValue])
 
   useEffect(() => {

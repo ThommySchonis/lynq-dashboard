@@ -154,7 +154,7 @@ export function MacroPanel({ macros = [], aiMacros = [], onInsert, onClose, cust
                 className="flex items-center gap-[9px] w-full py-2 px-[11px] rounded-[7px] bg-none border-none font-inherit text-[12.5px] text-foreground cursor-pointer text-left transition-[background] duration-120 hover:bg-secondary"
                 onClick={() => {
                   setGearOpen(false);
-                  active && onManage(active);
+                  if (active) onManage(active);
                 }}
               >
                 <SquarePen size={13} />
@@ -175,7 +175,7 @@ export function MacroPanel({ macros = [], aiMacros = [], onInsert, onClose, cust
                 className="flex items-center gap-[9px] w-full py-2 px-[11px] rounded-[7px] bg-none border-none font-inherit text-[12.5px] text-destructive cursor-pointer text-left transition-[background] duration-120 hover:bg-secondary"
                 onClick={() => {
                   setGearOpen(false);
-                  active && confirm("Delete this macro?") && onDeleteMacro && onDeleteMacro(active.id);
+                  if (active && confirm("Delete this macro?") && onDeleteMacro) onDeleteMacro(active.id);
                 }}
               >
                 <Trash2 size={13} />

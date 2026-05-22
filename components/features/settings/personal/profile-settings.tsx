@@ -51,8 +51,10 @@ export function ProfileSettings() {
       bio: profile.bio ?? '',
       theme: (profile.theme as Theme) ?? 'system',
     }
-    setInitForm(initial)
-    setForm(initial)
+    setTimeout(() => {
+      setInitForm(initial)
+      setForm(initial)
+    }, 0)
   }, [profile])
 
   const isDirty =

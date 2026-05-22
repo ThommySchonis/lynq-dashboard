@@ -36,6 +36,7 @@ export function FeedbackModal({ open, onClose, onSuccess, onError }: FeedbackMod
 
   useEffect(() => {
     if (open) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setType("bug");
       setMessage("");
       setSubmitting(false);

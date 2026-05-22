@@ -65,6 +65,7 @@ function StrengthBar({ password }: { password: string }) {
 
 export function ChangePasswordSection() {
   const userEmail = useAuthStore((s) => s.user?.email)
+  const isSuspended = useAuthStore((s) => s.isSuspended)
   const changePassword = useChangePassword()
 
   const [form, setForm] = useState<PasswordChangeForm>({ ...INITIAL_PASSWORD_FORM })
@@ -132,7 +133,7 @@ export function ChangePasswordSection() {
     >
       <SettingsCard
         footer={
-          <Button onClick={() => void handleSubmit()} disabled={isBusy}>
+          <Button onClick={() => void handleSubmit()} disabled={isSuspended || isBusy}>
             {isBusy ? 'Updating...' : 'Update password'}
           </Button>
         }

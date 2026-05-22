@@ -1,4 +1,4 @@
-import { getAuthContext } from '@/lib/auth'
+import { getAuthContext, requireWriteAccess } from '@/lib/auth'
 import { getStoreCredentials } from '@/lib/store-credentials'
 import { can } from '@/lib/permissions'
 import { generatePatternTasks } from '@/lib/services/tasks'
@@ -13,6 +13,8 @@ import type { Refund } from '@/types/analytics'
 export async function POST(request: NextRequest) {
   const ctx = await getAuthContext(request)
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const blocked = requireWriteAccess(ctx)
+  if (blocked) return blocked
   if (!can.manageTasks(ctx.role as Role)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
   const [query, qErr] = validateQuery(request, generateTasksQuery)

@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import type { RouteContext } from '@/types/api'
 import type { Role } from '@/types/database'
-import { getAuthContext } from '@/lib/auth'
+import { getAuthContext, requireWriteAccess } from '@/lib/auth'
 import { can } from '@/lib/permissions'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import { validateBody, validateParams } from '@/lib/validation'
@@ -16,6 +16,8 @@ export async function PATCH(request: NextRequest, { params: routeParams }: Route
   if (!ctx) {
     return NextResponse.json({ error: 'Unauthorized', code: 'unauthorized' }, { status: 401 })
   }
+  const blocked = requireWriteAccess(ctx)
+  if (blocked) return blocked
 
   // Only owners + admins are ever allowed to change roles
   if (!can.changeRole(ctx.role as Role)) {
@@ -124,6 +126,8 @@ export async function DELETE(request: NextRequest, { params: routeParams }: Rout
   if (!ctx) {
     return NextResponse.json({ error: 'Unauthorized', code: 'unauthorized' }, { status: 401 })
   }
+  const blocked2 = requireWriteAccess(ctx)
+  if (blocked2) return blocked2
 
   const [params, paramErr] = validateParams(await routeParams, memberParams)
   if (paramErr) return paramErr

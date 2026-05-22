@@ -23,6 +23,7 @@ import { Input } from '@/components/ui/input'
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select'
 import { useComposeMacros, useEmailAccountInfo } from '@/hooks/inbox/use-inbox-data'
 import { useComposeEmail } from '@/hooks/inbox/use-inbox-mutations'
+import { useAuthStore } from '@/stores/auth'
 import { sanitizeHtml, plainTextToSafeHtml, normalizeSafeUrl } from '@/lib/inbox-utils'
 import type { ComposeMacro } from '@/lib/inbox-create-constants'
 import { DEMO_RECENT, STATUS_COLOR, PRIORITY_OPTS, FALLBACK_MACROS } from '@/lib/inbox-create-constants'
@@ -33,6 +34,7 @@ export default function CreateTicketPage() {
   const router = useRouter()
 
   // Hooks
+  const isSuspended = useAuthStore((s) => s.isSuspended)
   const { data: fetchedMacros } = useComposeMacros()
   const { data: accountInfo } = useEmailAccountInfo()
   const composeEmail = useComposeEmail()
@@ -541,7 +543,8 @@ export default function CreateTicketPage() {
             <div className="flex shrink-0 items-stretch overflow-hidden rounded-[9px] shadow-[0_2px_12px_rgba(124,92,252,0.35)]">
               <Button
                 onClick={() => { void doSend() }}
-                disabled={composeEmail.isPending}
+                disabled={isSuspended || composeEmail.isPending}
+                title={isSuspended ? 'Workspace is suspended' : undefined}
                 className="gap-1.5 rounded-none bg-[linear-gradient(135deg,#7C5CFC_0%,#6d4af8_100%)] px-[18px] py-[7px] text-[12.5px] font-semibold text-white hover:opacity-90"
               >
                 {composeEmail.isPending ? (
@@ -559,7 +562,8 @@ export default function CreateTicketPage() {
               <div className="w-px shrink-0 bg-white/20" />
               <Button
                 onClick={() => { void doSend() }}
-                disabled={composeEmail.isPending}
+                disabled={isSuspended || composeEmail.isPending}
+                title={isSuspended ? 'Workspace is suspended' : undefined}
                 className="gap-[5px] rounded-none bg-[linear-gradient(135deg,#7C5CFC_0%,#6d4af8_100%)] px-[18px] py-[7px] text-[12.5px] font-semibold text-white hover:opacity-90"
               >
                 Send &amp; Close

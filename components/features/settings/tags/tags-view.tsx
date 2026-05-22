@@ -5,6 +5,7 @@ import { Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useTags } from '@/hooks/settings'
 import { useDeleteTag } from '@/hooks/settings'
+import { useAuthStore } from '@/stores/auth'
 import { ConfirmDialog } from '@/components/features/settings/confirm-dialog'
 import { TagsTable } from './tags-table'
 import { TagsBulkBar } from './tags-bulk-bar'
@@ -12,6 +13,7 @@ import { TagEditModal } from './tag-edit-modal'
 import type { Tag } from '@/types/settings'
 
 export function TagsView() {
+  const isSuspended = useAuthStore((s) => s.isSuspended)
   const { data: tags = [], isLoading } = useTags()
   const deleteTag = useDeleteTag()
 
@@ -55,7 +57,7 @@ export function TagsView() {
           </p>
         </div>
         {canManage && (
-          <Button onClick={handleCreate}>
+          <Button onClick={handleCreate} disabled={isSuspended}>
             <Plus size={16} strokeWidth={1.75} />
             Create tag
           </Button>

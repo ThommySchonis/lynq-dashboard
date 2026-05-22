@@ -34,6 +34,7 @@ export function StoreCard({ store }: StoreCardProps) {
   const deleteEmailMutation = useDeleteStoreEmailAccount()
   const { data: emailConfigs } = useStoreEmailAccounts(store.id)
   const token = useAuthStore((s) => s.session?.access_token ?? '')
+  const isSuspended = useAuthStore((s) => s.isSuspended)
 
   const isConnected = !!store.shopify_connected_at
 
@@ -103,7 +104,7 @@ export function StoreCard({ store }: StoreCardProps) {
               size="sm"
               variant="outline"
               onClick={() => setDisconnectOpen(true)}
-              disabled={disconnectMutation.isPending}
+              disabled={isSuspended || disconnectMutation.isPending}
             >
               <Unplug className="size-3.5" />
               Disconnect
@@ -113,7 +114,7 @@ export function StoreCard({ store }: StoreCardProps) {
             size="sm"
             variant="destructive"
             onClick={() => setDeleteOpen(true)}
-            disabled={deleteMutation.isPending}
+            disabled={isSuspended || deleteMutation.isPending}
           >
             <Trash2 className="size-3.5" />
             Delete

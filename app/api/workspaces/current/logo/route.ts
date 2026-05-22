@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import type { Role } from '@/types/database'
-import { getAuthContext } from '@/lib/auth'
+import { getAuthContext, requireWriteAccess } from '@/lib/auth'
 import { can } from '@/lib/permissions'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
 
@@ -12,6 +12,8 @@ const BUCKET = 'workspace-assets'
 export async function POST(request: NextRequest) {
   const ctx = await getAuthContext(request)
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const blocked = requireWriteAccess(ctx)
+  if (blocked) return blocked
   if (!can.manageWorkspace(ctx.role as Role)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
   const formData = await request.formData()
@@ -62,6 +64,8 @@ export async function POST(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   const ctx = await getAuthContext(request)
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const blocked2 = requireWriteAccess(ctx)
+  if (blocked2) return blocked2
   if (!can.manageWorkspace(ctx.role as Role)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
   // Remove all possible extensions

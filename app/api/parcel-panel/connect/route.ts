@@ -1,7 +1,7 @@
 import { randomUUID } from 'crypto'
 import type { NextRequest } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
-import { getAuthContext } from '@/lib/auth'
+import { getAuthContext, requireWriteAccess } from '@/lib/auth'
 import { NextResponse } from 'next/server'
 import { validateBody } from '@/lib/validation'
 import { connectBody } from '@/lib/schemas/parcel-panel'
@@ -11,6 +11,8 @@ const PP_BASE = 'https://open.parcelwill.com'
 export async function POST(request: NextRequest) {
   const ctx = await getAuthContext(request)
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const blocked = requireWriteAccess(ctx)
+  if (blocked) return blocked
 
   const [body, err] = await validateBody(request, connectBody)
   if (err) return err

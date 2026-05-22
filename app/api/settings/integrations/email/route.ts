@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { getAuthContext } from '@/lib/auth'
+import { getAuthContext, requireWriteAccess } from '@/lib/auth'
 import { supabaseAdmin }  from '@/lib/supabaseAdmin'
 import { validateBody } from '@/lib/validation'
 import { emailIntegrationBody } from '@/lib/schemas/settings'
@@ -43,6 +43,8 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   const ctx = await getAuthContext(request)
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const blocked = requireWriteAccess(ctx)
+  if (blocked) return blocked
 
   const [body, bErr] = await validateBody(request, emailIntegrationBody)
   if (bErr) return bErr

@@ -35,6 +35,7 @@ interface SupabaseFactor {
 
 export function MfaSection() {
   const token = useAuthStore((s) => s.session?.access_token ?? '')
+  const isSuspended = useAuthStore((s) => s.isSuspended)
   const unenrollMfa = useUnenrollMfa()
 
   const [factors, setFactors] = useState<SupabaseFactor[]>([])
@@ -128,7 +129,7 @@ export function MfaSection() {
             </div>
 
             {!twoFaEnabled ? (
-              <Button onClick={() => setWizardOpen(true)}>Enable 2FA</Button>
+              <Button onClick={() => setWizardOpen(true)} disabled={isSuspended}>Enable 2FA</Button>
             ) : (
               <DropdownMenu>
                 <DropdownMenuTrigger

@@ -61,7 +61,57 @@ export async function sendInviteEmail({ to, workspaceName, inviterEmail, role, l
   }
 }
 
-function escapeHtml(s: string) {
+export async function sendSuspensionEmail({ to, workspaceName, reason }: { to: string; workspaceName: string; reason: string | null }) {
+  if (!process.env.RESEND_API_KEY) {
+    console.warn('[email] RESEND_API_KEY not set — skipping suspension email')
+    return { status: 'not_configured' }
+  }
+
+  try {
+    const { Resend } = await import('resend')
+    const resend = new Resend(process.env.RESEND_API_KEY)
+
+    const from = process.env.INVITE_EMAIL_FROM || FROM_DEFAULT
+    const safeWs = escapeHtml(workspaceName)
+    const reasonLine = reason
+      ? `<p style="font-size:14px;line-height:1.6;color:#6B5E7B;margin:0 0 16px;"><strong style="color:#1C0F36;">Reason:</strong> ${escapeHtml(reason)}</p>`
+      : ''
+
+    await resend.emails.send({
+      from,
+      to,
+      subject: `Your Lynq workspace has been suspended`,
+      html: `
+        <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#1C0F36;max-width:480px;margin:0 auto;padding:24px;">
+          <h2 style="font-size:18px;font-weight:600;margin:0 0 12px;">Workspace Suspended</h2>
+          <p style="font-size:14px;line-height:1.6;color:#6B5E7B;margin:0 0 16px;">
+            Your workspace <strong style="color:#1C0F36;">${safeWs}</strong> has been suspended.
+            You can still view your data, but write operations are temporarily disabled.
+          </p>
+          ${reasonLine}
+          <p style="font-size:14px;line-height:1.6;color:#6B5E7B;margin:0 0 20px;">
+            To restore full access, please resolve any outstanding billing issues or contact support.
+          </p>
+          <p style="margin:0 0 24px;">
+            <a href="https://lynq-dashboard.vercel.app" style="background:#A175FC;color:#fff;padding:11px 22px;border-radius:8px;text-decoration:none;display:inline-block;font-weight:500;font-size:14px;">
+              Go to Dashboard
+            </a>
+          </p>
+          <p style="font-size:12px;color:#9B91A8;margin:0;">
+            If you believe this was a mistake, please contact us at info@lynqagency.com.
+          </p>
+        </div>
+      `,
+    })
+    return { status: 'sent' }
+  } catch (err: unknown) {
+    const error = err instanceof Error ? err.message : 'Email send failed'
+    console.error('[email] Resend suspension email error:', error)
+    return { status: 'failed', error }
+  }
+}
+
+export function escapeHtml(s: string) {
   return String(s ?? '')
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')

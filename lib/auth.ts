@@ -1,5 +1,5 @@
 import { supabaseAdmin, getUserFromToken } from './supabaseAdmin'
-import type { NextRequest } from 'next/server'
+import { type NextRequest, NextResponse } from 'next/server'
 import type { User } from '@supabase/supabase-js'
 
 interface MembershipRow {
@@ -7,10 +7,6 @@ interface MembershipRow {
   workspace_id: string
   role: string
   workspaces: unknown
-}
-
-interface MemberIdRow {
-  id: string
 }
 
 interface ProvisionResult {
@@ -21,7 +17,7 @@ interface ProvisionResult {
 export interface AuthWorkspace {
   id: string
   name: string
-  owner_id: string
+  suspended_at: string | null
 }
 
 export interface AuthContext {
@@ -30,15 +26,15 @@ export interface AuthContext {
   workspaceId: string
   role: string
   memberId: string | null
+  isSuspended: boolean
 }
 
 /**
  * Resolves authenticated user + workspace membership from a Bearer token.
  *
- * Three paths:
+ * Two paths:
  *   A) Membership row found → return immediately (fast path)
- *   B) Backfill: user owns a workspace but has no membership row → upsert it
- *   C) Provision: brand-new user → call provision_workspace RPC (atomic)
+ *   B) Provision: brand-new user → call provision_workspace RPC (atomic)
  *
  * Returns null on missing/invalid token. Never swallows provisioning errors
  * silently — every failure path logs to console (visible in Vercel logs).
@@ -59,7 +55,7 @@ export async function getAuthContext(request: NextRequest): Promise<AuthContext 
   // ── Path A: membership exists ────────────────────────────────────────────
   const { data: membership, error: memberError } = await supabaseAdmin
     .from('workspace_members')
-    .select('id, workspace_id, role, workspaces(id, name, owner_id)')
+    .select('id, workspace_id, role, workspaces(id, name, suspended_at)')
     .eq('user_id', user.id)
     .maybeSingle()
 
@@ -76,50 +72,11 @@ export async function getAuthContext(request: NextRequest): Promise<AuthContext 
       workspaceId: m.workspace_id,
       role:        m.role,
       memberId:    m.id,
+      isSuspended: !!(m.workspaces as AuthWorkspace).suspended_at,
     }
   }
 
-  // ── Path B: backfill — workspace exists but member row is missing ────────
-  console.log('[auth] no membership found — checking for owned workspace (path B)')
-  const { data: ownedWorkspace, error: workspaceError } = await supabaseAdmin
-    .from('workspaces')
-    .select('id, name, owner_id')
-    .eq('owner_id', user.id)
-    .maybeSingle()
-
-  if (workspaceError) {
-    console.error('[auth] workspaces query failed:', workspaceError.message)
-  }
-
-  if (ownedWorkspace) {
-    const ws = ownedWorkspace as AuthWorkspace
-    console.log('[auth] path B — backfilling missing owner membership for workspace', ws.id)
-    const { data: backfilled, error: backfillError } = await supabaseAdmin
-      .from('workspace_members')
-      .upsert(
-        { workspace_id: ws.id, user_id: user.id, role: 'owner' },
-        { onConflict: 'workspace_id,user_id', ignoreDuplicates: false }
-      )
-      .select('id')
-      .single()
-
-    if (backfillError) {
-      console.error('[auth] backfill failed:', backfillError.message)
-      return null
-    }
-
-    const bf = backfilled as MemberIdRow
-    console.log('[auth] path B — backfill complete, member id:', bf.id)
-    return {
-      user,
-      workspace:   ws,
-      workspaceId: ws.id,
-      role:        'owner',
-      memberId:    bf.id,
-    }
-  }
-
-  // ── Path C: provision — new user, no workspace yet ───────────────────────
+  // ── Path B: provision — new user, no workspace yet ───────────────────────
   // Prefer company_name from signup form (ONBOARDING_SPEC v1.1 §3.2),
   // fall back to legacy .name (older signups), then email-prefix.
   const meta = user.user_metadata as Record<string, unknown> | undefined
@@ -128,7 +85,7 @@ export async function getAuthContext(request: NextRequest): Promise<AuthContext 
     (meta?.name as string) ||
     user.email?.split('@')[0] ||
     'My Workspace'
-  console.log('[auth] path C — provisioning new workspace for', user.email, 'name:', workspaceName)
+  console.log('[auth] path B — provisioning new workspace for', user.email, 'name:', workspaceName)
 
   const provisionResult = await supabaseAdmin
     .rpc('provision_workspace', {
@@ -147,17 +104,33 @@ export async function getAuthContext(request: NextRequest): Promise<AuthContext 
 
   const { data: newWorkspaceData } = await supabaseAdmin
     .from('workspaces')
-    .select('id, name, owner_id')
+    .select('id, name, suspended_at')
     .eq('id', result.workspace_id)
     .single()
 
   const newWorkspace = newWorkspaceData as AuthWorkspace | null
-  console.log('[auth] path C — provisioning complete, workspace:', result.workspace_id)
+  console.log('[auth] path B — provisioning complete, workspace:', result.workspace_id)
   return {
     user,
-    workspace:   newWorkspace ?? { id: result.workspace_id, name: workspaceName, owner_id: user.id },
+    workspace:   newWorkspace ?? { id: result.workspace_id, name: workspaceName, suspended_at: null },
     workspaceId: result.workspace_id,
     role:        'owner',
     memberId:    result.member_id ?? null,
+    isSuspended: false,
   }
+}
+
+/**
+ * Returns a 403 response if the workspace is suspended.
+ * Call this in write routes (POST/PUT/PATCH/DELETE) after getAuthContext().
+ * Returns null if write access is allowed (caller should proceed).
+ */
+export function requireWriteAccess(ctx: AuthContext): NextResponse | null {
+  if (ctx.isSuspended) {
+    return NextResponse.json(
+      { error: 'workspace_suspended', message: 'This workspace is currently suspended. Write operations are disabled.' },
+      { status: 403 }
+    )
+  }
+  return null
 }

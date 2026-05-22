@@ -1,4 +1,4 @@
-import { getAuthContext } from '@/lib/auth'
+import { getAuthContext, requireWriteAccess } from '@/lib/auth'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
@@ -70,6 +70,8 @@ export async function GET(request: NextRequest, { params: routeParams }: RouteCo
 export async function PATCH(request: NextRequest, { params: routeParams }: RouteContext<{ id: string }>) {
   const ctx = await getAuthContext(request)
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const blocked = requireWriteAccess(ctx)
+  if (blocked) return blocked
 
   const rl = checkRateLimit(`ws:${ctx.workspaceId}:inbox`, 60, 60_000)
   if (!rl.allowed) {

@@ -16,6 +16,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { BADGE_COLORS, fmtEur } from '@/lib/analytics-constants'
 import { useTasksQuery, useUpdateTask, useWorkspaceMembers } from '@/hooks/tasks'
 import { CreateTaskModal } from '@/components/shared/modals/create-task-modal'
+import { useAuthStore } from '@/stores/auth'
 import type { Task } from '@/types/tasks'
 
 // ── CatBadge ────────────────────────────────────────────────────────────────
@@ -59,6 +60,7 @@ interface ActionBoardProps {
 
 export function ActionBoard({ demoMode }: ActionBoardProps) {
   const router = useRouter()
+  const isSuspended = useAuthStore((s) => s.isSuspended)
   const [activeTab, setActiveTab] = useState<'open' | 'picked_up' | 'done'>('open')
   const [noteInps, setNoteInps] = useState<Record<string, string>>({})
   const [assignDropdown, setAssignDropdown] = useState<string | null>(null)
@@ -170,7 +172,8 @@ export function ActionBoard({ demoMode }: ActionBoardProps) {
           <div className="flex items-center gap-1.5">
             <button
               onClick={() => setShowCreateModal(true)}
-              className="flex items-center gap-1 rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-[11.5px] font-semibold text-primary transition-all duration-150 hover:bg-primary/10"
+              disabled={isSuspended}
+              className="flex items-center gap-1 rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-[11.5px] font-semibold text-primary transition-all duration-150 hover:bg-primary/10 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Plus size={12} />
               New Task
@@ -336,7 +339,8 @@ export function ActionBoard({ demoMode }: ActionBoardProps) {
                     {task.status === 'open' && (
                       <button
                         onClick={() => handlePickUp(task)}
-                        className="rounded-md border border-black/[0.08] bg-gray-100 px-3.5 py-[5px] text-xs font-medium text-gray-700 transition-all duration-150 hover:bg-gray-200"
+                        disabled={isSuspended}
+                        className="rounded-md border border-black/[0.08] bg-gray-100 px-3.5 py-[5px] text-xs font-medium text-gray-700 transition-all duration-150 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         Pick Up
                       </button>
@@ -344,20 +348,23 @@ export function ActionBoard({ demoMode }: ActionBoardProps) {
                     {task.status === 'picked_up' && (
                       <>
                         <input
-                          className="w-[130px] rounded-[7px] border border-black/[0.08] bg-gray-100 px-2.5 py-1 text-[11.5px] text-gray-900 placeholder:text-gray-300 focus:border-black/[0.18] focus:outline-none"
+                          className="w-[130px] rounded-[7px] border border-black/[0.08] bg-gray-100 px-2.5 py-1 text-[11.5px] text-gray-900 placeholder:text-gray-300 focus:border-black/[0.18] focus:outline-none disabled:opacity-50"
                           placeholder="Result note (optional)"
                           value={noteInps[task.id] || ''}
                           onChange={e => setNoteInps(p => ({ ...p, [task.id]: e.target.value }))}
+                          disabled={isSuspended}
                         />
                         <button
                           onClick={() => handleReopen(task)}
-                          className="rounded-full border border-black/[0.08] bg-transparent px-[11px] py-1 text-[11px] font-medium text-gray-400 transition-all duration-150 hover:bg-gray-100 hover:text-gray-600"
+                          disabled={isSuspended}
+                          className="rounded-full border border-black/[0.08] bg-transparent px-[11px] py-1 text-[11px] font-medium text-gray-400 transition-all duration-150 hover:bg-gray-100 hover:text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           Re-open
                         </button>
                         <button
                           onClick={() => handleMarkDone(task)}
-                          className="rounded-full border border-green-700/25 bg-green-50 px-3.5 py-[5px] text-xs font-semibold text-green-700 transition-all duration-150 hover:bg-green-100"
+                          disabled={isSuspended}
+                          className="rounded-full border border-green-700/25 bg-green-50 px-3.5 py-[5px] text-xs font-semibold text-green-700 transition-all duration-150 hover:bg-green-100 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           Mark Done
                         </button>
@@ -366,7 +373,8 @@ export function ActionBoard({ demoMode }: ActionBoardProps) {
                     {isDone && (
                       <button
                         onClick={() => handleReopen(task)}
-                        className="flex items-center gap-1 rounded-full border border-black/[0.08] bg-transparent px-[11px] py-1 text-[11px] font-medium text-gray-400 transition-all duration-150 hover:bg-gray-100 hover:text-gray-600"
+                        disabled={isSuspended}
+                        className="flex items-center gap-1 rounded-full border border-black/[0.08] bg-transparent px-[11px] py-1 text-[11px] font-medium text-gray-400 transition-all duration-150 hover:bg-gray-100 hover:text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         <RotateCcw size={10} />
                         Re-open

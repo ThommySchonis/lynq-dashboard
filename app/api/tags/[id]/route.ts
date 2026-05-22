@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import type { RouteContext } from '@/types/api'
-import { getAuthContext } from '@/lib/auth'
+import { getAuthContext, requireWriteAccess } from '@/lib/auth'
 import { can } from '@/lib/permissions'
 import type { Role } from '@/types/database'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
@@ -41,6 +41,8 @@ export async function GET(request: NextRequest, { params: routeParams }: RouteCo
 export async function PATCH(request: NextRequest, { params: routeParams }: RouteContext<{ id: string }>) {
   const ctx = await getAuthContext(request)
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const blocked = requireWriteAccess(ctx)
+  if (blocked) return blocked
   if (!can.manageTags(ctx.role as Role)) {
     return NextResponse.json({ error: 'You do not have permission to edit tags.', code: 'permission_denied' }, { status: 403 })
   }
@@ -85,6 +87,8 @@ export async function PATCH(request: NextRequest, { params: routeParams }: Route
 export async function DELETE(request: NextRequest, { params: routeParams }: RouteContext<{ id: string }>) {
   const ctx = await getAuthContext(request)
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const blocked2 = requireWriteAccess(ctx)
+  if (blocked2) return blocked2
   if (!can.deleteTags(ctx.role as Role)) {
     return NextResponse.json({ error: 'Only owners and admins can delete tags.', code: 'permission_denied' }, { status: 403 })
   }

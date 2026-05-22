@@ -2,7 +2,7 @@ import type { NextRequest } from 'next/server'
 import { NextResponse } from 'next/server'
 import type { RouteContext } from '@/types/api'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
-import { getAuthContext } from '@/lib/auth'
+import { getAuthContext, requireWriteAccess } from '@/lib/auth'
 import { validateBody, validateParams } from '@/lib/validation'
 import { timeSessionParams, editSessionBody } from '@/lib/schemas/time'
 
@@ -23,6 +23,8 @@ type EditableField = (typeof EDITABLE_FIELDS)[number]
 export async function PATCH(request: NextRequest, { params: routeParams }: RouteContext<{ sessionId: string }>) {
   const ctx = await getAuthContext(request)
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const blocked = requireWriteAccess(ctx)
+  if (blocked) return blocked
 
   if (!['owner', 'admin'].includes(ctx.role)) {
     return NextResponse.json({ error: 'Only owners and admins can edit sessions' }, { status: 403 })

@@ -10,6 +10,7 @@ import { PasswordField } from '@/components/features/auth/password-field'
 import { useSignIn } from '@/hooks/auth/use-auth-mutations'
 import { useAuthStore } from '@/stores/auth'
 import { WORD_REVEAL_DELAY_MS } from '@/lib/auth-constants'
+import { getConsent } from '@/lib/cookies/consent'
 
 function getSafeRedirect(raw: string | null): string {
   if (!raw || !raw.startsWith('/') || raw.startsWith('//') || raw.includes('\\')) {
@@ -45,7 +46,21 @@ export default function LoginPage() {
     signIn.mutate(
       { email, password },
       {
-        onSuccess: () => {
+        onSuccess: (data) => {
+          // Fire-and-forget consent sync to Supabase
+          const consent = getConsent()
+          if (consent && data.session?.access_token) {
+            fetch('/api/auth/consent-sync', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${data.session.access_token}`,
+              },
+              body: JSON.stringify({ level: consent.level }),
+            }).catch(() => {
+              // Non-blocking — consent sync failure should not affect login
+            })
+          }
           router.push(redirectTo)
         },
       },

@@ -1,5 +1,5 @@
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
-import { getAuthContext } from '@/lib/auth'
+import { getAuthContext, requireWriteAccess } from '@/lib/auth'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { validateBody } from '@/lib/validation'
@@ -8,6 +8,8 @@ import { shopifyManualConnectBody } from '@/lib/schemas/shopify'
 export async function POST(request: NextRequest) {
   const ctx = await getAuthContext(request)
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const blocked = requireWriteAccess(ctx)
+  if (blocked) return blocked
 
   const [body, bErr] = await validateBody(request, shopifyManualConnectBody)
   if (bErr) return bErr
@@ -41,6 +43,8 @@ export async function POST(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   const ctx = await getAuthContext(request)
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const blocked2 = requireWriteAccess(ctx)
+  if (blocked2) return blocked2
 
   await supabaseAdmin.from('integrations').update({
     shopify_domain: null,

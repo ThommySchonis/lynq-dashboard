@@ -1,6 +1,6 @@
 import type { NextRequest } from 'next/server'
 import { NextResponse } from 'next/server'
-import { getAuthContext } from '@/lib/auth'
+import { getAuthContext, requireWriteAccess } from '@/lib/auth'
 import { getWorkspaceFeatures, subscribeAddon, listAddons } from '@/lib/services/billing'
 
 export async function POST(request: NextRequest) {
@@ -10,6 +10,8 @@ export async function POST(request: NextRequest) {
 
   const ctx = await getAuthContext(request)
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const blocked = requireWriteAccess(ctx)
+  if (blocked) return blocked
 
   // Check if already has access via plan
   const features = await getWorkspaceFeatures(ctx.workspaceId)

@@ -7,6 +7,8 @@ export interface Client {
   parcel_panel_api_key: string | null
   status: 'active' | 'inactive'
   created_at: string
+  suspended_at: string | null      // from joined workspaces table
+  suspension_reason: string | null  // from joined workspaces table
 }
 
 export interface Broadcast {

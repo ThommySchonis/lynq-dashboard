@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
+import { useAuthStore } from '@/stores/auth'
 import {
   ArrowLeft, ArrowRight, Sparkles, Loader2, AlertCircle,
 } from 'lucide-react'
@@ -41,6 +42,7 @@ function validateStep(step: number, form: MacroWizardForm): Record<string, strin
 
 export function MacroWizard() {
   const router = useRouter()
+  const isSuspended = useAuthStore((s) => s.isSuspended)
   const [step, setStep] = useState(0)
   const [form, setForm] = useState<MacroWizardForm>(INITIAL_MACRO_WIZARD_FORM)
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -236,7 +238,7 @@ export function MacroWizard() {
             <ArrowRight size={14} strokeWidth={1.75} />
           </Button>
         ) : (
-          <Button onClick={() => void handleSubmit()} disabled={saveMutation.isPending}>
+          <Button onClick={() => void handleSubmit()} disabled={isSuspended || saveMutation.isPending}>
             {saveMutation.isPending ? (
               <>
                 <Loader2 size={14} strokeWidth={1.75} className="animate-spin" />

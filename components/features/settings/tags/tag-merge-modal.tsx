@@ -12,6 +12,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog'
 import { useMergeTags } from '@/hooks/settings'
+import { useAuthStore } from '@/stores/auth'
 import { paletteFor } from '@/lib/tags'
 import type { Tag } from '@/types/settings'
 
@@ -22,6 +23,7 @@ interface TagMergeModalProps {
 }
 
 export function TagMergeModal({ open, onOpenChange, tags }: TagMergeModalProps) {
+  const isSuspended = useAuthStore((s) => s.isSuspended)
   const [winnerId, setWinnerId] = useState<string>(tags[0]?.id ?? '')
   const mergeTags = useMergeTags()
 
@@ -100,7 +102,7 @@ export function TagMergeModal({ open, onOpenChange, tags }: TagMergeModalProps) 
           >
             Cancel
           </Button>
-          <Button onClick={handleMerge} disabled={mergeTags.isPending}>
+          <Button onClick={handleMerge} disabled={isSuspended || mergeTags.isPending}>
             {mergeTags.isPending ? (
               <>
                 <Loader2 size={14} strokeWidth={1.75} className="animate-spin" />

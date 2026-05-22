@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import type { Role } from '@/types/database'
-import { getAuthContext } from '@/lib/auth'
+import { getAuthContext, requireWriteAccess } from '@/lib/auth'
 import { can } from '@/lib/permissions'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import { sanitizeMacroInput, relativeTime } from '@/lib/macros'
@@ -77,6 +77,8 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   const ctx = await getAuthContext(request)
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const blocked = requireWriteAccess(ctx)
+  if (blocked) return blocked
   if (!can.manageMacros(ctx.role as Role)) {
     return NextResponse.json({ error: 'You do not have permission to create macros.', code: 'permission_denied' }, { status: 403 })
   }

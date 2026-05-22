@@ -16,6 +16,7 @@ import {
   useUploadAvatar,
   useDeleteAvatar,
 } from '@/hooks/settings'
+import { useAuthStore } from '@/stores/auth'
 import type { Theme } from '@/types/settings'
 
 interface FormState {
@@ -25,6 +26,7 @@ interface FormState {
 }
 
 export function ProfileSettings() {
+  const isSuspended = useAuthStore((s) => s.isSuspended)
   const { data: profile, isLoading } = useProfile()
 
   const updateProfile = useUpdateProfile()
@@ -252,7 +254,7 @@ export function ProfileSettings() {
             type="button"
             size="sm"
             onClick={() => void handleSave()}
-            disabled={isSaving || !form.displayName.trim()}
+            disabled={isSuspended || isSaving || !form.displayName.trim()}
           >
             {isSaving ? (
               <>

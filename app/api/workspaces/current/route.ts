@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import type { Role } from '@/types/database'
-import { getAuthContext } from '@/lib/auth'
+import { getAuthContext, requireWriteAccess } from '@/lib/auth'
 import { can } from '@/lib/permissions'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import { validateBody } from '@/lib/validation'
@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
 
   const { data: workspace, error } = await supabaseAdmin
     .from('workspaces')
-    .select('id, name, slug, logo_url, timezone, locale, date_format, time_format, first_day_of_week, show_order_data, auto_translate, allow_deletion, owner_id, created_at, updated_at')
+    .select('id, name, slug, logo_url, timezone, locale, date_format, time_format, first_day_of_week, show_order_data, auto_translate, allow_deletion, created_at, updated_at')
     .eq('id', ctx.workspaceId)
     .single()
 
@@ -24,6 +24,8 @@ export async function GET(request: NextRequest) {
 export async function PATCH(request: NextRequest) {
   const ctx = await getAuthContext(request)
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const blocked = requireWriteAccess(ctx)
+  if (blocked) return blocked
   if (!can.manageWorkspace(ctx.role as Role)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
   const [body, bodyErr] = await validateBody(request, updateWorkspaceBody)

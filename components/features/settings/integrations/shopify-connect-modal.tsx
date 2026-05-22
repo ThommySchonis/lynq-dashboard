@@ -29,6 +29,7 @@ export function ShopifyConnectModal({ open, onOpenChange }: ShopifyConnectModalP
   const [oauthLoading, setOauthLoading] = useState(false)
 
   const token = useAuthStore((s) => s.session?.access_token ?? '')
+  const isSuspended = useAuthStore((s) => s.isSuspended)
   const connectMutation = useConnectShopify()
 
   const isBusy = connectMutation.isPending || oauthLoading
@@ -102,7 +103,7 @@ export function ShopifyConnectModal({ open, onOpenChange }: ShopifyConnectModalP
             </div>
             <Button
               onClick={() => void handleOAuth()}
-              disabled={!canOAuth || isBusy}
+              disabled={isSuspended || !canOAuth || isBusy}
               className="w-full"
             >
               {oauthLoading ? (
@@ -150,7 +151,7 @@ export function ShopifyConnectModal({ open, onOpenChange }: ShopifyConnectModalP
         <DialogFooter showCloseButton={!isBusy}>
           <Button
             onClick={() => void handleManualConnect()}
-            disabled={!canManual || isBusy}
+            disabled={isSuspended || !canManual || isBusy}
             variant="secondary"
           >
             {connectMutation.isPending && <Loader2 className="size-3.5 animate-spin" />}

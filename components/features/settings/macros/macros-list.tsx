@@ -23,6 +23,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog'
 import { useSettingsUI } from '@/stores/settings-ui'
+import { useAuthStore } from '@/stores/auth'
 import {
   useMacros,
   useMacroOnboarding,
@@ -39,6 +40,7 @@ import { MacroRow } from './macro-row'
 import type { Macro } from '@/types/inbox'
 
 export function MacrosList() {
+  const isSuspended = useAuthStore((s) => s.isSuspended)
   const filter = useSettingsUI((s) => s.macroFilter)
   const setFilter = useSettingsUI((s) => s.setMacroFilter)
 
@@ -74,7 +76,7 @@ export function MacrosList() {
           </p>
         </div>
         {canManage && (
-          <Button render={<Link href="/settings/workspace/macros/new" />}>
+          <Button render={<Link href="/settings/workspace/macros/new" />} disabled={isSuspended}>
             <Plus size={16} strokeWidth={1.75} />
             Create macro
           </Button>
@@ -114,8 +116,8 @@ export function MacrosList() {
           <MacrosTable
             macros={macros ?? []}
             isLoading={isLoading}
-            canManage={canManage}
-            canDelete={canDelete}
+            canManage={canManage && !isSuspended}
+            canDelete={canDelete && !isSuspended}
             hasFilters={hasFilters}
             tab="active"
             onDuplicate={(id) => duplicateMut.mutate(id)}
@@ -129,8 +131,8 @@ export function MacrosList() {
           <MacrosTable
             macros={macros ?? []}
             isLoading={isLoading}
-            canManage={canManage}
-            canDelete={canDelete}
+            canManage={canManage && !isSuspended}
+            canDelete={canDelete && !isSuspended}
             hasFilters={hasFilters}
             tab="archived"
             onDuplicate={(id) => duplicateMut.mutate(id)}
@@ -168,7 +170,7 @@ export function MacrosList() {
             </Button>
             <Button
               onClick={() => generateMut.mutate(undefined, { onSuccess: () => setRegenOpen(false) })}
-              disabled={generateMut.isPending}
+              disabled={isSuspended || generateMut.isPending}
             >
               {generateMut.isPending ? (
                 <>

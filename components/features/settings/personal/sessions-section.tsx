@@ -38,6 +38,7 @@ function parseDevice(ua: string): string {
 export function SessionsSection() {
   const signOutOthers = useSignOutOthers()
   const userEmail = useAuthStore((s) => s.user?.email)
+  const isSuspended = useAuthStore((s) => s.isSuspended)
   const [deviceInfo, setDeviceInfo] = useState('This device')
   const [confirmOpen, setConfirmOpen] = useState(false)
 
@@ -85,7 +86,7 @@ export function SessionsSection() {
           <Button
             variant="outline"
             onClick={() => setConfirmOpen(true)}
-            disabled={signOutOthers.isPending}
+            disabled={isSuspended || signOutOthers.isPending}
           >
             {signOutOthers.isPending ? 'Signing out...' : 'Sign out of all other devices'}
           </Button>

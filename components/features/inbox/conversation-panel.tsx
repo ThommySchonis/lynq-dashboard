@@ -70,6 +70,7 @@ export function ConversationPanel() {
   // Auth
   const session = useAuthStore((s) => s.session)
   const token = session?.access_token ?? ''
+  const isSuspended = useAuthStore((s) => s.isSuspended)
 
   // Zustand UI state
   const selectedThreadId = useInboxUI((s) => s.selectedThreadId)
@@ -311,7 +312,7 @@ export function ConversationPanel() {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 {Object.entries(STATUS).map(([k, s]) => (
-                  <DropdownMenuItem key={k} onClick={() => void saveStatus(selectedThread.id, k)} style={{ color: s.color }}>
+                  <DropdownMenuItem key={k} onClick={isSuspended ? undefined : () => void saveStatus(selectedThread.id, k)} disabled={isSuspended} style={{ color: s.color }}>
                     <span className="w-2 h-2 rounded-full shrink-0" style={{ background: s.color }} />
                     {s.label}
                     {getStatus(selectedThread.id) === k && <span className="ml-auto text-[10px] text-muted-foreground">&#10003;</span>}
@@ -509,6 +510,7 @@ export function ConversationPanel() {
                 onSend={() => void handleSend()}
                 onSendResolve={() => void handleSendResolve()}
                 hasMessages={messages.length > 0}
+                disabled={isSuspended}
               />
             </div>
           </>

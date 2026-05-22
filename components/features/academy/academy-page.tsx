@@ -37,7 +37,6 @@ export function AcademyPage() {
   const selectedModule = MODULES.find((m) => m.id === selectedModuleId) ?? null
 
   useEffect(() => {
-    setMounted(true)
     // Load localStorage read state
     const map: Record<string, boolean> = {}
     MODULES.forEach((mod) =>
@@ -46,7 +45,10 @@ export function AcademyPage() {
         if (localStorage.getItem(k) === '1') map[k] = true
       }),
     )
-    setReadMap(map)
+    setTimeout(() => {
+      setMounted(true)
+      setReadMap(map)
+    }, 0)
   }, [])
 
   useEffect(() => {
@@ -57,10 +59,14 @@ export function AcademyPage() {
     }
 
     // Set session for downstream use (double-cast is tech debt)
-    setSession(storeSession as unknown as Record<string, unknown>)
+    const sessionRecord = storeSession as unknown as Record<string, unknown>
     const meta = (storeUser.user_metadata || {}) as Record<string, string>
     const raw = (storeUser.email || '').split('@')[0]
-    setUserName(meta.full_name || meta.name || raw.charAt(0).toUpperCase() + raw.slice(1))
+    const name = meta.full_name || meta.name || raw.charAt(0).toUpperCase() + raw.slice(1)
+    setTimeout(() => {
+      setSession(sessionRecord)
+      setUserName(name)
+    }, 0)
 
     // Keep existing API call logic but use storeSession.access_token
     const token = storeSession.access_token

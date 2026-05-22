@@ -8,6 +8,7 @@ import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import { sendInviteEmail } from '@/lib/email'
 import { validateBody, validateQuery } from '@/lib/validation'
 import { getMembersQuery, inviteMemberBody } from '@/lib/schemas/workspaces'
+import { sanitizeLikeInput } from '@/lib/sanitize'
 
 interface CursorPayload {
   joined_at: string
@@ -50,13 +51,43 @@ export async function GET(request: NextRequest) {
     .order('id', { ascending: true })
     .limit(limit + 1)
 
-  if (search)    membersQ = membersQ.or(`email.ilike.%${search}%,display_name.ilike.%${search}%`)
+  if (search) {
+    const sanitized = sanitizeLikeInput(search)
+    const pattern = `%${sanitized}%`
+
+    // Find member IDs matching email or display_name via separate safe queries
+    const baseQ = () => supabaseAdmin
+      .from('workspace_member_details')
+      .select('id')
+      .eq('workspace_id', ctx.workspaceId)
+
+    const [emailRes, nameRes] = await Promise.all([
+      baseQ().ilike('email', pattern).limit(200),
+      baseQ().ilike('display_name', pattern).limit(200),
+    ])
+
+    const idSet = new Set<string>()
+    for (const row of emailRes.data || []) idSet.add((row as { id: string }).id)
+    for (const row of nameRes.data || []) idSet.add((row as { id: string }).id)
+
+    if (idSet.size > 0) {
+      membersQ = membersQ.in('id', [...idSet])
+    } else {
+      // No members match — short-circuit: skip main query, still fetch invites below
+      membersQ = membersQ.eq('id', '00000000-0000-0000-0000-000000000000')
+    }
+  }
   if (roleParam) membersQ = membersQ.eq('role', roleParam)
 
   if (cursor) {
     try {
       const { joined_at, id } = JSON.parse(Buffer.from(cursor, 'base64').toString()) as CursorPayload
-      membersQ = membersQ.or(`joined_at.gt.${joined_at},and(joined_at.eq.${joined_at},id.gt.${id})`)
+      // Validate cursor values to prevent PostgREST injection
+      const isoTimestamp = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(joined_at)
+      const validUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)
+      if (isoTimestamp && validUuid) {
+        membersQ = membersQ.or(`joined_at.gt.${joined_at},and(joined_at.eq.${joined_at},id.gt.${id})`)
+      }
     } catch {
       // invalid cursor — ignore
     }

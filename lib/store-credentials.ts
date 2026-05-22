@@ -16,9 +16,14 @@ export async function getStoreCredentials(
     .eq('workspace_id', workspaceId)
     .single()
 
-  if (error || !data?.shopify_access_token) {
+  if (error || !data) {
     throw new Error('Store not connected or credentials missing')
   }
 
-  return { domain: data.shopify_domain, accessToken: data.shopify_access_token }
+  const row = data as unknown as { shopify_domain: string; shopify_access_token: string | null }
+  if (!row.shopify_access_token) {
+    throw new Error('Store not connected or credentials missing')
+  }
+
+  return { domain: row.shopify_domain, accessToken: row.shopify_access_token }
 }

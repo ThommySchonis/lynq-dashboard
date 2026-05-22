@@ -46,11 +46,10 @@ export function DonutReasonChart({ refunds, loaded }: DonutReasonChartProps) {
 
   const r = 58
   const C = 2 * Math.PI * r
-  let cum = 0
-  const slices = segments.map(s => {
+  const slices = segments.map((s, i) => {
+    const prevCum = segments.slice(0, i).reduce((acc, seg) => acc + (seg.val / total) * C, 0)
     const dashLen = (s.val / total) * C - 1.5
-    const offset = -cum
-    cum += (s.val / total) * C
+    const offset = -prevCum
     return { ...s, dashLen: Math.max(dashLen, 0), offset }
   })
 

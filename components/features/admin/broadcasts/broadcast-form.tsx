@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Image from 'next/image'
 import { toast } from 'sonner'
 import { useCreateBroadcast } from '@/hooks/admin'
 import { INITIAL_BROADCAST_FORM, BROADCAST_TYPES, BROADCAST_TOPICS } from '@/lib/admin-constants'
@@ -123,10 +124,11 @@ export function BroadcastForm() {
               />
               {ytId && (
                 <div className="rounded-lg overflow-hidden relative pt-[36%] mb-3.5">
-                  <img
+                  <Image
                     src={`https://img.youtube.com/vi/${ytId}/maxresdefault.jpg`}
                     alt="Video thumbnail"
-                    className="absolute inset-0 w-full h-full object-cover"
+                    fill
+                    className="object-cover"
                   />
                 </div>
               )}

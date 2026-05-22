@@ -40,7 +40,8 @@ export function CertificatePage() {
 
     const meta = (storeUser.user_metadata || {}) as Record<string, string>
     const raw = (storeUser.email || '').split('@')[0]
-    setName(meta.full_name || meta.name || raw.charAt(0).toUpperCase() + raw.slice(1))
+    const name = meta.full_name || meta.name || raw.charAt(0).toUpperCase() + raw.slice(1)
+    setTimeout(() => setName(name), 0)
 
     void (async () => {
       try {

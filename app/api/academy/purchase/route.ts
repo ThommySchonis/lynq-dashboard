@@ -1,43 +1,40 @@
 import type { NextRequest } from 'next/server'
-import { getUserFromToken, supabaseAdmin } from '@/lib/supabaseAdmin'
-import { getSubscription, hasAcademyAccess } from '@/lib/subscription'
 import { NextResponse } from 'next/server'
-
-const ACADEMY_PRICE = 100
+import { getAuthContext } from '@/lib/auth'
+import { getWorkspaceFeatures, subscribeAddon, listAddons } from '@/lib/services/billing'
 
 export async function POST(request: NextRequest) {
   if (process.env.PAYMENTS_ENABLED !== 'true') {
-    return NextResponse.json({ error: 'Payments are not configured yet' }, { status: 503 })
+    return NextResponse.json({ error: 'Payments are not enabled' }, { status: 503 })
   }
 
-  const authHeader = request.headers.get('authorization')
-  if (!authHeader) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const ctx = await getAuthContext(request)
+  if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const token = authHeader.replace('Bearer ', '')
-  const user = await getUserFromToken(token)
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-  const sub = await getSubscription(user.email!)
-  if (!sub || sub.status !== 'active') {
-    return NextResponse.json({ error: 'Active subscription required' }, { status: 403 })
+  // Check if already has access via plan
+  const features = await getWorkspaceFeatures(ctx.workspaceId)
+  if (features.academy_access) {
+    return NextResponse.json(
+      { error: 'Academy access already included in your plan' },
+      { status: 400 }
+    )
   }
 
-  const alreadyHasAccess = await hasAcademyAccess(user.email!)
-  if (alreadyHasAccess) {
-    return NextResponse.json({ error: 'Already has academy access' }, { status: 400 })
+  // Check if already purchased via addon
+  const addons = await listAddons(ctx.workspaceId)
+  const academyAddon = addons.find(a => a.id === 'academy')
+  if (academyAddon?.workspace_status === 'active') {
+    return NextResponse.json(
+      { error: 'Academy access already active' },
+      { status: 400 }
+    )
   }
 
-  const { error } = await supabaseAdmin.from('addon_purchases').insert({
-    user_email: user.email,
+  const result = await subscribeAddon(ctx.workspaceId, 'academy')
+
+  return NextResponse.json({
+    success: true,
     addon: 'academy',
-    price_paid: ACADEMY_PRICE,
-    status: 'active',
-    purchased_at: new Date().toISOString(),
+    status: result.status,
   })
-
-  if (error) {
-    return NextResponse.json({ error: 'Failed to register purchase' }, { status: 500 })
-  }
-
-  return NextResponse.json({ success: true, addon: 'academy', pricePaid: ACADEMY_PRICE })
 }

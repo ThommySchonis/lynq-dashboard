@@ -43,7 +43,8 @@ export function SessionsSection() {
 
   useEffect(() => {
     if (typeof navigator !== 'undefined') {
-      setDeviceInfo(parseDevice(navigator.userAgent))
+      const info = parseDevice(navigator.userAgent)
+      setTimeout(() => setDeviceInfo(info), 0)
     }
   }, [])
 

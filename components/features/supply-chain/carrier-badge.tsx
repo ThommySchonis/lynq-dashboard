@@ -5,6 +5,7 @@ export function CarrierBadge({ name, logoUrl }: { name?: string; logoUrl?: strin
   return (
     <span className="inline-flex items-center gap-1.5 px-2.5 py-[3px] rounded-lg bg-secondary border border-border text-xs text-foreground-2 font-medium">
       {logoUrl && (
+        // eslint-disable-next-line @next/next/no-img-element
         <img src={logoUrl} alt={name} className="h-[13px] object-contain opacity-55" />
       )}
       {name}

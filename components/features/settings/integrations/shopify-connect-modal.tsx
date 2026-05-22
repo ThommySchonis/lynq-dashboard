@@ -113,7 +113,7 @@ export function ShopifyConnectModal({ open, onOpenChange }: ShopifyConnectModalP
               {oauthLoading ? 'Redirecting…' : 'Connect with Shopify'}
             </Button>
             <p className="text-xs text-muted-foreground text-center">
-              We'll redirect you to Shopify to authorize access
+              We&apos;ll redirect you to Shopify to authorize access
             </p>
           </div>
 

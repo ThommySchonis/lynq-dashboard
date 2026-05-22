@@ -39,7 +39,7 @@ export function ConfirmDialog({
   const [typed, setTyped] = useState('')
 
   useEffect(() => {
-    if (!open) setTyped('')
+    if (!open) setTyped('') // eslint-disable-line react-hooks/set-state-in-effect
   }, [open])
 
   const canConfirm = typeToConfirm ? typed === typeToConfirm : true

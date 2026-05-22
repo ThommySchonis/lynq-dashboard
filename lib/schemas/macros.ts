@@ -5,7 +5,7 @@ export const macroParams = idParams
 
 export const getMacrosQuery = z.object({
   archived: z.enum(['true', 'false']).optional(),
-  search: z.string().max(200).optional(),
+  search: z.string().trim().min(1).max(200).optional(),
   language: z.string().optional(),
   tags: z.string().optional(),
 })

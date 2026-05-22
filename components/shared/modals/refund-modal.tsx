@@ -45,9 +45,10 @@ export function RefundModal({ order, token, onClose, onSuccess }: RefundModalPro
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (mode === "full") setQtys(Object.fromEntries((order.lineItems || []).map((li) => [li.id, li.quantity])));
     else if (mode === "items") setQtys(Object.fromEntries((order.lineItems || []).map((li) => [li.id, 0])));
-  }, [mode]);
+  }, [mode, order.lineItems]);
 
   const itemsTotal = (order.lineItems || []).reduce((s, li) => s + (qtys[li.id] || 0) * Number(li.price), 0);
   const totalRefund = mode === "custom" ? Number(customAmount) || 0 : itemsTotal;

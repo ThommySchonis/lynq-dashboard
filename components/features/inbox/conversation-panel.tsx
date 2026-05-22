@@ -129,7 +129,8 @@ export function ConversationPanel() {
     setReply,
     setAttachments,
     (msg, type = 'success') => {
-      type === 'success' ? sonnerToast.success(msg) : sonnerToast.error(msg)
+      if (type === 'success') sonnerToast.success(msg)
+      else sonnerToast.error(msg)
     },
   )
 

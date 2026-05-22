@@ -1,5 +1,6 @@
 import { supabaseAdmin } from './supabaseAdmin'
 import { getAdapter } from './providers'
+import { getStoreCredentials } from './store-credentials'
 import { checkTicketLimit, lockWorkspace } from './services/limit-check'
 import { recordOutboundMessage } from './services/billing'
 import { parseJson } from './utils/typed-json'
@@ -42,11 +43,6 @@ interface MessageConversationRef {
 
 interface MessageIdRow {
   message_id?: string
-}
-
-interface ShopifyClientRow {
-  shopify_domain?: string
-  shopify_api_key?: string
 }
 
 interface ShopifyCustomerSearchResponse {
@@ -173,7 +169,7 @@ async function createConversation(thread: Thread, account: EmailAccountRow, work
   const customerEmail = inboundMsg?.isOutbound ? inboundMsg.to[0]?.email : inboundMsg?.from?.email
   const customerName = inboundMsg?.isOutbound ? inboundMsg.to[0]?.name : inboundMsg?.from?.name
 
-  const shopifyCustomerId = await matchShopifyCustomer(workspaceId, customerEmail)
+  const shopifyCustomerId = await matchShopifyCustomer(account.store_id || null, workspaceId, customerEmail)
 
   const insertResult = await supabaseAdmin
     .from('email_conversations')
@@ -355,7 +351,7 @@ export async function processInboundMessage(account: EmailAccountRow, normalized
     //   (b) Prior conversation matched but it was closed/resolved and the
     //       10-day reactivation window has lapsed → new conversation row
     //       linked back via reactivated_from for analytics.
-    const shopifyCustomerId = await matchShopifyCustomer(workspaceId, normalizedMessage.from.email)
+    const shopifyCustomerId = await matchShopifyCustomer(account.store_id || null, workspaceId, normalizedMessage.from.email)
 
     const newConvResult = await supabaseAdmin
       .from('email_conversations')
@@ -523,7 +519,7 @@ export async function sendNewEmail(workspaceId: string, _userEmail: string, acco
     to, cc, bcc, subject, bodyHtml, bodyText,
   })
 
-  const shopifyCustomerId = await matchShopifyCustomer(workspaceId, to[0]?.email)
+  const shopifyCustomerId = await matchShopifyCustomer(accountRow.store_id || null, workspaceId, to[0]?.email)
 
   const newConvInsertResult = await supabaseAdmin
     .from('email_conversations')
@@ -617,24 +613,17 @@ export async function linkCustomer(workspaceId: string, conversationId: string, 
 // Internal: Shopify customer lookup by email
 // ---------------------------------------------------------------------------
 
-async function matchShopifyCustomer(workspaceId: string, email: string | undefined | null) {
-  if (!email) return null
+async function matchShopifyCustomer(storeId: string | null, workspaceId: string, email: string | undefined | null) {
+  if (!storeId || !email) return null
 
   try {
-    const { data: client } = await supabaseAdmin
-      .from('clients')
-      .select('shopify_domain, shopify_api_key')
-      .eq('workspace_id', workspaceId)
-      .maybeSingle()
-
-    const clientRow = client as ShopifyClientRow | null
-    if (!clientRow?.shopify_domain || !clientRow?.shopify_api_key) return null
+    const { domain, accessToken } = await getStoreCredentials(storeId, workspaceId)
 
     const res = await fetch(
-      `https://${clientRow.shopify_domain}/admin/api/2024-01/customers/search.json?query=email:${encodeURIComponent(email)}`,
+      `https://${domain}/admin/api/2025-04/customers/search.json?query=email:${encodeURIComponent(email)}`,
       {
         headers: {
-          'X-Shopify-Access-Token': clientRow.shopify_api_key,
+          'X-Shopify-Access-Token': accessToken,
           'Content-Type': 'application/json',
         },
       }

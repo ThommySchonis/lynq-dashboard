@@ -1,8 +1,32 @@
 import { supabaseAdmin } from '../supabaseAdmin'
 import type { StorePublic } from '@/types/stores'
 
+interface StoreRow {
+  id: string
+  name: string
+  created_at: string
+}
+
+interface IntegrationRow {
+  store_id: string
+  shopify_domain: string | null
+  shopify_connected_at: string | null
+  store_currency: string | null
+}
+
+interface IntegrationDetailRow {
+  shopify_domain: string | null
+  shopify_connected_at: string | null
+  store_currency: string | null
+}
+
+interface ShopifyCredentialsRow {
+  shopify_domain: string | null
+  shopify_access_token: string | null
+}
+
 export async function listStores(workspaceId: string): Promise<StorePublic[]> {
-  const { data, error } = await supabaseAdmin
+  const { data: rawData, error } = await supabaseAdmin
     .from('stores')
     .select('id, name, created_at')
     .eq('workspace_id', workspaceId)
@@ -10,17 +34,19 @@ export async function listStores(workspaceId: string): Promise<StorePublic[]> {
 
   if (error) throw error
 
-  const storeIds = (data || []).map(s => s.id)
-  const { data: integrations } = await supabaseAdmin
+  const data = (rawData || []) as unknown as StoreRow[]
+  const storeIds = data.map(s => s.id)
+  const { data: rawIntegrations } = await supabaseAdmin
     .from('integrations')
     .select('store_id, shopify_domain, shopify_connected_at, store_currency')
     .in('store_id', storeIds)
 
+  const integrations = (rawIntegrations || []) as unknown as IntegrationRow[]
   const integrationMap = new Map(
-    (integrations || []).map(i => [i.store_id, i])
+    integrations.map(i => [i.store_id, i])
   )
 
-  return (data || []).map(store => {
+  return data.map(store => {
     const integration = integrationMap.get(store.id)
     return {
       id: store.id,
@@ -34,7 +60,7 @@ export async function listStores(workspaceId: string): Promise<StorePublic[]> {
 }
 
 export async function getStore(storeId: string, workspaceId: string): Promise<StorePublic | null> {
-  const { data, error } = await supabaseAdmin
+  const { data: rawData, error } = await supabaseAdmin
     .from('stores')
     .select('id, name, created_at')
     .eq('id', storeId)
@@ -42,14 +68,16 @@ export async function getStore(storeId: string, workspaceId: string): Promise<St
     .maybeSingle()
 
   if (error) throw error
-  if (!data) return null
+  if (!rawData) return null
 
-  const { data: integration } = await supabaseAdmin
+  const data = rawData as unknown as StoreRow
+  const { data: rawIntegration } = await supabaseAdmin
     .from('integrations')
     .select('shopify_domain, shopify_connected_at, store_currency')
     .eq('store_id', storeId)
     .maybeSingle()
 
+  const integration = rawIntegration as unknown as IntegrationDetailRow | null
   return {
     id: data.id,
     name: data.name,
@@ -75,31 +103,34 @@ export async function updateStore(
 
   if (error) throw new Error(`Failed to update store: ${error.message}`)
 
-  const { data: integration } = await supabaseAdmin
+  const store = data as unknown as StoreRow
+  const { data: rawIntegration } = await supabaseAdmin
     .from('integrations')
     .select('shopify_domain, shopify_connected_at, store_currency')
     .eq('store_id', storeId)
     .maybeSingle()
 
+  const integration = rawIntegration as unknown as IntegrationDetailRow | null
   return {
-    id: data.id,
-    name: data.name,
+    id: store.id,
+    name: store.name,
     shopify_domain: integration?.shopify_domain ?? null,
     shopify_connected_at: integration?.shopify_connected_at ?? null,
     store_currency: integration?.store_currency ?? null,
-    created_at: data.created_at,
+    created_at: store.created_at,
   }
 }
 
 export async function disconnectStore(storeId: string, workspaceId: string) {
-  const { data: integration, error } = await supabaseAdmin
+  const { data: rawIntegration, error } = await supabaseAdmin
     .from('integrations')
     .select('shopify_domain, shopify_access_token')
     .eq('store_id', storeId)
     .eq('workspace_id', workspaceId)
     .single()
 
-  if (error || !integration) throw new Error('Integration not found')
+  if (error || !rawIntegration) throw new Error('Integration not found')
+  const integration = rawIntegration as unknown as ShopifyCredentialsRow
 
   if (integration.shopify_access_token) {
     try {

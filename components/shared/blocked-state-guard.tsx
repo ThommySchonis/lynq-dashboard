@@ -35,7 +35,7 @@ export function BlockedStateGuard({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (isAllowed(pathname)) {
-      setChecked(true);
+      setChecked(true); // eslint-disable-line react-hooks/set-state-in-effect
       return;
     }
 

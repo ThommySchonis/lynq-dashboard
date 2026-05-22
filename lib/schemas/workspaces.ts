@@ -35,7 +35,7 @@ export const updateMemberBody = z.object({
 })
 
 export const getMembersQuery = paginationQuery.extend({
-  q: z.string().optional(),
+  q: z.string().trim().min(1).optional(),
   role: z.string().optional(),
   cursor: z.string().optional(),
 })

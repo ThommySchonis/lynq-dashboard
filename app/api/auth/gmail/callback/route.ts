@@ -93,6 +93,39 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(`${appUrl}/settings?provider=gmail&status=error&reason=save_failed`)
   }
 
+  // Register Gmail Watch for push notifications
+  const gmailPushTopic = process.env.GMAIL_PUSH_TOPIC
+  if (gmailPushTopic && tokens.access_token) {
+    try {
+      const watchRes = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/watch', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${tokens.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          topicName: gmailPushTopic,
+          labelIds: ['INBOX'],
+        }),
+      })
+
+      if (watchRes.ok) {
+        const watchExpiry = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+        await supabaseAdmin
+          .from('email_accounts')
+          .update({ watch_expiry: watchExpiry })
+          .eq('workspace_id', workspaceId)
+          .eq('provider', 'gmail')
+          .eq('email_address', emailAddress)
+      } else {
+        console.error('[gmail/callback] Watch registration failed:', watchRes.status, await watchRes.text().catch(() => ''))
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err)
+      console.error('[gmail/callback] Watch registration error:', msg)
+    }
+  }
+
   // Fire-and-forget: sync emails in the background so inbox is populated after redirect
   if (workspaceId) {
     syncAllAccounts(workspaceId).catch((err: unknown) => {

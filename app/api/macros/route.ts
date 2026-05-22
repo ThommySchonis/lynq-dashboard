@@ -8,6 +8,7 @@ import { sanitizeMacroInput, relativeTime } from '@/lib/macros'
 import { ensureTagsByName, syncMacroTags } from '@/lib/tags'
 import { validateQuery } from '@/lib/validation'
 import { getMacrosQuery } from '@/lib/schemas/macros'
+import { sanitizeLikeInput } from '@/lib/sanitize'
 
 interface TagLink {
   tag: unknown
@@ -45,7 +46,7 @@ export async function GET(request: NextRequest) {
     .limit(500)
 
   q = archived ? q.not('archived_at', 'is', null) : q.is('archived_at', null)
-  if (search)         q = q.ilike('name', `%${search}%`)
+  if (search)         q = q.ilike('name', `%${sanitizeLikeInput(search)}%`)
   if (language)       q = q.eq('language', language)
   if (tagList.length) q = q.contains('tags', tagList)
 

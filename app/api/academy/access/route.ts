@@ -1,31 +1,29 @@
-import type { NextRequest } from 'next/server'
-import { getUserFromToken } from '@/lib/supabaseAdmin'
-import { hasAcademyAccess, getSubscription } from '@/lib/subscription'
 import { NextResponse } from 'next/server'
+import type { NextRequest } from 'next/server'
+import { getAuthContext } from '@/lib/auth'
+import { getWorkspaceFeatures, listAddons } from '@/lib/services/billing'
 
 export async function GET(request: NextRequest) {
-  const authHeader = request.headers.get('authorization')
-  if (!authHeader) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const ctx = await getAuthContext(request)
+  if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const token = authHeader.replace('Bearer ', '')
-  const user = await getUserFromToken(token)
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const features = await getWorkspaceFeatures(ctx.workspaceId)
 
-  const access = await hasAcademyAccess(user.email!)
-
-  if (access) {
+  // Plan-level access
+  if (features.academy_access) {
     return NextResponse.json({ hasAccess: true })
   }
 
-  const sub = await getSubscription(user.email!)
-  const hasPlan = sub && sub.status === 'active'
+  // Addon-purchased access (check workspace_addons)
+  const addons = await listAddons(ctx.workspaceId)
+  const academyAddon = addons.find(a => a.id === 'academy')
+  if (academyAddon?.workspace_status === 'active') {
+    return NextResponse.json({ hasAccess: true })
+  }
 
   return NextResponse.json({
     hasAccess: false,
-    canPurchase: hasPlan,
-    addonPrice: 100,
-    message: hasPlan
-      ? 'Upgrade to Scale or purchase academy access for €100'
-      : 'An active subscription is required',
+    canPurchase: true,
+    addonPrice: academyAddon?.price_eur ?? 100,
   })
 }

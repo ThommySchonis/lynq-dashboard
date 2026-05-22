@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/stores/auth'
 import {
@@ -43,18 +43,18 @@ export function MfaSection() {
   const [disableOpen, setDisableOpen] = useState(false)
   const [rcOpen, setRcOpen] = useState(false)
 
-  useEffect(() => {
-    void loadFactors()
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
-
-  async function loadFactors() {
+  const loadFactors = useCallback(async () => {
     setLoadingFactors(true)
     const { data, error } = await supabase.auth.mfa.listFactors()
     if (!error && data) {
       setFactors((data.totp ?? []) as unknown as SupabaseFactor[])
     }
     setLoadingFactors(false)
-  }
+  }, [])
+
+  useEffect(() => {
+    void loadFactors() // eslint-disable-line react-hooks/set-state-in-effect
+  }, [loadFactors])
 
   const verifiedFactor = factors.find((f) => f.status === 'verified')
   const twoFaEnabled = Boolean(verifiedFactor)

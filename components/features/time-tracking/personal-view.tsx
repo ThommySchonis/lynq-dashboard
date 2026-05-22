@@ -64,7 +64,7 @@ export function PersonalView({
       setElapsed(0)
       setIsPaused(false)
     }
-  }, [activeSession?.id])
+  }, [activeSession?.id, activeSession])
 
   // Tick timer when active (not paused)
   useEffect(() => {
@@ -75,7 +75,7 @@ export function PersonalView({
     return () => {
       if (timerRef.current) clearInterval(timerRef.current)
     }
-  }, [activeSession?.id, isPaused])
+  }, [activeSession?.id, isPaused]) // eslint-disable-line react-hooks/exhaustive-deps -- intentional: only re-run on session id change
 
   // Break timer tick for paused display
   useEffect(() => {
@@ -86,7 +86,7 @@ export function PersonalView({
     return () => {
       if (breakTimerRef.current) clearInterval(breakTimerRef.current)
     }
-  }, [activeSession?.id, isPaused])
+  }, [activeSession?.id, isPaused]) // eslint-disable-line react-hooks/exhaustive-deps -- intentional: only re-run on session id change
 
   // Heartbeat every 30s when active
   useEffect(() => {
@@ -100,7 +100,7 @@ export function PersonalView({
     return () => {
       if (heartbeatRef.current) clearInterval(heartbeatRef.current)
     }
-  }, [activeSession?.id, isPaused, token])
+  }, [activeSession?.id, isPaused, token]) // eslint-disable-line react-hooks/exhaustive-deps -- intentional: only re-run on session id change
 
   // Warn on page unload when session active
   useEffect(() => {
@@ -167,6 +167,7 @@ export function PersonalView({
     if (!activeSession) return 0
     const base = activeSession.paused_seconds || 0
     if (isPaused && activeSession.paused_at) {
+      // eslint-disable-next-line react-hooks/purity
       return base + Math.round((Date.now() - new Date(activeSession.paused_at).getTime()) / 1000)
     }
     return base

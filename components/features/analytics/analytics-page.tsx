@@ -29,6 +29,11 @@ import type {
   AiInsight,
 } from '@/types/analytics'
 
+import { ExportButton } from '@/components/shared/export-button'
+import { downloadExport } from '@/lib/export-download'
+import { useAuthStore } from '@/stores/auth'
+import { useStoreStore } from '@/stores/store'
+
 import { AlertBanner } from './alert-banner'
 import { KpiRow } from './kpi-row'
 import { RevenueTrendChart } from './revenue-trend-chart'
@@ -57,6 +62,9 @@ function AnalyticsContent() {
   const [customFrom, setCustomFrom] = useState('')
   const [customTo, setCustomTo] = useState('')
   const [demoMode, setDemoMode] = useState(false)
+
+  const token = useAuthStore(s => s.session?.access_token ?? '')
+  const activeStoreId = useStoreStore(s => s.activeStoreId)
 
   // Compute date ranges from UI state
   const range: DateRange = useMemo(() => {
@@ -131,6 +139,34 @@ function AnalyticsContent() {
                 <p className="text-[13px] text-gray-500">Where money is lost &middot; {rangeLabel}</p>
               </div>
               <div className="flex items-center gap-2">
+                <ExportButton
+                  formats={[
+                    { label: 'Orders CSV', value: 'csv' },
+                    { label: 'Orders PDF Report', value: 'pdf' },
+                  ]}
+                  onExport={async (format) => {
+                    await downloadExport(
+                      '/api/orders/export',
+                      { format, storeId: activeStoreId ?? undefined },
+                      token,
+                      `orders-export-${new Date().toISOString().slice(0, 10)}.${format === 'csv' ? 'csv' : 'pdf'}`,
+                    )
+                  }}
+                />
+                <ExportButton
+                  formats={[
+                    { label: 'Analytics CSV', value: 'csv' },
+                    { label: 'Analytics PDF Report', value: 'pdf' },
+                  ]}
+                  onExport={async (format) => {
+                    await downloadExport(
+                      '/api/analytics/export',
+                      { format, storeId: activeStoreId ?? undefined },
+                      token,
+                      `analytics-export-${new Date().toISOString().slice(0, 10)}.${format === 'csv' ? 'csv' : 'pdf'}`,
+                    )
+                  }}
+                />
                 {demoMode ? (
                   <span className="rounded border border-black/[0.08] bg-gray-100 px-[7px] py-0.5 text-[10px] font-bold uppercase tracking-[.05em] text-gray-600">
                     DEMO

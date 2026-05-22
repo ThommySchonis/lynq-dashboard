@@ -7,6 +7,10 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { InvoiceRow } from './invoice-row'
 import { useInvoices } from '@/hooks/billing'
 import { useAuthStore } from '@/stores/auth'
+import { ExportButton } from '@/components/shared/export-button'
+import { downloadExport } from '@/lib/export-download'
+import { can } from '@/lib/permissions'
+import type { Role } from '@/types/database'
 
 const PER_PAGE = 25
 
@@ -18,6 +22,7 @@ export function PaymentHistoryTab() {
   const [page, setPage] = useState(0)
   const { data, isLoading } = useInvoices(page, PER_PAGE)
   const token = useAuthStore(s => s.session?.access_token ?? '')
+  const role = useAuthStore(s => s.role)
 
   const invoices = data?.invoices ?? []
   const total    = data?.total ?? 0
@@ -25,11 +30,31 @@ export function PaymentHistoryTab() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-col gap-1">
-        <h3 className="text-sm font-semibold">Payment history</h3>
-        <p className="text-xs text-muted-foreground">
-          The account owner receives an invoice by email at the start of each billing period.
-        </p>
+      <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-1">
+          <h3 className="text-sm font-semibold">Payment history</h3>
+          <p className="text-xs text-muted-foreground">
+            The account owner receives an invoice by email at the start of each billing period.
+          </p>
+        </div>
+        {can.manageWorkspace(role as Role) && (
+          <ExportButton
+            formats={[
+              { label: 'Download CSV', value: 'csv' },
+              { label: 'Download Invoices (ZIP)', value: 'pdf' },
+            ]}
+            onExport={async (format) => {
+              await downloadExport(
+                '/api/billing/export',
+                { format },
+                token,
+                format === 'csv'
+                  ? `billing-export-${new Date().toISOString().slice(0, 10)}.csv`
+                  : `billing-invoices-${new Date().toISOString().slice(0, 10)}.zip`,
+              )
+            }}
+          />
+        )}
       </div>
 
       <div className="overflow-hidden rounded-xl border border-border bg-card">

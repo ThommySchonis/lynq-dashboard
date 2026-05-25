@@ -11,7 +11,7 @@
  *   )
  *
  * Workspace-owned tables:
- *   tickets, agents, macros, workspace_members, workspace_invites,
+ *   tickets, macros, workspace_members, workspace_invites,
  *   ai_settings, integrations, and any future resource table.
  */
 export const scoped = <Q extends { eq: (column: string, value: string) => Q }>(

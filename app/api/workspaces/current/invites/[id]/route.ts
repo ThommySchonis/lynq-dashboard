@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import type { RouteContext } from '@/types/api'
 import type { Role } from '@/types/database'
-import { getAuthContext } from '@/lib/auth'
+import { getAuthContext, requireWriteAccess } from '@/lib/auth'
 import { can } from '@/lib/permissions'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import { validateParams } from '@/lib/validation'
@@ -16,6 +16,8 @@ interface InviteRow {
 export async function DELETE(request: NextRequest, { params: routeParams }: RouteContext<{ id: string }>) {
   const ctx = await getAuthContext(request)
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const blocked = requireWriteAccess(ctx)
+  if (blocked) return blocked
   if (!can.removeMembers(ctx.role as Role)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
   const [params, paramErr] = validateParams(await routeParams, inviteParams)

@@ -3,6 +3,8 @@
 import { useState } from 'react'
 import { useMediaQuery } from '@/hooks/use-media-query'
 import { Sidebar } from './sidebar'
+import { useAuthStore } from '@/stores/auth'
+import { SuspensionBanner } from '@/components/shared/suspension-banner'
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { Button } from '@/components/ui/button'
 import { Menu } from 'lucide-react'
@@ -18,6 +20,8 @@ interface AppShellProps {
 export function AppShell({ children }: AppShellProps) {
   const [mobileOpen, setMobileOpen] = useState(false)
   const isMobile = useMediaQuery('(max-width: 767px)')
+  const isSuspended = useAuthStore((s) => s.isSuspended)
+  const suspensionReason = useAuthStore((s) => s.suspensionReason)
 
   if (isMobile) {
     return (
@@ -39,7 +43,10 @@ export function AppShell({ children }: AppShellProps) {
             <Sidebar />
           </SheetContent>
         </Sheet>
-        <main className="min-h-screen">{children}</main>
+        <main className="min-h-screen">
+          {isSuspended && <SuspensionBanner reason={suspensionReason} />}
+          {children}
+        </main>
       </div>
     )
   }
@@ -48,6 +55,7 @@ export function AppShell({ children }: AppShellProps) {
     <div className="min-h-screen bg-background">
       <Sidebar />
       <main className="min-h-screen ml-16">
+        {isSuspended && <SuspensionBanner reason={suspensionReason} />}
         {children}
       </main>
     </div>

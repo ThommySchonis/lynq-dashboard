@@ -6,12 +6,14 @@ import { Input } from '@/components/ui/input'
 import { FileText, ChevronDown } from 'lucide-react'
 import { relTime as formatDate } from '@/lib/inbox-utils'
 import { useInboxUI } from '@/stores/inbox-ui'
+import { useAuthStore } from '@/stores/auth'
 import { useConversation } from '@/hooks/inbox/use-inbox-data'
 import { useAddNote } from '@/hooks/inbox/use-inbox-mutations'
 import { useMemo } from 'react'
 import { toast as sonnerToast } from 'sonner'
 
 export function NotesSection() {
+  const isSuspended = useAuthStore((s) => s.isSuspended)
   const selectedThreadId = useInboxUI((s) => s.selectedThreadId)
   const showNotes = useInboxUI((s) => s.showNotes)
   const setShowNotes = useInboxUI((s) => s.setShowNotes)
@@ -86,7 +88,7 @@ export function NotesSection() {
         <Button
           variant="outline"
           onClick={() => void handleAddNote()}
-          disabled={addingNote || !noteInput.trim()}
+          disabled={isSuspended || addingNote || !noteInput.trim()}
           className={`px-3.5 py-2 rounded-lg border border-[#FDE68A] bg-[rgba(251,191,36,0.08)] text-[#F59E0B] text-xs font-semibold font-inherit transition-all duration-150 shrink-0 whitespace-nowrap ${addingNote || !noteInput.trim() ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
         >
           {addingNote ? 'Adding...' : 'Add Note'}

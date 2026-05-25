@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL
 
   const [query, queryErr] = validateQuery(request, shopifyCallbackQuery)
-  if (queryErr) return NextResponse.redirect(`${appUrl}/settings/integrations/shopify?error=missing_params`)
+  if (queryErr) return NextResponse.redirect(`${appUrl}/settings/workspace/stores?error=missing_params`)
 
   const { code, hmac, shop, state } = query
 
@@ -61,7 +61,7 @@ export async function GET(request: NextRequest) {
   const oauthState = oauthStateResult.data as OAuthStateRow | null
 
   if (!oauthState || new Date(oauthState.expires_at) < new Date()) {
-    return NextResponse.redirect(`${appUrl}/settings/integrations/shopify?error=invalid_state`)
+    return NextResponse.redirect(`${appUrl}/settings/workspace/stores?error=invalid_state`)
   }
 
   const clientId = oauthState.client_id || process.env.SHOPIFY_CLIENT_ID || ''
@@ -73,7 +73,7 @@ export async function GET(request: NextRequest) {
   const digest = crypto.createHmac('sha256', clientSecret).update(message).digest('hex')
 
   if (!timingSafeCompare(digest, hmac)) {
-    return NextResponse.redirect(`${appUrl}/settings/integrations/shopify?error=invalid_hmac`)
+    return NextResponse.redirect(`${appUrl}/settings/workspace/stores?error=invalid_hmac`)
   }
 
   const tokenRes = await fetch(`https://${shop}/admin/oauth/access_token`, {
@@ -84,7 +84,7 @@ export async function GET(request: NextRequest) {
 
   const tokenData = await parseJson<ShopifyTokenResponse>(tokenRes)
   if (!tokenData.access_token) {
-    return NextResponse.redirect(`${appUrl}/settings/integrations/shopify?error=token_exchange_failed`)
+    return NextResponse.redirect(`${appUrl}/settings/workspace/stores?error=token_exchange_failed`)
   }
 
   const accessToken = tokenData.access_token
@@ -103,7 +103,7 @@ export async function GET(request: NextRequest) {
   }
   if (!workspaceId) {
     console.error('[shopify oauth callback] no workspace found for user', oauthState.user_id)
-    return NextResponse.redirect(`${appUrl}/settings/integrations/shopify?error=no_workspace`)
+    return NextResponse.redirect(`${appUrl}/settings/workspace/stores?error=no_workspace`)
   }
 
   const userId = oauthState.user_id
@@ -149,7 +149,7 @@ export async function GET(request: NextRequest) {
 
   if (upsertError) {
     console.error('integrations upsert failed:', JSON.stringify(upsertError))
-    return NextResponse.redirect(`${appUrl}/settings/integrations/shopify?error=save_failed`)
+    return NextResponse.redirect(`${appUrl}/settings/workspace/stores?error=save_failed`)
   }
 
   // Register webhooks with store_id in URLs
@@ -175,5 +175,5 @@ export async function GET(request: NextRequest) {
     console.error('Initial sync failed:', e)
   }
 
-  return NextResponse.redirect(`${appUrl}/settings/integrations/shopify?shopify=connected`)
+  return NextResponse.redirect(`${appUrl}/settings/workspace/stores?shopify=connected`)
 }

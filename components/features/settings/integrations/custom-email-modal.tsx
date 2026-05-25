@@ -15,6 +15,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog'
 import { useConnectCustomEmail } from '@/hooks/settings'
+import { useAuthStore } from '@/stores/auth'
 import { INITIAL_CUSTOM_EMAIL_FORM, type CustomEmailForm } from '@/lib/settings-constants'
 import type { CustomEmailConfig } from '@/types/settings'
 
@@ -37,6 +38,7 @@ function validate(fields: CustomEmailForm): string | null {
 }
 
 export function CustomEmailModal({ open, onOpenChange, storeId }: CustomEmailModalProps) {
+  const isSuspended = useAuthStore((s) => s.isSuspended)
   const [fields, setFields] = useState<CustomEmailForm>({ ...INITIAL_CUSTOM_EMAIL_FORM })
   const [error, setError] = useState('')
   const connectMutation = useConnectCustomEmail()
@@ -217,7 +219,7 @@ export function CustomEmailModal({ open, onOpenChange, storeId }: CustomEmailMod
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={connectMutation.isPending}>
+            <Button type="submit" disabled={isSuspended || connectMutation.isPending}>
               {connectMutation.isPending && <Loader2 className="size-3.5 animate-spin" />}
               {connectMutation.isPending ? 'Connecting...' : 'Connect account'}
             </Button>

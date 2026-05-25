@@ -42,6 +42,7 @@ export function MembersTable({
   workspaceName,
 }: MembersTableProps) {
   const userId = useAuthStore((s) => s.user?.id)
+  const isSuspended = useAuthStore((s) => s.isSuspended)
   const updateRole = useUpdateMemberRole()
   const removeMember = useRemoveMember()
   const resendInvite = useResendInvite()
@@ -51,7 +52,7 @@ export function MembersTable({
   const [promoteTarget, setPromoteTarget] = useState<Member | null>(null)
   const [revokeTarget, setRevokeTarget] = useState<Invite | null>(null)
 
-  const canManage = (currentUserRole && can.inviteMembers(currentUserRole)) || isOwner
+  const canManage = !isSuspended && ((currentUserRole && can.inviteMembers(currentUserRole)) || isOwner)
   const roleOptions = currentUserRole === 'owner' ? ROLES_FOR_OWNER : ROLES_FOR_ADMIN
 
   function handleRoleSelect(member: Member, newRole: MemberRole) {

@@ -37,6 +37,8 @@ export interface Workspace {
   plan: string
   trial_ends_at: string | null
   created_at: string
+  suspended_at: string | null
+  suspension_reason: string | null
 }
 
 export interface WorkspaceMember {
@@ -50,3 +52,31 @@ export interface WorkspaceMember {
 }
 
 export type Role = 'owner' | 'admin' | 'agent' | 'observer'
+
+export interface OwnershipTransfer {
+  id: string
+  workspace_id: string
+  from_user_id: string
+  to_user_id: string
+  new_role_for_old_owner: string
+  status: string
+  created_at: string
+  expires_at: string
+  resolved_at: string | null
+}
+
+export interface AccountDeletionLog {
+  id: string
+  user_id: string
+  user_email: string
+  event: 'scheduled' | 'cancelled' | 'deleted' | 'error'
+  metadata: Record<string, unknown>
+  created_at: string
+}
+
+export interface AnonymizedMember {
+  id: string
+  workspace_id: string
+  original_user_id: string
+  anonymized_at: string
+}

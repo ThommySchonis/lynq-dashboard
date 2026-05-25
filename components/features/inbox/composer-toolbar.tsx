@@ -28,6 +28,8 @@ interface ComposerToolbarProps {
   onSendResolve: () => void
   /** Pass false when there are no messages to reply to (disables AI Reply) */
   hasMessages: boolean
+  /** When true, disables send/resolve buttons (workspace is suspended) */
+  disabled?: boolean
 }
 
 export function ComposerToolbar({
@@ -40,6 +42,7 @@ export function ComposerToolbar({
   onSend,
   onSendResolve,
   hasMessages,
+  disabled = false,
 }: ComposerToolbarProps) {
   const showEmoji = useInboxUI((s) => s.showEmoji)
   const setShowEmoji = useInboxUI((s) => s.setShowEmoji)
@@ -172,8 +175,8 @@ export function ComposerToolbar({
       <Button
         className="px-[9px] py-[9px] text-[12.5px] font-semibold bg-[rgba(74,222,128,0.07)] border border-[rgba(74,222,128,0.2)] text-[rgba(74,222,128,0.75)] rounded-xl flex items-center gap-[5px] transition-all hover:bg-[rgba(74,222,128,0.13)] hover:border-[rgba(74,222,128,0.38)] hover:text-[#4ade80] ml-1.5"
         onClick={onSendResolve}
-        disabled={!reply.trim() || sending || planLocked}
-        title={sendDisabledReason}
+        disabled={disabled || !reply.trim() || sending || planLocked}
+        title={disabled ? 'Workspace is suspended' : sendDisabledReason}
       >
         <Check size={11} />
         Send & Close
@@ -181,8 +184,8 @@ export function ComposerToolbar({
       <Button
         className="flex items-center gap-1.5 ml-1.5"
         onClick={onSend}
-        disabled={!reply.trim() || sending || planLocked}
-        title={sendDisabledReason}
+        disabled={disabled || !reply.trim() || sending || planLocked}
+        title={disabled ? 'Workspace is suspended' : sendDisabledReason}
       >
         {sending ? <Loader2 size={13} className="animate-spin text-white" /> : <Send size={13} />}
         {planLocked ? 'Upgrade to send' : sending ? 'Sending…' : 'Send'}

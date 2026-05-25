@@ -28,14 +28,37 @@ export const adminKeys = {
   feedbackCount: () => [...adminKeys.all, 'feedback-count'] as const,
 }
 
+interface ClientRow {
+  id: string
+  company_name: string
+  email: string
+  shopify_domain: string | null
+  shopify_api_key: string | null
+  parcel_panel_api_key: string | null
+  status: 'active' | 'inactive'
+  created_at: string
+  workspaces: { suspended_at: string | null; suspension_reason: string | null } | null
+}
+
 export function useClients() {
   return useQuery<Client[]>({
     queryKey: adminKeys.clients(),
     queryFn: async () => {
       const { data } = await supabase
-        .from('clients').select('*')
+        .from('clients')
+        .select('*, workspaces(suspended_at, suspension_reason)')
         .order('created_at', { ascending: false })
-      return (data ?? []) as Client[]
+
+      // Flatten the joined workspace data into each client
+      return (data as ClientRow[] ?? []).map((row) => {
+        const ws = row.workspaces
+        return {
+          ...row,
+          suspended_at: ws?.suspended_at ?? null,
+          suspension_reason: ws?.suspension_reason ?? null,
+          workspaces: undefined, // remove the nested join object
+        }
+      }) as Client[]
     },
     staleTime: 5 * 60_000,
   })

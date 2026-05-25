@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import type { RouteContext } from '@/types/api'
 import type { Role } from '@/types/database'
-import { getAuthContext } from '@/lib/auth'
+import { getAuthContext, requireWriteAccess } from '@/lib/auth'
 import { can } from '@/lib/permissions'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import { sanitizeMacroInput, relativeTime } from '@/lib/macros'
@@ -66,6 +66,8 @@ export async function GET(request: NextRequest, { params }: RouteContext<{ id: s
 export async function PATCH(request: NextRequest, { params }: RouteContext<{ id: string }>) {
   const ctx = await getAuthContext(request)
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const blocked = requireWriteAccess(ctx)
+  if (blocked) return blocked
   if (!can.manageMacros(ctx.role as Role)) {
     return NextResponse.json({ error: 'You do not have permission to edit macros.', code: 'permission_denied' }, { status: 403 })
   }
@@ -132,6 +134,8 @@ export async function PATCH(request: NextRequest, { params }: RouteContext<{ id:
 export async function DELETE(request: NextRequest, { params }: RouteContext<{ id: string }>) {
   const ctx = await getAuthContext(request)
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const blocked2 = requireWriteAccess(ctx)
+  if (blocked2) return blocked2
   if (!can.deleteMacros(ctx.role as Role)) {
     return NextResponse.json({ error: 'Only owners and admins can delete macros.', code: 'permission_denied' }, { status: 403 })
   }

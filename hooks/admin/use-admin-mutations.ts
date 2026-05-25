@@ -220,3 +220,45 @@ export function useUpdateZoomUrl() {
     },
   })
 }
+
+export function useSuspendClient() {
+  const token = useToken()
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ id, reason }: { id: string; reason?: string }) => {
+      const res = await fetch(`/api/admin/clients/${id}/suspend`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ reason }),
+      })
+      const d = await parseJson<ErrorResponse>(res)
+      if (!res.ok) throw new Error(d.error || 'Failed to suspend')
+      return d
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: adminKeys.clients() })
+    },
+  })
+}
+
+export function useUnsuspendClient() {
+  const token = useToken()
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const res = await fetch(`/api/admin/clients/${id}/unsuspend`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      const d = await parseJson<ErrorResponse>(res)
+      if (!res.ok) throw new Error(d.error || 'Failed to unsuspend')
+      return d
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: adminKeys.clients() })
+    },
+  })
+}

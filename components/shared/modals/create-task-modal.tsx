@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Loader2, Package } from 'lucide-react'
 import { useCreateTask, useWorkspaceMembers } from '@/hooks/tasks'
+import { useAuthStore } from '@/stores/auth'
 import type { CreateTaskInput } from '@/types/tasks'
 
 const CATEGORIES = ['Sizing', 'Quality', 'Damaged', 'Wrong Item', 'Late Delivery', 'Other'] as const
@@ -37,6 +38,7 @@ interface CreateTaskModalProps {
 }
 
 export function CreateTaskModal({ linkedOrder, onClose, onSuccess }: CreateTaskModalProps) {
+  const isSuspended = useAuthStore((s) => s.isSuspended)
   const createTask = useCreateTask()
   const { data: members } = useWorkspaceMembers()
 
@@ -173,7 +175,7 @@ export function CreateTaskModal({ linkedOrder, onClose, onSuccess }: CreateTaskM
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
-            <Button type="submit" disabled={isSubmitting}>
+            <Button type="submit" disabled={isSuspended || isSubmitting}>
               {isSubmitting ? <Loader2 size={13} className="animate-spin" /> : 'Create task'}
             </Button>
           </DialogFooter>

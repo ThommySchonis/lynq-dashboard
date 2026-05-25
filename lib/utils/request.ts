@@ -1,3 +1,16 @@
+import type { NextRequest } from 'next/server'
+
+/**
+ * Derive the site URL from env first, fall back to the incoming request.
+ * Avoids broken links when NEXT_PUBLIC_SITE_URL isn't set on Vercel.
+ */
+export function getSiteUrl(request: NextRequest): string {
+  if (process.env.NEXT_PUBLIC_SITE_URL) return process.env.NEXT_PUBLIC_SITE_URL.replace(/\/$/, '')
+  const host = request.headers.get('x-forwarded-host') || request.headers.get('host')
+  const proto = request.headers.get('x-forwarded-proto') || 'https'
+  return host ? `${proto}://${host}` : ''
+}
+
 /**
  * Parse ?from=YYYY-MM-DD&to=YYYY-MM-DD from request URL.
  * Falls back to start-of-current-month to today in Amsterdam timezone.

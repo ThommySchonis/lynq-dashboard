@@ -13,6 +13,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog'
 import { useCreateTag, useUpdateTag } from '@/hooks/settings'
+import { useAuthStore } from '@/stores/auth'
 import { TAG_COLORS, TAG_PALETTE } from '@/lib/tags'
 import type { Tag } from '@/types/settings'
 
@@ -23,6 +24,7 @@ interface TagEditModalProps {
 }
 
 export function TagEditModal({ open, onOpenChange, tag }: TagEditModalProps) {
+  const isSuspended = useAuthStore((s) => s.isSuspended)
   const isNew = !tag
   const [name, setName] = useState(tag?.name ?? '')
   const [color, setColor] = useState(tag?.color ?? 'slate')
@@ -144,7 +146,7 @@ export function TagEditModal({ open, onOpenChange, tag }: TagEditModalProps) {
           >
             Cancel
           </Button>
-          <Button onClick={() => void handleSave()} disabled={saving}>
+          <Button onClick={() => void handleSave()} disabled={isSuspended || saving}>
             {saving ? (
               <>
                 <Loader2 size={14} strokeWidth={1.75} className="animate-spin" />

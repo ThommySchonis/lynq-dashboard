@@ -15,6 +15,7 @@ import {
 import { extractName } from '@/lib/inbox-utils'
 import { relTime as formatDate } from '@/lib/inbox-utils'
 import { useInboxUI } from '@/stores/inbox-ui'
+import { useAuthStore } from '@/stores/auth'
 import { useStoreStore } from '@/stores/store'
 import { useConversations, useInboxCounts } from '@/hooks/inbox/use-inbox-data'
 import { useSyncInbox } from '@/hooks/inbox/use-inbox-mutations'
@@ -26,6 +27,7 @@ import type { Thread } from '@/types/inbox'
 
 export function ThreadListPanel() {
   const router = useRouter()
+  const isSuspended = useAuthStore((s) => s.isSuspended)
 
   // Zustand UI state
   const activeFolder = useInboxUI((s) => s.activeFolder)
@@ -174,8 +176,9 @@ export function ThreadListPanel() {
             </Button>
             <Button
               onClick={onCreateTicket}
+              disabled={isSuspended}
               className="flex items-center gap-[5px] px-[11px] py-[5px] rounded-lg bg-[#111111] text-white text-[11.5px] font-semibold font-inherit transition-all duration-[180ms] tracking-[.01em] hover:bg-[#333333]"
-              title="Create Ticket"
+              title={isSuspended ? 'Workspace is suspended' : 'Create Ticket'}
             >
               <Plus size={12} />
               Create Ticket

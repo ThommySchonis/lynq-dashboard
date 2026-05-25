@@ -37,6 +37,7 @@ export function PersonalView({
   onFilterChange,
 }: PersonalViewProps) {
   const token = useAuthStore((s) => s.session?.access_token ?? '')
+  const isSuspended = useAuthStore((s) => s.isSuspended)
 
   // Local UI state for the timer
   const [elapsed, setElapsed] = useState(0)
@@ -245,6 +246,7 @@ export function PersonalView({
         onPause={handlePause}
         onResume={handleResume}
         onClockOut={() => setShowModal(true)}
+        disabled={isSuspended}
       />
 
       {/* KPI cards */}

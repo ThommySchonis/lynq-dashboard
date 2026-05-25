@@ -78,12 +78,72 @@ async function handle(request: NextRequest): Promise<NextResponse> {
       .eq('id', sub.workspace_id)
   }
 
+  // ── Phase 2: Auto-suspend workspaces past_due for 7+ days ──────────
+  const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
+
+  const { data: pastDue } = await supabaseAdmin
+    .from('workspace_subscriptions')
+    .select('id, workspace_id')
+    .eq('status', 'past_due')
+    .lte('updated_at', sevenDaysAgo)
+
+  let autoSuspended = 0
+  for (const sub of pastDue || []) {
+    // Skip if already suspended
+    const { data: ws } = await supabaseAdmin
+      .from('workspaces')
+      .select('suspended_at, name')
+      .eq('id', sub.workspace_id)
+      .single()
+
+    if (!ws || ws.suspended_at) continue
+
+    const { error: suspendError } = await supabaseAdmin
+      .from('workspaces')
+      .update({
+        suspended_at: new Date().toISOString(),
+        suspension_reason: 'Unpaid invoice — subscription past due',
+      })
+      .eq('id', sub.workspace_id)
+
+    if (suspendError) {
+      console.error('[cron/trial-expiry] auto-suspend failed for', sub.workspace_id, suspendError.message)
+      continue
+    }
+
+    autoSuspended++
+    console.log('[cron/trial-expiry] auto-suspended workspace', sub.workspace_id)
+
+    // Send suspension email to owner (find via workspace_members, not workspaces.owner_id)
+    const { data: ownerMember } = await supabaseAdmin
+      .from('workspace_members')
+      .select('user_id')
+      .eq('workspace_id', sub.workspace_id)
+      .eq('role', 'owner')
+      .single()
+
+    if (ownerMember?.user_id) {
+      const userId = ownerMember.user_id as string
+      const { data: { user: ownerUser } } = await supabaseAdmin.auth.admin.getUserById(userId)
+      if (ownerUser?.email) {
+        const { sendSuspensionEmail } = await import('@/lib/email')
+        const workspaceName = (ws.name as string | null) || 'your workspace'
+        await sendSuspensionEmail({
+          to: ownerUser.email,
+          workspaceName,
+          reason: 'Unpaid invoice — subscription past due',
+        })
+      }
+    }
+  }
+
   const summary = {
-    ok:           true,
-    started_at:   new Date(startedAt).toISOString(),
-    duration_ms:  Date.now() - startedAt,
-    found:        expired?.length ?? 0,
-    expired:      updated,
+    ok:             true,
+    started_at:     new Date(startedAt).toISOString(),
+    duration_ms:    Date.now() - startedAt,
+    found:          expired?.length ?? 0,
+    expired:        updated,
+    auto_suspended: autoSuspended,
   }
   console.log('[cron/trial-expiry] done', JSON.stringify(summary))
   return NextResponse.json(summary)

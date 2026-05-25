@@ -16,6 +16,7 @@ interface EmailAccountRow {
   email_address: string
   access_token: string | null
   refresh_token: string | null
+  workspaces: { suspended_at: string | null } | null
 }
 
 interface TokenRefreshResponse {
@@ -95,7 +96,7 @@ Deno.serve(async () => {
   // - watch_expiry is null (never registered) or expiring within 1 day
   const { data: accounts, error } = await supabase
     .from('email_accounts')
-    .select('id, email_address, access_token, refresh_token')
+    .select('id, email_address, access_token, refresh_token, workspaces(suspended_at)')
     .eq('provider', 'gmail')
     .eq('status', 'active')
     .or('watch_expiry.is.null,watch_expiry.lt.' + new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString())
@@ -110,6 +111,17 @@ Deno.serve(async () => {
   let skipped = 0
 
   for (const account of accounts as EmailAccountRow[]) {
+    const ws = account.workspaces
+    if (ws?.suspended_at) {
+      const suspendedMs = Date.now() - new Date(ws.suspended_at).getTime()
+      const gracePeriodMs = 7 * 24 * 60 * 60 * 1000
+      if (suspendedMs > gracePeriodMs) {
+        console.log('[gmail-watch-renewal] skipping', account.email_address, '— workspace suspended beyond grace period')
+        skipped++
+        continue
+      }
+    }
+
     if (!account.refresh_token) {
       console.warn(`[gmail-watch-renewal] No refresh_token for account ${account.id} (${account.email_address}), skipping`)
       skipped++

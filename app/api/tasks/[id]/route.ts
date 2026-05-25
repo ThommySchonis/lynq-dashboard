@@ -1,4 +1,4 @@
-import { getAuthContext } from '@/lib/auth'
+import { getAuthContext, requireWriteAccess } from '@/lib/auth'
 import { can } from '@/lib/permissions'
 import { updateTask, deleteTask } from '@/lib/services/tasks'
 import { validateBody, validateParams } from '@/lib/validation'
@@ -11,6 +11,8 @@ import type { RouteContext } from '@/types/api'
 export async function PATCH(request: NextRequest, { params }: RouteContext<{ id: string }>) {
   const ctx = await getAuthContext(request)
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const blocked = requireWriteAccess(ctx)
+  if (blocked) return blocked
   if (!can.manageTasks(ctx.role as Role)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
   const [p, pErr] = validateParams(await params, taskParams)
@@ -31,6 +33,8 @@ export async function PATCH(request: NextRequest, { params }: RouteContext<{ id:
 export async function DELETE(request: NextRequest, { params }: RouteContext<{ id: string }>) {
   const ctx = await getAuthContext(request)
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const blocked2 = requireWriteAccess(ctx)
+  if (blocked2) return blocked2
   if (!can.deleteTasks(ctx.role as Role)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
   const [p, pErr] = validateParams(await params, taskParams)

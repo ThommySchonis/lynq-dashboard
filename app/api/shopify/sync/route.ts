@@ -1,4 +1,4 @@
-import { getAuthContext } from '@/lib/auth'
+import { getAuthContext, requireWriteAccess } from '@/lib/auth'
 import { getStoreCredentials } from '@/lib/store-credentials'
 import { syncOrders } from '@/lib/services/shopify'
 import { NextResponse } from 'next/server'
@@ -9,6 +9,8 @@ import { shopifySyncQuery } from '@/lib/schemas/shopify'
 export async function POST(request: NextRequest) {
   const ctx = await getAuthContext(request)
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const blocked = requireWriteAccess(ctx)
+  if (blocked) return blocked
 
   const [query, qErr] = validateQuery(request, shopifySyncQuery)
   if (qErr) return qErr

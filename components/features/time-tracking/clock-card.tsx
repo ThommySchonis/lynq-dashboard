@@ -16,6 +16,8 @@ interface ClockCardProps {
   onPause: () => void
   onResume: () => void
   onClockOut: () => void
+  /** When true, disables all clock actions (workspace is suspended) */
+  disabled?: boolean
 }
 
 export function ClockCard({
@@ -30,6 +32,7 @@ export function ClockCard({
   onPause,
   onResume,
   onClockOut,
+  disabled = false,
 }: ClockCardProps) {
   const isActive = !!activeSession
 
@@ -79,8 +82,8 @@ export function ClockCard({
           <button
             className="inline-flex h-10 shrink-0 items-center gap-2 rounded-lg bg-[#0F0F10] px-5 text-[13px] font-semibold text-white transition-all hover:bg-[#1a1a1a] disabled:opacity-45 disabled:cursor-not-allowed"
             onClick={onClockIn}
-            disabled={clockingIn || isAdmin}
-            title={isAdmin ? 'Admin accounts cannot clock in' : undefined}
+            disabled={disabled || clockingIn || isAdmin}
+            title={disabled ? 'Workspace is suspended' : isAdmin ? 'Admin accounts cannot clock in' : undefined}
           >
             {clockingIn ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Play className="h-3.5 w-3.5 fill-current" />}
             {clockingIn ? 'Starting...' : 'Clock In'}
@@ -89,15 +92,19 @@ export function ClockCard({
         {isActive && !isPaused && (
           <>
             <button
-              className="inline-flex h-10 shrink-0 items-center gap-2 rounded-lg border border-black/8 bg-gray-100 px-5 text-[13px] font-semibold text-gray-700 transition-all hover:bg-gray-200"
+              className="inline-flex h-10 shrink-0 items-center gap-2 rounded-lg border border-black/8 bg-gray-100 px-5 text-[13px] font-semibold text-gray-700 transition-all hover:bg-gray-200 disabled:opacity-45 disabled:cursor-not-allowed"
               onClick={onPause}
+              disabled={disabled}
+              title={disabled ? 'Workspace is suspended' : undefined}
             >
               <Pause className="h-[13px] w-[13px] fill-current" />
               Pause
             </button>
             <button
-              className="inline-flex h-10 shrink-0 items-center gap-2 rounded-lg bg-red-500 px-5 text-[13px] font-semibold text-white transition-all hover:bg-red-600"
+              className="inline-flex h-10 shrink-0 items-center gap-2 rounded-lg bg-red-500 px-5 text-[13px] font-semibold text-white transition-all hover:bg-red-600 disabled:opacity-45 disabled:cursor-not-allowed"
               onClick={onClockOut}
+              disabled={disabled}
+              title={disabled ? 'Workspace is suspended' : undefined}
             >
               <Square className="h-[13px] w-[13px] fill-current" />
               Clock Out
@@ -107,15 +114,19 @@ export function ClockCard({
         {isActive && isPaused && (
           <>
             <button
-              className="inline-flex h-10 shrink-0 items-center gap-2 rounded-lg border border-black/8 bg-gray-100 px-5 text-[13px] font-semibold text-gray-700 transition-all hover:bg-gray-200"
+              className="inline-flex h-10 shrink-0 items-center gap-2 rounded-lg border border-black/8 bg-gray-100 px-5 text-[13px] font-semibold text-gray-700 transition-all hover:bg-gray-200 disabled:opacity-45 disabled:cursor-not-allowed"
               onClick={onResume}
+              disabled={disabled}
+              title={disabled ? 'Workspace is suspended' : undefined}
             >
               <Play className="h-3.5 w-3.5 fill-current" />
               Resume
             </button>
             <button
-              className="inline-flex h-10 shrink-0 items-center gap-2 rounded-lg bg-red-500 px-5 text-[13px] font-semibold text-white transition-all hover:bg-red-600"
+              className="inline-flex h-10 shrink-0 items-center gap-2 rounded-lg bg-red-500 px-5 text-[13px] font-semibold text-white transition-all hover:bg-red-600 disabled:opacity-45 disabled:cursor-not-allowed"
               onClick={onClockOut}
+              disabled={disabled}
+              title={disabled ? 'Workspace is suspended' : undefined}
             >
               <Square className="h-[13px] w-[13px] fill-current" />
               Clock Out

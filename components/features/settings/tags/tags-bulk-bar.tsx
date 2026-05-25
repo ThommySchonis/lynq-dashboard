@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { GitMerge, Trash2, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useSettingsUI } from '@/stores/settings-ui'
+import { useAuthStore } from '@/stores/auth'
 import { useDeleteTag } from '@/hooks/settings'
 import { ConfirmDialog } from '@/components/features/settings/confirm-dialog'
 import { TagMergeModal } from './tag-merge-modal'
@@ -15,6 +16,7 @@ interface TagsBulkBarProps {
 }
 
 export function TagsBulkBar({ tags, canDelete }: TagsBulkBarProps) {
+  const isSuspended = useAuthStore((s) => s.isSuspended)
   const selectedTagIds = useSettingsUI((s) => s.selectedTagIds)
   const clearTagSelection = useSettingsUI((s) => s.clearTagSelection)
 
@@ -49,6 +51,7 @@ export function TagsBulkBar({ tags, canDelete }: TagsBulkBarProps) {
               variant="outline"
               size="sm"
               onClick={() => setShowMerge(true)}
+              disabled={isSuspended}
             >
               <GitMerge size={14} strokeWidth={1.75} />
               Merge
@@ -59,6 +62,7 @@ export function TagsBulkBar({ tags, canDelete }: TagsBulkBarProps) {
               variant="destructive"
               size="sm"
               onClick={() => setShowDeleteConfirm(true)}
+              disabled={isSuspended}
             >
               <Trash2 size={14} strokeWidth={1.75} />
               Delete

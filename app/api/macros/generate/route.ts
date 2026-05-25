@@ -3,7 +3,7 @@ import type { NextRequest } from 'next/server'
 import type { Role } from '@/types/database'
 import Anthropic from '@anthropic-ai/sdk'
 import type { Message, TextBlock } from '@anthropic-ai/sdk/resources/messages'
-import { getAuthContext } from '../../../../lib/auth'
+import { getAuthContext, requireWriteAccess } from '../../../../lib/auth'
 import { can } from '../../../../lib/permissions'
 import { supabaseAdmin } from '../../../../lib/supabaseAdmin'
 import {
@@ -27,6 +27,8 @@ const MAX_TOKENS   = 16000
 export async function POST(request: NextRequest) {
   const ctx = await getAuthContext(request)
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const blocked = requireWriteAccess(ctx)
+  if (blocked) return blocked
   if (!can.manageMacros(ctx.role as Role)) {
     return NextResponse.json({ error: 'You do not have permission to generate macros.', code: 'permission_denied' }, { status: 403 })
   }

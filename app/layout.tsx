@@ -25,6 +25,7 @@ import { Toaster } from '@/components/ui/sonner'
 import { PageTransition } from '@/components/shared/page-transition'
 import { BlockedStateGuard } from '@/components/shared/blocked-state-guard'
 import { SentryUserSync } from '@/components/providers/sentry-user-sync'
+import { CookieConsentBanner } from '@/components/features/cookie-consent/cookie-consent-banner'
 
 export const metadata: Metadata = {
   title: 'Lynq — Customer Support Dashboard',
@@ -59,6 +60,7 @@ export default function RootLayout({
           </BlockedStateGuard>
         </QueryProvider>
         <Toaster />
+        <CookieConsentBanner />
       </body>
     </html>
   )

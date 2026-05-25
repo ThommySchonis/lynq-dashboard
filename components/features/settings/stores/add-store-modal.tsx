@@ -46,10 +46,10 @@ export function AddStoreModal({ open, onOpenChange }: AddStoreModalProps) {
       throw new Error(d.error ?? 'Failed to initiate connection')
     }
 
-    const json = (await res.json()) as { authUrl: string }
+    const json = (await res.json()) as { url: string }
     reset()
     onOpenChange(false)
-    window.location.href = json.authUrl
+    window.location.href = json.url
   }
 
   return (

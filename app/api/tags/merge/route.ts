@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { getAuthContext } from '@/lib/auth'
+import { getAuthContext, requireWriteAccess } from '@/lib/auth'
 import { can } from '@/lib/permissions'
 import type { Role } from '@/types/database'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
@@ -22,6 +22,8 @@ interface TagRow {
 export async function POST(request: NextRequest) {
   const ctx = await getAuthContext(request)
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const blocked = requireWriteAccess(ctx)
+  if (blocked) return blocked
   if (!can.deleteTags(ctx.role as Role)) {
     return NextResponse.json({ error: 'Only owners and admins can merge tags.', code: 'permission_denied' }, { status: 403 })
   }

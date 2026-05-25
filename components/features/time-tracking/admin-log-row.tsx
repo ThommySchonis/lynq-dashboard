@@ -6,6 +6,7 @@ import { fmtDate, fmtTime, fmtDur, durSec } from '@/lib/time-tracking-constants'
 import type { Session, TeamMember } from '@/types/time-tracking'
 import { SessionEditModal, type EditPatch } from './session-edit-modal'
 import { useEditSession } from '@/hooks/time-tracking/use-time-tracking-mutations'
+import { useAuthStore } from '@/stores/auth'
 
 // Thresholds for the visual flags shown in admin/owner views only.
 // No auto-clock-out — these are UI hints, never actions.
@@ -43,6 +44,7 @@ interface AdminLogRowProps {
 }
 
 export function AdminLogRow({ session: s, canEdit = false, membersById }: AdminLogRowProps) {
+  const isSuspended = useAuthStore((s) => s.isSuspended)
   const [isExpanded, setIsExpanded] = useState(false)
   const [editOpen, setEditOpen] = useState(false)
   const [editError, setEditError] = useState<string | null>(null)
@@ -117,8 +119,9 @@ export function AdminLogRow({ session: s, canEdit = false, membersById }: AdminL
           {canEdit && (
             <button
               onClick={(e) => { e.stopPropagation(); setEditOpen(true) }}
-              title="Edit session"
-              className="rounded p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-foreground"
+              title={isSuspended ? 'Workspace is suspended' : 'Edit session'}
+              disabled={isSuspended}
+              className="rounded p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-foreground disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Pencil className="h-3 w-3" strokeWidth={2} />
             </button>

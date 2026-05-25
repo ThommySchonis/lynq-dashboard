@@ -2,24 +2,20 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import type { RouteContext } from '@/types/api'
 import type { Role } from '@/types/database'
-import { getAuthContext } from '@/lib/auth'
+import { getAuthContext, requireWriteAccess } from '@/lib/auth'
 import { can } from '@/lib/permissions'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import { sendInviteEmail } from '@/lib/email'
 import { validateParams } from '@/lib/validation'
 import { inviteParams } from '@/lib/schemas/workspaces'
-
-function getSiteUrl(request: NextRequest) {
-  if (process.env.NEXT_PUBLIC_SITE_URL) return process.env.NEXT_PUBLIC_SITE_URL.replace(/\/$/, '')
-  const host  = request.headers.get('x-forwarded-host') || request.headers.get('host')
-  const proto = request.headers.get('x-forwarded-proto') || 'https'
-  return host ? `${proto}://${host}` : ''
-}
+import { getSiteUrl } from '@/lib/utils/request'
 
 // POST — resend invite email + extend expiry by 7 days. Idempotent.
 export async function POST(request: NextRequest, { params: routeParams }: RouteContext<{ id: string }>) {
   const ctx = await getAuthContext(request)
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const blocked = requireWriteAccess(ctx)
+  if (blocked) return blocked
   if (!can.inviteMembers(ctx.role as Role)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
   const [params, paramErr] = validateParams(await routeParams, inviteParams)

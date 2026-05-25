@@ -1,4 +1,4 @@
-import { getAuthContext } from '@/lib/auth'
+import { getAuthContext, requireWriteAccess } from '@/lib/auth'
 import { sendNewEmail } from '@/lib/conversationEngine'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import { NextResponse } from 'next/server'
@@ -14,6 +14,8 @@ interface EmailAccountId {
 export async function POST(request: NextRequest) {
   const ctx = await getAuthContext(request)
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const blocked = requireWriteAccess(ctx)
+  if (blocked) return blocked
 
   const rl = checkRateLimit(`ws:${ctx.workspaceId}:inbox`, 60, 60_000)
   if (!rl.allowed) {

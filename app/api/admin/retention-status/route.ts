@@ -29,7 +29,6 @@ type DeletionEvent = 'scheduled' | 'deleted' | 'cancelled' | 'error'
 interface WorkspaceRow {
   id:                         string
   name:                       string | null
-  owner_id:                   string | null
   subscription_status:        string | null
   trial_ends_at:              string | null
   scheduled_for_deletion_at?: string | null
@@ -83,14 +82,14 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     // 1. Currently scheduled for deletion (binnen 7-day grace window)
     supabaseAdmin
       .from('workspaces')
-      .select('id, name, owner_id, subscription_status, trial_ends_at, scheduled_for_deletion_at, created_at')
+      .select('id, name, subscription_status, trial_ends_at, scheduled_for_deletion_at, created_at')
       .not('scheduled_for_deletion_at', 'is', null)
       .order('scheduled_for_deletion_at', { ascending: true }),
 
     // 2. In retention window (trial expired, niet 'paying', nog niet ingepland)
     supabaseAdmin
       .from('workspaces')
-      .select('id, name, owner_id, subscription_status, trial_ends_at, created_at')
+      .select('id, name, subscription_status, trial_ends_at, created_at')
       .neq('subscription_status', 'paying')
       .is('scheduled_for_deletion_at', null)
       .not('trial_ends_at', 'is', null)

@@ -1,6 +1,7 @@
 import type { NextRequest } from 'next/server'
 import { NextResponse } from 'next/server'
 import { asciiSafe } from '@/lib/utils/ascii-safe'
+import { validateCsrfOrigin } from '@/lib/csrf'
 
 // ─── Auth bypass (geen Bearer-token vereist) ────────────────────────
 const AUTH_BYPASS_PREFIXES = [
@@ -106,6 +107,16 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
   const { pathname } = request.nextUrl
 
   if (request.method === 'OPTIONS') return NextResponse.next()
+
+  // ─── CSRF origin check (mutating methods only) ─────────────────────
+  const csrf = validateCsrfOrigin(request)
+  if (!csrf.valid) {
+    console.warn(`[csrf] Blocked: ${csrf.reason} — ${request.method} ${pathname}`)
+    return NextResponse.json(
+      { error: 'CSRF validation failed' },
+      { status: 403 }
+    )
+  }
 
   // Pre-session paths door
   if (startsWithAny(pathname, AUTH_BYPASS_PREFIXES)) {

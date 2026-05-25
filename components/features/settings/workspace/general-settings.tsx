@@ -12,6 +12,8 @@ import type { RegionalValues } from './regional-section'
 import { PreferencesSection } from './preferences-section'
 import type { PreferencesValues } from './preferences-section'
 import { DangerZoneSection } from './danger-zone-section'
+import { PendingTransferBanner } from './pending-transfer-banner'
+import { usePendingTransfer } from '@/hooks/settings/use-ownership-transfer'
 
 interface IdentityState {
   name: string
@@ -37,8 +39,11 @@ interface GeneralSettingsWorkspace {
 
 export function GeneralSettings() {
   const role = useAuthStore((s) => s.role)
+  const currentUserId = useAuthStore((s) => s.user?.id)
+  const isSuspended = useAuthStore((s) => s.isSuspended)
 
   const { data: ws, isLoading } = useWorkspace()
+  const { data: pendingTransfer } = usePendingTransfer()
 
   const updateWorkspace = useUpdateWorkspace()
   const uploadLogo = useUploadLogo()
@@ -141,7 +146,7 @@ export function GeneralSettings() {
     preferences.auto_translate !== initPreferences.auto_translate ||
     preferences.allow_deletion !== initPreferences.allow_deletion
 
-  const canEdit = role === 'owner' || role === 'admin'
+  const canEdit = !isSuspended && (role === 'owner' || role === 'admin')
 
   // ── Save handlers ─────────────────────────────────────────────────────────────
   async function handleSaveIdentity() {
@@ -202,14 +207,6 @@ export function GeneralSettings() {
     }
   }
 
-  function handleTransfer() {
-    toast.success('Transfer initiated')
-  }
-
-  function handleDelete() {
-    toast.error('Workspace deletion scheduled')
-  }
-
   // ── Loading skeleton ─────────────────────────────────────────────────────────
   if (isLoading) {
     return (
@@ -242,6 +239,15 @@ export function GeneralSettings() {
           Manage your workspace identity, regional preferences, and global settings.
         </p>
       </div>
+
+      {currentUserId && pendingTransfer && (
+        <div className="mb-6">
+          <PendingTransferBanner
+            transfer={pendingTransfer}
+            currentUserId={currentUserId}
+          />
+        </div>
+      )}
 
       <div className="flex flex-col gap-10">
         <IdentitySection
@@ -277,8 +283,7 @@ export function GeneralSettings() {
 
         <DangerZoneSection
           role={role}
-          onTransfer={handleTransfer}
-          onDelete={handleDelete}
+          currentUserId={currentUserId}
         />
       </div>
     </div>

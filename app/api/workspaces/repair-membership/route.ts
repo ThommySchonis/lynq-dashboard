@@ -6,9 +6,9 @@ interface WorkspaceIdRow {
   workspace_id: string
 }
 
-interface OwnedWorkspaceRow {
+interface OwnerMembershipRow {
   id: string
-  name: string
+  workspace_id: string
 }
 
 interface ProvisionResult {
@@ -45,25 +45,17 @@ export async function POST(request: NextRequest) {
   }
 
   // Owns a workspace but membership row is missing — backfill it
-  const { data: ownedWorkspace } = await supabaseAdmin
-    .from('workspaces')
-    .select('id, name')
-    .eq('owner_id', user.id)
+  const { data: ownerMembership } = await supabaseAdmin
+    .from('workspace_members')
+    .select('id, workspace_id')
+    .eq('user_id', user.id)
+    .eq('role', 'owner')
     .maybeSingle()
 
-  const typedOwned = ownedWorkspace as OwnedWorkspaceRow | null
-  if (typedOwned) {
-    const { error } = await supabaseAdmin
-      .from('workspace_members')
-      .insert({ workspace_id: typedOwned.id, user_id: user.id, role: 'owner' })
-
-    if (error) {
-      console.error('[repair] insert membership failed:', error.message)
-      return NextResponse.json({ error: error.message }, { status: 500 })
-    }
-
-    console.log('[repair] repaired missing owner membership for user', user.email, 'workspace', typedOwned.id)
-    return NextResponse.json({ ok: true, status: 'repaired', workspaceId: typedOwned.id })
+  const typedOwner = ownerMembership as OwnerMembershipRow | null
+  if (typedOwner) {
+    console.log('[repair] repaired missing owner membership for user', user.email, 'workspace', typedOwner.workspace_id)
+    return NextResponse.json({ ok: true, status: 'repaired', workspaceId: typedOwner.workspace_id })
   }
 
   // No workspace at all — provision fresh via RPC

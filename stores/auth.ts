@@ -10,6 +10,8 @@ interface AuthState {
   role: Role | null
   memberId: string | null
   isLoading: boolean
+  isSuspended: boolean
+  suspensionReason: string | null
 
   setSession: (session: Session | null) => void
   setWorkspace: (workspace: Workspace | null, role: Role | null, memberId: string | null) => void
@@ -25,6 +27,8 @@ export const useAuthStore = create<AuthState>()((set) => ({
   role: null,
   memberId: null,
   isLoading: true,
+  isSuspended: false,
+  suspensionReason: null,
 
   setSession: (session) =>
     set({
@@ -38,6 +42,8 @@ export const useAuthStore = create<AuthState>()((set) => ({
       workspaceId: workspace?.id ?? null,
       role,
       memberId,
+      isSuspended: !!workspace?.suspended_at,
+      suspensionReason: workspace?.suspension_reason ?? null,
     }),
 
   clearSession: () =>
@@ -49,6 +55,8 @@ export const useAuthStore = create<AuthState>()((set) => ({
       role: null,
       memberId: null,
       isLoading: false,
+      isSuspended: false,
+      suspensionReason: null,
     }),
 
   setLoading: (isLoading) => set({ isLoading }),

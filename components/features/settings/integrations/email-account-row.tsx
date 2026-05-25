@@ -6,6 +6,7 @@ import { Mail } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { StatusBadge } from '@/components/features/settings/status-badge'
 import { ConfirmDialog } from '@/components/features/settings/confirm-dialog'
+import { useAuthStore } from '@/stores/auth'
 import type { EmailAccount, EmailProvider } from '@/types/settings'
 import type { UseMutationResult } from '@tanstack/react-query'
 
@@ -47,6 +48,7 @@ interface EmailAccountRowProps {
 }
 
 export function EmailAccountRow({ account, disconnectMutation }: EmailAccountRowProps) {
+  const isSuspended = useAuthStore((s) => s.isSuspended)
   const [confirmOpen, setConfirmOpen] = useState(false)
 
   const displayName = account.email || PROVIDER_LABELS[account.provider]
@@ -70,7 +72,7 @@ export function EmailAccountRow({ account, disconnectMutation }: EmailAccountRow
           variant="destructive"
           size="sm"
           className="flex-shrink-0"
-          disabled={disconnectMutation.isPending}
+          disabled={isSuspended || disconnectMutation.isPending}
           onClick={() => setConfirmOpen(true)}
         >
           Disconnect

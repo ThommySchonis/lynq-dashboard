@@ -1,4 +1,4 @@
-import { getAuthContext } from '@/lib/auth'
+import { getAuthContext, requireWriteAccess } from '@/lib/auth'
 import { linkCustomer } from '@/lib/conversationEngine'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
@@ -10,6 +10,8 @@ import { checkRateLimit } from '@/lib/rate-limit'
 export async function POST(request: NextRequest, { params: routeParams }: RouteContext<{ id: string }>) {
   const ctx = await getAuthContext(request)
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const blocked = requireWriteAccess(ctx)
+  if (blocked) return blocked
 
   const rl = checkRateLimit(`ws:${ctx.workspaceId}:inbox`, 60, 60_000)
   if (!rl.allowed) {

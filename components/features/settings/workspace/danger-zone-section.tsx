@@ -4,40 +4,56 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { SettingsSection } from '@/components/features/settings/settings-section'
 import { ConfirmDialog } from '@/components/features/settings/confirm-dialog'
+import { TransferOwnershipDialog } from './transfer-ownership-dialog'
+import {
+  usePendingTransfer,
+  useCancelTransfer,
+} from '@/hooks/settings/use-ownership-transfer'
+import { useMembers } from '@/hooks/settings/use-settings-data'
+import { useAuthStore } from '@/stores/auth'
+import { useDeleteWorkspace } from '@/hooks/settings/use-workspace-mutations'
 
 interface DangerZoneSectionProps {
   role: string | null
-  onTransfer?: () => void
-  onDelete?: () => void
+  currentUserId?: string
 }
 
-export function DangerZoneSection({ role, onTransfer, onDelete }: DangerZoneSectionProps) {
+export function DangerZoneSection({
+  role,
+  currentUserId,
+}: DangerZoneSectionProps) {
   const [transferOpen, setTransferOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
 
+  const { data: pendingTransfer } = usePendingTransfer()
+  const cancelTransfer = useCancelTransfer()
+  const { data: members } = useMembers()
+  const deleteWorkspace = useDeleteWorkspace()
+
+  const isSuspended = useAuthStore((s) => s.isSuspended)
   const isOwner = role === 'owner'
+  const hasPendingTransfer =
+    !!pendingTransfer && pendingTransfer.from_user_id === currentUserId
 
-  function handleTransferConfirm() {
-    setTransferOpen(false)
-    onTransfer?.()
-  }
+  const targetMember = hasPendingTransfer
+    ? (members?.find((m) => m.user_id === pendingTransfer.to_user_id) as
+        { display_name?: string; email?: string } | undefined)
+    : null
+  const targetMemberName = targetMember?.display_name ?? targetMember?.email ?? 'a member'
 
-  function handleDeleteConfirm() {
-    setDeleteOpen(false)
-    onDelete?.()
-  }
+  const transferExpiresAt = pendingTransfer
+    ? new Date(pendingTransfer.expires_at).toLocaleDateString(undefined, {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+      })
+    : null
 
   return (
     <SettingsSection title="Danger zone">
-      <ConfirmDialog
+      <TransferOwnershipDialog
         open={transferOpen}
         onOpenChange={setTransferOpen}
-        title="Transfer workspace ownership"
-        description="Are you sure you want to transfer ownership of this workspace? This action cannot be undone."
-        confirmLabel="Transfer ownership"
-        typeToConfirm="TRANSFER"
-        onConfirm={handleTransferConfirm}
-        variant="danger"
       />
 
       <ConfirmDialog
@@ -47,7 +63,12 @@ export function DangerZoneSection({ role, onTransfer, onDelete }: DangerZoneSect
         description="This will permanently delete the workspace and all associated data. This action cannot be undone."
         confirmLabel="Delete workspace"
         typeToConfirm="DELETE"
-        onConfirm={handleDeleteConfirm}
+        onConfirm={() => {
+          deleteWorkspace.mutate(undefined, {
+            onSuccess: () => setDeleteOpen(false),
+          })
+        }}
+        loading={deleteWorkspace.isPending}
         variant="danger"
       />
 
@@ -63,18 +84,32 @@ export function DangerZoneSection({ role, onTransfer, onDelete }: DangerZoneSect
           <div>
             <p className="text-sm font-medium text-foreground mb-0.5">Transfer ownership</p>
             <p className="text-sm text-muted-foreground">
-              Transfer this workspace to another member
+              {hasPendingTransfer
+                ? `Pending transfer to ${targetMemberName}. Expires ${transferExpiresAt}.`
+                : 'Transfer this workspace to another member'}
             </p>
           </div>
-          <Button
-            variant="outline"
-            type="button"
-            disabled={!isOwner}
-            onClick={() => setTransferOpen(true)}
-            className="shrink-0"
-          >
-            Transfer…
-          </Button>
+          {hasPendingTransfer ? (
+            <Button
+              variant="outline"
+              type="button"
+              onClick={() => cancelTransfer.mutate()}
+              disabled={isSuspended || cancelTransfer.isPending}
+              className="shrink-0"
+            >
+              {cancelTransfer.isPending ? 'Cancelling…' : 'Cancel transfer'}
+            </Button>
+          ) : (
+            <Button
+              variant="outline"
+              type="button"
+              disabled={isSuspended || !isOwner}
+              onClick={() => setTransferOpen(true)}
+              className="shrink-0"
+            >
+              Transfer…
+            </Button>
+          )}
         </div>
 
         <div className="px-6 py-[18px] flex items-center justify-between gap-6">
@@ -87,7 +122,7 @@ export function DangerZoneSection({ role, onTransfer, onDelete }: DangerZoneSect
           <Button
             variant="destructive"
             type="button"
-            disabled={!isOwner}
+            disabled={isSuspended || !isOwner}
             onClick={() => setDeleteOpen(true)}
             className="shrink-0"
           >

@@ -3,6 +3,7 @@
 import { ChangePasswordSection } from './change-password-section'
 import { MfaSection } from './mfa-section'
 import { SessionsSection } from './sessions-section'
+import { AccountDeletionSection } from '@/components/features/settings/personal/account-deletion-section'
 
 export function SecuritySettings() {
   return (
@@ -17,6 +18,7 @@ export function SecuritySettings() {
         <ChangePasswordSection />
         <MfaSection />
         <SessionsSection />
+        <AccountDeletionSection />
       </div>
     </div>
   )

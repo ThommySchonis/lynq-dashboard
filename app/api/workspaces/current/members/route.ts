@@ -2,13 +2,14 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import type { Role } from '@/types/database'
 import { randomBytes } from 'node:crypto'
-import { getAuthContext } from '@/lib/auth'
+import { getAuthContext, requireWriteAccess } from '@/lib/auth'
 import { can } from '@/lib/permissions'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import { sendInviteEmail } from '@/lib/email'
 import { validateBody, validateQuery } from '@/lib/validation'
 import { getMembersQuery, inviteMemberBody } from '@/lib/schemas/workspaces'
 import { sanitizeLikeInput } from '@/lib/sanitize'
+import { getSiteUrl } from '@/lib/utils/request'
 
 interface CursorPayload {
   joined_at: string
@@ -20,15 +21,6 @@ interface IdRow {
 }
 
 const ROLE_ORDER: Record<string, number> = { owner: 0, admin: 1, agent: 2, observer: 3 }
-
-// Derive the site URL from env first, fall back to the incoming request.
-// Avoids broken invite links when NEXT_PUBLIC_SITE_URL isn't set on Vercel.
-function getSiteUrl(request: NextRequest) {
-  if (process.env.NEXT_PUBLIC_SITE_URL) return process.env.NEXT_PUBLIC_SITE_URL.replace(/\/$/, '')
-  const host  = request.headers.get('x-forwarded-host') || request.headers.get('host')
-  const proto = request.headers.get('x-forwarded-proto') || 'https'
-  return host ? `${proto}://${host}` : ''
-}
 
 // GET — list workspace members + pending invites
 export async function GET(request: NextRequest) {
@@ -130,7 +122,7 @@ export async function GET(request: NextRequest) {
     inviteLink: siteUrl ? `${siteUrl}/invites/${i.token}` : null,
   }))
 
-  const isOwner = ctx.workspace?.owner_id === ctx.user.id
+  const isOwner = ctx.role === 'owner'
 
   if (!ctx.role) {
     console.warn('[members GET] ctx.role missing!', {
@@ -168,6 +160,8 @@ export async function POST(request: NextRequest) {
     console.error('[invite POST] no auth context')
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
+  const blocked = requireWriteAccess(ctx)
+  if (blocked) return blocked
   if (!can.inviteMembers(ctx.role as Role)) {
     console.error('[invite POST] role', ctx.role, 'cannot invite members')
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })

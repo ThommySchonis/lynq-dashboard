@@ -1,7 +1,7 @@
 import { generateText } from 'ai'
 import { anthropic } from '@ai-sdk/anthropic'
 import { supabaseAdmin } from '../../../../lib/supabaseAdmin'
-import { getAuthContext } from '../../../../lib/auth'
+import { getAuthContext, requireWriteAccess } from '../../../../lib/auth'
 import { checkAiSuggestLimit } from '../../../../lib/services/limit-check'
 import { checkRateLimit } from '@/lib/rate-limit'
 import { NextResponse } from 'next/server'
@@ -29,6 +29,8 @@ Rules:
 export async function POST(request: NextRequest) {
   const ctx = await getAuthContext(request)
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const blocked = requireWriteAccess(ctx)
+  if (blocked) return blocked
   const user = ctx.user
 
   // Model 3 (forced upgrade) — block AI Suggest at the plan's

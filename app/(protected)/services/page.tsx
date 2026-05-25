@@ -30,6 +30,7 @@ interface ModalService {
 export default function ServicesPage() {
   const user = useAuthStore((s) => s.user)
   const userId = user?.id ?? null
+  const isSuspended = useAuthStore((s) => s.isSuspended)
 
   const [activeService, setActiveService] = useState<ModalService | null>(null)
   const [phone, setPhone] = useState('')
@@ -195,7 +196,7 @@ export default function ServicesPage() {
                   message={message}
                   setMessage={setMessage}
                   onSubmit={() => { void handleSubmit() }}
-                  submitting={submitInquiry.isPending}
+                  submitting={isSuspended || submitInquiry.isPending}
                   formError={formError}
                 />
               )}

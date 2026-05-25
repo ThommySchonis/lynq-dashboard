@@ -13,6 +13,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog'
 import { useInviteMember } from '@/hooks/settings'
+import { useAuthStore } from '@/stores/auth'
 import { ROLES, ROLE_LABELS, ROLE_DESCS } from '@/lib/settings-constants'
 import type { MemberRole } from '@/types/settings'
 
@@ -35,6 +36,7 @@ interface InviteModalProps {
 }
 
 export function InviteModal({ open, onOpenChange }: InviteModalProps) {
+  const isSuspended = useAuthStore((s) => s.isSuspended)
   const inviteMember = useInviteMember()
 
   const [email, setEmail] = useState('')
@@ -88,7 +90,7 @@ export function InviteModal({ open, onOpenChange }: InviteModalProps) {
   const emailValid = isValidEmail(trimmedEmail)
   const showEmailError = emailBlurred && trimmedEmail.length > 0 && !emailValid
   const roleValid = ROLES.includes(role)
-  const canSend = emailValid && roleValid && !inviteMember.isPending
+  const canSend = !isSuspended && emailValid && roleValid && !inviteMember.isPending
 
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) handleClose() }}>

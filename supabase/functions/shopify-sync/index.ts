@@ -10,7 +10,7 @@ Deno.serve(async () => {
   // Fetch all workspaces with active Shopify integrations
   const { data: integrations, error: intError } = await supabase
     .from('integrations')
-    .select('workspace_id, shopify_domain, shopify_access_token, client_id, store_id')
+    .select('workspace_id, shopify_domain, shopify_access_token, client_id, store_id, workspaces(suspended_at)')
     .not('shopify_access_token', 'is', null)
 
   if (intError || !integrations) {
@@ -21,6 +21,17 @@ Deno.serve(async () => {
   let totalSynced = 0
 
   for (const int of integrations) {
+    // Skip workspaces suspended for more than 7 days (grace period)
+    const ws = int.workspaces as { suspended_at: string | null } | null
+    if (ws?.suspended_at) {
+      const suspendedMs = Date.now() - new Date(ws.suspended_at).getTime()
+      const gracePeriodMs = 7 * 24 * 60 * 60 * 1000
+      if (suspendedMs > gracePeriodMs) {
+        console.log('[shopify-sync] skipping workspace', int.workspace_id, '— suspended beyond grace period')
+        continue
+      }
+    }
+
     try {
       const since = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString()
       let orders: any[] = []

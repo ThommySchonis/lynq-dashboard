@@ -1,5 +1,5 @@
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
-import { getAuthContext } from '@/lib/auth'
+import { getAuthContext, requireWriteAccess } from '@/lib/auth'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { validateBody, validateQuery } from '@/lib/validation'
@@ -25,6 +25,8 @@ function pickAllowedIntegrationFields(body: Record<string, unknown>): Record<str
 export async function POST(request: NextRequest) {
   const ctx = await getAuthContext(request)
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const blocked = requireWriteAccess(ctx)
+  if (blocked) return blocked
 
   const [query, qErr] = validateQuery(request, saveIntegrationQuery)
   if (qErr) return qErr

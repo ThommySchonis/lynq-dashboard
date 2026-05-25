@@ -67,7 +67,7 @@ supabase/
 
 Every table with a `workspace_id` column must be queried with a `workspace_id` filter. Omitting it leaks data across workspaces. Use `getAuthContext(request)` → `ctx.workspaceId`. Use `scoped()` helper from `lib/db.ts` or explicit `.eq("workspace_id", ctx.workspaceId)`.
 
-**Workspace-scoped tables:** `workspace_members`, `workspace_invites`, `clients`, `integrations`, `email_accounts`, `email_conversations`, `email_messages`, `conversation_notes`, `shopify_orders`, `shipments`, `analytics_actions`, `ai_settings`, `agents`, `agent_actions`, `time_sessions`, `time_session_edits`, `macros`, `macro_onboarding`, `tags`, `team_members`, `tasks`, `feedback_submissions`, `workspace_subscriptions`, `usage_counters`, `invoices`, `billing_info`, `payment_methods`, `workspace_addons`, `workspace_deletion_log`, `oauth_states`, `stores`. Any new table with `workspace_id` follows the same rule.
+**Workspace-scoped tables:** `workspace_members`, `workspace_invites`, `clients`, `integrations`, `email_accounts`, `email_conversations`, `email_messages`, `conversation_notes`, `shopify_orders`, `shipments`, `analytics_actions`, `ai_settings`, `time_sessions`, `time_session_edits`, `macros`, `macro_onboarding`, `tags`, `team_members`, `tasks`, `feedback_submissions`, `workspace_subscriptions`, `usage_counters`, `invoices`, `billing_info`, `payment_methods`, `workspace_addons`, `workspace_deletion_log`, `oauth_states`, `stores`. Any new table with `workspace_id` follows the same rule.
 
 ### Backend Service Layer
 

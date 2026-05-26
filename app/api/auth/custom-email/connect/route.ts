@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
   const [body, bodyErr] = await validateBody(request, customEmailConnectBody)
   if (bodyErr) return bodyErr
 
-  const { imapHost, imapPort, smtpHost, smtpPort, email, password, store_id: storeId } = body
+  const { imap_host: imapHost, imap_port: imapPort, smtp_host: smtpHost, smtp_port: smtpPort, email, password, store_id: storeId } = body
 
   // Test IMAP connection
   const imapClient = new ImapFlow({

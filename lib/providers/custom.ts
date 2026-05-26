@@ -72,13 +72,17 @@ interface Thread {
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
+function getAccountEmail(account: CustomAccount) {
+  return account.email_address || account.email
+}
+
 function getImapConfig(account: CustomAccount) {
   return {
     host: account.imap_host,
     port: account.imap_port || 993,
     secure: (account.imap_port || 993) !== 143,
     auth: {
-      user: account.email,
+      user: getAccountEmail(account),
       pass: decrypt(account.encrypted_password),
     },
     logger: false as const,
@@ -93,7 +97,7 @@ function getSmtpConfig(account: CustomAccount) {
     port,
     secure: port === 465,
     auth: {
-      user: account.email,
+      user: getAccountEmail(account),
       pass: decrypt(account.encrypted_password),
     },
   }
@@ -216,7 +220,7 @@ export async function fetchThreads(account: CustomAccount, { limit = 20 }: { lim
           : new Date().toISOString(),
         isOutbound:
           (msg.envelope?.from?.[0]?.address || '').toLowerCase() ===
-          (account.email || '').toLowerCase(),
+          getAccountEmail(account).toLowerCase(),
         unread: !msg.flags?.has('\\Seen'),
       })
     }
@@ -268,7 +272,7 @@ export async function fetchThread(account: CustomAccount, providerThreadId: stri
           source: true,
           flags: true,
         })) {
-          messages.push(parseImapMessage(msg as ImapMessage, account.email, mailbox))
+          messages.push(parseImapMessage(msg as ImapMessage, getAccountEmail(account), mailbox))
         }
       } finally {
         lock.release()
@@ -306,8 +310,8 @@ export async function sendReply(account: CustomAccount, { to, cc, bcc, subject, 
   // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment -- nodemailer has no type declarations
   const info = await transporter.sendMail({
     from: account.display_name
-      ? `"${account.display_name}" <${account.email}>`
-      : account.email,
+      ? `"${account.display_name}" <${getAccountEmail(account)}>`
+      : getAccountEmail(account),
     to: to.map(formatAddr).join(', '),
     cc: cc?.length ? cc.map(formatAddr).join(', ') : undefined,
     bcc: bcc?.length ? bcc.map(formatAddr).join(', ') : undefined,

@@ -3,10 +3,10 @@ import { z } from 'zod'
 // --- Body schemas ---
 
 export const customEmailConnectBody = z.object({
-  imapHost: z.string().min(1, 'IMAP host is required'),
-  imapPort: z.union([z.string(), z.number()]).optional().default(993),
-  smtpHost: z.string().min(1, 'SMTP host is required'),
-  smtpPort: z.union([z.string(), z.number()]).optional().default(587),
+  imap_host: z.string().min(1, 'IMAP host is required'),
+  imap_port: z.union([z.string(), z.number()]).optional().default(993),
+  smtp_host: z.string().min(1, 'SMTP host is required'),
+  smtp_port: z.union([z.string(), z.number()]).optional().default(587),
   email: z.string().min(1, 'Email is required'),
   password: z.string().min(1, 'Password is required'),
   store_id: z.string().optional(),

@@ -1,8 +1,9 @@
-import { createHmac, timingSafeEqual } from 'crypto'
+import { createHash, createHmac, timingSafeEqual } from 'crypto'
 import type { NextRequest } from 'next/server'
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import { parcelPanelWebhookPayload } from '@/lib/schemas/parcel-panel'
+import { withIdempotency } from '@/lib/services/webhookIdempotency'
 
 const OK = () => NextResponse.json({ received: true })
 
@@ -59,47 +60,52 @@ export async function POST(
     return OK()
   }
 
-  // 4. Parse and validate payload
-  let parsed: unknown
-  try {
-    parsed = JSON.parse(rawBody)
-  } catch {
-    console.warn('[parcel-panel/webhook] invalid JSON:', rawBody.substring(0, 500))
-    return OK()
-  }
+  return withIdempotency({
+    rawBody,
+    request,
+    source: 'parcelpanel',
+    eventType: 'shipment_update',
+    workspaceId: workspace_id,
+    extractEventId: (_req, body) => {
+      const p = parcelPanelWebhookPayload.safeParse(body)
+      if (!p.success) return null
+      const raw = `${p.data.tracking_number}:${p.data.status}:${p.data.order_number}`
+      return createHash('sha256').update(raw).digest('hex')
+    },
+    handler: async (body) => {
+      const result = parcelPanelWebhookPayload.safeParse(body)
+      if (!result.success) {
+        console.warn('[parcel-panel/webhook] payload validation failed')
+        return { response: OK() }
+      }
 
-  const result = parcelPanelWebhookPayload.safeParse(parsed)
-  if (!result.success) {
-    console.warn('[parcel-panel/webhook] payload validation failed:', rawBody.substring(0, 500))
-    return OK()
-  }
+      const payload = result.data
 
-  const payload = result.data
+      const { error } = await supabaseAdmin
+        .from('shipments')
+        .upsert(
+          {
+            workspace_id,
+            store_id,
+            order_number: payload.order_number,
+            tracking_number: payload.tracking_number,
+            carrier: payload.carrier.name,
+            status: payload.status,
+            customer_name: payload.customer?.name ?? null,
+            estimated_delivery: payload.estimated_delivery_date ?? null,
+            last_updated: new Date().toISOString(),
+            raw_data: body,
+          },
+          { onConflict: 'workspace_id, tracking_number' }
+        )
 
-  // 5. Upsert into shipments
-  const { error } = await supabaseAdmin
-    .from('shipments')
-    .upsert(
-      {
-        workspace_id,
-        store_id,
-        order_number: payload.order_number,
-        tracking_number: payload.tracking_number,
-        carrier: payload.carrier.name,
-        status: payload.status,
-        customer_name: payload.customer?.name ?? null,
-        estimated_delivery: payload.estimated_delivery_date ?? null,
-        last_updated: new Date().toISOString(),
-        raw_data: parsed,
-      },
-      { onConflict: 'workspace_id, tracking_number' }
-    )
+      if (error) {
+        console.error('[parcel-panel/webhook] upsert error:', error.message)
+        throw error
+      }
 
-  if (error) {
-    console.error('[parcel-panel/webhook] upsert error:', error.message)
-    return NextResponse.json({ error: error.message }, { status: 500 })
-  }
-
-  console.info('[parcel-panel/webhook] upserted:', payload.tracking_number)
-  return OK()
+      console.info('[parcel-panel/webhook] upserted:', payload.tracking_number)
+      return { response: OK(), workspaceId: workspace_id }
+    },
+  })
 }

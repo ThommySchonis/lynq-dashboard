@@ -3,7 +3,7 @@
 //
 // Workspace shape:
 //   {
-//     subscription_status: 'trial' | 'paying' | 'expired',
+//     subscription_status: 'trial' | 'active' | 'past_due' | 'canceled' | 'paused',
 //     trial_ends_at:       'iso string' | null,
 //     ...
 //   }

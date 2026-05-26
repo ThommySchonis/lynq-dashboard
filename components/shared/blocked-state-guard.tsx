@@ -64,7 +64,7 @@ export function BlockedStateGuard({ children }: { children: ReactNode }) {
 
         const data = await parseJson<OnboardingStatus>(res);
 
-        if (data?.subscription_status === "paying") {
+        if (data?.subscription_status === "active") {
           if (!cancelled) setChecked(true);
           return;
         }
@@ -72,7 +72,9 @@ export function BlockedStateGuard({ children }: { children: ReactNode }) {
         const subStatus = data?.subscription_status;
         const trialEndsAt = data?.trial_ends_at;
         const blocked =
-          subStatus === "expired" ||
+          subStatus === "past_due" ||
+          subStatus === "canceled" ||
+          subStatus === "paused" ||
           isTrialExpired({
             subscription_status: subStatus,
             trial_ends_at: trialEndsAt,

@@ -29,10 +29,12 @@ type DeletionEvent = 'scheduled' | 'deleted' | 'cancelled' | 'error'
 interface WorkspaceRow {
   id:                         string
   name:                       string | null
-  subscription_status:        string | null
-  trial_ends_at:              string | null
   scheduled_for_deletion_at?: string | null
   created_at:                 string
+  workspace_subscriptions:    {
+    status:        string | null
+    trial_ends_at: string | null
+  }
 }
 
 interface LogRow {
@@ -82,19 +84,19 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     // 1. Currently scheduled for deletion (binnen 7-day grace window)
     supabaseAdmin
       .from('workspaces')
-      .select('id, name, subscription_status, trial_ends_at, scheduled_for_deletion_at, created_at')
+      .select('id, name, scheduled_for_deletion_at, created_at, workspace_subscriptions!inner(status, trial_ends_at)')
       .not('scheduled_for_deletion_at', 'is', null)
       .order('scheduled_for_deletion_at', { ascending: true }),
 
-    // 2. In retention window (trial expired, niet 'paying', nog niet ingepland)
+    // 2. In retention window (trial expired, niet 'active', nog niet ingepland)
     supabaseAdmin
       .from('workspaces')
-      .select('id, name, subscription_status, trial_ends_at, created_at')
-      .neq('subscription_status', 'paying')
+      .select('id, name, created_at, workspace_subscriptions!inner(status, trial_ends_at)')
+      .neq('workspace_subscriptions.status', 'active')
       .is('scheduled_for_deletion_at', null)
-      .not('trial_ends_at', 'is', null)
-      .lte('trial_ends_at', new Date(now).toISOString())
-      .order('trial_ends_at', { ascending: true }),
+      .not('workspace_subscriptions.trial_ends_at', 'is', null)
+      .lte('workspace_subscriptions.trial_ends_at', new Date(now).toISOString())
+      .order('workspace_subscriptions.trial_ends_at', { ascending: true }),
 
     // 3. Recent log events
     supabaseAdmin
@@ -116,7 +118,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   }
 
   // Annoteer scheduled-list met "days_until_deletion"
-  const scheduled: ScheduledAnnotated[] = ((scheduledRes.data as WorkspaceRow[]) || []).map(ws => {
+  const scheduled: ScheduledAnnotated[] = ((scheduledRes.data as unknown as WorkspaceRow[]) || []).map(ws => {
     const msUntil = ws.scheduled_for_deletion_at
       ? new Date(ws.scheduled_for_deletion_at).getTime() - now
       : 0
@@ -126,8 +128,8 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     }
   })
 
-  const retention: RetentionAnnotated[] = ((retentionRes.data as WorkspaceRow[]) || []).map(ws => {
-    const trialEndMs = ws.trial_ends_at ? new Date(ws.trial_ends_at).getTime() : now
+  const retention: RetentionAnnotated[] = ((retentionRes.data as unknown as WorkspaceRow[]) || []).map(ws => {
+    const trialEndMs = ws.workspace_subscriptions.trial_ends_at ? new Date(ws.workspace_subscriptions.trial_ends_at).getTime() : now
     const msPast     = now - trialEndMs
     const daysPast   = Math.floor(msPast / (24 * 60 * 60 * 1000))
     return {

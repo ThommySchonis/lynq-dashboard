@@ -1,0 +1,189 @@
+import { supabaseAdmin } from '@/lib/supabaseAdmin'
+import { NextResponse } from 'next/server'
+import * as Sentry from '@sentry/nextjs'
+
+type WebhookSource = 'shopify' | 'whop' | 'email' | 'parcelpanel'
+
+interface HandlerResult {
+  response: Response
+  workspaceId?: string
+}
+
+interface WithIdempotencyOptions {
+  rawBody: string
+  request: Request
+  source: WebhookSource
+  eventType: string
+  extractEventId: (request: Request, body: unknown) => string | null
+  workspaceId?: string
+  handler: (body: unknown) => Promise<HandlerResult>
+}
+
+const STALE_THRESHOLD_MS = 5 * 60 * 1000 // 5 minutes
+
+export async function withIdempotency(options: WithIdempotencyOptions): Promise<Response> {
+  const { rawBody, request, source, eventType, extractEventId, handler } = options
+
+  // 1. Parse body
+  let body: unknown
+  try {
+    body = JSON.parse(rawBody)
+  } catch {
+    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
+  }
+
+  // 2. Extract event ID
+  const eventId = extractEventId(request, body)
+  if (!eventId) {
+    // No event ID available — skip dedup, run handler directly
+    console.warn(`[webhook/${source}] no event ID extractable, skipping dedup`)
+    try {
+      const result = await handler(body)
+      return result.response
+    } catch (err) {
+      console.error(`[webhook/${source}] handler error (no dedup):`, err)
+      Sentry.captureException(err, { tags: { webhook_source: source, event_type: eventType } })
+      return NextResponse.json({ error: 'Handler failed' }, { status: 500 })
+    }
+  }
+
+  // 3. Attempt insert
+  const { error: insertError } = await supabaseAdmin
+    .from('webhook_events')
+    .insert({
+      event_id: eventId,
+      source,
+      event_type: eventType,
+      payload: body,
+      status: 'processing',
+      workspace_id: options.workspaceId ?? null,
+    })
+    .select('id')
+    .single()
+
+  if (insertError) {
+    // Unique violation — check existing row
+    if (insertError.code === '23505') {
+      const { data: existing } = await supabaseAdmin
+        .from('webhook_events')
+        .select('id, status, created_at, attempt_count')
+        .eq('source', source)
+        .eq('event_id', eventId)
+        .single()
+
+      if (!existing) {
+        // Race condition: row disappeared between conflict and select
+        return NextResponse.json({ error: 'Transient conflict' }, { status: 500 })
+      }
+
+      if (existing.status === 'completed') {
+        console.log(`[webhook/${source}] duplicate delivery ignored:`, eventId, eventType)
+        return NextResponse.json({ received: true, duplicate: true })
+      }
+
+      // Failed events: allow re-processing on retry delivery.
+      if (existing.status === 'failed') {
+        console.warn(`[webhook/${source}] retrying previously failed event:`, eventId)
+        await supabaseAdmin
+          .from('webhook_events')
+          .delete()
+          .eq('id', existing.id)
+
+        const { error: retryInsertError } = await supabaseAdmin
+          .from('webhook_events')
+          .insert({
+            event_id: eventId,
+            source,
+            event_type: eventType,
+            payload: body,
+            status: 'processing',
+            workspace_id: options.workspaceId ?? null,
+            attempt_count: ((existing.attempt_count as number) ?? 1) + 1,
+          })
+
+        if (retryInsertError) {
+          console.log(`[webhook/${source}] lost race on failed retry re-insert:`, eventId)
+          return NextResponse.json({ received: true, duplicate: true })
+        }
+        // Fall through to execute handler
+      } else {
+        // Status is 'processing' — check if stale
+        const age = Date.now() - new Date(existing.created_at as string).getTime()
+        if (age < STALE_THRESHOLD_MS) {
+          console.log(`[webhook/${source}] concurrent processing, skipping:`, eventId)
+          return NextResponse.json({ received: true, duplicate: true })
+        }
+
+        // Stale — delete and re-insert
+        console.warn(`[webhook/${source}] stale processing event detected (${Math.round(age / 1000)}s old), re-processing:`, eventId)
+        await supabaseAdmin
+          .from('webhook_events')
+          .delete()
+          .eq('id', existing.id)
+
+        const { error: reinsertError } = await supabaseAdmin
+          .from('webhook_events')
+          .insert({
+            event_id: eventId,
+            source,
+            event_type: eventType,
+            payload: body,
+            status: 'processing',
+            workspace_id: options.workspaceId ?? null,
+          })
+
+        if (reinsertError) {
+          console.log(`[webhook/${source}] lost race on stale re-insert:`, eventId)
+          return NextResponse.json({ received: true, duplicate: true })
+        }
+      }
+    } else {
+      // Non-conflict DB error — log but still process the webhook
+      console.error(`[webhook/${source}] event insert failed:`, insertError.message)
+      Sentry.captureException(insertError, { tags: { webhook_source: source, stage: 'idempotency' } })
+    }
+  }
+
+  // 4. Execute handler
+  const startTime = Date.now()
+  try {
+    const result = await handler(body)
+    const durationMs = Date.now() - startTime
+    const resolvedWorkspaceId = result.workspaceId ?? options.workspaceId ?? null
+
+    // 5. Mark completed
+    await supabaseAdmin
+      .from('webhook_events')
+      .update({
+        status: 'completed',
+        completed_at: new Date().toISOString(),
+        processing_duration_ms: durationMs,
+        ...(resolvedWorkspaceId ? { workspace_id: resolvedWorkspaceId } : {}),
+      })
+      .eq('source', source)
+      .eq('event_id', eventId)
+
+    return result.response
+  } catch (err) {
+    const durationMs = Date.now() - startTime
+    const errorMessage = err instanceof Error ? err.message : String(err)
+
+    // 6. Mark failed
+    await supabaseAdmin
+      .from('webhook_events')
+      .update({
+        status: 'failed',
+        error_message: errorMessage,
+        processing_duration_ms: durationMs,
+      })
+      .eq('source', source)
+      .eq('event_id', eventId)
+
+    console.error(`[webhook/${source}] handler error:`, err)
+    Sentry.captureException(err, {
+      tags: { webhook_source: source, event_type: eventType },
+      extra: { event_id: eventId, duration_ms: durationMs },
+    })
+    return NextResponse.json({ error: 'Handler failed' }, { status: 500 })
+  }
+}

@@ -34,8 +34,6 @@ export interface Workspace {
   name: string
   slug: string
   logo_url: string | null
-  plan: string
-  trial_ends_at: string | null
   created_at: string
   suspended_at: string | null
   suspension_reason: string | null

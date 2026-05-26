@@ -19,7 +19,7 @@ import { executeAccountDeletion } from '@/lib/services/account-deletion'
 //               event 'scheduled' (triggert email waarschuwing).
 //
 //   Phase 2 — Delete: scheduled_for_deletion_at is in het verleden
-//             EN status is niet 'paying'
+//             EN status is niet 'active'
 //             → harde DELETE op workspaces (cascade via FK).
 //               Snapshot wordt eerst gelogd als event 'deleted'.
 //
@@ -38,9 +38,11 @@ type DeletionEvent = 'scheduled' | 'deleted' | 'cancelled' | 'error'
 interface WorkspaceRow {
   id:                         string
   name:                       string | null
-  subscription_status:        string | null
-  trial_ends_at:              string | null
   scheduled_for_deletion_at:  string | null
+  workspace_subscriptions:    {
+    status:        string | null
+    trial_ends_at: string | null
+  }
 }
 
 interface LogEventInput {
@@ -114,8 +116,8 @@ async function getOwnerEmail(workspaceId: string): Promise<string | null> {
 async function runCancelPhase(): Promise<PhaseSummary> {
   const { data, error } = await supabaseAdmin
     .from('workspaces')
-    .select('id, name, subscription_status, trial_ends_at, scheduled_for_deletion_at')
-    .eq('subscription_status', 'paying')
+    .select('id, name, scheduled_for_deletion_at, workspace_subscriptions!inner(status, trial_ends_at)')
+    .eq('workspace_subscriptions.status', 'active')
     .not('scheduled_for_deletion_at', 'is', null)
 
   if (error) {
@@ -126,7 +128,7 @@ async function runCancelPhase(): Promise<PhaseSummary> {
   let cancelled = 0
   let errors    = 0
 
-  for (const ws of (data as WorkspaceRow[]) || []) {
+  for (const ws of (data as unknown as WorkspaceRow[]) || []) {
     const { error: updateError } = await supabaseAdmin
       .from('workspaces')
       .update({ scheduled_for_deletion_at: null })
@@ -140,7 +142,7 @@ async function runCancelPhase(): Promise<PhaseSummary> {
         workspaceName: ws.name,
         ownerEmail:    await getOwnerEmail(ws.id),
         event:         'error',
-        trialEndsAt:   ws.trial_ends_at,
+        trialEndsAt:   ws.workspace_subscriptions.trial_ends_at,
         scheduledAt:   ws.scheduled_for_deletion_at,
         details:       { phase: 'cancel', message: updateError.message },
       })
@@ -153,9 +155,9 @@ async function runCancelPhase(): Promise<PhaseSummary> {
       workspaceName: ws.name,
       ownerEmail:    await getOwnerEmail(ws.id),
       event:         'cancelled',
-      trialEndsAt:   ws.trial_ends_at,
+      trialEndsAt:   ws.workspace_subscriptions.trial_ends_at,
       scheduledAt:   ws.scheduled_for_deletion_at,
-      details:       { phase: 'cancel', reason: 'subscription_status=paying' },
+      details:       { phase: 'cancel', reason: 'status=active' },
     })
   }
 
@@ -168,14 +170,14 @@ async function runSchedulePhase(): Promise<PhaseSummary> {
   const cutoffIso  = new Date(Date.now() - TRIAL_RETENTION_DAYS * 24 * 60 * 60 * 1000).toISOString()
   const scheduleAt = new Date(Date.now() + GRACE_DAYS * 24 * 60 * 60 * 1000).toISOString()
 
-  // Niet 'paying', niet al ingepland, trial >60 dagen voorbij.
+  // Niet 'active', niet al ingepland, trial >60 dagen voorbij.
   const { data, error } = await supabaseAdmin
     .from('workspaces')
-    .select('id, name, subscription_status, trial_ends_at, scheduled_for_deletion_at')
-    .neq('subscription_status', 'paying')
+    .select('id, name, scheduled_for_deletion_at, workspace_subscriptions!inner(status, trial_ends_at)')
+    .neq('workspace_subscriptions.status', 'active')
     .is('scheduled_for_deletion_at', null)
-    .not('trial_ends_at', 'is', null)
-    .lte('trial_ends_at', cutoffIso)
+    .not('workspace_subscriptions.trial_ends_at', 'is', null)
+    .lte('workspace_subscriptions.trial_ends_at', cutoffIso)
 
   if (error) {
     console.error('[cron/data-retention] phase 1 query failed:', error.message)
@@ -185,7 +187,7 @@ async function runSchedulePhase(): Promise<PhaseSummary> {
   let scheduled = 0
   let errors    = 0
 
-  for (const ws of (data as WorkspaceRow[]) || []) {
+  for (const ws of (data as unknown as WorkspaceRow[]) || []) {
     const { error: updateError } = await supabaseAdmin
       .from('workspaces')
       .update({ scheduled_for_deletion_at: scheduleAt })
@@ -200,7 +202,7 @@ async function runSchedulePhase(): Promise<PhaseSummary> {
         workspaceName: ws.name,
         ownerEmail:    await getOwnerEmail(ws.id),
         event:         'error',
-        trialEndsAt:   ws.trial_ends_at,
+        trialEndsAt:   ws.workspace_subscriptions.trial_ends_at,
         scheduledAt:   null,
         details:       { phase: 'schedule', message: updateError.message },
       })
@@ -213,13 +215,13 @@ async function runSchedulePhase(): Promise<PhaseSummary> {
       workspaceName: ws.name,
       ownerEmail:    await getOwnerEmail(ws.id),
       event:         'scheduled',
-      trialEndsAt:   ws.trial_ends_at,
+      trialEndsAt:   ws.workspace_subscriptions.trial_ends_at,
       scheduledAt:   scheduleAt,
       details:       {
         phase:               'schedule',
         retention_days:      TRIAL_RETENTION_DAYS,
         grace_days:          GRACE_DAYS,
-        subscription_status: ws.subscription_status,
+        subscription_status: ws.workspace_subscriptions.status,
       },
     })
   }
@@ -232,12 +234,12 @@ async function runSchedulePhase(): Promise<PhaseSummary> {
 async function runDeletePhase(): Promise<PhaseSummary> {
   const nowIso = new Date().toISOString()
 
-  // scheduled_for_deletion_at is verleden + niet 'paying' (laatste safety net,
+  // scheduled_for_deletion_at is verleden + niet 'active' (laatste safety net,
   // hoewel Phase 0 dit normaal al opruimt).
   const { data, error } = await supabaseAdmin
     .from('workspaces')
-    .select('id, name, subscription_status, trial_ends_at, scheduled_for_deletion_at')
-    .neq('subscription_status', 'paying')
+    .select('id, name, scheduled_for_deletion_at, workspace_subscriptions!inner(status, trial_ends_at)')
+    .neq('workspace_subscriptions.status', 'active')
     .not('scheduled_for_deletion_at', 'is', null)
     .lte('scheduled_for_deletion_at', nowIso)
 
@@ -249,7 +251,7 @@ async function runDeletePhase(): Promise<PhaseSummary> {
   let deleted = 0
   let errors  = 0
 
-  for (const ws of (data as WorkspaceRow[]) || []) {
+  for (const ws of (data as unknown as WorkspaceRow[]) || []) {
     const ownerEmail = await getOwnerEmail(ws.id)
 
     // 1. Log eerst (met snapshot) — daarna delete. Workspace_id staat
@@ -259,11 +261,11 @@ async function runDeletePhase(): Promise<PhaseSummary> {
       workspaceName: ws.name,
       ownerEmail,
       event:         'deleted',
-      trialEndsAt:   ws.trial_ends_at,
+      trialEndsAt:   ws.workspace_subscriptions.trial_ends_at,
       scheduledAt:   ws.scheduled_for_deletion_at,
       details:       {
         phase:               'delete',
-        subscription_status: ws.subscription_status,
+        subscription_status: ws.workspace_subscriptions.status,
       },
     })
 
@@ -281,7 +283,7 @@ async function runDeletePhase(): Promise<PhaseSummary> {
         workspaceName: ws.name,
         ownerEmail,
         event:         'error',
-        trialEndsAt:   ws.trial_ends_at,
+        trialEndsAt:   ws.workspace_subscriptions.trial_ends_at,
         scheduledAt:   ws.scheduled_for_deletion_at,
         details:       { phase: 'delete', message: deleteError.message },
       })

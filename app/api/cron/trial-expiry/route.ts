@@ -67,15 +67,6 @@ async function handle(request: NextRequest): Promise<NextResponse> {
     }
     updated++
     console.log('[cron/trial-expiry] expired workspace', sub.workspace_id, '(trial ended', sub.trial_ends_at, ')')
-
-    // Mirror the change onto the legacy workspaces.subscription_status
-    // column so proxy.ts's existing blocked-state check (which reads
-    // from workspaces, not workspace_subscriptions, until PR 2 swaps
-    // it over) keeps working.
-    await supabaseAdmin
-      .from('workspaces')
-      .update({ subscription_status: 'expired' })
-      .eq('id', sub.workspace_id)
   }
 
   // ── Phase 2: Auto-suspend workspaces past_due for 7+ days ──────────

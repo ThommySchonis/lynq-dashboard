@@ -38,13 +38,13 @@ interface SupabaseUser {
   [key: string]: unknown
 }
 
-interface WorkspaceData {
-  subscription_status: string | null
+interface SubscriptionData {
+  status: string | null
   trial_ends_at: string | null
 }
 
 interface WorkspaceMemberRow {
-  workspaces: WorkspaceData | null
+  workspace_id: string
 }
 
 interface BlockedState {
@@ -73,34 +73,52 @@ async function checkBlockedState(token: string): Promise<BlockedState> {
   const user = await userRes.json().catch(() => null) as SupabaseUser | null
   if (!user?.id) return { blocked: false }
 
-  // 2. Workspace via workspace_members → workspaces (service-role
-  // request, bypassed RLS). Embedded select met PostgREST syntax.
-  const wsUrl = `${supabaseUrl}/rest/v1/workspace_members`
+  // 2. Get workspace_id from workspace_members
+  const memberUrl = `${supabaseUrl}/rest/v1/workspace_members`
     + `?user_id=eq.${user.id}`
-    + `&select=workspaces(subscription_status,trial_ends_at)`
+    + `&select=workspace_id`
     + `&limit=1`
-  const wsRes = await fetch(wsUrl, {
+  const memberRes = await fetch(memberUrl, {
     headers: {
       Authorization: asciiSafe(`Bearer ${secretKey}`, 'Authorization', 'proxy'),
       apikey:        asciiSafe(secretKey,              'apikey',        'proxy'),
     },
     cache:   'no-store',
   })
-  if (!wsRes.ok) return { blocked: false }
-  const rows = await wsRes.json().catch(() => null) as WorkspaceMemberRow[] | null
-  const ws   = Array.isArray(rows) ? rows[0]?.workspaces : null
-  if (!ws) return { blocked: false }
+  if (!memberRes.ok) return { blocked: false }
+  const members = await memberRes.json().catch(() => null) as WorkspaceMemberRow[] | null
+  const workspaceId = Array.isArray(members) ? members[0]?.workspace_id : null
+  if (!workspaceId) return { blocked: false }
 
-  // 3. Beslis: paying → nooit blocked. Expired status of trial-met-
-  // verlopen-trial_ends_at → blocked.
-  if (ws.subscription_status === 'paying')  return { blocked: false }
-  if (ws.subscription_status === 'expired') return { blocked: true }
-  if (ws.subscription_status === 'trial' && ws.trial_ends_at) {
-    if (new Date(ws.trial_ends_at).getTime() < Date.now()) {
+  // 3. Get subscription status from workspace_subscriptions
+  const subUrl = `${supabaseUrl}/rest/v1/workspace_subscriptions`
+    + `?workspace_id=eq.${workspaceId}`
+    + `&select=status,trial_ends_at`
+  const subRes = await fetch(subUrl, {
+    headers: {
+      Authorization: asciiSafe(`Bearer ${secretKey}`, 'Authorization', 'proxy'),
+      apikey:        asciiSafe(secretKey,              'apikey',        'proxy'),
+    },
+    cache:   'no-store',
+  })
+  if (!subRes.ok) return { blocked: false }
+  const subs = await subRes.json().catch(() => null) as SubscriptionData[] | null
+  const sub = Array.isArray(subs) ? subs[0] : null
+  if (!sub) return { blocked: false }
+
+  // 4. Decide: active → never blocked. trial → check expiry.
+  //    past_due / canceled / paused → blocked.
+  if (sub.status === 'active')  return { blocked: false }
+  if (sub.status === 'trial' && sub.trial_ends_at) {
+    if (new Date(sub.trial_ends_at).getTime() < Date.now()) {
       return { blocked: true }
     }
+    return { blocked: false }
   }
-  return { blocked: false }
+  if (sub.status === 'trial') return { blocked: false }
+
+  // past_due, canceled, paused → blocked
+  return { blocked: true }
 }
 
 export async function proxy(request: NextRequest): Promise<NextResponse> {

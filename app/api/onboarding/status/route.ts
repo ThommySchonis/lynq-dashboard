@@ -24,10 +24,11 @@ export async function GET(request: NextRequest) {
     emailRes,
     integrationRes,
     membersRes,
+    subscriptionRes,
   ] = await Promise.all([
     supabaseAdmin
       .from('workspaces')
-      .select('id, name, subscription_status, trial_ends_at')
+      .select('id, name')
       .eq('id', ctx.workspaceId)
       .maybeSingle(),
     supabaseAdmin
@@ -54,15 +55,22 @@ export async function GET(request: NextRequest) {
       .from('workspace_members')
       .select('id', { count: 'exact', head: true })
       .eq('workspace_id', ctx.workspaceId),
+    supabaseAdmin
+      .from('workspace_subscriptions')
+      .select('status, trial_ends_at')
+      .eq('workspace_id', ctx.workspaceId)
+      .maybeSingle(),
   ])
 
   interface ProfileRow { display_name?: string; welcome_dismissed_at?: string | null; setup_checklist_dismissed_at?: string | null }
-  interface WorkspaceRow { id: string; name?: string; subscription_status?: string; trial_ends_at?: string }
+  interface WorkspaceRow { id: string; name?: string }
+  interface SubscriptionRow { status?: string; trial_ends_at?: string }
   interface EmailRow { status?: string }
   interface IntegrationRow { shopify_domain?: string; status?: string }
 
   const profileData = profileRes.data as ProfileRow | null
   const wsData = workspaceRes.data as WorkspaceRow | null
+  const subData = subscriptionRes.data as SubscriptionRow | null
   const emailData = emailRes.data as EmailRow | null
   const integrationData = integrationRes.data as IntegrationRow | null
 
@@ -84,8 +92,8 @@ export async function GET(request: NextRequest) {
     team_member_count: membersRes.count ?? 0,
 
     // Meta for trial-only gating + UI copy
-    subscription_status: wsData?.subscription_status ?? null,
-    trial_ends_at:       wsData?.trial_ends_at ?? null,
+    subscription_status: subData?.status ?? null,
+    trial_ends_at:       subData?.trial_ends_at ?? null,
     workspace_name:      wsData?.name ?? null,
     user: {
       first_name:                   firstName,

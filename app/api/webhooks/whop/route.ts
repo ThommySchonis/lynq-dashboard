@@ -4,6 +4,7 @@ import * as Sentry from '@sentry/nextjs'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import { verifyWebhookSignature, type WhopMembership, type WhopPayment } from '@/lib/whop'
 import { unlockWorkspace } from '@/lib/services/limit-check'
+import { withIdempotency } from '@/lib/services/webhookIdempotency'
 
 interface WorkspaceIdRow {
   workspace_id: string
@@ -21,7 +22,7 @@ interface PlanIdRow {
 //
 // Receives Standard Webhooks-spec signed events from Whop and applies
 // them to workspace_subscriptions / invoices. Idempotent via the
-// whop_webhook_events table — duplicate webhook-id deliveries are a
+// withIdempotency middleware — duplicate webhook-id deliveries are a
 // no-op return-200.
 //
 // Five events handled:
@@ -133,35 +134,6 @@ async function resolveWorkspaceIdFromMembership(membership: WhopMembership): Pro
   return null
 }
 
-async function recordEvent({
-  whopEventId,
-  eventType,
-  payload,
-}: {
-  whopEventId: string
-  eventType:   string
-  payload:     unknown
-}): Promise<{ duplicate: boolean }> {
-  const { error } = await supabaseAdmin
-    .from('whop_webhook_events')
-    .insert({
-      whop_event_id: whopEventId,
-      event_type:    eventType,
-      payload,
-    })
-
-  if (error) {
-    if (error.code === '23505') {  // unique violation → duplicate delivery
-      return { duplicate: true }
-    }
-    // Other DB errors don't stop processing; we log + continue so
-    // Whop doesn't retry on transient DB blips.
-    console.error('[whop webhook] event log insert failed:', error.message)
-    Sentry.captureException(error, { tags: { integration: 'whop', stage: 'idempotency' } })
-  }
-  return { duplicate: false }
-}
-
 // ─── Event handlers ───────────────────────────────────────────────────
 
 async function handleMembershipActivated(membership: WhopMembership): Promise<void> {
@@ -211,13 +183,6 @@ async function handleMembershipActivated(membership: WhopMembership): Promise<vo
     throw error
   }
 
-  // Mirror to legacy workspaces.subscription_status for the existing
-  // proxy.ts blocked-state check, which still reads from `workspaces`.
-  await supabaseAdmin
-    .from('workspaces')
-    .update({ subscription_status: 'paying' })
-    .eq('id', workspaceId)
-
   console.log('[whop webhook] membership.activated:', workspaceId, 'membership=', membership.id, 'plan=', planId)
 }
 
@@ -236,20 +201,6 @@ async function handleMembershipDeactivated(membership: WhopMembership): Promise<
     console.error('[whop webhook] membership.deactivated update failed:', error.message)
     Sentry.captureException(error, { tags: { integration: 'whop', event: 'membership.deactivated' } })
     throw error
-  }
-
-  // Mirror to legacy column so proxy.ts blocked-state catches it.
-  const { data: sub } = await supabaseAdmin
-    .from('workspace_subscriptions')
-    .select('workspace_id')
-    .eq('whop_subscription_id', membership.id)
-    .maybeSingle()
-
-  if (sub) {
-    await supabaseAdmin
-      .from('workspaces')
-      .update({ subscription_status: 'expired' })
-      .eq('id', (sub as WorkspaceIdRow).workspace_id)
   }
 
   console.log('[whop webhook] membership.deactivated:', membership.id)
@@ -457,9 +408,9 @@ async function handlePaymentFailed(payment: WhopPayment): Promise<void> {
 export async function POST(request: NextRequest) {
   const rawBody = await request.text()
 
-  const webhookId        = request.headers.get('webhook-id')
   const webhookTimestamp = request.headers.get('webhook-timestamp')
   const webhookSignature = request.headers.get('webhook-signature')
+  const webhookId        = request.headers.get('webhook-id')
 
   const ok = verifyWebhookSignature({
     webhookId,
@@ -496,53 +447,45 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ received: true, unknown_event: true })
   }
 
-  // Idempotency check — webhook-id is the unique event identifier.
-  // Standard Webhooks guarantees uniqueness across retries.
-  if (webhookId) {
-    const { duplicate } = await recordEvent({
-      whopEventId: webhookId,
-      eventType,
-      payload:     envelope,
-    })
-    if (duplicate) {
-      console.log('[whop webhook] duplicate delivery ignored:', webhookId, eventType)
-      return NextResponse.json({ received: true, duplicate: true })
-    }
-  }
+  return withIdempotency({
+    rawBody,
+    request,
+    source: 'whop',
+    eventType: eventType,
+    extractEventId: (req) => req.headers.get('webhook-id'),
+    handler: async () => {
+      const data = envelope.data ?? envelope
+      let resolvedWorkspaceId: string | undefined
 
-  // Dispatch
-  try {
-    const data = envelope.data ?? envelope  // some Whop payloads put data at the top level
-    switch (eventType) {
-      case 'membership.activated':
-        await handleMembershipActivated(data as WhopMembership)
-        break
-      case 'membership.deactivated':
-        await handleMembershipDeactivated(data as WhopMembership)
-        break
-      case 'membership.cancel_at_period_end_changed':
-        await handleMembershipCancelAtPeriodEndChanged(data as WhopMembership)
-        break
-      case 'payment.succeeded':
-        await handlePaymentSucceeded(data as WhopPayment)
-        break
-      case 'payment.failed':
-        await handlePaymentFailed(data as WhopPayment)
-        break
-      default:
-        // payout_account_status_updated etc. — log + 200, no work
-        console.log('[whop webhook] unhandled event:', eventType)
-        Sentry.captureMessage(`[whop] unhandled event type: ${eventType}`, {
-          level: 'info',
-          tags:  { integration: 'whop', event: eventType },
-        })
-    }
-  } catch (err) {
-    // Domain errors are already logged + Sentry-captured by the handler;
-    // here we catch anything unexpected and 500 so Whop retries.
-    console.error('[whop webhook] handler threw for', eventType, err)
-    return NextResponse.json({ error: 'Handler failed' }, { status: 500 })
-  }
+      switch (eventType) {
+        case 'membership.activated':
+          await handleMembershipActivated(data as WhopMembership)
+          resolvedWorkspaceId = await resolveWorkspaceIdFromMembership(data as WhopMembership) ?? undefined
+          break
+        case 'membership.deactivated':
+          await handleMembershipDeactivated(data as WhopMembership)
+          break
+        case 'membership.cancel_at_period_end_changed':
+          await handleMembershipCancelAtPeriodEndChanged(data as WhopMembership)
+          break
+        case 'payment.succeeded':
+          await handlePaymentSucceeded(data as WhopPayment)
+          break
+        case 'payment.failed':
+          await handlePaymentFailed(data as WhopPayment)
+          break
+        default:
+          console.log('[whop webhook] unhandled event:', eventType)
+          Sentry.captureMessage(`[whop] unhandled event type: ${eventType}`, {
+            level: 'info',
+            tags: { integration: 'whop', event: eventType },
+          })
+      }
 
-  return NextResponse.json({ received: true, event: eventType })
+      return {
+        response: NextResponse.json({ received: true, event: eventType }),
+        workspaceId: resolvedWorkspaceId,
+      }
+    },
+  })
 }

@@ -4,6 +4,7 @@ import type { NextRequest } from 'next/server'
 import crypto from 'crypto'
 import { validateQuery } from '@/lib/validation'
 import { shopifyWebhookQuery } from '@/lib/schemas/webhooks'
+import { withIdempotency } from '@/lib/services/webhookIdempotency'
 
 interface IntegrationRow {
   client_id: string
@@ -159,48 +160,55 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
   }
 
-  let payload: Record<string, unknown>
-  try {
-    payload = JSON.parse(rawBody) as Record<string, unknown>
-  } catch {
-    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
-  }
-
   // workspaceId is guaranteed non-empty at this point (we returned 401 above if
   // neither store nor integration resolved)
   const resolvedWorkspaceId = workspaceId as string
   const resolvedClientId = clientId || ''
 
-  if (topic === 'orders/create' || topic === 'orders/updated') {
-    await upsertOrder(payload, resolvedClientId, resolvedWorkspaceId, storeId)
-  }
+  return withIdempotency({
+    rawBody,
+    request,
+    source: 'shopify',
+    eventType: topic || 'unknown',
+    extractEventId: (req) => req.headers.get('x-shopify-webhook-id'),
+    workspaceId: resolvedWorkspaceId,
+    handler: async (body) => {
+      const payload = body as Record<string, unknown>
 
-  if (topic === 'orders/cancelled') {
-    await supabaseAdmin
-      .from('shopify_orders')
-      .update({ cancel_reason: payload.cancel_reason || 'other', synced_at: new Date().toISOString() })
-      .eq('id', payload.id)
-      .eq('workspace_id', resolvedWorkspaceId)
-  }
+      if (topic === 'orders/create' || topic === 'orders/updated') {
+        await upsertOrder(payload, resolvedClientId, resolvedWorkspaceId, storeId)
+      }
 
-  if (topic === 'refunds/create') {
-    const orderId = payload.order_id
-    const { data: existing } = await supabaseAdmin
-      .from('shopify_orders')
-      .select('refund_amount')
-      .eq('id', orderId)
-      .eq('workspace_id', resolvedWorkspaceId)
-      .maybeSingle()
+      if (topic === 'orders/cancelled') {
+        await supabaseAdmin
+          .from('shopify_orders')
+          .update({ cancel_reason: payload.cancel_reason || 'other', synced_at: new Date().toISOString() })
+          .eq('id', payload.id)
+          .eq('workspace_id', resolvedWorkspaceId)
+      }
 
-    if (existing) {
-      const newRefund = ((payload.transactions as Array<{ amount?: string | number }> | undefined) || []).reduce((s: number, t: { amount?: string | number }) => s + parseFloat(String(t.amount || 0)), 0)
-      await supabaseAdmin
-        .from('shopify_orders')
-        .update({ refund_amount: (existing.refund_amount || 0) + newRefund, synced_at: new Date().toISOString() })
-        .eq('id', orderId)
-        .eq('workspace_id', resolvedWorkspaceId)
-    }
-  }
+      if (topic === 'refunds/create') {
+        const orderId = payload.order_id
+        const { data: existing } = await supabaseAdmin
+          .from('shopify_orders')
+          .select('refund_amount')
+          .eq('id', orderId)
+          .eq('workspace_id', resolvedWorkspaceId)
+          .maybeSingle()
 
-  return NextResponse.json({ ok: true })
+        if (existing) {
+          const newRefund = ((payload.transactions as Array<{ amount?: string | number }> | undefined) || []).reduce(
+            (s: number, t: { amount?: string | number }) => s + parseFloat(String(t.amount || 0)), 0
+          )
+          await supabaseAdmin
+            .from('shopify_orders')
+            .update({ refund_amount: (existing.refund_amount || 0) + newRefund, synced_at: new Date().toISOString() })
+            .eq('id', orderId)
+            .eq('workspace_id', resolvedWorkspaceId)
+        }
+      }
+
+      return { response: NextResponse.json({ ok: true }), workspaceId: resolvedWorkspaceId }
+    },
+  })
 }

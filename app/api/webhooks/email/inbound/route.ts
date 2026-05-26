@@ -1,5 +1,6 @@
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import { processInboundMessage } from '@/lib/conversationEngine'
+import { withIdempotency } from '@/lib/services/webhookIdempotency'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import crypto from 'crypto'
@@ -59,52 +60,58 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  let payload: Record<string, unknown>
-  try {
-    payload = JSON.parse(rawBody) as Record<string, unknown>
-  } catch {
-    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
-  }
+  const svixId = request.headers.get('svix-id')
 
-  // Resend sends parsed email fields
-  const to = (payload.to as Array<{ email: string }> | undefined)?.[0]?.email || payload.to as string | undefined
-  const fromObj = payload.from as EmailFromObj | string | undefined
-  const fromEmail = typeof fromObj === 'object' && fromObj?.email ? fromObj.email : fromObj as string | undefined
-  const fromName = (typeof fromObj === 'object' && fromObj?.name ? fromObj.name : fromEmail) as string | undefined
-  const subject = (payload.subject as string | undefined) || '(no subject)'
-  const bodyHtml = (payload.html as string | undefined) || (payload.text as string | undefined) || ''
-  const bodyText = (payload.text as string | undefined) || ''
-  const headers = payload.headers as Record<string, string> | undefined
-  const messageId = headers?.['message-id'] || payload.message_id as string | undefined
-  const inReplyTo = headers?.['in-reply-to'] || payload.in_reply_to as string | undefined
+  return withIdempotency({
+    rawBody,
+    request,
+    source: 'email',
+    eventType: 'inbound',
+    extractEventId: () => svixId,
+    handler: async (body) => {
+      const payload = body as Record<string, unknown>
 
-  if (!to) return NextResponse.json({ ok: true })
+      const to = (payload.to as Array<{ email: string }> | undefined)?.[0]?.email || payload.to as string | undefined
+      const fromObj = payload.from as EmailFromObj | string | undefined
+      const fromEmail = typeof fromObj === 'object' && fromObj?.email ? fromObj.email : fromObj as string | undefined
+      const fromName = (typeof fromObj === 'object' && fromObj?.name ? fromObj.name : fromEmail) as string | undefined
+      const subject = (payload.subject as string | undefined) || '(no subject)'
+      const bodyHtml = (payload.html as string | undefined) || (payload.text as string | undefined) || ''
+      const bodyText = (payload.text as string | undefined) || ''
+      const headers = payload.headers as Record<string, string> | undefined
+      const messageId = headers?.['message-id'] || payload.message_id as string | undefined
+      const inReplyTo = headers?.['in-reply-to'] || payload.in_reply_to as string | undefined
 
-  // Look up email account by forwarding address
-  const accountResult = await supabaseAdmin
-    .from('email_accounts')
-    .select('*')
-    .eq('forwarding_address', to)
-    .maybeSingle()
+      if (!to) return { response: NextResponse.json({ ok: true }) }
 
-  const account = accountResult.data as Parameters<typeof processInboundMessage>[0] | null
-  if (!account) return NextResponse.json({ ok: true })
+      const accountResult = await supabaseAdmin
+        .from('email_accounts')
+        .select('*')
+        .eq('forwarding_address', to)
+        .maybeSingle()
 
-  // Normalize the inbound email into a NormalizedMessage shape
-  const normalizedMessage = {
-    providerMessageId: messageId || `inbound_${Date.now()}`,
-    messageId: inReplyTo || messageId || undefined,
-    from: { email: fromEmail ?? '', name: fromName },
-    to: [{ email: to, name: '' }],
-    cc: [],
-    subject,
-    bodyHtml,
-    bodyText,
-    date: new Date().toISOString(),
-    isOutbound: false,
-  }
+      const account = accountResult.data as Parameters<typeof processInboundMessage>[0] | null
+      if (!account) return { response: NextResponse.json({ ok: true }) }
 
-  await processInboundMessage(account, normalizedMessage)
+      const normalizedMessage = {
+        providerMessageId: messageId || `inbound_${Date.now()}`,
+        messageId: inReplyTo || messageId || undefined,
+        from: { email: fromEmail ?? '', name: fromName },
+        to: [{ email: to, name: '' }],
+        cc: [],
+        subject,
+        bodyHtml,
+        bodyText,
+        date: new Date().toISOString(),
+        isOutbound: false,
+      }
 
-  return NextResponse.json({ ok: true })
+      await processInboundMessage(account, normalizedMessage)
+
+      return {
+        response: NextResponse.json({ ok: true }),
+        workspaceId: account.workspace_id as string | undefined,
+      }
+    },
+  })
 }

@@ -12,6 +12,7 @@ export interface ShopifyContext {
 }
 
 export interface OnboardingStatus {
+  /** 'trial' | 'active' | 'past_due' | 'canceled' | 'paused' */
   subscription_status: string
   trial_ends_at: string | null
   user?: {

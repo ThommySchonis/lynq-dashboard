@@ -7,6 +7,7 @@ import { can } from '@/lib/permissions'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import { validateParams } from '@/lib/validation'
 import { macroParams } from '@/lib/schemas/macros'
+import { logger } from '@/lib/logger'
 
 interface MacroSource {
   name: string
@@ -37,7 +38,7 @@ export async function POST(request: NextRequest, { params }: RouteContext<{ id: 
     .maybeSingle()
 
   if (lookupError) {
-    console.error('[macros duplicate] lookup failed:', lookupError.message)
+    logger.error('[macros/duplicate]', 'lookup failed', { error: lookupError.message })
     return NextResponse.json({ error: lookupError.message, code: 'lookup_failed' }, { status: 500 })
   }
   if (!source) return NextResponse.json({ error: 'Macro not found', code: 'not_found' }, { status: 404 })
@@ -57,10 +58,10 @@ export async function POST(request: NextRequest, { params }: RouteContext<{ id: 
 
   const copy = copyResult.data as Record<string, unknown> | null
   if (copyResult.error || !copy) {
-    console.error('[macros duplicate] insert failed:', copyResult.error?.message)
+    logger.error('[macros/duplicate]', 'insert failed', { error: copyResult.error?.message })
     return NextResponse.json({ error: copyResult.error?.message ?? 'Failed to duplicate macro', code: 'insert_failed' }, { status: 500 })
   }
 
-  console.log('[macros duplicate] cloned', id, '→', copy.id)
+  logger.info('[macros/duplicate]', 'cloned macro', { sourceId: id, newId: copy.id })
   return NextResponse.json({ macro: copy }, { status: 201 })
 }

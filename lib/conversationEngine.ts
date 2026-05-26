@@ -1,4 +1,5 @@
 import { supabaseAdmin } from './supabaseAdmin'
+import { logger } from '@/lib/logger'
 import { getAdapter } from './providers'
 import { getStoreCredentials } from './store-credentials'
 import { checkTicketLimit, lockWorkspace } from './services/limit-check'
@@ -111,7 +112,7 @@ export async function syncAllAccounts(workspaceId: string) {
       results.push({ accountId: (account as EmailAccountRow).id, ...result })
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err)
-      console.error(`Sync failed for account ${(account as EmailAccountRow).id}:`, message)
+      logger.error('[conversationEngine]', 'Sync failed', { accountId: (account as EmailAccountRow).id, error: message })
       results.push({ accountId: (account as EmailAccountRow).id, error: message })
     }
   }
@@ -193,7 +194,7 @@ async function createConversation(thread: Thread, account: EmailAccountRow, work
     .single()
 
   if (insertResult.error) {
-    console.error('[engine] createConversation error:', insertResult.error.message, insertResult.error.details)
+    logger.error('[conversationEngine]', 'createConversation error', { error: insertResult.error.message, details: insertResult.error.details })
   }
 
   const conversation = insertResult.data as ConversationRow | null
@@ -637,7 +638,7 @@ async function matchShopifyCustomer(storeId: string | null, workspaceId: string,
     }
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err)
-    console.error('Shopify customer match failed:', message)
+    logger.error('[conversationEngine]', 'Shopify customer match failed', { error: message })
   }
 
   return null

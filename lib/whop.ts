@@ -1,4 +1,5 @@
 import crypto from 'crypto'
+import { logger } from '@/lib/logger'
 // Whop integration — real v1 API calls (no more stubs).
 //
 // Base URL: https://api.whop.com/api/v1 (configured via WHOP_API_URL).
@@ -30,7 +31,7 @@ const WHOP_API_URL = process.env.WHOP_API_URL ?? 'https://api.whop.com/api/v1'
 const WHOP_API_KEY = process.env.WHOP_API_KEY
 
 if (!WHOP_API_KEY) {
-  console.warn('[whop] WHOP_API_KEY not set — all calls will fail')
+  logger.warn('[whop]', 'WHOP_API_KEY not set — all calls will fail')
 }
 
 interface WhopErrorPayload {
@@ -346,7 +347,7 @@ export async function cancelSubscription({
   atPeriodEnd?: boolean
 }): Promise<WhopMembership> {
   if (!atPeriodEnd) {
-    console.warn('[whop] cancelSubscription called with atPeriodEnd=false — Whop only supports period-end cancellation, falling back to soft cancel')
+    logger.warn('[whop]', 'cancelSubscription called with atPeriodEnd=false — Whop only supports period-end cancellation, falling back to soft cancel')
   }
   return await cancelMembership({ membershipId: subscriptionId })
 }

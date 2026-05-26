@@ -1,6 +1,8 @@
 import { supabaseAdmin, getUserFromToken } from './supabaseAdmin'
 import { type NextRequest, NextResponse } from 'next/server'
 import type { User } from '@supabase/supabase-js'
+import * as Sentry from '@sentry/nextjs'
+import { logger } from '@/lib/logger'
 
 interface MembershipRow {
   id: string
@@ -47,11 +49,11 @@ export async function getAuthContext(request: NextRequest): Promise<AuthContext 
   const token = authHeader.replace('Bearer ', '')
   const user = await getUserFromToken(token)
   if (!user) {
-    console.error('[auth] getUserFromToken failed — token invalid or expired')
+    logger.warn('[auth]', 'getUserFromToken failed — token invalid or expired')
     return null
   }
 
-  console.log('[auth] user resolved:', user.email)
+  Sentry.setUser({ id: user.id })
 
   // ── Path A: membership exists ────────────────────────────────────────────
   const { data: membership, error: memberError } = await supabaseAdmin
@@ -61,12 +63,12 @@ export async function getAuthContext(request: NextRequest): Promise<AuthContext 
     .maybeSingle()
 
   if (memberError) {
-    console.error('[auth] workspace_members query failed:', memberError.message)
+    logger.error('[auth]', 'workspace_members query failed', { error: memberError.message })
   }
 
   if (membership) {
     const m = membership as MembershipRow
-    console.log('[auth] path A — membership found, workspace:', m.workspace_id, 'role:', m.role)
+    logger.debug('[auth]', 'path A — membership found', { workspaceId: m.workspace_id, role: m.role })
 
     const { data: profile } = await supabaseAdmin
       .from('user_profiles')
@@ -94,7 +96,7 @@ export async function getAuthContext(request: NextRequest): Promise<AuthContext 
     (meta?.name as string) ||
     user.email?.split('@')[0] ||
     'My Workspace'
-  console.log('[auth] path B — provisioning new workspace for', user.email, 'name:', workspaceName)
+  logger.debug('[auth]', 'path B — provisioning new workspace', { workspaceName })
 
   const provisionResult = await supabaseAdmin
     .rpc('provision_workspace', {
@@ -104,10 +106,10 @@ export async function getAuthContext(request: NextRequest): Promise<AuthContext 
 
   const rpcError = provisionResult.error
   const result = provisionResult.data as ProvisionResult | null
-  console.log('[auth] provision_workspace result:', JSON.stringify(result), 'error:', rpcError?.message ?? null)
+  logger.info('[auth]', 'provision_workspace result', { workspaceId: result?.workspace_id, error: rpcError?.message ?? null })
 
   if (rpcError || !result?.workspace_id) {
-    console.error('[auth] provision_workspace RPC failed:', rpcError?.message ?? 'returned no workspace_id')
+    logger.error('[auth]', 'provision_workspace RPC failed', { error: rpcError?.message ?? 'returned no workspace_id' })
     return null
   }
 
@@ -118,7 +120,7 @@ export async function getAuthContext(request: NextRequest): Promise<AuthContext 
     .single()
 
   const newWorkspace = newWorkspaceData as AuthWorkspace | null
-  console.log('[auth] path B — provisioning complete, workspace:', result.workspace_id)
+  logger.debug('[auth]', 'path B — provisioning complete', { workspaceId: result.workspace_id })
   return {
     user,
     workspace:            newWorkspace ?? { id: result.workspace_id, name: workspaceName, suspended_at: null },

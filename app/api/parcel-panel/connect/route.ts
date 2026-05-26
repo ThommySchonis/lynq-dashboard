@@ -5,6 +5,7 @@ import { getAuthContext, requireWriteAccess } from '@/lib/auth'
 import { NextResponse } from 'next/server'
 import { validateBody } from '@/lib/validation'
 import { connectBody } from '@/lib/schemas/parcel-panel'
+import { logger } from '@/lib/logger'
 
 const PP_BASE = 'https://open.parcelwill.com'
 
@@ -24,15 +25,15 @@ export async function POST(request: NextRequest) {
       method: 'GET',
       headers: { 'x-parcelpanel-api-key': apiKey },
     })
-    console.log('[parcel-panel/connect] PP status:', ppRes.status)
+    logger.info('[parcel-panel/connect]', 'PP status', { status: ppRes.status })
 
     if (ppRes.status === 401 || ppRes.status === 403) {
       const text = await ppRes.text()
-      console.error('[parcel-panel/connect] invalid key:', text.substring(0, 200))
+      logger.error('[parcel-panel/connect]', 'invalid key', { response: text.substring(0, 200) })
       return NextResponse.json({ error: 'Invalid API key — please check and try again' }, { status: 400 })
     }
   } catch (fetchErr: unknown) {
-    console.error('[parcel-panel/connect] fetch error', fetchErr)
+    logger.error('[parcel-panel/connect]', 'fetch error', { error: fetchErr instanceof Error ? fetchErr.message : String(fetchErr) })
     return NextResponse.json({ error: 'Could not reach Parcel Panel' }, { status: 503 })
   }
 
@@ -52,7 +53,7 @@ export async function POST(request: NextRequest) {
     )
 
   if (upsertError) {
-    console.error('[parcel-panel/connect] upsert error', upsertError)
+    logger.error('[parcel-panel/connect]', 'upsert error', { error: upsertError.message })
     return NextResponse.json({ error: 'Failed to save: ' + upsertError.message }, { status: 500 })
   }
 

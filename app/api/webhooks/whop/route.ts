@@ -5,6 +5,7 @@ import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import { verifyWebhookSignature, type WhopMembership, type WhopPayment } from '@/lib/whop'
 import { unlockWorkspace } from '@/lib/services/limit-check'
 import { withIdempotency } from '@/lib/services/webhookIdempotency'
+import { logger } from '@/lib/logger'
 
 interface WorkspaceIdRow {
   workspace_id: string
@@ -178,12 +179,12 @@ async function handleMembershipActivated(membership: WhopMembership): Promise<vo
     .eq('workspace_id', workspaceId)
 
   if (error) {
-    console.error('[whop webhook] membership.activated DB update failed:', error.message)
+    logger.error('[whop]', 'membership.activated DB update failed', { error: error.message })
     Sentry.captureException(error, { tags: { integration: 'whop', event: 'membership.activated' } })
     throw error
   }
 
-  console.log('[whop webhook] membership.activated:', workspaceId, 'membership=', membership.id, 'plan=', planId)
+  logger.info('[whop]', 'membership.activated', { workspaceId, membershipId: membership.id, planId })
 }
 
 async function handleMembershipDeactivated(membership: WhopMembership): Promise<void> {
@@ -198,12 +199,12 @@ async function handleMembershipDeactivated(membership: WhopMembership): Promise<
     .eq('whop_subscription_id', membership.id)
 
   if (error) {
-    console.error('[whop webhook] membership.deactivated update failed:', error.message)
+    logger.error('[whop]', 'membership.deactivated update failed', { error: error.message })
     Sentry.captureException(error, { tags: { integration: 'whop', event: 'membership.deactivated' } })
     throw error
   }
 
-  console.log('[whop webhook] membership.deactivated:', membership.id)
+  logger.info('[whop]', 'membership.deactivated', { membershipId: membership.id })
 }
 
 async function handleMembershipCancelAtPeriodEndChanged(membership: WhopMembership): Promise<void> {
@@ -217,12 +218,12 @@ async function handleMembershipCancelAtPeriodEndChanged(membership: WhopMembersh
     .eq('whop_subscription_id', membership.id)
 
   if (error) {
-    console.error('[whop webhook] cancel_at_period_end_changed update failed:', error.message)
+    logger.error('[whop]', 'cancel_at_period_end_changed update failed', { error: error.message })
     Sentry.captureException(error, { tags: { integration: 'whop', event: 'membership.cancel_at_period_end_changed' } })
     throw error
   }
 
-  console.log('[whop webhook] cancel_at_period_end_changed:', membership.id, 'cancel=', membership.cancel_at_period_end)
+  logger.info('[whop]', 'cancel_at_period_end_changed', { membershipId: membership.id, cancelAtPeriodEnd: membership.cancel_at_period_end })
 }
 
 async function handlePaymentSucceeded(payment: WhopPayment): Promise<void> {
@@ -278,12 +279,12 @@ async function handlePaymentSucceeded(payment: WhopPayment): Promise<void> {
     .eq('id', invoiceId)
 
   if (error) {
-    console.error('[whop webhook] payment.succeeded update failed:', error.message)
+    logger.error('[whop]', 'payment.succeeded update failed', { error: error.message })
     Sentry.captureException(error, { tags: { integration: 'whop', event: 'payment.succeeded' } })
     throw error
   }
 
-  console.log('[whop webhook] payment.succeeded: invoice=', invoiceId, 'amount=', amount)
+  logger.info('[whop]', 'payment.succeeded', { invoiceId, amount })
 
   // Model 3 (forced upgrade): a successful subscription payment is the
   // single source of truth for unlocking a workspace + resetting its
@@ -315,7 +316,7 @@ async function unlockAndResetForMembership(membershipId: string): Promise<void> 
   try {
     await unlockWorkspace(workspaceId)
   } catch (err) {
-    console.error('[whop webhook] unlockWorkspace failed:', err)
+    logger.error('[whop]', 'unlockWorkspace failed', { error: err instanceof Error ? err.message : String(err) })
     Sentry.captureException(err, { tags: { integration: 'whop', event: 'payment.succeeded' } })
     // Continue to counter reset — the two are independent.
   }
@@ -337,10 +338,10 @@ async function unlockAndResetForMembership(membershipId: string): Promise<void> 
     .eq('workspace_id', workspaceId)
 
   if (resetErr) {
-    console.error('[whop webhook] usage_counters reset failed:', resetErr.message)
+    logger.error('[whop]', 'usage_counters reset failed', { error: resetErr.message })
     Sentry.captureException(resetErr, { tags: { integration: 'whop', event: 'payment.succeeded' } })
   } else {
-    console.log('[whop webhook] payment.succeeded: unlocked + reset counters for workspace=', workspaceId)
+    logger.info('[whop]', 'payment.succeeded: unlocked + reset counters', { workspaceId })
   }
 }
 
@@ -386,7 +387,7 @@ async function handlePaymentFailed(payment: WhopPayment): Promise<void> {
     .eq('id', invoiceId)
 
   if (error) {
-    console.error('[whop webhook] payment.failed update failed:', error.message)
+    logger.error('[whop]', 'payment.failed update failed', { error: error.message })
     Sentry.captureException(error, { tags: { integration: 'whop', event: 'payment.failed' } })
     throw error
   }
@@ -400,7 +401,7 @@ async function handlePaymentFailed(payment: WhopPayment): Promise<void> {
     extra: { invoice_id: invoiceId, payment_id: payment.id },
   })
 
-  console.log('[whop webhook] payment.failed: invoice=', invoiceId, 'payment=', payment.id)
+  logger.info('[whop]', 'payment.failed', { invoiceId, paymentId: payment.id })
 }
 
 // ─── Main handler ─────────────────────────────────────────────────────
@@ -421,7 +422,7 @@ export async function POST(request: NextRequest) {
   })
 
   if (!ok) {
-    console.error('[whop webhook] signature verification failed')
+    logger.error('[whop]', 'signature verification failed')
     Sentry.captureMessage('[whop] signature verification failed', {
       level: 'warning',
       tags:  { integration: 'whop' },
@@ -475,7 +476,7 @@ export async function POST(request: NextRequest) {
           await handlePaymentFailed(data as WhopPayment)
           break
         default:
-          console.log('[whop webhook] unhandled event:', eventType)
+          logger.info('[whop]', 'unhandled event', { eventType })
           Sentry.captureMessage(`[whop] unhandled event type: ${eventType}`, {
             level: 'info',
             tags: { integration: 'whop', event: eventType },

@@ -5,6 +5,7 @@ import { getUserFromToken, supabaseAdmin } from '@/lib/supabaseAdmin'
 import { NextResponse } from 'next/server'
 import { validateBody } from '@/lib/validation'
 import { translateBody } from '@/lib/schemas/translate'
+import { logger } from '@/lib/logger'
 
 interface TranslateResult {
   detectedLanguage?: string
@@ -50,8 +51,8 @@ ${text}`,
     })
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : 'Unknown error'
-    console.error('[translate] generateText failed:', msg)
-    return NextResponse.json({ error: 'AI error: ' + msg }, { status: 500 })
+    logger.error('[translate]', 'generateText failed', { error: msg })
+    return NextResponse.json({ error: `AI error: ${msg}` }, { status: 500 })
   }
 
   let detectedLanguage = 'Unknown'

@@ -4,6 +4,7 @@ import type { RouteContext } from '@/types/api'
 import { getUserFromToken, supabaseAdmin } from '@/lib/supabaseAdmin'
 import { validateParams } from '@/lib/validation'
 import { tokenParams } from '@/lib/schemas/common'
+import { logger } from '@/lib/logger'
 
 // POST — accept an invite (requires auth).
 // All validation (token, expiry, accepted, email-match) happens atomically
@@ -30,7 +31,7 @@ export async function POST(request: NextRequest, { params }: RouteContext<{ toke
     })
 
   if (rpcResponse.error) {
-    console.error('[invite accept] RPC error:', rpcResponse.error.message)
+    logger.error('[invite/accept]', 'RPC error', { error: rpcResponse.error.message })
     return NextResponse.json({ error: 'Failed to accept invite' }, { status: 500 })
   }
 
@@ -68,7 +69,7 @@ export async function POST(request: NextRequest, { params }: RouteContext<{ toke
       return NextResponse.json({ error: 'Invite already accepted', code }, { status: 410 })
 
     default:
-      console.error('[invite accept] unexpected RPC payload:', JSON.stringify(result))
+      logger.error('[invite/accept]', 'unexpected RPC payload', { result })
       return NextResponse.json({ error: 'Invite could not be accepted' }, { status: 500 })
   }
 }

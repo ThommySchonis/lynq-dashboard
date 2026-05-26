@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
+import { logger } from '@/lib/logger'
 
 // ─── Usage warnings cron ──────────────────────────────────────────────
 //
@@ -81,7 +82,7 @@ async function processOne({
       tickets_pct: Math.round(ticketsPct),
       ai_pct:      Math.round(aiPct),
     })
-    console.log('[cron/usage-warnings] 100% reached for workspace', sub.workspace_id, 'plan', plan.id)
+    logger.info('[cron/usage-warnings]', '100% reached for workspace', { workspaceId: sub.workspace_id, planId: plan.id })
     // TODO PR 2: send "you've reached your plan limit" email via Resend
   }
 
@@ -94,7 +95,7 @@ async function processOne({
       tickets_pct: Math.round(ticketsPct),
       ai_pct:      Math.round(aiPct),
     })
-    console.log('[cron/usage-warnings] 80% reached for workspace', sub.workspace_id)
+    logger.info('[cron/usage-warnings]', '80% reached for workspace', { workspaceId: sub.workspace_id })
     // TODO PR 2: send "approaching limit" email via Resend
   }
 
@@ -104,7 +105,7 @@ async function processOne({
       .update(updates)
       .eq('id', counter.id)
     if (error) {
-      console.error('[cron/usage-warnings] update failed for', sub.workspace_id, error.message)
+      logger.error('[cron/usage-warnings]', 'update failed', { workspaceId: sub.workspace_id, error: error.message })
       return { ok: false, workspace_id: sub.workspace_id, error: error.message }
     }
   }
@@ -119,7 +120,7 @@ async function handle(request: NextRequest): Promise<NextResponse> {
   if (token !== expected) return unauthorized('cron-secret-mismatch')
 
   const startedAt = Date.now()
-  console.log('[cron/usage-warnings] start')
+  logger.info('[cron/usage-warnings]', 'start')
 
   // Find counters in an active period (period_end in future) where we
   // haven't yet sent the 100% notification.
@@ -130,7 +131,7 @@ async function handle(request: NextRequest): Promise<NextResponse> {
     .gte('period_end', new Date().toISOString())
 
   if (error) {
-    console.error('[cron/usage-warnings] query failed:', error.message)
+    logger.error('[cron/usage-warnings]', 'query failed', { error: error.message })
     return NextResponse.json({ ok: false, error: error.message }, { status: 500 })
   }
 
@@ -163,7 +164,7 @@ async function handle(request: NextRequest): Promise<NextResponse> {
       results.push(await processOne({ counter, sub, plan }))
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err)
-      console.error('[cron/usage-warnings] unhandled error:', msg)
+      logger.error('[cron/usage-warnings]', 'unhandled error', { error: msg })
       results.push({ ok: false, workspace_id: counter.workspace_id, error: msg })
     }
   }
@@ -177,7 +178,7 @@ async function handle(request: NextRequest): Promise<NextResponse> {
     notified_80:  allEvents.filter(e => e.type === 'approaching_limit').length,
     notified_100: allEvents.filter(e => e.type === 'limit_reached').length,
   }
-  console.log('[cron/usage-warnings] done', JSON.stringify(summary))
+  logger.info('[cron/usage-warnings]', 'done', summary)
   return NextResponse.json(summary)
 }
 

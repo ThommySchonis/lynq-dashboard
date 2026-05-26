@@ -9,6 +9,7 @@
 // keep working with the same id semantics they had with team_members.
 
 import { supabaseAdmin } from '../supabaseAdmin'
+import { logger } from '@/lib/logger'
 
 export interface EnrichedMember {
   /** auth.users.id — matches time_sessions.agent_id. */
@@ -71,7 +72,7 @@ export async function getEnrichedMembers(opts: { workspaceId?: string } = {}): P
 
   const queryResult = await query
   if (queryResult.error) {
-    console.error('[workspace-members] query failed:', queryResult.error.message)
+    logger.error('[workspace-members]', 'query failed', { error: queryResult.error.message })
     return []
   }
 
@@ -85,7 +86,7 @@ export async function getEnrichedMembers(opts: { workspaceId?: string } = {}): P
   // and filter in-memory by the userIds we actually need.
   const { data: usersPayload, error: usersErr } = await supabaseAdmin.auth.admin.listUsers({ perPage: 1000 })
   if (usersErr) {
-    console.error('[workspace-members] listUsers failed:', usersErr.message)
+    logger.error('[workspace-members]', 'listUsers failed', { error: usersErr.message })
   }
   const userById = new Map<string, { email: string; metadata: AuthUserMetadata | null }>()
   for (const u of usersPayload?.users ?? []) {

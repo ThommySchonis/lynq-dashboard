@@ -6,15 +6,11 @@ import type { Role } from '@/types/database'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import { validateBody } from '@/lib/validation'
 import { mergeTagsBody } from '@/lib/schemas/tags'
+import { logger } from '@/lib/logger'
 
 interface MacroTagLink {
   macro_id: string
   tag_id: string
-}
-
-interface TagRow {
-  id: string
-  name: string
 }
 
 // POST /api/tags/merge — body: { winner_id, loser_ids: [] }
@@ -47,7 +43,7 @@ export async function POST(request: NextRequest) {
     .in('id', allIds)
 
   if (lookupError) {
-    console.error('[tags merge] lookup failed:', lookupError.message)
+    logger.error('[tags/merge]', 'lookup failed', { error: lookupError.message })
     return NextResponse.json({ error: lookupError.message, code: 'lookup_failed' }, { status: 500 })
   }
   if (!workspaceTags || workspaceTags.length !== allIds.length) {
@@ -69,7 +65,7 @@ export async function POST(request: NextRequest) {
     .in('tag_id', loserIds)
 
   if (loserError) {
-    console.error('[tags merge] loser-link lookup failed:', loserError.message)
+    logger.error('[tags/merge]', 'loser-link lookup failed', { error: loserError.message })
     return NextResponse.json({ error: loserError.message, code: 'lookup_failed' }, { status: 500 })
   }
 
@@ -88,7 +84,7 @@ export async function POST(request: NextRequest) {
       .from('macro_tags')
       .insert(newWinnerLinks)
     if (insertError) {
-      console.error('[tags merge] winner-link insert failed:', insertError.message)
+      logger.error('[tags/merge]', 'winner-link insert failed', { error: insertError.message })
       return NextResponse.json({ error: insertError.message, code: 'merge_failed' }, { status: 500 })
     }
   }
@@ -101,12 +97,11 @@ export async function POST(request: NextRequest) {
     .in('id', loserIds)
 
   if (deleteError) {
-    console.error('[tags merge] loser delete failed:', deleteError.message)
+    logger.error('[tags/merge]', 'loser delete failed', { error: deleteError.message })
     return NextResponse.json({ error: deleteError.message, code: 'merge_failed' }, { status: 500 })
   }
 
-  const winner = ((workspaceTags || []) as TagRow[]).find(t => t.id === winnerId)
-  console.log(`[tags merge] workspace=${ctx.workspaceId} winner="${winner?.name}" merged=${loserIds.length}`)
+  logger.info('[tags/merge]', 'merge complete', { workspaceId: ctx.workspaceId, merged: loserIds.length })
 
   return NextResponse.json({
     ok:        true,

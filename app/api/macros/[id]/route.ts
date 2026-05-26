@@ -9,6 +9,7 @@ import { sanitizeMacroInput, relativeTime } from '@/lib/macros'
 import { ensureTagsByName, syncMacroTags } from '@/lib/tags'
 import { validateParams } from '@/lib/validation'
 import { macroParams } from '@/lib/schemas/macros'
+import { logger } from '@/lib/logger'
 
 interface TagLink {
   tag: unknown
@@ -40,7 +41,7 @@ export async function GET(request: NextRequest, { params }: RouteContext<{ id: s
     .maybeSingle()
 
   if (error) {
-    console.error('[macros GET id] failed:', error.message)
+    logger.error('[macros]', 'GET by id failed', { error: error.message })
     return NextResponse.json({ error: error.message, code: 'lookup_failed' }, { status: 500 })
   }
   if (!macro) return NextResponse.json({ error: 'Macro not found', code: 'not_found' }, { status: 404 })
@@ -100,7 +101,7 @@ export async function PATCH(request: NextRequest, { params }: RouteContext<{ id:
   const macro = macroResult.data as Record<string, unknown> | null
 
   if (macroResult.error || !macro) {
-    console.error('[macros PATCH] update failed:', macroResult.error?.message)
+    logger.error('[macros]', 'update failed', { error: macroResult.error?.message })
     const status = macroResult.error?.code === 'PGRST116' ? 404 : 500
     return NextResponse.json(
       { error: macroResult.error?.message ?? 'Failed to update macro', code: status === 404 ? 'not_found' : 'update_failed' },
@@ -123,7 +124,7 @@ export async function PATCH(request: NextRequest, { params }: RouteContext<{ id:
         .in('id', tagIds.length ? tagIds : ['00000000-0000-0000-0000-000000000000'])
       tagObjects = linked || []
     } catch (err: unknown) {
-      console.error('[macros PATCH] tag sync failed (macro update succeeded):', err instanceof Error ? err.message : 'Unknown error')
+      logger.error('[macros]', 'tag sync failed (macro update succeeded)', { error: err instanceof Error ? err.message : 'Unknown error' })
     }
   }
 
@@ -152,7 +153,7 @@ export async function DELETE(request: NextRequest, { params }: RouteContext<{ id
     .maybeSingle()
 
   if (lookupError) {
-    console.error('[macros DELETE] lookup failed:', lookupError.message)
+    logger.error('[macros]', 'DELETE lookup failed', { error: lookupError.message })
     return NextResponse.json({ error: lookupError.message, code: 'lookup_failed' }, { status: 500 })
   }
   if (!target) return NextResponse.json({ error: 'Macro not found', code: 'not_found' }, { status: 404 })
@@ -164,10 +165,11 @@ export async function DELETE(request: NextRequest, { params }: RouteContext<{ id
     .eq('workspace_id', ctx.workspaceId)
 
   if (deleteError) {
-    console.error('[macros DELETE] failed:', deleteError.message)
+    logger.error('[macros]', 'DELETE failed', { error: deleteError.message })
     return NextResponse.json({ error: deleteError.message, code: 'delete_failed' }, { status: 500 })
   }
 
-  console.log('[macros DELETE] removed', id, 'name:', target.name, 'in workspace', ctx.workspaceId)
+  const targetTyped = target as { id: string; name: string }
+  logger.info('[macros]', 'deleted macro', { macroId: id, name: targetTyped.name, workspaceId: ctx.workspaceId })
   return NextResponse.json({ ok: true })
 }

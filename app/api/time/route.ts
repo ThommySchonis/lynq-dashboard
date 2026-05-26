@@ -5,6 +5,7 @@ import { getEnrichedMembers } from '@/lib/services/workspace-members'
 import { NextResponse } from 'next/server'
 import { validateBody, validateQuery } from '@/lib/validation'
 import { getTimeQuery, timeActionBody } from '@/lib/schemas/time'
+import { logger } from '@/lib/logger'
 
 interface SessionEditRow {
   session_id: string
@@ -92,7 +93,7 @@ async function fetchLatestEditMap(sessionIds: string[]): Promise<Map<string, { e
     .in('session_id', sessionIds)
     .order('edited_at', { ascending: false })
   if (error) {
-    console.error('[time] fetchLatestEditMap failed:', error.message)
+    logger.error('[time]', 'fetchLatestEditMap failed', { error: error.message })
     return new Map()
   }
   const latest = new Map<string, { edited_at: string; edited_by_user_id: string }>()

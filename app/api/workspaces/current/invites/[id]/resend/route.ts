@@ -9,6 +9,7 @@ import { sendInviteEmail } from '@/lib/email'
 import { validateParams } from '@/lib/validation'
 import { inviteParams } from '@/lib/schemas/workspaces'
 import { getSiteUrl } from '@/lib/utils/request'
+import { logger } from '@/lib/logger'
 
 // POST — resend invite email + extend expiry by 7 days. Idempotent.
 export async function POST(request: NextRequest, { params: routeParams }: RouteContext<{ id: string }>) {
@@ -29,7 +30,7 @@ export async function POST(request: NextRequest, { params: routeParams }: RouteC
     .maybeSingle()
 
   if (lookupError) {
-    console.error('[invites resend] lookup failed:', lookupError.message)
+    logger.error('[invites]', 'resend lookup failed', { message: lookupError.message })
     return NextResponse.json({ error: lookupError.message }, { status: 500 })
   }
   if (!invite)         return NextResponse.json({ error: 'Invite not found' },     { status: 404 })
@@ -49,7 +50,7 @@ export async function POST(request: NextRequest, { params: routeParams }: RouteC
 
   const updated = updateResult.data as UpdatedInvite | null
   if (updateResult.error || !updated) {
-    console.error('[invites resend] update failed:', updateResult.error?.message)
+    logger.error('[invites]', 'resend update failed', { message: updateResult.error?.message })
     return NextResponse.json({ error: updateResult.error?.message ?? 'Failed to update invite' }, { status: 500 })
   }
 
@@ -64,7 +65,7 @@ export async function POST(request: NextRequest, { params: routeParams }: RouteC
     link:          inviteLink,
   })
 
-  console.log('[invites resend]', { id: updated.id, email: updated.email, emailStatus: emailResult.status })
+  logger.info('[invites]', 'invite resent', { inviteId: updated.id, emailStatus: emailResult.status })
 
   return NextResponse.json({
     ok:          true,

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { getAuthContext } from '@/lib/auth'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
+import { logger } from '@/lib/logger'
 
 // Forcibly remove orphaned (status='unverified') MFA factors for the
 // authenticated user. Required because the user-scoped
@@ -21,9 +22,7 @@ export async function DELETE(request: NextRequest) {
   })
 
   if (listErr) {
-    console.error('[mfa/cleanup] listFactors failed', {
-      message: listErr.message, code: listErr.code, status: listErr.status,
-    })
+    logger.error('[mfa/cleanup]', 'listFactors failed', { error: listErr.message })
     const isProd = process.env.VERCEL_ENV === 'production' || process.env.NODE_ENV === 'production'
     return NextResponse.json(
       isProd ? { error: 'Could not read factors' } : { error: listErr.message, code: listErr.code },
@@ -45,9 +44,7 @@ export async function DELETE(request: NextRequest) {
       userId: ctx.user.id,
     })
     if (error) {
-      console.error('[mfa/cleanup] deleteFactor failed', {
-        factorId: factor.id, message: error.message, code: error.code, status: error.status,
-      })
+      logger.error('[mfa/cleanup]', 'deleteFactor failed', { error: error.message, factorId: factor.id })
       failures.push({ id: factor.id, message: error.message })
     } else {
       deleted += 1

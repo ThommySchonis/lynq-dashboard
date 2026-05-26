@@ -7,6 +7,8 @@
  * status: 'sent' | 'not_configured' | 'no_link' | 'failed'
  */
 
+import { logger } from '@/lib/logger'
+
 const FROM_DEFAULT = 'Lynq & Flow <onboarding@resend.dev>'
 
 const ROLE_LABELS: Record<string, string> = {
@@ -17,7 +19,7 @@ const ROLE_LABELS: Record<string, string> = {
 
 export async function sendInviteEmail({ to, workspaceName, inviterEmail, role, link }: { to: string; workspaceName: string; inviterEmail: string; role: string; link: string | null }) {
   if (!process.env.RESEND_API_KEY) {
-    console.warn('[email] RESEND_API_KEY not set — skipping send')
+    logger.warn('[email]', 'RESEND_API_KEY not set — skipping send')
     return { status: 'not_configured' }
   }
   if (!link) return { status: 'no_link' }
@@ -56,14 +58,14 @@ export async function sendInviteEmail({ to, workspaceName, inviterEmail, role, l
     return { status: 'sent' }
   } catch (err: unknown) {
     const error = err instanceof Error ? err.message : 'Email send failed'
-    console.error('[email] Resend error:', error)
+    logger.error('[email]', 'Resend error', { error: err instanceof Error ? err.message : String(err) })
     return { status: 'failed', error }
   }
 }
 
 export async function sendSuspensionEmail({ to, workspaceName, reason }: { to: string; workspaceName: string; reason: string | null }) {
   if (!process.env.RESEND_API_KEY) {
-    console.warn('[email] RESEND_API_KEY not set — skipping suspension email')
+    logger.warn('[email]', 'RESEND_API_KEY not set — skipping suspension email')
     return { status: 'not_configured' }
   }
 
@@ -106,7 +108,7 @@ export async function sendSuspensionEmail({ to, workspaceName, reason }: { to: s
     return { status: 'sent' }
   } catch (err: unknown) {
     const error = err instanceof Error ? err.message : 'Email send failed'
-    console.error('[email] Resend suspension email error:', error)
+    logger.error('[email]', 'Resend suspension email error', { error: err instanceof Error ? err.message : String(err) })
     return { status: 'failed', error }
   }
 }

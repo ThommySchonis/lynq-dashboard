@@ -6,6 +6,7 @@ import { can } from '@/lib/permissions'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import { validateBody } from '@/lib/validation'
 import { macroOnboardingBody } from '@/lib/schemas/macros'
+import { logger } from '@/lib/logger'
 
 // GET /api/macros/onboarding — fetch existing answers (for prefill)
 export async function GET(request: NextRequest) {
@@ -20,7 +21,7 @@ export async function GET(request: NextRequest) {
     .maybeSingle()
 
   if (error) {
-    console.error('[onboarding GET] failed:', error.message)
+    logger.error('[macros/onboarding]', 'GET failed', { error: error.message })
     return NextResponse.json({ error: error.message, code: 'lookup_failed' }, { status: 500 })
   }
 
@@ -56,7 +57,7 @@ export async function POST(request: NextRequest) {
     .single()
 
   if (upsertResult.error || !upsertResult.data) {
-    console.error('[onboarding POST] upsert failed:', upsertResult.error?.message)
+    logger.error('[macros/onboarding]', 'upsert failed', { error: upsertResult.error?.message })
     return NextResponse.json({ error: upsertResult.error?.message ?? 'Failed to save onboarding', code: 'upsert_failed' }, { status: 500 })
   }
 

@@ -10,6 +10,7 @@
 import { supabaseAdmin } from '../supabaseAdmin'
 import * as whop from '../whop'
 import { isEUCountry, isValidVATFormat } from '../billing/issuer'
+import { logger } from '@/lib/logger'
 import type {
   Plan,
   PlanFeatures,
@@ -62,7 +63,7 @@ export async function getSubscription(workspaceId: string): Promise<WorkspaceSub
     .maybeSingle()
 
   if (result.error) {
-    console.error('[billing.getSubscription] failed:', result.error.message)
+    logger.error('[billing]', 'getSubscription failed', { error: result.error.message })
     return null
   }
   return result.data as WorkspaceSubscription | null
@@ -95,7 +96,7 @@ export async function getPlan(planId: string): Promise<Plan | null> {
     .maybeSingle()
 
   if (result.error) {
-    console.error('[billing.getPlan] failed:', result.error.message)
+    logger.error('[billing]', 'getPlan failed', { error: result.error.message })
     return null
   }
   return result.data as Plan | null
@@ -109,7 +110,7 @@ export async function listPlans(): Promise<Plan[]> {
     .order('sort_order', { ascending: true })
 
   if (error) {
-    console.error('[billing.listPlans] failed:', error.message)
+    logger.error('[billing]', 'listPlans failed', { error: error.message })
     return []
   }
   return (data as Plan[]) || []
@@ -152,7 +153,7 @@ async function ensureCurrentPeriod(
         .single()
       return refetchResult.data as UsageCounter | null
     }
-    console.error('[billing.ensureCurrentPeriod] insert failed:', createResult.error.message)
+    logger.error('[billing]', 'ensureCurrentPeriod insert failed', { error: createResult.error.message })
     return null
   }
   return createResult.data as UsageCounter
@@ -301,7 +302,7 @@ export async function changePlan(
       .single()
 
     if (updateResult.error) {
-      console.error('[billing.changePlan] DB update failed:', updateResult.error.message)
+      logger.error('[billing]', 'changePlan DB update failed', { error: updateResult.error.message })
       throw new BillingServiceError(updateResult.error.message, 'update_failed', 500)
     }
     return { mode: 'updated', subscription: updateResult.data as WorkspaceSubscription }
@@ -389,7 +390,7 @@ export async function getBillingInfo(workspaceId: string): Promise<BillingInfo |
     .maybeSingle()
 
   if (infoResult.error) {
-    console.error('[billing.getBillingInfo] failed:', infoResult.error.message)
+    logger.error('[billing]', 'getBillingInfo failed', { error: infoResult.error.message })
     return null
   }
   return infoResult.data as BillingInfo | null
@@ -478,7 +479,7 @@ export async function getInvoice(workspaceId: string, invoiceId: string): Promis
     .maybeSingle()
 
   if (invoiceResult.error) {
-    console.error('[billing.getInvoice] failed:', invoiceResult.error.message)
+    logger.error('[billing]', 'getInvoice failed', { error: invoiceResult.error.message })
     return null
   }
   return invoiceResult.data as Invoice | null
@@ -600,7 +601,7 @@ export async function recordOutboundMessage(
     .eq('workspace_id', workspaceId)
     .maybeSingle<ConversationBillingRow>()
 
-  if (convError) console.error('[recordOutboundMessage] fetch failed:', convError.message)
+  if (convError) logger.error('[billing]', 'recordOutboundMessage fetch failed', { error: convError.message })
 
   if (!conv) {
     return { counted: false, overage: false, reason: 'conversation_not_found' }
@@ -662,7 +663,7 @@ export async function recordOutboundMessage(
     .eq('id', counter.id)
 
   if (counterError) {
-    console.error('[recordOutboundMessage] counter update failed:', counterError.message)
+    logger.error('[billing]', 'recordOutboundMessage counter update failed', { error: counterError.message })
     // Don't claim we counted if the increment failed
     await supabaseAdmin
       .from('email_conversations')

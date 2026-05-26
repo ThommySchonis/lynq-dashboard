@@ -14,6 +14,7 @@ import {
   sleep,
 } from '../../../../lib/aiMacros'
 import { ensureTagsByName } from '../../../../lib/tags'
+import { logger } from '@/lib/logger'
 
 interface AnthropicStatusError {
   status?: number
@@ -44,7 +45,7 @@ export async function POST(request: NextRequest) {
     .maybeSingle()
 
   if (lookupError) {
-    console.error('[macros generate] onboarding lookup failed:', lookupError.message)
+    logger.error('[macros/generate]', 'onboarding lookup failed', { error: lookupError.message })
     return NextResponse.json({ error: lookupError.message, code: 'lookup_failed' }, { status: 500 })
   }
   interface OnboardingRow { id: string; answers: Record<string, unknown>; completed_at: string | null; generation_count: number }
@@ -76,14 +77,7 @@ export async function POST(request: NextRequest) {
   // syntactically incomplete — surface a specific error before parsing
   // so the user understands the cause.
   if (response.stop_reason === 'max_tokens') {
-    console.error(
-      '[macros generate] hit max_tokens — output_tokens=',
-      response.usage?.output_tokens,
-      'response length=', text.length,
-      '\n--- BEGIN TRUNCATED RESPONSE ---\n',
-      text,
-      '\n--- END TRUNCATED RESPONSE ---'
-    )
+    logger.error('[macros/generate]', 'hit max_tokens', { outputTokens: response.usage?.output_tokens, responseLength: text.length, truncatedResponse: text })
     return NextResponse.json(
       { error: 'AI response was too long. Generating fewer macros, please retry.', code: 'max_tokens' },
       { status: 502 }
@@ -93,15 +87,7 @@ export async function POST(request: NextRequest) {
   // Parse JSON (with code-fence stripping + preamble extraction fallback)
   const { macros: parsed, parseError, raw } = parseMacroJson(text)
   if (!parsed || parsed.length === 0) {
-    console.error(
-      '[macros generate] parse failed:', parseError,
-      '\n  stop_reason =', response.stop_reason,
-      '\n  output_tokens =', response.usage?.output_tokens,
-      '\n  response length =', text.length,
-      '\n--- BEGIN RAW CLAUDE RESPONSE ---\n',
-      raw,
-      '\n--- END RAW CLAUDE RESPONSE ---'
-    )
+    logger.error('[macros/generate]', 'parse failed', { parseError, stopReason: response.stop_reason, outputTokens: response.usage?.output_tokens, responseLength: text.length, rawResponse: raw })
     return NextResponse.json(
       { error: "Couldn't parse AI response. Try again.", code: 'parse_failed' },
       { status: 502 }
@@ -109,7 +95,7 @@ export async function POST(request: NextRequest) {
   }
 
   if (parsed.length < 40 || parsed.length > 60) {
-    console.warn('[macros generate] unusual count:', parsed.length, '— accepting anyway')
+    logger.warn('[macros/generate]', 'unusual count — accepting anyway', { count: parsed.length })
   }
 
   // Build rows for bulk insert (single statement = atomic in Postgres)
@@ -145,7 +131,7 @@ export async function POST(request: NextRequest) {
   const insertError = insertResult.error
 
   if (insertError) {
-    console.error('[macros generate] bulk insert failed:', insertError.message)
+    logger.error('[macros/generate]', 'bulk insert failed', { error: insertError.message })
     return NextResponse.json(
       { error: 'Saved 0 macros. Try again.', code: 'db_failed' },
       { status: 500 }
@@ -172,11 +158,11 @@ export async function POST(request: NextRequest) {
       }
       if (links.length > 0) {
         const { error: linkError } = await supabaseAdmin.from('macro_tags').insert(links)
-        if (linkError) console.error('[macros generate] macro_tags insert failed:', linkError.message)
+        if (linkError) logger.error('[macros/generate]', 'macro_tags insert failed', { error: linkError.message })
       }
     }
   } catch (err: unknown) {
-    console.error('[macros generate] tag sync failed (macros themselves were created):', err instanceof Error ? err.message : 'Unknown error')
+    logger.error('[macros/generate]', 'tag sync failed (macros themselves were created)', { error: err instanceof Error ? err.message : 'Unknown error' })
   }
 
   // Update onboarding bookkeeping
@@ -190,9 +176,7 @@ export async function POST(request: NextRequest) {
     .eq('workspace_id', ctx.workspaceId)
 
   const cost = calculateCost(response.usage)
-  console.log(
-    `[macros][generate] workspace=${ctx.workspaceId} input=${cost.input_tokens} output=${cost.output_tokens} cost=$${cost.estimated_cost_usd.toFixed(4)} count=${inserted.length}`
-  )
+  logger.info('[macros/generate]', 'generation complete', { workspaceId: ctx.workspaceId, inputTokens: cost.input_tokens, outputTokens: cost.output_tokens, estimatedCostUsd: cost.estimated_cost_usd, count: inserted.length })
 
   return NextResponse.json({
     ok:    true,
@@ -214,7 +198,7 @@ async function callClaudeWithRetry(client: Anthropic, userMessage: string): Prom
   } catch (err: unknown) {
     if (isRetryable(err)) {
       const e = err as AnthropicStatusError
-      console.warn('[macros generate] retrying after 2s, status =', e?.status)
+      logger.warn('[macros/generate]', 'retrying after 2s', { status: e?.status })
       await sleep(2000)
       return await client.messages.create({
         model:      CLAUDE_MODEL,
@@ -236,7 +220,7 @@ function mapAnthropicError(err: unknown) {
   const e      = err as AnthropicStatusError
   const status = e?.status ?? 0
   const msg    = e?.message ?? 'Unknown error'
-  console.error('[macros generate] Anthropic error:', status, msg)
+  logger.error('[macros/generate]', 'Anthropic error', { status, error: msg })
 
   if (status === 401) {
     return NextResponse.json({ error: 'AI service unavailable. Contact support.', code: 'ai_auth' }, { status: 500 })

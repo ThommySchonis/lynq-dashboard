@@ -4,6 +4,7 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { validateQuery } from '@/lib/validation'
 import { supportAnalyticsQuery } from '@/lib/schemas/analytics'
+import { logger } from '@/lib/logger'
 
 export async function GET(request: NextRequest) {
   const ctx = await getAuthContext(request)
@@ -20,7 +21,7 @@ export async function GET(request: NextRequest) {
   })
 
   if (rpcResult.error) {
-    console.error('[analytics] get_response_times error:', rpcResult.error.message)
+    logger.error('[analytics]', 'get_response_times error', { error: rpcResult.error.message })
     return NextResponse.json({ data: null, error: 'analytics_unavailable' })
   }
 

@@ -5,6 +5,7 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { validateQuery } from '@/lib/validation'
 import { shopifySyncQuery } from '@/lib/schemas/shopify'
+import { logger } from '@/lib/logger'
 
 export async function POST(request: NextRequest) {
   const ctx = await getAuthContext(request)
@@ -22,7 +23,7 @@ export async function POST(request: NextRequest) {
     const result = await syncOrders(ctx.workspaceId, credentials, ctx.user.id, { full, storeId: query.store_id })
     return NextResponse.json({ success: true, synced: result.synced })
   } catch (err: unknown) {
-    console.error('[sync] error:', err)
+    logger.error('[shopify/sync]', 'sync error', { error: err instanceof Error ? err.message : String(err) })
     return NextResponse.json({ error: 'Sync failed' }, { status: 500 })
   }
 }

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import type { Archiver } from 'archiver'
+import { logger } from '@/lib/logger'
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const { ZipArchive } = require('archiver') as { ZipArchive: new (opts: { zlib: { level: number } }) => Archiver }
 import { getAuthContext } from '@/lib/auth'
@@ -78,7 +79,7 @@ export async function POST(request: NextRequest) {
     })
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Export failed'
-    console.error('[billing.export]', msg)
+    logger.error('[billing/export]', 'export failed', { error: msg })
     return NextResponse.json({ error: msg }, { status: 500 })
   }
 }

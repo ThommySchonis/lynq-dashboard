@@ -1,4 +1,5 @@
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
+import { logger } from '@/lib/logger'
 import type { EventType } from './events'
 
 export async function trackEvent(
@@ -19,6 +20,6 @@ export async function trackEvent(
       metadata: metadata || {},
     })
   } catch (err) {
-    console.error('[analytics] trackEvent failed:', eventType, conversationId, err)
+    logger.error('[analytics]', 'trackEvent failed', { eventType, conversationId, error: err instanceof Error ? err.message : String(err) })
   }
 }

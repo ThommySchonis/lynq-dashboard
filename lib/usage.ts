@@ -17,6 +17,7 @@
 //     under concurrent requests.
 
 import { supabaseAdmin } from './supabaseAdmin'
+import { logger } from '@/lib/logger'
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000
 
@@ -104,7 +105,7 @@ export async function getSubscription(workspaceId: string): Promise<WorkspaceSub
     .maybeSingle()
 
   if (error) {
-    console.error('[usage] getSubscription failed:', error.message)
+    logger.error('[usage]', 'getSubscription failed', { error: error.message })
     return null
   }
   return data as WorkspaceSubscription | null
@@ -121,7 +122,7 @@ export async function getPlan(planId: string): Promise<Plan | null> {
     .maybeSingle()
 
   if (error) {
-    console.error('[usage] getPlan failed:', error.message)
+    logger.error('[usage]', 'getPlan failed', { error: error.message })
     return null
   }
   return data as Plan | null
@@ -137,7 +138,7 @@ export async function getPlan(planId: string): Promise<Plan | null> {
 export async function ensureCurrentPeriod(workspaceId: string): Promise<UsageCounter | null> {
   const sub = await getSubscription(workspaceId)
   if (!sub) {
-    console.error('[usage] ensureCurrentPeriod: no subscription for', workspaceId)
+    logger.error('[usage]', 'ensureCurrentPeriod: no subscription', { workspaceId })
     return null
   }
 
@@ -174,7 +175,7 @@ export async function ensureCurrentPeriod(workspaceId: string): Promise<UsageCou
         .single()
       return refetchResult.data as UsageCounter | null
     }
-    console.error('[usage] ensureCurrentPeriod insert failed:', insertError.message)
+    logger.error('[usage]', 'ensureCurrentPeriod insert failed', { error: insertError.message })
     return null
   }
   return createResult.data as UsageCounter
@@ -276,7 +277,7 @@ export async function incrementTicketUsage(workspaceId: string): Promise<Increme
     .eq('id', counter.id)
 
   if (error) {
-    console.error('[usage] incrementTicketUsage failed:', error.message)
+    logger.error('[usage]', 'incrementTicketUsage failed', { error: error.message })
     return { counted: false, overage: false }
   }
 
@@ -306,7 +307,7 @@ export async function incrementAISuggestUsage(workspaceId: string): Promise<Incr
     .eq('id', counter.id)
 
   if (error) {
-    console.error('[usage] incrementAISuggestUsage failed:', error.message)
+    logger.error('[usage]', 'incrementAISuggestUsage failed', { error: error.message })
     return { counted: false, overage: false }
   }
 
@@ -331,7 +332,7 @@ export async function incrementAIResolutionUsage(workspaceId: string): Promise<{
     .eq('id', counter.id)
 
   if (error) {
-    console.error('[usage] incrementAIResolutionUsage failed:', error.message)
+    logger.error('[usage]', 'incrementAIResolutionUsage failed', { error: error.message })
     return { counted: false }
   }
   return { counted: true }

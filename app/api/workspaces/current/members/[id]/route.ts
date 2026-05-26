@@ -7,6 +7,7 @@ import { can } from '@/lib/permissions'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import { validateBody, validateParams } from '@/lib/validation'
 import { memberParams, updateMemberBody } from '@/lib/schemas/workspaces'
+import { logger } from '@/lib/logger'
 
 interface MemberRow { id: string; user_id: string; role: string }
 
@@ -43,7 +44,7 @@ export async function PATCH(request: NextRequest, { params: routeParams }: Route
     .maybeSingle()
 
   if (targetResult.error) {
-    console.error('[role PATCH] target lookup failed:', targetResult.error.message)
+    logger.error('[members]', 'role PATCH target lookup failed', { message: targetResult.error.message })
     return NextResponse.json({ error: targetResult.error.message, code: 'lookup_failed' }, { status: 500 })
   }
   const target = targetResult.data as MemberRow | null
@@ -90,7 +91,7 @@ export async function PATCH(request: NextRequest, { params: routeParams }: Route
       .neq('id', target.id)
 
     if (countError) {
-      console.error('[role PATCH] owner count failed:', countError.message)
+      logger.error('[members]', 'role PATCH owner count failed', { message: countError.message })
       return NextResponse.json({ error: countError.message, code: 'lookup_failed' }, { status: 500 })
     }
     if ((count ?? 0) === 0) {
@@ -110,11 +111,11 @@ export async function PATCH(request: NextRequest, { params: routeParams }: Route
     .single()
 
   if (memberUpdateResult.error) {
-    console.error('[role PATCH] update failed:', memberUpdateResult.error.message)
+    logger.error('[members]', 'role PATCH update failed', { message: memberUpdateResult.error.message })
     return NextResponse.json({ error: memberUpdateResult.error.message, code: 'update_failed' }, { status: 500 })
   }
 
-  console.log('[role PATCH]', { workspaceId: ctx.workspaceId, target: target.id, from: target.role, to: newRole })
+  logger.info('[members]', 'role updated', { workspaceId: ctx.workspaceId, targetId: target.id, from: target.role, to: newRole })
   return NextResponse.json({ ok: true, member: memberUpdateResult.data as Record<string, unknown> })
 }
 
@@ -166,7 +167,7 @@ export async function DELETE(request: NextRequest, { params: routeParams }: Rout
     .maybeSingle()
 
   if (delTargetResult.error) {
-    console.error('[member DELETE] lookup failed:', delTargetResult.error.message)
+    logger.error('[members]', 'member DELETE lookup failed', { message: delTargetResult.error.message })
     return NextResponse.json({ error: delTargetResult.error.message, code: 'lookup_failed' }, { status: 500 })
   }
   const target = delTargetResult.data as MemberRow | null
@@ -200,7 +201,7 @@ export async function DELETE(request: NextRequest, { params: routeParams }: Rout
       .neq('id', target.id)
 
     if (countError) {
-      console.error('[member DELETE] owner count failed:', countError.message)
+      logger.error('[members]', 'member DELETE owner count failed', { message: countError.message })
       return NextResponse.json({ error: countError.message, code: 'lookup_failed' }, { status: 500 })
     }
     if ((count ?? 0) === 0) {
@@ -218,13 +219,13 @@ export async function DELETE(request: NextRequest, { params: routeParams }: Rout
     .eq('workspace_id', ctx.workspaceId)
 
   if (deleteError) {
-    console.error('[member DELETE] delete failed:', deleteError.message)
+    logger.error('[members]', 'member DELETE failed', { message: deleteError.message })
     return NextResponse.json({ error: deleteError.message, code: 'delete_failed' }, { status: 500 })
   }
 
-  console.log('[member DELETE]', {
+  logger.info('[members]', 'member removed', {
     workspaceId: ctx.workspaceId,
-    removed:     target.id,
+    removedId:   target.id,
     removedRole: target.role,
     by:          ctx.user.id,
   })

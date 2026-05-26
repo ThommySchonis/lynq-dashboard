@@ -3,6 +3,7 @@ import type { NextRequest } from 'next/server'
 import { getUserFromToken, supabaseAdmin } from '@/lib/supabaseAdmin'
 import { validateBody } from '@/lib/validation'
 import { consentSyncBody } from '@/lib/schemas/consent'
+import { logger } from '@/lib/logger'
 
 export async function POST(request: NextRequest) {
   const authHeader = request.headers.get('authorization')
@@ -23,7 +24,7 @@ export async function POST(request: NextRequest) {
     .eq('user_id', user.id)
 
   if (error) {
-    console.error('[consent-sync] update failed:', error.message)
+    logger.error('[consent-sync]', 'update failed', { error: error.message })
     return NextResponse.json({ error: 'Failed to sync consent' }, { status: 500 })
   }
 

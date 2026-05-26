@@ -5,6 +5,7 @@ import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import { validateBody, validateParams } from '@/lib/validation'
 import { tokenParams } from '@/lib/schemas/common'
 import { inviteSignupBody } from '@/lib/schemas/auth'
+import { logger } from '@/lib/logger'
 
 function sanitizeName(raw: string): string {
   // Strip control chars + collapse whitespace + trim + cap to 100
@@ -45,7 +46,7 @@ export async function POST(request: NextRequest, { params }: RouteContext<{ toke
     .maybeSingle()
 
   if (inviteResult.error) {
-    console.error('[invite signup] lookup failed:', inviteResult.error.message)
+    logger.error('[invite/signup]', 'lookup failed', { error: inviteResult.error.message })
     return NextResponse.json({ error: 'Lookup failed', code: 'lookup_failed' }, { status: 500 })
   }
 
@@ -84,13 +85,13 @@ export async function POST(request: NextRequest, { params }: RouteContext<{ toke
     if (/password/i.test(msg)) {
       return NextResponse.json({ error: msg, code: 'weak_password' }, { status: 400 })
     }
-    console.error('[invite signup] createUser failed:', msg)
+    logger.error('[invite/signup]', 'createUser failed', { error: msg })
     return NextResponse.json({ error: msg || 'Signup failed', code: 'signup_failed' }, { status: 500 })
   }
 
   const newUserId = created?.user?.id
   if (!newUserId) {
-    console.error('[invite signup] createUser returned no user id')
+    logger.error('[invite/signup]', 'createUser returned no user id')
     return NextResponse.json({ error: 'Signup failed', code: 'signup_failed' }, { status: 500 })
   }
 
@@ -102,20 +103,20 @@ export async function POST(request: NextRequest, { params }: RouteContext<{ toke
   })
 
   if (rpcResponse.error) {
-    console.error('[invite signup] accept RPC failed:', rpcResponse.error.message)
+    logger.error('[invite/signup]', 'accept RPC failed', { error: rpcResponse.error.message })
     return NextResponse.json({ error: rpcResponse.error.message, code: 'accept_failed' }, { status: 500 })
   }
 
   const acceptResult = rpcResponse.data as RpcResult | null
   if (!acceptResult?.ok) {
-    console.error('[invite signup] accept RPC returned non-ok:', JSON.stringify(acceptResult))
+    logger.error('[invite/signup]', 'accept RPC returned non-ok', { result: acceptResult })
     return NextResponse.json(
       { error: acceptResult?.error ?? 'Failed to accept invite', code: 'accept_failed' },
       { status: 500 }
     )
   }
 
-  console.log('[invite signup] success — user', newUserId, 'joined workspace', invite.workspace_id)
+  logger.info('[invite/signup]', 'signup success', { workspaceId: invite.workspace_id })
 
   return NextResponse.json({
     ok:           true,

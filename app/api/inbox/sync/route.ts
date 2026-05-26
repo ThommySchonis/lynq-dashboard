@@ -3,6 +3,7 @@ import { syncAllAccounts } from '../../../../lib/conversationEngine'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { checkRateLimit } from '@/lib/rate-limit'
+import { logger } from '@/lib/logger'
 
 export async function POST(request: NextRequest) {
   const ctx = await getAuthContext(request)
@@ -26,14 +27,14 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    console.log('[sync] Starting sync for workspace:', ctx.workspaceId)
+    logger.info('[inbox/sync]', 'starting sync', { workspaceId: ctx.workspaceId })
     const result = await syncAllAccounts(ctx.workspaceId)
-    console.log('[sync] Result:', JSON.stringify(result))
+    logger.info('[inbox/sync]', 'sync complete', { result })
     return NextResponse.json(result)
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Unknown error'
     const stack = err instanceof Error ? err.stack : undefined
-    console.error('[sync] Error:', message, stack)
+    logger.error('[inbox/sync]', 'sync error', { error: message, stack })
     return NextResponse.json({ error: message }, { status: 500 })
   }
 }

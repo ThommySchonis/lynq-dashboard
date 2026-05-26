@@ -4,6 +4,7 @@ import { getAuthContext, requireWriteAccess } from '@/lib/auth'
 import { supabaseAdmin }  from '@/lib/supabaseAdmin'
 import { validateBody } from '@/lib/validation'
 import { emailIntegrationBody } from '@/lib/schemas/settings'
+import { logger } from '@/lib/logger'
 
 interface EmailAccountRow {
   provider?: string
@@ -69,7 +70,7 @@ export async function POST(request: NextRequest) {
     }, { onConflict: 'client_id' })
 
   if (error) {
-    console.error('[settings/integrations/email POST] upsert failed:', error.message)
+    logger.error('[settings/email]', 'POST upsert failed', { error: error.message })
     return NextResponse.json({ error: error.message, code: 'save_failed' }, { status: 500 })
   }
 

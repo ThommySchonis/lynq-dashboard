@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
+import { logger } from '@/lib/logger'
 
 // ─── Trial expiry cron ────────────────────────────────────────────────
 //
@@ -22,6 +23,18 @@ import { supabaseAdmin } from '@/lib/supabaseAdmin'
 // Idempotent: re-running for an already-expired trial is a no-op.
 // ──────────────────────────────────────────────────────────────────────
 
+interface ExpiredSubRow {
+  id:           string
+  workspace_id: string
+  plan_id:      string
+  trial_ends_at: string | null
+}
+
+interface PastDueSubRow {
+  id:           string
+  workspace_id: string
+}
+
 function unauthorized(reason: string): NextResponse {
   return NextResponse.json({ error: 'Unauthorized', reason }, { status: 401 })
 }
@@ -29,14 +42,14 @@ function unauthorized(reason: string): NextResponse {
 async function handle(request: NextRequest): Promise<NextResponse> {
   const expected = process.env.CRON_SECRET
   if (!expected) {
-    console.error('[cron/trial-expiry] CRON_SECRET not configured')
+    logger.error('[cron/trial-expiry]', 'CRON_SECRET not configured')
     return NextResponse.json({ error: 'Server misconfigured' }, { status: 500 })
   }
   const token = (request.headers.get('authorization') || '').replace(/^Bearer\s+/i, '')
   if (token !== expected) return unauthorized('cron-secret-mismatch')
 
   const startedAt = Date.now()
-  console.log('[cron/trial-expiry] start')
+  logger.info('[cron/trial-expiry]', 'start')
 
   // Find expired trials
   const { data: expired, error } = await supabaseAdmin
@@ -47,14 +60,14 @@ async function handle(request: NextRequest): Promise<NextResponse> {
     .lte('trial_ends_at', new Date().toISOString())
 
   if (error) {
-    console.error('[cron/trial-expiry] query failed:', error.message)
+    logger.error('[cron/trial-expiry]', 'query failed', { error: error.message })
     return NextResponse.json({ ok: false, error: error.message }, { status: 500 })
   }
 
   // Bulk update — single SQL statement, race-safe via the `eq('status','trial')`
   // guard (won't downgrade something that's since been upgraded).
   let updated = 0
-  for (const sub of expired || []) {
+  for (const sub of (expired as unknown as ExpiredSubRow[]) || []) {
     const { error: updateError } = await supabaseAdmin
       .from('workspace_subscriptions')
       .update({ status: 'past_due' })
@@ -62,11 +75,11 @@ async function handle(request: NextRequest): Promise<NextResponse> {
       .eq('status', 'trial')        // race guard
 
     if (updateError) {
-      console.error('[cron/trial-expiry] update failed for', sub.workspace_id, updateError.message)
+      logger.error('[cron/trial-expiry]', 'update failed', { workspaceId: sub.workspace_id, error: updateError.message })
       continue
     }
     updated++
-    console.log('[cron/trial-expiry] expired workspace', sub.workspace_id, '(trial ended', sub.trial_ends_at, ')')
+    logger.info('[cron/trial-expiry]', 'expired workspace', { workspaceId: sub.workspace_id, trialEndsAt: sub.trial_ends_at })
   }
 
   // ── Phase 2: Auto-suspend workspaces past_due for 7+ days ──────────
@@ -79,7 +92,7 @@ async function handle(request: NextRequest): Promise<NextResponse> {
     .lte('updated_at', sevenDaysAgo)
 
   let autoSuspended = 0
-  for (const sub of pastDue || []) {
+  for (const sub of (pastDue as unknown as PastDueSubRow[]) || []) {
     // Skip if already suspended
     const { data: ws } = await supabaseAdmin
       .from('workspaces')
@@ -98,12 +111,12 @@ async function handle(request: NextRequest): Promise<NextResponse> {
       .eq('id', sub.workspace_id)
 
     if (suspendError) {
-      console.error('[cron/trial-expiry] auto-suspend failed for', sub.workspace_id, suspendError.message)
+      logger.error('[cron/trial-expiry]', 'auto-suspend failed', { workspaceId: sub.workspace_id, error: suspendError.message })
       continue
     }
 
     autoSuspended++
-    console.log('[cron/trial-expiry] auto-suspended workspace', sub.workspace_id)
+    logger.info('[cron/trial-expiry]', 'auto-suspended workspace', { workspaceId: sub.workspace_id })
 
     // Send suspension email to owner (find via workspace_members, not workspaces.owner_id)
     const { data: ownerMember } = await supabaseAdmin
@@ -136,7 +149,7 @@ async function handle(request: NextRequest): Promise<NextResponse> {
     expired:        updated,
     auto_suspended: autoSuspended,
   }
-  console.log('[cron/trial-expiry] done', JSON.stringify(summary))
+  logger.info('[cron/trial-expiry]', 'done', summary)
   return NextResponse.json(summary)
 }
 

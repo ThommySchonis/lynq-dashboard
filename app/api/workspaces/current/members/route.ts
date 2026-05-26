@@ -10,6 +10,7 @@ import { validateBody, validateQuery } from '@/lib/validation'
 import { getMembersQuery, inviteMemberBody } from '@/lib/schemas/workspaces'
 import { sanitizeLikeInput } from '@/lib/sanitize'
 import { getSiteUrl } from '@/lib/utils/request'
+import { logger } from '@/lib/logger'
 
 interface CursorPayload {
   joined_at: string
@@ -98,8 +99,8 @@ export async function GET(request: NextRequest) {
       .order('created_at', { ascending: false }),
   ])
 
-  if (membersError) console.error('[members GET] members query failed:', membersError.message)
-  if (invitesError) console.error('[members GET] invites query failed:', invitesError.message)
+  if (membersError) logger.error('[members]', 'members query failed', { message: membersError.message })
+  if (invitesError) logger.error('[members]', 'invites query failed', { message: invitesError.message })
 
   interface MemberViewRow { id: string; role: string; joined_at: string; [key: string]: unknown }
   const members = (rawMembers || []) as MemberViewRow[]
@@ -125,20 +126,10 @@ export async function GET(request: NextRequest) {
   const isOwner = ctx.role === 'owner'
 
   if (!ctx.role) {
-    console.warn('[members GET] ctx.role missing!', {
-      userId:      ctx.user?.id,
-      workspaceId: ctx.workspaceId,
-      memberId:    ctx.memberId,
-    })
+    logger.warn('[members]', 'ctx.role missing', { workspaceId: ctx.workspaceId })
   }
 
-  console.log('[members GET]', {
-    workspaceId: ctx.workspaceId,
-    userId:      ctx.user.id,
-    role:        ctx.role,
-    isOwner,
-    memberCount: members.length,
-  })
+  logger.debug('[members]', 'members loaded', { memberCount: members.length, inviteCount: inviteCount ?? 0 })
 
   return NextResponse.json({
     members,
@@ -157,13 +148,13 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   const ctx = await getAuthContext(request)
   if (!ctx) {
-    console.error('[invite POST] no auth context')
+    logger.error('[members]', 'no auth context')
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
   const blocked = requireWriteAccess(ctx)
   if (blocked) return blocked
   if (!can.inviteMembers(ctx.role as Role)) {
-    console.error('[invite POST] role', ctx.role, 'cannot invite members')
+    logger.error('[members]', 'role cannot invite members', { role: ctx.role })
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
@@ -172,7 +163,7 @@ export async function POST(request: NextRequest) {
 
   const { email, role } = body
   const normalizedEmail = email.toLowerCase().trim()
-  console.log('[invite POST] starting invite for', normalizedEmail, 'role:', role, 'workspace:', ctx.workspaceId)
+  logger.info('[members]', 'starting invite', { role, workspaceId: ctx.workspaceId })
 
   // Rate limit: max 20 invites in last 60s
   const { count: recentCount, error: rateError } = await supabaseAdmin
@@ -181,7 +172,7 @@ export async function POST(request: NextRequest) {
     .eq('workspace_id', ctx.workspaceId)
     .gt('created_at', new Date(Date.now() - 60_000).toISOString())
 
-  if (rateError) console.error('[invite POST] rate-limit query failed:', rateError.message)
+  if (rateError) logger.error('[members]', 'rate-limit query failed', { message: rateError.message })
   if ((recentCount ?? 0) >= 20) {
     return NextResponse.json({ error: 'Too many invites. Please wait a minute.' }, { status: 429 })
   }
@@ -195,7 +186,7 @@ export async function POST(request: NextRequest) {
     .maybeSingle()
 
   if (memberError) {
-    console.error('[invite POST] existing member check failed:', memberError.message)
+    logger.error('[members]', 'existing member check failed', { message: memberError.message })
     return NextResponse.json({ error: `Member lookup failed: ${memberError.message}` }, { status: 500 })
   }
   if (existingMember) {
@@ -216,7 +207,7 @@ export async function POST(request: NextRequest) {
     .maybeSingle()
 
   if (existingInviteError) {
-    console.error('[invite POST] existing invite check failed:', existingInviteError.message)
+    logger.error('[members]', 'existing invite check failed', { message: existingInviteError.message })
     return NextResponse.json({ error: existingInviteError.message, code: 'lookup_failed' }, { status: 500 })
   }
 
@@ -227,7 +218,7 @@ export async function POST(request: NextRequest) {
   interface InviteRow { id: string; token: string; [key: string]: unknown }
   let invite: InviteRow
   if (existingInvite) {
-    console.log('[invite POST] refreshing pending invite', (existingInvite as IdRow).id)
+    logger.info('[members]', 'refreshing pending invite', { inviteId: (existingInvite as IdRow).id })
     const updateResult = await supabaseAdmin
       .from('workspace_invites')
       .update({
@@ -242,7 +233,7 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (updateResult.error || !updateResult.data) {
-      console.error('[invite POST] update failed:', updateResult.error?.message)
+      logger.error('[members]', 'invite update failed', { message: updateResult.error?.message })
       return NextResponse.json({ error: updateResult.error?.message ?? 'Failed to refresh invite' }, { status: 500 })
     }
     invite = updateResult.data as InviteRow
@@ -253,7 +244,7 @@ export async function POST(request: NextRequest) {
     //       (the partial unique index `workspace_invites_active_unique` only
     //       blocks duplicates among rows where accepted_at IS NULL, so an
     //       old accepted row doesn't conflict)
-    console.log('[invite POST] creating new invite')
+    logger.info('[members]', 'creating new invite')
     const insertResult = await supabaseAdmin
       .from('workspace_invites')
       .insert({
@@ -269,19 +260,19 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (insertResult.error || !insertResult.data) {
-      console.error('[invite POST] insert failed:', insertResult.error?.message)
+      logger.error('[members]', 'invite insert failed', { message: insertResult.error?.message })
       return NextResponse.json({ error: insertResult.error?.message ?? 'Failed to create invite' }, { status: 500 })
     }
     invite = insertResult.data as InviteRow
   }
 
-  console.log('[invite POST] invite saved, id:', invite.id, 'token length:', invite.token?.length)
+  logger.info('[members]', 'invite saved', { inviteId: invite.id, tokenLength: invite.token?.length })
 
   const siteUrl    = getSiteUrl(request)
   const inviteLink = siteUrl ? `${siteUrl}/invites/${invite.token}` : null
 
   if (!siteUrl) {
-    console.error('[invite POST] could not determine site URL — invite link unavailable')
+    logger.error('[members]', 'could not determine site URL — invite link unavailable')
   }
 
   // Send invite email via shared helper
@@ -293,7 +284,7 @@ export async function POST(request: NextRequest) {
     link:          inviteLink,
   })
 
-  console.log('[invite POST] email result:', emailResult.status)
+  logger.info('[members]', 'invite email sent', { status: emailResult.status })
 
   return NextResponse.json(
     {

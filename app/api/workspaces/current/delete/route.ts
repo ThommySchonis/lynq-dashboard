@@ -5,6 +5,7 @@ import { getAuthContext, requireWriteAccess } from '@/lib/auth'
 import { can } from '@/lib/permissions'
 import { cancelSubscription } from '@/lib/services/billing'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
+import { logger } from '@/lib/logger'
 
 export async function POST(request: NextRequest) {
   const ctx = await getAuthContext(request)
@@ -48,7 +49,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ scheduledFor })
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Failed to schedule workspace deletion'
-    console.error('[workspaces/current/delete POST]', message)
+    logger.error('[delete]', 'workspace delete POST failed', { message })
     return NextResponse.json({ error: message }, { status: 400 })
   }
 }

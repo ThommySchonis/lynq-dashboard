@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { logger } from '@/lib/logger'
 
 /**
  * Shared helpers for the tags system (Phase 1).
@@ -70,7 +71,7 @@ export async function ensureTagsByName(supabaseAdmin: SupabaseClient, workspaceI
     .eq('workspace_id', workspaceId)
 
   if (lookupError) {
-    console.error('[tags] lookup for ensureTagsByName failed:', lookupError.message)
+    logger.error('[tags]', 'lookup for ensureTagsByName failed', { error: lookupError.message })
     throw lookupError
   }
 
@@ -98,7 +99,7 @@ export async function ensureTagsByName(supabaseAdmin: SupabaseClient, workspaceI
       .select('id, name')
 
     if (insertError) {
-      console.error('[tags] bulk-insert failed in ensureTagsByName:', insertError.message)
+      logger.error('[tags]', 'bulk-insert failed in ensureTagsByName', { error: insertError.message })
       throw insertError
     }
     for (const t of (created as TagRow[] | null) || []) byLower.set(t.name.toLowerCase(), t.id)
@@ -122,7 +123,7 @@ export async function syncMacroTags(supabaseAdmin: SupabaseClient, macroId: stri
     .eq('macro_id', macroId)
 
   if (delError) {
-    console.error('[tags] macro_tags delete failed:', delError.message)
+    logger.error('[tags]', 'macro_tags delete failed', { error: delError.message })
     throw delError
   }
 
@@ -134,7 +135,7 @@ export async function syncMacroTags(supabaseAdmin: SupabaseClient, macroId: stri
     .insert(rows)
 
   if (insError) {
-    console.error('[tags] macro_tags insert failed:', insError.message)
+    logger.error('[tags]', 'macro_tags insert failed', { error: insError.message })
     throw insError
   }
 }

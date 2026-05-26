@@ -4,6 +4,7 @@ import type { RouteContext } from '@/types/api'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import { validateParams } from '@/lib/validation'
 import { tokenParams } from '@/lib/schemas/common'
+import { logger } from '@/lib/logger'
 
 interface WorkspaceNameRow {
   name?: string
@@ -28,7 +29,7 @@ export async function GET(request: NextRequest, { params }: RouteContext<{ token
     .maybeSingle()
 
   if (inviteResult.error) {
-    console.error('[invite GET] lookup failed:', inviteResult.error.message)
+    logger.error('[invite]', 'GET lookup failed', { error: inviteResult.error.message })
     return NextResponse.json({ error: 'lookup_failed' }, { status: 500 })
   }
 

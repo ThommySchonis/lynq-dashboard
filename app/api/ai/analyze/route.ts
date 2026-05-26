@@ -5,6 +5,7 @@ import { checkRateLimit } from '@/lib/rate-limit'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { aiAnalyzeBody } from '@/lib/schemas/ai'
+import { logger } from '@/lib/logger'
 
 interface AnalyzeResult {
   results?: Record<string, unknown>
@@ -72,7 +73,7 @@ ${threads.slice(0, 25).map(t => `ID: ${t.id}\nSubject: ${t.subject || '(no subje
     cost_usd: ((usage.inputTokens ?? 0) * 0.0000008) + ((usage.outputTokens ?? 0) * 0.000004),
     user_email: user.email,
   })
-  if (usageErr) console.error('[ai/analyze] usage log failed:', usageErr.message)
+  if (usageErr) logger.error('[ai/analyze]', 'usage log failed', { error: usageErr.message })
 
   try {
     const jsonMatch = text.match(/\{[\s\S]*\}/)

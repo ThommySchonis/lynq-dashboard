@@ -5,6 +5,7 @@ import { validateBody } from '@/lib/validation'
 import { exportBody } from '@/lib/schemas/data-export'
 import { exportAnalyticsCSV } from '@/lib/services/data-export'
 import { renderAnalyticsReportPDF } from '@/lib/services/data-export-pdf'
+import { logger } from '@/lib/logger'
 
 export async function POST(request: NextRequest) {
   const ctx = await getAuthContext(request)
@@ -37,7 +38,7 @@ export async function POST(request: NextRequest) {
     })
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Export failed'
-    console.error('[analytics.export]', msg)
+    logger.error('[analytics/export]', 'export failed', { error: msg })
     return NextResponse.json({ error: msg }, { status: 500 })
   }
 }

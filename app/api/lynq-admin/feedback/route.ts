@@ -1,6 +1,7 @@
 import { supabaseAdmin, getUserFromToken } from '@/lib/supabaseAdmin'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { logger } from '@/lib/logger'
 
 const LYNQ_ADMIN_EMAILS = ['info@lynqagency.com']
 
@@ -27,7 +28,7 @@ export async function GET(request: NextRequest) {
     .limit(500)
 
   if (error) {
-    console.error('[lynq-admin/feedback] query failed:', error.message)
+    logger.error('[lynq-admin/feedback]', 'query failed', { error: error.message })
     return NextResponse.json({ error: 'Query failed' }, { status: 500 })
   }
 

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import { executeAccountDeletion } from '@/lib/services/account-deletion'
+import { logger } from '@/lib/logger'
 
 // ─── Data retention cleanup job ───────────────────────────────────────
 //
@@ -90,7 +91,7 @@ async function logEvent({
     })
 
   if (error) {
-    console.error('[cron/data-retention] log insert failed:', event, workspaceId, error.message)
+    logger.error('[cron/data-retention]', 'log insert failed', { event, workspaceId, error: error.message })
   }
 }
 
@@ -121,7 +122,7 @@ async function runCancelPhase(): Promise<PhaseSummary> {
     .not('scheduled_for_deletion_at', 'is', null)
 
   if (error) {
-    console.error('[cron/data-retention] phase 0 query failed:', error.message)
+    logger.error('[cron/data-retention]', 'phase 0 query failed', { error: error.message })
     return { cancelled: 0, errors: 1 }
   }
 
@@ -136,7 +137,7 @@ async function runCancelPhase(): Promise<PhaseSummary> {
 
     if (updateError) {
       errors++
-      console.error('[cron/data-retention] phase 0 update failed for', ws.id, updateError.message)
+      logger.error('[cron/data-retention]', 'phase 0 update failed', { workspaceId: ws.id, error: updateError.message })
       await logEvent({
         workspaceId:   ws.id,
         workspaceName: ws.name,
@@ -180,7 +181,7 @@ async function runSchedulePhase(): Promise<PhaseSummary> {
     .lte('workspace_subscriptions.trial_ends_at', cutoffIso)
 
   if (error) {
-    console.error('[cron/data-retention] phase 1 query failed:', error.message)
+    logger.error('[cron/data-retention]', 'phase 1 query failed', { error: error.message })
     return { scheduled: 0, errors: 1 }
   }
 
@@ -196,7 +197,7 @@ async function runSchedulePhase(): Promise<PhaseSummary> {
 
     if (updateError) {
       errors++
-      console.error('[cron/data-retention] phase 1 update failed for', ws.id, updateError.message)
+      logger.error('[cron/data-retention]', 'phase 1 update failed', { workspaceId: ws.id, error: updateError.message })
       await logEvent({
         workspaceId:   ws.id,
         workspaceName: ws.name,
@@ -244,7 +245,7 @@ async function runDeletePhase(): Promise<PhaseSummary> {
     .lte('scheduled_for_deletion_at', nowIso)
 
   if (error) {
-    console.error('[cron/data-retention] phase 2 query failed:', error.message)
+    logger.error('[cron/data-retention]', 'phase 2 query failed', { error: error.message })
     return { deleted: 0, errors: 1 }
   }
 
@@ -277,7 +278,7 @@ async function runDeletePhase(): Promise<PhaseSummary> {
 
     if (deleteError) {
       errors++
-      console.error('[cron/data-retention] phase 2 delete failed for', ws.id, deleteError.message)
+      logger.error('[cron/data-retention]', 'phase 2 delete failed', { workspaceId: ws.id, error: deleteError.message })
       await logEvent({
         workspaceId:   ws.id,
         workspaceName: ws.name,
@@ -305,7 +306,7 @@ async function runDeletePhase(): Promise<PhaseSummary> {
 async function handle(request: NextRequest): Promise<NextResponse> {
   const expected = process.env.CRON_SECRET
   if (!expected) {
-    console.error('[cron/data-retention] CRON_SECRET not configured')
+    logger.error('[cron/data-retention]', 'CRON_SECRET not configured')
     return NextResponse.json({ error: 'Server misconfigured' }, { status: 500 })
   }
 
@@ -316,7 +317,7 @@ async function handle(request: NextRequest): Promise<NextResponse> {
   }
 
   const startedAt = Date.now()
-  console.log('[cron/data-retention] start')
+  logger.info('[cron/data-retention]', 'start')
 
   const cancel   = await runCancelPhase()
   const schedule = await runSchedulePhase()
@@ -332,7 +333,7 @@ async function handle(request: NextRequest): Promise<NextResponse> {
     .lte('scheduled_for_deletion_at', new Date().toISOString())
 
   if (accountFetchError) {
-    console.error('[data-retention] Phase 3 fetch error:', accountFetchError.message)
+    logger.error('[cron/data-retention]', 'Phase 3 fetch error', { error: accountFetchError.message })
     accountPhase.errors++
   } else {
     for (const account of accountsToDelete ?? []) {
@@ -346,7 +347,7 @@ async function handle(request: NextRequest): Promise<NextResponse> {
         accountPhase.deleted = (accountPhase.deleted ?? 0) + 1
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Unknown error'
-        console.error(`[data-retention] Phase 3 error for user ${userId}:`, message)
+        logger.error('[cron/data-retention]', 'Phase 3 error for user', { userId, error: message })
 
         // Log error to account_deletion_log
         await supabaseAdmin.from('account_deletion_log').insert({
@@ -373,7 +374,7 @@ async function handle(request: NextRequest): Promise<NextResponse> {
     },
   }
 
-  console.log('[cron/data-retention] done', JSON.stringify(summary))
+  logger.info('[cron/data-retention]', 'done', summary)
   return NextResponse.json(summary)
 }
 

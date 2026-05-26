@@ -5,6 +5,7 @@ import type { NextRequest } from 'next/server'
 import crypto from 'crypto'
 import { validateBody } from '@/lib/validation'
 import { shopifyAuthBody } from '@/lib/schemas/auth'
+import { logger } from '@/lib/logger'
 
 const SCOPES = [
   // Orders — read, write, cancel, refund, note
@@ -64,7 +65,7 @@ export async function POST(request: NextRequest) {
   })
 
   if (stateError) {
-    console.error('oauth_states insert failed:', stateError)
+    logger.error('[shopify/auth]', 'oauth_states insert failed', { error: stateError.message })
     return NextResponse.json({ error: 'Failed to initiate OAuth: ' + stateError.message }, { status: 500 })
   }
 

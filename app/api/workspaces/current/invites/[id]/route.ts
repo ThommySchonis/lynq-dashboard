@@ -7,6 +7,7 @@ import { can } from '@/lib/permissions'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import { validateParams } from '@/lib/validation'
 import { inviteParams } from '@/lib/schemas/workspaces'
+import { logger } from '@/lib/logger'
 
 interface InviteRow {
   email: string
@@ -31,7 +32,7 @@ export async function DELETE(request: NextRequest, { params: routeParams }: Rout
     .maybeSingle()
 
   if (lookupError) {
-    console.error('[invites DELETE] lookup failed:', lookupError.message)
+    logger.error('[invites]', 'DELETE lookup failed', { message: lookupError.message })
     return NextResponse.json({ error: lookupError.message }, { status: 500 })
   }
   if (!invite) return NextResponse.json({ error: 'Invite not found' }, { status: 404 })
@@ -43,10 +44,10 @@ export async function DELETE(request: NextRequest, { params: routeParams }: Rout
     .eq('workspace_id', ctx.workspaceId)
 
   if (deleteError) {
-    console.error('[invites DELETE] delete failed:', deleteError.message)
+    logger.error('[invites]', 'DELETE failed', { message: deleteError.message })
     return NextResponse.json({ error: deleteError.message }, { status: 500 })
   }
 
-  console.log('[invites DELETE] revoked invite', params.id, 'for', (invite as InviteRow).email, 'in workspace', ctx.workspaceId)
+  logger.info('[invites]', 'invite revoked', { inviteId: params.id, workspaceId: ctx.workspaceId })
   return NextResponse.json({ ok: true, email: (invite as InviteRow).email })
 }

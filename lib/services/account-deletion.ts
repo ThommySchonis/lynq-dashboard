@@ -2,6 +2,7 @@ import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import { cancelSubscription } from '@/lib/services/billing'
 import { getPendingTransfer } from '@/lib/services/ownership-transfer'
 import { sendDeletionScheduledEmail, sendDeletionCompletedEmail } from '@/lib/emails/account-deletion'
+import { logger } from '@/lib/logger'
 
 export async function getAccountDeletionStatus(userId: string): Promise<{
   scheduled: boolean
@@ -14,7 +15,7 @@ export async function getAccountDeletionStatus(userId: string): Promise<{
     .maybeSingle()
 
   if (error) {
-    console.error('[account-deletion] getStatus failed:', error.message)
+    logger.error('[account-deletion]', 'getStatus failed', { error: error.message })
     return { scheduled: false, scheduledFor: null }
   }
 
@@ -176,7 +177,7 @@ export async function executeAccountDeletion(
       p_workspace_id: workspaceId,
     })
     if (error) {
-      console.error(`[account-deletion] anonymize failed for workspace ${workspaceId}:`, error.message)
+      logger.error('[account-deletion]', 'anonymize failed', { workspaceId, error: error.message })
       throw new Error(`Anonymization failed for workspace ${workspaceId}: ${error.message}`)
     }
   }
@@ -195,7 +196,7 @@ export async function executeAccountDeletion(
       .eq('id', workspaceId)
 
     if (error) {
-      console.error(`[account-deletion] workspace delete failed for ${workspaceId}:`, error.message)
+      logger.error('[account-deletion]', 'workspace delete failed', { workspaceId, error: error.message })
       throw new Error(`Workspace deletion failed: ${error.message}`)
     }
   }

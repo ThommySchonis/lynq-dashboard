@@ -6,6 +6,7 @@ import type { NextRequest } from 'next/server'
 import { ImapFlow } from 'imapflow'
 import { validateBody } from '@/lib/validation'
 import { customEmailConnectBody } from '@/lib/schemas/auth'
+import { logger } from '@/lib/logger'
 // nodemailer ships without bundled types; suppress the implicit-any warning for this import
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
 const nodemailer = require('nodemailer') as any
@@ -91,7 +92,7 @@ export async function POST(request: NextRequest) {
     .upsert(emailAccountRecord, { onConflict: 'workspace_id,provider,email_address' })
 
   if (emailAccountError) {
-    console.error('[custom-email/connect] email_accounts upsert error:', emailAccountError.message)
+    logger.error('[custom-email/connect]', 'email_accounts upsert error', { error: emailAccountError.message })
     return NextResponse.json({ error: emailAccountError.message }, { status: 500 })
   }
 

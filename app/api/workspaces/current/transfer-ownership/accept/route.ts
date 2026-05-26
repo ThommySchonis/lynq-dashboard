@@ -4,6 +4,7 @@ import { getAuthContext } from '@/lib/auth'
 import { acceptTransfer, getPendingTransfer } from '@/lib/services/ownership-transfer'
 import { sendTransferAcceptedEmail } from '@/lib/emails/ownership-transfer'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
+import { logger } from '@/lib/logger'
 
 export async function POST(request: NextRequest) {
   const ctx = await getAuthContext(request)
@@ -31,7 +32,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: true })
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Failed to accept transfer'
-    console.error('[transfer-ownership/accept POST]', message)
+    logger.error('[transfer-ownership]', 'accept POST failed', { message })
     return NextResponse.json({ error: message }, { status: 400 })
   }
 }

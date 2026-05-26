@@ -6,6 +6,7 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { validateQuery } from '@/lib/validation'
 import { shopifyRevenueTrendQuery } from '@/lib/schemas/shopify'
+import { logger } from '@/lib/logger'
 
 export async function GET(request: NextRequest) {
   const ctx = await getAuthContext(request)
@@ -29,7 +30,7 @@ export async function GET(request: NextRequest) {
       headers: { 'Cache-Control': 'private, max-age=300' },
     })
   } catch (err: unknown) {
-    console.error('[revenue-trend] error:', err)
+    logger.error('[shopify/revenue-trend]', 'error fetching revenue trend', { error: err instanceof Error ? err.message : String(err) })
     return NextResponse.json({ trend: [] }, {
       headers: { 'Cache-Control': 'private, max-age=300' },
     })

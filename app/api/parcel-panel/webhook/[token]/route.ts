@@ -4,6 +4,7 @@ import { NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import { parcelPanelWebhookPayload } from '@/lib/schemas/parcel-panel'
 import { withIdempotency } from '@/lib/services/webhookIdempotency'
+import { logger } from '@/lib/logger'
 
 const OK = () => NextResponse.json({ received: true })
 
@@ -39,7 +40,7 @@ export async function POST(
     .maybeSingle()
 
   if (!integration) {
-    console.warn('[parcel-panel/webhook] token not found:', token.substring(0, 8))
+    logger.warn('[parcel-panel/webhook]', 'token not found', { tokenPrefix: token.substring(0, 8) })
     return OK()
   }
 
@@ -51,12 +52,12 @@ export async function POST(
   // 3. Verify HMAC signature
   const signature = request.headers.get('x-parcelpanel-hmac-sha256')
   if (!signature) {
-    console.warn('[parcel-panel/webhook] HMAC header missing')
+    logger.warn('[parcel-panel/webhook]', 'HMAC header missing')
     return OK()
   }
 
   if (!verifyHmac(rawBody, signature, parcelpanel_api_key)) {
-    console.warn('[parcel-panel/webhook] HMAC mismatch for token:', token.substring(0, 8))
+    logger.warn('[parcel-panel/webhook]', 'HMAC mismatch', { tokenPrefix: token.substring(0, 8) })
     return OK()
   }
 
@@ -75,7 +76,7 @@ export async function POST(
     handler: async (body) => {
       const result = parcelPanelWebhookPayload.safeParse(body)
       if (!result.success) {
-        console.warn('[parcel-panel/webhook] payload validation failed')
+        logger.warn('[parcel-panel/webhook]', 'payload validation failed')
         return { response: OK() }
       }
 
@@ -100,11 +101,11 @@ export async function POST(
         )
 
       if (error) {
-        console.error('[parcel-panel/webhook] upsert error:', error.message)
+        logger.error('[parcel-panel/webhook]', 'upsert error', { error: error.message })
         throw error
       }
 
-      console.info('[parcel-panel/webhook] upserted:', payload.tracking_number)
+      logger.info('[parcel-panel/webhook]', 'upserted', { trackingNumber: payload.tracking_number })
       return { response: OK(), workspaceId: workspace_id }
     },
   })

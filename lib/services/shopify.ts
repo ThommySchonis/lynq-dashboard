@@ -1,5 +1,6 @@
 import { supabaseAdmin } from '../supabaseAdmin'
 import { parseJson } from '../utils/typed-json'
+import { logger } from '@/lib/logger'
 
 // ── Error class ──────────────────────────────────────────────────────────────
 export class ShopifyApiError extends Error {
@@ -728,7 +729,7 @@ export async function editOrder(credentials: ShopifyCredentials, orderId: string
     )
     if (!setRes.ok) {
       const err: unknown = await setRes.json()
-      console.error('[edit order] set_quantity failed:', err)
+      logger.error('[shopify]', 'set_quantity failed', { error: err instanceof Error ? err.message : String(err) })
     }
   }
 

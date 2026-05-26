@@ -1,7 +1,8 @@
 import { createClient } from '@supabase/supabase-js'
+import { logger } from '@/lib/logger'
 
 if (!process.env.SUPABASE_SECRET_KEY) {
-  console.error('[supabaseAdmin] SUPABASE_SECRET_KEY is not set — admin DB operations will fail')
+  logger.error('[supabaseAdmin]', 'SUPABASE_SECRET_KEY is not set — admin DB operations will fail')
 }
 
 // Admin client — service role key, bypasses RLS for database operations
@@ -33,14 +34,14 @@ const authClient = createClient(
 
 export async function getUserFromToken(token: string) {
   if (!token) {
-    console.error('[auth] getUserFromToken called with empty token')
+    logger.warn('[auth]', 'getUserFromToken called with empty token')
     return null
   }
 
   const { data: { user }, error } = await authClient.auth.getUser(token)
 
   if (error) {
-    console.error('[auth] getUserFromToken error:', error.message, '| status:', error.status ?? 'n/a')
+    logger.error('[auth]', 'getUserFromToken error', { error: error.message, status: error.status ?? 'n/a' })
     return null
   }
 

@@ -4,6 +4,7 @@ import { getAuthContext, requireWriteAccess } from '@/lib/auth'
 import { supabaseAdmin }  from '@/lib/supabaseAdmin'
 import { validateBody, validateQuery } from '@/lib/validation'
 import { shopifyIntegrationQuery, shopifyIntegrationBody } from '@/lib/schemas/settings'
+import { logger } from '@/lib/logger'
 
 interface ShopifyIntegrationRow {
   shopify_domain?: string
@@ -89,7 +90,7 @@ export async function POST(request: NextRequest) {
     }, { onConflict: 'client_id' })
 
   if (error) {
-    console.error('[settings/integrations/shopify POST] upsert failed:', error.message)
+    logger.error('[settings/shopify]', 'POST upsert failed', { error: error.message })
     return NextResponse.json({ error: error.message, code: 'save_failed' }, { status: 500 })
   }
 

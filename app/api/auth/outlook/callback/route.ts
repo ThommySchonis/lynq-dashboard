@@ -7,6 +7,7 @@ import { parseJson } from '@/lib/utils/typed-json'
 import { syncAllAccounts } from '@/lib/conversationEngine'
 import { validateQuery } from '@/lib/validation'
 import { outlookCallbackQuery } from '@/lib/schemas/auth'
+import { logger } from '@/lib/logger'
 
 interface OAuthTokenResponse {
   access_token?: string
@@ -95,7 +96,7 @@ export async function GET(request: NextRequest) {
     .upsert(emailAccountRecord, { onConflict: 'workspace_id,provider,email_address' })
 
   if (emailAccountError) {
-    console.error('[outlook/callback] email_accounts upsert error:', emailAccountError.message)
+    logger.error('[outlook/callback]', 'email_accounts upsert error', { error: emailAccountError.message })
     return NextResponse.redirect(`${appUrl}/settings?provider=outlook&status=error&reason=save_failed`)
   }
 
@@ -103,7 +104,7 @@ export async function GET(request: NextRequest) {
   if (workspaceId) {
     syncAllAccounts(workspaceId).catch((err: unknown) => {
       const msg = err instanceof Error ? err.message : String(err)
-      console.error('[outlook/callback] background sync failed:', msg)
+      logger.error('[outlook/callback]', 'background sync failed', { error: msg })
     })
   }
 

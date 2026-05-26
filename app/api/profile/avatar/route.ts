@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { getUserFromToken, supabaseAdmin } from '@/lib/supabaseAdmin'
+import { logger } from '@/lib/logger'
 
 const MAX_BYTES = 500 * 1024  // 500 KB
 const ALLOWED: Record<string, string>   = { 'image/png': 'png', 'image/jpeg': 'jpg' }
@@ -62,7 +63,7 @@ export async function POST(request: NextRequest) {
     })
 
   if (uploadError) {
-    console.error('[profile avatar POST] upload failed:', uploadError.message)
+    logger.error('[profile/avatar]', 'POST upload failed', { error: uploadError.message })
     return NextResponse.json({ error: uploadError.message, code: 'upload_failed' }, { status: 500 })
   }
 
@@ -78,7 +79,7 @@ export async function POST(request: NextRequest) {
     .upsert({ user_id: user.id, avatar_url: versionedUrl }, { onConflict: 'user_id' })
 
   if (upsertError) {
-    console.error('[profile avatar POST] db upsert failed:', upsertError.message)
+    logger.error('[profile/avatar]', 'POST db upsert failed', { error: upsertError.message })
     // Storage already has the file; surface the error so the client can retry
     return NextResponse.json({ error: upsertError.message, code: 'db_failed' }, { status: 500 })
   }
@@ -107,7 +108,7 @@ export async function DELETE(request: NextRequest) {
     .upsert({ user_id: user.id, avatar_url: null }, { onConflict: 'user_id' })
 
   if (upsertError) {
-    console.error('[profile avatar DELETE] db upsert failed:', upsertError.message)
+    logger.error('[profile/avatar]', 'DELETE db upsert failed', { error: upsertError.message })
     return NextResponse.json({ error: upsertError.message, code: 'db_failed' }, { status: 500 })
   }
 

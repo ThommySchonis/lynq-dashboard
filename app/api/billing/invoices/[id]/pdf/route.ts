@@ -6,6 +6,7 @@ import { getInvoice } from '@/lib/services/billing'
 import { renderInvoicePDF } from '@/lib/billing/invoice-pdf'
 import { validateParams } from '@/lib/validation'
 import { billingIdParams } from '@/lib/schemas/billing'
+import { logger } from '@/lib/logger'
 
 // GET /api/billing/invoices/[id]/pdf
 // Returns the PDF as application/pdf with the invoice number as filename.
@@ -34,7 +35,7 @@ export async function GET(request: NextRequest, { params: routeParams }: RouteCo
     })
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'PDF generation failed'
-    console.error('[billing.pdf]', invoice.invoice_number, msg)
+    logger.error('[billing/pdf]', 'PDF generation failed', { invoiceNumber: invoice.invoice_number, error: msg })
     return NextResponse.json({ error: msg }, { status: 500 })
   }
 }

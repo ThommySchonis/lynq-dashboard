@@ -4,6 +4,7 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { validateBody } from '@/lib/validation'
 import { submitFeedbackBody } from '@/lib/schemas/feedback'
+import { logger } from '@/lib/logger'
 
 interface IdRow {
   id: string
@@ -37,12 +38,11 @@ export async function POST(request: NextRequest) {
 
   if (error) {
     // Surface every Supabase/Postgres field so root cause is debuggable.
-    console.error('[feedback] insert failed', {
+    logger.error('[feedback]', 'insert failed', {
       message: error.message,
       code:    error.code,
       details: error.details,
       hint:    error.hint,
-      payload: { ...insertPayload, message: '<redacted>' },
     })
     const isProd = process.env.VERCEL_ENV === 'production' || process.env.NODE_ENV === 'production'
     return NextResponse.json(

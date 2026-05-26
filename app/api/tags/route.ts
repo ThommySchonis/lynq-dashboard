@@ -6,6 +6,7 @@ import type { Role } from '@/types/database'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import { validateBody } from '@/lib/validation'
 import { createTagBody } from '@/lib/schemas/tags'
+import { logger } from '@/lib/logger'
 
 // GET /api/tags — list workspace tags + macro_count per tag
 export async function GET(request: NextRequest) {
@@ -20,7 +21,7 @@ export async function GET(request: NextRequest) {
     .order('name', { ascending: true })
 
   if (error) {
-    console.error('[tags GET] failed:', error.message)
+    logger.error('[tags]', 'GET failed', { error: error.message })
     return NextResponse.json({ error: error.message, code: 'lookup_failed' }, { status: 500 })
   }
 
@@ -62,7 +63,7 @@ export async function POST(request: NextRequest) {
     if (error.code === '23505') {
       return NextResponse.json({ error: `A tag named "${body.name}" already exists.`, code: 'duplicate' }, { status: 409 })
     }
-    console.error('[tags POST] insert failed:', error.message)
+    logger.error('[tags]', 'POST insert failed', { error: error.message })
     return NextResponse.json({ error: error.message, code: 'insert_failed' }, { status: 500 })
   }
 

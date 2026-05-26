@@ -1,4 +1,5 @@
 import { escapeHtml } from '@/lib/email'
+import { logger } from '@/lib/logger'
 
 const FROM_DEFAULT = 'Lynq & Flow <onboarding@resend.dev>'
 
@@ -25,7 +26,7 @@ export async function sendTransferInitiatedEmail({
   dashboardUrl: string
 }) {
   if (!process.env.RESEND_API_KEY) {
-    console.warn('[email] RESEND_API_KEY not set — skipping send')
+    logger.warn('[email]', 'RESEND_API_KEY not set — skipping send')
     return { status: 'not_configured' as const }
   }
 
@@ -38,7 +39,7 @@ export async function sendTransferInitiatedEmail({
     const safeUrl = sanitizeUrl(dashboardUrl)
 
     if (!safeUrl) {
-      console.warn('[email] Invalid dashboard URL — skipping transfer email')
+      logger.warn('[email]', 'Invalid dashboard URL — skipping transfer email')
       return { status: 'failed' as const, error: 'Invalid dashboard URL' }
     }
 
@@ -70,7 +71,7 @@ export async function sendTransferInitiatedEmail({
     return { status: 'sent' as const }
   } catch (err: unknown) {
     const error = err instanceof Error ? err.message : 'Email send failed'
-    console.error('[email] Resend error:', error)
+    logger.error('[email]', 'Resend error', { error })
     return { status: 'failed' as const, error }
   }
 }
@@ -87,7 +88,7 @@ export async function sendTransferAcceptedEmail({
   newRoleForOldOwner: string
 }) {
   if (!process.env.RESEND_API_KEY) {
-    console.warn('[email] RESEND_API_KEY not set — skipping send')
+    logger.warn('[email]', 'RESEND_API_KEY not set — skipping send')
     return { status: 'not_configured' as const }
   }
 
@@ -121,7 +122,7 @@ export async function sendTransferAcceptedEmail({
     return { status: 'sent' as const }
   } catch (err: unknown) {
     const error = err instanceof Error ? err.message : 'Email send failed'
-    console.error('[email] Resend error:', error)
+    logger.error('[email]', 'Resend error', { error })
     return { status: 'failed' as const, error }
   }
 }

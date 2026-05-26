@@ -16,6 +16,7 @@
 // Marked at call-sites with TEMP comments for follow-up removal.
 
 import * as Sentry from '@sentry/nextjs'
+import { logger } from '@/lib/logger'
 
 /**
  * Sanitize a value for use as an HTTP header. Converts common smart
@@ -59,7 +60,7 @@ export function asciiSafe(
         non_ascii_chars:  offenders,
       },
     })
-    console.warn(`[${scope}] asciiSafe modified header`, { header: label, non_ascii_chars: offenders })
+    logger.warn(`[${scope}]`, 'asciiSafe modified header', { header: label, non_ascii_chars: offenders })
   }
   return sanitized
 }
@@ -81,7 +82,7 @@ export function diagnoseEnvVar(
   logScope: string,
 ): void {
   if (value === undefined) {
-    console.log(`[${logScope}] ${name}`, { defined: false })
+    logger.debug(`[${logScope}]`, name, { defined: false })
     return
   }
   const nonAscii: Array<{ i: number; code: number; hex: string }> = []
@@ -89,7 +90,7 @@ export function diagnoseEnvVar(
     const code = value.charCodeAt(i)
     if (code > 127) nonAscii.push({ i, code, hex: '0x' + code.toString(16) })
   }
-  console.log(`[${logScope}] ${name}`, {
+  logger.debug(`[${logScope}]`, name, {
     first5:           value.slice(0, 5),
     last5:            value.slice(-5),
     length:           value.length,

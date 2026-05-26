@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { getUserFromToken, supabaseAdmin } from '@/lib/supabaseAdmin'
+import { logger } from '@/lib/logger'
 
 interface WorkspaceIdRow {
   workspace_id: string
@@ -54,7 +55,7 @@ export async function POST(request: NextRequest) {
 
   const typedOwner = ownerMembership as OwnerMembershipRow | null
   if (typedOwner) {
-    console.log('[repair] repaired missing owner membership for user', user.email, 'workspace', typedOwner.workspace_id)
+    logger.info('[repair]', 'repaired missing owner membership', { workspaceId: typedOwner.workspace_id })
     return NextResponse.json({ ok: true, status: 'repaired', workspaceId: typedOwner.workspace_id })
   }
 
@@ -69,13 +70,13 @@ export async function POST(request: NextRequest) {
 
   const result = rpcResponse.data as ProvisionResult | null
   if (rpcResponse.error || !result?.workspace_id) {
-    console.error('[repair] provision_workspace RPC failed:', rpcResponse.error?.message ?? 'no workspace_id returned')
+    logger.error('[repair]', 'provision_workspace RPC failed', { message: rpcResponse.error?.message ?? 'no workspace_id returned' })
     return NextResponse.json(
       { error: rpcResponse.error?.message ?? 'Failed to provision workspace' },
       { status: 500 }
     )
   }
 
-  console.log('[repair] provisioned new workspace for user', user.email, 'workspace', result.workspace_id)
+  logger.info('[repair]', 'provisioned new workspace', { workspaceId: result.workspace_id })
   return NextResponse.json({ ok: true, status: 'provisioned', workspaceId: result.workspace_id })
 }

@@ -5,6 +5,7 @@ import { NextResponse } from 'next/server'
 import { parseJson } from '@/lib/utils/typed-json'
 import { validateQuery } from '@/lib/validation'
 import { trackingQuery } from '@/lib/schemas/parcel-panel'
+import { logger } from '@/lib/logger'
 
 interface ParcelPanelIntegration {
   parcelpanel_api_key?: string
@@ -71,7 +72,7 @@ export async function GET(request: NextRequest) {
     .order('last_updated', { ascending: false })
 
   if (error) {
-    console.error('[parcel-panel/tracking] DB error:', error.message)
+    logger.error('[parcel-panel/tracking]', 'DB error', { error: error.message })
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 

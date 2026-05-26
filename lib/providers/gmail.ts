@@ -1,6 +1,7 @@
 import { decrypt, encrypt } from '../encryption'
 import { supabaseAdmin } from '../supabaseAdmin'
 import { parseJson } from '../utils/typed-json'
+import { logger } from '@/lib/logger'
 
 const GMAIL_API = 'https://gmail.googleapis.com/gmail/v1/users/me'
 
@@ -75,7 +76,7 @@ async function getAccessToken(account: GmailAccount) {
   // Refresh proactively if token expires within 5 minutes
   const expiresAt = account.expires_at ? new Date(account.expires_at) : null
   const needsRefresh = expiresAt && expiresAt < new Date(Date.now() + 5 * 60 * 1000)
-  console.log('[gmail] Token expires_at:', account.expires_at, 'needsRefresh:', needsRefresh)
+  logger.debug('[gmail]', 'Token expiry check', { expiresAt: account.expires_at, needsRefresh })
   if (needsRefresh) {
     const res = await fetch('https://oauth2.googleapis.com/token', {
       method: 'POST',
@@ -215,18 +216,16 @@ export async function fetchThreads(account: GmailAccount, { since, pageToken, li
     listUrl.searchParams.set('q', `after:${epoch}`)
   }
 
-  console.log('[gmail] fetchThreads URL:', listUrl.toString())
-  console.log('[gmail] Token starts with:', token?.substring(0, 20))
+  logger.debug('[gmail]', 'fetchThreads request', { url: listUrl.toString() })
   const res = await fetch(listUrl.toString(), {
     headers: { Authorization: `Bearer ${token}` },
   })
   if (!res.ok) {
-    const errBody = await res.text()
-    console.error('[gmail] fetchThreads failed:', res.status, errBody)
+    logger.error('[gmail]', 'fetchThreads failed', { status: res.status })
     throw new Error(`Gmail fetchThreads failed: ${res.status}`)
   }
   const data = await parseJson<GmailThreadListResponse>(res)
-  console.log('[gmail] threads count:', data.threads?.length ?? 0, 'nextPage:', !!data.nextPageToken)
+  logger.debug('[gmail]', 'fetchThreads result', { count: data.threads?.length ?? 0, hasNextPage: !!data.nextPageToken })
 
   if (!data.threads?.length) return { threads: [], nextPageToken: null }
 

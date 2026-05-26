@@ -4,6 +4,7 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { validateBody } from '@/lib/validation'
 import { createUserBody } from '@/lib/schemas/admin'
+import { logger } from '@/lib/logger'
 
 const ADMIN_EMAIL = 'info@lynqagency.com'
 
@@ -63,7 +64,7 @@ export async function POST(request: NextRequest) {
       { onConflict: 'user_id' },
     )
   if (profileError) {
-    console.warn('[admin/create-user] user_profiles upsert failed (non-fatal):', profileError.message)
+    logger.warn('[admin/create-user]', 'user_profiles upsert failed (non-fatal)', { error: profileError.message })
   }
 
   return NextResponse.json({ ok: true, userId: newUserId })

@@ -3,6 +3,7 @@ import type { NextRequest } from 'next/server'
 import { getUserFromToken, supabaseAdmin } from '@/lib/supabaseAdmin'
 import { validateBody } from '@/lib/validation'
 import { updateProfileBody } from '@/lib/schemas/profile'
+import { logger } from '@/lib/logger'
 
 interface ProfileRow { display_name?: string; bio?: string; avatar_url?: string; theme?: string; welcome_dismissed_at?: string | null; setup_checklist_dismissed_at?: string | null }
 
@@ -27,7 +28,7 @@ export async function GET(request: NextRequest) {
     .maybeSingle()
 
   if (error) {
-    console.error('[profile GET] failed:', error.message)
+    logger.error('[profile]', 'GET failed', { error: error.message })
     return NextResponse.json({ error: error.message, code: 'lookup_failed' }, { status: 500 })
   }
 
@@ -98,7 +99,7 @@ export async function PATCH(request: NextRequest) {
 
   const patchRow = upsertResult.data as ProfileRow | null
   if (upsertResult.error || !patchRow) {
-    console.error('[profile PATCH] upsert failed:', upsertResult.error?.message)
+    logger.error('[profile]', 'PATCH upsert failed', { error: upsertResult.error?.message })
     return NextResponse.json({ error: upsertResult.error?.message ?? 'Failed to save profile', code: 'upsert_failed' }, { status: 500 })
   }
 
@@ -114,7 +115,7 @@ export async function PATCH(request: NextRequest) {
       user_metadata: newMeta,
     })
     if (metaError) {
-      console.error('[profile PATCH] auth metadata sync failed:', metaError.message)
+      logger.error('[profile]', 'PATCH auth metadata sync failed', { error: metaError.message })
       // Non-fatal — user_profiles is the source of truth for the profile page itself
     }
   }

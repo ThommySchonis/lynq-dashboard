@@ -2,6 +2,7 @@ import { supabaseAdmin, getUserFromToken } from '@/lib/supabaseAdmin'
 import { sendSuspensionEmail } from '@/lib/email'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { logger } from '@/lib/logger'
 
 const ADMIN_EMAILS = ['info@lynqagency.com', 'denver9523@gmail.com']
 
@@ -48,7 +49,7 @@ export async function POST(
     .eq('id', client.workspace_id)
 
   if (error) {
-    console.error('[admin/suspend] update failed:', error.message)
+    logger.error('[admin/suspend]', 'update failed', { error: error.message })
     return NextResponse.json({ error: 'Failed to suspend workspace' }, { status: 500 })
   }
 
@@ -77,10 +78,10 @@ export async function POST(
         workspaceName,
         reason,
       })
-      console.log('[admin/suspend] email status:', emailResult.status)
+      logger.info('[admin/suspend]', 'email status', { status: emailResult.status })
     }
   }
 
-  console.log('[admin/suspend] workspace', client.workspace_id, 'suspended by', user.email, 'reason:', reason)
+  logger.info('[admin/suspend]', 'workspace suspended', { workspaceId: String(client.workspace_id), reason })
   return NextResponse.json({ ok: true })
 }

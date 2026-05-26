@@ -9,6 +9,7 @@ import { ensureTagsByName, syncMacroTags } from '@/lib/tags'
 import { validateQuery } from '@/lib/validation'
 import { getMacrosQuery } from '@/lib/schemas/macros'
 import { sanitizeLikeInput } from '@/lib/sanitize'
+import { logger } from '@/lib/logger'
 
 interface TagLink {
   tag: unknown
@@ -53,7 +54,7 @@ export async function GET(request: NextRequest) {
   const { data: rows, error } = await q
 
   if (error) {
-    console.error('[macros GET] query failed:', error.message)
+    logger.error('[macros]', 'query failed', { error: error.message })
     return NextResponse.json({ error: error.message, code: 'lookup_failed' }, { status: 500 })
   }
 
@@ -109,7 +110,7 @@ export async function POST(request: NextRequest) {
   const macro = macroResult.data as Record<string, unknown> | null
 
   if (macroResult.error || !macro) {
-    console.error('[macros POST] insert failed:', macroResult.error?.message)
+    logger.error('[macros]', 'insert failed', { error: macroResult.error?.message })
     return NextResponse.json({ error: macroResult.error?.message ?? 'Failed to create macro', code: 'insert_failed' }, { status: 500 })
   }
 
@@ -129,10 +130,10 @@ export async function POST(request: NextRequest) {
         .in('id', tagIds)
       tagObjects = linked || []
     } catch (err: unknown) {
-      console.error('[macros POST] tag sync failed (macro itself was created):', err instanceof Error ? err.message : 'Unknown error')
+      logger.error('[macros]', 'tag sync failed (macro itself was created)', { error: err instanceof Error ? err.message : 'Unknown error' })
     }
   }
 
-  console.log('[macros POST] created', macro.id, 'in workspace', ctx.workspaceId)
+  logger.info('[macros]', 'created macro', { macroId: macro.id, workspaceId: ctx.workspaceId })
   return NextResponse.json({ macro: { ...macro, tagObjects } }, { status: 201 })
 }

@@ -7,6 +7,7 @@ import { parseJson } from '@/lib/utils/typed-json'
 import { syncAllAccounts } from '@/lib/conversationEngine'
 import { validateQuery } from '@/lib/validation'
 import { gmailCallbackQuery } from '@/lib/schemas/auth'
+import { logger } from '@/lib/logger'
 
 interface OAuthTokenResponse {
   access_token?: string
@@ -89,7 +90,7 @@ export async function GET(request: NextRequest) {
     .upsert(emailAccountRecord, { onConflict: 'workspace_id,provider,email_address' })
 
   if (emailAccountError) {
-    console.error('[gmail/callback] email_accounts upsert error:', emailAccountError.message)
+    logger.error('[gmail/callback]', 'email_accounts upsert error', { error: emailAccountError.message })
     return NextResponse.redirect(`${appUrl}/settings?provider=gmail&status=error&reason=save_failed`)
   }
 
@@ -118,11 +119,11 @@ export async function GET(request: NextRequest) {
           .eq('provider', 'gmail')
           .eq('email_address', emailAddress)
       } else {
-        console.error('[gmail/callback] Watch registration failed:', watchRes.status, await watchRes.text().catch(() => ''))
+        logger.error('[gmail/callback]', 'Watch registration failed', { status: watchRes.status })
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err)
-      console.error('[gmail/callback] Watch registration error:', msg)
+      logger.error('[gmail/callback]', 'Watch registration error', { error: msg })
     }
   }
 
@@ -130,7 +131,7 @@ export async function GET(request: NextRequest) {
   if (workspaceId) {
     syncAllAccounts(workspaceId).catch((err: unknown) => {
       const msg = err instanceof Error ? err.message : String(err)
-      console.error('[gmail/callback] background sync failed:', msg)
+      logger.error('[gmail/callback]', 'background sync failed', { error: msg })
     })
   }
 

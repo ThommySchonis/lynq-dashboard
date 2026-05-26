@@ -1,6 +1,7 @@
 import { supabaseAdmin, getUserFromToken } from '@/lib/supabaseAdmin'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { logger } from '@/lib/logger'
 
 const ADMIN_EMAILS = ['info@lynqagency.com', 'denver9523@gmail.com']
 
@@ -40,10 +41,10 @@ export async function POST(
     .eq('id', client.workspace_id)
 
   if (error) {
-    console.error('[admin/unsuspend] update failed:', error.message)
+    logger.error('[admin/unsuspend]', 'update failed', { error: error.message })
     return NextResponse.json({ error: 'Failed to unsuspend workspace' }, { status: 500 })
   }
 
-  console.log('[admin/unsuspend] workspace', client.workspace_id, 'unsuspended by', user.email)
+  logger.info('[admin/unsuspend]', 'workspace unsuspended', { workspaceId: String(client.workspace_id) })
   return NextResponse.json({ ok: true })
 }

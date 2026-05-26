@@ -1,6 +1,7 @@
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import { NextResponse } from 'next/server'
 import * as Sentry from '@sentry/nextjs'
+import { logger } from '@/lib/logger'
 
 type WebhookSource = 'shopify' | 'whop' | 'email' | 'parcelpanel'
 
@@ -36,12 +37,12 @@ export async function withIdempotency(options: WithIdempotencyOptions): Promise<
   const eventId = extractEventId(request, body)
   if (!eventId) {
     // No event ID available — skip dedup, run handler directly
-    console.warn(`[webhook/${source}] no event ID extractable, skipping dedup`)
+    logger.warn(`[webhook/${source}]`, 'no event ID extractable, skipping dedup')
     try {
       const result = await handler(body)
       return result.response
     } catch (err) {
-      console.error(`[webhook/${source}] handler error (no dedup):`, err)
+      logger.error(`[webhook/${source}]`, 'handler error (no dedup)', { error: err instanceof Error ? err.message : String(err) })
       Sentry.captureException(err, { tags: { webhook_source: source, event_type: eventType } })
       return NextResponse.json({ error: 'Handler failed' }, { status: 500 })
     }
@@ -77,13 +78,13 @@ export async function withIdempotency(options: WithIdempotencyOptions): Promise<
       }
 
       if (existing.status === 'completed') {
-        console.log(`[webhook/${source}] duplicate delivery ignored:`, eventId, eventType)
+        logger.info(`[webhook/${source}]`, 'duplicate delivery ignored', { eventId, eventType })
         return NextResponse.json({ received: true, duplicate: true })
       }
 
       // Failed events: allow re-processing on retry delivery.
       if (existing.status === 'failed') {
-        console.warn(`[webhook/${source}] retrying previously failed event:`, eventId)
+        logger.warn(`[webhook/${source}]`, 'retrying previously failed event', { eventId })
         await supabaseAdmin
           .from('webhook_events')
           .delete()
@@ -102,7 +103,7 @@ export async function withIdempotency(options: WithIdempotencyOptions): Promise<
           })
 
         if (retryInsertError) {
-          console.log(`[webhook/${source}] lost race on failed retry re-insert:`, eventId)
+          logger.info(`[webhook/${source}]`, 'lost race on failed retry re-insert', { eventId })
           return NextResponse.json({ received: true, duplicate: true })
         }
         // Fall through to execute handler
@@ -110,12 +111,12 @@ export async function withIdempotency(options: WithIdempotencyOptions): Promise<
         // Status is 'processing' — check if stale
         const age = Date.now() - new Date(existing.created_at as string).getTime()
         if (age < STALE_THRESHOLD_MS) {
-          console.log(`[webhook/${source}] concurrent processing, skipping:`, eventId)
+          logger.info(`[webhook/${source}]`, 'concurrent processing, skipping', { eventId })
           return NextResponse.json({ received: true, duplicate: true })
         }
 
         // Stale — delete and re-insert
-        console.warn(`[webhook/${source}] stale processing event detected (${Math.round(age / 1000)}s old), re-processing:`, eventId)
+        logger.warn(`[webhook/${source}]`, `stale processing event detected (${Math.round(age / 1000)}s old), re-processing`, { eventId })
         await supabaseAdmin
           .from('webhook_events')
           .delete()
@@ -133,13 +134,13 @@ export async function withIdempotency(options: WithIdempotencyOptions): Promise<
           })
 
         if (reinsertError) {
-          console.log(`[webhook/${source}] lost race on stale re-insert:`, eventId)
+          logger.info(`[webhook/${source}]`, 'lost race on stale re-insert', { eventId })
           return NextResponse.json({ received: true, duplicate: true })
         }
       }
     } else {
       // Non-conflict DB error — log but still process the webhook
-      console.error(`[webhook/${source}] event insert failed:`, insertError.message)
+      logger.error(`[webhook/${source}]`, 'event insert failed', { error: insertError.message })
       Sentry.captureException(insertError, { tags: { webhook_source: source, stage: 'idempotency' } })
     }
   }
@@ -179,7 +180,7 @@ export async function withIdempotency(options: WithIdempotencyOptions): Promise<
       .eq('source', source)
       .eq('event_id', eventId)
 
-    console.error(`[webhook/${source}] handler error:`, err)
+    logger.error(`[webhook/${source}]`, 'handler error', { error: err instanceof Error ? err.message : String(err) })
     Sentry.captureException(err, {
       tags: { webhook_source: source, event_type: eventType },
       extra: { event_id: eventId, duration_ms: durationMs },

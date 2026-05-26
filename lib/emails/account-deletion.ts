@@ -1,3 +1,5 @@
+import { logger } from '@/lib/logger'
+
 const RESEND_FROM = 'Lynq <noreply@lynqagency.com>'
 
 function escapeHtml(str: string): string {
@@ -58,7 +60,7 @@ export async function sendDeletionScheduledEmail({
     return { status: 'sent' }
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error'
-    console.error('[account-deletion email] scheduled failed:', message)
+    logger.error('[account-deletion-email]', 'scheduled failed', { error: message })
     return { status: 'failed', error: message }
   }
 }
@@ -95,7 +97,7 @@ export async function sendDeletionCompletedEmail({
     return { status: 'sent' }
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error'
-    console.error('[account-deletion email] completed failed:', message)
+    logger.error('[account-deletion-email]', 'completed failed', { error: message })
     return { status: 'failed', error: message }
   }
 }

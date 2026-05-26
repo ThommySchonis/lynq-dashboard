@@ -5,6 +5,7 @@ import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import { getAuthContext, requireWriteAccess } from '@/lib/auth'
 import { validateBody, validateParams } from '@/lib/validation'
 import { timeSessionParams, editSessionBody } from '@/lib/schemas/time'
+import { logger } from '@/lib/logger'
 
 // PATCH /api/time/[sessionId]
 // Manual edit by an owner/admin of the workspace this session lives in.
@@ -82,7 +83,7 @@ export async function PATCH(request: NextRequest, { params: routeParams }: Route
     .single()
 
   if (updateResult.error) {
-    console.error('[time/[sessionId]] update failed', { message: updateResult.error.message, code: updateResult.error.code })
+    logger.error('[time]', 'session update failed', { error: updateResult.error.message, code: updateResult.error.code })
     return NextResponse.json({ error: 'Could not update session' }, { status: 500 })
   }
 
@@ -98,7 +99,7 @@ export async function PATCH(request: NextRequest, { params: routeParams }: Route
       after_json:        after,
     })
   if (auditErr) {
-    console.error('[time/[sessionId]] audit log insert failed', auditErr.message)
+    logger.error('[time]', 'audit log insert failed', { error: auditErr.message })
   }
 
   return NextResponse.json({ session: updateResult.data as Record<string, unknown>, audited: !auditErr })

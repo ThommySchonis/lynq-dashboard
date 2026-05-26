@@ -9,6 +9,7 @@ import { getPendingTransfer, initiateTransfer } from '@/lib/services/ownership-t
 import { sendTransferInitiatedEmail } from '@/lib/emails/ownership-transfer'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import { getSiteUrl } from '@/lib/utils/request'
+import { logger } from '@/lib/logger'
 
 export async function GET(request: NextRequest) {
   const ctx = await getAuthContext(request)
@@ -54,7 +55,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ transfer }, { status: 201 })
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Failed to initiate transfer'
-    console.error('[transfer-ownership POST]', message)
+    logger.error('[transfer-ownership]', 'POST failed', { message })
     return NextResponse.json({ error: message }, { status: 400 })
   }
 }

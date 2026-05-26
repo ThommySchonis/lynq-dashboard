@@ -6,6 +6,7 @@ import crypto from 'crypto'
 import { parseJson } from '@/lib/utils/typed-json'
 import { validateQuery } from '@/lib/validation'
 import { shopifyCallbackQuery } from '@/lib/schemas/auth'
+import { logger } from '@/lib/logger'
 
 interface ShopifyShopDataResponse {
   shop?: { currency?: string }
@@ -102,7 +103,7 @@ export async function GET(request: NextRequest) {
     workspaceId = (membership as WorkspaceMemberRow | null)?.workspace_id ?? null
   }
   if (!workspaceId) {
-    console.error('[shopify oauth callback] no workspace found for user', oauthState.user_id)
+    logger.error('[shopify/callback]', 'no workspace found for user', { userId: oauthState.user_id })
     return NextResponse.redirect(`${appUrl}/settings/workspace/stores?error=no_workspace`)
   }
 
@@ -148,7 +149,7 @@ export async function GET(request: NextRequest) {
     )
 
   if (upsertError) {
-    console.error('integrations upsert failed:', JSON.stringify(upsertError))
+    logger.error('[shopify/callback]', 'integrations upsert failed', { error: upsertError.message })
     return NextResponse.redirect(`${appUrl}/settings/workspace/stores?error=save_failed`)
   }
 
@@ -172,7 +173,7 @@ export async function GET(request: NextRequest) {
     const credentials = { domain: shop, accessToken }
     await syncOrders(workspaceId, credentials, userId, { storeId })
   } catch (e: unknown) {
-    console.error('Initial sync failed:', e)
+    logger.error('[shopify/callback]', 'Initial sync failed', { error: e instanceof Error ? e.message : String(e) })
   }
 
   return NextResponse.redirect(`${appUrl}/settings/workspace/stores?shopify=connected`)

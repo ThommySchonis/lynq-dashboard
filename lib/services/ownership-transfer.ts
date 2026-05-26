@@ -1,5 +1,6 @@
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import type { OwnershipTransfer } from '@/types/database'
+import { logger } from '@/lib/logger'
 
 /** Get the pending transfer for a workspace, marking expired ones lazily. */
 export async function getPendingTransfer(workspaceId: string): Promise<OwnershipTransfer | null> {
@@ -11,7 +12,7 @@ export async function getPendingTransfer(workspaceId: string): Promise<Ownership
     .maybeSingle()
 
   if (result.error) {
-    console.error('[ownership-transfer] getPending failed:', result.error.message)
+    logger.error('[ownership-transfer]', 'getPending failed', { error: result.error.message })
     return null
   }
   if (!result.data) return null

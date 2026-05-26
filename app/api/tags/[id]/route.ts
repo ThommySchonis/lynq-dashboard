@@ -7,6 +7,7 @@ import type { Role } from '@/types/database'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import { validateBody, validateParams } from '@/lib/validation'
 import { tagParams, updateTagBody } from '@/lib/schemas/tags'
+import { logger } from '@/lib/logger'
 
 // GET /api/tags/[id]
 export async function GET(request: NextRequest, { params: routeParams }: RouteContext<{ id: string }>) {
@@ -112,10 +113,10 @@ export async function DELETE(request: NextRequest, { params: routeParams }: Rout
     .eq('workspace_id', ctx.workspaceId)
 
   if (error) {
-    console.error('[tags DELETE] failed:', error.message)
+    logger.error('[tags]', 'DELETE failed', { error: error.message })
     return NextResponse.json({ error: error.message, code: 'delete_failed' }, { status: 500 })
   }
 
-  console.log('[tags DELETE] removed', target.name, 'in workspace', ctx.workspaceId)
+  logger.info('[tags]', 'tag deleted', { workspaceId: ctx.workspaceId })
   return NextResponse.json({ ok: true })
 }

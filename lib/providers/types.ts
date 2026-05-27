@@ -39,4 +39,5 @@ export const PROVIDERS = {
   GMAIL: 'gmail',
   OUTLOOK: 'outlook',
   CUSTOM: 'custom',
+  FORWARDING: 'forwarding',
 }

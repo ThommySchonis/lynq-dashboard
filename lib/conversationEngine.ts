@@ -107,6 +107,8 @@ export async function syncAllAccounts(workspaceId: string) {
 
   const results: Array<{ accountId: string; error?: string; newConversations?: number; updatedConversations?: number }> = []
   for (const account of accounts) {
+    // Forwarding accounts are webhook-driven, no sync needed
+    if ((account as EmailAccountRow).provider === 'forwarding') continue
     try {
       const result = await syncAccount(account as EmailAccountRow, workspaceId)
       results.push({ accountId: (account as EmailAccountRow).id, ...result })

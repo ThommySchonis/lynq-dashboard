@@ -48,3 +48,15 @@ export const migrateUsersBody = z.object({
     )
     .min(1, 'At least one user is required'),
 })
+
+// --- Webhook event admin schemas ---
+
+export const listWebhookEventsQuery = z.object({
+  status: z.string().optional().default('dead_letter'),
+  source: z.string().optional(),
+  page: z.coerce.number().int().positive().optional().default(1),
+})
+
+export const webhookEventIdsBody = z.object({
+  ids: z.array(z.string().min(1)).min(1, 'At least one id is required'),
+})

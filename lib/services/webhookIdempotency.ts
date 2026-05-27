@@ -2,6 +2,7 @@ import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import { NextResponse } from 'next/server'
 import * as Sentry from '@sentry/nextjs'
 import { logger } from '@/lib/logger'
+import { computeNextRetryAt, MAX_ATTEMPTS } from '@/lib/services/webhookRetry'
 
 type WebhookSource = 'shopify' | 'whop' | 'email' | 'parcelpanel'
 
@@ -17,6 +18,7 @@ interface WithIdempotencyOptions {
   eventType: string
   extractEventId: (request: Request, body: unknown) => string | null
   workspaceId?: string
+  metadata?: Record<string, unknown>
   handler: (body: unknown) => Promise<HandlerResult>
 }
 
@@ -58,6 +60,7 @@ export async function withIdempotency(options: WithIdempotencyOptions): Promise<
       payload: body,
       status: 'processing',
       workspace_id: options.workspaceId ?? null,
+      metadata: options.metadata ?? null,
     })
     .select('id')
     .single()
@@ -67,7 +70,7 @@ export async function withIdempotency(options: WithIdempotencyOptions): Promise<
     if (insertError.code === '23505') {
       const { data: existing } = await supabaseAdmin
         .from('webhook_events')
-        .select('id, status, created_at, attempt_count')
+        .select('id, status, created_at, attempt_count, next_retry_at')
         .eq('source', source)
         .eq('event_id', eventId)
         .single()
@@ -84,6 +87,12 @@ export async function withIdempotency(options: WithIdempotencyOptions): Promise<
 
       // Failed events: allow re-processing on retry delivery.
       if (existing.status === 'failed') {
+        // If our retry system has a future retry scheduled, let it handle it
+        if (existing.next_retry_at && new Date(existing.next_retry_at as string) > new Date()) {
+          logger.info(`[webhook/${source}]`, 'retry scheduled, deferring to retry system', { eventId })
+          return NextResponse.json({ received: true, duplicate: true })
+        }
+        // Otherwise allow provider retry to proceed (our system hasn't picked it up)
         logger.warn(`[webhook/${source}]`, 'retrying previously failed event', { eventId })
         await supabaseAdmin
           .from('webhook_events')
@@ -99,6 +108,7 @@ export async function withIdempotency(options: WithIdempotencyOptions): Promise<
             payload: body,
             status: 'processing',
             workspace_id: options.workspaceId ?? null,
+            metadata: options.metadata ?? null,
             attempt_count: ((existing.attempt_count as number) ?? 1) + 1,
           })
 
@@ -107,6 +117,9 @@ export async function withIdempotency(options: WithIdempotencyOptions): Promise<
           return NextResponse.json({ received: true, duplicate: true })
         }
         // Fall through to execute handler
+      } else if (existing.status === 'dead_letter' || existing.status === 'dismissed') {
+        logger.info(`[webhook/${source}]`, 'event is dead-lettered/dismissed, skipping', { eventId })
+        return NextResponse.json({ received: true, duplicate: true })
       } else {
         // Status is 'processing' — check if stale
         const age = Date.now() - new Date(existing.created_at as string).getTime()
@@ -131,6 +144,7 @@ export async function withIdempotency(options: WithIdempotencyOptions): Promise<
             payload: body,
             status: 'processing',
             workspace_id: options.workspaceId ?? null,
+            metadata: options.metadata ?? null,
           })
 
         if (reinsertError) {
@@ -169,21 +183,37 @@ export async function withIdempotency(options: WithIdempotencyOptions): Promise<
     const durationMs = Date.now() - startTime
     const errorMessage = err instanceof Error ? err.message : String(err)
 
-    // 6. Mark failed
+    // Determine current attempt count
+    const { data: currentEvent } = await supabaseAdmin
+      .from('webhook_events')
+      .select('attempt_count')
+      .eq('source', source)
+      .eq('event_id', eventId)
+      .single()
+
+    const attemptCount = (currentEvent?.attempt_count as number) ?? 1
+    const nextRetry = computeNextRetryAt(attemptCount)
+    const newStatus = attemptCount >= MAX_ATTEMPTS ? 'dead_letter' : 'failed'
+
     await supabaseAdmin
       .from('webhook_events')
       .update({
-        status: 'failed',
+        status: newStatus,
         error_message: errorMessage,
         processing_duration_ms: durationMs,
+        next_retry_at: nextRetry,
       })
       .eq('source', source)
       .eq('event_id', eventId)
 
-    logger.error(`[webhook/${source}]`, 'handler error', { error: err instanceof Error ? err.message : String(err) })
+    logger.error(`[webhook/${source}]`, 'handler error', {
+      error: errorMessage,
+      status: newStatus,
+      nextRetry,
+    })
     Sentry.captureException(err, {
       tags: { webhook_source: source, event_type: eventType },
-      extra: { event_id: eventId, duration_ms: durationMs },
+      extra: { event_id: eventId, duration_ms: durationMs, status: newStatus },
     })
     return NextResponse.json({ error: 'Handler failed' }, { status: 500 })
   }

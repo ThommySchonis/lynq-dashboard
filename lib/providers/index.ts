@@ -2,6 +2,7 @@ import { PROVIDERS } from './types'
 import * as gmailAdapter from './gmail'
 import * as outlookAdapter from './outlook'
 import * as customAdapter from './custom'
+import * as forwardingAdapter from './forwarding'
 
 /** Common account shape that all providers accept. */
 export interface ProviderAccount {
@@ -38,6 +39,7 @@ const adapters: Record<string, ProviderAdapter> = {
   [PROVIDERS.GMAIL]: gmailAdapter as unknown as ProviderAdapter,
   [PROVIDERS.OUTLOOK]: outlookAdapter as unknown as ProviderAdapter,
   [PROVIDERS.CUSTOM]: customAdapter as unknown as ProviderAdapter,
+  [PROVIDERS.FORWARDING]: forwardingAdapter as unknown as ProviderAdapter,
 }
 
 export function getAdapter(provider: string): ProviderAdapter {

@@ -10,6 +10,7 @@ import { SettingsCard } from '@/components/features/settings/settings-section'
 import { StatusBadge } from '@/components/features/settings/status-badge'
 import { ConfirmDialog } from '@/components/features/settings/confirm-dialog'
 import { CustomEmailModal } from '@/components/features/settings/integrations/custom-email-modal'
+import { ForwardingSetupWizard } from '@/components/features/settings/integrations/forwarding/forwarding-setup-wizard'
 import { useUpdateStore, useDisconnectStore, useDeleteStore, useDeleteStoreEmailAccount } from '@/hooks/stores'
 import { useStoreEmailAccounts } from '@/hooks/stores'
 import { useAuthStore } from '@/stores/auth'
@@ -27,6 +28,7 @@ export function StoreCard({ store }: StoreCardProps) {
 
   const [emailsExpanded, setEmailsExpanded] = useState(false)
   const [customModalOpen, setCustomModalOpen] = useState(false)
+  const [forwardingModalOpen, setForwardingModalOpen] = useState(false)
 
   const updateMutation = useUpdateStore()
   const disconnectMutation = useDisconnectStore()
@@ -153,7 +155,20 @@ export function StoreCard({ store }: StoreCardProps) {
                 </div>
               ))}
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {/* Email Forwarding (recommended) */}
+                <button
+                  type="button"
+                  onClick={() => setForwardingModalOpen(true)}
+                  className="flex items-center gap-2.5 rounded-lg border border-border bg-card px-3 py-2.5 text-left text-xs font-semibold text-foreground transition-colors hover:border-primary/50 hover:shadow-sm"
+                >
+                  <span className="flex size-5 items-center justify-center flex-shrink-0">
+                    <Mail className="size-4 text-muted-foreground" />
+                  </span>
+                  <span className="flex-1">Email Forwarding</span>
+                  <Plus className="size-3 text-muted-foreground flex-shrink-0" />
+                </button>
+
                 {/* Gmail */}
                 <button
                   type="button"
@@ -232,6 +247,10 @@ export function StoreCard({ store }: StoreCardProps) {
         open={customModalOpen}
         onOpenChange={setCustomModalOpen}
         storeId={store.id}
+      />
+      <ForwardingSetupWizard
+        open={forwardingModalOpen}
+        onOpenChange={setForwardingModalOpen}
       />
     </SettingsCard>
   )

@@ -127,7 +127,7 @@ export interface TagForm {
 }
 
 // ── Integrations ──
-export type EmailProvider = 'gmail' | 'outlook' | 'custom'
+export type EmailProvider = 'gmail' | 'outlook' | 'custom' | 'forwarding'
 export type ConnectionStatus = 'active' | 'pending' | 'error' | 'disconnected'
 
 export interface EmailAccount {

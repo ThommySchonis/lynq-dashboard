@@ -11,7 +11,7 @@ import type {
 import {
   LayoutDashboard, Users, UserPlus, Radio, Bell, MessageSquare,
   UserCheck, Clock, BarChart2, Calendar, Inbox,
-  TrendingUp, Info, Play, Building2,
+  TrendingUp, Info, Play, Building2, RefreshCw,
 } from 'lucide-react'
 
 export const ADMIN_EMAILS = ['info@lynqagency.com', 'denver9523@gmail.com']
@@ -50,6 +50,9 @@ export const ADMIN_NAV: NavGroup[] = [
     { id: 'finance', label: 'Finance', icon: BarChart2, href: '/admin/finance' },
     { id: 'events', label: 'Events', icon: Calendar, href: '/admin/events' },
   ]},
+  { group: 'SYSTEM', items: [
+    { id: 'webhooks', label: 'Webhooks', icon: RefreshCw, href: '/admin/webhooks' },
+  ]},
 ]
 
 export const FEEDBACK_NAV = {
@@ -70,6 +73,7 @@ export const TAB_META: Record<string, { title: string; sub: string | null }> = {
   time: { title: 'Time Tracking', sub: 'Session overview' },
   finance: { title: 'Finance', sub: 'P&L and AI costs' },
   events: { title: 'Events', sub: null },
+  webhooks: { title: 'Webhooks', sub: 'Failed and dead-lettered webhook events' },
 }
 
 export interface BroadcastTypeConfig {

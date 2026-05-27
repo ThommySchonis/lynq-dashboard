@@ -14,6 +14,7 @@ const PROVIDER_LABELS: Record<EmailProvider, string> = {
   gmail: 'Gmail',
   outlook: 'Outlook',
   custom: 'Custom email',
+  forwarding: 'Email Forwarding',
 }
 
 function ProviderIcon({ provider }: { provider: EmailProvider }) {

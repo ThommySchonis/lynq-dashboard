@@ -8,6 +8,7 @@ import { toast } from 'sonner'
 import { SettingsSection } from '@/components/features/settings/settings-section'
 import { EmailAccountRow } from '@/components/features/settings/integrations/email-account-row'
 import { CustomEmailModal } from '@/components/features/settings/integrations/custom-email-modal'
+import { ForwardingSetupWizard } from '@/components/features/settings/integrations/forwarding/forwarding-setup-wizard'
 import { useEmailAccounts, useDisconnectEmail } from '@/hooks/settings'
 import { useAuthStore } from '@/stores/auth'
 import { useStoreStore } from '@/stores/store'
@@ -25,6 +26,7 @@ function useOAuthRedirectToast() {
 
 export function EmailSettings() {
   const [customModalOpen, setCustomModalOpen] = useState(false)
+  const [forwardingModalOpen, setForwardingModalOpen] = useState(false)
   const token = useAuthStore((s) => s.session?.access_token ?? '')
   const activeStoreId = useStoreStore((s) => s.activeStoreId)
   const { data: accounts, isLoading } = useEmailAccounts()
@@ -56,7 +58,7 @@ export function EmailSettings() {
 
       {/* Add account */}
       <SettingsSection title="Add an account">
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+        <div className="grid grid-cols-1 sm:grid-cols-4 gap-2.5">
           {/* Gmail */}
           <button
             type="button"
@@ -83,7 +85,20 @@ export function EmailSettings() {
             <ArrowUpRight className="size-3.5 text-muted-foreground flex-shrink-0" />
           </button>
 
-          {/* Custom */}
+          {/* Email Forwarding (recommended) */}
+          <button
+            type="button"
+            onClick={() => setForwardingModalOpen(true)}
+            className="flex items-center gap-3 rounded-lg border border-border bg-card px-4 py-3.5 text-left text-sm font-semibold text-foreground transition-colors hover:border-primary/50 hover:shadow-sm"
+          >
+            <span className="flex size-7 items-center justify-center flex-shrink-0">
+              <Mail className="size-5 text-muted-foreground" />
+            </span>
+            <span className="flex-1">Email Forwarding</span>
+            <Plus className="size-3.5 text-muted-foreground flex-shrink-0" />
+          </button>
+
+          {/* Custom (IMAP) */}
           <button
             type="button"
             onClick={() => setCustomModalOpen(true)}
@@ -129,6 +144,10 @@ export function EmailSettings() {
       <CustomEmailModal
         open={customModalOpen}
         onOpenChange={setCustomModalOpen}
+      />
+      <ForwardingSetupWizard
+        open={forwardingModalOpen}
+        onOpenChange={setForwardingModalOpen}
       />
     </div>
   )

@@ -1,14 +1,8 @@
-import { supabaseAdmin } from '@/lib/supabaseAdmin'
-import { processInboundMessage } from '@/lib/conversationEngine'
 import { withIdempotency } from '@/lib/services/webhookIdempotency'
+import { handleEmailWebhook } from '@/lib/services/webhookHandlers'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import crypto from 'crypto'
-
-interface EmailFromObj {
-  email?: string
-  name?: string
-}
 
 function timingSafeCompare(a: string, b: string): boolean {
   const left = Buffer.from(a || '')
@@ -69,48 +63,10 @@ export async function POST(request: NextRequest) {
     eventType: 'inbound',
     extractEventId: () => svixId,
     handler: async (body) => {
-      const payload = body as Record<string, unknown>
-
-      const to = (payload.to as Array<{ email: string }> | undefined)?.[0]?.email || payload.to as string | undefined
-      const fromObj = payload.from as EmailFromObj | string | undefined
-      const fromEmail = typeof fromObj === 'object' && fromObj?.email ? fromObj.email : fromObj as string | undefined
-      const fromName = (typeof fromObj === 'object' && fromObj?.name ? fromObj.name : fromEmail) as string | undefined
-      const subject = (payload.subject as string | undefined) || '(no subject)'
-      const bodyHtml = (payload.html as string | undefined) || (payload.text as string | undefined) || ''
-      const bodyText = (payload.text as string | undefined) || ''
-      const headers = payload.headers as Record<string, string> | undefined
-      const messageId = headers?.['message-id'] || payload.message_id as string | undefined
-      const inReplyTo = headers?.['in-reply-to'] || payload.in_reply_to as string | undefined
-
-      if (!to) return { response: NextResponse.json({ ok: true }) }
-
-      const accountResult = await supabaseAdmin
-        .from('email_accounts')
-        .select('*')
-        .eq('forwarding_address', to)
-        .maybeSingle()
-
-      const account = accountResult.data as Parameters<typeof processInboundMessage>[0] | null
-      if (!account) return { response: NextResponse.json({ ok: true }) }
-
-      const normalizedMessage = {
-        providerMessageId: messageId || `inbound_${Date.now()}`,
-        messageId: inReplyTo || messageId || undefined,
-        from: { email: fromEmail ?? '', name: fromName },
-        to: [{ email: to, name: '' }],
-        cc: [],
-        subject,
-        bodyHtml,
-        bodyText,
-        date: new Date().toISOString(),
-        isOutbound: false,
-      }
-
-      await processInboundMessage(account, normalizedMessage)
-
+      const result = await handleEmailWebhook(body as Record<string, unknown>)
       return {
         response: NextResponse.json({ ok: true }),
-        workspaceId: account.workspace_id as string | undefined,
+        workspaceId: result.workspaceId,
       }
     },
   })

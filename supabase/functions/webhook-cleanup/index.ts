@@ -17,7 +17,7 @@ Deno.serve(async (req) => {
     .from('webhook_events')
     .delete({ count: 'exact' })
     .lt('created_at', cutoff)
-    .neq('status', 'processing')
+    .not('status', 'in', '("processing","dead_letter")')
 
   if (error) {
     console.error('[webhook-cleanup] delete failed:', error.message)

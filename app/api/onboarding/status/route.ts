@@ -2,6 +2,7 @@ import type { NextRequest } from 'next/server'
 import { NextResponse } from 'next/server'
 import { getAuthContext } from '@/lib/auth'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
+import { isPlatformAdmin } from '@/lib/platformAdmin'
 
 // GET /api/onboarding/status
 //
@@ -95,6 +96,11 @@ export async function GET(request: NextRequest) {
     subscription_status: subData?.status ?? null,
     trial_ends_at:       subData?.trial_ends_at ?? null,
     workspace_name:      wsData?.name ?? null,
+
+    // Platform admins bypass the subscription gate entirely. Checked
+    // server-side here so the client cannot spoof this flag via devtools.
+    is_platform_admin: isPlatformAdmin(ctx.user),
+
     user: {
       first_name:                   firstName,
       welcome_dismissed_at:         profileData?.welcome_dismissed_at ?? null,

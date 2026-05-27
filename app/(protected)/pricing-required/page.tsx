@@ -70,7 +70,8 @@ export default function PricingRequiredPage() {
   const [firstName, setFirstName] = useState('')
   const router = useRouter()
   const signOut = useSignOut()
-  const user = useAuthStore((s) => s.user)
+  const user    = useAuthStore((s) => s.user)
+  const session = useAuthStore((s) => s.session)
 
   useEffect(() => {
     if (user) {
@@ -79,6 +80,22 @@ export default function PricingRequiredPage() {
       setFirstName(raw || '')
     }
   }, [user])
+
+  // Platform admins should never be stuck on this page. If they land
+  // here (bookmark, stale redirect, manual URL), send them to /home.
+  // The is_platform_admin flag is set server-side and cannot be spoofed.
+  useEffect(() => {
+    if (!session?.access_token) return
+    void fetch('/api/onboarding/status', {
+      headers: { Authorization: `Bearer ${session.access_token}` },
+      cache:   'no-store',
+    })
+      .then(r => r.ok ? r.json() : null)
+      .then((data: { is_platform_admin?: boolean } | null) => {
+        if (data?.is_platform_admin) router.replace('/home')
+      })
+      .catch(() => { /* fail-open: toon de normale pagina als de check mislukt */ })
+  }, [session, router])
 
   function handleLogout() {
     signOut.mutate(undefined, {

@@ -2,6 +2,7 @@ import type { NextRequest } from 'next/server'
 import { NextResponse } from 'next/server'
 import { asciiSafe } from '@/lib/utils/ascii-safe'
 import { validateCsrfOrigin } from '@/lib/csrf'
+import { isPlatformAdmin } from '@/lib/platformAdmin'
 
 // ─── Auth bypass (geen Bearer-token vereist) ────────────────────────
 const AUTH_BYPASS_PREFIXES = [
@@ -72,6 +73,9 @@ async function checkBlockedState(token: string): Promise<BlockedState> {
   if (!userRes.ok) return { blocked: false }
   const user = await userRes.json().catch(() => null) as SupabaseUser | null
   if (!user?.id) return { blocked: false }
+
+  // Platform admins are never blocked, regardless of workspace subscription.
+  if (isPlatformAdmin({ email: user.email as string | undefined })) return { blocked: false }
 
   // 2. Get workspace_id from workspace_members
   const memberUrl = `${supabaseUrl}/rest/v1/workspace_members`

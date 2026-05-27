@@ -5,6 +5,8 @@ import { checkRateLimit } from '@/lib/rate-limit'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { aiMacrosBody } from '@/lib/schemas/ai'
+import { resilientSdkCall } from '@/lib/resilient-fetch'
+import { serviceCatchHandler } from '@/lib/service-catch-handler'
 
 interface Macro {
   id: string
@@ -60,9 +62,10 @@ export async function POST(request: NextRequest) {
   const macroList = MACROS.map(m => `${m.id}: ${m.name}`).join('\n')
 
   try {
-    const { text, usage } = await generateText({
-      model: anthropic('claude-haiku-4-5-20251001'),
-      prompt: `You are a customer service assistant. Based on this customer email, pick the 3 most relevant macro IDs to suggest as quick replies. Return only the 3 IDs, comma-separated, nothing else.
+    const { text, usage } = await resilientSdkCall('anthropic', () =>
+      generateText({
+        model: anthropic('claude-haiku-4-5-20251001'),
+        prompt: `You are a customer service assistant. Based on this customer email, pick the 3 most relevant macro IDs to suggest as quick replies. Return only the 3 IDs, comma-separated, nothing else.
 
 Email subject: ${subject}
 Email content: ${snippet}
@@ -71,8 +74,9 @@ Available macros:
 ${macroList}
 
 Return exactly 3 IDs, comma-separated:`,
-      maxOutputTokens: 60,
-    })
+        maxOutputTokens: 60,
+      })
+    )
 
     await supabaseAdmin.from('ai_usage').insert({
       route: 'macros',
@@ -102,8 +106,9 @@ Return exactly 3 IDs, comma-separated:`,
         'X-RateLimit-Remaining': String(rl.remaining),
       },
     })
-  } catch {
-    // Fallback to first 3 macros when AI call fails (e.g. insufficient credits)
-    return NextResponse.json({ macros: MACROS.slice(0, 3) })
+  } catch (err) {
+    return serviceCatchHandler(err, 'anthropic', {
+      fallbackData: { macros: MACROS.slice(0, 3) },
+    })
   }
 }

@@ -8,6 +8,8 @@ import type { NextRequest } from 'next/server'
 import { validateQuery } from '@/lib/validation'
 import { shopifyStoreQuery } from '@/lib/schemas/shopify'
 import { logger } from '@/lib/logger'
+import { serviceCatchHandler } from '@/lib/service-catch-handler'
+import { supabaseAdmin } from '@/lib/supabaseAdmin'
 
 export async function GET(request: NextRequest) {
   const ctx = await getAuthContext(request)
@@ -31,6 +33,25 @@ export async function GET(request: NextRequest) {
     })
   } catch (err: unknown) {
     logger.error('[shopify/kpis]', 'error fetching KPIs', { error: err instanceof Error ? err.message : String(err) })
-    return NextResponse.json({ error: 'Failed to fetch data' }, { status: 500 })
+
+    const { data: cached } = await supabaseAdmin
+      .from('shopify_orders')
+      .select('total_price, financial_status, created_at')
+      .eq('workspace_id', ctx.workspaceId)
+      .order('created_at', { ascending: false })
+      .limit(500)
+
+    if (cached && cached.length > 0) {
+      const totalOrders = cached.length
+      const totalRevenue = cached.reduce((sum, o) => sum + (parseFloat(String(o.total_price)) || 0), 0)
+      const avgOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0
+      const refundedCount = cached.filter(o => o.financial_status === 'refunded').length
+
+      return serviceCatchHandler(err, 'shopify', {
+        fallbackData: { totalOrders, totalRevenue, avgOrderValue, refundedCount, needsSync: false },
+        fallbackMessage: 'Showing cached KPIs — Shopify is temporarily unavailable',
+      })
+    }
+    return serviceCatchHandler(err, 'shopify')
   }
 }

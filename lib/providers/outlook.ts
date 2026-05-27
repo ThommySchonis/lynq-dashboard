@@ -1,6 +1,7 @@
 import { decrypt, encrypt } from '../encryption'
 import { supabaseAdmin } from '../supabaseAdmin'
 import { parseJson } from '../utils/typed-json'
+import { resilientFetch } from '@/lib/resilient-fetch'
 
 const GRAPH_API = 'https://graph.microsoft.com/v1.0/me'
 
@@ -31,10 +32,6 @@ interface OutlookTokenResponse {
 interface OutlookMessagesResponse {
   value?: OutlookMessage[]
   '@odata.nextLink'?: string
-}
-
-interface OutlookErrorResponse {
-  error?: { message?: string }
 }
 
 interface OutlookEmailAddress {
@@ -154,11 +151,11 @@ export async function fetchThreads(account: OutlookAccount, { since, pageToken, 
     url = pageToken
   }
 
-  const res = await fetch(url, {
+  const result = await resilientFetch<OutlookMessagesResponse>('outlook', url, {
     headers: { Authorization: `Bearer ${token}` },
   })
-  if (!res.ok) throw new Error(`Outlook fetchThreads failed: ${res.status}`)
-  const data = await parseJson<OutlookMessagesResponse>(res)
+  if (!result.ok) throw new Error(result.error)
+  const data = result.data
 
   const threadMap = new Map<string, { messages: ReturnType<typeof parseOutlookMessage>[]; bodyPreview: string }>()
   for (const msg of (data.value || [])) {
@@ -194,14 +191,11 @@ export async function fetchThread(account: OutlookAccount, providerThreadId: str
   const safeConversationId = String(providerThreadId || '').replace(/'/g, "''")
 
   const url = `${GRAPH_API}/messages?$filter=conversationId eq '${safeConversationId}'&$orderby=receivedDateTime asc&$top=50&$select=id,subject,body,from,toRecipients,ccRecipients,receivedDateTime,sentDateTime,internetMessageId`
-  const res = await fetch(url, {
+  const result = await resilientFetch<OutlookMessagesResponse>('outlook', url, {
     headers: { Authorization: `Bearer ${token}` },
   })
-  if (!res.ok) {
-    const err = await parseJson<OutlookErrorResponse>(res).catch((): OutlookErrorResponse => ({}))
-    throw new Error(`Outlook fetchThread failed: ${res.status} ${err?.error?.message || ''}`)
-  }
-  const data = await parseJson<OutlookMessagesResponse>(res)
+  if (!result.ok) throw new Error(`Outlook fetchThread failed: ${result.status} ${result.error}`)
+  const data = result.data
 
   return {
     messages: (data.value || []).map((m) => parseOutlookMessage(m, account.email_address)),
@@ -214,20 +208,21 @@ export async function sendReply(account: OutlookAccount, { to, cc, bcc, subject,
   // If inReplyTo is a provider message ID, use the Graph reply endpoint to
   // preserve threading headers automatically. Otherwise fall back to sendMail.
   if (inReplyTo) {
-    const res = await fetch(`${GRAPH_API}/messages/${encodeURIComponent(inReplyTo)}/reply`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
+    const replyResult = await resilientFetch<Record<string, never>>(
+      'outlook',
+      `${GRAPH_API}/messages/${encodeURIComponent(inReplyTo)}/reply`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          comment: bodyHtml || bodyText || '',
+        }),
       },
-      body: JSON.stringify({
-        comment: bodyHtml || bodyText || '',
-      }),
-    })
-    if (!res.ok) {
-      const err = await res.text()
-      throw new Error(`Outlook reply failed: ${res.status} ${err}`)
-    }
+    )
+    if (!replyResult.ok) throw new Error(`Outlook reply failed: ${replyResult.status} ${replyResult.error}`)
     return {
       providerMessageId: `outlook_reply_${Date.now()}`,
       messageId: `<outlook_reply_${Date.now()}@graph.microsoft.com>`,
@@ -243,18 +238,19 @@ export async function sendReply(account: OutlookAccount, { to, cc, bcc, subject,
     bccRecipients: (bcc || []).map((a) => ({ emailAddress: { address: a.email, name: a.name } })),
   }
 
-  const res = await fetch(`${GRAPH_API}/sendMail`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
+  const sendResult = await resilientFetch<Record<string, never>>(
+    'outlook',
+    `${GRAPH_API}/sendMail`,
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ message, saveToSentItems: true }),
     },
-    body: JSON.stringify({ message, saveToSentItems: true }),
-  })
-  if (!res.ok) {
-    const err = await res.text()
-    throw new Error(`Outlook send failed: ${res.status} ${err}`)
-  }
+  )
+  if (!sendResult.ok) throw new Error(`Outlook send failed: ${sendResult.status} ${sendResult.error}`)
 
   return {
     providerMessageId: `outlook_sent_${Date.now()}`,

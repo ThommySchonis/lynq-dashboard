@@ -8,6 +8,8 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { validateBody, validateQuery } from '@/lib/validation'
 import { refundInsightsBody, refundInsightsQuery } from '@/lib/schemas/analytics'
+import { resilientSdkCall } from '@/lib/resilient-fetch'
+import { serviceCatchHandler } from '@/lib/service-catch-handler'
 
 interface RefundItem {
   orderId: string | number
@@ -83,11 +85,13 @@ category must be one of: "Supplier", "Customer Outreach", "Listing Fix", "Qualit
 priority: "high" if product appears 3+ times or >€100 lost on one issue, "medium" if 2 times or €30-100, "low" otherwise`
 
   try {
-    const { text, usage } = await generateText({
-      model: anthropic('claude-haiku-4-5-20251001'),
-      prompt,
-      maxOutputTokens: 700,
-    })
+    const { text, usage } = await resilientSdkCall('anthropic', () =>
+      generateText({
+        model: anthropic('claude-haiku-4-5-20251001'),
+        prompt,
+        maxOutputTokens: 700,
+      })
+    )
 
     try {
       await supabaseAdmin.from('ai_usage').insert({
@@ -105,7 +109,9 @@ priority: "high" if product appears 3+ times or >€100 lost on one issue, "medi
     const clean = text.trim().replace(/^```json?\n?/i, '').replace(/\n?```$/i, '')
     const insights: unknown = JSON.parse(clean)
     return NextResponse.json({ insights: Array.isArray(insights) ? insights : [] })
-  } catch {
-    return NextResponse.json({ insights: [] })
+  } catch (err) {
+    return serviceCatchHandler(err, 'anthropic', {
+      fallbackData: { insights: [] },
+    })
   }
 }

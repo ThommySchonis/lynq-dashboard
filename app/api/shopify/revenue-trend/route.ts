@@ -7,6 +7,8 @@ import type { NextRequest } from 'next/server'
 import { validateQuery } from '@/lib/validation'
 import { shopifyRevenueTrendQuery } from '@/lib/schemas/shopify'
 import { logger } from '@/lib/logger'
+import { serviceCatchHandler } from '@/lib/service-catch-handler'
+import { supabaseAdmin } from '@/lib/supabaseAdmin'
 
 export async function GET(request: NextRequest) {
   const ctx = await getAuthContext(request)
@@ -31,8 +33,32 @@ export async function GET(request: NextRequest) {
     })
   } catch (err: unknown) {
     logger.error('[shopify/revenue-trend]', 'error fetching revenue trend', { error: err instanceof Error ? err.message : String(err) })
-    return NextResponse.json({ trend: [] }, {
-      headers: { 'Cache-Control': 'private, max-age=300' },
-    })
+
+    const { data: cached } = await supabaseAdmin
+      .from('shopify_orders')
+      .select('total_price, created_at')
+      .eq('workspace_id', ctx.workspaceId)
+      .gte('created_at', query.from)
+      .lte('created_at', query.to)
+      .order('created_at', { ascending: true })
+      .limit(500)
+
+    if (cached && cached.length > 0) {
+      const trendMap = new Map<string, number>()
+      for (const order of cached) {
+        const createdAt = String(order.created_at ?? '')
+        const date = createdAt.split('T')[0] ?? ''
+        if (date) {
+          trendMap.set(date, (trendMap.get(date) ?? 0) + (parseFloat(String(order.total_price)) || 0))
+        }
+      }
+      const fallbackTrend = Array.from(trendMap.entries()).map(([date, revenue]) => ({ date, revenue }))
+
+      return serviceCatchHandler(err, 'shopify', {
+        fallbackData: { trend: fallbackTrend },
+        fallbackMessage: 'Showing cached revenue trend — Shopify is temporarily unavailable',
+      })
+    }
+    return serviceCatchHandler(err, 'shopify')
   }
 }

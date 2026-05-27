@@ -1,12 +1,14 @@
 import { getAuthContext } from '@/lib/auth'
 import { getStoreCredentials } from '@/lib/store-credentials'
 import { DEMO_SHOP, DEMO_REFUNDS } from '@/lib/demoData'
-import { getRefunds, ShopifyApiError } from '@/lib/services/shopify'
+import { getRefunds } from '@/lib/services/shopify'
 import { parseDateRange } from '@/lib/utils/request'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { validateQuery } from '@/lib/validation'
 import { shopifyStoreQuery } from '@/lib/schemas/shopify'
+import { serviceCatchHandler } from '@/lib/service-catch-handler'
+import { supabaseAdmin } from '@/lib/supabaseAdmin'
 
 export async function GET(request: NextRequest) {
   const ctx = await getAuthContext(request)
@@ -27,9 +29,20 @@ export async function GET(request: NextRequest) {
       headers: { 'Cache-Control': 'private, max-age=300' },
     })
   } catch (err: unknown) {
-    if (err instanceof ShopifyApiError) {
-      return NextResponse.json({ error: err.message }, { status: err.statusCode })
+    const { data: cached } = await supabaseAdmin
+      .from('shopify_orders')
+      .select('*')
+      .eq('workspace_id', ctx.workspaceId)
+      .eq('financial_status', 'refunded')
+      .order('created_at', { ascending: false })
+      .limit(50)
+
+    if (cached && cached.length > 0) {
+      return serviceCatchHandler(err, 'shopify', {
+        fallbackData: { refunds: cached },
+        fallbackMessage: 'Showing cached refunds — Shopify is temporarily unavailable',
+      })
     }
-    return NextResponse.json({ error: 'Failed to fetch refunds' }, { status: 500 })
+    return serviceCatchHandler(err, 'shopify')
   }
 }

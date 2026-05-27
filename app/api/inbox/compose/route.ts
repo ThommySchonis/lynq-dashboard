@@ -6,6 +6,7 @@ import type { NextRequest } from 'next/server'
 import { validateBody } from '@/lib/validation'
 import { composeBody } from '@/lib/schemas/inbox'
 import { checkRateLimit } from '@/lib/rate-limit'
+import { serviceCatchHandler } from '@/lib/service-catch-handler'
 
 interface EmailAccountId {
   id: string
@@ -79,6 +80,6 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(result)
   } catch (err: unknown) {
-    return NextResponse.json({ error: err instanceof Error ? err.message : 'Unknown error' }, { status: 500 })
+    return serviceCatchHandler(err, 'gmail')
   }
 }

@@ -5,6 +5,7 @@ import { supabaseAdmin, getUserFromToken } from '@/lib/supabaseAdmin'
 import { NextResponse } from 'next/server'
 import { validateBody } from '@/lib/validation'
 import { submitExamBody } from '@/lib/schemas/exams'
+import { resilientSdkCall } from '@/lib/resilient-fetch'
 
 interface GradeResult {
   score?: number
@@ -32,9 +33,10 @@ async function gradeOpenQuestion(question: ExamQuestion, answer: string): Promis
   if (!answer?.trim()) return { score: 0, feedback: 'No answer provided.' }
 
   try {
-    const { text } = await generateText({
-      model: anthropic('claude-haiku-4-5-20251001'),
-      prompt: `You are grading an e-commerce operations exam. Be strict but fair.
+    const { text } = await resilientSdkCall('anthropic', () =>
+      generateText({
+        model: anthropic('claude-haiku-4-5-20251001'),
+        prompt: `You are grading an e-commerce operations exam. Be strict but fair.
 
 Question: ${question.question}
 
@@ -44,8 +46,9 @@ Candidate's Answer: ${answer}
 
 Return ONLY this JSON (no markdown, no other text):
 {"score":${question.max_points <= 10 ? '<number 0 to ' + question.max_points + '>' : '<number>'},"feedback":"<1-2 sentence feedback explaining the score>"}`,
-      maxOutputTokens: 200,
-    })
+        maxOutputTokens: 200,
+      })
+    )
 
     const cleaned = text.trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim()
     const parsed = JSON.parse(cleaned) as GradeResult

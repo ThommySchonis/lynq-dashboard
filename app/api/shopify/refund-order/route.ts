@@ -1,10 +1,11 @@
 import { getAuthContext, requireWriteAccess } from '@/lib/auth'
 import { getStoreCredentials } from '@/lib/store-credentials'
-import { createRefund, ShopifyApiError } from '@/lib/services/shopify'
+import { createRefund } from '@/lib/services/shopify'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { validateQuery, validateBody } from '@/lib/validation'
 import { shopifyStoreQuery, legacyRefundOrderBody } from '@/lib/schemas/shopify'
+import { serviceCatchHandler } from '@/lib/service-catch-handler'
 
 export async function POST(request: NextRequest) {
   const ctx = await getAuthContext(request)
@@ -26,9 +27,6 @@ export async function POST(request: NextRequest) {
     const refund = await createRefund(credentials, orderId, params)
     return NextResponse.json({ success: true, refund })
   } catch (err: unknown) {
-    if (err instanceof ShopifyApiError) {
-      return NextResponse.json({ error: err.message }, { status: err.statusCode })
-    }
-    return NextResponse.json({ error: 'Refund failed' }, { status: 500 })
+    return serviceCatchHandler(err, 'shopify')
   }
 }

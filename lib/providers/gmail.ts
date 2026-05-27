@@ -2,6 +2,7 @@ import { decrypt, encrypt } from '../encryption'
 import { supabaseAdmin } from '../supabaseAdmin'
 import { parseJson } from '../utils/typed-json'
 import { logger } from '@/lib/logger'
+import { resilientFetch } from '@/lib/resilient-fetch'
 
 const GMAIL_API = 'https://gmail.googleapis.com/gmail/v1/users/me'
 
@@ -52,10 +53,6 @@ interface GmailThreadListResponse {
 
 interface GmailSendResponse {
   id: string
-}
-
-interface GmailErrorResponse {
-  error?: { message?: string }
 }
 
 interface GmailThreadListEntry {
@@ -217,25 +214,25 @@ export async function fetchThreads(account: GmailAccount, { since, pageToken, li
   }
 
   logger.debug('[gmail]', 'fetchThreads request', { url: listUrl.toString() })
-  const res = await fetch(listUrl.toString(), {
+  const listResult = await resilientFetch<GmailThreadListResponse>('gmail', listUrl.toString(), {
     headers: { Authorization: `Bearer ${token}` },
   })
-  if (!res.ok) {
-    logger.error('[gmail]', 'fetchThreads failed', { status: res.status })
-    throw new Error(`Gmail fetchThreads failed: ${res.status}`)
+  if (!listResult.ok) {
+    logger.error('[gmail]', 'fetchThreads failed', { status: listResult.status })
+    throw new Error(listResult.error)
   }
-  const data = await parseJson<GmailThreadListResponse>(res)
+  const data = listResult.data
   logger.debug('[gmail]', 'fetchThreads result', { count: data.threads?.length ?? 0, hasNextPage: !!data.nextPageToken })
 
   if (!data.threads?.length) return { threads: [], nextPageToken: null }
 
   const threads = await Promise.all(
     data.threads.map(async (t) => {
-      const threadRes = await fetch(`${GMAIL_API}/threads/${t.id}?format=full`, {
+      const threadResult = await resilientFetch<GmailThreadDetail>('gmail', `${GMAIL_API}/threads/${t.id}?format=full`, {
         headers: { Authorization: `Bearer ${token}` },
       })
-      if (!threadRes.ok) return null
-      const threadData = await threadRes.json() as GmailThreadDetail
+      if (!threadResult.ok) return null
+      const threadData = threadResult.data
 
       const messages = threadData.messages.map((m) => parseGmailMessage(m, account.email_address))
       const lastMsg = messages[messages.length - 1]
@@ -259,11 +256,11 @@ export async function fetchThreads(account: GmailAccount, { since, pageToken, li
 export async function fetchThread(account: GmailAccount, providerThreadId: string) {
   const token = await getAccessToken(account)
 
-  const res = await fetch(`${GMAIL_API}/threads/${providerThreadId}?format=full`, {
+  const result = await resilientFetch<GmailThreadDetail>('gmail', `${GMAIL_API}/threads/${providerThreadId}?format=full`, {
     headers: { Authorization: `Bearer ${token}` },
   })
-  if (!res.ok) throw new Error(`Gmail fetchThread failed: ${res.status}`)
-  const data = await res.json() as GmailThreadDetail
+  if (!result.ok) throw new Error(result.error)
+  const data = result.data
 
   return {
     messages: data.messages.map((m) => parseGmailMessage(m, account.email_address)),
@@ -320,7 +317,7 @@ export async function sendReply(account: GmailAccount, { to, cc, bcc: _bcc, subj
     .replace(/\//g, '_')
     .replace(/=+$/, '')
 
-  const res = await fetch(`${GMAIL_API}/messages/send`, {
+  const sendResult = await resilientFetch<GmailSendResponse>('gmail', `${GMAIL_API}/messages/send`, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${token}`,
@@ -328,11 +325,8 @@ export async function sendReply(account: GmailAccount, { to, cc, bcc: _bcc, subj
     },
     body: JSON.stringify({ raw }),
   })
-  if (!res.ok) {
-    const errData = await parseJson<GmailErrorResponse>(res).catch((): GmailErrorResponse => ({}))
-    throw new Error(`Gmail send failed: ${errData.error?.message || res.status}`)
-  }
-  const data = await parseJson<GmailSendResponse>(res)
+  if (!sendResult.ok) throw new Error(sendResult.error)
+  const data = sendResult.data
 
   return {
     providerMessageId: data.id,

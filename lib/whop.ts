@@ -22,7 +22,7 @@ import { logger } from '@/lib/logger'
 //   - Whop "plan"        ←→ our "plan" (plans.whop_plan_id)
 //   - Whop "payment"     ←→ our "invoice" (invoices row, matched by metadata)
 
-import * as Sentry from '@sentry/nextjs'
+import { resilientFetch } from '@/lib/resilient-fetch'
 import { asciiSafe } from './utils/ascii-safe'
 
 // ─── Configuration ──────────────────────────────────────────────────
@@ -82,49 +82,44 @@ async function whopFetch<T>(path: string, options: WhopFetchOptions = {}): Promi
     headers['Idempotency-Key'] = asciiSafe(options.idempotencyKey, 'Idempotency-Key', 'whop')
   }
 
-  let response: Response
-  try {
-    response = await fetch(url, {
+  const result = await resilientFetch<T>(
+    'whop',
+    url,
+    {
       method:  options.method ?? 'GET',
       headers,
       body:    options.body ? JSON.stringify(options.body) : undefined,
-      // Whop API generally returns within a few seconds; failing fast
-      // beats hanging a checkout flow.
-      signal:  AbortSignal.timeout(15_000),
-    })
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : 'Network error'
-    const apiError = new WhopApiError(`Whop API network error: ${msg}`, { status: 0, endpoint: path })
-    Sentry.captureException(apiError, { tags: { integration: 'whop', endpoint: path } })
-    throw apiError
-  }
+    },
+  )
 
-  let payload: unknown = null
-  const contentType = response.headers.get('content-type') ?? ''
-  if (contentType.includes('application/json')) {
-    payload = await response.json().catch(() => null)
-  } else {
-    payload = await response.text().catch(() => null)
-  }
+  if (!result.ok) {
+    // Try to extract a structured error message and code from the error string
+    // (resilientFetch returns the raw response body as `error` on non-ok responses)
+    let message = `Whop API error ${result.status}`
+    let whopCode: string | null = null
+    let parsedBody: unknown = result.error
 
-  if (!response.ok) {
-    const errPayload = payload as WhopErrorPayload | null
-    const message  = errPayload?.error?.message ?? `Whop API error ${response.status}`
-    const whopCode = errPayload?.error?.code ?? null
-    const apiError = new WhopApiError(message, {
-      status:   response.status,
+    try {
+      const parsed = JSON.parse(result.error) as WhopErrorPayload
+      if (parsed?.error?.message) message = parsed.error.message
+      if (parsed?.error?.code) whopCode = parsed.error.code
+      parsedBody = parsed
+    } catch {
+      // error string was not JSON — use raw string as message if informative
+      if (result.error && result.error !== `HTTP ${result.status}`) {
+        message = result.error
+      }
+    }
+
+    throw new WhopApiError(message, {
+      status:   result.status,
       whopCode,
       endpoint: path,
-      body:     payload,
+      body:     parsedBody,
     })
-    Sentry.captureException(apiError, {
-      tags:  { integration: 'whop', endpoint: path, status: String(response.status) },
-      extra: { whopCode, body: payload },
-    })
-    throw apiError
   }
 
-  return payload as T
+  return result.data
 }
 
 // ─── Types (defensive — Whop's response schemas are tolerated as

@@ -5,6 +5,8 @@ import { checkRateLimit } from '@/lib/rate-limit'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { aiTranslateBody } from '@/lib/schemas/ai'
+import { resilientSdkCall } from '@/lib/resilient-fetch'
+import { serviceCatchHandler } from '@/lib/service-catch-handler'
 
 export async function POST(request: NextRequest) {
   const authHeader = request.headers.get('authorization')
@@ -57,31 +59,37 @@ Text to translate:
 ${text}`
   }
 
-  const { text: result, usage } = await generateText({
-    model: anthropic('claude-haiku-4-5-20251001'),
-    prompt,
-    maxOutputTokens: 2000,
-  })
-
-  void supabaseAdmin.from('ai_usage').insert({
-    route: 'translate',
-    model: 'claude-haiku-4-5-20251001',
-    input_tokens: usage.inputTokens,
-    output_tokens: usage.outputTokens,
-    cost_usd: ((usage.inputTokens ?? 0) * 0.0000008) + ((usage.outputTokens ?? 0) * 0.000004),
-    user_email: user.email,
-  }).then(undefined, () => {})
-
   try {
-    const jsonMatch = result.match(/\{[\s\S]*\}/)
-    const parsed = JSON.parse(jsonMatch?.[0] || '{}') as Record<string, unknown>
-    return NextResponse.json(parsed, {
-      headers: {
-        'X-RateLimit-Limit': '10',
-        'X-RateLimit-Remaining': String(rl.remaining),
-      },
-    })
-  } catch {
-    return NextResponse.json({ error: 'Parse failed' }, { status: 500 })
+    const { text: result, usage } = await resilientSdkCall('anthropic', () =>
+      generateText({
+        model: anthropic('claude-haiku-4-5-20251001'),
+        prompt,
+        maxOutputTokens: 2000,
+      })
+    )
+
+    void supabaseAdmin.from('ai_usage').insert({
+      route: 'translate',
+      model: 'claude-haiku-4-5-20251001',
+      input_tokens: usage.inputTokens,
+      output_tokens: usage.outputTokens,
+      cost_usd: ((usage.inputTokens ?? 0) * 0.0000008) + ((usage.outputTokens ?? 0) * 0.000004),
+      user_email: user.email,
+    }).then(undefined, () => {})
+
+    try {
+      const jsonMatch = result.match(/\{[\s\S]*\}/)
+      const parsed = JSON.parse(jsonMatch?.[0] || '{}') as Record<string, unknown>
+      return NextResponse.json(parsed, {
+        headers: {
+          'X-RateLimit-Limit': '10',
+          'X-RateLimit-Remaining': String(rl.remaining),
+        },
+      })
+    } catch {
+      return NextResponse.json({ error: 'Parse failed' }, { status: 500 })
+    }
+  } catch (err) {
+    return serviceCatchHandler(err, 'anthropic')
   }
 }

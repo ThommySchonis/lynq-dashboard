@@ -1,10 +1,11 @@
 import { getAuthContext, requireWriteAccess } from '@/lib/auth'
 import { getStoreCredentials } from '@/lib/store-credentials'
-import { cancelOrder, ShopifyApiError } from '@/lib/services/shopify'
+import { cancelOrder } from '@/lib/services/shopify'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { validateQuery, validateBody } from '@/lib/validation'
 import { shopifyStoreQuery, legacyCancelOrderBody } from '@/lib/schemas/shopify'
+import { serviceCatchHandler } from '@/lib/service-catch-handler'
 
 export async function POST(request: NextRequest) {
   const ctx = await getAuthContext(request)
@@ -26,9 +27,6 @@ export async function POST(request: NextRequest) {
     const order = await cancelOrder(credentials, orderId, params)
     return NextResponse.json({ success: true, order })
   } catch (err: unknown) {
-    if (err instanceof ShopifyApiError) {
-      return NextResponse.json({ error: err.message }, { status: err.statusCode })
-    }
-    return NextResponse.json({ error: 'Cancel failed' }, { status: 500 })
+    return serviceCatchHandler(err, 'shopify')
   }
 }

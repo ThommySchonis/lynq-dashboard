@@ -5,6 +5,8 @@ import { checkRateLimit } from '@/lib/rate-limit'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { aiChatBody } from '@/lib/schemas/ai'
+import { serviceHealth } from '@/lib/service-health'
+import { serviceCatchHandler } from '@/lib/service-catch-handler'
 
 export async function POST(request: NextRequest) {
   const authHeader = request.headers.get('authorization')
@@ -70,28 +72,35 @@ Be concise, confident, and data-driven. Reference specific numbers when availabl
     ? `${storeContextBlock}\n\n---\n${message}`
     : message
 
-  const result = streamText({
-    model: anthropic('claude-haiku-4-5-20251001'),
-    system: systemPrompt,
-    messages: [
-      ...historyMessages,
-      { role: 'user', content: userContent },
-    ],
-    maxOutputTokens: 800,
-    onFinish: async ({ usage }) => {
-      await supabaseAdmin.from('ai_usage').insert({
-        route: 'chat',
-        model: 'claude-haiku-4-5-20251001',
-        input_tokens: usage.inputTokens,
-        output_tokens: usage.outputTokens,
-        cost_usd: ((usage.inputTokens ?? 0) * 0.0000008) + ((usage.outputTokens ?? 0) * 0.000004),
-        user_email: user.email,
-      }).then(undefined, () => {})
-    },
-  })
+  try {
+    const result = streamText({
+      model: anthropic('claude-haiku-4-5-20251001'),
+      system: systemPrompt,
+      messages: [
+        ...historyMessages,
+        { role: 'user', content: userContent },
+      ],
+      maxOutputTokens: 800,
+      onFinish: async ({ usage }) => {
+        await supabaseAdmin.from('ai_usage').insert({
+          route: 'chat',
+          model: 'claude-haiku-4-5-20251001',
+          input_tokens: usage.inputTokens,
+          output_tokens: usage.outputTokens,
+          cost_usd: ((usage.inputTokens ?? 0) * 0.0000008) + ((usage.outputTokens ?? 0) * 0.000004),
+          user_email: user.email,
+        }).then(undefined, () => {})
+      },
+    })
 
-  const streamResponse = result.toTextStreamResponse()
-  streamResponse.headers.set('X-RateLimit-Limit', '10')
-  streamResponse.headers.set('X-RateLimit-Remaining', String(rl.remaining))
-  return streamResponse
+    serviceHealth.record('anthropic', true)
+
+    const streamResponse = result.toTextStreamResponse()
+    streamResponse.headers.set('X-RateLimit-Limit', '10')
+    streamResponse.headers.set('X-RateLimit-Remaining', String(rl.remaining))
+    return streamResponse
+  } catch (err) {
+    serviceHealth.record('anthropic', false)
+    return serviceCatchHandler(err, 'anthropic')
+  }
 }

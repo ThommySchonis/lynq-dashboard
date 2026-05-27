@@ -6,6 +6,8 @@ import { NextResponse } from 'next/server'
 import { validateBody } from '@/lib/validation'
 import { translateBody } from '@/lib/schemas/translate'
 import { logger } from '@/lib/logger'
+import { resilientSdkCall } from '@/lib/resilient-fetch'
+import { serviceCatchHandler } from '@/lib/service-catch-handler'
 
 interface TranslateResult {
   detectedLanguage?: string
@@ -29,17 +31,19 @@ export async function POST(request: NextRequest) {
 
   let raw
   try {
-    const result = await generateText({
-      model: anthropic('claude-haiku-4-5-20251001'),
-      prompt: `Detect the language of the following text and translate it to ${targetLanguage}.
+    const result = await resilientSdkCall('anthropic', () =>
+      generateText({
+        model: anthropic('claude-haiku-4-5-20251001'),
+        prompt: `Detect the language of the following text and translate it to ${targetLanguage}.
 
 Respond ONLY with a JSON object in this exact format (no markdown, no extra text):
 {"detectedLanguage":"<detected language name in English>","translatedText":"<the translated text>"}
 
 Text to translate:
 ${text}`,
-      maxOutputTokens: 1024,
-    })
+        maxOutputTokens: 1024,
+      })
+    )
     raw = result.text
     await supabaseAdmin.from('ai_usage').insert({
       route: 'translate',
@@ -50,9 +54,10 @@ ${text}`,
       user_email: user.email,
     })
   } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : 'Unknown error'
-    logger.error('[translate]', 'generateText failed', { error: msg })
-    return NextResponse.json({ error: `AI error: ${msg}` }, { status: 500 })
+    logger.error('[translate]', 'generateText failed', {
+      error: err instanceof Error ? err.message : 'Unknown error',
+    })
+    return serviceCatchHandler(err, 'anthropic')
   }
 
   let detectedLanguage = 'Unknown'

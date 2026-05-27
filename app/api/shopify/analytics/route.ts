@@ -6,6 +6,8 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { validateQuery } from '@/lib/validation'
 import { shopifyStoreQuery } from '@/lib/schemas/shopify'
+import { serviceCatchHandler } from '@/lib/service-catch-handler'
+import { supabaseAdmin } from '@/lib/supabaseAdmin'
 
 export async function GET(request: NextRequest) {
   const ctx = await getAuthContext(request)
@@ -20,7 +22,24 @@ export async function GET(request: NextRequest) {
     const dateRange = parseDateRange(request)
     const result = await getAnalytics(credentials, dateRange)
     return NextResponse.json(result)
-  } catch {
-    return NextResponse.json({ error: 'Failed to fetch analytics' }, { status: 500 })
+  } catch (err: unknown) {
+    const { data: cached } = await supabaseAdmin
+      .from('shopify_orders')
+      .select('total_price, financial_status, created_at')
+      .eq('workspace_id', ctx.workspaceId)
+      .order('created_at', { ascending: false })
+      .limit(500)
+
+    if (cached && cached.length > 0) {
+      const totalOrders = cached.length
+      const totalRevenue = cached.reduce((sum, o) => sum + (parseFloat(String(o.total_price)) || 0), 0)
+      const avgOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0
+
+      return serviceCatchHandler(err, 'shopify', {
+        fallbackData: { totalOrders, totalRevenue, avgOrderValue },
+        fallbackMessage: 'Showing cached analytics — Shopify is temporarily unavailable',
+      })
+    }
+    return serviceCatchHandler(err, 'shopify')
   }
 }

@@ -6,6 +6,8 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { aiAnalyzeBody } from '@/lib/schemas/ai'
 import { logger } from '@/lib/logger'
+import { resilientSdkCall } from '@/lib/resilient-fetch'
+import { serviceCatchHandler } from '@/lib/service-catch-handler'
 
 interface AnalyzeResult {
   results?: Record<string, unknown>
@@ -59,32 +61,40 @@ Return ONLY a valid JSON object, no markdown, no explanation:
 Emails:
 ${threads.slice(0, 25).map(t => `ID: ${t.id}\nSubject: ${t.subject || '(no subject)'}\nPreview: ${t.snippet || ''}`).join('\n\n')}`
 
-  const { text, usage } = await generateText({
-    model: anthropic('claude-haiku-4-5-20251001'),
-    prompt,
-    maxOutputTokens: 1200,
-  })
-
-  const { error: usageErr } = await supabaseAdmin.from('ai_usage').insert({
-    route: 'analyze',
-    model: 'claude-haiku-4-5-20251001',
-    input_tokens: usage.inputTokens,
-    output_tokens: usage.outputTokens,
-    cost_usd: ((usage.inputTokens ?? 0) * 0.0000008) + ((usage.outputTokens ?? 0) * 0.000004),
-    user_email: user.email,
-  })
-  if (usageErr) logger.error('[ai/analyze]', 'usage log failed', { error: usageErr.message })
-
   try {
-    const jsonMatch = text.match(/\{[\s\S]*\}/)
-    const parsed = JSON.parse(jsonMatch?.[0] || '{}') as AnalyzeResult
-    return NextResponse.json({ analyses: parsed.results || {} }, {
-      headers: {
-        'X-RateLimit-Limit': '10',
-        'X-RateLimit-Remaining': String(rl.remaining),
-      },
+    const { text, usage } = await resilientSdkCall('anthropic', () =>
+      generateText({
+        model: anthropic('claude-haiku-4-5-20251001'),
+        prompt,
+        maxOutputTokens: 1200,
+      })
+    )
+
+    const { error: usageErr } = await supabaseAdmin.from('ai_usage').insert({
+      route: 'analyze',
+      model: 'claude-haiku-4-5-20251001',
+      input_tokens: usage.inputTokens,
+      output_tokens: usage.outputTokens,
+      cost_usd: ((usage.inputTokens ?? 0) * 0.0000008) + ((usage.outputTokens ?? 0) * 0.000004),
+      user_email: user.email,
     })
-  } catch {
-    return NextResponse.json({ analyses: {} })
+    if (usageErr) logger.error('[ai/analyze]', 'usage log failed', { error: usageErr.message })
+
+    try {
+      const jsonMatch = text.match(/\{[\s\S]*\}/)
+      const parsed = JSON.parse(jsonMatch?.[0] || '{}') as AnalyzeResult
+      return NextResponse.json({ analyses: parsed.results || {} }, {
+        headers: {
+          'X-RateLimit-Limit': '10',
+          'X-RateLimit-Remaining': String(rl.remaining),
+        },
+      })
+    } catch {
+      return NextResponse.json({ analyses: {} })
+    }
+  } catch (err) {
+    return serviceCatchHandler(err, 'anthropic', {
+      fallbackData: { analyses: {} },
+    })
   }
 }

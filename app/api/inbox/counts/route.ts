@@ -5,6 +5,7 @@ import type { NextRequest } from 'next/server'
 import { validateQuery } from '@/lib/validation'
 import { getCountsQuery } from '@/lib/schemas/inbox'
 import { checkRateLimit } from '@/lib/rate-limit'
+import { serviceCatchHandler } from '@/lib/service-catch-handler'
 
 export async function GET(request: NextRequest) {
   const ctx = await getAuthContext(request)
@@ -31,26 +32,54 @@ export async function GET(request: NextRequest) {
   const wsId = ctx.workspaceId
   const storeId = query.store_id
 
-  const baseQuery = () => {
-    const q = supabaseAdmin.from('email_conversations').select('id', { count: 'exact', head: true }).eq('workspace_id', wsId)
-    return storeId ? q.eq('store_id', storeId) : q
+  try {
+    const baseQuery = () => {
+      const q = supabaseAdmin.from('email_conversations').select('id', { count: 'exact', head: true }).eq('workspace_id', wsId)
+      return storeId ? q.eq('store_id', storeId) : q
+    }
+
+    const [open, pending, resolved, unlinked, trash] = await Promise.all([
+      baseQuery().eq('status', 'open'),
+      baseQuery().eq('status', 'pending'),
+      baseQuery().eq('status', 'resolved'),
+      baseQuery().is('shopify_customer_id', null).neq('status', 'closed'),
+      baseQuery().eq('status', 'closed'),
+    ])
+
+    return NextResponse.json({
+      open: open.count || 0,
+      pending: pending.count || 0,
+      resolved: resolved.count || 0,
+      unlinked: unlinked.count || 0,
+      trash: trash.count || 0,
+    }, {
+      headers: { 'Cache-Control': 'private, max-age=60' },
+    })
+  } catch (err) {
+    const baseCountQuery = supabaseAdmin
+      .from('email_conversations')
+      .select('status, shopify_customer_id')
+      .eq('workspace_id', wsId)
+
+    const { data: cached } = storeId
+      ? await baseCountQuery.eq('store_id', storeId)
+      : await baseCountQuery
+
+    if (cached) {
+      const counts = {
+        open: cached.filter((r: { status: string }) => r.status === 'open').length,
+        pending: cached.filter((r: { status: string }) => r.status === 'pending').length,
+        resolved: cached.filter((r: { status: string }) => r.status === 'resolved').length,
+        unlinked: cached.filter((r: { status: string; shopify_customer_id: string | null }) =>
+          r.shopify_customer_id === null && r.status !== 'closed'
+        ).length,
+        trash: cached.filter((r: { status: string }) => r.status === 'closed').length,
+      }
+      return serviceCatchHandler(err, 'gmail', {
+        fallbackData: counts,
+        fallbackMessage: 'Showing cached counts — inbox is temporarily unavailable',
+      })
+    }
+    return serviceCatchHandler(err, 'gmail')
   }
-
-  const [open, pending, resolved, unlinked, trash] = await Promise.all([
-    baseQuery().eq('status', 'open'),
-    baseQuery().eq('status', 'pending'),
-    baseQuery().eq('status', 'resolved'),
-    baseQuery().is('shopify_customer_id', null).neq('status', 'closed'),
-    baseQuery().eq('status', 'closed'),
-  ])
-
-  return NextResponse.json({
-    open: open.count || 0,
-    pending: pending.count || 0,
-    resolved: resolved.count || 0,
-    unlinked: unlinked.count || 0,
-    trash: trash.count || 0,
-  }, {
-    headers: { 'Cache-Control': 'private, max-age=60' },
-  })
 }

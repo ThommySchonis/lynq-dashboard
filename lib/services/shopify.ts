@@ -1,5 +1,5 @@
-import { supabaseAdmin } from '../supabaseAdmin'
-import { parseJson } from '../utils/typed-json'
+import { supabaseAdmin } from '@/lib/supabaseAdmin'
+import { resilientFetch } from '@/lib/resilient-fetch'
 import { logger } from '@/lib/logger'
 
 // ── Error class ──────────────────────────────────────────────────────────────
@@ -151,31 +151,65 @@ interface ShopifyShopResponse { shop?: { currency?: string } }
 // ── Internal Shopify REST helper ─────────────────────────────────────────────
 const SHOPIFY_API_VERSION = '2025-04'
 
-async function shopifyFetch(credentials: ShopifyCredentials, path: string, options: RequestInit = {}) {
+/**
+ * Paginated fetch for Shopify REST endpoints that need Link-header pagination.
+ * Uses retry logic consistent with resilientFetch (429 + Retry-After handling).
+ */
+interface PaginatedResult<T> {
+  data: T
+  nextUrl: string | null
+}
+
+async function shopifyPaginatedFetch<T>(
+  credentials: ShopifyCredentials,
+  url: string,
+): Promise<PaginatedResult<T>> {
+  const MAX_RETRIES = 2
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    const res = await fetch(url, {
+      headers: { 'X-Shopify-Access-Token': credentials.accessToken },
+      signal: AbortSignal.timeout(10_000),
+    })
+
+    if (res.status === 429) {
+      const wait = parseInt(res.headers.get('Retry-After') || '2', 10) * 1000
+      await new Promise<void>((r) => setTimeout(r, wait))
+      continue
+    }
+
+    if (!res.ok) {
+      throw new ShopifyApiError(`Shopify paginated fetch failed`, res.status, url)
+    }
+
+    const data = (await res.json()) as T
+    const link: string | null = res.headers.get('link')
+    const next: RegExpMatchArray | null | undefined = link?.match(/<([^>]+)>;\s*rel="next"/)
+    const nextUrl: string | null = next?.[1] ?? null
+    const result: PaginatedResult<T> = { data, nextUrl }
+    return result
+  }
+
+  throw new ShopifyApiError('Shopify rate limit exceeded after retries', 429, url)
+}
+
+async function shopifyFetchJSON<T = Record<string, unknown>>(credentials: ShopifyCredentials, path: string, options: RequestInit = {}): Promise<T> {
   const url = `https://${credentials.domain}/admin/api/${SHOPIFY_API_VERSION}${path}`
-  const res = await fetch(url, {
+  const res = await resilientFetch<T>('shopify', url, {
     ...options,
     headers: {
       'X-Shopify-Access-Token': credentials.accessToken,
       'Content-Type': 'application/json',
-      ...(options.headers || {}),
+      ...(options.headers as Record<string, string> | undefined ?? {}),
     },
   })
-  return res
-}
-
-async function shopifyFetchJSON<T = Record<string, unknown>>(credentials: ShopifyCredentials, path: string, options: RequestInit = {}): Promise<T> {
-  const res = await shopifyFetch(credentials, path, options)
-  const data: unknown = await res.json()
   if (!res.ok) {
-    const errorData = data as Record<string, unknown>
     throw new ShopifyApiError(
-      (errorData.errors as string) || `Shopify API error on ${path}`,
+      res.error || `Shopify API error on ${path}`,
       res.status,
       path
     )
   }
-  return data as T
+  return res.data
 }
 
 // ── Supabase-backed functions ────────────────────────────────────────────────
@@ -310,7 +344,8 @@ export async function getAnalytics(credentials: ShopifyCredentials, dateRange: {
     }
   `
 
-  const res = await fetch(
+  const res = await resilientFetch<unknown>(
+    'shopify',
     `https://${credentials.domain}/admin/api/${SHOPIFY_API_VERSION}/graphql.json`,
     {
       method: 'POST',
@@ -322,11 +357,10 @@ export async function getAnalytics(credentials: ShopifyCredentials, dateRange: {
     }
   )
 
-  const text = await res.text()
-  let data: unknown
-  try { data = JSON.parse(text) } catch { data = text }
-
-  return { status: res.status, raw: data }
+  if (!res.ok) {
+    return { status: res.status, raw: res.error }
+  }
+  return { status: res.status, raw: res.data }
 }
 
 // ── Shopify API-backed functions ─────────────────────────────────────────────
@@ -422,26 +456,9 @@ export async function getRefunds(credentials: ShopifyCredentials, dateRange: { f
   const allOrders: ShopifyOrder[] = []
 
   while (nextUrl) {
-    const res: Response = await fetch(nextUrl, {
-      headers: { 'X-Shopify-Access-Token': credentials.accessToken },
-    })
-
-    if (res.status === 429) {
-      const wait = parseInt(res.headers.get('Retry-After') || '2') * 1000
-      await new Promise(r => setTimeout(r, wait))
-      continue
-    }
-
-    if (!res.ok) {
-      throw new ShopifyApiError('Failed to fetch orders for refunds', res.status, nextUrl)
-    }
-
-    const data = await parseJson<ShopifyOrdersResponse>(res)
-    allOrders.push(...(data.orders || []))
-
-    const link: string | null = res.headers.get('link')
-    const next: RegExpMatchArray | null | undefined = link?.match(/<([^>]+)>;\s*rel="next"/)
-    nextUrl = next ? next[1] : null
+    const page: PaginatedResult<ShopifyOrdersResponse> = await shopifyPaginatedFetch<ShopifyOrdersResponse>(credentials, nextUrl)
+    allOrders.push(...(page.data.orders || []))
+    nextUrl = page.nextUrl
   }
 
   const fromTs = from ? `${from}T00:00:00` : null
@@ -722,14 +739,20 @@ export async function editOrder(credentials: ShopifyCredentials, orderId: string
 
   // Step 2: set quantities
   for (const item of (lineItems || [])) {
-    const setRes = await shopifyFetch(
-      credentials,
-      `/order_edits/${editId}/line_items/${item.lineItemId}/set_quantity.json`,
-      { method: 'POST', body: JSON.stringify({ quantity: item.quantity, restock: true }) }
+    const setRes = await resilientFetch<Record<string, unknown>>(
+      'shopify',
+      `https://${credentials.domain}/admin/api/${SHOPIFY_API_VERSION}/order_edits/${editId}/line_items/${item.lineItemId}/set_quantity.json`,
+      {
+        method: 'POST',
+        headers: {
+          'X-Shopify-Access-Token': credentials.accessToken,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ quantity: item.quantity, restock: true }),
+      }
     )
     if (!setRes.ok) {
-      const err: unknown = await setRes.json()
-      logger.error('[shopify]', 'set_quantity failed', { error: err instanceof Error ? err.message : String(err) })
+      logger.error('[shopify]', 'set_quantity failed', { error: setRes.error })
     }
   }
 
@@ -913,13 +936,13 @@ export async function fulfillOrder(credentials: ShopifyCredentials, orderId: str
  */
 export async function syncOrders(workspaceId: string, credentials: ShopifyCredentials, userId: string, options: { full?: boolean; storeId?: string } = {}) {
   // Fetch + store currency
-  const shopRes = await fetch(
+  const shopRes = await resilientFetch<ShopifyShopResponse>(
+    'shopify',
     `https://${credentials.domain}/admin/api/${SHOPIFY_API_VERSION}/shop.json`,
     { headers: { 'X-Shopify-Access-Token': credentials.accessToken } }
   )
   if (shopRes.ok) {
-    const shopData = await parseJson<ShopifyShopResponse>(shopRes)
-    const currency = shopData.shop?.currency || 'EUR'
+    const currency = shopRes.data.shop?.currency || 'EUR'
     // Always write store_currency to integrations
     if (options.storeId) {
       await supabaseAdmin
@@ -945,15 +968,13 @@ export async function syncOrders(workspaceId: string, credentials: ShopifyCreden
   let url: string | null = `https://${credentials.domain}/admin/api/${SHOPIFY_API_VERSION}/orders.json?status=any&limit=250${since}`
 
   while (url) {
-    const res: Response = await fetch(url, {
-      headers: { 'X-Shopify-Access-Token': credentials.accessToken },
-    })
-    if (!res.ok) break
-    const data = await parseJson<ShopifyOrdersResponse>(res)
-    orders = orders.concat(data.orders || [])
-    const link: string | null = res.headers.get('link')
-    const next: RegExpMatchArray | null | undefined = link?.match(/<([^>]+)>;\s*rel="next"/)
-    url = next ? next[1] : null
+    try {
+      const page: PaginatedResult<ShopifyOrdersResponse> = await shopifyPaginatedFetch<ShopifyOrdersResponse>(credentials, url)
+      orders = orders.concat(page.data.orders || [])
+      url = page.nextUrl
+    } catch {
+      break
+    }
   }
 
   const rows = orders.map((order: ShopifyOrder) => {

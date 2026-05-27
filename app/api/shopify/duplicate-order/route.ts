@@ -1,10 +1,11 @@
 import { getAuthContext, requireWriteAccess } from '@/lib/auth'
 import { getStoreCredentials } from '@/lib/store-credentials'
-import { duplicateOrder, ShopifyApiError } from '@/lib/services/shopify'
+import { duplicateOrder } from '@/lib/services/shopify'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { validateQuery, validateBody } from '@/lib/validation'
 import { shopifyStoreQuery, legacyDuplicateOrderBody } from '@/lib/schemas/shopify'
+import { serviceCatchHandler } from '@/lib/service-catch-handler'
 
 export async function POST(request: NextRequest) {
   const ctx = await getAuthContext(request)
@@ -26,9 +27,6 @@ export async function POST(request: NextRequest) {
     const draftOrder = await duplicateOrder(credentials, orderId, params)
     return NextResponse.json({ success: true, draftOrder })
   } catch (err: unknown) {
-    if (err instanceof ShopifyApiError) {
-      return NextResponse.json({ error: err.message }, { status: err.statusCode })
-    }
-    return NextResponse.json({ error: 'Duplicate failed' }, { status: 500 })
+    return serviceCatchHandler(err, 'shopify')
   }
 }

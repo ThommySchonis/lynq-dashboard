@@ -7,6 +7,8 @@ import { checkRateLimit } from '@/lib/rate-limit'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { aiReplyBody } from '@/lib/schemas/ai'
+import { resilientSdkCall } from '@/lib/resilient-fetch'
+import { serviceCatchHandler } from '@/lib/service-catch-handler'
 
 interface AiSettingsRow {
   system_prompt?: string
@@ -99,31 +101,37 @@ export async function POST(request: NextRequest) {
     ? `\n\nIMPORTANT: Write your reply in ${language}. The customer is communicating in ${language}.`
     : ''
 
-  const { text, usage } = await generateText({
-    model: anthropic('claude-haiku-4-5-20251001'),
-    system: systemPrompt + languageInstruction,
-    prompt: `Here is the full email conversation. Write a professional reply to the latest message from the customer.
+  try {
+    const { text, usage } = await resilientSdkCall('anthropic', () =>
+      generateText({
+        model: anthropic('claude-haiku-4-5-20251001'),
+        system: systemPrompt + languageInstruction,
+        prompt: `Here is the full email conversation. Write a professional reply to the latest message from the customer.
 
 ${conversationContext}
 
 ---
 Write only the reply body. Do not include subject lines, metadata, or explanations. Sign off as "${brandName}".`,
-    maxOutputTokens: 600,
-  })
+        maxOutputTokens: 600,
+      })
+    )
 
-  await supabaseAdmin.from('ai_usage').insert({
-    route: 'reply',
-    model: 'claude-haiku-4-5-20251001',
-    input_tokens: usage.inputTokens,
-    output_tokens: usage.outputTokens,
-    cost_usd: ((usage.inputTokens ?? 0) * 0.0000008) + ((usage.outputTokens ?? 0) * 0.000004),
-    user_email: user.email,
-  })
+    await supabaseAdmin.from('ai_usage').insert({
+      route: 'reply',
+      model: 'claude-haiku-4-5-20251001',
+      input_tokens: usage.inputTokens,
+      output_tokens: usage.outputTokens,
+      cost_usd: ((usage.inputTokens ?? 0) * 0.0000008) + ((usage.outputTokens ?? 0) * 0.000004),
+      user_email: user.email,
+    })
 
-  return NextResponse.json({ reply: text.trim(), threadId }, {
-    headers: {
-      'X-RateLimit-Limit': '10',
-      'X-RateLimit-Remaining': String(rl.remaining),
-    },
-  })
+    return NextResponse.json({ reply: text.trim(), threadId }, {
+      headers: {
+        'X-RateLimit-Limit': '10',
+        'X-RateLimit-Remaining': String(rl.remaining),
+      },
+    })
+  } catch (err) {
+    return serviceCatchHandler(err, 'anthropic')
+  }
 }

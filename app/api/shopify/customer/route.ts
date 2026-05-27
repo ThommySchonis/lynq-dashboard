@@ -1,10 +1,11 @@
 import { getAuthContext } from '@/lib/auth'
 import { getStoreCredentials } from '@/lib/store-credentials'
-import { getCustomer, ShopifyApiError } from '@/lib/services/shopify'
+import { getCustomer } from '@/lib/services/shopify'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { validateQuery } from '@/lib/validation'
 import { shopifyCustomerQuery } from '@/lib/schemas/shopify'
+import { serviceCatchHandler } from '@/lib/service-catch-handler'
 
 export async function GET(request: NextRequest) {
   const ctx = await getAuthContext(request)
@@ -23,9 +24,6 @@ export async function GET(request: NextRequest) {
     const result = await getCustomer(credentials, { email: query.email, order: query.order })
     return NextResponse.json(result)
   } catch (err: unknown) {
-    if (err instanceof ShopifyApiError) {
-      return NextResponse.json({ error: err.message }, { status: err.statusCode })
-    }
-    return NextResponse.json({ error: 'Failed to fetch customer' }, { status: 500 })
+    return serviceCatchHandler(err, 'shopify')
   }
 }

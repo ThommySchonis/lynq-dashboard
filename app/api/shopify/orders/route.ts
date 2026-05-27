@@ -1,11 +1,13 @@
 import { getAuthContext } from '@/lib/auth'
 import { getStoreCredentials } from '@/lib/store-credentials'
 import { DEMO_SHOP, DEMO_ORDERS } from '@/lib/demoData'
-import { getOrders, ShopifyApiError } from '@/lib/services/shopify'
+import { getOrders } from '@/lib/services/shopify'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { validateQuery } from '@/lib/validation'
 import { shopifyStoreQuery } from '@/lib/schemas/shopify'
+import { serviceCatchHandler } from '@/lib/service-catch-handler'
+import { supabaseAdmin } from '@/lib/supabaseAdmin'
 
 export async function GET(request: NextRequest) {
   const ctx = await getAuthContext(request)
@@ -21,9 +23,19 @@ export async function GET(request: NextRequest) {
     const orders = await getOrders(credentials)
     return NextResponse.json({ orders })
   } catch (err: unknown) {
-    if (err instanceof ShopifyApiError) {
-      return NextResponse.json({ error: err.message }, { status: err.statusCode })
+    const { data: cached } = await supabaseAdmin
+      .from('shopify_orders')
+      .select('*')
+      .eq('workspace_id', ctx.workspaceId)
+      .order('created_at', { ascending: false })
+      .limit(50)
+
+    if (cached && cached.length > 0) {
+      return serviceCatchHandler(err, 'shopify', {
+        fallbackData: { orders: cached },
+        fallbackMessage: 'Showing cached orders — Shopify is temporarily unavailable',
+      })
     }
-    return NextResponse.json({ error: 'Failed to fetch orders' }, { status: 500 })
+    return serviceCatchHandler(err, 'shopify')
   }
 }

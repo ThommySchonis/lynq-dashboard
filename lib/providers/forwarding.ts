@@ -43,6 +43,7 @@ export async function sendReply(
   if (inReplyTo) headers['In-Reply-To'] = inReplyTo
   if (references) headers['References'] = references
 
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- Resend SDK union type requires cast
   const result = await resend.emails.send({
     from: account.display_name
       ? `${account.display_name} <${fromEmail}>`
@@ -54,7 +55,7 @@ export async function sendReply(
     html: bodyHtml || undefined,
     text: bodyText || undefined,
     headers: Object.keys(headers).length > 0 ? headers : undefined,
-  })
+  } as Parameters<typeof resend.emails.send>[0])
 
   const messageId = result.data?.id
     ? `<${result.data.id}@resend.dev>`

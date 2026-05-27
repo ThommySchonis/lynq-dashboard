@@ -3,6 +3,7 @@ import type { NextRequest } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import { executeAccountDeletion } from '@/lib/services/account-deletion'
 import { logger } from '@/lib/logger'
+import { startCronRun, endCronRun } from '@/lib/services/cron-logger'
 
 // ─── Data retention cleanup job ───────────────────────────────────────
 //
@@ -316,66 +317,76 @@ async function handle(request: NextRequest): Promise<NextResponse> {
     return unauthorized('cron-secret-mismatch')
   }
 
+  const runId = await startCronRun('data-retention', 'vercel-cron')
   const startedAt = Date.now()
   logger.info('[cron/data-retention]', 'start')
 
-  const cancel   = await runCancelPhase()
-  const schedule = await runSchedulePhase()
-  const del      = await runDeletePhase()
+  try {
+    const cancel   = await runCancelPhase()
+    const schedule = await runSchedulePhase()
+    const del      = await runDeletePhase()
 
-  // Phase 3 — Account Deletion
-  const accountPhase: PhaseSummary = { deleted: 0, errors: 0 }
+    // Phase 3 — Account Deletion
+    const accountPhase: PhaseSummary = { deleted: 0, errors: 0 }
 
-  const { data: accountsToDelete, error: accountFetchError } = await supabaseAdmin
-    .from('user_profiles')
-    .select('user_id')
-    .not('scheduled_for_deletion_at', 'is', null)
-    .lte('scheduled_for_deletion_at', new Date().toISOString())
+    const { data: accountsToDelete, error: accountFetchError } = await supabaseAdmin
+      .from('user_profiles')
+      .select('user_id')
+      .not('scheduled_for_deletion_at', 'is', null)
+      .lte('scheduled_for_deletion_at', new Date().toISOString())
 
-  if (accountFetchError) {
-    logger.error('[cron/data-retention]', 'Phase 3 fetch error', { error: accountFetchError.message })
-    accountPhase.errors++
-  } else {
-    for (const account of accountsToDelete ?? []) {
-      const userId = (account as { user_id: string }).user_id
-      try {
-        // Look up email before deletion
-        const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(userId)
-        const email = authUser?.user?.email ?? 'unknown'
+    if (accountFetchError) {
+      logger.error('[cron/data-retention]', 'Phase 3 fetch error', { error: accountFetchError.message })
+      accountPhase.errors++
+    } else {
+      for (const account of accountsToDelete ?? []) {
+        const userId = (account as { user_id: string }).user_id
+        try {
+          // Look up email before deletion
+          const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(userId)
+          const email = authUser?.user?.email ?? 'unknown'
 
-        await executeAccountDeletion(userId, email)
-        accountPhase.deleted = (accountPhase.deleted ?? 0) + 1
-      } catch (err) {
-        const message = err instanceof Error ? err.message : 'Unknown error'
-        logger.error('[cron/data-retention]', 'Phase 3 error for user', { userId, error: message })
+          await executeAccountDeletion(userId, email)
+          accountPhase.deleted = (accountPhase.deleted ?? 0) + 1
+        } catch (err) {
+          const message = err instanceof Error ? err.message : 'Unknown error'
+          logger.error('[cron/data-retention]', 'Phase 3 error for user', { userId, error: message })
 
-        // Log error to account_deletion_log
-        await supabaseAdmin.from('account_deletion_log').insert({
-          user_id:    userId,
-          user_email: 'unknown',
-          event:      'error',
-          metadata:   { error: message },
-        })
+          // Log error to account_deletion_log
+          await supabaseAdmin.from('account_deletion_log').insert({
+            user_id:    userId,
+            user_email: 'unknown',
+            event:      'error',
+            metadata:   { error: message },
+          })
 
-        accountPhase.errors++
+          accountPhase.errors++
+        }
       }
     }
-  }
 
-  const summary = {
-    ok:          true,
-    started_at:  new Date(startedAt).toISOString(),
-    duration_ms: Date.now() - startedAt,
-    phases: {
-      cancel,
-      schedule,
-      delete:        del,
-      accountDelete: accountPhase,
-    },
-  }
+    const summary = {
+      ok:          true,
+      started_at:  new Date(startedAt).toISOString(),
+      duration_ms: Date.now() - startedAt,
+      phases: {
+        cancel,
+        schedule,
+        delete:        del,
+        accountDelete: accountPhase,
+      },
+    }
 
-  logger.info('[cron/data-retention]', 'done', summary)
-  return NextResponse.json(summary)
+    const hasErrors = cancel.errors + schedule.errors + del.errors + accountPhase.errors > 0
+    const runStatus = hasErrors ? 'warning' : 'success'
+    await endCronRun(runId, { status: runStatus, summary })
+
+    logger.info('[cron/data-retention]', 'done', summary)
+    return NextResponse.json(summary)
+  } catch (err) {
+    await endCronRun(runId, { status: 'failure', errorMessage: err instanceof Error ? err.message : String(err) })
+    throw err
+  }
 }
 
 // Vercel Cron stuurt POST. GET wordt ondersteund voor handmatige tests

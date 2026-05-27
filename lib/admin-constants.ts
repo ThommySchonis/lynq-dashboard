@@ -52,6 +52,7 @@ export const ADMIN_NAV: NavGroup[] = [
   ]},
   { group: 'SYSTEM', items: [
     { id: 'webhooks', label: 'Webhooks', icon: RefreshCw, href: '/admin/webhooks' },
+    { id: 'cron-jobs', label: 'Cron Jobs', icon: Clock, href: '/admin/cron-jobs' },
   ]},
 ]
 
@@ -74,6 +75,7 @@ export const TAB_META: Record<string, { title: string; sub: string | null }> = {
   finance: { title: 'Finance', sub: 'P&L and AI costs' },
   events: { title: 'Events', sub: null },
   webhooks: { title: 'Webhooks', sub: 'Failed and dead-lettered webhook events' },
+  'cron-jobs': { title: 'Cron Jobs', sub: 'Scheduled job monitoring and alerting' },
 }
 
 export interface BroadcastTypeConfig {

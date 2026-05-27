@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import { logger } from '@/lib/logger'
+import { startCronRun, endCronRun } from '@/lib/services/cron-logger'
 
 // ─── Usage warnings cron ──────────────────────────────────────────────
 //
@@ -119,67 +120,80 @@ async function handle(request: NextRequest): Promise<NextResponse> {
   const token = (request.headers.get('authorization') || '').replace(/^Bearer\s+/i, '')
   if (token !== expected) return unauthorized('cron-secret-mismatch')
 
+  const runId = await startCronRun('usage-warnings', 'vercel-cron')
   const startedAt = Date.now()
   logger.info('[cron/usage-warnings]', 'start')
 
-  // Find counters in an active period (period_end in future) where we
-  // haven't yet sent the 100% notification.
-  const { data: counters, error } = await supabaseAdmin
-    .from('usage_counters')
-    .select('id, workspace_id, period_start, period_end, tickets_used, ai_suggest_used, notified_80_at, notified_100_at')
-    .is('notified_100_at', null)
-    .gte('period_end', new Date().toISOString())
+  try {
+    // Find counters in an active period (period_end in future) where we
+    // haven't yet sent the 100% notification.
+    const { data: counters, error } = await supabaseAdmin
+      .from('usage_counters')
+      .select('id, workspace_id, period_start, period_end, tickets_used, ai_suggest_used, notified_80_at, notified_100_at')
+      .is('notified_100_at', null)
+      .gte('period_end', new Date().toISOString())
 
-  if (error) {
-    logger.error('[cron/usage-warnings]', 'query failed', { error: error.message })
-    return NextResponse.json({ ok: false, error: error.message }, { status: 500 })
-  }
-
-  const counterList = (counters as CounterRow[]) || []
-
-  // Fetch subscriptions + plans in bulk to avoid N+1
-  const workspaceIds = [...new Set(counterList.map(c => c.workspace_id))]
-  const [{ data: subs }, { data: plans }] = await Promise.all([
-    supabaseAdmin
-      .from('workspace_subscriptions')
-      .select('workspace_id, plan_id')
-      .in('workspace_id', workspaceIds),
-    supabaseAdmin
-      .from('plans')
-      .select('id, ticket_limit, ai_suggest_limit, is_custom'),
-  ])
-
-  const subByWs:  Record<string, SubRow>  = Object.fromEntries(((subs  as SubRow[])  ?? []).map(s => [s.workspace_id, s]))
-  const planById: Record<string, PlanRow> = Object.fromEntries(((plans as PlanRow[]) ?? []).map(p => [p.id, p]))
-
-  const results: OneResult[] = []
-  for (const counter of counterList) {
-    const sub  = subByWs[counter.workspace_id]
-    const plan = sub ? planById[sub.plan_id] : null
-    if (!sub || !plan) continue
-    // Skip custom plans (no limit to warn about)
-    if (plan.is_custom || plan.ticket_limit == null) continue
-
-    try {
-      results.push(await processOne({ counter, sub, plan }))
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err)
-      logger.error('[cron/usage-warnings]', 'unhandled error', { error: msg })
-      results.push({ ok: false, workspace_id: counter.workspace_id, error: msg })
+    if (error) {
+      logger.error('[cron/usage-warnings]', 'query failed', { error: error.message })
+      await endCronRun(runId, { status: 'failure', errorMessage: error.message })
+      return NextResponse.json({ ok: false, error: error.message }, { status: 500 })
     }
-  }
 
-  const allEvents = results.flatMap(r => r.events || [])
-  const summary = {
-    ok:           true,
-    started_at:   new Date(startedAt).toISOString(),
-    duration_ms:  Date.now() - startedAt,
-    processed:    results.length,
-    notified_80:  allEvents.filter(e => e.type === 'approaching_limit').length,
-    notified_100: allEvents.filter(e => e.type === 'limit_reached').length,
+    const counterList = (counters as CounterRow[]) || []
+
+    // Fetch subscriptions + plans in bulk to avoid N+1
+    const workspaceIds = [...new Set(counterList.map(c => c.workspace_id))]
+    const [{ data: subs }, { data: plans }] = await Promise.all([
+      supabaseAdmin
+        .from('workspace_subscriptions')
+        .select('workspace_id, plan_id')
+        .in('workspace_id', workspaceIds),
+      supabaseAdmin
+        .from('plans')
+        .select('id, ticket_limit, ai_suggest_limit, is_custom'),
+    ])
+
+    const subByWs:  Record<string, SubRow>  = Object.fromEntries(((subs  as SubRow[])  ?? []).map(s => [s.workspace_id, s]))
+    const planById: Record<string, PlanRow> = Object.fromEntries(((plans as PlanRow[]) ?? []).map(p => [p.id, p]))
+
+    const results: OneResult[] = []
+    let failedCount = 0
+    for (const counter of counterList) {
+      const sub  = subByWs[counter.workspace_id]
+      const plan = sub ? planById[sub.plan_id] : null
+      if (!sub || !plan) continue
+      // Skip custom plans (no limit to warn about)
+      if (plan.is_custom || plan.ticket_limit == null) continue
+
+      try {
+        results.push(await processOne({ counter, sub, plan }))
+      } catch (err) {
+        failedCount++
+        const msg = err instanceof Error ? err.message : String(err)
+        logger.error('[cron/usage-warnings]', 'unhandled error', { error: msg })
+        results.push({ ok: false, workspace_id: counter.workspace_id, error: msg })
+      }
+    }
+
+    const allEvents = results.flatMap(r => r.events || [])
+    const summary = {
+      ok:           true,
+      started_at:   new Date(startedAt).toISOString(),
+      duration_ms:  Date.now() - startedAt,
+      processed:    results.length,
+      notified_80:  allEvents.filter(e => e.type === 'approaching_limit').length,
+      notified_100: allEvents.filter(e => e.type === 'limit_reached').length,
+    }
+
+    const runStatus = failedCount > 0 ? 'warning' : 'success'
+    await endCronRun(runId, { status: runStatus, summary: { ...summary, failed: failedCount } })
+
+    logger.info('[cron/usage-warnings]', 'done', summary)
+    return NextResponse.json(summary)
+  } catch (err) {
+    await endCronRun(runId, { status: 'failure', errorMessage: err instanceof Error ? err.message : String(err) })
+    throw err
   }
-  logger.info('[cron/usage-warnings]', 'done', summary)
-  return NextResponse.json(summary)
 }
 
 export const POST = handle

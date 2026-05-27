@@ -162,3 +162,16 @@ export interface MasterclassForm {
   scheduled_at: string
   zoom_url: string
 }
+
+export interface CronJobRun {
+  id: string
+  job_name: string
+  status: 'running' | 'success' | 'warning' | 'failure'
+  started_at: string
+  finished_at: string | null
+  duration_ms: number | null
+  summary: Record<string, unknown> | null
+  error_message: string | null
+  runtime: 'vercel-cron' | 'edge-function'
+  created_at: string
+}

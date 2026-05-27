@@ -60,3 +60,11 @@ export const listWebhookEventsQuery = z.object({
 export const webhookEventIdsBody = z.object({
   ids: z.array(z.string().min(1)).min(1, 'At least one id is required'),
 })
+
+export const listCronRunsQuery = z.object({
+  jobName: z.string().optional(),
+  status: z.string().optional(),
+  from: z.string().optional(),
+  to: z.string().optional(),
+  limit: z.coerce.number().min(1).max(500).optional().default(100),
+})

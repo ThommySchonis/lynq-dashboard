@@ -1,5 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { hmac } from 'https://deno.land/x/hmac@v2.0.1/mod.ts'
+import { startCronRun, endCronRun } from '../_shared/cron-logger.ts'
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!
 const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
@@ -11,9 +12,12 @@ Deno.serve(async (req) => {
     return new Response('Method not allowed', { status: 405 })
   }
 
+  const runId = await startCronRun('shopify-webhook', 'edge-function')
+
   const body = await req.text()
   const hmacHeader = req.headers.get('x-shopify-hmac-sha256')
   if (!hmacHeader) {
+    await endCronRun(runId, { status: 'warning', summary: { reason: 'missing_signature' } })
     return new Response('Missing signature', { status: 401 })
   }
 
@@ -29,17 +33,20 @@ Deno.serve(async (req) => {
 
   if (!integration) {
     console.error(`[shopify-webhook] No workspace found for domain: ${shopDomain}`)
+    await endCronRun(runId, { status: 'warning', summary: { reason: 'unknown_shop' } })
     return new Response('Unknown shop', { status: 200 }) // 200 so Shopify doesn't retry
   }
 
   // HMAC verification using per-store secret from DB
   if (!integration.shopify_client_secret) {
     console.error(`[shopify-webhook] No client secret configured for domain: ${shopDomain}`)
+    await endCronRun(runId, { status: 'warning', summary: { reason: 'missing_secret' } })
     return new Response('Missing secret', { status: 401 })
   }
 
   const computed = hmac('sha256', integration.shopify_client_secret, body, 'utf8', 'base64')
   if (computed !== hmacHeader) {
+    await endCronRun(runId, { status: 'warning', summary: { reason: 'invalid_signature' } })
     return new Response('Invalid signature', { status: 401 })
   }
 
@@ -91,8 +98,11 @@ Deno.serve(async (req) => {
 
     if (error) {
       console.error('[shopify-webhook] upsert error:', error.message)
+      await endCronRun(runId, { status: 'failure', errorMessage: error.message })
+      return new Response('OK', { status: 200 })
     }
   }
 
+  await endCronRun(runId, { status: 'success', summary: { topic, shop_domain: shopDomain } })
   return new Response('OK', { status: 200 })
 })

@@ -191,10 +191,12 @@ export function useAiInsights(refunds: Refund[]) {
 
 export function useShopifyConnected() {
   const token = useToken();
+  const activeStoreId = useStoreStore((s) => s.activeStoreId);
+  const storeParam = activeStoreId ? `?store_id=${activeStoreId}` : "";
   return useQuery<boolean>({
-    queryKey: analyticsKeys.shopifyConnected(),
+    queryKey: [...analyticsKeys.shopifyConnected(), activeStoreId],
     queryFn: async () => {
-      const res = await fetch("/api/settings/integrations", {
+      const res = await fetch(`/api/settings/integrations${storeParam}`, {
         headers: { Authorization: `Bearer ${token}` },
         cache: "no-store",
       });
@@ -202,7 +204,7 @@ export function useShopifyConnected() {
       const data = await parseJson<ShopifyConnectedResponse>(res);
       return Boolean(data?.shopify);
     },
-    enabled: !!token,
+    enabled: !!token && !!activeStoreId,
     staleTime: 5 * 60_000,
   });
 }

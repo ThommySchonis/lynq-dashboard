@@ -1,7 +1,13 @@
 const MUTATING_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 
-const ALLOWED_ORIGINS = [
+// Default allowlist when ALLOWED_ORIGINS env var is unset. Covers the
+// production app URL (Vercel), the marketing root + www, and the local
+// dev port. Vercel preview deployments are matched separately via
+// isVercelPreview() so feature-branch URLs don't need an env update.
+const DEFAULT_ALLOWED_ORIGINS = [
   "https://lynq-dashboard.vercel.app",
+  "https://lynqflow.co",
+  "https://www.lynqflow.co",
   "http://localhost:3000",
 ];
 
@@ -11,6 +17,15 @@ const CSRF_EXEMPT_PREFIXES = [
   "/api/webhooks/whop",
 ];
 
+function getAllowedOrigins(): string[] {
+  const raw = process.env.ALLOWED_ORIGINS;
+  if (!raw) return DEFAULT_ALLOWED_ORIGINS;
+  return raw
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
 function isVercelPreview(origin: string): boolean {
   try {
     const url = new URL(origin);
@@ -18,6 +33,10 @@ function isVercelPreview(origin: string): boolean {
   } catch {
     return false;
   }
+}
+
+export function isOriginAllowed(origin: string): boolean {
+  return getAllowedOrigins().includes(origin) || isVercelPreview(origin);
 }
 
 function extractOrigin(referer: string): string | null {
@@ -53,7 +72,7 @@ export function validateCsrfOrigin(request: {
   // Check Origin header
   const origin = request.headers.get("origin");
   if (origin) {
-    if (ALLOWED_ORIGINS.includes(origin) || isVercelPreview(origin)) {
+    if (isOriginAllowed(origin)) {
       return { valid: true };
     }
     return { valid: false, reason: `Origin not allowed: ${origin}` };
@@ -63,10 +82,7 @@ export function validateCsrfOrigin(request: {
   const referer = request.headers.get("referer");
   if (referer) {
     const refOrigin = extractOrigin(referer);
-    if (
-      refOrigin &&
-      (ALLOWED_ORIGINS.includes(refOrigin) || isVercelPreview(refOrigin))
-    ) {
+    if (refOrigin && isOriginAllowed(refOrigin)) {
       return { valid: true };
     }
     return { valid: false, reason: `Referer origin not allowed: ${refOrigin}` };

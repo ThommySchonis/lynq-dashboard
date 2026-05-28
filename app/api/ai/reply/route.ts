@@ -3,6 +3,7 @@ import { anthropic } from '@ai-sdk/anthropic'
 import { supabaseAdmin } from '../../../../lib/supabaseAdmin'
 import { getAuthContext, requireWriteAccess } from '../../../../lib/auth'
 import { checkAiSuggestLimit } from '../../../../lib/services/limit-check'
+import { incrementAISuggestUsage } from '@/lib/usage'
 import { checkRateLimit } from '@/lib/rate-limit'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
@@ -124,6 +125,12 @@ Write only the reply body. Do not include subject lines, metadata, or explanatio
       cost_usd: ((usage.inputTokens ?? 0) * 0.0000008) + ((usage.outputTokens ?? 0) * 0.000004),
       user_email: user.email,
     })
+
+    // Increment workspace AI Suggest counter — Model 3 plan-limit gating.
+    // Mirrors the ticket-counter wiring in lib/services/billing.ts
+    // (recordOutboundMessage). The helper logs its own errors and returns a
+    // result we don't need to act on here.
+    await incrementAISuggestUsage(ctx.workspaceId)
 
     return NextResponse.json({ reply: text.trim(), threadId }, {
       headers: {

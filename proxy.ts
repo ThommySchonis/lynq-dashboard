@@ -1,8 +1,26 @@
 import type { NextRequest } from 'next/server'
 import { NextResponse } from 'next/server'
 import { asciiSafe } from '@/lib/utils/ascii-safe'
-import { validateCsrfOrigin } from '@/lib/csrf'
+import { isOriginAllowed, validateCsrfOrigin } from '@/lib/csrf'
 import { isPlatformAdmin } from '@/lib/platformAdmin'
+
+// ─── CORS — dynamic origin echo against the lib/csrf allowlist ──────
+// Replaces the wildcard `Access-Control-Allow-Origin: *` that used to
+// live in next.config.ts. Same allowlist as the CSRF check; cross-origin
+// requests from anywhere else lack a matching Allow-Origin header and
+// the browser blocks them.
+const CORS_ALLOWED_METHODS = 'GET,POST,PUT,PATCH,DELETE,OPTIONS'
+const CORS_ALLOWED_HEADERS = 'Content-Type, Authorization, x-admin-email'
+const CORS_MAX_AGE_SECONDS = '600'
+
+function applyCorsHeaders(response: NextResponse, origin: string | null): NextResponse {
+  if (origin && isOriginAllowed(origin)) {
+    response.headers.set('Access-Control-Allow-Origin', origin)
+    response.headers.set('Access-Control-Allow-Credentials', 'true')
+    response.headers.append('Vary', 'Origin')
+  }
+  return response
+}
 
 // ─── Auth bypass (geen Bearer-token vereist) ────────────────────────
 const AUTH_BYPASS_PREFIXES = [
@@ -127,32 +145,55 @@ async function checkBlockedState(token: string): Promise<BlockedState> {
 
 export async function proxy(request: NextRequest): Promise<NextResponse> {
   const { pathname } = request.nextUrl
+  const origin = request.headers.get('origin')
 
-  if (request.method === 'OPTIONS') return NextResponse.next()
+  // ─── CORS preflight ────────────────────────────────────────────────
+  // Allowed origin → reply 204 with full preflight headers.
+  // Disallowed / missing origin → 204 without Allow-Origin; browser
+  // will block the follow-up request.
+  if (request.method === 'OPTIONS') {
+    if (origin && isOriginAllowed(origin)) {
+      return new NextResponse(null, {
+        status: 204,
+        headers: {
+          'Access-Control-Allow-Origin':      origin,
+          'Access-Control-Allow-Credentials': 'true',
+          'Access-Control-Allow-Methods':     CORS_ALLOWED_METHODS,
+          'Access-Control-Allow-Headers':     CORS_ALLOWED_HEADERS,
+          'Access-Control-Max-Age':           CORS_MAX_AGE_SECONDS,
+          'Vary':                             'Origin',
+        },
+      })
+    }
+    return new NextResponse(null, { status: 204 })
+  }
 
   // ─── CSRF origin check (mutating methods only) ─────────────────────
   const csrf = validateCsrfOrigin(request)
   if (!csrf.valid) {
     console.warn(`[csrf] Blocked: ${csrf.reason} — ${request.method} ${pathname}`)
-    return NextResponse.json(
-      { error: 'CSRF validation failed' },
-      { status: 403 }
+    return applyCorsHeaders(
+      NextResponse.json({ error: 'CSRF validation failed' }, { status: 403 }),
+      origin,
     )
   }
 
   // Pre-session paths door
   if (startsWithAny(pathname, AUTH_BYPASS_PREFIXES)) {
-    return NextResponse.next()
+    return applyCorsHeaders(NextResponse.next(), origin)
   }
 
   const authHeader = request.headers.get('authorization') || ''
   if (!authHeader.toLowerCase().startsWith('bearer ')) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    return applyCorsHeaders(
+      NextResponse.json({ error: 'Unauthorized' }, { status: 401 }),
+      origin,
+    )
   }
 
   // Self-rescue endpoints (zelfs blocked users moeten hier kunnen komen)
   if (startsWithAny(pathname, BLOCKED_BYPASS_PREFIXES)) {
-    return NextResponse.next()
+    return applyCorsHeaders(NextResponse.next(), origin)
   }
 
   // Trial-expired check
@@ -160,12 +201,15 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
   try {
     const { blocked } = await checkBlockedState(token)
     if (blocked) {
-      return NextResponse.json(
-        {
-          error: 'Trial expired. Pick a plan to continue.',
-          code:  'TRIAL_EXPIRED',
-        },
-        { status: 402 }
+      return applyCorsHeaders(
+        NextResponse.json(
+          {
+            error: 'Trial expired. Pick a plan to continue.',
+            code:  'TRIAL_EXPIRED',
+          },
+          { status: 402 },
+        ),
+        origin,
       )
     }
   } catch {
@@ -173,7 +217,7 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
     // Supabase even traag is. BlockedStateGuard pakt het wel client-side.
   }
 
-  return NextResponse.next()
+  return applyCorsHeaders(NextResponse.next(), origin)
 }
 
 export const config: { matcher: string[] } = {

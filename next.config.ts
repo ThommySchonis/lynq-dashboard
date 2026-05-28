@@ -9,18 +9,9 @@ const nextConfig: NextConfig = {
     ];
     return config;
   },
-  async headers() {
-    return [
-      {
-        source: "/api/:path*",
-        headers: [
-          { key: "Access-Control-Allow-Origin", value: "*" },
-          { key: "Access-Control-Allow-Methods", value: "GET,POST,PUT,DELETE,OPTIONS" },
-          { key: "Access-Control-Allow-Headers", value: "Content-Type, Authorization, x-admin-email" },
-        ],
-      },
-    ];
-  },
+  // CORS for /api/* is handled dynamically in proxy.ts so the
+  // Access-Control-Allow-Origin header echoes back only origins from
+  // the allowlist (lib/csrf.ts -> isOriginAllowed). Static `*` is gone.
   async redirects() {
     return [
       { source: "/dashboard.html", destination: "/home", permanent: true },

@@ -1,19 +1,41 @@
 'use client'
 
 import { useState } from 'react'
-import type { Client } from '@/types/admin'
+import type { ClientOverviewItem } from '@/types/admin-client-overview'
 import { useSuspendClient, useUnsuspendClient } from '@/hooks/admin/use-admin-mutations'
 
 interface ClientRowProps {
-  client: Client
+  client: ClientOverviewItem
 }
 
 const REASON_PRESETS = ['Unpaid invoice', 'Terms violation', 'Abuse', 'Other']
 
+function formatRelativeTime(dateStr: string | null): string {
+  if (!dateStr) return 'Never'
+  const diff = Date.now() - new Date(dateStr).getTime()
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24))
+  if (days === 0) return 'Today'
+  if (days === 1) return '1d ago'
+  return `${days}d ago`
+}
+
+const BILLING_BADGE: Record<string, string> = {
+  active: 'border-emerald-500/15 bg-emerald-500/8 text-emerald-600',
+  trial: 'border-blue-500/15 bg-blue-500/8 text-blue-600',
+  past_due: 'border-red-500/15 bg-red-500/8 text-red-600',
+  canceled: 'border-border bg-muted text-muted-foreground',
+  paused: 'border-amber-500/15 bg-amber-500/8 text-amber-600',
+}
+
+function IntegrationDot({ connected }: { connected: boolean }) {
+  return (
+    <span className={`inline-block size-2 rounded-full ${connected ? 'bg-emerald-500' : 'bg-muted-foreground/30'}`} />
+  )
+}
+
 export function ClientRow({ client }: ClientRowProps) {
-  const initial = (client.company_name || '?')[0].toUpperCase()
-  const isSuspended = !!client.suspended_at
-  const isActive = client.status === 'active' && !isSuspended
+  const initial = (client.companyName || '?')[0].toUpperCase()
+  const isSuspended = !!client.suspendedAt
 
   const suspendMutation = useSuspendClient()
   const unsuspendMutation = useUnsuspendClient()
@@ -36,50 +58,87 @@ export function ClientRow({ client }: ClientRowProps) {
     unsuspendMutation.mutate(client.id)
   }
 
+  const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000
+  const isInactive = !client.lastLoginAt || new Date(client.lastLoginAt).getTime() < sevenDaysAgo
+
+  const billingLabel = client.billingStatus
+    ? client.billingStatus.replace('_', ' ')
+    : '—'
+  const billingClass = client.billingStatus
+    ? BILLING_BADGE[client.billingStatus] ?? BILLING_BADGE.canceled
+    : 'border-border bg-muted text-muted-foreground'
+
   return (
     <div className="border-b border-border last:border-b-0">
-      <div className="flex items-center gap-3 px-4 py-3">
-        <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-[#F0F0F0] text-xs font-semibold text-[#555]">
-          {initial}
-        </div>
-        <div className="min-w-0 flex-1">
-          <div className="text-[13px] font-medium text-foreground">
-            {client.company_name}
+      <div className="flex items-center gap-3 px-4 py-2.5">
+        {/* Client info */}
+        <div className="flex items-center gap-2.5 min-w-0" style={{ width: '240px' }}>
+          <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
+            {initial}
           </div>
-          <div className="text-xs text-muted-foreground">{client.email}</div>
+          <div className="min-w-0 flex-1">
+            <div className="truncate text-[13px] font-medium text-foreground">
+              {client.companyName}
+            </div>
+            <div className="truncate text-[11px] text-muted-foreground">
+              {client.email}
+              {client.planName && (
+                <span className="ml-1.5 text-foreground-3">· {client.planName}</span>
+              )}
+            </div>
+          </div>
         </div>
 
-        {/* Status badge */}
-        <span
-          className={
-            isSuspended
-              ? 'rounded-full border border-amber-500/15 bg-amber-500/8 px-2.5 py-0.5 text-[11px] font-semibold text-amber-600'
-              : isActive
-                ? 'rounded-full border border-emerald-500/15 bg-emerald-500/8 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-600'
-                : 'rounded-full border border-border bg-muted px-2.5 py-0.5 text-[11px] font-semibold text-muted-foreground'
-          }
-        >
-          {isSuspended ? 'suspended' : client.status}
-        </span>
+        {/* Billing status */}
+        <div style={{ width: '80px' }}>
+          <span className={`rounded-full border px-2 py-0.5 text-[11px] font-semibold capitalize ${billingClass}`}>
+            {billingLabel}
+          </span>
+        </div>
 
-        {/* Quick action button */}
-        {isSuspended ? (
-          <button
-            onClick={handleUnsuspend}
-            disabled={unsuspendMutation.isPending}
-            className="rounded-md border border-border px-2.5 py-1 text-[11px] font-medium text-foreground hover:bg-muted disabled:opacity-50"
-          >
-            {unsuspendMutation.isPending ? 'Restoring...' : 'Unsuspend'}
-          </button>
-        ) : (
-          <button
-            onClick={handleSuspend}
-            disabled={suspendMutation.isPending}
-            className="rounded-md border border-destructive/30 px-2.5 py-1 text-[11px] font-medium text-destructive hover:bg-destructive/5 disabled:opacity-50"
-          >
-            {suspendMutation.isPending ? 'Suspending...' : 'Suspend'}
-          </button>
-        )}
+        {/* Integration dots: S G O */}
+        <div className="flex items-center gap-3" style={{ width: '80px' }}>
+          <div className="flex flex-col items-center gap-0.5">
+            <IntegrationDot connected={client.hasShopify} />
+            <span className="text-[9px] text-muted-foreground">S</span>
+          </div>
+          <div className="flex flex-col items-center gap-0.5">
+            <IntegrationDot connected={client.hasGmail} />
+            <span className="text-[9px] text-muted-foreground">G</span>
+          </div>
+          <div className="flex flex-col items-center gap-0.5">
+            <IntegrationDot connected={client.hasOutlook} />
+            <span className="text-[9px] text-muted-foreground">O</span>
+          </div>
+        </div>
+
+        {/* Last login */}
+        <div style={{ width: '70px' }}>
+          <span className={`text-[12px] ${isInactive ? 'text-red-500' : 'text-muted-foreground'}`}>
+            {formatRelativeTime(client.lastLoginAt)}
+          </span>
+        </div>
+
+        {/* Actions */}
+        <div className="ml-auto shrink-0">
+          {isSuspended ? (
+            <button
+              onClick={handleUnsuspend}
+              disabled={unsuspendMutation.isPending}
+              className="rounded-md border border-border px-2.5 py-1 text-[11px] font-medium text-foreground hover:bg-muted disabled:opacity-50"
+            >
+              {unsuspendMutation.isPending ? 'Restoring...' : 'Unsuspend'}
+            </button>
+          ) : (
+            <button
+              onClick={handleSuspend}
+              disabled={suspendMutation.isPending}
+              className="rounded-md border border-destructive/30 px-2.5 py-1 text-[11px] font-medium text-destructive hover:bg-destructive/5 disabled:opacity-50"
+            >
+              {suspendMutation.isPending ? 'Suspending...' : 'Suspend'}
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Reason picker (shown when suspend button clicked first time) */}
@@ -122,14 +181,14 @@ export function ClientRow({ client }: ClientRowProps) {
       )}
 
       {/* Suspension info (shown when already suspended) */}
-      {isSuspended && client.suspension_reason && (
+      {isSuspended && client.suspensionReason && (
         <div className="border-t border-border/50 bg-amber-500/5 px-4 py-1.5">
           <span className="text-[11px] text-amber-700">
-            Reason: {client.suspension_reason}
+            Reason: {client.suspensionReason}
           </span>
-          {client.suspended_at && (
+          {client.suspendedAt && (
             <span className="ml-2 text-[11px] text-muted-foreground">
-              · Since {new Date(client.suspended_at).toLocaleDateString()}
+              · Since {new Date(client.suspendedAt).toLocaleDateString()}
             </span>
           )}
         </div>

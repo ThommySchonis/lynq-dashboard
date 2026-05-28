@@ -240,6 +240,7 @@ export function useSuspendClient() {
     },
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: adminKeys.clients() })
+      void qc.invalidateQueries({ queryKey: adminKeys.clientOverview() })
     },
   })
 }
@@ -259,6 +260,7 @@ export function useUnsuspendClient() {
     },
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: adminKeys.clients() })
+      void qc.invalidateQueries({ queryKey: adminKeys.clientOverview() })
     },
   })
 }

@@ -26,6 +26,7 @@ export const adminKeys = {
   masterclasses: () => [...adminKeys.all, 'masterclasses'] as const,
   broadcastReactions: () => [...adminKeys.all, 'broadcast-reactions'] as const,
   feedbackCount: () => [...adminKeys.all, 'feedback-count'] as const,
+  clientOverview: () => [...adminKeys.all, 'client-overview'] as const,
 }
 
 interface ClientRow {

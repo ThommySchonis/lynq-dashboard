@@ -1,11 +1,18 @@
 'use client'
 
-import { useClients } from '@/hooks/admin'
+import { useClientOverview } from '@/hooks/admin'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { ClientRow } from './client-row'
 
 export function ClientsList() {
-  const { data: clients = [] } = useClients()
+  // ClientRow renders the rich ClientOverviewItem shape (planName,
+  // billingStatus, hasShopify/Gmail/Outlook, suspendedAt, lastLoginAt).
+  // useClients() returns the basic Client row which is missing those
+  // fields; load via useClientOverview() so the row receives the type
+  // it actually needs. Shares the cache with /admin/clients (the main
+  // overview page), so this incurs no extra fetch.
+  const { data } = useClientOverview()
+  const clients = data?.clients ?? []
 
   return (
     <Card>

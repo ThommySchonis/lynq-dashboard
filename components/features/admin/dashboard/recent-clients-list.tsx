@@ -2,7 +2,7 @@
 
 import { useClients } from '@/hooks/admin'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
-import { ClientRow } from '@/components/features/admin/clients/client-row'
+import { SimpleClientRow } from '@/components/features/admin/clients/simple-client-row'
 
 export function RecentClientsList() {
   const { data: clients = [] } = useClients()
@@ -16,7 +16,7 @@ export function RecentClientsList() {
       </CardHeader>
       <CardContent className="flex flex-col gap-0 p-0">
         {clients.slice(0, 5).map((client) => (
-          <ClientRow key={client.id} client={client} />
+          <SimpleClientRow key={client.id} client={client} />
         ))}
       </CardContent>
     </Card>

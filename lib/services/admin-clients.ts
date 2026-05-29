@@ -75,7 +75,8 @@ export async function getClientOverview(): Promise<ClientOverviewResponse> {
   // Build lookup maps
   const subMap = new Map<string, { status: SubscriptionStatus; planName: string | null }>()
   for (const sub of subscriptions ?? []) {
-    const plans = sub.plans as { display_name: string } | null
+    const rawPlans = sub.plans as unknown
+    const plans = (Array.isArray(rawPlans) ? rawPlans[0] : rawPlans) as { display_name: string } | null
     subMap.set(sub.workspace_id as string, {
       status: sub.status as SubscriptionStatus,
       planName: plans?.display_name ?? null,
@@ -103,7 +104,8 @@ export async function getClientOverview(): Promise<ClientOverviewResponse> {
 
   const items: ClientOverviewItem[] = clients.map((c) => {
     const wsId = c.workspace_id as string
-    const ws = c.workspaces as { suspended_at: string | null; suspension_reason: string | null } | null
+    const rawWs = c.workspaces as unknown
+    const ws = (Array.isArray(rawWs) ? rawWs[0] : rawWs) as { suspended_at: string | null; suspension_reason: string | null } | null
     const sub = subMap.get(wsId)
     const hasShopify = shopifySet.has(wsId)
     const hasGmail = gmailSet.has(wsId)

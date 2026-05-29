@@ -2,7 +2,7 @@
 
 import { useClients } from '@/hooks/admin'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
-import { ClientRow } from './client-row'
+import { SimpleClientRow } from './simple-client-row'
 
 export function ClientsList() {
   const { data: clients = [] } = useClients()
@@ -19,7 +19,7 @@ export function ClientsList() {
           </div>
         ) : (
           clients.map((client) => (
-            <ClientRow key={client.id} client={client} />
+            <SimpleClientRow key={client.id} client={client} />
           ))
         )}
       </CardContent>

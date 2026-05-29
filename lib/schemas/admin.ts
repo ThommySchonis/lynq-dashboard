@@ -68,3 +68,7 @@ export const listCronRunsQuery = z.object({
   to: z.string().optional(),
   limit: z.coerce.number().min(1).max(500).optional().default(100),
 })
+
+export const startImpersonationBody = z.object({
+  workspaceId: z.string().min(1, 'workspaceId is required'),
+})

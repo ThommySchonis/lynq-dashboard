@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { getAuthContext } from '@/lib/auth'
+import { getAuthContext, requireNotImpersonating } from '@/lib/auth'
 import { can } from '@/lib/permissions'
 import {
   BillingServiceError,
@@ -25,6 +25,8 @@ export async function GET(request: NextRequest) {
 export async function PATCH(request: NextRequest) {
   const ctx = await getAuthContext(request)
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const impersonationBlocked = requireNotImpersonating(ctx)
+  if (impersonationBlocked) return impersonationBlocked
   if (!can.manageBilling(ctx.role as Role)) {
     return NextResponse.json({ error: 'Only owners can edit billing info', code: 'permission_denied' }, { status: 403 })
   }

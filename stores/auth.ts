@@ -12,6 +12,9 @@ interface AuthState {
   isLoading: boolean
   isSuspended: boolean
   suspensionReason: string | null
+  isImpersonating: boolean
+  impersonationSessionId: string | null
+  setImpersonating: (sessionId: string | null) => void
 
   setSession: (session: Session | null) => void
   setWorkspace: (workspace: Workspace | null, role: Role | null, memberId: string | null) => void
@@ -29,6 +32,14 @@ export const useAuthStore = create<AuthState>()((set) => ({
   isLoading: true,
   isSuspended: false,
   suspensionReason: null,
+  isImpersonating: false,
+  impersonationSessionId: null,
+
+  setImpersonating: (sessionId) =>
+    set({
+      isImpersonating: !!sessionId,
+      impersonationSessionId: sessionId,
+    }),
 
   setSession: (session) =>
     set({
@@ -57,6 +68,8 @@ export const useAuthStore = create<AuthState>()((set) => ({
       isLoading: false,
       isSuspended: false,
       suspensionReason: null,
+      isImpersonating: false,
+      impersonationSessionId: null,
     }),
 
   setLoading: (isLoading) => set({ isLoading }),

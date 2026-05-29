@@ -6,12 +6,13 @@ import { Badge } from '@/components/ui/badge'
 import type { Plan, PaymentMethod } from '@/types/billing'
 
 interface SummaryPanelProps {
-  currentPlan:   Plan | null
-  selectedPlan:  Plan | null
-  isTrial:       boolean
-  paymentMethod: PaymentMethod | null
-  isPending:     boolean
-  onSubmit:      () => void
+  currentPlan:     Plan | null
+  selectedPlan:    Plan | null
+  isTrial:         boolean
+  paymentMethod:   PaymentMethod | null
+  isPending:       boolean
+  onSubmit:        () => void
+  isImpersonating: boolean
 }
 
 function paymentMethodLabel(pm: PaymentMethod | null): string {
@@ -41,6 +42,7 @@ export function SummaryPanel({
   paymentMethod,
   isPending,
   onSubmit,
+  isImpersonating,
 }: SummaryPanelProps) {
   const hasChange  = !!selectedPlan && !!currentPlan && selectedPlan.id !== currentPlan.id
   const isSamePlan = !!selectedPlan && selectedPlan.id === currentPlan?.id
@@ -136,7 +138,8 @@ export function SummaryPanel({
         <button
           type="button"
           onClick={onSubmit}
-          disabled={ctaDisabled || isPending}
+          disabled={ctaDisabled || isPending || isImpersonating}
+          title={isImpersonating ? 'Not available during impersonation' : undefined}
           className="self-end rounded-md bg-[#1C0F36] px-4 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {ctaLabel}

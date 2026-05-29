@@ -15,6 +15,7 @@ interface HelpdeskProductCardProps {
   willCancel:        boolean
   onCancelToggle:    () => void
   cancelToggleBusy:  boolean
+  isImpersonating:   boolean
 }
 
 /**
@@ -38,6 +39,7 @@ export function HelpdeskProductCard({
   willCancel,
   onCancelToggle,
   cancelToggleBusy,
+  isImpersonating,
 }: HelpdeskProductCardProps) {
   const currentPlan      = plans.find(p => p.id === currentPlanId) ?? null
   const selectedPlan     = plans.find(p => p.id === selectedPlanId) ?? currentPlan
@@ -65,7 +67,8 @@ export function HelpdeskProductCard({
         <button
           type="button"
           onClick={onCancelToggle}
-          disabled={cancelToggleBusy}
+          disabled={cancelToggleBusy || isImpersonating}
+          title={isImpersonating ? 'Not available during impersonation' : undefined}
           className="whitespace-nowrap text-sm font-medium text-[#EF4444] transition-opacity hover:opacity-80 disabled:opacity-50"
         >
           {willCancel ? 'Reactivate subscription' : 'Cancel auto-renewal'}

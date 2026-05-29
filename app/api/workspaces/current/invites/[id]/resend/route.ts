@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import type { RouteContext } from '@/types/api'
 import type { Role } from '@/types/database'
-import { getAuthContext, requireWriteAccess } from '@/lib/auth'
+import { getAuthContext, requireWriteAccess, requireNotImpersonating } from '@/lib/auth'
 import { can } from '@/lib/permissions'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import { sendInviteEmail } from '@/lib/email'
@@ -17,6 +17,8 @@ export async function POST(request: NextRequest, { params: routeParams }: RouteC
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const blocked = requireWriteAccess(ctx)
   if (blocked) return blocked
+  const impersonationBlocked = requireNotImpersonating(ctx)
+  if (impersonationBlocked) return impersonationBlocked
   if (!can.inviteMembers(ctx.role as Role)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
   const [params, paramErr] = validateParams(await routeParams, inviteParams)

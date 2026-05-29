@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import type { Role } from '@/types/database'
 import { randomBytes } from 'node:crypto'
-import { getAuthContext, requireWriteAccess } from '@/lib/auth'
+import { getAuthContext, requireWriteAccess, requireNotImpersonating } from '@/lib/auth'
 import { can } from '@/lib/permissions'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import { sendInviteEmail } from '@/lib/email'
@@ -153,6 +153,8 @@ export async function POST(request: NextRequest) {
   }
   const blocked = requireWriteAccess(ctx)
   if (blocked) return blocked
+  const impersonationBlocked = requireNotImpersonating(ctx)
+  if (impersonationBlocked) return impersonationBlocked
   if (!can.inviteMembers(ctx.role as Role)) {
     logger.error('[members]', 'role cannot invite members', { role: ctx.role })
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })

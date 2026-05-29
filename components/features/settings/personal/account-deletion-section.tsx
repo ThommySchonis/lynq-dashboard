@@ -12,6 +12,7 @@ export function AccountDeletionSection() {
   const role = useAuthStore((s) => s.role)
   const workspace = useAuthStore((s) => s.workspace)
   const userId = useAuthStore((s) => s.user?.id)
+  const isImpersonating = useAuthStore((s) => s.isImpersonating)
   const { data: members } = useMembers()
   const scheduleDeletion = useScheduleAccountDeletion()
 
@@ -54,7 +55,12 @@ export function AccountDeletionSection() {
         <p className="text-sm text-foreground-3 mb-4">
           Permanently delete your account and all associated data.
         </p>
-        <Button variant="destructive" onClick={handleDeleteClick}>
+        <Button
+          variant="destructive"
+          onClick={handleDeleteClick}
+          disabled={isImpersonating}
+          title={isImpersonating ? 'Not available during impersonation' : undefined}
+        >
           Delete my account
         </Button>
       </div>

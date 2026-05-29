@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import type { Role } from '@/types/database'
 import type { RouteContext } from '@/types/api'
-import { getAuthContext } from '@/lib/auth'
+import { getAuthContext, requireNotImpersonating } from '@/lib/auth'
 import { can } from '@/lib/permissions'
 import { BillingServiceError, subscribeAddon } from '@/lib/services/billing'
 import { validateParams } from '@/lib/validation'
@@ -13,6 +13,8 @@ import { billingIdParams } from '@/lib/schemas/billing'
 export async function POST(request: NextRequest, { params: routeParams }: RouteContext<{ id: string }>) {
   const ctx = await getAuthContext(request)
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const impersonationBlocked = requireNotImpersonating(ctx)
+  if (impersonationBlocked) return impersonationBlocked
   if (!can.manageBilling(ctx.role as Role)) {
     return NextResponse.json({ error: 'Only owners can manage add-ons', code: 'permission_denied' }, { status: 403 })
   }

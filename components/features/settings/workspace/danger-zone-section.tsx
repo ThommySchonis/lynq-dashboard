@@ -31,6 +31,7 @@ export function DangerZoneSection({
   const deleteWorkspace = useDeleteWorkspace()
 
   const isSuspended = useAuthStore((s) => s.isSuspended)
+  const isImpersonating = useAuthStore((s) => s.isImpersonating)
   const isOwner = role === 'owner'
   const hasPendingTransfer =
     !!pendingTransfer && pendingTransfer.from_user_id === currentUserId
@@ -94,7 +95,8 @@ export function DangerZoneSection({
               variant="outline"
               type="button"
               onClick={() => cancelTransfer.mutate()}
-              disabled={isSuspended || cancelTransfer.isPending}
+              disabled={isSuspended || isImpersonating || cancelTransfer.isPending}
+              title={isImpersonating ? 'Not available during impersonation' : undefined}
               className="shrink-0"
             >
               {cancelTransfer.isPending ? 'Cancelling…' : 'Cancel transfer'}
@@ -103,7 +105,8 @@ export function DangerZoneSection({
             <Button
               variant="outline"
               type="button"
-              disabled={isSuspended || !isOwner}
+              disabled={isSuspended || isImpersonating || !isOwner}
+              title={isImpersonating ? 'Not available during impersonation' : undefined}
               onClick={() => setTransferOpen(true)}
               className="shrink-0"
             >
@@ -122,7 +125,8 @@ export function DangerZoneSection({
           <Button
             variant="destructive"
             type="button"
-            disabled={isSuspended || !isOwner}
+            disabled={isSuspended || isImpersonating || !isOwner}
+            title={isImpersonating ? 'Not available during impersonation' : undefined}
             onClick={() => setDeleteOpen(true)}
             className="shrink-0"
           >

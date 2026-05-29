@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import type { Role } from '@/types/database'
-import { getAuthContext } from '@/lib/auth'
+import { getAuthContext, requireNotImpersonating } from '@/lib/auth'
 import { can } from '@/lib/permissions'
 import { BillingServiceError, changePlan } from '@/lib/services/billing'
 import { validateBody } from '@/lib/validation'
@@ -19,6 +19,8 @@ import { changePlanBody } from '@/lib/schemas/billing'
 export async function POST(request: NextRequest) {
   const ctx = await getAuthContext(request)
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const impersonationBlocked = requireNotImpersonating(ctx)
+  if (impersonationBlocked) return impersonationBlocked
   if (!can.manageBilling(ctx.role as Role)) {
     return NextResponse.json({ error: 'Only owners can change plans', code: 'permission_denied' }, { status: 403 })
   }

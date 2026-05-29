@@ -15,6 +15,7 @@ import {
   useCancelSubscription,
   useReactivateSubscription,
 } from '@/hooks/billing'
+import { useAuthStore } from '@/stores/auth'
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
@@ -42,6 +43,7 @@ export function UsagePlansTab() {
   const changePlan = useChangePlan()
   const cancelSub  = useCancelSubscription()
   const reactivate = useReactivateSubscription()
+  const isImpersonating = useAuthStore((s) => s.isImpersonating)
 
   const sub  = subResp?.subscription ?? null
   const plan = subResp?.plan         ?? null
@@ -135,6 +137,7 @@ export function UsagePlansTab() {
               willCancel={willCancel}
               onCancelToggle={handleCancelToggle}
               cancelToggleBusy={cancelSub.isPending || reactivate.isPending}
+              isImpersonating={isImpersonating}
             />
 
             {addonsLoading
@@ -158,6 +161,7 @@ export function UsagePlansTab() {
         paymentMethod={defaultPaymentMethod}
         isPending={changePlan.isPending}
         onSubmit={handleSubmit}
+        isImpersonating={isImpersonating}
       />
     </div>
   )

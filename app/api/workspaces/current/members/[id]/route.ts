@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import type { RouteContext } from '@/types/api'
 import type { Role } from '@/types/database'
-import { getAuthContext, requireWriteAccess } from '@/lib/auth'
+import { getAuthContext, requireWriteAccess, requireNotImpersonating } from '@/lib/auth'
 import { can } from '@/lib/permissions'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import { validateBody, validateParams } from '@/lib/validation'
@@ -19,6 +19,8 @@ export async function PATCH(request: NextRequest, { params: routeParams }: Route
   }
   const blocked = requireWriteAccess(ctx)
   if (blocked) return blocked
+  const impersonationBlocked = requireNotImpersonating(ctx)
+  if (impersonationBlocked) return impersonationBlocked
 
   // Only owners + admins are ever allowed to change roles
   if (!can.changeRole(ctx.role as Role)) {
@@ -129,6 +131,8 @@ export async function DELETE(request: NextRequest, { params: routeParams }: Rout
   }
   const blocked2 = requireWriteAccess(ctx)
   if (blocked2) return blocked2
+  const impersonationBlocked2 = requireNotImpersonating(ctx)
+  if (impersonationBlocked2) return impersonationBlocked2
 
   const [params, paramErr] = validateParams(await routeParams, memberParams)
   if (paramErr) return paramErr

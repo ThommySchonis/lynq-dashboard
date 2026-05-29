@@ -1,8 +1,10 @@
 'use client'
 
 import { useState } from 'react'
+import { Eye } from 'lucide-react'
 import type { ClientOverviewItem } from '@/types/admin-client-overview'
 import { useSuspendClient, useUnsuspendClient } from '@/hooks/admin/use-admin-mutations'
+import { useAuthStore } from '@/stores/auth'
 
 interface ClientRowProps {
   client: ClientOverviewItem
@@ -56,6 +58,35 @@ export function ClientRow({ client }: ClientRowProps) {
 
   function handleUnsuspend() {
     unsuspendMutation.mutate(client.id)
+  }
+
+  const session = useAuthStore((s) => s.session)
+  const setImpersonating = useAuthStore((s) => s.setImpersonating)
+  const [isImpersonating, setIsImpersonatingLocal] = useState(false)
+
+  async function handleImpersonate() {
+    if (!client.workspaceId) return
+    setIsImpersonatingLocal(true)
+    try {
+      const token = session?.access_token
+      const res = await fetch('/api/admin/impersonate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ workspaceId: client.workspaceId }),
+      })
+      if (!res.ok) {
+        setIsImpersonatingLocal(false)
+        return
+      }
+      const data = await res.json() as { sessionId: string }
+      setImpersonating(data.sessionId)
+      window.location.href = '/'
+    } catch {
+      setIsImpersonatingLocal(false)
+    }
   }
 
   const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000
@@ -120,7 +151,20 @@ export function ClientRow({ client }: ClientRowProps) {
         </div>
 
         {/* Actions */}
-        <div className="ml-auto shrink-0">
+        <div className="ml-auto flex shrink-0 items-center gap-2">
+          {/* Impersonate button */}
+          {client.workspaceId && (
+            <button
+              onClick={() => void handleImpersonate()}
+              disabled={isImpersonating}
+              className="flex items-center gap-1.5 rounded-md border border-primary/30 bg-primary/10 px-2.5 py-1 text-[11px] font-medium text-primary hover:bg-primary/15 disabled:opacity-50"
+            >
+              <Eye className="h-3 w-3" />
+              {isImpersonating ? 'Opening...' : 'Impersonate'}
+            </button>
+          )}
+
+          {/* Existing suspend/unsuspend buttons */}
           {isSuspended ? (
             <button
               onClick={handleUnsuspend}

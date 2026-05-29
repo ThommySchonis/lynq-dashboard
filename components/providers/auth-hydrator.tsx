@@ -5,13 +5,40 @@ import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/stores/auth'
 import type { Workspace, Role } from '@/types/database'
 
+interface ImpersonationStatusResponse {
+  active: boolean
+  workspace?: Workspace
+  sessionId?: string
+}
+
 export function AuthHydrator() {
   const setSession = useAuthStore((s) => s.setSession)
   const setWorkspace = useAuthStore((s) => s.setWorkspace)
   const setLoading = useAuthStore((s) => s.setLoading)
   const clearSession = useAuthStore((s) => s.clearSession)
+  const setImpersonating = useAuthStore((s) => s.setImpersonating)
 
-  async function loadWorkspace(userId: string) {
+  async function loadWorkspace(userId: string, accessToken: string) {
+    // Check for active impersonation session first
+    try {
+      const res = await fetch('/api/auth/impersonation-status', {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      })
+      if (res.ok) {
+        const status = await res.json() as ImpersonationStatusResponse
+        if (status.active && status.workspace) {
+          setWorkspace(status.workspace, 'owner' as Role, null)
+          setImpersonating(status.sessionId ?? null)
+          setLoading(false)
+          return
+        }
+      }
+    } catch {
+      // Fall through to normal workspace loading
+    }
+
+    // Normal path: load own workspace from workspace_members
+    setImpersonating(null)
     const { data: member } = await supabase
       .from('workspace_members')
       .select('id, role, workspace_id, workspaces(*)')
@@ -35,7 +62,7 @@ export function AuthHydrator() {
     void supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
         setSession(session)
-        void loadWorkspace(session.user.id)
+        void loadWorkspace(session.user.id, session.access_token)
       } else {
         setLoading(false)
       }
@@ -45,7 +72,7 @@ export function AuthHydrator() {
       (_event, session) => {
         if (session) {
           setSession(session)
-          void loadWorkspace(session.user.id)
+          void loadWorkspace(session.user.id, session.access_token)
         } else {
           clearSession()
         }
@@ -53,7 +80,7 @@ export function AuthHydrator() {
     )
 
     return () => subscription.unsubscribe()
-  }, [setSession, setWorkspace, setLoading, clearSession]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [setSession, setWorkspace, setLoading, clearSession, setImpersonating]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return null
 }

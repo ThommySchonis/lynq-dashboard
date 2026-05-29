@@ -4,7 +4,7 @@ import type { Archiver } from 'archiver'
 import { logger } from '@/lib/logger'
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const { ZipArchive } = require('archiver') as { ZipArchive: new (opts: { zlib: { level: number } }) => Archiver }
-import { getAuthContext } from '@/lib/auth'
+import { getAuthContext, requireNotImpersonating } from '@/lib/auth'
 import { validateBody } from '@/lib/validation'
 import { can } from '@/lib/permissions'
 import { billingExportBody } from '@/lib/schemas/data-export'
@@ -16,6 +16,8 @@ import type { Role } from '@/types/database'
 export async function POST(request: NextRequest) {
   const ctx = await getAuthContext(request)
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const impersonationBlocked = requireNotImpersonating(ctx)
+  if (impersonationBlocked) return impersonationBlocked
 
   if (!can.manageWorkspace(ctx.role as Role)) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })

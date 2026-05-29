@@ -30,6 +30,7 @@ export function MembersView() {
 
   const currentUserRole: Role | null = data?.currentUserRole ?? useAuthStore.getState().role ?? null
   const isOwner = data?.isOwner ?? false
+  const isImpersonating = useAuthStore((s) => s.isImpersonating)
   const canManage = (currentUserRole != null && can.inviteMembers(currentUserRole)) || isOwner
 
   const seatsUsed = data?.seatsUsed ?? 0
@@ -47,7 +48,8 @@ export function MembersView() {
         </div>
         <Button
           onClick={() => setShowInvite(true)}
-          disabled={!canManage}
+          disabled={!canManage || isImpersonating}
+          title={isImpersonating ? 'Not available during impersonation' : undefined}
         >
           <UserPlus size={16} strokeWidth={1.75} />
           Invite user

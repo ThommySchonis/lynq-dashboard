@@ -15,6 +15,7 @@ import {
 import { BillingInfoForm } from './billing-info-form'
 import { ChangePaymentMethodModal } from './change-payment-method-modal'
 import { useBillingInfo, usePaymentMethods } from '@/hooks/billing'
+import { useAuthStore } from '@/stores/auth'
 
 /**
  * Tab 2 — Payment Information. Three sections:
@@ -26,6 +27,7 @@ import { useBillingInfo, usePaymentMethods } from '@/hooks/billing'
 export function PaymentInfoTab() {
   const { data: billingInfo, isLoading: billingLoading }    = useBillingInfo()
   const { data: paymentMethods = [], isLoading: pmLoading } = usePaymentMethods()
+  const isImpersonating = useAuthStore((s) => s.isImpersonating)
 
   const [paymentModalOpen, setPaymentModalOpen]   = useState(false)
   const [billingModalOpen, setBillingModalOpen]   = useState(false)
@@ -38,7 +40,14 @@ export function PaymentInfoTab() {
       <section className="flex flex-col gap-3 rounded-xl border border-border bg-card p-5">
         <div className="flex items-center justify-between gap-3">
           <h3 className="text-sm font-semibold">Payment method</h3>
-          <Button type="button" size="sm" variant="ghost" onClick={() => setPaymentModalOpen(true)}>
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            onClick={() => setPaymentModalOpen(true)}
+            disabled={isImpersonating}
+            title={isImpersonating ? 'Not available during impersonation' : undefined}
+          >
             {defaultMethod ? 'Change' : 'Add'}
           </Button>
         </div>

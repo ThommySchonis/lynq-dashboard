@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import type { Role } from '@/types/database'
-import { getAuthContext, requireWriteAccess } from '@/lib/auth'
+import { getAuthContext, requireWriteAccess, requireNotImpersonating } from '@/lib/auth'
 import { can } from '@/lib/permissions'
 import { cancelSubscription } from '@/lib/services/billing'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
@@ -12,6 +12,8 @@ export async function POST(request: NextRequest) {
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const blocked = requireWriteAccess(ctx)
   if (blocked) return blocked
+  const impersonationBlocked = requireNotImpersonating(ctx)
+  if (impersonationBlocked) return impersonationBlocked
 
   if (!can.deleteWorkspace(ctx.role as Role)) {
     return NextResponse.json({ error: 'Only the workspace owner can delete a workspace' }, { status: 403 })

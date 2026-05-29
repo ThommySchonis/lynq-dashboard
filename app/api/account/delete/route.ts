@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { getAuthContext } from '@/lib/auth'
+import { getAuthContext, requireNotImpersonating } from '@/lib/auth'
 import { scheduleAccountDeletion } from '@/lib/services/account-deletion'
 import { getSiteUrl } from '@/lib/utils/request'
 import { logger } from '@/lib/logger'
@@ -8,6 +8,8 @@ import { logger } from '@/lib/logger'
 export async function POST(request: NextRequest) {
   const ctx = await getAuthContext(request)
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const impersonationBlocked = requireNotImpersonating(ctx)
+  if (impersonationBlocked) return impersonationBlocked
 
   try {
     const siteUrl = getSiteUrl(request)

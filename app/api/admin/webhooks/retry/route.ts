@@ -1,7 +1,7 @@
 import { supabaseAdmin, getUserFromToken } from '@/lib/supabaseAdmin'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { ADMIN_EMAILS } from '@/lib/admin-constants'
+import { isPlatformAdmin } from '@/lib/platformAdmin'
 import { validateBody } from '@/lib/validation'
 import { webhookEventIdsBody } from '@/lib/schemas/admin'
 
@@ -11,7 +11,8 @@ export async function POST(request: NextRequest) {
 
   const token = authHeader.replace('Bearer ', '')
   const user = await getUserFromToken(token)
-  if (!user || !ADMIN_EMAILS.includes(user.email ?? '')) {
+  const isAdmin = await isPlatformAdmin(user?.email)
+  if (!user || !isAdmin) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 

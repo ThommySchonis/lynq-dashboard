@@ -91,8 +91,8 @@ export default function PricingRequiredPage() {
       cache:   'no-store',
     })
       .then(r => r.ok ? r.json() : null)
-      .then((data: { is_platform_admin?: boolean } | null) => {
-        if (data?.is_platform_admin) router.replace('/home')
+      .then((data: { is_payment_exempt?: boolean } | null) => {
+        if (data?.is_payment_exempt) router.replace('/home')
       })
       .catch(() => { /* fail-open: toon de normale pagina als de check mislukt */ })
   }, [session, router])

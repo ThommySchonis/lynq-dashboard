@@ -2,7 +2,14 @@ import type { NextRequest } from 'next/server'
 import { NextResponse } from 'next/server'
 import { getAuthContext } from '@/lib/auth'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
-import { isPlatformAdmin } from '@/lib/platformAdmin'
+import { isPlatformAdmin, isPlatformAdminOrTester } from '@/lib/platformAdmin'
+
+interface ProfileRow { display_name?: string; welcome_dismissed_at?: string | null; setup_checklist_dismissed_at?: string | null }
+interface WorkspaceRow { id: string; name?: string }
+interface SubscriptionRow { status?: string; trial_ends_at?: string }
+interface EmailRow { status?: string }
+interface IntegrationRow { shopify_domain?: string; status?: string }
+interface UserMetadata { name?: string; full_name?: string }
 
 // GET /api/onboarding/status
 //
@@ -63,21 +70,16 @@ export async function GET(request: NextRequest) {
       .maybeSingle(),
   ])
 
-  interface ProfileRow { display_name?: string; welcome_dismissed_at?: string | null; setup_checklist_dismissed_at?: string | null }
-  interface WorkspaceRow { id: string; name?: string }
-  interface SubscriptionRow { status?: string; trial_ends_at?: string }
-  interface EmailRow { status?: string }
-  interface IntegrationRow { shopify_domain?: string; status?: string }
+  const profileData = profileRes.data as unknown as ProfileRow | null
+  const wsData = workspaceRes.data as unknown as WorkspaceRow | null
+  const subData = subscriptionRes.data as unknown as SubscriptionRow | null
+  const emailData = emailRes.data as unknown as EmailRow | null
+  const integrationData = integrationRes.data as unknown as IntegrationRow | null
 
-  const profileData = profileRes.data as ProfileRow | null
-  const wsData = workspaceRes.data as WorkspaceRow | null
-  const subData = subscriptionRes.data as SubscriptionRow | null
-  const emailData = emailRes.data as EmailRow | null
-  const integrationData = integrationRes.data as IntegrationRow | null
-
+  const userMeta = (ctx.user.user_metadata ?? {}) as UserMetadata
   const fullName =
     profileData?.display_name ||
-    (ctx.user.user_metadata as Record<string, unknown> | undefined)?.name as string ||
+    userMeta.name ||
     ctx.user.email?.split('@')[0] ||
     ''
   const firstName = String(fullName).split(/\s+/)[0]
@@ -97,9 +99,12 @@ export async function GET(request: NextRequest) {
     trial_ends_at:       subData?.trial_ends_at ?? null,
     workspace_name:      wsData?.name ?? null,
 
-    // Platform admins bypass the subscription gate entirely. Checked
-    // server-side here so the client cannot spoof this flag via devtools.
-    is_platform_admin: isPlatformAdmin(ctx.user),
+    // Payment-exempt users (admins + testers) bypass the subscription
+    // gate. Checked server-side so the client cannot spoof this flag.
+    is_payment_exempt: await isPlatformAdminOrTester(ctx.user.email ?? ''),
+
+    // Platform admins get admin panel access.
+    is_platform_admin: await isPlatformAdmin(ctx.user.email ?? ''),
 
     user: {
       first_name:                   firstName,

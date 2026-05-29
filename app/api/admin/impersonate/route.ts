@@ -4,14 +4,15 @@ import { getAuthContext } from '@/lib/auth'
 import { validateBody } from '@/lib/validation'
 import { startImpersonationBody } from '@/lib/schemas/admin'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
-import { ADMIN_EMAILS } from '@/lib/admin-constants'
+import { isPlatformAdmin } from '@/lib/platformAdmin'
 import { logger } from '@/lib/logger'
 
 // POST /api/admin/impersonate — start impersonation session
 export async function POST(request: NextRequest) {
   const ctx = await getAuthContext(request)
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  if (!ADMIN_EMAILS.includes(ctx.user.email ?? '')) {
+  const isAdmin = await isPlatformAdmin(ctx.user.email)
+  if (!isAdmin) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
@@ -39,7 +40,7 @@ export async function POST(request: NextRequest) {
     .is('ended_at', null)
 
   // Create new session
-  const { data: sessionData, error } = await supabaseAdmin
+  const { data: sessionRaw, error } = await supabaseAdmin
     .from('impersonation_sessions')
     .insert({
       admin_user_id: ctx.user.id,
@@ -48,8 +49,7 @@ export async function POST(request: NextRequest) {
     .select('id')
     .single()
 
-  const session = sessionData as { id: string } | null
-
+  const session = sessionRaw as unknown as { id: string } | null
   if (error || !session) {
     logger.error('[impersonate]', 'failed to create session', { error: error?.message })
     return NextResponse.json({ error: 'Failed to start impersonation' }, { status: 500 })
@@ -77,7 +77,8 @@ export async function POST(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   const ctx = await getAuthContext(request)
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  if (!ADMIN_EMAILS.includes(ctx.user.email ?? '')) {
+  const isAdmin = await isPlatformAdmin(ctx.user.email)
+  if (!isAdmin) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 

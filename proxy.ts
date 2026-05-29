@@ -2,7 +2,6 @@ import type { NextRequest } from 'next/server'
 import { NextResponse } from 'next/server'
 import { asciiSafe } from '@/lib/utils/ascii-safe'
 import { validateCsrfOrigin } from '@/lib/csrf'
-import { isPlatformAdmin } from '@/lib/platformAdmin'
 
 // ─── Auth bypass (geen Bearer-token vereist) ────────────────────────
 const AUTH_BYPASS_PREFIXES = [
@@ -71,11 +70,28 @@ async function checkBlockedState(token: string): Promise<BlockedState> {
     cache:   'no-store',
   })
   if (!userRes.ok) return { blocked: false }
-  const user = await userRes.json().catch(() => null) as SupabaseUser | null
+  const userRaw: unknown = await userRes.json().catch(() => null)
+  const user = userRaw as SupabaseUser | null
   if (!user?.id) return { blocked: false }
 
-  // Platform admins are never blocked, regardless of workspace subscription.
-  if (isPlatformAdmin({ email: user.email as string | undefined })) return { blocked: false }
+  // Platform admins and testers are never blocked, regardless of workspace subscription.
+  const adminEmail = typeof user.email === 'string' ? user.email : undefined
+  if (adminEmail) {
+    const adminUrl = `${supabaseUrl}/rest/v1/platform_admins`
+      + `?email=eq.${encodeURIComponent(adminEmail)}`
+      + `&select=role`
+      + `&limit=1`
+    const adminRes = await fetch(adminUrl, {
+      headers: {
+        Authorization: asciiSafe(`Bearer ${secretKey}`, 'Authorization', 'proxy'),
+        apikey:        asciiSafe(secretKey,              'apikey',        'proxy'),
+      },
+      cache: 'no-store',
+    })
+    const adminRowsRaw: unknown = await adminRes.json().catch(() => [])
+    const adminRows = adminRowsRaw as { role: string }[]
+    if (Array.isArray(adminRows) && adminRows.length > 0) return { blocked: false }
+  }
 
   // 2. Get workspace_id from workspace_members
   const memberUrl = `${supabaseUrl}/rest/v1/workspace_members`
@@ -90,7 +106,8 @@ async function checkBlockedState(token: string): Promise<BlockedState> {
     cache:   'no-store',
   })
   if (!memberRes.ok) return { blocked: false }
-  const members = await memberRes.json().catch(() => null) as WorkspaceMemberRow[] | null
+  const membersRaw: unknown = await memberRes.json().catch(() => null)
+  const members = membersRaw as WorkspaceMemberRow[] | null
   const workspaceId = Array.isArray(members) ? members[0]?.workspace_id : null
   if (!workspaceId) return { blocked: false }
 
@@ -106,7 +123,8 @@ async function checkBlockedState(token: string): Promise<BlockedState> {
     cache:   'no-store',
   })
   if (!subRes.ok) return { blocked: false }
-  const subs = await subRes.json().catch(() => null) as SubscriptionData[] | null
+  const subsRaw: unknown = await subRes.json().catch(() => null)
+  const subs = subsRaw as SubscriptionData[] | null
   const sub = Array.isArray(subs) ? subs[0] : null
   if (!sub) return { blocked: false }
 

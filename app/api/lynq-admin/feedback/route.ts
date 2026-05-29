@@ -2,22 +2,15 @@ import { supabaseAdmin, getUserFromToken } from '@/lib/supabaseAdmin'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { logger } from '@/lib/logger'
-
-const LYNQ_ADMIN_EMAILS = ['info@lynqagency.com']
-
-async function requireLynqAdmin(request: NextRequest) {
-  const authHeader = request.headers.get('authorization')
-  if (!authHeader) return null
-  const token = authHeader.replace('Bearer ', '')
-  const user = await getUserFromToken(token)
-  if (!user) return null
-  if (!LYNQ_ADMIN_EMAILS.includes(user.email ?? '')) return null
-  return user
-}
+import { isPlatformAdmin } from '@/lib/platformAdmin'
 
 export async function GET(request: NextRequest) {
-  const admin = await requireLynqAdmin(request)
-  if (!admin) {
+  const authHeader = request.headers.get('authorization')
+  if (!authHeader) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  const token = authHeader.replace('Bearer ', '')
+  const user = await getUserFromToken(token)
+  const isAdmin = await isPlatformAdmin(user?.email)
+  if (!user || !isAdmin) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 

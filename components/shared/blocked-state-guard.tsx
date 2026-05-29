@@ -10,6 +10,7 @@ interface OnboardingStatus {
   subscription_status?: string
   trial_ends_at?: string | null
   is_platform_admin?: boolean
+  is_payment_exempt?: boolean
 }
 
 const ALLOW_PATHS = [
@@ -69,7 +70,7 @@ export function BlockedStateGuard({ children }: { children: ReactNode }) {
         // subscription status — they are internal operators, not customers.
         // The flag is set server-side in /api/onboarding/status and cannot
         // be spoofed from the client.
-        if (data?.is_platform_admin) {
+        if (data?.is_payment_exempt) {
           if (!cancelled) setChecked(true);
           return;
         }

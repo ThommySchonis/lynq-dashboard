@@ -4,12 +4,11 @@ import type { NextRequest } from 'next/server'
 import type { RouteContext } from '@/types/api'
 import { validateBody, validateParams } from '@/lib/validation'
 import { adminCandidateParams, validateCandidateBody } from '@/lib/schemas/admin'
+import { isPlatformAdmin } from '@/lib/platformAdmin'
 
 interface RoleRow {
   role?: string
 }
-
-const ADMIN_EMAIL = 'info@lynqagency.com'
 
 // PATCH — admin validates candidate after call, or sets them live in marketplace
 export async function PATCH(request: NextRequest, { params }: RouteContext<{ id: string }>) {
@@ -18,7 +17,8 @@ export async function PATCH(request: NextRequest, { params }: RouteContext<{ id:
 
   const token = authHeader.replace('Bearer ', '')
   const user = await getUserFromToken(token)
-  if (!user || user.email !== ADMIN_EMAIL) {
+  const isAdmin = await isPlatformAdmin(user?.email)
+  if (!user || !isAdmin) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 

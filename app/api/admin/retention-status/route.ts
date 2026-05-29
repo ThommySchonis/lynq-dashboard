@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { supabaseAdmin, getUserFromToken } from '@/lib/supabaseAdmin'
+import { isPlatformAdmin } from '@/lib/platformAdmin'
 
-const ADMIN_EMAIL = 'info@lynqagency.com'
 const TRIAL_RETENTION_DAYS = 60
 
 // GET /api/admin/retention-status
@@ -72,7 +72,8 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
   const token = authHeader.replace('Bearer ', '')
   const user  = await getUserFromToken(token)
-  if (!user || user.email !== ADMIN_EMAIL) {
+  const isAdmin = await isPlatformAdmin(user?.email)
+  if (!user || !isAdmin) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 

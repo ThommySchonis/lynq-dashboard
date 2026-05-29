@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { getUserFromToken } from '@/lib/supabaseAdmin'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
-import { ADMIN_EMAILS } from '@/lib/admin-constants'
+import { isPlatformAdmin } from '@/lib/platformAdmin'
 import type { Workspace } from '@/types/database'
 
 // GET /api/auth/impersonation-status
@@ -19,7 +19,8 @@ export async function GET(request: NextRequest) {
 
   const token = authHeader.replace('Bearer ', '')
   const user = await getUserFromToken(token)
-  if (!user || !ADMIN_EMAILS.includes(user.email ?? '')) {
+  const isAdmin = await isPlatformAdmin(user?.email)
+  if (!user || !isAdmin) {
     return NextResponse.json({ active: false })
   }
 

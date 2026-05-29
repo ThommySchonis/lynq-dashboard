@@ -3,8 +3,7 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { validateBody } from '@/lib/validation'
 import { migrateUsersBody } from '@/lib/schemas/admin'
-
-const ADMIN_EMAIL = 'info@lynqagency.com'
+import { isPlatformAdmin } from '@/lib/platformAdmin'
 
 // POST body: { users: [{ id, email, password }] }
 // Creates each user in the main Supabase project with the same UUID
@@ -15,7 +14,8 @@ export async function POST(request: NextRequest) {
 
   const token = authHeader.replace('Bearer ', '')
   const user = await getUserFromToken(token)
-  if (!user || user.email !== ADMIN_EMAIL) {
+  const isAdmin = await isPlatformAdmin(user?.email)
+  if (!user || !isAdmin) {
     return NextResponse.json({ error: 'Admin only' }, { status: 403 })
   }
 

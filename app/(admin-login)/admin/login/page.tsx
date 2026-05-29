@@ -2,7 +2,6 @@
 
 import { type FormEvent, useState } from 'react'
 import { supabase } from '@/lib/supabase'
-import { ADMIN_EMAILS } from '@/lib/admin-constants'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
@@ -17,12 +16,6 @@ export default function AdminLoginPage() {
     e.preventDefault()
     setLoading(true)
     setError('')
-
-    if (!ADMIN_EMAILS.includes(email)) {
-      setError('No access.')
-      setLoading(false)
-      return
-    }
 
     const { error: authError } = await supabase.auth.signInWithPassword({ email, password })
 

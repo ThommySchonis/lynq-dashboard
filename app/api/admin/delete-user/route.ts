@@ -4,8 +4,7 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { validateQuery } from '@/lib/validation'
 import { deleteUserQuery } from '@/lib/schemas/admin'
-
-const ADMIN_EMAIL = 'info@lynqagency.com'
+import { isPlatformAdmin } from '@/lib/platformAdmin'
 
 // `id` query param is the user_id (= auth.users.id). Same value that
 // team_members.id stored pre-refactor, so the mutation contract is unchanged.
@@ -15,7 +14,8 @@ export async function DELETE(request: NextRequest) {
 
   const token = authHeader.replace('Bearer ', '')
   const user = await getUserFromToken(token)
-  if (!user || user.email !== ADMIN_EMAIL) {
+  const isAdmin = await isPlatformAdmin(user?.email)
+  if (!user || !isAdmin) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 

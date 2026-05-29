@@ -15,6 +15,8 @@ export interface OnboardingStatus {
   /** 'trial' | 'active' | 'past_due' | 'canceled' | 'paused' */
   subscription_status: string
   trial_ends_at: string | null
+  is_payment_exempt?: boolean
+  is_platform_admin?: boolean
   user?: {
     first_name?: string
     welcome_dismissed_at?: string | null

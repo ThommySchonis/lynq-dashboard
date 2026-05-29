@@ -3,8 +3,7 @@ import { getAuthContext } from '@/lib/auth'
 import { getEnrichedMembers } from '@/lib/services/workspace-members'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-
-const ADMIN_EMAIL = 'info@lynqagency.com'
+import { isPlatformAdmin } from '@/lib/platformAdmin'
 
 // GET /api/admin/team
 //
@@ -22,7 +21,8 @@ export async function GET(request: NextRequest) {
 
   const token = authHeader.replace('Bearer ', '')
   const user = await getUserFromToken(token)
-  if (!user || user.email !== ADMIN_EMAIL) {
+  const isAdmin = await isPlatformAdmin(user?.email)
+  if (!user || !isAdmin) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 

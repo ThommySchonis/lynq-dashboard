@@ -1,34 +1,29 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
-import { useAuthStore } from '@/stores/auth'
-import { ADMIN_EMAILS } from '@/lib/admin-constants'
+import { useOnboardingStatus } from '@/hooks/home/use-home-data'
 import { AdminSidebar } from '@/components/features/admin/admin-sidebar'
 import { AdminTopbar } from '@/components/features/admin/admin-topbar'
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  const user = useAuthStore((s) => s.user)
-  const isLoading = useAuthStore((s) => s.isLoading)
+  const { data, isLoading } = useOnboardingStatus()
+  const isAdmin = data?.is_platform_admin === true
   const redirected = useRef(false)
 
   useEffect(() => {
     if (isLoading || redirected.current) return
-    if (!user || !ADMIN_EMAILS.includes(user.email ?? '')) {
+    if (!isAdmin) {
       redirected.current = true
       window.location.href = '/admin/login'
     }
-  }, [user, isLoading])
+  }, [isAdmin, isLoading])
 
-  if (isLoading) {
+  if (isLoading || !isAdmin) {
     return (
       <div className="min-h-screen bg-[#F9F9FB] flex items-center justify-center text-[13px] text-muted-foreground font-sans">
         Checking access…
       </div>
     )
-  }
-
-  if (!user || !ADMIN_EMAILS.includes(user.email ?? '')) {
-    return null
   }
 
   return (

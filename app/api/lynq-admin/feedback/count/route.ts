@@ -2,8 +2,7 @@ import { supabaseAdmin, getUserFromToken } from '@/lib/supabaseAdmin'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { logger } from '@/lib/logger'
-
-const LYNQ_ADMIN_EMAILS = ['info@lynqagency.com']
+import { isPlatformAdmin } from '@/lib/platformAdmin'
 
 export async function GET(request: NextRequest) {
   const authHeader = request.headers.get('authorization')
@@ -11,7 +10,8 @@ export async function GET(request: NextRequest) {
 
   const token = authHeader.replace('Bearer ', '')
   const user = await getUserFromToken(token)
-  if (!user || !LYNQ_ADMIN_EMAILS.includes(user.email ?? '')) {
+  const isAdmin = await isPlatformAdmin(user?.email)
+  if (!user || !isAdmin) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 

@@ -3,24 +3,30 @@ import { type NextRequest, NextResponse } from 'next/server'
 import type { User } from '@supabase/supabase-js'
 import * as Sentry from '@sentry/nextjs'
 import { logger } from '@/lib/logger'
-import { ADMIN_EMAILS } from '@/lib/admin-constants'
-
-interface MembershipRow {
-  id: string
-  workspace_id: string
-  role: string
-  workspaces: unknown
-}
-
-interface ProvisionResult {
-  workspace_id?: string
-  member_id?: string
-}
+import { isPlatformAdmin } from '@/lib/platformAdmin'
 
 export interface AuthWorkspace {
   id: string
   name: string
   suspended_at: string | null
+}
+
+interface MembershipRow {
+  id: string
+  workspace_id: string
+  role: string
+  workspaces: AuthWorkspace
+}
+
+interface UserMetadata {
+  company_name?: string
+  name?: string
+  full_name?: string
+}
+
+interface ProvisionResult {
+  workspace_id?: string
+  member_id?: string
 }
 
 export interface AuthContext {
@@ -33,6 +39,15 @@ export interface AuthContext {
   scheduledForDeletion: string | null
   isImpersonating: boolean
   impersonationSessionId: string | null
+}
+
+/**
+ * Extracts `data` from a Supabase query result as `T | null`, avoiding
+ * `no-unsafe-assignment` / `no-unsafe-member-access` on untyped clients.
+ * The single `as unknown as T | null` cast is the intentional boundary.
+ */
+function pluck<T>(result: { data: unknown }): T | null {
+  return result.data as unknown as T | null
 }
 
 /**
@@ -60,8 +75,9 @@ export async function getAuthContext(request: NextRequest): Promise<AuthContext 
 
   // ── Impersonation check ──────────────────────────────────────────────
   const impersonateCookie = request.cookies.get('x-impersonate-session')?.value
-  if (impersonateCookie && ADMIN_EMAILS.includes(user.email ?? '')) {
-    const { data: session } = await supabaseAdmin
+  const isAdmin = await isPlatformAdmin(user.email)
+  if (impersonateCookie && isAdmin) {
+    const impRow = await supabaseAdmin
       .from('impersonation_sessions')
       .select('id, target_workspace_id')
       .eq('id', impersonateCookie)
@@ -69,16 +85,18 @@ export async function getAuthContext(request: NextRequest): Promise<AuthContext 
       .is('ended_at', null)
       .maybeSingle()
 
-    if (session) {
-      const imp = session as { id: string; target_workspace_id: string }
-      const { data: targetWorkspace } = await supabaseAdmin
+    const imp = pluck<{ id: string; target_workspace_id: string }>(impRow)
+
+    if (imp) {
+      const wsRow = await supabaseAdmin
         .from('workspaces')
         .select('id, name, suspended_at')
         .eq('id', imp.target_workspace_id)
         .single()
 
-      if (targetWorkspace) {
-        const ws = targetWorkspace as AuthWorkspace
+      const ws = pluck<AuthWorkspace>(wsRow)
+
+      if (ws) {
         logger.info('[auth]', 'impersonation active', {
           adminId: user.id,
           targetWorkspaceId: ws.id,
@@ -99,34 +117,37 @@ export async function getAuthContext(request: NextRequest): Promise<AuthContext 
   }
 
   // ── Path A: membership exists ────────────────────────────────────────────
-  const { data: membership, error: memberError } = await supabaseAdmin
+  const memberRow = await supabaseAdmin
     .from('workspace_members')
     .select('id, workspace_id, role, workspaces(id, name, suspended_at)')
     .eq('user_id', user.id)
     .maybeSingle()
 
-  if (memberError) {
-    logger.error('[auth]', 'workspace_members query failed', { error: memberError.message })
+  if (memberRow.error) {
+    logger.error('[auth]', 'workspace_members query failed', { error: memberRow.error.message })
   }
 
-  if (membership) {
-    const m = membership as MembershipRow
-    logger.debug('[auth]', 'path A — membership found', { workspaceId: m.workspace_id, role: m.role })
+  const membership = pluck<MembershipRow>(memberRow)
 
-    const { data: profile } = await supabaseAdmin
+  if (membership) {
+    logger.debug('[auth]', 'path A — membership found', { workspaceId: membership.workspace_id, role: membership.role })
+
+    const profileRow = await supabaseAdmin
       .from('user_profiles')
       .select('scheduled_for_deletion_at')
       .eq('user_id', user.id)
       .maybeSingle()
 
+    const profile = pluck<{ scheduled_for_deletion_at: string | null }>(profileRow)
+
     return {
       user,
-      workspace:              m.workspaces as AuthWorkspace,
-      workspaceId:            m.workspace_id,
-      role:                   m.role,
-      memberId:               m.id,
-      isSuspended:            !!(m.workspaces as AuthWorkspace).suspended_at,
-      scheduledForDeletion:   (profile?.scheduled_for_deletion_at as string | null) ?? null,
+      workspace:              membership.workspaces,
+      workspaceId:            membership.workspace_id,
+      role:                   membership.role,
+      memberId:               membership.id,
+      isSuspended:            !!membership.workspaces.suspended_at,
+      scheduledForDeletion:   profile?.scheduled_for_deletion_at ?? null,
       isImpersonating:        false,
       impersonationSessionId: null,
     }
@@ -135,22 +156,21 @@ export async function getAuthContext(request: NextRequest): Promise<AuthContext 
   // ── Path B: provision — new user, no workspace yet ───────────────────────
   // Prefer company_name from signup form (ONBOARDING_SPEC v1.1 §3.2),
   // fall back to legacy .name (older signups), then email-prefix.
-  const meta = user.user_metadata as Record<string, unknown> | undefined
+  const meta: UserMetadata = (user.user_metadata ?? {}) as UserMetadata
   const workspaceName =
-    (meta?.company_name as string) ||
-    (meta?.name as string) ||
+    meta.company_name ||
+    meta.name ||
     user.email?.split('@')[0] ||
     'My Workspace'
   logger.debug('[auth]', 'path B — provisioning new workspace', { workspaceName })
 
-  const provisionResult = await supabaseAdmin
-    .rpc('provision_workspace', {
-      p_user_id:        user.id,
-      p_workspace_name: workspaceName,
-    })
+  const provisionRaw = await supabaseAdmin.rpc('provision_workspace', {
+    p_user_id:        user.id,
+    p_workspace_name: workspaceName,
+  })
 
-  const rpcError = provisionResult.error
-  const result = provisionResult.data as ProvisionResult | null
+  const rpcError = provisionRaw.error as { message: string } | null
+  const result = pluck<ProvisionResult>(provisionRaw)
   logger.info('[auth]', 'provision_workspace result', { workspaceId: result?.workspace_id, error: rpcError?.message ?? null })
 
   if (rpcError || !result?.workspace_id) {
@@ -158,13 +178,13 @@ export async function getAuthContext(request: NextRequest): Promise<AuthContext 
     return null
   }
 
-  const { data: newWorkspaceData } = await supabaseAdmin
+  const newWsRow = await supabaseAdmin
     .from('workspaces')
     .select('id, name, suspended_at')
     .eq('id', result.workspace_id)
     .single()
 
-  const newWorkspace = newWorkspaceData as AuthWorkspace | null
+  const newWorkspace = pluck<AuthWorkspace>(newWsRow)
   logger.debug('[auth]', 'path B — provisioning complete', { workspaceId: result.workspace_id })
   return {
     user,

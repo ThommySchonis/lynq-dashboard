@@ -2,8 +2,7 @@ import { supabaseAdmin, getUserFromToken } from '@/lib/supabaseAdmin'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { logger } from '@/lib/logger'
-
-const ADMIN_EMAILS = ['info@lynqagency.com', 'denver9523@gmail.com']
+import { isPlatformAdmin } from '@/lib/platformAdmin'
 
 export async function POST(
   request: NextRequest,
@@ -14,7 +13,8 @@ export async function POST(
 
   const token = authHeader.replace('Bearer ', '')
   const user = await getUserFromToken(token)
-  if (!user || !ADMIN_EMAILS.includes(user.email ?? '')) {
+  const isAdmin = await isPlatformAdmin(user?.email)
+  if (!user || !isAdmin) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 

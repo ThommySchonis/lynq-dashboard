@@ -14,8 +14,6 @@ import {
   TrendingUp, Info, Play, Building2, RefreshCw,
 } from 'lucide-react'
 
-export const ADMIN_EMAILS = ['info@lynqagency.com', 'denver9523@gmail.com']
-
 export interface NavItem {
   id: string
   label: string

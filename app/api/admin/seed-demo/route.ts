@@ -4,8 +4,7 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { validateBody } from '@/lib/validation'
 import { seedDemoBody } from '@/lib/schemas/admin'
-
-const ADMIN_EMAIL = 'info@lynqagency.com'
+import { isPlatformAdmin } from '@/lib/platformAdmin'
 
 export async function POST(request: NextRequest) {
   const authHeader = request.headers.get('authorization')
@@ -13,7 +12,8 @@ export async function POST(request: NextRequest) {
 
   const token = authHeader.replace('Bearer ', '')
   const user = await getUserFromToken(token)
-  if (!user || user.email !== ADMIN_EMAIL) {
+  const isAdmin = await isPlatformAdmin(user?.email)
+  if (!user || !isAdmin) {
     return NextResponse.json({ error: 'Admin only' }, { status: 403 })
   }
 

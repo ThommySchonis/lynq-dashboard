@@ -12,11 +12,29 @@ async function getResend() {
   return new Resend(process.env.RESEND_API_KEY)
 }
 
-export async function registerDomain(domainName: string): Promise<ResendDomain> {
+export async function findDomainByName(domainName: string): Promise<ResendDomain | null> {
+  const resend = await getResend()
+  const { data, error } = await resend.domains.list()
+  if (error || !data) return null
+  const domains = (data as unknown as { data: ResendDomain[] }).data ?? (data as unknown as ResendDomain[])
+  const match = (Array.isArray(domains) ? domains : []).find(
+    (d: ResendDomain) => d.name === domainName
+  )
+  return (match as ResendDomain) ?? null
+}
+
+export async function registerOrGetDomain(domainName: string): Promise<ResendDomain> {
   const resend = await getResend()
   const { data, error } = await resend.domains.create({ name: domainName })
-  if (error) throw new Error(`Failed to register domain: ${error.message}`)
-  return data as unknown as ResendDomain
+  if (data) return data as unknown as ResendDomain
+
+  // Domain already exists in Resend — look it up
+  if (error?.message?.includes('already')) {
+    const existing = await findDomainByName(domainName)
+    if (existing) return existing
+  }
+
+  throw new Error(`Failed to register domain: ${error?.message ?? 'Unknown error'}`)
 }
 
 export async function getDomain(domainId: string): Promise<ResendDomain> {

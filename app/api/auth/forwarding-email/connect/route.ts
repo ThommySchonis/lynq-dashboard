@@ -5,7 +5,7 @@ import { getAuthContext } from '@/lib/auth'
 import { validateBody } from '@/lib/validation'
 import { forwardingEmailConnectBody } from '@/lib/schemas/forwarding'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
-import { registerDomain, getDomain } from '@/lib/services/resend-domains'
+import { registerOrGetDomain, getDomain } from '@/lib/services/resend-domains'
 
 const FORWARDING_DOMAIN = process.env.FORWARDING_EMAIL_DOMAIN || 'inbox.lynq.com'
 
@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
     if (existingDomain?.resend_domain_id) {
       resendDomainId = existingDomain.resend_domain_id as string
     } else {
-      const domain = await registerDomain(senderDomain)
+      const domain = await registerOrGetDomain(senderDomain)
       resendDomainId = domain.id
     }
 

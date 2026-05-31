@@ -89,17 +89,24 @@ export async function POST(request: NextRequest) {
   let systemPrompt = settings?.system_prompt || DEFAULT_SYSTEM_PROMPT
   const brandName = settings?.brand_name || 'Support Team'
 
+  // store_id is resolved here (hoisted out of the gate's try below) so it is
+  // available both to the Emma gate and to the ai_drafts INSERT after the LLM
+  // call. promptPath records which prompt path actually produced the reply.
+  let storeId: string | null = null
+  let promptPath: 'emma' | 'fallback' = 'fallback'
+
   // Emma Phase 1 — if the conversation's store has completed AI onboarding,
   // swap in a system prompt built from ai_policies + ai_scenarios. Any failure
   // (unknown thread, no store, DB error) falls through to the legacy prompt
   // above; AI Suggest must never 500 because of an onboarding lookup. Policy
   // and scenario contents are never logged.
   try {
-    const storeId = await resolveStoreIdForThread(threadId, ctx.workspaceId)
+    storeId = await resolveStoreIdForThread(threadId, ctx.workspaceId)
     if (storeId) {
       const onboarding = await getOnboardingStatus(storeId, ctx.workspaceId)
       if (onboarding.isComplete && onboarding.policies) {
         systemPrompt = buildEmmaSystemPrompt(onboarding.policies, onboarding.scenarios)
+        promptPath = 'emma'
       }
     }
   } catch (err) {
@@ -144,6 +151,35 @@ Write only the reply body. Do not include subject lines, metadata, or explanatio
       cost_usd: ((usage.inputTokens ?? 0) * 0.0000008) + ((usage.outputTokens ?? 0) * 0.000004),
       user_email: user.email,
     })
+
+    // Best-effort: persist the suggestion as an ai_drafts row. This must NEVER
+    // affect the response — any failure is logged with a generic message (no
+    // suggested_text / policy / scenario content) and swallowed. Skipped when
+    // there is no conversation to link the draft to (threadId absent).
+    if (threadId) {
+      try {
+        const promptTokens = usage.inputTokens ?? null
+        const completionTokens = usage.outputTokens ?? null
+        const totalTokens =
+          promptTokens != null || completionTokens != null
+            ? (promptTokens ?? 0) + (completionTokens ?? 0)
+            : null
+        await supabaseAdmin.from('ai_drafts').insert({
+          workspace_id:      ctx.workspaceId,
+          store_id:          storeId,
+          conversation_id:   threadId,
+          user_id:           user.id,
+          prompt_path:       promptPath,
+          suggested_text:    text.trim(),
+          model:             'claude-haiku-4-5-20251001',
+          prompt_tokens:     promptTokens,
+          completion_tokens: completionTokens,
+          total_tokens:      totalTokens,
+        })
+      } catch (err) {
+        logger.error('[ai/reply]', 'ai_drafts insert failed', err)
+      }
+    }
 
     return NextResponse.json({ reply: text.trim(), threadId }, {
       headers: {

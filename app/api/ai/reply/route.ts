@@ -9,6 +9,9 @@ import type { NextRequest } from 'next/server'
 import { aiReplyBody } from '@/lib/schemas/ai'
 import { resilientSdkCall } from '@/lib/resilient-fetch'
 import { serviceCatchHandler } from '@/lib/service-catch-handler'
+import { getOnboardingStatus, resolveStoreIdForThread } from '@/lib/services/ai-onboarding'
+import { buildEmmaSystemPrompt } from '@/lib/services/ai-prompt-builder'
+import { logger } from '@/lib/logger'
 
 interface AiSettingsRow {
   system_prompt?: string
@@ -83,8 +86,25 @@ export async function POST(request: NextRequest) {
     .single()
 
   const settings = settingsRaw as AiSettingsRow | null
-  const systemPrompt = settings?.system_prompt || DEFAULT_SYSTEM_PROMPT
+  let systemPrompt = settings?.system_prompt || DEFAULT_SYSTEM_PROMPT
   const brandName = settings?.brand_name || 'Support Team'
+
+  // Emma Phase 1 — if the conversation's store has completed AI onboarding,
+  // swap in a system prompt built from ai_policies + ai_scenarios. Any failure
+  // (unknown thread, no store, DB error) falls through to the legacy prompt
+  // above; AI Suggest must never 500 because of an onboarding lookup. Policy
+  // and scenario contents are never logged.
+  try {
+    const storeId = await resolveStoreIdForThread(threadId, ctx.workspaceId)
+    if (storeId) {
+      const onboarding = await getOnboardingStatus(storeId, ctx.workspaceId)
+      if (onboarding.isComplete && onboarding.policies) {
+        systemPrompt = buildEmmaSystemPrompt(onboarding.policies, onboarding.scenarios)
+      }
+    }
+  } catch (err) {
+    logger.error('[ai/reply]', 'emma onboarding lookup failed', err)
+  }
 
   // Build the conversation context from thread messages
   const conversationContext = messages

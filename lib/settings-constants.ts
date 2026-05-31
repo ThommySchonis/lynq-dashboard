@@ -27,6 +27,9 @@ export const SETTINGS_NAV: SettingsNavGroup[] = [
     { label: 'Stores',   href: '/settings/workspace/stores' },
     { label: 'Billing',  href: '/settings/workspace/billing' },
   ]},
+  { label: 'AI AGENT', items: [
+    { label: 'Onboarding', href: '/settings/ai-agent/onboarding' },
+  ]},
   { label: 'PERSONAL', items: [
     { label: 'Profile',        href: '/settings/personal/profile' },
     { label: 'Password & 2FA', href: '/settings/personal/security' },

@@ -30,6 +30,7 @@ export const SETTINGS_NAV: SettingsNavGroup[] = [
   { label: 'AI AGENT', items: [
     { label: 'Onboarding', href: '/settings/ai-agent/onboarding' },
     { label: 'Lessons',    href: '/settings/ai-agent/lessons' },
+    { label: 'Rules',      href: '/settings/ai-agent/rules' },
   ]},
   { label: 'PERSONAL', items: [
     { label: 'Profile',        href: '/settings/personal/profile' },

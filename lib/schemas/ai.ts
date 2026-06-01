@@ -194,3 +194,36 @@ export const emmaReplyOutput = z.object({
 })
 
 export type ReplyIntent = (typeof REPLY_INTENTS)[number]
+
+// --- AI Autonomy Rules (Emma Phase 2 — gated auto-send) ---
+
+// Defaults applied by GET /api/ai/autonomy-rules when no row exists yet.
+// Auto-send is OFF by default; only refund + chargeback intents are blocked
+// out of the gate. Surfaced through the schema (via .default) so the GET
+// route and UI share one source of truth.
+export const DEFAULT_AUTONOMY_CONFIG = {
+  master_enabled:       false,
+  confidence_threshold: 0.85,
+  global_block_intents: ['refund_or_cancel', 'angry_or_chargeback'],
+} as const
+
+export const aiAutonomyRulesQuery = z.object({
+  store_id: z.string().uuid(),
+})
+
+// Strict shape. Every field is required so the UI cannot accidentally drop
+// one. confidence_threshold is bounded 0–1 to match the slider; intents must
+// be one of the 9 REPLY_INTENTS so the decision logic always has a valid
+// comparison target.
+export const aiAutonomyRulesConfig = z.object({
+  master_enabled:       z.boolean(),
+  confidence_threshold: z.number().min(0).max(1),
+  global_block_intents: z.array(z.enum(REPLY_INTENTS)),
+})
+
+export const aiAutonomyRulesBody = z.object({
+  store_id: z.string().uuid(),
+  config:   aiAutonomyRulesConfig,
+})
+
+export type AiAutonomyRulesConfig = z.infer<typeof aiAutonomyRulesConfig>

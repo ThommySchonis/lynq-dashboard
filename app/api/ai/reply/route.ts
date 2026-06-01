@@ -6,7 +6,14 @@ import { checkAiSuggestLimit } from '../../../../lib/services/limit-check'
 import { checkRateLimit } from '@/lib/rate-limit'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { aiReplyBody, emmaReplyOutput, type ReplyIntent } from '@/lib/schemas/ai'
+import {
+  aiAutonomyRulesConfig,
+  aiReplyBody,
+  DEFAULT_AUTONOMY_CONFIG,
+  emmaReplyOutput,
+  type AiAutonomyRulesConfig,
+  type ReplyIntent,
+} from '@/lib/schemas/ai'
 import { resilientSdkCall } from '@/lib/resilient-fetch'
 import { serviceCatchHandler } from '@/lib/service-catch-handler'
 import {
@@ -14,8 +21,11 @@ import {
   getOnboardingStatus,
   resolveStoreIdForThread,
 } from '@/lib/services/ai-onboarding'
-import type { AiLesson } from '@/lib/services/ai-onboarding'
+import type { AiLesson, AiScenario } from '@/lib/services/ai-onboarding'
 import { buildEmmaSystemPrompt } from '@/lib/services/ai-prompt-builder'
+import { shouldAutoSend, type AutoSendBlockedReason } from '@/lib/services/ai-autonomy'
+import { sendReply } from '@/lib/conversationEngine'
+import { plainTextToSafeHtml } from '@/lib/inbox-utils'
 import { logger } from '@/lib/logger'
 
 interface AiSettingsRow {
@@ -97,8 +107,11 @@ export async function POST(request: NextRequest) {
   // store_id is resolved here (hoisted out of the gate's try below) so it is
   // available both to the Emma gate and to the ai_drafts INSERT after the LLM
   // call. promptPath records which prompt path actually produced the reply.
+  // scenarios is hoisted too so Phase 2's autonomy decision can find the row
+  // matching the draft's intent without re-querying.
   let storeId: string | null = null
   let promptPath: 'emma' | 'fallback' = 'fallback'
+  let scenarios: AiScenario[] = []
 
   // Emma Phase 1 — if the conversation's store has completed AI onboarding,
   // swap in a system prompt built from ai_policies + ai_scenarios. Any failure
@@ -127,6 +140,7 @@ export async function POST(request: NextRequest) {
           onboarding.scenarios,
           lessons,
         )
+        scenarios = onboarding.scenarios
         promptPath = 'emma'
       }
     }
@@ -225,6 +239,112 @@ Write only the reply body. Do not include subject lines, metadata, or explanatio
       user_email: user.email,
     })
 
+    // Emma Phase 2 — gated auto-send. The decision runs ONLY when:
+    //  • Emma path produced a structured draft (intent/confidence/should_escalate
+    //    are all present — null when the structured call failed and we retried
+    //    as plain text), AND
+    //  • we have a storeId and a threadId (there's no autonomous-send target
+    //    otherwise).
+    // The fallback path is intentionally left untouched.
+    //
+    // Failure modes: the rules read, the decision logic, AND the send execution
+    // are each wrapped in try/catch. None of them can 500 AI Suggest — the
+    // worst case is that auto-send doesn't fire and the user gets the reply
+    // they can manually send. No draft / policy / scenario / lesson content
+    // is logged in any of these paths.
+    let autoSentAt: string | null = null
+    let autoSendBlockedReason: AutoSendBlockedReason | null = null
+
+    // Narrow intent/confidence/shouldEscalate to non-null via an explicit
+    // local snapshot. TypeScript can't propagate the narrowing through a
+    // single `canEvaluateAutonomy` boolean, but it follows the dedicated
+    // const declarations below.
+    const intentLocal         = intent
+    const confidenceLocal     = confidence
+    const shouldEscalateLocal = shouldEscalate
+
+    if (
+      promptPath === 'emma' &&
+      intentLocal         !== null &&
+      confidenceLocal     !== null &&
+      shouldEscalateLocal !== null &&
+      storeId  !== null &&
+      threadId !== undefined
+    ) {
+      // 1) Load rules — default to suggest mode on any failure.
+      let rules: AiAutonomyRulesConfig = {
+        master_enabled:       DEFAULT_AUTONOMY_CONFIG.master_enabled,
+        confidence_threshold: DEFAULT_AUTONOMY_CONFIG.confidence_threshold,
+        global_block_intents: [...DEFAULT_AUTONOMY_CONFIG.global_block_intents],
+      }
+      try {
+        const { data, error } = await supabaseAdmin
+          .from('ai_autonomy_rules')
+          .select('config')
+          .eq('workspace_id', ctx.workspaceId)
+          .eq('store_id', storeId)
+          .maybeSingle<{ config: unknown }>()
+        if (error) throw error
+        if (data?.config) {
+          // Defensive parse — a stale row from a future trede must not crash
+          // the decision logic. On schema mismatch fall back to defaults.
+          const parsed = aiAutonomyRulesConfig.safeParse(data.config)
+          if (parsed.success) rules = parsed.data
+        }
+      } catch (err) {
+        logger.error('[ai/reply]', 'autonomy rules load failed', err)
+      }
+
+      // 2) Decide. Pure function — can't throw.
+      const scenarioRow = scenarios.find((s) => s.scenario_key === intentLocal) ?? null
+      const decision = shouldAutoSend({
+        draft:    {
+          intent:          intentLocal,
+          confidence:      confidenceLocal,
+          should_escalate: shouldEscalateLocal,
+        },
+        scenario: scenarioRow ? { autonomy_pct: scenarioRow.autonomy_pct } : null,
+        rules,
+      })
+
+      if (decision.send) {
+        // 3) Execute — reuse sendReply() from lib/conversationEngine. The
+        // helper derives `to` from the conversation's customer_email and
+        // `subject` from the conversation row when those fields are empty
+        // (see SendReplyParams handling inside sendReply); we pass the
+        // empty defaults explicitly because SendReplyParams marks all
+        // fields required.
+        try {
+          const sendResult = await sendReply(
+            ctx.workspaceId,
+            threadId,
+            ctx.user.email ?? '',
+            {
+              to:       [],
+              cc:       [],
+              bcc:      [],
+              subject:  '',
+              bodyHtml: plainTextToSafeHtml(replyText),
+              bodyText: replyText,
+            },
+            ctx.memberId,
+          )
+          if (sendResult && typeof sendResult === 'object' && 'error' in sendResult) {
+            // Plan-limit / ticket cap blocked the send.
+            autoSendBlockedReason = 'send_failed'
+            logger.error('[ai/reply]', 'auto-send blocked by sendReply error response')
+          } else {
+            autoSentAt = new Date().toISOString()
+          }
+        } catch (err) {
+          autoSendBlockedReason = 'send_failed'
+          logger.error('[ai/reply]', 'auto-send execution failed', err)
+        }
+      } else {
+        autoSendBlockedReason = decision.reason
+      }
+    }
+
     // Best-effort: persist the suggestion as an ai_drafts row. This must NEVER
     // affect the response — any failure is logged with a generic message (no
     // suggested_text / policy / scenario / model-output content) and swallowed.
@@ -238,27 +358,36 @@ Write only the reply body. Do not include subject lines, metadata, or explanatio
             ? (promptTokens ?? 0) + (completionTokens ?? 0)
             : null
         await supabaseAdmin.from('ai_drafts').insert({
-          workspace_id:      ctx.workspaceId,
-          store_id:          storeId,
-          conversation_id:   threadId,
-          user_id:           user.id,
-          prompt_path:       promptPath,
-          suggested_text:    replyText,
-          model:             MODEL,
-          prompt_tokens:     promptTokens,
-          completion_tokens: completionTokens,
-          total_tokens:      totalTokens,
+          workspace_id:             ctx.workspaceId,
+          store_id:                 storeId,
+          conversation_id:          threadId,
+          user_id:                  user.id,
+          prompt_path:              promptPath,
+          suggested_text:           replyText,
+          model:                    MODEL,
+          prompt_tokens:            promptTokens,
+          completion_tokens:        completionTokens,
+          total_tokens:             totalTokens,
           intent,
           confidence,
-          should_escalate:   shouldEscalate,
-          escalate_reason:   escalateReason,
+          should_escalate:          shouldEscalate,
+          escalate_reason:          escalateReason,
+          auto_sent_at:             autoSentAt,
+          auto_send_blocked_reason: autoSendBlockedReason,
         })
       } catch (err) {
         logger.error('[ai/reply]', 'ai_drafts insert failed', err)
       }
     }
 
-    return NextResponse.json({ reply: replyText, threadId }, {
+    // Response shape: existing { reply, threadId } unchanged. Add the
+    // optional `auto_sent: true` flag ONLY when auto-send actually fired,
+    // so existing UI behaviour stays backwards-compatible when absent.
+    const responseBody = autoSentAt
+      ? { reply: replyText, threadId, auto_sent: true }
+      : { reply: replyText, threadId }
+
+    return NextResponse.json(responseBody, {
       headers: {
         'X-RateLimit-Limit': '10',
         'X-RateLimit-Remaining': String(rl.remaining),

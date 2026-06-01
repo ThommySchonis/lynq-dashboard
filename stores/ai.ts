@@ -4,9 +4,17 @@ import { parseJson } from '@/lib/utils/typed-json'
 import type { Thread, Message } from '@/types'
 
 interface AnalyzeResponse { analyses?: Record<string, ThreadAnalysis> }
-interface ReplyResponse { reply?: string }
+// Emma Phase 2: auto_sent is an optional addition to the response payload —
+// when true, /api/ai/reply already sent the message and the caller should
+// refresh the conversation thread instead of populating the composer.
+interface ReplyResponse { reply?: string; auto_sent?: boolean }
 interface TranslateResponse { translated?: string }
 interface DetectLanguageResponse { code?: string; name?: string }
+
+export interface GenerateReplyResult {
+  reply:    string
+  autoSent: boolean
+}
 
 interface ThreadAnalysis {
   urgency: string
@@ -41,7 +49,7 @@ interface AIState {
   setTranslation: (msgId: string, value: string | undefined) => void
   resetForThread: () => void
   analyzeThreads: (threads: Thread[], token: string) => Promise<void>
-  generateReply: (thread: Thread, messages: Message[], token: string) => Promise<string | null>
+  generateReply: (thread: Thread, messages: Message[], token: string) => Promise<GenerateReplyResult | null>
   translateMessage: (msgId: string, text: string, token: string) => Promise<void>
   detectLanguage: (text: string, token: string) => Promise<void>
 }
@@ -108,7 +116,7 @@ export const useAIStore = create<AIState>()((set, get) => ({
       )
       const data = await parseJson<ReplyResponse>(res)
       set({ aiLoading: false })
-      if (data.reply) return data.reply
+      if (data.reply) return { reply: data.reply, autoSent: data.auto_sent === true }
       return null
     } catch {
       set({ aiLoading: false })

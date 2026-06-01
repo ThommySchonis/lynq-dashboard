@@ -36,13 +36,14 @@ import { useAuthStore } from '@/stores/auth'
 import { useAIStore } from '@/stores/ai'
 import { useMacrosStore } from '@/stores/macros'
 import { useTicketMetaStore } from '@/stores/ticket-meta'
-import { useConversations, useConversation } from '@/hooks/inbox/use-inbox-data'
+import { useConversations, useConversation, inboxKeys } from '@/hooks/inbox/use-inbox-data'
 import {
   useSendReply,
   useUpdateStatus,
   useTranslateMessage,
 } from '@/hooks/inbox/use-inbox-mutations'
 import { useComposerActions } from '@/hooks/inbox/use-composer-actions'
+import { useQueryClient } from '@tanstack/react-query'
 
 const REFUND_REASONS = [
   { value: 'customer', label: 'Customer changed mind' },
@@ -92,6 +93,7 @@ export function ConversationPanel() {
   const setSelectedThreadId = useInboxUI((s) => s.setSelectedThreadId)
 
   // AI state
+  const queryClient = useQueryClient()
   const aiLoading = useAIStore((s) => s.aiLoading)
   const setAutoTranslate = useAIStore((s) => s.setAutoTranslate)
   const generateReply = useAIStore((s) => s.generateReply)
@@ -249,13 +251,23 @@ export function ConversationPanel() {
   // AI reply
   async function handleAiReply() {
     if (!messages.length || !selectedThreadId || !selectedThread) return
-    const replyText = await generateReply(selectedThread, messages, token)
-    if (replyText) {
-      if (composerRef.current) {
-        composerRef.current.innerHTML = plainTextToSafeHtml(replyText)
-        setReply(composerRef.current.textContent)
-      } else setReply(replyText)
-    } else sonnerToast.error('AI reply failed')
+    const result = await generateReply(selectedThread, messages, token)
+    if (!result) {
+      sonnerToast.error('AI reply failed')
+      return
+    }
+    // Emma Phase 2: when the server already auto-sent the reply, surface a
+    // toast and refresh the thread instead of populating the composer.
+    // Mirrors the post-send invalidation pattern in useSendReply().
+    if (result.autoSent) {
+      sonnerToast.success('Emma sent the reply automatically.')
+      void queryClient.invalidateQueries({ queryKey: inboxKeys.all })
+      return
+    }
+    if (composerRef.current) {
+      composerRef.current.innerHTML = plainTextToSafeHtml(result.reply)
+      setReply(composerRef.current.textContent)
+    } else setReply(result.reply)
   }
 
   if (!selectedThread) {

@@ -164,3 +164,33 @@ export const aiLessonParams = z.object({
 export const aiLessonPatchBody = z.object({
   enabled: z.boolean(),
 })
+
+// --- AI Reply structured output (Emma path only) ---
+
+// The 7 canonical scenario keys + 'other'/'unknown', matching the intent CHECK
+// constraint on ai_drafts (supabase/migrations/20260601000000_ai_drafts_structured.sql)
+// and the scenario keys in the settings UI.
+export const REPLY_INTENTS = [
+  'wismo',
+  'long_delivery',
+  'lost_package',
+  'wrong_or_damaged',
+  'refund_or_cancel',
+  'customs_fees',
+  'angry_or_chargeback',
+  'other',
+  'unknown',
+] as const
+
+// Structured-output schema for generateText({ experimental_output: Output.object }).
+// `reply` carries the reply body returned to the inbox UI unchanged; the other
+// fields are persisted on the ai_drafts row.
+export const emmaReplyOutput = z.object({
+  reply:           z.string(),
+  intent:          z.enum(REPLY_INTENTS),
+  confidence:      z.number().min(0).max(1),
+  should_escalate: z.boolean(),
+  escalate_reason: z.string().nullable().optional(),
+})
+
+export type ReplyIntent = (typeof REPLY_INTENTS)[number]

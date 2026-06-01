@@ -1,4 +1,4 @@
-import { generateText } from 'ai'
+import { generateText, Output } from 'ai'
 import { anthropic } from '@ai-sdk/anthropic'
 import { supabaseAdmin } from '../../../../lib/supabaseAdmin'
 import { getAuthContext, requireWriteAccess } from '../../../../lib/auth'
@@ -6,7 +6,7 @@ import { checkAiSuggestLimit } from '../../../../lib/services/limit-check'
 import { checkRateLimit } from '@/lib/rate-limit'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { aiReplyBody } from '@/lib/schemas/ai'
+import { aiReplyBody, emmaReplyOutput, type ReplyIntent } from '@/lib/schemas/ai'
 import { resilientSdkCall } from '@/lib/resilient-fetch'
 import { serviceCatchHandler } from '@/lib/service-catch-handler'
 import {
@@ -149,24 +149,76 @@ export async function POST(request: NextRequest) {
     ? `\n\nIMPORTANT: Write your reply in ${language}. The customer is communicating in ${language}.`
     : ''
 
-  try {
-    const { text, usage } = await resilientSdkCall('anthropic', () =>
-      generateText({
-        model: anthropic('claude-haiku-4-5-20251001'),
-        system: systemPrompt + languageInstruction,
-        prompt: `Here is the full email conversation. Write a professional reply to the latest message from the customer.
+  const MODEL = 'claude-haiku-4-5-20251001'
+  const userPrompt = `Here is the full email conversation. Write a professional reply to the latest message from the customer.
 
 ${conversationContext}
 
 ---
-Write only the reply body. Do not include subject lines, metadata, or explanations. Sign off as "${brandName}".`,
-        maxOutputTokens: 600,
-      })
-    )
+Write only the reply body. Do not include subject lines, metadata, or explanations. Sign off as "${brandName}".`
+
+  try {
+    // Emma path → structured generation (reply + classification). Fallback path
+    // → existing plain-text generation, untouched. Classification metadata is
+    // null unless the Emma structured call succeeds.
+    let replyText = ''
+    let usage: { inputTokens?: number; outputTokens?: number } = {}
+    let intent: ReplyIntent | null = null
+    let confidence: number | null = null
+    let shouldEscalate: boolean | null = null
+    let escalateReason: string | null = null
+
+    if (promptPath === 'emma') {
+      try {
+        const result = await resilientSdkCall('anthropic', () =>
+          generateText({
+            model: anthropic(MODEL),
+            system: systemPrompt + languageInstruction,
+            prompt: userPrompt,
+            maxOutputTokens: 600,
+            experimental_output: Output.object({ schema: emmaReplyOutput }),
+          })
+        )
+        const out = result.experimental_output
+        replyText = out.reply
+        intent = out.intent
+        confidence = out.confidence
+        shouldEscalate = out.should_escalate
+        escalateReason = out.escalate_reason ?? null
+        usage = result.usage
+      } catch (err) {
+        // Structured-output failure: log (no content) and retry ONCE as plain
+        // text for this call only. The draft persists null classification.
+        logger.error('[ai/reply]', 'structured output failed; retrying as plain text', err)
+        const result = await resilientSdkCall('anthropic', () =>
+          generateText({
+            model: anthropic(MODEL),
+            system: systemPrompt + languageInstruction,
+            prompt: userPrompt,
+            maxOutputTokens: 600,
+          })
+        )
+        replyText = result.text
+        usage = result.usage
+      }
+    } else {
+      const result = await resilientSdkCall('anthropic', () =>
+        generateText({
+          model: anthropic(MODEL),
+          system: systemPrompt + languageInstruction,
+          prompt: userPrompt,
+          maxOutputTokens: 600,
+        })
+      )
+      replyText = result.text
+      usage = result.usage
+    }
+
+    replyText = replyText.trim()
 
     await supabaseAdmin.from('ai_usage').insert({
       route: 'reply',
-      model: 'claude-haiku-4-5-20251001',
+      model: MODEL,
       input_tokens: usage.inputTokens,
       output_tokens: usage.outputTokens,
       cost_usd: ((usage.inputTokens ?? 0) * 0.0000008) + ((usage.outputTokens ?? 0) * 0.000004),
@@ -175,8 +227,8 @@ Write only the reply body. Do not include subject lines, metadata, or explanatio
 
     // Best-effort: persist the suggestion as an ai_drafts row. This must NEVER
     // affect the response — any failure is logged with a generic message (no
-    // suggested_text / policy / scenario content) and swallowed. Skipped when
-    // there is no conversation to link the draft to (threadId absent).
+    // suggested_text / policy / scenario / model-output content) and swallowed.
+    // Skipped when there is no conversation to link the draft to (threadId absent).
     if (threadId) {
       try {
         const promptTokens = usage.inputTokens ?? null
@@ -191,18 +243,22 @@ Write only the reply body. Do not include subject lines, metadata, or explanatio
           conversation_id:   threadId,
           user_id:           user.id,
           prompt_path:       promptPath,
-          suggested_text:    text.trim(),
-          model:             'claude-haiku-4-5-20251001',
+          suggested_text:    replyText,
+          model:             MODEL,
           prompt_tokens:     promptTokens,
           completion_tokens: completionTokens,
           total_tokens:      totalTokens,
+          intent,
+          confidence,
+          should_escalate:   shouldEscalate,
+          escalate_reason:   escalateReason,
         })
       } catch (err) {
         logger.error('[ai/reply]', 'ai_drafts insert failed', err)
       }
     }
 
-    return NextResponse.json({ reply: text.trim(), threadId }, {
+    return NextResponse.json({ reply: replyText, threadId }, {
       headers: {
         'X-RateLimit-Limit': '10',
         'X-RateLimit-Remaining': String(rl.remaining),

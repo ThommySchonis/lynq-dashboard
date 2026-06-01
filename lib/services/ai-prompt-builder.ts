@@ -87,5 +87,21 @@ export function buildEmmaSystemPrompt(
     sections.push(['## Recent learnings', ...lessonBullets].join('\n'))
   }
 
+  // ── Structured output guidance ──
+  // Emma replies are generated as a structured object (see emmaReplyOutput in
+  // lib/schemas/ai.ts). Tell the model how to fill the classification fields
+  // alongside the reply text. Instructive, not verbose. Placed LAST so the
+  // model has all brand + policy + scenario + lesson context before being
+  // told the output format.
+  sections.push(
+    `## Output
+Return the reply together with a short classification:
+- reply: the customer-facing reply only — no metadata or explanations.
+- intent: the customer's underlying question. Map to one of: wismo, long_delivery, lost_package, wrong_or_damaged, refund_or_cancel, customs_fees, angry_or_chargeback. Use 'other' for on-topic but unmapped requests, 'unknown' for genuinely unclear or off-topic messages.
+- confidence: 0–1, be honest. >=0.85 when the scenario maps cleanly and the policies cover the case; 0.5–0.85 when handleable but uncertain; <0.5 when the policies don't cover this or the intent is unclear.
+- should_escalate: true when an escalate trigger above applies, when intent is angry_or_chargeback, or when confidence is low.
+- escalate_reason: a short phrase explaining why — only when should_escalate is true, otherwise null.`
+  )
+
   return sections.join('\n\n')
 }

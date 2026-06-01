@@ -21,6 +21,13 @@ interface AutonomyRow {
 // yet. Never auto-creates a row on GET — the UI is responsible for sending
 // a PUT once the user actually saves. `has_persisted_config` lets the UI
 // distinguish "showing defaults" from "showing stored values".
+//
+// Post Emma onboarding refactor: DEFAULT_AUTONOMY_CONFIG.global_block_intents
+// is now ['refund_or_return', 'cancellation', 'angry_or_chargeback']
+// (was ['refund_or_cancel', 'angry_or_chargeback']). Existing stored configs
+// were migrated in 20260603000001_ai_scenarios_onboarding_refactor.sql.
+// The PUT body still validates against aiAutonomyRulesConfig which now
+// accepts the 10 new REPLY_INTENTS values only.
 export async function GET(request: NextRequest) {
   const ctx = await getAuthContext(request)
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })

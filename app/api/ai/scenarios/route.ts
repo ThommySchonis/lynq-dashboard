@@ -9,6 +9,14 @@ import { aiScenariosQuery, aiScenarioBody } from '@/lib/schemas/ai'
 
 // GET /api/ai/scenarios?store_id={uuid}
 // Returns all ai_scenarios rows for the given store (may be empty).
+//
+// Shape after the onboarding refactor (20260603000001_ai_scenarios_onboarding_refactor.sql):
+// each row now carries five text fields the prompt builder injects per scenario:
+//   triggers / approach / must_do / must_not_do / escalate_when.
+// Canonical scenario_keys (8 total) — wismo -> order_status,
+// wrong_or_damaged -> wrong_or_damaged_item, refund_or_cancel ->
+// refund_or_return, plus a new 'cancellation' key. See lib/constants/emma-onboarding.ts
+// CANONICAL_SCENARIOS for the authoritative list.
 export async function GET(request: NextRequest) {
   const ctx = await getAuthContext(request)
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })

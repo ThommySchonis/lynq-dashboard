@@ -9,6 +9,15 @@ import { aiPoliciesQuery, aiPoliciesBody } from '@/lib/schemas/ai'
 
 // GET /api/ai/policies?store_id={uuid}
 // Returns the ai_policies row for the given store, or null if not yet created.
+//
+// Shape after the onboarding refactor (20260603000000_ai_policies_onboarding_refactor.sql):
+//   - tone_of_voice    : enum (persoonlijk_eigenaar | vriendelijk_warm |
+//                        professioneel_verzorgd | direct_efficient)
+//   - can_decide_options + can_decide_notes      (was can_decide jsonb array)
+//   - cannot_decide_options + cannot_decide_notes (was escalate_triggers jsonb array)
+//   - parcelpanel_url       (new)
+//   - cancellation_window   (new, enum '4h'|'12h'|'24h'|'none', default '24h')
+// `languages` was dropped — Emma auto-detects from the customer's message.
 export async function GET(request: NextRequest) {
   const ctx = await getAuthContext(request)
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })

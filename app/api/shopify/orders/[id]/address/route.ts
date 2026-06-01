@@ -23,6 +23,7 @@ export async function PUT(request: NextRequest, { params }: RouteContext<{ id: s
   if (bErr) return bErr
 
   const credentials = await getStoreCredentials(query.store_id, ctx.workspaceId)
+  if (!credentials) return NextResponse.json({ error: 'Store not connected to Shopify' }, { status: 422 })
 
   try {
     const shippingAddress = await updateOrderAddress(credentials, p.id, body as Parameters<typeof updateOrderAddress>[2])

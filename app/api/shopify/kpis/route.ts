@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
   if (qErr) return qErr
 
   const credentials = await getStoreCredentials(query.store_id, ctx.workspaceId)
-  if (credentials.domain === DEMO_SHOP) return NextResponse.json(DEMO_KPIS, {
+  if (credentials?.domain === DEMO_SHOP) return NextResponse.json(DEMO_KPIS, {
     headers: { 'Cache-Control': 'private, max-age=300' },
   })
 

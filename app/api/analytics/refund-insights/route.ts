@@ -27,6 +27,7 @@ export async function POST(request: NextRequest) {
   if (qErr) return qErr
 
   const credentials = await getStoreCredentials(query.store_id, ctx.workspaceId)
+  if (!credentials) return NextResponse.json({ error: 'Store not connected to Shopify' }, { status: 422 })
   if (credentials.domain === DEMO_SHOP) return NextResponse.json({ insights: DEMO_INSIGHTS })
 
   const [body, bErr] = await validateBody(request, refundInsightsBody)

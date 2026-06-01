@@ -620,13 +620,14 @@ async function matchShopifyCustomer(storeId: string | null, workspaceId: string,
   if (!storeId || !email) return null
 
   try {
-    const { domain, accessToken } = await getStoreCredentials(storeId, workspaceId)
+    const credentials = await getStoreCredentials(storeId, workspaceId)
+    if (!credentials) return null
 
     const res = await fetch(
-      `https://${domain}/admin/api/2025-04/customers/search.json?query=email:${encodeURIComponent(email)}`,
+      `https://${credentials.domain}/admin/api/2025-04/customers/search.json?query=email:${encodeURIComponent(email)}`,
       {
         headers: {
-          'X-Shopify-Access-Token': accessToken,
+          'X-Shopify-Access-Token': credentials.accessToken,
           'Content-Type': 'application/json',
         },
       }

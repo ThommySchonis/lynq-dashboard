@@ -18,6 +18,7 @@ export async function POST(request: NextRequest) {
 
   const full = query.full === 'true'
   const credentials = await getStoreCredentials(query.store_id, ctx.workspaceId)
+  if (!credentials) return NextResponse.json({ error: 'Store not connected to Shopify' }, { status: 422 })
 
   try {
     const result = await syncOrders(ctx.workspaceId, credentials, ctx.user.id, { full, storeId: query.store_id })

@@ -17,6 +17,7 @@ export async function GET(request: NextRequest) {
   if (qErr) return qErr
 
   const credentials = await getStoreCredentials(query.store_id, ctx.workspaceId)
+  if (!credentials) return NextResponse.json({ error: 'Store not connected to Shopify' }, { status: 422 })
 
   try {
     const dateRange = parseDateRange(request)

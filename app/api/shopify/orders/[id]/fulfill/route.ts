@@ -23,6 +23,7 @@ export async function POST(request: NextRequest, { params }: RouteContext<{ id: 
   if (bErr) return bErr
 
   const credentials = await getStoreCredentials(query.store_id, ctx.workspaceId)
+  if (!credentials) return NextResponse.json({ error: 'Store not connected to Shopify' }, { status: 422 })
 
   try {
     const fulfillment = await fulfillOrder(credentials, p.id, body as Parameters<typeof fulfillOrder>[2])

@@ -14,6 +14,9 @@ interface ShopifyShopDataResponse {
 
 interface ShopifyTokenResponse {
   access_token?: string
+  refresh_token?: string
+  expires_in?: number
+  refresh_token_expires_in?: number
   scope?: string
 }
 
@@ -129,6 +132,15 @@ export async function GET(request: NextRequest) {
   const shopData = await parseJson<ShopifyShopDataResponse>(shopRes)
   const storeCurrency = shopData.shop?.currency || null
 
+  // Compute expiry timestamps if Shopify returned expiring token fields
+  const now = new Date()
+  const tokenExpiresAt = tokenData.expires_in
+    ? new Date(now.getTime() + tokenData.expires_in * 1000).toISOString()
+    : null
+  const refreshTokenExpiresAt = tokenData.refresh_token_expires_in
+    ? new Date(now.getTime() + tokenData.refresh_token_expires_in * 1000).toISOString()
+    : null
+
   // 3. Write credentials to integrations (not stores)
   const { error: upsertError } = await supabaseAdmin
     .from('integrations')
@@ -139,11 +151,16 @@ export async function GET(request: NextRequest) {
         store_id: storeId,
         shopify_domain: shop,
         shopify_access_token: accessToken,
-        shopify_client_secret: process.env.SHOPIFY_CLIENT_SECRET,
+        shopify_client_id: clientId,
+        shopify_client_secret: clientSecret,
         shopify_scope: scope,
         shopify_connected_at: new Date().toISOString(),
         store_currency: storeCurrency,
         status: 'connected',
+        // Expiring token fields — null if Shopify returned non-expiring token
+        shopify_refresh_token: tokenData.refresh_token ?? null,
+        shopify_token_expires_at: tokenExpiresAt,
+        shopify_refresh_token_expires_at: refreshTokenExpiresAt,
       },
       { onConflict: 'workspace_id,store_id' }
     )

@@ -21,6 +21,7 @@ export async function POST(request: NextRequest) {
   if (qErr) return qErr
 
   const credentials = await getStoreCredentials(query.store_id, ctx.workspaceId)
+  if (!credentials) return NextResponse.json({ error: 'Store not connected to Shopify' }, { status: 422 })
 
   try {
     // Fetch all refunds (last 365 days) for pattern analysis

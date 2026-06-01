@@ -1,5 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { startCronRun, endCronRun } from '../_shared/cron-logger.ts'
+import { refreshExpiringTokens } from '../_shared/shopify-token.ts'
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!
 const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
@@ -11,10 +12,16 @@ Deno.serve(async () => {
   const runId = await startCronRun('shopify-sync', 'edge-function')
 
   try {
+    // Pre-sync: refresh any expiring Shopify tokens (10-min buffer for long syncs)
+    const tokensRefreshed = await refreshExpiringTokens(10)
+    if (tokensRefreshed > 0) {
+      console.log(`[shopify-sync] refreshed ${tokensRefreshed} expiring token(s)`)
+    }
+
     // Fetch all workspaces with active Shopify integrations
     const { data: integrations, error: intError } = await supabase
       .from('integrations')
-      .select('workspace_id, shopify_domain, shopify_access_token, client_id, store_id, workspaces(suspended_at)')
+      .select('workspace_id, shopify_domain, shopify_access_token, client_id, store_id, shopify_token_expires_at, workspaces(suspended_at)')
       .not('shopify_access_token', 'is', null)
 
     if (intError || !integrations) {
@@ -37,6 +44,12 @@ Deno.serve(async () => {
           console.log('[shopify-sync] skipping workspace', int.workspace_id, '— suspended beyond grace period')
           continue
         }
+      }
+
+      // Skip integrations with expired tokens that failed refresh
+      if (int.shopify_token_expires_at && new Date(int.shopify_token_expires_at).getTime() < Date.now()) {
+        console.log('[shopify-sync] skipping store', int.store_id, '— token expired, refresh failed')
+        continue
       }
 
       try {

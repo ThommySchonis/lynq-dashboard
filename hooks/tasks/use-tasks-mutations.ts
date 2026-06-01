@@ -2,6 +2,7 @@
 
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAuthStore } from '@/stores/auth'
+import { useStoreStore } from '@/stores/store'
 import { taskKeys } from './use-tasks-data'
 import { parseJson } from '@/lib/utils/typed-json'
 import type { CreateTaskInput, UpdateTaskInput } from '@/types/tasks'
@@ -90,11 +91,13 @@ export function useDeleteTask() {
 
 export function useGeneratePatternTasks() {
   const token = useToken()
+  const activeStoreId = useStoreStore((s) => s.activeStoreId)
   const qc = useQueryClient()
 
   return useMutation({
     mutationFn: async () => {
-      const res = await fetch('/api/tasks/generate', {
+      if (!activeStoreId) throw new Error('No store selected')
+      const res = await fetch(`/api/tasks/generate?store_id=${activeStoreId}`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
       })

@@ -58,7 +58,7 @@ export async function GET(request: NextRequest) {
 
   let query = supabaseAdmin
     .from('integrations')
-    .select('shopify_domain, shopify_connected_at, parcelpanel_api_key')
+    .select('shopify_domain, shopify_connected_at, shopify_access_token, parcelpanel_api_key')
     .eq('workspace_id', ctx.workspaceId)
 
   if (storeId) {
@@ -67,9 +67,9 @@ export async function GET(request: NextRequest) {
 
   const { data } = await query.maybeSingle()
 
-  const integration = data as IntegrationRow | null
+  const integration = data as (IntegrationRow & { shopify_access_token?: string }) | null
   return NextResponse.json({
-    shopify: !!integration?.shopify_domain,
+    shopify: !!integration?.shopify_domain && !!integration?.shopify_access_token,
     shopifyDomain: integration?.shopify_domain || null,
     parcelpanel: !!integration?.parcelpanel_api_key,
   })

@@ -11,13 +11,17 @@
 // (Phase 2 concern).
 
 import { CANONICAL_SCENARIO_TITLES } from './ai-onboarding'
-import type { AiPolicies, AiScenario } from './ai-onboarding'
+import type { AiLesson, AiPolicies, AiScenario } from './ai-onboarding'
 
 const has = (v: string | null | undefined): v is string => !!v && v.trim().length > 0
 const hasList = (v: string[] | null | undefined): v is string[] => Array.isArray(v) && v.length > 0
 const bullets = (items: string[]): string => items.map((i) => `- ${i}`).join('\n')
 
-export function buildEmmaSystemPrompt(policies: AiPolicies, scenarios: AiScenario[]): string {
+export function buildEmmaSystemPrompt(
+  policies: AiPolicies,
+  scenarios: AiScenario[],
+  lessons: AiLesson[] = []
+): string {
   const sections: string[] = []
 
   const brandName = has(policies.brand_name) ? policies.brand_name.trim() : 'the brand'
@@ -63,6 +67,24 @@ export function buildEmmaSystemPrompt(policies: AiPolicies, scenarios: AiScenari
 
   if (scenarioBlocks.length > 0) {
     sections.push(['## Scenarios', ...scenarioBlocks].join('\n\n'))
+  }
+
+  // ── Recent learnings (manual lessons from Settings → AI agent → Lessons) ──
+  // Placed AFTER scenarios so brand + policies + scenarios anchor the
+  // response shape first, and lessons refine it. The query-side LIMIT lives
+  // in getEnabledLessons (lib/services/ai-onboarding.ts) — this builder
+  // formats whatever it receives. Section is omitted entirely when the list
+  // is empty (no empty header).
+  const lessonBullets = lessons
+    .map((l) => {
+      const text = l.lesson_text.trim()
+      if (!text) return ''
+      return l.applies_to_scenario ? `- [${l.applies_to_scenario}] ${text}` : `- ${text}`
+    })
+    .filter(Boolean)
+
+  if (lessonBullets.length > 0) {
+    sections.push(['## Recent learnings', ...lessonBullets].join('\n'))
   }
 
   return sections.join('\n\n')

@@ -43,11 +43,25 @@ export interface AiScenario {
   enabled: boolean | null
 }
 
+export interface AiLesson {
+  id: string
+  lesson_text: string
+  applies_to_scenario: string | null
+  created_at: string
+}
+
 export interface OnboardingStatus {
   isComplete: boolean
   policies: AiPolicies | null
   scenarios: AiScenario[]
 }
+
+/**
+ * Cap on lessons injected into a single Emma prompt. Surfaced in the
+ * Lessons UI as "N of 50 active" so the user knows what the model
+ * actually sees.
+ */
+export const LESSON_PROMPT_LIMIT = 50
 
 // The 7 canonical scenarios, with the same human-readable titles the UI uses
 // (components/features/settings/ai-agent/scenarios-section.tsx). The prompt
@@ -152,4 +166,33 @@ export async function getOnboardingStatus(
     policies,
     scenarios,
   }
+}
+
+/**
+ * Read enabled lessons for a store, newest first, capped at `limit`.
+ * Used by the Emma prompt builder via /api/ai/reply. Single indexed
+ * query (idx_ai_lessons_store from 20260530000000_ai_agent_tables.sql
+ * covers the store_id predicate; workspace_id + enabled stay in the
+ * filter for defense-in-depth).
+ *
+ * Throws on DB error — callers are expected to wrap in try/catch and
+ * fall back to an empty array so AI Suggest never 500s because of a
+ * lessons read. Mirrors getOnboardingStatus's "throw, caller decides"
+ * contract.
+ */
+export async function getEnabledLessons(
+  storeId: string,
+  workspaceId: string,
+  limit: number = LESSON_PROMPT_LIMIT
+): Promise<AiLesson[]> {
+  const { data, error } = await supabaseAdmin
+    .from('ai_lessons')
+    .select('id, lesson_text, applies_to_scenario, created_at')
+    .eq('workspace_id', workspaceId)
+    .eq('store_id', storeId)
+    .eq('enabled', true)
+    .order('created_at', { ascending: false })
+    .limit(limit)
+  if (error) throw error
+  return (data as unknown as AiLesson[] | null) ?? []
 }

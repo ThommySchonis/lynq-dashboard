@@ -26,19 +26,21 @@ import type { AiAutonomyRulesConfig } from '@/lib/schemas/ai'
 import { REPLY_INTENTS, DEFAULT_AUTONOMY_CONFIG } from '@/lib/schemas/ai'
 import { SCENARIOS } from './scenarios-section'
 
-// Human-readable label for each of the 9 REPLY_INTENTS. Mirrors the titles
-// from SCENARIOS for the 7 canonical scenario keys; adds the two intent-only
-// values (other / unknown) which don't have a scenario row.
+// Human-readable label for each of the 10 REPLY_INTENTS post Emma
+// onboarding refactor. Mirrors the titles from SCENARIOS for the 8
+// canonical scenario keys; adds the two intent-only values (other /
+// unknown) which don't have a scenario row.
 const INTENT_LABELS: Record<(typeof REPLY_INTENTS)[number], string> = {
-  wismo:                'Where is my order?',
-  long_delivery:        'Long delivery time',
-  lost_package:         'Lost package',
-  wrong_or_damaged:     'Wrong or damaged item',
-  refund_or_cancel:     'Refund or cancellation',
-  customs_fees:         'Customs fees',
-  angry_or_chargeback:  'Angry customer or chargeback',
-  other:                'Other (on-topic but unmapped)',
-  unknown:              'Unknown / off-topic',
+  order_status:           'Where is my order?',
+  long_delivery:          'Long delivery time',
+  lost_package:           'Lost package',
+  wrong_or_damaged_item:  'Wrong or damaged item',
+  refund_or_return:       'Refund or return',
+  cancellation:           'Cancellation',
+  customs_fees:           'Customs fees',
+  angry_or_chargeback:    'Angry customer or chargeback',
+  other:                  'Other (on-topic but unmapped)',
+  unknown:                'Unknown / off-topic',
 }
 
 const sameList = (a: string[], b: string[]) =>

@@ -3,18 +3,28 @@
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { SettingsSection, SettingsCard } from '@/components/features/settings/settings-section'
 import { SettingsField } from '@/components/features/settings/settings-field'
 import { StatusBadge } from '@/components/features/settings/status-badge'
-import { ChipInput } from '@/components/shared/chip-input'
+import {
+  TONE_OF_VOICE_OPTIONS,
+  DEFAULT_TONE_OF_VOICE,
+} from '@/lib/constants/emma-onboarding'
+import type { ToneOfVoiceKey } from '@/lib/schemas/ai'
 
 export interface FundamentValues {
-  brand_name: string
+  brand_name:        string
   brand_description: string
-  tone_of_voice: string
-  sign_off: string
-  languages: string[]
-  website_url: string
+  tone_of_voice:     ToneOfVoiceKey
+  sign_off:          string
+  website_url:       string
 }
 
 interface FundamentSectionProps {
@@ -26,6 +36,9 @@ interface FundamentSectionProps {
   onChange: (patch: Partial<FundamentValues>) => void
   onSave: () => void
 }
+
+const TONE_KEYS = TONE_OF_VOICE_OPTIONS.map((o) => o.key) as readonly ToneOfVoiceKey[]
+const isToneKey = (v: string): v is ToneOfVoiceKey => (TONE_KEYS as readonly string[]).includes(v)
 
 export function FundamentSection({
   values,
@@ -86,16 +99,26 @@ export function FundamentSection({
           <SettingsField
             label="Tone of voice"
             htmlFor="ai-tone"
-            hint="e.g. Warm & personal, Professional & efficient."
+            hint="Pick the voice Emma should use in every reply."
           >
-            <Input
-              id="ai-tone"
-              type="text"
+            <Select
               value={values.tone_of_voice}
-              onChange={(e) => onChange({ tone_of_voice: e.target.value })}
-              placeholder="How replies should sound"
+              onValueChange={(v) => {
+                if (v && isToneKey(v)) onChange({ tone_of_voice: v })
+              }}
               disabled={!canEdit}
-            />
+            >
+              <SelectTrigger id="ai-tone" className="w-full">
+                <SelectValue placeholder="Choose a tone" />
+              </SelectTrigger>
+              <SelectContent>
+                {TONE_OF_VOICE_OPTIONS.map((opt) => (
+                  <SelectItem key={opt.key} value={opt.key}>
+                    {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </SettingsField>
 
           <SettingsField
@@ -109,18 +132,6 @@ export function FundamentSection({
               value={values.sign_off}
               onChange={(e) => onChange({ sign_off: e.target.value })}
               placeholder="Kind regards, the team"
-              disabled={!canEdit}
-            />
-          </SettingsField>
-
-          <SettingsField
-            label="Languages"
-            hint="Languages the agent may reply in. Type and press Enter."
-          >
-            <ChipInput
-              value={values.languages}
-              onChange={(languages) => onChange({ languages })}
-              placeholder="e.g. English, Nederlands…"
               disabled={!canEdit}
             />
           </SettingsField>
@@ -139,4 +150,12 @@ export function FundamentSection({
       </SettingsCard>
     </SettingsSection>
   )
+}
+
+/** Coerce a stored tone_of_voice value (possibly legacy free-text) to a
+ *  valid TONE_OF_VOICE_KEYS member. Used by the onboarding shell when
+ *  seeding the form from the loaded policies row.
+ */
+export function coerceToneOfVoice(stored: string | null | undefined): ToneOfVoiceKey {
+  return stored && isToneKey(stored) ? stored : DEFAULT_TONE_OF_VOICE
 }

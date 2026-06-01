@@ -17,6 +17,10 @@ export const aiScenarioKeys = {
   byStore:   (storeId: string) => [...aiScenarioKeys.all, storeId] as const,
 }
 
+// Shape after the Emma onboarding refactor — `languages`, `can_decide`,
+// `escalate_triggers` are gone; `*_options` + `*_notes` pairs replace
+// them; tone_of_voice is the enum key; parcelpanel_url + cancellation_window
+// are new. Fields stay optional so partial PATCH/PUT bodies type-check.
 export interface AiPoliciesRow {
   id?: string
   store_id?: string
@@ -25,27 +29,35 @@ export interface AiPoliciesRow {
   brand_description?: string | null
   tone_of_voice?: string | null
   sign_off?: string | null
-  languages?: string[]
   website_url?: string | null
   shipping_policy?: string | null
   refund_policy?: string | null
   customs_policy?: string | null
-  can_decide?: string[]
-  cannot_decide?: string[]
-  escalate_triggers?: string[]
+  can_decide_options?: string[]
+  can_decide_notes?: string | null
+  cannot_decide_options?: string[]
+  cannot_decide_notes?: string | null
+  parcelpanel_url?: string | null
+  cancellation_window?: string | null
   tracking_url?: string | null
 }
 
+// Five-field scenario shape post-refactor — triggers / must_do /
+// must_not_do are new; questions_to_ask + response_template stay on the
+// type as legacy fields for backwards compatibility.
 export interface AiScenarioRow {
   id?: string
   store_id?: string
   workspace_id?: string
   scenario_key?: string
   title?: string | null
+  triggers?: string | null
   approach?: string | null
+  must_do?: string | null
+  must_not_do?: string | null
+  escalate_when?: string | null
   questions_to_ask?: string[]
   response_template?: string | null
-  escalate_when?: string | null
   autonomy_pct?: number
   enabled?: boolean
 }

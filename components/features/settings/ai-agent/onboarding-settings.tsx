@@ -21,48 +21,65 @@ import {
   useUpsertAiPolicies,
 } from '@/hooks/ai'
 import type { AiPoliciesRow } from '@/hooks/ai'
-import { FundamentSection } from './fundament-section'
+import type { CancellationWindowKey, ToneOfVoiceKey } from '@/lib/schemas/ai'
+import {
+  CANONICAL_SCENARIOS,
+  DEFAULT_CANCELLATION_WINDOW,
+} from '@/lib/constants/emma-onboarding'
+import { FundamentSection, coerceToneOfVoice } from './fundament-section'
 import type { FundamentValues } from './fundament-section'
 import { PoliciesSection } from './policies-section'
 import type { PoliciesValues } from './policies-section'
-import { ScenariosSection, SCENARIOS } from './scenarios-section'
+import { ScenariosSection } from './scenarios-section'
 
 // ── Policies form state (Fundament + Policies write to the SAME ai_policies row) ──
 interface PoliciesForm extends FundamentValues, PoliciesValues {}
 
-const EMPTY_FORM: PoliciesForm = {
-  // Fundament
-  brand_name: '',
-  brand_description: '',
-  tone_of_voice: '',
-  sign_off: '',
-  languages: [],
-  website_url: '',
-  // Policies & rules
-  shipping_policy: '',
-  refund_policy: '',
-  customs_policy: '',
-  can_decide: [],
-  cannot_decide: [],
-  escalate_triggers: [],
-  tracking_url: '',
+function emptyForm(): PoliciesForm {
+  return {
+    // Fundament
+    brand_name:        '',
+    brand_description: '',
+    tone_of_voice:     coerceToneOfVoice(null),
+    sign_off:          '',
+    website_url:       '',
+    // Policies & rules
+    shipping_policy:        '',
+    refund_policy:          '',
+    customs_policy:         '',
+    can_decide_options:     [],
+    can_decide_notes:       '',
+    cannot_decide_options:  [],
+    cannot_decide_notes:    '',
+    parcelpanel_url:        '',
+    cancellation_window:    DEFAULT_CANCELLATION_WINDOW,
+    tracking_url:           '',
+  }
+}
+
+function isCancellationWindow(v: string | null | undefined): v is CancellationWindowKey {
+  return v === '4h' || v === '12h' || v === '24h' || v === 'none'
 }
 
 function rowToForm(row: AiPoliciesRow | null | undefined): PoliciesForm {
   return {
-    brand_name: row?.brand_name ?? '',
-    brand_description: row?.brand_description ?? '',
-    tone_of_voice: row?.tone_of_voice ?? '',
-    sign_off: row?.sign_off ?? '',
-    languages: row?.languages ?? [],
-    website_url: row?.website_url ?? '',
-    shipping_policy: row?.shipping_policy ?? '',
-    refund_policy: row?.refund_policy ?? '',
-    customs_policy: row?.customs_policy ?? '',
-    can_decide: row?.can_decide ?? [],
-    cannot_decide: row?.cannot_decide ?? [],
-    escalate_triggers: row?.escalate_triggers ?? [],
-    tracking_url: row?.tracking_url ?? '',
+    brand_name:             row?.brand_name ?? '',
+    brand_description:      row?.brand_description ?? '',
+    tone_of_voice:          coerceToneOfVoice(row?.tone_of_voice),
+    sign_off:               row?.sign_off ?? '',
+    website_url:            row?.website_url ?? '',
+    shipping_policy:        row?.shipping_policy ?? '',
+    refund_policy:          row?.refund_policy ?? '',
+    customs_policy:         row?.customs_policy ?? '',
+    can_decide_options:     row?.can_decide_options ?? [],
+    can_decide_notes:       row?.can_decide_notes ?? '',
+    cannot_decide_options:  row?.cannot_decide_options ?? [],
+    cannot_decide_notes:    row?.cannot_decide_notes ?? '',
+    parcelpanel_url:        row?.parcelpanel_url ?? '',
+    cancellation_window:    isCancellationWindow(row?.cancellation_window)
+                              ? row.cancellation_window
+                              : DEFAULT_CANCELLATION_WINDOW,
+    tracking_url:           row?.tracking_url ?? '',
   }
 }
 
@@ -103,8 +120,8 @@ export function OnboardingSettings() {
   const upsertPolicies = useUpsertAiPolicies(storeId)
 
   // ── Local form state, seeded from the server row ──
-  const [form, setForm] = useState<PoliciesForm>(EMPTY_FORM)
-  const [init, setInit] = useState<PoliciesForm>(EMPTY_FORM)
+  const [form, setForm] = useState<PoliciesForm>(emptyForm)
+  const [init, setInit] = useState<PoliciesForm>(emptyForm)
   const [savingFundament, setSavingFundament] = useState(false)
   const [savingPolicies, setSavingPolicies] = useState(false)
 
@@ -120,24 +137,23 @@ export function OnboardingSettings() {
     form.brand_description !== init.brand_description ||
     form.tone_of_voice !== init.tone_of_voice ||
     form.sign_off !== init.sign_off ||
-    form.website_url !== init.website_url ||
-    !sameList(form.languages, init.languages)
+    form.website_url !== init.website_url
 
   const policiesDirty =
     form.shipping_policy !== init.shipping_policy ||
     form.refund_policy !== init.refund_policy ||
     form.customs_policy !== init.customs_policy ||
     form.tracking_url !== init.tracking_url ||
-    !sameList(form.can_decide, init.can_decide) ||
-    !sameList(form.cannot_decide, init.cannot_decide) ||
-    !sameList(form.escalate_triggers, init.escalate_triggers)
+    form.can_decide_notes !== init.can_decide_notes ||
+    form.cannot_decide_notes !== init.cannot_decide_notes ||
+    form.parcelpanel_url !== init.parcelpanel_url ||
+    form.cancellation_window !== init.cancellation_window ||
+    !sameList(form.can_decide_options, init.can_decide_options) ||
+    !sameList(form.cannot_decide_options, init.cannot_decide_options)
 
   // ── Completeness (UI-only; computed from saved server data so badges
-  //    reflect what is actually stored and update after each save) ──
-  //  • Fundament: brand_name + tone_of_voice + sign_off all non-empty.
-  //  • Policies:  shipping_policy + refund_policy + can_decide (non-empty)
-  //               + escalate_triggers (non-empty) all present.
-  //  • Scenarios: all 7 canonical scenarios have approach + escalate_when.
+  //    reflect what is actually stored and update after each save). Mirrors
+  //    getOnboardingStatus in lib/services/ai-onboarding.ts per Notion §6. ──
   const fundamentComplete = !!(
     policies?.brand_name?.trim() &&
     policies?.tone_of_voice?.trim() &&
@@ -146,12 +162,20 @@ export function OnboardingSettings() {
   const policiesComplete = !!(
     policies?.shipping_policy?.trim() &&
     policies?.refund_policy?.trim() &&
-    policies?.can_decide?.length &&
-    policies?.escalate_triggers?.length
+    (policies?.can_decide_options?.length || policies?.can_decide_notes?.trim()) &&
+    (policies?.cannot_decide_options?.length || policies?.cannot_decide_notes?.trim()) &&
+    policies?.parcelpanel_url?.trim() &&
+    policies?.cancellation_window?.trim()
   )
-  const scenariosComplete = SCENARIOS.every((s) => {
+  const scenariosComplete = CANONICAL_SCENARIOS.every((s) => {
     const row = scenarios?.find((r) => r.scenario_key === s.key)
-    return !!(row?.approach?.trim() && row?.escalate_when?.trim())
+    return !!(
+      row?.triggers?.trim() &&
+      row?.approach?.trim() &&
+      row?.must_do?.trim() &&
+      row?.must_not_do?.trim() &&
+      row?.escalate_when?.trim()
+    )
   })
 
   // ── Save handlers (each section saves only its own fields; omitted fields
@@ -162,21 +186,19 @@ export function OnboardingSettings() {
     setSavingFundament(true)
     try {
       await upsertPolicies.mutateAsync({
-        brand_name: form.brand_name,
+        brand_name:        form.brand_name,
         brand_description: form.brand_description,
-        tone_of_voice: form.tone_of_voice,
-        sign_off: form.sign_off,
-        languages: form.languages,
-        website_url: form.website_url,
+        tone_of_voice:     form.tone_of_voice as ToneOfVoiceKey,
+        sign_off:          form.sign_off,
+        website_url:       form.website_url,
       })
       setInit((prev) => ({
         ...prev,
-        brand_name: form.brand_name,
+        brand_name:        form.brand_name,
         brand_description: form.brand_description,
-        tone_of_voice: form.tone_of_voice,
-        sign_off: form.sign_off,
-        languages: form.languages,
-        website_url: form.website_url,
+        tone_of_voice:     form.tone_of_voice,
+        sign_off:          form.sign_off,
+        website_url:       form.website_url,
       }))
     } finally {
       setSavingFundament(false)
@@ -188,23 +210,29 @@ export function OnboardingSettings() {
     setSavingPolicies(true)
     try {
       await upsertPolicies.mutateAsync({
-        shipping_policy: form.shipping_policy,
-        refund_policy: form.refund_policy,
-        customs_policy: form.customs_policy,
-        can_decide: form.can_decide,
-        cannot_decide: form.cannot_decide,
-        escalate_triggers: form.escalate_triggers,
-        tracking_url: form.tracking_url,
+        shipping_policy:        form.shipping_policy,
+        refund_policy:          form.refund_policy,
+        customs_policy:         form.customs_policy,
+        can_decide_options:     form.can_decide_options,
+        can_decide_notes:       form.can_decide_notes,
+        cannot_decide_options:  form.cannot_decide_options,
+        cannot_decide_notes:    form.cannot_decide_notes,
+        parcelpanel_url:        form.parcelpanel_url,
+        cancellation_window:    form.cancellation_window,
+        tracking_url:           form.tracking_url,
       })
       setInit((prev) => ({
         ...prev,
-        shipping_policy: form.shipping_policy,
-        refund_policy: form.refund_policy,
-        customs_policy: form.customs_policy,
-        can_decide: form.can_decide,
-        cannot_decide: form.cannot_decide,
-        escalate_triggers: form.escalate_triggers,
-        tracking_url: form.tracking_url,
+        shipping_policy:        form.shipping_policy,
+        refund_policy:          form.refund_policy,
+        customs_policy:         form.customs_policy,
+        can_decide_options:     form.can_decide_options,
+        can_decide_notes:       form.can_decide_notes,
+        cannot_decide_options:  form.cannot_decide_options,
+        cannot_decide_notes:    form.cannot_decide_notes,
+        parcelpanel_url:        form.parcelpanel_url,
+        cancellation_window:    form.cancellation_window,
+        tracking_url:           form.tracking_url,
       }))
     } finally {
       setSavingPolicies(false)

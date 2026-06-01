@@ -3,19 +3,35 @@
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
+import { Checkbox } from '@/components/ui/checkbox'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { SettingsSection, SettingsCard } from '@/components/features/settings/settings-section'
 import { SettingsField } from '@/components/features/settings/settings-field'
 import { StatusBadge } from '@/components/features/settings/status-badge'
-import { ChipInput } from '@/components/shared/chip-input'
+import {
+  CAN_DECIDE_PREDEFINED,
+  CANNOT_DECIDE_PREDEFINED,
+  CANCELLATION_WINDOW_OPTIONS,
+} from '@/lib/constants/emma-onboarding'
+import type { CancellationWindowKey } from '@/lib/schemas/ai'
 
 export interface PoliciesValues {
-  shipping_policy: string
-  refund_policy: string
-  customs_policy: string
-  can_decide: string[]
-  cannot_decide: string[]
-  escalate_triggers: string[]
-  tracking_url: string
+  shipping_policy:        string
+  refund_policy:          string
+  customs_policy:         string
+  can_decide_options:     string[]
+  can_decide_notes:       string
+  cannot_decide_options:  string[]
+  cannot_decide_notes:    string
+  parcelpanel_url:        string
+  cancellation_window:    CancellationWindowKey
+  tracking_url:           string
 }
 
 interface PoliciesSectionProps {
@@ -28,6 +44,47 @@ interface PoliciesSectionProps {
   onSave: () => void
 }
 
+const CW_KEYS = CANCELLATION_WINDOW_OPTIONS.map((o) => o.key) as readonly CancellationWindowKey[]
+const isCwKey = (v: string): v is CancellationWindowKey =>
+  (CW_KEYS as readonly string[]).includes(v)
+
+interface OptionListProps {
+  items:    string[]
+  selected: string[]
+  canEdit:  boolean
+  onToggle: (item: string, checked: boolean) => void
+  idPrefix: string
+}
+
+function OptionList({ items, selected, canEdit, onToggle, idPrefix }: OptionListProps) {
+  return (
+    <div className="flex flex-col gap-2.5">
+      {items.map((item, i) => {
+        const id = `${idPrefix}-${i}`
+        const checked = selected.includes(item)
+        return (
+          <label
+            key={item}
+            htmlFor={id}
+            className="flex items-start gap-3 cursor-pointer group/option"
+          >
+            <Checkbox
+              id={id}
+              checked={checked}
+              onCheckedChange={(c) => onToggle(item, c === true)}
+              disabled={!canEdit}
+              className="mt-0.5"
+            />
+            <span className="text-sm text-foreground group-has-disabled/option:opacity-50">
+              {item}
+            </span>
+          </label>
+        )
+      })}
+    </div>
+  )
+}
+
 export function PoliciesSection({
   values,
   canEdit,
@@ -37,6 +94,22 @@ export function PoliciesSection({
   onChange,
   onSave,
 }: PoliciesSectionProps) {
+  function toggleCanDecide(item: string, checked: boolean) {
+    onChange({
+      can_decide_options: checked
+        ? Array.from(new Set([...values.can_decide_options, item]))
+        : values.can_decide_options.filter((v) => v !== item),
+    })
+  }
+
+  function toggleCannotDecide(item: string, checked: boolean) {
+    onChange({
+      cannot_decide_options: checked
+        ? Array.from(new Set([...values.cannot_decide_options, item]))
+        : values.cannot_decide_options.filter((v) => v !== item),
+    })
+  }
+
   return (
     <SettingsSection
       title="Policies & regels"
@@ -57,7 +130,7 @@ export function PoliciesSection({
           ) : undefined
         }
       >
-        <div className="flex flex-col gap-5">
+        <div className="flex flex-col gap-6">
           <SettingsField label="Shipping policy" htmlFor="ai-shipping">
             <Textarea
               id="ai-shipping"
@@ -93,41 +166,93 @@ export function PoliciesSection({
 
           <SettingsField
             label="Agent can decide"
-            hint="Things the agent may resolve on its own. Type and press Enter."
+            hint="Pick what Emma may resolve on her own. Add aanvullende notities hieronder."
           >
-            <ChipInput
-              value={values.can_decide}
-              onChange={(can_decide) => onChange({ can_decide })}
-              placeholder="e.g. Resend tracking link…"
+            <OptionList
+              items={CAN_DECIDE_PREDEFINED}
+              selected={values.can_decide_options}
+              canEdit={canEdit}
+              onToggle={toggleCanDecide}
+              idPrefix="ai-can-decide"
+            />
+          </SettingsField>
+
+          <SettingsField label="Aanvullende notities (can decide)" htmlFor="ai-can-decide-notes">
+            <Textarea
+              id="ai-can-decide-notes"
+              value={values.can_decide_notes}
+              onChange={(e) => onChange({ can_decide_notes: e.target.value })}
+              placeholder="Brand-specifieke aanvullingen voor wat Emma zelfstandig mag doen…"
               disabled={!canEdit}
+              rows={3}
             />
           </SettingsField>
 
           <SettingsField
             label="Agent cannot decide"
-            hint="Things the agent must never decide on its own."
+            hint="Pick wat Emma nooit zelfstandig mag beslissen. Aanvullende notities hieronder."
           >
-            <ChipInput
-              value={values.cannot_decide}
-              onChange={(cannot_decide) => onChange({ cannot_decide })}
-              placeholder="e.g. Approve refunds over €100…"
+            <OptionList
+              items={CANNOT_DECIDE_PREDEFINED}
+              selected={values.cannot_decide_options}
+              canEdit={canEdit}
+              onToggle={toggleCannotDecide}
+              idPrefix="ai-cannot-decide"
+            />
+          </SettingsField>
+
+          <SettingsField label="Aanvullende notities (cannot decide)" htmlFor="ai-cannot-decide-notes">
+            <Textarea
+              id="ai-cannot-decide-notes"
+              value={values.cannot_decide_notes}
+              onChange={(e) => onChange({ cannot_decide_notes: e.target.value })}
+              placeholder="Brand-specifieke aanvullingen voor wat Emma nooit mag doen…"
+              disabled={!canEdit}
+              rows={3}
+            />
+          </SettingsField>
+
+          <SettingsField
+            label="ParcelPanel tracking URL"
+            htmlFor="ai-parcelpanel"
+            hint="Statische tracking-URL waarmee Emma klanten doorverwijst voor actuele status."
+          >
+            <Input
+              id="ai-parcelpanel"
+              type="text"
+              value={values.parcelpanel_url}
+              onChange={(e) => onChange({ parcelpanel_url: e.target.value })}
+              placeholder="https://track.example.com"
               disabled={!canEdit}
             />
           </SettingsField>
 
           <SettingsField
-            label="Escalate triggers"
-            hint="Situations that should always be handed to a human."
+            label="Cancellation window"
+            htmlFor="ai-cancellation-window"
+            hint="Hoe lang na een bestelling kan een klant nog annuleren?"
           >
-            <ChipInput
-              value={values.escalate_triggers}
-              onChange={(escalate_triggers) => onChange({ escalate_triggers })}
-              placeholder="e.g. Legal threat, chargeback…"
+            <Select
+              value={values.cancellation_window}
+              onValueChange={(v) => {
+                if (v && isCwKey(v)) onChange({ cancellation_window: v })
+              }}
               disabled={!canEdit}
-            />
+            >
+              <SelectTrigger id="ai-cancellation-window" className="w-full max-w-xs">
+                <SelectValue placeholder="Kies een window" />
+              </SelectTrigger>
+              <SelectContent>
+                {CANCELLATION_WINDOW_OPTIONS.map((opt) => (
+                  <SelectItem key={opt.key} value={opt.key}>
+                    {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </SettingsField>
 
-          <SettingsField label="Tracking URL" htmlFor="ai-tracking">
+          <SettingsField label="Tracking URL template" htmlFor="ai-tracking">
             <Input
               id="ai-tracking"
               type="text"

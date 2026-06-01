@@ -1,6 +1,6 @@
 // lib/services/ai-onboarding.ts
 //
-// Emma Phase 1 — server-side onboarding gate for /api/ai/reply.
+// Emma server-side onboarding gate for /api/ai/reply.
 //
 // Given a store, reports whether its AI agent onboarding is complete and
 // returns the raw ai_policies row + ai_scenarios rows so a caller can build
@@ -15,32 +15,55 @@
 // have verified the workspace context via getAuthContext before invoking.
 
 import { supabaseAdmin } from '../supabaseAdmin'
+import {
+  CANONICAL_SCENARIO_KEYS,
+  CANONICAL_SCENARIO_TITLES,
+} from '@/lib/constants/emma-onboarding'
 
+// Re-export so existing importers (lib/services/ai-prompt-builder.ts) keep
+// working with their current import path. The canonical definitions live
+// in lib/constants/emma-onboarding.ts now.
+export { CANONICAL_SCENARIO_KEYS, CANONICAL_SCENARIO_TITLES }
+
+// Shape after the onboarding refactor — 20260603000000_ai_policies_onboarding_refactor.sql
+//   - languages dropped (Emma auto-detects from the customer message)
+//   - can_decide / escalate_triggers replaced by *_options + *_notes pairs
+//   - parcelpanel_url + cancellation_window added
+//   - tone_of_voice stays text so old free-text values remain readable; the
+//     UI coerces unknown values to 'persoonlijk_eigenaar' on next save.
 export interface AiPolicies {
-  brand_name: string | null
-  brand_description: string | null
-  tone_of_voice: string | null
-  sign_off: string | null
-  languages: string[] | null
-  website_url: string | null
-  shipping_policy: string | null
-  refund_policy: string | null
-  customs_policy: string | null
-  can_decide: string[] | null
-  cannot_decide: string[] | null
-  escalate_triggers: string[] | null
-  tracking_url: string | null
+  brand_name:             string | null
+  brand_description:      string | null
+  tone_of_voice:          string | null
+  sign_off:               string | null
+  website_url:            string | null
+  shipping_policy:        string | null
+  refund_policy:          string | null
+  customs_policy:         string | null
+  can_decide_options:     string[] | null
+  can_decide_notes:       string | null
+  cannot_decide_options:  string[] | null
+  cannot_decide_notes:    string | null
+  parcelpanel_url:        string | null
+  cancellation_window:    string | null
+  tracking_url:           string | null
 }
 
+// Shape after 20260603000001_ai_scenarios_onboarding_refactor.sql —
+// five text fields per scenario.
 export interface AiScenario {
-  scenario_key: string
-  title: string | null
-  approach: string | null
-  questions_to_ask: string[] | null
+  scenario_key:      string
+  title:             string | null
+  triggers:          string | null
+  approach:          string | null
+  must_do:           string | null
+  must_not_do:       string | null
+  escalate_when:     string | null
+  // Carried for backwards compatibility; not used by the prompt builder anymore.
+  questions_to_ask:  string[] | null
   response_template: string | null
-  escalate_when: string | null
-  autonomy_pct: number | null
-  enabled: boolean | null
+  autonomy_pct:      number | null
+  enabled:           boolean | null
 }
 
 export interface AiLesson {
@@ -62,21 +85,6 @@ export interface OnboardingStatus {
  * actually sees.
  */
 export const LESSON_PROMPT_LIMIT = 50
-
-// The 7 canonical scenarios, with the same human-readable titles the UI uses
-// (components/features/settings/ai-agent/scenarios-section.tsx). The prompt
-// builder reuses CANONICAL_SCENARIO_TITLES for scenario headings.
-export const CANONICAL_SCENARIO_TITLES: Record<string, string> = {
-  wismo:                'Where is my order?',
-  long_delivery:        'Long delivery time',
-  lost_package:         'Lost package',
-  wrong_or_damaged:     'Wrong or damaged item',
-  refund_or_cancel:     'Refund or cancellation',
-  customs_fees:         'Customs fees',
-  angry_or_chargeback:  'Angry customer or chargeback',
-}
-
-export const CANONICAL_SCENARIO_KEYS: string[] = Object.keys(CANONICAL_SCENARIO_TITLES)
 
 const nonEmpty = (v: string | null | undefined): boolean => !!v && v.trim().length > 0
 const nonEmptyList = (v: string[] | null | undefined): boolean => Array.isArray(v) && v.length > 0
@@ -106,12 +114,16 @@ export async function resolveStoreIdForThread(
  * Read ai_policies + ai_scenarios for a store and evaluate onboarding
  * completeness. Two queries, run in parallel — no per-row fetch loops.
  *
- * Completeness rules (mirror the UI exactly):
+ * Completeness rules per Notion §6 — mirror the UI exactly:
  *  • Fundament — brand_name + tone_of_voice + sign_off all non-empty.
- *  • Policies  — shipping_policy + refund_policy non-empty AND can_decide
- *                non-empty array AND escalate_triggers non-empty array.
- *  • Scenarios — every one of the 7 canonical scenario_keys has a row with
- *                non-empty approach AND non-empty escalate_when.
+ *  • Policies  — shipping_policy + refund_policy non-empty AND
+ *                (can_decide_options non-empty OR can_decide_notes non-empty)
+ *                AND
+ *                (cannot_decide_options non-empty OR cannot_decide_notes non-empty)
+ *                AND parcelpanel_url non-empty AND cancellation_window non-empty.
+ *  • Scenarios — every one of the 8 canonical scenario_keys has a row with
+ *                triggers + approach + must_do + must_not_do + escalate_when
+ *                all non-empty.
  */
 export async function getOnboardingStatus(
   storeId: string,
@@ -121,9 +133,11 @@ export async function getOnboardingStatus(
     supabaseAdmin
       .from('ai_policies')
       .select(
-        'brand_name, brand_description, tone_of_voice, sign_off, languages, website_url, ' +
-          'shipping_policy, refund_policy, customs_policy, can_decide, cannot_decide, ' +
-          'escalate_triggers, tracking_url'
+        'brand_name, brand_description, tone_of_voice, sign_off, website_url, ' +
+          'shipping_policy, refund_policy, customs_policy, ' +
+          'can_decide_options, can_decide_notes, ' +
+          'cannot_decide_options, cannot_decide_notes, ' +
+          'parcelpanel_url, cancellation_window, tracking_url'
       )
       .eq('workspace_id', workspaceId)
       .eq('store_id', storeId)
@@ -131,8 +145,8 @@ export async function getOnboardingStatus(
     supabaseAdmin
       .from('ai_scenarios')
       .select(
-        'scenario_key, title, approach, questions_to_ask, response_template, ' +
-          'escalate_when, autonomy_pct, enabled'
+        'scenario_key, title, triggers, approach, must_do, must_not_do, ' +
+          'escalate_when, questions_to_ask, response_template, autonomy_pct, enabled'
       )
       .eq('workspace_id', workspaceId)
       .eq('store_id', storeId),
@@ -152,13 +166,21 @@ export async function getOnboardingStatus(
   const policiesComplete =
     nonEmpty(policies?.shipping_policy) &&
     nonEmpty(policies?.refund_policy) &&
-    nonEmptyList(policies?.can_decide) &&
-    nonEmptyList(policies?.escalate_triggers)
+    (nonEmptyList(policies?.can_decide_options) || nonEmpty(policies?.can_decide_notes)) &&
+    (nonEmptyList(policies?.cannot_decide_options) || nonEmpty(policies?.cannot_decide_notes)) &&
+    nonEmpty(policies?.parcelpanel_url) &&
+    nonEmpty(policies?.cancellation_window)
 
   const byKey = new Map(scenarios.map((s) => [s.scenario_key, s]))
   const scenariosComplete = CANONICAL_SCENARIO_KEYS.every((key) => {
     const row = byKey.get(key)
-    return nonEmpty(row?.approach) && nonEmpty(row?.escalate_when)
+    return (
+      nonEmpty(row?.triggers) &&
+      nonEmpty(row?.approach) &&
+      nonEmpty(row?.must_do) &&
+      nonEmpty(row?.must_not_do) &&
+      nonEmpty(row?.escalate_when)
+    )
   })
 
   return {

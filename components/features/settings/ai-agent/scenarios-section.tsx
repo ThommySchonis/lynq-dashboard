@@ -3,6 +3,7 @@
 import { SettingsSection, SettingsCard } from '@/components/features/settings/settings-section'
 import { StatusBadge } from '@/components/features/settings/status-badge'
 import type { AiScenarioRow } from '@/hooks/ai'
+import { CANONICAL_SCENARIOS } from '@/lib/constants/emma-onboarding'
 import { ScenarioRow } from './scenario-row'
 
 export interface ScenarioMeta {
@@ -12,16 +13,12 @@ export interface ScenarioMeta {
   lockAutonomy?: boolean
 }
 
-// The 7 canonical scenarios, in the exact order required by the spec.
-export const SCENARIOS: ScenarioMeta[] = [
-  { key: 'wismo',             title: 'Where is my order?' },
-  { key: 'long_delivery',     title: 'Long delivery time' },
-  { key: 'lost_package',      title: 'Lost package' },
-  { key: 'wrong_or_damaged',  title: 'Wrong or damaged item' },
-  { key: 'refund_or_cancel',  title: 'Refund or cancellation' },
-  { key: 'customs_fees',      title: 'Customs fees' },
-  { key: 'angry_or_chargeback', title: 'Angry customer or chargeback', lockAutonomy: true },
-]
+// 8 canonical scenarios post Emma onboarding refactor. The authoritative
+// list lives in lib/constants/emma-onboarding.ts (CANONICAL_SCENARIOS) so
+// the prompt builder, the autonomy gate, the rules-settings UI, and this
+// section all share one source. SCENARIOS is re-exported for the small
+// number of legacy importers that still reach for it from this path.
+export const SCENARIOS: ScenarioMeta[] = CANONICAL_SCENARIOS
 
 interface ScenariosSectionProps {
   storeId: string

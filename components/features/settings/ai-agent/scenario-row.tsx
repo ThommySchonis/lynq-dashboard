@@ -15,32 +15,35 @@ import {
 import { SettingsField } from '@/components/features/settings/settings-field'
 import { SettingsToggle } from '@/components/features/settings/settings-toggle'
 import { StatusBadge } from '@/components/features/settings/status-badge'
-import { ChipInput } from '@/components/shared/chip-input'
 import { useUpsertAiScenario } from '@/hooks/ai'
 import type { AiScenarioRow } from '@/hooks/ai'
 import type { ScenarioMeta } from './scenarios-section'
 
+// Five-field scenario form post Emma onboarding refactor.
+// Field order in the UI: Triggers → Approach → Must do → Must not do →
+// Escalate when (mirrors the prompt-builder render order so the merchant
+// sees the same shape Emma sees).
 interface ScenarioForm {
-  approach: string
-  questions_to_ask: string[]
-  response_template: string
+  triggers:      string
+  approach:      string
+  must_do:       string
+  must_not_do:   string
   escalate_when: string
-  autonomy_pct: number
-  enabled: boolean
+  autonomy_pct:  number
+  enabled:       boolean
 }
 
 function rowToForm(row: AiScenarioRow | undefined): ScenarioForm {
   return {
-    approach: row?.approach ?? '',
-    questions_to_ask: row?.questions_to_ask ?? [],
-    response_template: row?.response_template ?? '',
+    triggers:      row?.triggers ?? '',
+    approach:      row?.approach ?? '',
+    must_do:       row?.must_do ?? '',
+    must_not_do:   row?.must_not_do ?? '',
     escalate_when: row?.escalate_when ?? '',
-    autonomy_pct: row?.autonomy_pct ?? 0,
-    enabled: row?.enabled ?? true,
+    autonomy_pct:  row?.autonomy_pct ?? 0,
+    enabled:       row?.enabled ?? true,
   }
 }
-
-const sameList = (a: string[], b: string[]) => JSON.stringify(a) === JSON.stringify(b)
 
 interface ScenarioRowProps {
   meta: ScenarioMeta
@@ -68,16 +71,25 @@ export function ScenarioRow({ meta, storeId, canEdit, row, first, last }: Scenar
 
   const update = (patch: Partial<ScenarioForm>) => setForm((prev) => ({ ...prev, ...patch }))
 
-  // A scenario counts as complete once it has at least an approach + escalate_when.
-  const complete = !!(form.approach.trim() && form.escalate_when.trim())
+  // A scenario counts as complete once it has ALL 5 fields filled (mirrors
+  // getOnboardingStatus per Notion §6 and the page-level scenariosComplete
+  // check in onboarding-settings.tsx).
+  const complete = !!(
+    form.triggers.trim() &&
+    form.approach.trim() &&
+    form.must_do.trim() &&
+    form.must_not_do.trim() &&
+    form.escalate_when.trim()
+  )
 
   const isDirty =
-    form.approach !== init.approach ||
-    form.response_template !== init.response_template ||
+    form.triggers      !== init.triggers ||
+    form.approach      !== init.approach ||
+    form.must_do       !== init.must_do ||
+    form.must_not_do   !== init.must_not_do ||
     form.escalate_when !== init.escalate_when ||
-    form.autonomy_pct !== init.autonomy_pct ||
-    form.enabled !== init.enabled ||
-    !sameList(form.questions_to_ask, init.questions_to_ask)
+    form.autonomy_pct  !== init.autonomy_pct ||
+    form.enabled       !== init.enabled
 
   async function handleSave() {
     if (!canEdit) return
@@ -85,14 +97,15 @@ export function ScenarioRow({ meta, storeId, canEdit, row, first, last }: Scenar
     try {
       const payload: ScenarioForm = { ...form, autonomy_pct: locked ? 0 : form.autonomy_pct }
       await upsert.mutateAsync({
-        scenario_key: meta.key,
-        title: meta.title,
-        approach: payload.approach,
-        questions_to_ask: payload.questions_to_ask,
-        response_template: payload.response_template,
+        scenario_key:  meta.key,
+        title:         meta.title,
+        triggers:      payload.triggers,
+        approach:      payload.approach,
+        must_do:       payload.must_do,
+        must_not_do:   payload.must_not_do,
         escalate_when: payload.escalate_when,
-        autonomy_pct: payload.autonomy_pct,
-        enabled: payload.enabled,
+        autonomy_pct:  payload.autonomy_pct,
+        enabled:       payload.enabled,
       })
       setInit(payload)
     } finally {
@@ -124,9 +137,24 @@ export function ScenarioRow({ meta, storeId, canEdit, row, first, last }: Scenar
       {expanded && (
         <div className="mt-4 flex flex-col gap-5">
           <SettingsField
+            label="Triggers"
+            htmlFor={`sc-${meta.key}-triggers`}
+            hint="Customer signals that make this scenario fire (key phrases, intent shape)."
+          >
+            <Textarea
+              id={`sc-${meta.key}-triggers`}
+              value={form.triggers}
+              onChange={(e) => update({ triggers: e.target.value })}
+              placeholder="Bijv. vragen over verzending, &ldquo;wanneer komt het&rdquo;, track-and-trace werkt niet…"
+              disabled={!canEdit}
+              rows={3}
+            />
+          </SettingsField>
+
+          <SettingsField
             label="Approach"
             htmlFor={`sc-${meta.key}-approach`}
-            hint="How the agent should handle this situation."
+            hint="The tone + framing Emma should use for this scenario."
           >
             <Textarea
               id={`sc-${meta.key}-approach`}
@@ -139,27 +167,30 @@ export function ScenarioRow({ meta, storeId, canEdit, row, first, last }: Scenar
           </SettingsField>
 
           <SettingsField
-            label="Questions to ask"
-            hint="Information the agent should gather first. Type and press Enter."
+            label="Must do"
+            htmlFor={`sc-${meta.key}-must-do`}
+            hint="Non-negotiable steps Emma always takes in this scenario."
           >
-            <ChipInput
-              value={form.questions_to_ask}
-              onChange={(questions_to_ask) => update({ questions_to_ask })}
-              placeholder="e.g. Order number…"
+            <Textarea
+              id={`sc-${meta.key}-must-do`}
+              value={form.must_do}
+              onChange={(e) => update({ must_do: e.target.value })}
+              placeholder="Bijv. altijd de ParcelPanel link meesturen…"
               disabled={!canEdit}
+              rows={3}
             />
           </SettingsField>
 
           <SettingsField
-            label="Response template"
-            htmlFor={`sc-${meta.key}-template`}
-            hint="An optional starting point for the reply."
+            label="Must not do"
+            htmlFor={`sc-${meta.key}-must-not-do`}
+            hint="Explicit no-gos. These override any example phrasing."
           >
             <Textarea
-              id={`sc-${meta.key}-template`}
-              value={form.response_template}
-              onChange={(e) => update({ response_template: e.target.value })}
-              placeholder="Hi {name}, thanks for reaching out…"
+              id={`sc-${meta.key}-must-not-do`}
+              value={form.must_not_do}
+              onChange={(e) => update({ must_not_do: e.target.value })}
+              placeholder="Bijv. nooit Chinese carrier tracking link sturen…"
               disabled={!canEdit}
               rows={3}
             />
@@ -174,7 +205,7 @@ export function ScenarioRow({ meta, storeId, canEdit, row, first, last }: Scenar
               id={`sc-${meta.key}-escalate`}
               value={form.escalate_when}
               onChange={(e) => update({ escalate_when: e.target.value })}
-              placeholder="e.g. Customer threatens a chargeback…"
+              placeholder="Bijv. tracking >7 dagen geen movement…"
               disabled={!canEdit}
               rows={2}
             />

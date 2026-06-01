@@ -6,6 +6,7 @@ import { useToken } from './utils'
 import { toast } from 'sonner'
 import { parseJson } from '@/lib/utils/typed-json'
 import type { CustomEmailConfig } from '@/types/settings'
+import { storeKeys } from '@/hooks/stores/use-stores-data'
 
 interface ErrorResponse {
   error?: string
@@ -13,6 +14,12 @@ interface ErrorResponse {
 
 interface ShopifyOAuthResponse {
   url: string
+}
+
+interface ManualConnectResponse {
+  success: boolean
+  shop: string
+  storeName: string
 }
 
 /* ─────────────────────────────────────────────
@@ -87,11 +94,12 @@ export function useConnectShopify() {
         const d = await parseJson<ErrorResponse>(res).catch((): ErrorResponse => ({}))
         throw new Error(d.error || 'Failed to connect Shopify')
       }
-      return parseJson<unknown>(res)
+      return parseJson<ManualConnectResponse>(res)
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       void qc.invalidateQueries({ queryKey: [...settingsKeys.all, 'shopify'] })
-      toast.success('Shopify connected')
+      void qc.invalidateQueries({ queryKey: storeKeys.list() })
+      toast.success(`Shopify connected — ${data.storeName}`)
     },
     onError: (err: Error) => {
       toast.error(err.message)

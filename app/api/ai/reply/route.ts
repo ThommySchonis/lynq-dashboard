@@ -9,7 +9,12 @@ import type { NextRequest } from 'next/server'
 import { aiReplyBody, emmaReplyOutput, type ReplyIntent } from '@/lib/schemas/ai'
 import { resilientSdkCall } from '@/lib/resilient-fetch'
 import { serviceCatchHandler } from '@/lib/service-catch-handler'
-import { getOnboardingStatus, resolveStoreIdForThread } from '@/lib/services/ai-onboarding'
+import {
+  getEnabledLessons,
+  getOnboardingStatus,
+  resolveStoreIdForThread,
+} from '@/lib/services/ai-onboarding'
+import type { AiLesson } from '@/lib/services/ai-onboarding'
 import { buildEmmaSystemPrompt } from '@/lib/services/ai-prompt-builder'
 import { logger } from '@/lib/logger'
 
@@ -105,7 +110,23 @@ export async function POST(request: NextRequest) {
     if (storeId) {
       const onboarding = await getOnboardingStatus(storeId, ctx.workspaceId)
       if (onboarding.isComplete && onboarding.policies) {
-        systemPrompt = buildEmmaSystemPrompt(onboarding.policies, onboarding.scenarios)
+        // Lessons are best-effort — a failure here MUST NOT block Emma. We
+        // wrap in a nested try so the empty-array fallback produces a prompt
+        // without the Recent learnings section, and the outer Emma path
+        // still benefits from the brand + policies + scenarios. The error
+        // object is logged with a fixed scope; lesson_text contents are
+        // never logged.
+        let lessons: AiLesson[] = []
+        try {
+          lessons = await getEnabledLessons(storeId, ctx.workspaceId)
+        } catch (err) {
+          logger.error('[ai/reply]', 'lessons load failed', err)
+        }
+        systemPrompt = buildEmmaSystemPrompt(
+          onboarding.policies,
+          onboarding.scenarios,
+          lessons,
+        )
         promptPath = 'emma'
       }
     }

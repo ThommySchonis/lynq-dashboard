@@ -131,6 +131,40 @@ export const aiScenarioBody = z.object({
   enabled:           z.boolean().default(true),
 })
 
+// --- AI Lessons (Emma learn loop v1) ---
+
+// Mirrors CANONICAL_SCENARIO_KEYS in lib/services/ai-onboarding.ts. Re-declared
+// here so the schemas folder stays free of service-layer imports (every other
+// schema file in lib/schemas does the same).
+const CANONICAL_SCENARIO_KEYS_TUPLE = [
+  'wismo',
+  'long_delivery',
+  'lost_package',
+  'wrong_or_damaged',
+  'refund_or_cancel',
+  'customs_fees',
+  'angry_or_chargeback',
+] as const
+
+export const aiLessonsQuery = z.object({
+  store_id: z.string().uuid(),
+})
+
+export const aiLessonsBody = z.object({
+  store_id:            z.string().uuid(),
+  lesson_text:         z.string().trim().min(1, 'Lesson text is required').max(2000),
+  // null / omitted → applies to all scenarios
+  applies_to_scenario: z.enum(CANONICAL_SCENARIO_KEYS_TUPLE).nullable().optional(),
+})
+
+export const aiLessonParams = z.object({
+  id: z.string().uuid(),
+})
+
+export const aiLessonPatchBody = z.object({
+  enabled: z.boolean(),
+})
+
 // --- AI Reply structured output (Emma path only) ---
 
 // The 7 canonical scenario keys + 'other'/'unknown', matching the intent CHECK

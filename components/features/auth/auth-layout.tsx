@@ -1,6 +1,7 @@
 'use client'
 
 import type { ReactNode } from 'react'
+import { PublicFooter } from '@/components/shared/public-footer'
 
 interface AuthLayoutProps {
   /** Headline content — supports word-by-word reveal spans */
@@ -112,6 +113,8 @@ export default function AuthLayout({
             {footer}
           </div>
         )}
+
+        <PublicFooter />
       </div>
     </div>
   )

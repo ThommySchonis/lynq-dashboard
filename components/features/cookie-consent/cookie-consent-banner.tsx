@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { usePathname } from 'next/navigation'
+import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import { hasConsented, setConsent, type ConsentLevel } from '@/lib/cookies/consent'
 
@@ -41,7 +42,15 @@ export function CookieConsentBanner() {
                   We use cookies
                 </p>
                 <p className="text-xs text-[var(--foreground-3)] mt-0.5">
-                  Essential cookies keep the app running. Analytics cookies help us improve.
+                  Essential cookies keep the app running. Analytics cookies help
+                  us improve. See our{' '}
+                  <Link
+                    href="/privacy"
+                    className="text-[var(--primary)] hover:underline"
+                  >
+                    Privacy Policy
+                  </Link>
+                  .
                 </p>
               </div>
               <div className="flex gap-2 shrink-0 max-sm:justify-center">

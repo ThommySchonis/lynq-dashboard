@@ -7,6 +7,7 @@ import { PasswordField } from '@/components/features/auth/password-field'
 import { TrustItem } from '@/components/features/auth/trust-item'
 import { VerifyPanel } from '@/components/features/auth/verify-panel'
 import { HeadlineWords } from '@/components/features/auth/headline-words'
+import { LegalAcceptance } from '@/components/features/auth/legal-acceptance'
 import { useSignUp } from '@/hooks/auth/use-auth-mutations'
 import { TRUST_ITEMS } from '@/lib/auth-constants'
 
@@ -192,6 +193,9 @@ export default function SignupPage() {
             {isLoading ? 'Creating account…' : 'Start free trial →'}
           </button>
         </div>
+
+        {/* Legal acceptance */}
+        <LegalAcceptance />
       </form>
 
       {/* Trust row */}

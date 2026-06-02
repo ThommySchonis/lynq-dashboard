@@ -10,6 +10,7 @@ import { SettingsSection, SettingsCard } from '@/components/features/settings/se
 import { SettingsField } from '@/components/features/settings/settings-field'
 import { AvatarUpload } from './avatar-upload'
 import { ThemeSelector } from './theme-selector'
+import { LegalLinksSection } from './legal-links-section'
 import {
   useProfile,
   useUpdateProfile,
@@ -235,6 +236,9 @@ export function ProfileSettings() {
             />
           </SettingsCard>
         </SettingsSection>
+
+        {/* Legal links */}
+        <LegalLinksSection />
       </div>
 
       {/* Sticky save/discard footer — only shown when dirty */}

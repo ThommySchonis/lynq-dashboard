@@ -2,7 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query'
 import { useAuthStore } from '@/stores/auth'
-import { parseJson } from '@/lib/utils/typed-json'
+import { rpc } from '@/lib/rpc'
 import type { TimeFilter, Session, TeamMember } from '@/types/time-tracking'
 
 export function restoreElapsed(s: Session | null): number {
@@ -43,11 +43,7 @@ export function useTimeData(filter: TimeFilter) {
   return useQuery<TimeDataResponse>({
     queryKey: timeTrackingKeys.time(filter),
     queryFn: async () => {
-      const res = await fetch(`/api/time?filter=${filter}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      if (!res.ok) throw new Error('Failed to fetch time data')
-      return parseJson<TimeDataResponse>(res)
+      return rpc<TimeDataResponse>('api_list_time_sessions', { p_filter: filter })
     },
     enabled: !!token,
   })
@@ -58,11 +54,7 @@ export function useActiveSession(filter: TimeFilter) {
   return useQuery<Session | null>({
     queryKey: [...timeTrackingKeys.time(filter), 'active-session'],
     queryFn: async () => {
-      const res = await fetch(`/api/time?filter=${filter}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      if (!res.ok) throw new Error('Failed to fetch active session')
-      const d = await parseJson<TimeDataResponse>(res)
+      const d = await rpc<TimeDataResponse>('api_list_time_sessions', { p_filter: filter })
       return d.active_session ?? null
     },
     enabled: !!token,

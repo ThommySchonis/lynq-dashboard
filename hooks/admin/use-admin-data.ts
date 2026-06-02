@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/stores/auth'
 import { parseJson } from '@/lib/utils/typed-json'
+import { rpc } from '@/lib/rpc'
 import type { Client, Broadcast, Notification, Inquiry, TeamMember, Masterclass, BroadcastReaction, FinanceData, TimeData } from '@/types/admin'
 
 interface FeedbackCountResponse {
@@ -153,11 +154,7 @@ export function useTimeData(filter: string) {
   return useQuery<TimeData>({
     queryKey: adminKeys.time(filter),
     queryFn: async () => {
-      const res = await fetch(`/api/time?filter=${filter}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      if (!res.ok) throw new Error('Failed to fetch time data')
-      return parseJson<TimeData>(res)
+      return rpc<TimeData>('api_list_time_sessions', { p_filter: filter })
     },
     enabled: !!token,
     staleTime: 5 * 60_000,

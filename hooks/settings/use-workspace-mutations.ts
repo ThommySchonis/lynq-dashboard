@@ -5,6 +5,7 @@ import { settingsKeys } from './use-settings-data'
 import { useToken } from './utils'
 import { toast } from 'sonner'
 import { parseJson } from '@/lib/utils/typed-json'
+import { rpc } from '@/lib/rpc'
 
 interface ErrorResponse {
   error?: string
@@ -15,20 +16,22 @@ interface LogoUploadResponse {
 }
 
 export function useUpdateWorkspace() {
-  const token = useToken()
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async (body: Record<string, unknown>) => {
-      const res = await fetch('/api/workspaces/current', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify(body),
+      return rpc('api_update_workspace', {
+        p_name: body.name ?? null,
+        p_slug: body.slug ?? null,
+        p_logo_url: body.logo_url ?? null,
+        p_timezone: body.timezone ?? null,
+        p_locale: body.locale ?? null,
+        p_date_format: body.date_format ?? null,
+        p_time_format: body.time_format ?? null,
+        p_first_day_of_week: body.first_day_of_week ?? null,
+        p_show_order_data: body.show_order_data ?? null,
+        p_auto_translate: body.auto_translate ?? null,
+        p_allow_deletion: body.allow_deletion ?? null,
       })
-      if (!res.ok) {
-        const d = await parseJson<ErrorResponse>(res).catch((): ErrorResponse => ({}))
-        throw new Error(d.error ||'Failed to update workspace')
-      }
-      return parseJson<unknown>(res)
     },
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: settingsKeys.workspace() })

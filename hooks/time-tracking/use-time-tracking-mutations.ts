@@ -1,126 +1,9 @@
 'use client'
 
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { useAuthStore } from '@/stores/auth'
 import { timeTrackingKeys } from './use-time-tracking-data'
-import { parseJson } from '@/lib/utils/typed-json'
+import { rpc } from '@/lib/rpc'
 import type { EodReport } from '@/types/time-tracking'
-
-interface ErrorResponse {
-  error?: string
-}
-
-interface ResumeSessionResponse {
-  paused_seconds: number
-}
-
-function useToken() {
-  return useAuthStore((s) => s.session?.access_token ?? '')
-}
-
-export function useClockIn() {
-  const token = useToken()
-  const qc = useQueryClient()
-
-  return useMutation({
-    mutationFn: async () => {
-      const res = await fetch('/api/time', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ action: 'clock-in' }),
-      })
-      if (!res.ok) throw new Error('Failed to clock in')
-      return parseJson<unknown>(res)
-    },
-    onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: timeTrackingKeys.all })
-    },
-  })
-}
-
-export function useClockOut() {
-  const token = useToken()
-  const qc = useQueryClient()
-
-  return useMutation({
-    mutationFn: async ({ sessionId, report }: { sessionId: string; report: EodReport }) => {
-      const res = await fetch('/api/time', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          action:     'clock-out',
-          session_id: sessionId,
-          report: {
-            emails_answered: report.emailsAnswered,
-            what_went_well:  report.whatWentWell,
-            needs_attention: report.needsAttention,
-          },
-        }),
-      })
-      if (!res.ok) {
-        const err = await parseJson<ErrorResponse>(res).catch((): ErrorResponse => ({}))
-        throw new Error(err.error || 'Failed to clock out')
-      }
-      return parseJson<unknown>(res)
-    },
-    onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: timeTrackingKeys.all })
-    },
-  })
-}
-
-export function usePauseSession() {
-  const token = useToken()
-  const qc = useQueryClient()
-
-  return useMutation({
-    mutationFn: async (sessionId: string) => {
-      const res = await fetch('/api/time', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ action: 'pause', session_id: sessionId }),
-      })
-      if (!res.ok) throw new Error('Failed to pause session')
-      return parseJson<unknown>(res)
-    },
-    onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: timeTrackingKeys.all })
-    },
-  })
-}
-
-export function useResumeSession() {
-  const token = useToken()
-  const qc = useQueryClient()
-
-  return useMutation({
-    mutationFn: async (sessionId: string) => {
-      const res = await fetch('/api/time', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ action: 'resume', session_id: sessionId }),
-      })
-      if (!res.ok) throw new Error('Failed to resume session')
-      const d = await parseJson<ResumeSessionResponse>(res)
-      return d
-    },
-    onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: timeTrackingKeys.all })
-    },
-  })
-}
 
 interface EditSessionPatch {
   clocked_in_at?:  string
@@ -131,25 +14,11 @@ interface EditSessionPatch {
   reason:          string
 }
 
-export function useEditSession() {
-  const token = useToken()
+export function useClockIn() {
   const qc = useQueryClient()
-
   return useMutation({
-    mutationFn: async ({ sessionId, patch }: { sessionId: string; patch: EditSessionPatch }) => {
-      const res = await fetch(`/api/time/${sessionId}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(patch),
-      })
-      if (!res.ok) {
-        const err = await parseJson<ErrorResponse>(res).catch((): ErrorResponse => ({}))
-        throw new Error(err.error || 'Failed to update session')
-      }
-      return parseJson<unknown>(res)
+    mutationFn: async () => {
+      return rpc('api_time_clock_in')
     },
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: timeTrackingKeys.all })
@@ -157,13 +26,67 @@ export function useEditSession() {
   })
 }
 
-export async function sendHeartbeat(token: string, sessionId: string): Promise<void> {
-  await fetch('/api/time', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
+export function useClockOut() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ sessionId, report }: { sessionId: string; report: EodReport }) => {
+      return rpc('api_time_clock_out', {
+        p_session_id: sessionId,
+        p_emails_answered: report.emailsAnswered ?? null,
+        p_what_went_well: report.whatWentWell ?? null,
+        p_needs_attention: report.needsAttention ?? null,
+      })
     },
-    body: JSON.stringify({ action: 'heartbeat', session_id: sessionId }),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: timeTrackingKeys.all })
+    },
   })
+}
+
+export function usePauseSession() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (sessionId: string) => {
+      return rpc('api_time_pause', { p_session_id: sessionId })
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: timeTrackingKeys.all })
+    },
+  })
+}
+
+export function useResumeSession() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (sessionId: string) => {
+      return rpc<{ ok: boolean; paused_seconds: number }>('api_time_resume', { p_session_id: sessionId })
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: timeTrackingKeys.all })
+    },
+  })
+}
+
+export function useEditSession() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ sessionId, patch }: { sessionId: string; patch: EditSessionPatch }) => {
+      return rpc('api_edit_time_session', {
+        p_session_id: sessionId,
+        p_clocked_in_at: patch.clocked_in_at ?? null,
+        p_clocked_out_at: patch.clocked_out_at ?? null,
+        p_emails_answered: patch.emails_answered ?? null,
+        p_what_went_well: patch.what_went_well ?? null,
+        p_needs_attention: patch.needs_attention ?? null,
+        p_reason: patch.reason ?? null,
+      })
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: timeTrackingKeys.all })
+    },
+  })
+}
+
+export async function sendHeartbeat(_token: string, sessionId: string): Promise<void> {
+  await rpc('api_time_heartbeat', { p_session_id: sessionId })
 }

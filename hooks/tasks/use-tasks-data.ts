@@ -3,7 +3,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { useAuthStore } from '@/stores/auth'
 import { rpc } from '@/lib/rpc'
-import { parseJson } from '@/lib/utils/typed-json'
 import type { Task, TaskFilters } from '@/types/tasks'
 
 interface WorkspaceMembersResponse {
@@ -48,11 +47,7 @@ export function useWorkspaceMembers() {
   return useQuery<{ id: string; displayName: string; email: string; role: string }[]>({
     queryKey: taskKeys.members(),
     queryFn: async () => {
-      const res = await fetch('/api/workspaces/current/members', {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      if (!res.ok) throw new Error('Failed to fetch members')
-      const d = await parseJson<WorkspaceMembersResponse>(res)
+      const d = await rpc<WorkspaceMembersResponse>('api_list_workspace_members')
       return (d.members || []).map((m) => ({
         id: m.id,
         displayName: m.display_name || m.email || 'Unknown',

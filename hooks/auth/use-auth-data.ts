@@ -1,7 +1,7 @@
 'use client'
 
 import { useQuery } from '@tanstack/react-query'
-import { parseJson } from '@/lib/utils/typed-json'
+import { rpc } from '@/lib/rpc'
 
 export const authKeys = {
   invite: (token: string) => ['invite', token] as const,
@@ -15,20 +15,31 @@ export interface InviteDetails {
   expires_at?: string | null
 }
 
-interface InviteDetailsResponse extends Partial<InviteDetails> {
+interface InviteDetailsResponse {
+  ok?: boolean
   error?: string
+  invite_email?: string
+  workspace_name?: string
+  role?: string
+  inviter_name?: string | null
+  expires_at?: string | null
 }
 
 export function useInviteDetails(token: string) {
   return useQuery<InviteDetails>({
     queryKey: authKeys.invite(token),
     queryFn: async () => {
-      const res = await fetch(`/api/invites/${token}`)
-      const body = await parseJson<InviteDetailsResponse>(res).catch((): InviteDetailsResponse => ({}))
-      if (!res.ok || body.error) {
-        throw new Error(body.error || 'Failed to load invite')
+      const data = await rpc<InviteDetailsResponse>('api_get_invite_details', { p_token: token })
+      if (data.error) {
+        throw new Error(data.error)
       }
-      return body as InviteDetails
+      return {
+        invite_email: data.invite_email!,
+        workspace_name: data.workspace_name!,
+        role: data.role!,
+        inviter_name: data.inviter_name ?? null,
+        expires_at: data.expires_at ?? null,
+      }
     },
     enabled: !!token,
     retry: false,

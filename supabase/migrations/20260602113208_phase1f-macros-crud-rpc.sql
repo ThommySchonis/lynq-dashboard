@@ -86,7 +86,7 @@ BEGIN
   END IF;
 
   SELECT json_build_object(
-    'macros', COALESCE(json_agg(row_data ORDER BY updated_at DESC), '[]'::json),
+    'macros', COALESCE(json_agg(row_data ORDER BY row_data.updated_at DESC), '[]'::json),
     'currentUserRole', v_role
   ) INTO v_result
   FROM (
@@ -98,8 +98,7 @@ BEGIN
          FROM macro_tags mt JOIN tags tg ON tg.id = mt.tag_id
          WHERE mt.macro_id = m.id),
         '[]'::json
-      ) AS "tagObjects",
-      m.updated_at
+      ) AS "tagObjects"
     FROM macros m
     WHERE m.workspace_id = v_ws
       AND (v_is_archived = true AND m.archived_at IS NOT NULL

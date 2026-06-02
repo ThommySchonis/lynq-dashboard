@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { settingsKeys } from './use-settings-data'
 import { useToken } from './utils'
 import { parseJson } from '@/lib/utils/typed-json'
+import { rpc } from '@/lib/rpc'
 import { toast } from 'sonner'
 
 import type { OwnershipTransfer } from '@/types/database'
@@ -23,13 +24,10 @@ export function usePendingTransfer() {
   return useQuery({
     queryKey: transferKeys.pending(),
     queryFn: async () => {
-      const res = await fetch('/api/workspaces/current/transfer-ownership', {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      if (!res.ok) throw new Error('Failed to fetch pending transfer')
-      const data = await parseJson<{ transfer: OwnershipTransfer | null }>(res)
+      const data = await rpc<{ transfer: OwnershipTransfer | null }>('api_get_pending_transfer')
       return data.transfer
     },
+    enabled: !!token,
   })
 }
 
@@ -56,18 +54,10 @@ export function useInitiateTransfer() {
 }
 
 export function useCancelTransfer() {
-  const token = useToken()
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async () => {
-      const res = await fetch('/api/workspaces/current/transfer-ownership/cancel', {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      if (!res.ok) {
-        const d = await parseJson<ErrorResponse>(res).catch((): ErrorResponse => ({}))
-        throw new Error(d.error || 'Failed to cancel transfer')
-      }
+      return rpc('api_cancel_transfer')
     },
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: transferKeys.pending() })
@@ -78,18 +68,10 @@ export function useCancelTransfer() {
 }
 
 export function useAcceptTransfer() {
-  const token = useToken()
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async () => {
-      const res = await fetch('/api/workspaces/current/transfer-ownership/accept', {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      if (!res.ok) {
-        const d = await parseJson<ErrorResponse>(res).catch((): ErrorResponse => ({}))
-        throw new Error(d.error || 'Failed to accept transfer')
-      }
+      return rpc('api_accept_transfer')
     },
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: transferKeys.pending() })
@@ -102,18 +84,10 @@ export function useAcceptTransfer() {
 }
 
 export function useDeclineTransfer() {
-  const token = useToken()
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async () => {
-      const res = await fetch('/api/workspaces/current/transfer-ownership/decline', {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      if (!res.ok) {
-        const d = await parseJson<ErrorResponse>(res).catch((): ErrorResponse => ({}))
-        throw new Error(d.error || 'Failed to decline transfer')
-      }
+      return rpc('api_decline_transfer')
     },
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: transferKeys.pending() })

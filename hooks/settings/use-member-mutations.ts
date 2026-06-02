@@ -5,6 +5,7 @@ import { settingsKeys } from './use-settings-data'
 import { useToken } from './utils'
 import { toast } from 'sonner'
 import { parseJson } from '@/lib/utils/typed-json'
+import { rpc } from '@/lib/rpc'
 import type { MemberRole } from '@/types/settings'
 
 interface ErrorResponse {
@@ -43,20 +44,10 @@ export function useInviteMember() {
 }
 
 export function useUpdateMemberRole() {
-  const token = useToken()
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async ({ id, role }: { id: string; role: MemberRole }) => {
-      const res = await fetch(`/api/workspaces/current/members/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ role }),
-      })
-      if (!res.ok) {
-        const d = await parseJson<ErrorResponse>(res).catch((): ErrorResponse => ({}))
-        throw new Error(d.error ||'Failed to update role')
-      }
-      return parseJson<unknown>(res)
+      return rpc('api_update_member_role', { p_member_id: id, p_role: role })
     },
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: settingsKeys.members() })
@@ -69,18 +60,10 @@ export function useUpdateMemberRole() {
 }
 
 export function useRemoveMember() {
-  const token = useToken()
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async (id: string) => {
-      const res = await fetch(`/api/workspaces/current/members/${id}`, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      if (!res.ok) {
-        const d = await parseJson<ErrorResponse>(res).catch((): ErrorResponse => ({}))
-        throw new Error(d.error ||'Failed to remove member')
-      }
+      return rpc('api_remove_member', { p_member_id: id })
     },
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: settingsKeys.members() })
@@ -126,18 +109,10 @@ export function useResendInvite() {
 }
 
 export function useRevokeInvite() {
-  const token = useToken()
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async (id: string) => {
-      const res = await fetch(`/api/workspaces/current/invites/${id}`, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      if (!res.ok) {
-        const d = await parseJson<ErrorResponse>(res).catch((): ErrorResponse => ({}))
-        throw new Error(d.error ||'Failed to revoke invite')
-      }
+      return rpc('api_revoke_invite', { p_invite_id: id })
     },
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: settingsKeys.members() })

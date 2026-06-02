@@ -68,12 +68,8 @@ export function useWorkspace() {
   return useQuery<WorkspaceSettings>({
     queryKey: settingsKeys.workspace(),
     queryFn: async () => {
-      const res = await fetch('/api/workspaces/current', {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      if (!res.ok) throw new Error('Failed to load workspace')
-      const { workspace } = await parseJson<WorkspaceResponse>(res)
-      return workspace
+      const data = await rpc<{ workspace: WorkspaceSettings; role: string }>('api_get_workspace')
+      return data.workspace
     },
     enabled: !!token,
     staleTime: 5 * 60_000,
@@ -85,12 +81,8 @@ export function useMembers() {
   return useQuery<Member[]>({
     queryKey: settingsKeys.members(),
     queryFn: async () => {
-      const res = await fetch('/api/workspaces/current/members', {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      if (!res.ok) throw new Error('Failed to load members')
-      const data = await parseJson<MembersResponse>(res)
-      return data.members ?? (data as unknown as Member[])
+      const data = await rpc<MembersPageResponse>('api_list_workspace_members')
+      return data.members as Member[] ?? []
     },
     enabled: !!token,
     staleTime: 5 * 60_000,
@@ -102,12 +94,9 @@ export function useMembersPage(search = '') {
   return useQuery<MembersPageData>({
     queryKey: [...settingsKeys.members(), search],
     queryFn: async () => {
-      const params = search ? `?q=${encodeURIComponent(search)}` : ''
-      const res = await fetch(`/api/workspaces/current/members${params}`, {
-        headers: { Authorization: `Bearer ${token}` },
+      const data = await rpc<MembersPageResponse>('api_list_workspace_members', {
+        p_search: search || null,
       })
-      if (!res.ok) throw new Error('Failed to load members')
-      const data = await parseJson<MembersPageResponse>(res)
       return {
         members: data.members ?? [],
         invites: data.invites ?? [],

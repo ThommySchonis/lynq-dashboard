@@ -3,8 +3,8 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { rpc } from "@/lib/rpc";
 import { isTrialExpired } from "@/lib/trialStatus";
-import { parseJson } from "@/lib/utils/typed-json";
 
 interface OnboardingStatus {
   subscription_status?: string
@@ -53,18 +53,7 @@ export function BlockedStateGuard({ children }: { children: ReactNode }) {
       }
 
       try {
-        const res = await fetch("/api/onboarding/status", {
-          headers: { Authorization: `Bearer ${session.access_token}` },
-          cache: "no-store",
-        });
-
-        if (!res.ok) {
-          if (res.status === 402 && !cancelled) router.replace("/pricing-required");
-          else if (!cancelled) setChecked(true);
-          return;
-        }
-
-        const data = await parseJson<OnboardingStatus>(res);
+        const data = await rpc<OnboardingStatus>('api_get_onboarding_status');
 
         // Platform admins bypass the gate regardless of workspace
         // subscription status — they are internal operators, not customers.

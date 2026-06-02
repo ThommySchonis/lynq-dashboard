@@ -3,6 +3,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { settingsKeys } from './use-settings-data'
 import { useToken } from './utils'
+import { rpc } from '@/lib/rpc'
 import { toast } from 'sonner'
 import { parseJson } from '@/lib/utils/typed-json'
 import type { MacroOnboarding } from '@/types/settings'
@@ -17,19 +18,10 @@ interface GenerateMacrosResponse {
 }
 
 export function useDuplicateMacro() {
-  const token = useToken()
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async (id: string) => {
-      const res = await fetch(`/api/macros/${id}/duplicate`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      if (!res.ok) {
-        const d = await parseJson<ErrorResponse>(res).catch((): ErrorResponse => ({}))
-        throw new Error(d.error ||'Failed to duplicate macro')
-      }
-      return parseJson<unknown>(res)
+      return rpc('api_duplicate_macro', { p_id: id })
     },
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: settingsKeys.macros({ search: '', language: '', tags: [], archived: false }) })
@@ -42,19 +34,10 @@ export function useDuplicateMacro() {
 }
 
 export function useArchiveMacro() {
-  const token = useToken()
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async (id: string) => {
-      const res = await fetch(`/api/macros/${id}/archive`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      if (!res.ok) {
-        const d = await parseJson<ErrorResponse>(res).catch((): ErrorResponse => ({}))
-        throw new Error(d.error ||'Failed to archive macro')
-      }
-      return parseJson<unknown>(res)
+      return rpc('api_archive_macro', { p_id: id })
     },
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: [...settingsKeys.all, 'macros'] })
@@ -67,19 +50,10 @@ export function useArchiveMacro() {
 }
 
 export function useRestoreMacro() {
-  const token = useToken()
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async (id: string) => {
-      const res = await fetch(`/api/macros/${id}/restore`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      if (!res.ok) {
-        const d = await parseJson<ErrorResponse>(res).catch((): ErrorResponse => ({}))
-        throw new Error(d.error ||'Failed to restore macro')
-      }
-      return parseJson<unknown>(res)
+      return rpc('api_restore_macro', { p_id: id })
     },
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: [...settingsKeys.all, 'macros'] })
@@ -92,18 +66,10 @@ export function useRestoreMacro() {
 }
 
 export function useDeleteMacro() {
-  const token = useToken()
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async (id: string) => {
-      const res = await fetch(`/api/macros/${id}`, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      if (!res.ok) {
-        const d = await parseJson<ErrorResponse>(res).catch((): ErrorResponse => ({}))
-        throw new Error(d.error ||'Failed to delete macro')
-      }
+      return rpc('api_delete_macro', { p_id: id })
     },
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: [...settingsKeys.all, 'macros'] })
@@ -116,20 +82,10 @@ export function useDeleteMacro() {
 }
 
 export function useSaveMacroOnboarding() {
-  const token = useToken()
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async (answers: MacroOnboarding) => {
-      const res = await fetch('/api/macros/onboarding', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ answers }),
-      })
-      if (!res.ok) {
-        const d = await parseJson<ErrorResponse>(res).catch((): ErrorResponse => ({}))
-        throw new Error(d.error ||'Failed to save onboarding')
-      }
-      return parseJson<unknown>(res)
+      return rpc('api_save_macro_onboarding', { p_answers: answers })
     },
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: settingsKeys.macroOnboarding() })

@@ -3,6 +3,7 @@
 import { useMutation } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/stores/auth'
+import { rpc } from '@/lib/rpc'
 import { toast } from 'sonner'
 import { parseJson } from '@/lib/utils/typed-json'
 
@@ -29,22 +30,13 @@ export interface ParcelPanelForm {
 }
 
 export function useSaveBrand() {
-  const token = useToken()
   return useMutation({
     mutationFn: async (form: BrandSetupForm) => {
-      const res = await fetch('/api/settings/brand', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(form),
+      return rpc('api_save_brand_settings', {
+        p_brand_name: form.brandName,
+        p_language: form.language,
+        p_tone: form.tone,
       })
-      if (!res.ok) {
-        const d = await parseJson<ErrorResponse>(res).catch((): ErrorResponse => ({}))
-        throw new Error(d.error ||'Failed to save brand setup')
-      }
-      return parseJson<unknown>(res)
     },
     onError: (err: Error) => {
       toast.error(err.message)

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { Bug, Lightbulb, Loader2, MessageSquare, Send, X } from "lucide-react";
-import { useAuthStore } from "@/stores/auth";
+import { rpc } from "@/lib/rpc";
 import { Button } from "@/components/ui/button";
 
 const TYPES = [
@@ -12,11 +12,6 @@ const TYPES = [
 ] as const;
 
 type FeedbackType = (typeof TYPES)[number]["key"];
-
-interface FeedbackErrorResponse {
-  code?: string
-  error?: string
-}
 
 const MAX_LEN = 5000;
 const MIN_LEN = 5;
@@ -70,32 +65,12 @@ export function FeedbackModal({ open, onClose, onSuccess, onError }: FeedbackMod
     if (!canSubmit) return;
     setSubmitting(true);
     try {
-      const session = useAuthStore.getState().session;
-      if (!session) {
-        onError?.("You must be logged in to send feedback.");
-        setSubmitting(false);
-        return;
-      }
-      const res = await fetch("/api/feedback", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({
-          type,
-          message,
-          page_url: typeof window !== "undefined" ? window.location.pathname + window.location.search : null,
-          user_agent: typeof navigator !== "undefined" ? navigator.userAgent : null,
-        }),
+      await rpc('api_submit_feedback', {
+        p_type: type,
+        p_message: message,
+        p_page_url: typeof window !== "undefined" ? window.location.pathname + window.location.search : null,
+        p_user_agent: typeof navigator !== "undefined" ? navigator.userAgent : null,
       });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({})) as FeedbackErrorResponse;
-        const detail = err.code ? ` (${err.code})` : "";
-        onError?.((err.error || "Something went wrong. Please try again.") + detail);
-        setSubmitting(false);
-        return;
-      }
       onSuccess?.();
       onClose();
     } catch (e) {

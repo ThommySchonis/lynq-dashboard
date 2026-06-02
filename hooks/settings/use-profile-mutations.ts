@@ -2,6 +2,7 @@
 
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
+import { apiUrl } from '@/lib/api-client'
 import { settingsKeys } from './use-settings-data'
 import { useToken } from './utils'
 import { toast } from 'sonner'
@@ -20,7 +21,7 @@ export function useUpdateProfile() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async (body: { display_name: string; bio: string; theme: string }) => {
-      const res = await fetch('/api/profile', {
+      const res = await fetch(apiUrl('profile'), {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify(body),
@@ -48,7 +49,7 @@ export function useUploadAvatar() {
     mutationFn: async (file: File) => {
       const fd = new FormData()
       fd.append('file', file)
-      const res = await fetch('/api/profile/avatar', {
+      const res = await fetch(apiUrl('profile/avatar'), {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
         body: fd,
@@ -74,7 +75,7 @@ export function useDeleteAvatar() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async () => {
-      const res = await fetch('/api/profile/avatar', {
+      const res = await fetch(apiUrl('profile/avatar'), {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       })

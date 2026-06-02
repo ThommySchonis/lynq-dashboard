@@ -2,12 +2,9 @@
 
 import { useQuery } from '@tanstack/react-query'
 import { useAuthStore } from '@/stores/auth'
+import { rpc } from '@/lib/rpc'
 import { parseJson } from '@/lib/utils/typed-json'
 import type { Task, TaskFilters } from '@/types/tasks'
-
-interface TasksResponse {
-  tasks?: Task[]
-}
 
 interface WorkspaceMembersResponse {
   members?: Array<{
@@ -33,19 +30,14 @@ export function useTasksQuery(filters?: TaskFilters) {
   return useQuery<Task[]>({
     queryKey: taskKeys.list(filters),
     queryFn: async () => {
-      const params = new URLSearchParams()
-      if (filters?.status) params.set('status', filters.status)
-      if (filters?.priority) params.set('priority', filters.priority)
-      if (filters?.assignee) params.set('assignee', filters.assignee)
-      if (filters?.limit) params.set('limit', String(filters.limit))
-      if (filters?.offset) params.set('offset', String(filters.offset))
-      const qs = params.toString()
-      const res = await fetch(`/api/tasks${qs ? `?${qs}` : ''}`, {
-        headers: { Authorization: `Bearer ${token}` },
+      const data = await rpc<{ tasks: Task[] }>('api_list_tasks', {
+        p_status: filters?.status ?? null,
+        p_priority: filters?.priority ?? null,
+        p_assignee: filters?.assignee ?? null,
+        p_limit: filters?.limit ?? 100,
+        p_offset: filters?.offset ?? 0,
       })
-      if (!res.ok) throw new Error('Failed to fetch tasks')
-      const d = await parseJson<TasksResponse>(res)
-      return d.tasks ?? []
+      return data.tasks ?? []
     },
     enabled: !!token,
   })

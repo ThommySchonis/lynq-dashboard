@@ -1,10 +1,10 @@
 -- Add suspension columns to workspaces table
 ALTER TABLE public.workspaces
-  ADD COLUMN suspended_at      timestamptz DEFAULT NULL,
-  ADD COLUMN suspension_reason  text        DEFAULT NULL;
+  ADD COLUMN IF NOT EXISTS suspended_at      timestamptz DEFAULT NULL,
+  ADD COLUMN IF NOT EXISTS suspension_reason  text        DEFAULT NULL;
 
 -- Index for cron queries that filter by suspension state
-CREATE INDEX idx_workspaces_suspended_at ON public.workspaces (suspended_at)
+CREATE INDEX IF NOT EXISTS idx_workspaces_suspended_at ON public.workspaces (suspended_at)
   WHERE suspended_at IS NOT NULL;
 
 -- Comment for documentation

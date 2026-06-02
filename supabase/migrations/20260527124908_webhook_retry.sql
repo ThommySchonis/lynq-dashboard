@@ -13,7 +13,7 @@ begin;
 
 -- 1. Replace status CHECK constraint
 alter table public.webhook_events
-  drop constraint chk_webhook_event_status;
+  drop constraint if exists chk_webhook_event_status;
 
 alter table public.webhook_events
   add constraint chk_webhook_event_status
@@ -26,7 +26,7 @@ alter table public.webhook_events
 -- 3. Replace partial index on status (old filter was: status != 'completed')
 drop index if exists idx_webhook_events_status;
 
-create index idx_webhook_events_status
+create index if not exists idx_webhook_events_status
   on public.webhook_events (status)
   where status not in ('completed', 'dismissed');
 

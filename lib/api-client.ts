@@ -8,15 +8,11 @@ const NEXT_API_BASE = '/api'
  * At migration end, replace this entire map with a single SUPABASE_API_BASE.
  */
 const routeBackend: Record<string, string> = {
-  // Phase 0: only health is on Supabase
+  // Phase 0
   health: SUPABASE_API_BASE,
 
-  // Everything else stays on Next.js until migrated
-  // Phase 1 will flip: tags, macros, profile, tasks, etc.
-  // Phase 2 will flip: shopify
-  // Phase 3 will flip: inbox, auth/gmail, auth/outlook, auth/forwarding-email
-  // Phase 4 will flip: billing, webhooks, workspace, account, uploads
-  // Phase 5 will flip: admin, cron
+  // Phase 1: profile routes on Hono
+  profile: SUPABASE_API_BASE,
 }
 
 /**

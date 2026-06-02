@@ -2,6 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query'
 import { useAuthStore } from '@/stores/auth'
+import { rpc } from '@/lib/rpc'
 import { parseJson } from '@/lib/utils/typed-json'
 import { useStoreStore } from '@/stores/store'
 
@@ -75,12 +76,11 @@ export function useOnboardingStatus() {
   return useQuery<OnboardingStatus | null>({
     queryKey: homeKeys.onboarding(),
     queryFn: async () => {
-      const res = await fetch('/api/onboarding/status', {
-        headers: { Authorization: `Bearer ${token}` },
-        cache: 'no-store',
-      })
-      if (!res.ok) return null
-      return parseJson<OnboardingStatus>(res)
+      try {
+        return await rpc<OnboardingStatus>('api_get_onboarding_status')
+      } catch {
+        return null
+      }
     },
     enabled: !!token,
     staleTime: 5 * 60 * 1000,

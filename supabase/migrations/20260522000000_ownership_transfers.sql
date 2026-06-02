@@ -29,6 +29,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_ownership_transfers_pending_unique
 -- 4. RLS
 ALTER TABLE ownership_transfers ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Members can view transfers in their workspace" ON ownership_transfers;
 CREATE POLICY "Members can view transfers in their workspace"
   ON ownership_transfers FOR SELECT
   USING (
@@ -37,6 +38,7 @@ CREATE POLICY "Members can view transfers in their workspace"
     )
   );
 
+DROP POLICY IF EXISTS "Service role has full access to ownership_transfers" ON ownership_transfers;
 CREATE POLICY "Service role has full access to ownership_transfers"
   ON ownership_transfers
   USING (auth.role() = 'service_role')

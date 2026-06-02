@@ -2,6 +2,8 @@
 
 import { useQuery } from '@tanstack/react-query'
 import { useAuthStore } from '@/stores/auth'
+import { rpc } from '@/lib/rpc'
+import { apiUrl } from '@/lib/api-client'
 import { parseJson } from '@/lib/utils/typed-json'
 import { useStoreStore } from '@/stores/store'
 import type { WorkspaceSettings, Member, UserProfile, MacroFilter, MacroOnboarding, Tag, EmailAccount, ShopifyIntegration, MembersPageData } from '@/types/settings'
@@ -126,7 +128,7 @@ export function useProfile() {
   return useQuery<UserProfile>({
     queryKey: settingsKeys.profile(),
     queryFn: async () => {
-      const res = await fetch('/api/profile', {
+      const res = await fetch(apiUrl('profile'), {
         headers: { Authorization: `Bearer ${token}` },
       })
       if (!res.ok) throw new Error('Failed to load profile')
@@ -143,17 +145,12 @@ export function useMacros(filter: MacroFilter) {
   return useQuery<Macro[]>({
     queryKey: settingsKeys.macros(filter),
     queryFn: async () => {
-      const params = new URLSearchParams()
-      if (filter.archived) params.set('archived', 'true')
-      if (filter.search) params.set('search', filter.search)
-      if (filter.language) params.set('language', filter.language)
-      if (filter.tags.length > 0) params.set('tags', filter.tags.join(','))
-      const url = `/api/macros${params.toString() ? `?${params}` : ''}`
-      const res = await fetch(url, {
-        headers: { Authorization: `Bearer ${token}` },
+      const data = await rpc<{ macros: Macro[] }>('api_list_macros', {
+        p_archived: filter.archived ? 'true' : 'false',
+        p_search: filter.search || null,
+        p_language: filter.language || null,
+        p_tags: filter.tags.length > 0 ? filter.tags.join(',') : null,
       })
-      if (!res.ok) throw new Error('Failed to load macros')
-      const data = await parseJson<MacrosResponse>(res)
       return data.macros ?? []
     },
     enabled: !!token,
@@ -166,12 +163,8 @@ export function useMacroOnboarding() {
   return useQuery<MacroOnboarding>({
     queryKey: settingsKeys.macroOnboarding(),
     queryFn: async () => {
-      const res = await fetch('/api/macros/onboarding', {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      if (!res.ok) throw new Error('Failed to load macro onboarding')
-      const { onboarding } = await parseJson<MacroOnboardingResponse>(res)
-      return onboarding
+      const data = await rpc<{ onboarding: MacroOnboarding }>('api_get_macro_onboarding')
+      return data.onboarding
     },
     enabled: !!token,
     staleTime: 5 * 60_000,
@@ -183,11 +176,7 @@ export function useTags() {
   return useQuery<Tag[]>({
     queryKey: settingsKeys.tags(),
     queryFn: async () => {
-      const res = await fetch('/api/tags', {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      if (!res.ok) throw new Error('Failed to load tags')
-      const data = await parseJson<TagsResponse>(res)
+      const data = await rpc<{ tags: Tag[] }>('api_list_tags')
       return data.tags ?? []
     },
     enabled: !!token,

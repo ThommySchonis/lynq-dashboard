@@ -32,8 +32,15 @@ alter table public.shopify_orders         enable row level security;
 alter table public.shipments              enable row level security;
 alter table public.analytics_actions      enable row level security;
 alter table public.ai_settings            enable row level security;
-alter table public.agents                 enable row level security;
-alter table public.agent_actions          enable row level security;
+-- agents + agent_actions may not exist yet (created in a later migration)
+do $$ begin
+  if exists (select 1 from information_schema.tables where table_schema='public' and table_name='agents') then
+    execute 'alter table public.agents enable row level security';
+  end if;
+  if exists (select 1 from information_schema.tables where table_schema='public' and table_name='agent_actions') then
+    execute 'alter table public.agent_actions enable row level security';
+  end if;
+end $$;
 alter table public.time_sessions          enable row level security;
 alter table public.macros                 enable row level security;
 alter table public.macro_onboarding       enable row level security;
@@ -279,41 +286,43 @@ create policy "ai_settings_delete_workspace_members"
   on public.ai_settings for delete
   using (workspace_id in (select public.user_workspace_ids()));
 
--- ── agents ────────────────────────────────────────────────────
-create policy "agents_select_workspace_members"
-  on public.agents for select
-  using (workspace_id in (select public.user_workspace_ids()));
+-- ── agents + agent_actions (created in later migration, guard with IF EXISTS) ──
+do $$ begin
+  if exists (select 1 from information_schema.tables where table_schema='public' and table_name='agents') then
+    execute $p$
+      create policy "agents_select_workspace_members" on public.agents for select
+        using (workspace_id in (select public.user_workspace_ids()));
+      create policy "agents_insert_workspace_members" on public.agents for insert
+        with check (workspace_id in (select public.user_workspace_ids()));
+      create policy "agents_update_workspace_members" on public.agents for update
+        using (workspace_id in (select public.user_workspace_ids()))
+        with check (workspace_id in (select public.user_workspace_ids()));
+      create policy "agents_delete_workspace_members" on public.agents for delete
+        using (workspace_id in (select public.user_workspace_ids()));
+    $p$;
+  end if;
 
-create policy "agents_insert_workspace_members"
-  on public.agents for insert
-  with check (workspace_id in (select public.user_workspace_ids()));
+  if exists (select 1 from information_schema.tables where table_schema='public' and table_name='agent_actions') then
+    execute $p$
+      create policy "agent_actions_select_workspace_members" on public.agent_actions for select
+        using (workspace_id in (select public.user_workspace_ids()));
+    $p$;
+  end if;
+end $$;
 
-create policy "agents_update_workspace_members"
-  on public.agents for update
-  using (workspace_id in (select public.user_workspace_ids()))
-  with check (workspace_id in (select public.user_workspace_ids()));
-
-create policy "agents_delete_workspace_members"
-  on public.agents for delete
-  using (workspace_id in (select public.user_workspace_ids()));
-
--- ── agent_actions ─────────────────────────────────────────────
-create policy "agent_actions_select_workspace_members"
-  on public.agent_actions for select
-  using (workspace_id in (select public.user_workspace_ids()));
-
-create policy "agent_actions_insert_workspace_members"
-  on public.agent_actions for insert
-  with check (workspace_id in (select public.user_workspace_ids()));
-
-create policy "agent_actions_update_workspace_members"
-  on public.agent_actions for update
-  using (workspace_id in (select public.user_workspace_ids()))
-  with check (workspace_id in (select public.user_workspace_ids()));
-
-create policy "agent_actions_delete_workspace_members"
-  on public.agent_actions for delete
-  using (workspace_id in (select public.user_workspace_ids()));
+do $$ begin
+  if exists (select 1 from information_schema.tables where table_schema='public' and table_name='agent_actions') then
+    execute $p$
+      create policy "agent_actions_insert_workspace_members" on public.agent_actions for insert
+        with check (workspace_id in (select public.user_workspace_ids()));
+      create policy "agent_actions_update_workspace_members" on public.agent_actions for update
+        using (workspace_id in (select public.user_workspace_ids()))
+        with check (workspace_id in (select public.user_workspace_ids()));
+      create policy "agent_actions_delete_workspace_members" on public.agent_actions for delete
+        using (workspace_id in (select public.user_workspace_ids()));
+    $p$;
+  end if;
+end $$;
 
 -- ── time_sessions ─────────────────────────────────────────────
 create policy "time_sessions_select_workspace_members"

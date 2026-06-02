@@ -2,30 +2,18 @@
 
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { settingsKeys } from './use-settings-data'
-import { useToken } from './utils'
+import { rpc } from '@/lib/rpc'
 import { toast } from 'sonner'
-import { parseJson } from '@/lib/utils/typed-json'
 import type { TagForm } from '@/types/settings'
 
-interface ErrorResponse {
-  error?: string
-}
-
 export function useCreateTag() {
-  const token = useToken()
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async (form: TagForm) => {
-      const res = await fetch('/api/tags', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ name: form.name, color: form.color }),
+      return rpc('api_create_tag', {
+        p_name: form.name,
+        p_color: form.color,
       })
-      if (!res.ok) {
-        const d = await parseJson<ErrorResponse>(res).catch((): ErrorResponse => ({}))
-        throw new Error(d.error ||'Failed to create tag')
-      }
-      return parseJson<unknown>(res)
     },
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: settingsKeys.tags() })
@@ -38,20 +26,14 @@ export function useCreateTag() {
 }
 
 export function useUpdateTag() {
-  const token = useToken()
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async ({ id, ...form }: TagForm & { id: string }) => {
-      const res = await fetch(`/api/tags/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ name: form.name, color: form.color }),
+      return rpc('api_update_tag', {
+        p_id: id,
+        p_name: form.name,
+        p_color: form.color,
       })
-      if (!res.ok) {
-        const d = await parseJson<ErrorResponse>(res).catch((): ErrorResponse => ({}))
-        throw new Error(d.error ||'Failed to update tag')
-      }
-      return parseJson<unknown>(res)
     },
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: settingsKeys.tags() })
@@ -64,18 +46,10 @@ export function useUpdateTag() {
 }
 
 export function useDeleteTag() {
-  const token = useToken()
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async (id: string) => {
-      const res = await fetch(`/api/tags/${id}`, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      if (!res.ok) {
-        const d = await parseJson<ErrorResponse>(res).catch((): ErrorResponse => ({}))
-        throw new Error(d.error ||'Failed to delete tag')
-      }
+      return rpc('api_delete_tag', { p_id: id })
     },
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: settingsKeys.tags() })
@@ -88,20 +62,13 @@ export function useDeleteTag() {
 }
 
 export function useMergeTags() {
-  const token = useToken()
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async ({ winner_id, loser_ids }: { winner_id: string; loser_ids: string[] }) => {
-      const res = await fetch('/api/tags/merge', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ winner_id, loser_ids }),
+      return rpc('api_merge_tags', {
+        p_winner_id: winner_id,
+        p_loser_ids: loser_ids,
       })
-      if (!res.ok) {
-        const d = await parseJson<ErrorResponse>(res).catch((): ErrorResponse => ({}))
-        throw new Error(d.error ||'Merge failed')
-      }
-      return parseJson<unknown>(res)
     },
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: settingsKeys.tags() })

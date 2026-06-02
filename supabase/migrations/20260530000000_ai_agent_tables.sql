@@ -27,8 +27,8 @@ create table if not exists public.ai_policies (
   unique (store_id)
 );
 
-create index idx_ai_policies_workspace on public.ai_policies(workspace_id);
-create index idx_ai_policies_store     on public.ai_policies(store_id);
+create index if not exists idx_ai_policies_workspace on public.ai_policies(workspace_id);
+create index if not exists idx_ai_policies_store     on public.ai_policies(store_id);
 
 drop trigger if exists ai_policies_set_updated_at on public.ai_policies;
 create trigger ai_policies_set_updated_at
@@ -37,15 +37,19 @@ create trigger ai_policies_set_updated_at
 
 alter table public.ai_policies enable row level security;
 
+drop policy if exists "ai_policies_select" on public.ai_policies;
 create policy "ai_policies_select" on public.ai_policies for select
   using (workspace_id in (select workspace_id from public.workspace_members where user_id = auth.uid()));
 
+drop policy if exists "ai_policies_insert" on public.ai_policies;
 create policy "ai_policies_insert" on public.ai_policies for insert
   with check (workspace_id in (select workspace_id from public.workspace_members where user_id = auth.uid()));
 
+drop policy if exists "ai_policies_update" on public.ai_policies;
 create policy "ai_policies_update" on public.ai_policies for update
   using (workspace_id in (select workspace_id from public.workspace_members where user_id = auth.uid()));
 
+drop policy if exists "ai_policies_delete" on public.ai_policies;
 create policy "ai_policies_delete" on public.ai_policies for delete
   using (workspace_id in (select workspace_id from public.workspace_members where user_id = auth.uid()));
 
@@ -78,8 +82,8 @@ create table if not exists public.ai_scenarios (
   unique (store_id, scenario_key)
 );
 
-create index idx_ai_scenarios_workspace on public.ai_scenarios(workspace_id);
-create index idx_ai_scenarios_store     on public.ai_scenarios(store_id);
+create index if not exists idx_ai_scenarios_workspace on public.ai_scenarios(workspace_id);
+create index if not exists idx_ai_scenarios_store     on public.ai_scenarios(store_id);
 
 drop trigger if exists ai_scenarios_set_updated_at on public.ai_scenarios;
 create trigger ai_scenarios_set_updated_at
@@ -88,15 +92,19 @@ create trigger ai_scenarios_set_updated_at
 
 alter table public.ai_scenarios enable row level security;
 
+drop policy if exists "ai_scenarios_select" on public.ai_scenarios;
 create policy "ai_scenarios_select" on public.ai_scenarios for select
   using (workspace_id in (select workspace_id from public.workspace_members where user_id = auth.uid()));
 
+drop policy if exists "ai_scenarios_insert" on public.ai_scenarios;
 create policy "ai_scenarios_insert" on public.ai_scenarios for insert
   with check (workspace_id in (select workspace_id from public.workspace_members where user_id = auth.uid()));
 
+drop policy if exists "ai_scenarios_update" on public.ai_scenarios;
 create policy "ai_scenarios_update" on public.ai_scenarios for update
   using (workspace_id in (select workspace_id from public.workspace_members where user_id = auth.uid()));
 
+drop policy if exists "ai_scenarios_delete" on public.ai_scenarios;
 create policy "ai_scenarios_delete" on public.ai_scenarios for delete
   using (workspace_id in (select workspace_id from public.workspace_members where user_id = auth.uid()));
 
@@ -125,8 +133,8 @@ create table if not exists public.ai_autonomy_rules (
   unique (store_id)
 );
 
-create index idx_ai_autonomy_rules_workspace on public.ai_autonomy_rules(workspace_id);
-create index idx_ai_autonomy_rules_store     on public.ai_autonomy_rules(store_id);
+create index if not exists idx_ai_autonomy_rules_workspace on public.ai_autonomy_rules(workspace_id);
+create index if not exists idx_ai_autonomy_rules_store     on public.ai_autonomy_rules(store_id);
 
 drop trigger if exists ai_autonomy_rules_set_updated_at on public.ai_autonomy_rules;
 create trigger ai_autonomy_rules_set_updated_at
@@ -135,15 +143,19 @@ create trigger ai_autonomy_rules_set_updated_at
 
 alter table public.ai_autonomy_rules enable row level security;
 
+drop policy if exists "ai_autonomy_rules_select" on public.ai_autonomy_rules;
 create policy "ai_autonomy_rules_select" on public.ai_autonomy_rules for select
   using (workspace_id in (select workspace_id from public.workspace_members where user_id = auth.uid()));
 
+drop policy if exists "ai_autonomy_rules_insert" on public.ai_autonomy_rules;
 create policy "ai_autonomy_rules_insert" on public.ai_autonomy_rules for insert
   with check (workspace_id in (select workspace_id from public.workspace_members where user_id = auth.uid()));
 
+drop policy if exists "ai_autonomy_rules_update" on public.ai_autonomy_rules;
 create policy "ai_autonomy_rules_update" on public.ai_autonomy_rules for update
   using (workspace_id in (select workspace_id from public.workspace_members where user_id = auth.uid()));
 
+drop policy if exists "ai_autonomy_rules_delete" on public.ai_autonomy_rules;
 create policy "ai_autonomy_rules_delete" on public.ai_autonomy_rules for delete
   using (workspace_id in (select workspace_id from public.workspace_members where user_id = auth.uid()));
 
@@ -173,14 +185,16 @@ create table if not exists public.ai_lessons (
   -- No UPDATE or DELETE RLS policies for the same reason.
 );
 
-create index idx_ai_lessons_workspace on public.ai_lessons(workspace_id);
-create index idx_ai_lessons_store     on public.ai_lessons(store_id);
+create index if not exists idx_ai_lessons_workspace on public.ai_lessons(workspace_id);
+create index if not exists idx_ai_lessons_store     on public.ai_lessons(store_id);
 
 alter table public.ai_lessons enable row level security;
 
+drop policy if exists "ai_lessons_select" on public.ai_lessons;
 create policy "ai_lessons_select" on public.ai_lessons for select
   using (workspace_id in (select workspace_id from public.workspace_members where user_id = auth.uid()));
 
+drop policy if exists "ai_lessons_insert" on public.ai_lessons;
 create policy "ai_lessons_insert" on public.ai_lessons for insert
   with check (workspace_id in (select workspace_id from public.workspace_members where user_id = auth.uid()));
 

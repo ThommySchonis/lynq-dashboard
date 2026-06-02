@@ -42,6 +42,9 @@ grant execute on function public.is_current_user_lynq_admin() to authenticated;
 -- ─── 2. Re-create RLS policies on feedback_submissions ───────
 -- Policy names match the original migration:
 --   feedback_admin_select / feedback_admin_update / feedback_admin_delete
+drop policy if exists "feedback_select_admin" on public.feedback_submissions;
+drop policy if exists "feedback_update_admin" on public.feedback_submissions;
+drop policy if exists "feedback_delete_admin" on public.feedback_submissions;
 drop policy if exists "feedback_admin_select" on public.feedback_submissions;
 drop policy if exists "feedback_admin_update" on public.feedback_submissions;
 drop policy if exists "feedback_admin_delete" on public.feedback_submissions;
@@ -91,7 +94,7 @@ begin
   if (
     select count(*) from pg_policy
     where polrelid = 'public.feedback_submissions'::regclass
-      and polname in ('feedback_admin_select', 'feedback_admin_update', 'feedback_admin_delete')
+      and polname like 'feedback_admin_%'
   ) <> 3 then
     raise exception 'feedback_submissions admin policies missing after rebuild';
   end if;

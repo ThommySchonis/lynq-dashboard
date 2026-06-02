@@ -45,9 +45,9 @@ create table if not exists public.tasks (
 );
 
 -- Indexes
-create index idx_tasks_workspace on public.tasks(workspace_id);
-create unique index idx_tasks_trigger_key on public.tasks(workspace_id, trigger_key) where trigger_key is not null;
-create index idx_tasks_status on public.tasks(workspace_id, status) where deleted_at is null;
+create index if not exists idx_tasks_workspace on public.tasks(workspace_id);
+create unique index if not exists idx_tasks_trigger_key on public.tasks(workspace_id, trigger_key) where trigger_key is not null;
+create index if not exists idx_tasks_status on public.tasks(workspace_id, status) where deleted_at is null;
 
 -- Auto-update updated_at (reuses shared function from 20260508_workspace_settings)
 drop trigger if exists tasks_set_updated_at on public.tasks;
@@ -58,12 +58,15 @@ create trigger tasks_set_updated_at
 -- RLS
 alter table public.tasks enable row level security;
 
+drop policy if exists "tasks_select" on public.tasks;
 create policy "tasks_select" on public.tasks for select
   using (workspace_id in (select workspace_id from public.workspace_members where user_id = auth.uid()));
 
+drop policy if exists "tasks_insert" on public.tasks;
 create policy "tasks_insert" on public.tasks for insert
   with check (workspace_id in (select workspace_id from public.workspace_members where user_id = auth.uid()));
 
+drop policy if exists "tasks_update" on public.tasks;
 create policy "tasks_update" on public.tasks for update
   using (workspace_id in (select workspace_id from public.workspace_members where user_id = auth.uid()));
 

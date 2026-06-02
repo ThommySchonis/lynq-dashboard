@@ -4,36 +4,31 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAuthStore } from '@/stores/auth'
 import { useStoreStore } from '@/stores/store'
 import { taskKeys } from './use-tasks-data'
+import { rpc } from '@/lib/rpc'
 import { parseJson } from '@/lib/utils/typed-json'
 import type { CreateTaskInput, UpdateTaskInput } from '@/types/tasks'
-
-interface ErrorResponse {
-  error?: string
-}
 
 function useToken() {
   return useAuthStore((s) => s.session?.access_token ?? '')
 }
 
 export function useCreateTask() {
-  const token = useToken()
   const qc = useQueryClient()
 
   return useMutation({
     mutationFn: async (input: CreateTaskInput) => {
-      const res = await fetch('/api/tasks', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(input),
+      return rpc('api_create_task', {
+        p_title: input.title,
+        p_description: input.description ?? null,
+        p_category: input.category ?? null,
+        p_priority: input.priority ?? 'medium',
+        p_assigned_to: input.assignedTo ?? null,
+        p_shopify_order_id: input.shopifyOrderId ?? null,
+        p_shopify_order_name: input.shopifyOrderName ?? null,
+        p_shopify_customer_id: input.shopifyCustomerId ?? null,
+        p_customer_name: input.customerName ?? null,
+        p_customer_email: input.customerEmail ?? null,
       })
-      if (!res.ok) {
-        const d = await parseJson<ErrorResponse>(res).catch((): ErrorResponse => ({}))
-        throw new Error(d.error ||'Failed to create task')
-      }
-      return parseJson<unknown>(res)
     },
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: taskKeys.all })
@@ -42,24 +37,20 @@ export function useCreateTask() {
 }
 
 export function useUpdateTask() {
-  const token = useToken()
   const qc = useQueryClient()
 
   return useMutation({
     mutationFn: async ({ id, ...updates }: UpdateTaskInput & { id: string }) => {
-      const res = await fetch(`/api/tasks/${id}`, {
-        method: 'PATCH',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(updates),
+      return rpc('api_update_task', {
+        p_id: id,
+        p_title: updates.title ?? null,
+        p_description: updates.description ?? null,
+        p_category: updates.category ?? null,
+        p_priority: updates.priority ?? null,
+        p_assigned_to: updates.assignedTo ?? null,
+        p_result_note: updates.resultNote ?? null,
+        p_status: updates.status ?? null,
       })
-      if (!res.ok) {
-        const d = await parseJson<ErrorResponse>(res).catch((): ErrorResponse => ({}))
-        throw new Error(d.error ||'Failed to update task')
-      }
-      return parseJson<unknown>(res)
     },
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: taskKeys.all })
@@ -68,20 +59,11 @@ export function useUpdateTask() {
 }
 
 export function useDeleteTask() {
-  const token = useToken()
   const qc = useQueryClient()
 
   return useMutation({
     mutationFn: async (id: string) => {
-      const res = await fetch(`/api/tasks/${id}`, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      if (!res.ok) {
-        const d = await parseJson<ErrorResponse>(res).catch((): ErrorResponse => ({}))
-        throw new Error(d.error ||'Failed to delete task')
-      }
-      return parseJson<unknown>(res)
+      return rpc('api_delete_task', { p_id: id })
     },
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: taskKeys.all })

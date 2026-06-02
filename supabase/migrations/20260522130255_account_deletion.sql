@@ -1,8 +1,8 @@
 -- 1. Add scheduled_for_deletion_at to user_profiles
 ALTER TABLE public.user_profiles
-  ADD COLUMN scheduled_for_deletion_at timestamptz DEFAULT NULL;
+  ADD COLUMN IF NOT EXISTS scheduled_for_deletion_at timestamptz DEFAULT NULL;
 
-CREATE INDEX idx_user_profiles_deletion
+CREATE INDEX IF NOT EXISTS idx_user_profiles_deletion
   ON public.user_profiles (scheduled_for_deletion_at)
   WHERE scheduled_for_deletion_at IS NOT NULL;
 
@@ -10,7 +10,7 @@ COMMENT ON COLUMN public.user_profiles.scheduled_for_deletion_at
   IS 'Non-null = account scheduled for deletion. Cron executes when this timestamp is in the past.';
 
 -- 2. Account deletion log (append-only, no FK — user may be deleted)
-CREATE TABLE public.account_deletion_log (
+CREATE TABLE IF NOT EXISTS public.account_deletion_log (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id uuid NOT NULL,
   user_email text NOT NULL,
@@ -21,13 +21,14 @@ CREATE TABLE public.account_deletion_log (
 
 ALTER TABLE public.account_deletion_log ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Super-admin read-only" ON public.account_deletion_log;
 CREATE POLICY "Super-admin read-only"
   ON public.account_deletion_log
   FOR SELECT
   USING (public.is_current_user_lynq_admin());
 
 -- 3. Anonymized members audit trail
-CREATE TABLE public.anonymized_members (
+CREATE TABLE IF NOT EXISTS public.anonymized_members (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   workspace_id uuid NOT NULL REFERENCES public.workspaces(id) ON DELETE CASCADE,
   original_user_id uuid NOT NULL,
@@ -36,6 +37,7 @@ CREATE TABLE public.anonymized_members (
 
 ALTER TABLE public.anonymized_members ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Super-admin read-only" ON public.anonymized_members;
 CREATE POLICY "Super-admin read-only"
   ON public.anonymized_members
   FOR SELECT

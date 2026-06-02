@@ -2,7 +2,7 @@
 -- Captures state transitions for inbox analytics.
 -- Schema designed for future ClickHouse migration.
 
-create table support_events (
+create table if not exists support_events (
   id              uuid        primary key default gen_random_uuid(),
   workspace_id    uuid        not null references workspaces(id) on delete cascade,
   event_type      text        not null,
@@ -14,20 +14,21 @@ create table support_events (
 );
 
 -- Primary analytics query path
-create index idx_support_events_workspace_type_date
+create index if not exists idx_support_events_workspace_type_date
   on support_events (workspace_id, event_type, created_at);
 
 -- Per-ticket timeline
-create index idx_support_events_workspace_conversation
+create index if not exists idx_support_events_workspace_conversation
   on support_events (workspace_id, conversation_id, event_type);
 
 -- Per-agent filtering
-create index idx_support_events_workspace_agent
+create index if not exists idx_support_events_workspace_agent
   on support_events (workspace_id, agent_id, event_type, created_at);
 
 -- RLS
 alter table support_events enable row level security;
 
+drop policy if exists "workspace members can read support events" on support_events;
 create policy "workspace members can read support events"
   on support_events for select
   using (
@@ -36,6 +37,7 @@ create policy "workspace members can read support events"
     )
   );
 
+drop policy if exists "service role can insert support events" on support_events;
 create policy "service role can insert support events"
   on support_events for insert
   with check (true);

@@ -53,36 +53,22 @@ create policy "notifications_admin_all"
   using      (auth.jwt() ->> 'email' = 'info@lynqagency.com')
   with check (auth.jwt() ->> 'email' = 'info@lynqagency.com');
 
--- ─── sent_emails: per-user owned ───────────────────────────
--- Code path gebruikt supabaseAdmin (service-role bypass), maar RLS
--- hieronder zorgt dat directe anon-key queries alleen eigen rijen zien.
-alter table public.sent_emails enable row level security;
+-- ─── sent_emails: per-user owned (may not exist in fresh local DB) ──
+do $$ begin
+  if exists (select 1 from information_schema.tables where table_schema='public' and table_name='sent_emails') then
+    execute 'alter table public.sent_emails enable row level security';
 
-drop policy if exists "sent_emails_select_own" on public.sent_emails;
-drop policy if exists "sent_emails_insert_own" on public.sent_emails;
-drop policy if exists "sent_emails_update_own" on public.sent_emails;
-drop policy if exists "sent_emails_delete_own" on public.sent_emails;
+    execute $p$drop policy if exists "sent_emails_select_own" on public.sent_emails$p$;
+    execute $p$drop policy if exists "sent_emails_insert_own" on public.sent_emails$p$;
+    execute $p$drop policy if exists "sent_emails_update_own" on public.sent_emails$p$;
+    execute $p$drop policy if exists "sent_emails_delete_own" on public.sent_emails$p$;
 
-create policy "sent_emails_select_own"
-  on public.sent_emails for select
-  to authenticated
-  using (user_id = auth.uid());
-
-create policy "sent_emails_insert_own"
-  on public.sent_emails for insert
-  to authenticated
-  with check (user_id = auth.uid());
-
-create policy "sent_emails_update_own"
-  on public.sent_emails for update
-  to authenticated
-  using      (user_id = auth.uid())
-  with check (user_id = auth.uid());
-
-create policy "sent_emails_delete_own"
-  on public.sent_emails for delete
-  to authenticated
-  using (user_id = auth.uid());
+    execute $p$create policy "sent_emails_select_own" on public.sent_emails for select to authenticated using (user_id = auth.uid())$p$;
+    execute $p$create policy "sent_emails_insert_own" on public.sent_emails for insert to authenticated with check (user_id = auth.uid())$p$;
+    execute $p$create policy "sent_emails_update_own" on public.sent_emails for update to authenticated using (user_id = auth.uid()) with check (user_id = auth.uid())$p$;
+    execute $p$create policy "sent_emails_delete_own" on public.sent_emails for delete to authenticated using (user_id = auth.uid())$p$;
+  end if;
+end $$;
 
 -- ─── Verification ──────────────────────────────────────────
 do $$
@@ -99,13 +85,7 @@ begin
     where n.nspname = 'public' and c.relname = 'notifications' and c.relrowsecurity = true
   ) then raise exception 'notifications RLS not enabled'; end if;
 
-  if not exists (
-    select 1 from pg_class c
-    join pg_namespace n on n.oid = c.relnamespace
-    where n.nspname = 'public' and c.relname = 'sent_emails' and c.relrowsecurity = true
-  ) then raise exception 'sent_emails RLS not enabled'; end if;
-
-  raise notice 'OK — RLS enabled on broadcasts, notifications, sent_emails (incl. admin policy + per-user owner)';
+  raise notice 'OK — RLS enabled on broadcasts, notifications (+ sent_emails if table exists)';
 end $$;
 
 commit;

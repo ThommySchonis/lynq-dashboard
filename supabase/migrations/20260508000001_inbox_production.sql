@@ -50,10 +50,12 @@ CREATE TABLE IF NOT EXISTS conversation_notes (
 -- 5. RLS for conversation_notes
 ALTER TABLE conversation_notes ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "conversation_notes_select_workspace_members" ON conversation_notes;
 CREATE POLICY "conversation_notes_select_workspace_members"
   ON conversation_notes FOR SELECT
   USING (workspace_id IN (SELECT public.user_workspace_ids()));
 
+DROP POLICY IF EXISTS "conversation_notes_insert_workspace_members" ON conversation_notes;
 CREATE POLICY "conversation_notes_insert_workspace_members"
   ON conversation_notes FOR INSERT
   WITH CHECK (workspace_id IN (SELECT public.user_workspace_ids()));

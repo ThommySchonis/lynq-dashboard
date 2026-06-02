@@ -4,5 +4,5 @@
 alter table email_conversations
   add column if not exists assigned_to uuid references workspace_members(id) on delete set null;
 
-create index idx_email_conversations_assigned_to
+create index if not exists idx_email_conversations_assigned_to
   on email_conversations (workspace_id, assigned_to);

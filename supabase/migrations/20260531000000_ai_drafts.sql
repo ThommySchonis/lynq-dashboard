@@ -28,15 +28,17 @@ create table if not exists public.ai_drafts (
 );
 
 -- For retroactive joins with email_messages (edit-rate / used-rate) per thread.
-create index idx_ai_drafts_conversation on public.ai_drafts(conversation_id, generated_at desc);
+create index if not exists idx_ai_drafts_conversation on public.ai_drafts(conversation_id, generated_at desc);
 -- For workspace-scoped dashboard reads in a later trede.
-create index idx_ai_drafts_workspace     on public.ai_drafts(workspace_id, generated_at desc);
+create index if not exists idx_ai_drafts_workspace     on public.ai_drafts(workspace_id, generated_at desc);
 
 alter table public.ai_drafts enable row level security;
 
+drop policy if exists "ai_drafts_select" on public.ai_drafts;
 create policy "ai_drafts_select" on public.ai_drafts for select
   using (workspace_id in (select workspace_id from public.workspace_members where user_id = auth.uid()));
 
+drop policy if exists "ai_drafts_insert" on public.ai_drafts;
 create policy "ai_drafts_insert" on public.ai_drafts for insert
   with check (workspace_id in (select workspace_id from public.workspace_members where user_id = auth.uid()));
 

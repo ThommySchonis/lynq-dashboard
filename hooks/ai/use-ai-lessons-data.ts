@@ -2,6 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query'
 import { useAuthStore } from '@/stores/auth'
+import { rpc } from '@/lib/rpc'
 
 function useToken() {
   return useAuthStore((s) => s.session?.access_token ?? '')
@@ -31,11 +32,7 @@ export function useAiLessons(storeId: string) {
   return useQuery<AiLessonRow[]>({
     queryKey: aiLessonKeys.byStore(storeId),
     queryFn: async () => {
-      const res = await fetch(`/api/ai/lessons?store_id=${encodeURIComponent(storeId)}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      if (!res.ok) throw new Error('Failed to load AI lessons')
-      const data = await res.json() as { lessons?: AiLessonRow[] }
+      const data = await rpc<{ lessons: AiLessonRow[] }>('api_list_ai_lessons', { p_store_id: storeId })
       return data.lessons ?? []
     },
     enabled: !!token && !!storeId,

@@ -2,6 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query'
 import { useAuthStore } from '@/stores/auth'
+import { rpc } from '@/lib/rpc'
 import type { StorePublic, StoreEmailAccount } from '@/types/stores'
 
 function useToken() {
@@ -19,12 +20,8 @@ export function useStores() {
   return useQuery<StorePublic[]>({
     queryKey: storeKeys.list(),
     queryFn: async () => {
-      const res = await fetch('/api/stores', {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      if (!res.ok) throw new Error('Failed to load stores')
-      const data = await res.json() as { stores?: StorePublic[] }
-      return (data.stores ?? []) as StorePublic[]
+      const data = await rpc<{ stores: StorePublic[] }>('api_list_stores')
+      return data.stores ?? []
     },
     enabled: !!token,
   })
@@ -35,12 +32,10 @@ export function useStoreEmailAccounts(storeId: string) {
   return useQuery<StoreEmailAccount[]>({
     queryKey: storeKeys.emailAccounts(storeId),
     queryFn: async () => {
-      const res = await fetch(`/api/stores/${storeId}/email-configs`, {
-        headers: { Authorization: `Bearer ${token}` },
+      const data = await rpc<{ configs: StoreEmailAccount[] }>('api_list_store_email_configs', {
+        p_store_id: storeId,
       })
-      if (!res.ok) throw new Error('Failed to load email configs')
-      const data = await res.json() as { configs?: StoreEmailAccount[] }
-      return (data.configs ?? []) as StoreEmailAccount[]
+      return data.configs ?? []
     },
     enabled: !!token && !!storeId,
   })

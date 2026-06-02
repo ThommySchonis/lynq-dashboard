@@ -3,6 +3,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAuthStore } from '@/stores/auth'
 import { storeKeys } from './use-stores-data'
+import { rpc } from '@/lib/rpc'
 import { toast } from 'sonner'
 
 function useToken() {
@@ -10,20 +11,10 @@ function useToken() {
 }
 
 export function useUpdateStore() {
-  const token = useToken()
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async ({ storeId, name }: { storeId: string; name: string }) => {
-      const res = await fetch(`/api/stores/${storeId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ name }),
-      })
-      if (!res.ok) {
-        const d = await (res.json() as Promise<{ error?: string }>).catch(() => ({} as { error?: string }))
-        throw new Error(d.error ?? 'Failed to update store')
-      }
-      await res.json()
+      return rpc('api_update_store', { p_store_id: storeId, p_name: name })
     },
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: storeKeys.list() })
@@ -78,18 +69,10 @@ export function useDeleteStore() {
 }
 
 export function useDeleteStoreEmailAccount() {
-  const token = useToken()
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async ({ storeId, configId }: { storeId: string; configId: string }) => {
-      const res = await fetch(`/api/stores/${storeId}/email-configs/${configId}`, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      if (!res.ok) {
-        const d = await (res.json() as Promise<{ error?: string }>).catch(() => ({} as { error?: string }))
-        throw new Error(d.error ?? 'Failed to remove email config')
-      }
+      return rpc('api_delete_store_email_config', { p_store_id: storeId, p_config_id: configId })
     },
     onSuccess: (_data, vars) => {
       void qc.invalidateQueries({ queryKey: storeKeys.emailAccounts(vars.storeId) })

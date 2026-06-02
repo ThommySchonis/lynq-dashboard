@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { useToken } from '@/hooks/settings/utils'
 import { parseJson } from '@/lib/utils/typed-json'
+import { rpc } from '@/lib/rpc'
 
 export const accountDeletionKeys = {
   status: () => ['account-deletion', 'status'] as const,
@@ -14,12 +15,9 @@ export function useAccountDeletionStatus() {
   return useQuery({
     queryKey: accountDeletionKeys.status(),
     queryFn: async () => {
-      const res = await fetch('/api/account/deletion-status', {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      if (!res.ok) throw new Error('Failed to fetch deletion status')
-      return parseJson<{ scheduled: boolean; scheduledFor: string | null }>(res)
+      return rpc<{ scheduled: boolean; scheduledFor: string | null }>('api_get_deletion_status')
     },
+    enabled: !!token,
   })
 }
 
@@ -51,19 +49,10 @@ export function useScheduleAccountDeletion() {
 }
 
 export function useCancelAccountDeletion() {
-  const token = useToken()
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async () => {
-      const res = await fetch('/api/account/cancel-deletion', {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      if (!res.ok) {
-        const data = await parseJson<{ error: string }>(res)
-        throw new Error(data.error)
-      }
-      return parseJson<{ cancelled: boolean }>(res)
+      return rpc<{ cancelled: boolean }>('api_cancel_account_deletion')
     },
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: accountDeletionKeys.status() })

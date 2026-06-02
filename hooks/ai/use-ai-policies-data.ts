@@ -2,6 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query'
 import { useAuthStore } from '@/stores/auth'
+import { rpc } from '@/lib/rpc'
 
 function useToken() {
   return useAuthStore((s) => s.session?.access_token ?? '')
@@ -55,11 +56,7 @@ export function useAiPolicies(storeId: string) {
   return useQuery<AiPoliciesRow | null>({
     queryKey: aiPolicyKeys.byStore(storeId),
     queryFn: async () => {
-      const res = await fetch(`/api/ai/policies?store_id=${encodeURIComponent(storeId)}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      if (!res.ok) throw new Error('Failed to load AI policies')
-      const data = await res.json() as { policies?: AiPoliciesRow | null }
+      const data = await rpc<{ policies: AiPoliciesRow | null }>('api_get_ai_policies', { p_store_id: storeId })
       return data.policies ?? null
     },
     enabled: !!token && !!storeId,
@@ -71,11 +68,7 @@ export function useAiScenarios(storeId: string) {
   return useQuery<AiScenarioRow[]>({
     queryKey: aiScenarioKeys.byStore(storeId),
     queryFn: async () => {
-      const res = await fetch(`/api/ai/scenarios?store_id=${encodeURIComponent(storeId)}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      if (!res.ok) throw new Error('Failed to load AI scenarios')
-      const data = await res.json() as { scenarios?: AiScenarioRow[] }
+      const data = await rpc<{ scenarios: AiScenarioRow[] }>('api_list_ai_scenarios', { p_store_id: storeId })
       return data.scenarios ?? []
     },
     enabled: !!token && !!storeId,

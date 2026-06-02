@@ -2,6 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query'
 import { useAuthStore } from '@/stores/auth'
+import { rpc } from '@/lib/rpc'
 import type { AiAutonomyRulesConfig } from '@/lib/schemas/ai'
 
 function useToken() {
@@ -23,13 +24,7 @@ export function useAiAutonomyRules(storeId: string) {
   return useQuery<AiAutonomyRulesResponse>({
     queryKey: aiAutonomyRulesKeys.byStore(storeId),
     queryFn: async () => {
-      const res = await fetch(
-        `/api/ai/autonomy-rules?store_id=${encodeURIComponent(storeId)}`,
-        { headers: { Authorization: `Bearer ${token}` } },
-      )
-      if (!res.ok) throw new Error('Failed to load autonomy rules')
-      const data = await res.json() as AiAutonomyRulesResponse
-      return data
+      return rpc<AiAutonomyRulesResponse>('api_get_ai_autonomy_rules', { p_store_id: storeId })
     },
     enabled: !!token && !!storeId,
   })

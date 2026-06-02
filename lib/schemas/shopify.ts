@@ -77,3 +77,40 @@ export const updateAddressBody = z.object({
   first_name: z.string().optional(),
   last_name: z.string().optional(),
 }).passthrough()
+
+export const shopifyProductSearchQuery = storeIdQuery.extend({
+  q: z.string().min(1, 'q is required'),
+  limit: z.coerce.number().int().min(1).max(50).optional(),
+})
+
+export const shippingAddressInputSchema = z.object({
+  firstName: z.string().optional(),
+  lastName: z.string().optional(),
+  address1: z.string().optional(),
+  address2: z.string().optional(),
+  city: z.string().optional(),
+  province: z.string().optional(),
+  country: z.string().optional(),
+  zip: z.string().optional(),
+  phone: z.string().optional(),
+})
+
+export const createDraftOrderBody = z.object({
+  customerId: z.string().min(1, 'customerId is required'),
+  lineItems: z
+    .array(
+      z.object({
+        variantId: z.string().min(1, 'variantId is required'),
+        quantity: z.number().int().min(1).max(999),
+      })
+    )
+    .min(1, 'At least one line item is required'),
+  shippingAddress: shippingAddressInputSchema.optional(),
+  discount: z
+    .object({
+      type: z.enum(['percentage', 'fixed']),
+      value: z.number().positive(),
+    })
+    .optional(),
+  note: z.string().max(5000).optional(),
+})

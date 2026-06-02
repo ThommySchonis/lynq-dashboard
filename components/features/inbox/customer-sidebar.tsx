@@ -74,6 +74,7 @@ interface SidebarOrder {
 }
 
 interface SidebarCustomerData {
+  id?: string | number
   firstName?: string
   lastName?: string
   email?: string
@@ -86,6 +87,17 @@ interface SidebarCustomerData {
   totalSpent?: string | number
   currency?: string
   tags?: string
+  defaultAddress?: {
+    firstName?: string
+    lastName?: string
+    address1?: string
+    address2?: string
+    city?: string
+    province?: string
+    country?: string
+    zip?: string
+    phone?: string
+  }
   [key: string]: unknown
 }
 
@@ -431,6 +443,7 @@ export function CustomerSidebar() {
           setExpandedOrders={setExpandedOrders}
           setExpandedSubs={setExpandedSubs}
           setModal={setModal}
+          customer={customer?.customer ?? null}
           customerEmail={customer?.customer?.email || autoCustomerEmail}
           customerName={customerName}
         />

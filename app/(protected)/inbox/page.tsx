@@ -19,6 +19,8 @@ import { FulfillModal } from "@/components/shared/modals/fulfill-modal";
 import { NoteModal } from "@/components/shared/modals/note-modal";
 import { CreateTaskModal } from "@/components/shared/modals/create-task-modal";
 import { RefundModal } from "@/components/shared/modals/refund-modal";
+import { CreateOrderModal } from "@/components/shared/modals/create-order-modal";
+import type { CreateOrderCustomer } from "@/components/shared/modals/create-order-modal";
 import { useConversations, useEmailConnected } from "@/hooks/inbox/use-inbox-data";
 import { useAIMacros } from "@/hooks/inbox/use-inbox-mutations";
 import { useKeyboardShortcuts } from "@/hooks/inbox/use-keyboard-shortcuts";
@@ -199,7 +201,7 @@ function InboxPage() {
       {modal?.type === "address" && <EditAddressModal order={modal.order as EditAddressOrder} token={token} onClose={() => setModal(null)} onSuccess={handleModalSuccess} />}
       {modal?.type === "fulfill" && <FulfillModal order={modal.order as FulfillOrder} token={token} onClose={() => setModal(null)} onSuccess={handleModalSuccess} />}
       {modal?.type === "note" && <NoteModal order={modal.order as NoteOrder} token={token} onClose={() => setModal(null)} onSuccess={handleModalSuccess} />}
-      {modal?.type === "create-task" && (
+      {modal?.type === "create-task" && modal.order && (
         <CreateTaskModal
           linkedOrder={{
             shopifyOrderId: String(modal.order.id),
@@ -213,6 +215,16 @@ function InboxPage() {
             if (type === "error") sonnerToast.error(msg);
             else sonnerToast.success(msg);
           }}
+        />
+      )}
+
+      {modal?.type === "create-order" && modal.customer && (
+        <CreateOrderModal
+          customer={modal.customer as CreateOrderCustomer}
+          customerName={modal.customerName ?? ""}
+          token={token}
+          onClose={() => setModal(null)}
+          onSuccess={handleModalSuccess}
         />
       )}
 

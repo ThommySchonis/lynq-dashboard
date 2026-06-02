@@ -17,7 +17,15 @@ interface InboxUIState {
   custFieldsOpen: boolean
   custShowMore: boolean
   checkedThreads: Record<string, boolean>
-  modal: { type: string; order: { id: string | number; name?: string; [key: string]: unknown }; customerEmail?: string; customerName?: string } | null
+  modal:
+    | null
+    | {
+        type: string
+        order?: { id: string | number; name?: string; [key: string]: unknown }
+        customer?: { id: string | number; [key: string]: unknown }
+        customerEmail?: string
+        customerName?: string
+      }
   activeFolder: string
   search: string
   sending: boolean
@@ -42,7 +50,15 @@ interface InboxUIState {
   setCustFieldsOpen: (v: boolean | ((prev: boolean) => boolean)) => void
   setCustShowMore: (v: boolean | ((prev: boolean) => boolean)) => void
   setCheckedThreads: (v: Record<string, boolean> | ((prev: Record<string, boolean>) => Record<string, boolean>)) => void
-  setModal: (v: { type: string; order: { id: string | number; name?: string; [key: string]: unknown }; customerEmail?: string; customerName?: string } | null) => void
+  setModal: (v:
+    | null
+    | {
+        type: string
+        order?: { id: string | number; name?: string; [key: string]: unknown }
+        customer?: { id: string | number; [key: string]: unknown }
+        customerEmail?: string
+        customerName?: string
+      }) => void
   setActiveFolder: (v: string) => void
   setSearch: (v: string) => void
   setSending: (v: boolean) => void

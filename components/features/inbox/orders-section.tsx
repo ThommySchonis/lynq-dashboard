@@ -77,7 +77,14 @@ interface OrdersSectionProps {
   expandedSubs: Record<string, boolean>
   setExpandedOrders: (fn: (v: Record<string, boolean>) => Record<string, boolean>) => void
   setExpandedSubs: (fn: (v: Record<string, boolean>) => Record<string, boolean>) => void
-  setModal: (modal: { type: string; order: OrdersOrder; [key: string]: unknown }) => void
+  setModal: (modal: {
+    type: string
+    order?: OrdersOrder
+    customer?: { id: string | number; [key: string]: unknown }
+    customerEmail?: string
+    customerName?: string
+  }) => void
+  customer?: { id?: string | number; [key: string]: unknown } | null
   customerEmail?: string
   customerName?: string
 }
@@ -91,6 +98,7 @@ export function OrdersSection({
   setExpandedOrders,
   setExpandedSubs,
   setModal,
+  customer,
   customerEmail,
   customerName,
 }: OrdersSectionProps) {
@@ -100,7 +108,22 @@ export function OrdersSection({
       <div className="px-3 py-2.5 border-b border-border">
         <Button
           variant="outline"
-          className="w-full px-3 py-[7px] rounded-lg border border-border bg-transparent text-foreground-2 text-xs font-semibold font-inherit flex items-center justify-center gap-1.5 transition-all duration-150 hover:bg-secondary hover:text-foreground"
+          disabled={!hasCustomer || !customer?.id}
+          onClick={() => {
+            if (!customer?.id) return
+            setModal({
+              type: 'create-order',
+              customer: customer as { id: string | number; [key: string]: unknown },
+              customerEmail,
+              customerName,
+            })
+          }}
+          title={
+            !hasCustomer || !customer?.id
+              ? 'No Shopify customer found'
+              : undefined
+          }
+          className="w-full px-3 py-[7px] rounded-lg border border-border bg-transparent text-foreground-2 text-xs font-semibold font-inherit flex items-center justify-center gap-1.5 transition-all duration-150 hover:bg-secondary hover:text-foreground disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <Plus size={12} />
           Create order

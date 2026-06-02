@@ -32,9 +32,16 @@ interface ShopifyCustomerRef {
   orders_count?: number
   total_spent?: string
   default_address?: {
+    first_name?: string
+    last_name?: string
+    address1?: string
+    address2?: string
     city?: string
+    province?: string
     country?: string
     country_code?: string
+    zip?: string
+    phone?: string
   }
   currency?: string
   tags?: string
@@ -48,6 +55,7 @@ interface ShopifyAddress {
   address1?: string
   address2?: string
   city?: string
+  province?: string
   zip?: string
   country?: string
   country_code?: string
@@ -147,6 +155,30 @@ interface ShopifyUpdateAddressResponse { order?: { shipping_address?: unknown } 
 interface ShopifyFulfillmentOrdersResponse { fulfillment_orders?: ShopifyFulfillmentOrder[] }
 interface ShopifyFulfillmentResponse { fulfillment?: { id?: number; status?: string } }
 interface ShopifyShopResponse { shop?: { currency?: string } }
+
+interface ShopifyProductVariant {
+  id: number
+  title?: string
+  price?: string
+  sku?: string
+  inventory_management?: string | null
+  inventory_quantity?: number
+}
+
+interface ShopifyProductImage {
+  src?: string
+}
+
+interface ShopifyProduct {
+  id: number
+  title: string
+  image?: ShopifyProductImage | null
+  variants?: ShopifyProductVariant[]
+}
+
+interface ShopifyProductsResponse {
+  products?: ShopifyProduct[]
+}
 
 // ── Internal Shopify REST helper ─────────────────────────────────────────────
 const SHOPIFY_API_VERSION = '2025-04'
@@ -594,6 +626,19 @@ export async function getCustomer(credentials: ShopifyCredentials, query: { emai
       city: customer.default_address?.city,
       country: customer.default_address?.country,
       countryCode: customer.default_address?.country_code,
+      defaultAddress: customer.default_address
+        ? {
+            firstName: customer.default_address.first_name,
+            lastName: customer.default_address.last_name,
+            address1: customer.default_address.address1,
+            address2: customer.default_address.address2,
+            city: customer.default_address.city,
+            province: customer.default_address.province,
+            country: customer.default_address.country,
+            zip: customer.default_address.zip,
+            phone: customer.default_address.phone,
+          }
+        : undefined,
       ordersCount: customer.orders_count,
       totalSpent: customer.total_spent,
       currency: customer.currency,
@@ -1023,4 +1068,139 @@ export async function syncOrders(workspaceId: string, credentials: ShopifyCreden
   }
 
   return { synced: rows.length }
+}
+
+export interface ProductSearchVariant {
+  variantId: string
+  title: string
+  price: string
+  sku?: string
+  available: boolean
+}
+
+export interface ProductSearchResult {
+  productId: string
+  productTitle: string
+  image?: string
+  variants: ProductSearchVariant[]
+}
+
+/**
+ * Search Shopify products by title, returning a flat list of products
+ * with their variants. Used by the inbox CreateOrderModal.
+ */
+export async function searchProducts(
+  credentials: ShopifyCredentials,
+  query: string,
+  limit = 20
+): Promise<{ products: ProductSearchResult[] }> {
+  const params = new URLSearchParams({
+    title: query,
+    limit: String(Math.min(Math.max(limit, 1), 50)),
+  })
+  const data = await shopifyFetchJSON<ShopifyProductsResponse>(
+    credentials,
+    `/products.json?${params.toString()}`
+  )
+
+  const products = (data.products || []).map((p) => ({
+    productId: String(p.id),
+    productTitle: p.title,
+    image: p.image?.src,
+    variants: (p.variants || []).map((v) => ({
+      variantId: String(v.id),
+      title: v.title || 'Default',
+      price: v.price ?? '0',
+      sku: v.sku || undefined,
+      available:
+        v.inventory_management === null ||
+        v.inventory_management === undefined ||
+        (typeof v.inventory_quantity === 'number' && v.inventory_quantity > 0),
+    })),
+  }))
+
+  return { products }
+}
+
+export interface CreateDraftOrderParams {
+  customerId: string
+  lineItems: Array<{ variantId: string; quantity: number }>
+  shippingAddress?: {
+    firstName?: string
+    lastName?: string
+    address1?: string
+    address2?: string
+    city?: string
+    province?: string
+    country?: string
+    zip?: string
+    phone?: string
+  }
+  discount?: {
+    type: 'percentage' | 'fixed'
+    value: number
+  }
+  note?: string
+}
+
+/**
+ * Create a Shopify draft order for an existing customer.
+ * Used by the inbox CreateOrderModal.
+ */
+export async function createDraftOrder(
+  credentials: ShopifyCredentials,
+  params: CreateDraftOrderParams
+) {
+  const draftOrder: Record<string, unknown> = {
+    line_items: params.lineItems.map((li) => ({
+      variant_id: Number(li.variantId),
+      quantity: li.quantity,
+    })),
+    customer: { id: Number(params.customerId) },
+  }
+
+  if (params.note) draftOrder.note = params.note
+
+  if (params.shippingAddress) {
+    const a = params.shippingAddress
+    draftOrder.shipping_address = {
+      first_name: a.firstName,
+      last_name: a.lastName,
+      address1: a.address1,
+      address2: a.address2,
+      city: a.city,
+      province: a.province,
+      country: a.country,
+      zip: a.zip,
+      phone: a.phone,
+    }
+  }
+
+  if (params.discount) {
+    draftOrder.applied_discount = {
+      description: 'Discount',
+      value_type:
+        params.discount.type === 'percentage' ? 'percentage' : 'fixed_amount',
+      value: String(params.discount.value),
+      title:
+        params.discount.type === 'percentage'
+          ? `${params.discount.value}% discount`
+          : `${params.discount.value} discount`,
+    }
+  }
+
+  const data = await shopifyFetchJSON<ShopifyDraftOrderResponse>(
+    credentials,
+    '/draft_orders.json',
+    {
+      method: 'POST',
+      body: JSON.stringify({ draft_order: draftOrder }),
+    }
+  )
+
+  return {
+    id: data.draft_order?.id,
+    name: data.draft_order?.name,
+    invoiceUrl: data.draft_order?.invoice_url,
+  }
 }

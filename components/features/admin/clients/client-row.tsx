@@ -5,6 +5,7 @@ import { Eye } from 'lucide-react'
 import type { ClientOverviewItem } from '@/types/admin-client-overview'
 import { useSuspendClient, useUnsuspendClient } from '@/hooks/admin/use-admin-mutations'
 import { useAuthStore } from '@/stores/auth'
+import { apiUrl } from '@/lib/api-client'
 
 interface ClientRowProps {
   client: ClientOverviewItem
@@ -69,7 +70,7 @@ export function ClientRow({ client }: ClientRowProps) {
     setIsImpersonatingLocal(true)
     try {
       const token = session?.access_token
-      const res = await fetch('/api/admin/impersonate', {
+      const res = await fetch(apiUrl('admin/impersonate'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -6,6 +6,7 @@ import { useAuthStore } from '@/stores/auth'
 import { supabase } from '@/lib/supabase'
 import { parseJson } from '@/lib/utils/typed-json'
 import { adminKeys } from './use-admin-data'
+import { apiUrl } from '@/lib/api-client'
 import type { CronJobRun } from '@/types/admin'
 
 function useToken() {
@@ -28,7 +29,7 @@ export function useCronRunsLatest() {
   return useQuery<CronJobRun[]>({
     queryKey: cronKeys.latest(),
     queryFn: async () => {
-      const res = await fetch('/api/admin/cron-runs/latest', {
+      const res = await fetch(apiUrl('admin/cron-runs/latest'), {
         headers: { Authorization: `Bearer ${token}` },
       })
       if (!res.ok) throw new Error('Failed to fetch latest cron runs')
@@ -58,7 +59,7 @@ export function useCronRuns(filters: {
   return useQuery<CronJobRun[]>({
     queryKey: cronKeys.list(Object.fromEntries(params)),
     queryFn: async () => {
-      const res = await fetch(`/api/admin/cron-runs?${params}`, {
+      const res = await fetch(`${apiUrl('admin/cron-runs')}?${params}`, {
         headers: { Authorization: `Bearer ${token}` },
       })
       if (!res.ok) throw new Error('Failed to fetch cron runs')

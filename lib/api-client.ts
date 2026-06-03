@@ -19,6 +19,7 @@ const honoRoutes: string[] = [
   'workspaces/repair-membership',
   'inbox/counts',
   'inbox/accounts',
+  'inbox/conversations',
   'auth/impersonation-status',
   'auth/consent-sync',
   'auth/mfa/cleanup',
@@ -28,6 +29,8 @@ const honoRoutes: string[] = [
   'exams/questions',
   'exams/result',
   'lynq-admin/',
+  'admin/',
+  'invites/',
 ]
 
 /**

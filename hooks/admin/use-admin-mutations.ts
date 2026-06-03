@@ -6,6 +6,7 @@ import { useAuthStore } from '@/stores/auth'
 import { adminKeys } from './use-admin-data'
 import { parseJson } from '@/lib/utils/typed-json'
 import type { CreateClientForm, BroadcastForm, NotificationForm, TeamMemberForm, MasterclassForm } from '@/types/admin'
+import { apiUrl } from '@/lib/api-client'
 
 interface ErrorResponse {
   error?: string
@@ -139,7 +140,7 @@ export function useCreateTeamMember() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async (form: TeamMemberForm) => {
-      const res = await fetch('/api/admin/create-user', {
+      const res = await fetch(apiUrl('admin/create-user'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -162,7 +163,7 @@ export function useDeleteTeamMember() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async (id: string) => {
-      await fetch(`/api/admin/delete-user?id=${id}`, {
+      await fetch(`${apiUrl('admin/delete-user')}?id=${id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       })
@@ -250,7 +251,7 @@ export function useUnsuspendClient() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async (id: string) => {
-      const res = await fetch(`/api/admin/clients/${id}/unsuspend`, {
+      const res = await fetch(apiUrl(`admin/clients/${id}/unsuspend`), {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
       })

@@ -126,7 +126,7 @@ export function useTeamMembers() {
       // Goes through /api/admin/team which reads workspace_members joined
       // with auth.users + user_profiles. The anon supabase client can't do
       // that join, so server-side is the only path.
-      const res = await fetch('/api/admin/team', {
+      const res = await fetch(apiUrl('admin/team'), {
         headers: { Authorization: `Bearer ${token}` },
       })
       if (!res.ok) return []
@@ -168,7 +168,7 @@ export function useFinance() {
   return useQuery<FinanceData>({
     queryKey: adminKeys.finance(),
     queryFn: async () => {
-      const res = await fetch('/api/admin/finance', {
+      const res = await fetch(apiUrl('admin/finance'), {
         headers: {
           Authorization: `Bearer ${token}`,
           'x-admin-email': email,

@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useAuthStore } from '@/stores/auth'
 import { parseJson } from '@/lib/utils/typed-json'
 import { adminKeys } from './use-admin-data'
+import { apiUrl } from '@/lib/api-client'
 import type { ClientOverviewResponse } from '@/types/admin-client-overview'
 
 export function useClientOverview() {
@@ -12,7 +13,7 @@ export function useClientOverview() {
   return useQuery<ClientOverviewResponse>({
     queryKey: adminKeys.clientOverview(),
     queryFn: async () => {
-      const res = await fetch('/api/admin/clients/overview', {
+      const res = await fetch(apiUrl('admin/clients/overview'), {
         headers: { Authorization: `Bearer ${token}` },
       })
       if (!res.ok) {

@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { Eye, X } from 'lucide-react'
 import { useAuthStore } from '@/stores/auth'
+import { apiUrl } from '@/lib/api-client'
 
 export function ImpersonationBanner() {
   const isImpersonating = useAuthStore((s) => s.isImpersonating)
@@ -17,7 +18,7 @@ export function ImpersonationBanner() {
     setIsExiting(true)
     try {
       const token = session?.access_token
-      await fetch('/api/admin/impersonate', {
+      await fetch(apiUrl('admin/impersonate'), {
         method: 'DELETE',
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       })

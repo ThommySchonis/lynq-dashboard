@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAuthStore } from '@/stores/auth'
 import { parseJson } from '@/lib/utils/typed-json'
 import { adminKeys } from './use-admin-data'
+import { apiUrl } from '@/lib/api-client'
 
 function useToken() {
   return useAuthStore((s) => s.session?.access_token ?? '')
@@ -51,7 +52,7 @@ export function useWebhookEvents(filters: {
   return useQuery<WebhookListResponse>({
     queryKey: webhookKeys.list(Object.fromEntries(params)),
     queryFn: async () => {
-      const res = await fetch(`/api/admin/webhooks?${params}`, {
+      const res = await fetch(`${apiUrl('admin/webhooks')}?${params}`, {
         headers: { Authorization: `Bearer ${token}` },
       })
       if (!res.ok) throw new Error('Failed to fetch webhook events')
@@ -68,7 +69,7 @@ export function useRetryWebhooks() {
 
   return useMutation({
     mutationFn: async (ids: string[]) => {
-      const res = await fetch('/api/admin/webhooks/retry', {
+      const res = await fetch(apiUrl('admin/webhooks/retry'), {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -91,7 +92,7 @@ export function useDismissWebhooks() {
 
   return useMutation({
     mutationFn: async (ids: string[]) => {
-      const res = await fetch('/api/admin/webhooks/dismiss', {
+      const res = await fetch(apiUrl('admin/webhooks/dismiss'), {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,

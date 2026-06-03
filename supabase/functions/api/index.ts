@@ -12,6 +12,9 @@ import { emailDnsRoutes } from './routes/email-dns.ts'
 import { marketplaceRoutes } from './routes/marketplace.ts'
 import { examRoutes } from './routes/exams.ts'
 import { lynqAdminRoutes } from './routes/lynq-admin.ts'
+import { adminRoutes } from './routes/admin.ts'
+import { inviteRoutes } from './routes/invites.ts'
+import { inboxConversationRoutes } from './routes/inbox-conversations.ts'
 
 const app = new Hono().basePath('/api')
 
@@ -31,6 +34,9 @@ app.route('/email/dns', emailDnsRoutes)
 app.route('/marketplace', marketplaceRoutes)
 app.route('/exams', examRoutes)
 app.route('/lynq-admin', lynqAdminRoutes)
+app.route('/admin', adminRoutes)
+app.route('/invites', inviteRoutes)
+app.route('/inbox/conversations', inboxConversationRoutes)
 
 Deno.serve(app.fetch)
 

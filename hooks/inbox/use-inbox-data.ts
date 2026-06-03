@@ -65,7 +65,7 @@ export function useConversations(folder: string, search: string) {
       else params.set('status', folder)
       if (search) params.set('search', search)
       if (effectiveStoreId) params.set('store_id', effectiveStoreId)
-      const res = await authFetch(`/api/inbox/conversations?${params}`, {}, token)
+      const res = await authFetch(`${apiUrl('inbox/conversations')}?${params}`, {}, token)
       const data = await parseJson<ConversationsResponse>(res)
       return ((data.conversations || []) as Array<Record<string, string | boolean | null>>).map((c) => ({
         ...c,
@@ -94,7 +94,7 @@ export function useConversation(threadId: string | null) {
   return useQuery<ConversationData>({
     queryKey: inboxKeys.conversation(threadId || ''),
     queryFn: async (): Promise<ConversationData> => {
-      const res = await authFetch(`/api/inbox/conversations/${threadId}`, {}, token)
+      const res = await authFetch(apiUrl(`inbox/conversations/${threadId}`), {}, token)
       const data = await parseJson<ConversationDetailResponse>(res)
       const messages: Message[] = (data.messages || []).map((m: Record<string, string | null>) => ({
         ...m,

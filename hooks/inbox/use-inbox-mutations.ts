@@ -5,6 +5,7 @@ import { authFetch } from '@/lib/inbox-utils'
 import { useAuthStore } from '@/stores/auth'
 import { parseJson } from '@/lib/utils/typed-json'
 import { inboxKeys } from './use-inbox-data'
+import { apiUrl } from '@/lib/api-client'
 
 function useToken() {
   return useAuthStore((s) => s.session?.access_token ?? '')
@@ -137,7 +138,7 @@ export function useUpdateStatus() {
       const body: { status: string; metadata?: Record<string, string> } = { status }
       if (metadata) body.metadata = metadata
       const res = await authFetch(
-        `/api/inbox/conversations/${threadId}`,
+        apiUrl(`inbox/conversations/${threadId}`),
         { method: 'PATCH', body: JSON.stringify(body) },
         token,
       )
@@ -162,7 +163,7 @@ export function useAddNote() {
       body: string
     }) => {
       const res = await authFetch(
-        `/api/inbox/conversations/${threadId}/notes`,
+        apiUrl(`inbox/conversations/${threadId}/notes`),
         { method: 'POST', body: JSON.stringify({ body }) },
         token,
       )

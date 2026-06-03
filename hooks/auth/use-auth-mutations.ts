@@ -4,6 +4,7 @@ import { useMutation } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/stores/auth'
 import { parseJson } from '@/lib/utils/typed-json'
+import { apiUrl } from '@/lib/api-client'
 
 export interface SignInVariables {
   email: string
@@ -114,7 +115,7 @@ export function useAcceptInvite(token: string) {
   return useMutation({
     mutationFn: async (): Promise<AcceptInviteResult> => {
       const accessToken = useAuthStore.getState().session?.access_token
-      const res = await fetch(`/api/invites/${token}/accept`, {
+      const res = await fetch(apiUrl(`invites/${token}/accept`), {
         method: 'POST',
         headers: { Authorization: `Bearer ${accessToken}` },
       })
@@ -128,7 +129,7 @@ export function useAcceptInvite(token: string) {
 export function useInviteSignup(token: string) {
   return useMutation({
     mutationFn: async ({ full_name, password }: InviteSignupVariables): Promise<InviteSignupResult> => {
-      const res = await fetch(`/api/invites/${token}/signup`, {
+      const res = await fetch(apiUrl(`invites/${token}/signup`), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ full_name: full_name.trim(), password }),

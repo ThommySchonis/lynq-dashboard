@@ -175,7 +175,7 @@ export const useInboxStore = create<InboxState>()((set, get) => ({
     const { search } = get()
     if (search) params.set('search', search)
     try {
-      const res = await authFetch(`/api/inbox/conversations?${params}`, {}, token)
+      const res = await authFetch(`${apiUrl('inbox/conversations')}?${params}`, {}, token)
       const data = (await res.json()) as ConversationsResponse
       const convs: Thread[] = (data.conversations ?? []).map((c: RawConversation) => ({
         ...c,
@@ -205,7 +205,7 @@ export const useInboxStore = create<InboxState>()((set, get) => ({
       customer: null,
     })
     try {
-      const res = await authFetch(`/api/inbox/conversations/${thread.id}`, {}, token)
+      const res = await authFetch(apiUrl(`inbox/conversations/${thread.id}`), {}, token)
       const data = (await res.json()) as ThreadDetailResponse
       const msgs: Message[] = (data.messages ?? []).map((m: RawMessage) => ({
         ...m,
@@ -323,7 +323,7 @@ export const useInboxStore = create<InboxState>()((set, get) => ({
     set({ addingNote: true })
     try {
       const res = await authFetch(
-        `/api/inbox/conversations/${threadId}/notes`,
+        apiUrl(`inbox/conversations/${threadId}/notes`),
         { method: 'POST', body: JSON.stringify({ body: text.trim() }) },
         token,
       )
@@ -346,7 +346,7 @@ export const useInboxStore = create<InboxState>()((set, get) => ({
     })
     // Persist via API
     await authFetch(
-      `/api/inbox/conversations/${id}`,
+      apiUrl(`inbox/conversations/${id}`),
       { method: 'PATCH', body: JSON.stringify({ status }) },
       token,
     )

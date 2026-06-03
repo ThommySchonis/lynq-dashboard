@@ -5,6 +5,7 @@ import { toast } from 'sonner'
 import { billingKeys } from './use-billing-data'
 import { useToken } from './utils'
 import { parseJson } from '@/lib/utils/typed-json'
+import { apiUrl } from '@/lib/api-client'
 import type { UpdateBillingInfoInput } from '@/types/billing'
 
 interface ErrorResponse {
@@ -64,7 +65,7 @@ export function useChangePlan() {
       const successUrl = typeof window !== 'undefined'
         ? `${window.location.origin}/settings/workspace/billing?tab=usage&checkout=success`
         : undefined
-      return await mutate('/api/billing/subscription/change-plan', 'POST', token, {
+      return await mutate(apiUrl('billing/subscription/change-plan'), 'POST', token, {
         plan_id:     planId,
         success_url: successUrl,
       }) as ChangePlanResponse
@@ -97,7 +98,7 @@ export function useCancelSubscription() {
   const token = useToken()
   const qc    = useQueryClient()
   return useMutation({
-    mutationFn: () => mutate('/api/billing/subscription/cancel', 'POST', token),
+    mutationFn: () => mutate(apiUrl('billing/subscription/cancel'), 'POST', token),
     onSuccess:  () => {
       void qc.invalidateQueries({ queryKey: billingKeys.subscription() })
       toast.success('Subscription will cancel at the end of the period')
@@ -110,7 +111,7 @@ export function useReactivateSubscription() {
   const token = useToken()
   const qc    = useQueryClient()
   return useMutation({
-    mutationFn: () => mutate('/api/billing/subscription/reactivate', 'POST', token),
+    mutationFn: () => mutate(apiUrl('billing/subscription/reactivate'), 'POST', token),
     onSuccess:  () => {
       void qc.invalidateQueries({ queryKey: billingKeys.subscription() })
       toast.success('Subscription reactivated')
@@ -125,7 +126,7 @@ export function useUpdateBillingInfo() {
   const token = useToken()
   const qc    = useQueryClient()
   return useMutation({
-    mutationFn: (input: UpdateBillingInfoInput) => mutate('/api/billing/info', 'PATCH', token, input),
+    mutationFn: (input: UpdateBillingInfoInput) => mutate(apiUrl('billing/info'), 'PATCH', token, input),
     onSuccess:  () => {
       void qc.invalidateQueries({ queryKey: billingKeys.billingInfo() })
       toast.success('Billing information updated')
@@ -140,7 +141,7 @@ export function useDeletePaymentMethod() {
   const token = useToken()
   const qc    = useQueryClient()
   return useMutation({
-    mutationFn: (id: string) => mutate(`/api/billing/payment-methods/${id}`, 'DELETE', token),
+    mutationFn: (id: string) => mutate(apiUrl(`billing/payment-methods/${id}`), 'DELETE', token),
     onSuccess:  () => {
       void qc.invalidateQueries({ queryKey: billingKeys.paymentMethods() })
       toast.success('Payment method removed')
@@ -155,7 +156,7 @@ export function useSubscribeAddon() {
   const token = useToken()
   const qc    = useQueryClient()
   return useMutation({
-    mutationFn: (addonId: string) => mutate(`/api/billing/addons/${addonId}/subscribe`, 'POST', token),
+    mutationFn: (addonId: string) => mutate(apiUrl(`billing/addons/${addonId}/subscribe`), 'POST', token),
     onSuccess:  () => {
       void qc.invalidateQueries({ queryKey: billingKeys.addons() })
       toast.success('Add-on activated')

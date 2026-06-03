@@ -10,7 +10,6 @@ import type {
   InboxFolder,
   Macro,
 } from '@/types'
-import { apiUrl } from '@/lib/api-client'
 import { useAIStore } from './ai'
 import { useMacrosStore } from './macros'
 

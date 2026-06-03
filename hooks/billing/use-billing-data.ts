@@ -3,6 +3,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useToken } from './utils'
 import { parseJson } from '@/lib/utils/typed-json'
+import { apiUrl } from '@/lib/api-client'
 import type {
   SubscriptionResponse,
   UsageResponse,
@@ -43,7 +44,7 @@ export function useSubscription() {
   const token = useToken()
   return useQuery<SubscriptionResponse>({
     queryKey: billingKeys.subscription(),
-    queryFn:  () => jsonFetch<SubscriptionResponse>('/api/billing/subscription', token),
+    queryFn:  () => jsonFetch<SubscriptionResponse>(apiUrl('billing/subscription'), token),
     enabled:  !!token,
     staleTime: 60_000,
   })
@@ -53,7 +54,7 @@ export function useUsage() {
   const token = useToken()
   return useQuery<UsageResponse>({
     queryKey: billingKeys.usage(),
-    queryFn:  () => jsonFetch<UsageResponse>('/api/billing/usage', token),
+    queryFn:  () => jsonFetch<UsageResponse>(apiUrl('billing/usage'), token),
     enabled:  !!token,
     staleTime: 60_000,
   })
@@ -64,7 +65,7 @@ export function usePlans() {
   return useQuery<Plan[]>({
     queryKey: billingKeys.plans(),
     queryFn: async () => {
-      const data = await jsonFetch<{ plans: Plan[] }>('/api/billing/plans', token)
+      const data = await jsonFetch<{ plans: Plan[] }>(apiUrl('billing/plans'), token)
       return data.plans ?? []
     },
     enabled:  !!token,
@@ -76,7 +77,7 @@ export function useInvoices(page = 0, perPage = 25) {
   const token = useToken()
   return useQuery<InvoicesListResponse>({
     queryKey: billingKeys.invoices(page),
-    queryFn:  () => jsonFetch<InvoicesListResponse>(`/api/billing/invoices?page=${page}&per_page=${perPage}`, token),
+    queryFn:  () => jsonFetch<InvoicesListResponse>(`${apiUrl('billing/invoices')}?page=${page}&per_page=${perPage}`, token),
     enabled:  !!token,
     staleTime: 5 * 60_000,
   })
@@ -87,7 +88,7 @@ export function useBillingInfo() {
   return useQuery<BillingInfo | null>({
     queryKey: billingKeys.billingInfo(),
     queryFn: async () => {
-      const data = await jsonFetch<{ billing_info: BillingInfo | null }>('/api/billing/info', token)
+      const data = await jsonFetch<{ billing_info: BillingInfo | null }>(apiUrl('billing/info'), token)
       return data.billing_info
     },
     enabled:  !!token,
@@ -100,7 +101,7 @@ export function usePaymentMethods() {
   return useQuery<PaymentMethod[]>({
     queryKey: billingKeys.paymentMethods(),
     queryFn: async () => {
-      const data = await jsonFetch<{ payment_methods: PaymentMethod[] }>('/api/billing/payment-methods', token)
+      const data = await jsonFetch<{ payment_methods: PaymentMethod[] }>(apiUrl('billing/payment-methods'), token)
       return data.payment_methods ?? []
     },
     enabled:  !!token,
@@ -113,7 +114,7 @@ export function useAddons() {
   return useQuery<SubscriptionAddon[]>({
     queryKey: billingKeys.addons(),
     queryFn: async () => {
-      const data = await jsonFetch<{ addons: SubscriptionAddon[] }>('/api/billing/addons', token)
+      const data = await jsonFetch<{ addons: SubscriptionAddon[] }>(apiUrl('billing/addons'), token)
       return data.addons ?? []
     },
     enabled:  !!token,
@@ -127,7 +128,7 @@ export function useInvoice(id: string | null) {
     queryKey: billingKeys.invoice(id ?? ''),
     queryFn: async () => {
       if (!id) return null
-      const data = await jsonFetch<{ invoice: Invoice }>(`/api/billing/invoices/${id}`, token)
+      const data = await jsonFetch<{ invoice: Invoice }>(apiUrl(`billing/invoices/${id}`), token)
       return data.invoice
     },
     enabled:  !!token && !!id,

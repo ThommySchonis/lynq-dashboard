@@ -16,6 +16,7 @@ import { adminRoutes } from './routes/admin.ts'
 import { inviteRoutes } from './routes/invites.ts'
 import { inboxConversationRoutes } from './routes/inbox-conversations.ts'
 import { shopifyRoutes } from './routes/shopify.ts'
+import { billingRoutes } from './routes/billing.ts'
 
 const app = new Hono().basePath('/api')
 
@@ -39,6 +40,7 @@ app.route('/admin', adminRoutes)
 app.route('/invites', inviteRoutes)
 app.route('/inbox/conversations', inboxConversationRoutes)
 app.route('/shopify', shopifyRoutes)
+app.route('/billing', billingRoutes)
 
 Deno.serve(app.fetch)
 

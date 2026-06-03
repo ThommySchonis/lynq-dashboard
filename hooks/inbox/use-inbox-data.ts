@@ -152,7 +152,7 @@ export function useCustomerSearch(query: string) {
   return useQuery({
     queryKey: inboxKeys.customer(query, activeStoreId),
     queryFn: async () => {
-      const res = await authFetch(`/api/shopify/customer?${param}${storeParam}`, {}, token)
+      const res = await authFetch(`${apiUrl('shopify/customer')}?${param}${storeParam}`, {}, token)
       return parseJson<Record<string, unknown>>(res)
     },
     enabled: !!trimmed && !!token,

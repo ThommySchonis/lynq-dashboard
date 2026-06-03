@@ -10,6 +10,7 @@ import type {
   InboxFolder,
   Macro,
 } from '@/types'
+import { apiUrl } from '@/lib/api-client'
 import { useAIStore } from './ai'
 import { useMacrosStore } from './macros'
 
@@ -237,7 +238,7 @@ export const useInboxStore = create<InboxState>()((set, get) => ({
         set({ loadingCustomer: true })
         try {
           const cr = await authFetch(
-            `/api/shopify/customer?email=${encodeURIComponent(email)}`,
+            `${apiUrl('shopify/customer')}?email=${encodeURIComponent(email)}`,
             {},
             token,
           )
@@ -389,7 +390,7 @@ export const useInboxStore = create<InboxState>()((set, get) => ({
       ? `order=${encodeURIComponent(query.trim().replace(/^#/, ''))}`
       : `email=${encodeURIComponent(query.trim())}`
     try {
-      const res = await authFetch(`/api/shopify/customer?${param}`, {}, token)
+      const res = await authFetch(`${apiUrl('shopify/customer')}?${param}`, {}, token)
       const data = (await res.json()) as ShopifyCustomer
       set({ customer: data, loadingCustomer: false })
     } catch {

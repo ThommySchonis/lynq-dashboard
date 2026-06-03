@@ -31,6 +31,7 @@ const honoRoutes: string[] = [
   'lynq-admin/',
   'admin/',
   'invites/',
+  'shopify/',
 ]
 
 /**

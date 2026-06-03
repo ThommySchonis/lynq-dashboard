@@ -5,6 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Button } from '@/components/ui/button'
 import { Loader2 } from 'lucide-react'
 import { authFetch } from '@/lib/inbox-utils'
+import { apiUrl } from '@/lib/api-client'
 import { parseJson } from '@/lib/utils/typed-json'
 
 export interface NoteOrder {
@@ -27,7 +28,7 @@ export function NoteModal({ order, token, onClose, onSuccess }: NoteModalProps) 
 
   async function handleSave() {
     setLoading(true);
-    const res = await authFetch(`/api/shopify/orders/${order.id}/note`, { method: "PUT", body: JSON.stringify({ note }) }, token);
+    const res = await authFetch(`${apiUrl(`shopify/orders/${order.id}/note`)}`, { method: "PUT", body: JSON.stringify({ note }) }, token);
     const data = await parseJson<{ success?: boolean; error?: string }>(res);
     setLoading(false);
     if (data.success) onSuccess("Note saved");

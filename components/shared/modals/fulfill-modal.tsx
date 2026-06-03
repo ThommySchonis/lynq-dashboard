@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Loader2, Truck } from 'lucide-react'
 import { authFetch } from '@/lib/inbox-utils'
+import { apiUrl } from '@/lib/api-client'
 import { parseJson } from '@/lib/utils/typed-json'
 
 export interface FulfillOrder {
@@ -31,7 +32,7 @@ export function FulfillModal({ order, token, onClose, onSuccess }: FulfillModalP
   async function handleFulfill() {
     setLoading(true);
     const res = await authFetch(
-      `/api/shopify/orders/${order.id}/fulfill`,
+      `${apiUrl(`shopify/orders/${order.id}/fulfill`)}`,
       {
         method: "POST",
         body: JSON.stringify({ trackingNumber, trackingCompany, notify }),

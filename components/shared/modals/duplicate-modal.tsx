@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Copy, Loader2 } from 'lucide-react'
 import { authFetch, fmtPrice } from '@/lib/inbox-utils'
+import { apiUrl } from '@/lib/api-client'
 import { parseJson } from '@/lib/utils/typed-json'
 
 export interface DuplicateLineItem {
@@ -53,7 +54,7 @@ export function DuplicateModal({ order, token, onClose, onSuccess }: DuplicateMo
   async function handleDuplicate() {
     setLoading(true);
     const res = await authFetch(
-      `/api/shopify/orders/${order.id}/duplicate`,
+      `${apiUrl(`shopify/orders/${order.id}/duplicate`)}`,
       {
         method: "POST",
         body: JSON.stringify({

@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Loader2 } from 'lucide-react'
 import { authFetch } from '@/lib/inbox-utils'
+import { apiUrl } from '@/lib/api-client'
 import { parseJson } from '@/lib/utils/typed-json'
 
 interface AddressFields {
@@ -53,7 +54,7 @@ export function EditAddressModal({ order, token, onClose, onSuccess }: EditAddre
 
   async function handleSave() {
     setLoading(true);
-    const res = await authFetch(`/api/shopify/orders/${order.id}/address`, { method: "PUT", body: JSON.stringify(form) }, token);
+    const res = await authFetch(`${apiUrl(`shopify/orders/${order.id}/address`)}`, { method: "PUT", body: JSON.stringify(form) }, token);
     const data = await parseJson<{ success?: boolean; error?: string }>(res);
     setLoading(false);
     if (data.success) onSuccess("Address updated");

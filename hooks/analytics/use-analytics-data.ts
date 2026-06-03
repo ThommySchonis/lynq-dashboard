@@ -5,6 +5,7 @@ import { useAuthStore } from "@/stores/auth";
 import { useStoreStore } from "@/stores/store";
 import { parseJson } from "@/lib/utils/typed-json";
 import { rpc } from "@/lib/rpc";
+import { apiUrl } from "@/lib/api-client";
 import type {
   DateRange,
   KpiData,
@@ -64,7 +65,7 @@ export function useKpis(range: DateRange) {
     queryKey: analyticsKeys.kpis(range, activeStoreId),
     queryFn: async () => {
       const res = await fetch(
-        `/api/shopify/kpis?from=${range.from}&to=${range.to}${storeParam}`,
+        `${apiUrl('shopify/kpis')}?from=${range.from}&to=${range.to}${storeParam}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         },
@@ -85,7 +86,7 @@ export function usePrevKpis(range: DateRange) {
     queryKey: analyticsKeys.prevKpis(range, activeStoreId),
     queryFn: async () => {
       const res = await fetch(
-        `/api/shopify/kpis?from=${range.from}&to=${range.to}${storeParam}`,
+        `${apiUrl('shopify/kpis')}?from=${range.from}&to=${range.to}${storeParam}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         },
@@ -106,7 +107,7 @@ export function useRefunds(range: DateRange) {
     queryKey: analyticsKeys.refunds(range, activeStoreId),
     queryFn: async () => {
       const res = await fetch(
-        `/api/shopify/refunds?from=${range.from}&to=${range.to}${storeParam}`,
+        `${apiUrl('shopify/refunds')}?from=${range.from}&to=${range.to}${storeParam}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         },
@@ -132,7 +133,7 @@ export function useAllRefunds() {
         .slice(0, 10);
       const to = new Date().toISOString().slice(0, 10);
       const res = await fetch(
-        `/api/shopify/refunds?from=${from}&to=${to}${storeParam}`,
+        `${apiUrl('shopify/refunds')}?from=${from}&to=${to}${storeParam}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         },
@@ -154,7 +155,7 @@ export function useRevenueTrend(range: DateRange) {
     queryKey: analyticsKeys.revenueTrend(range, activeStoreId),
     queryFn: async () => {
       const res = await fetch(
-        `/api/shopify/revenue-trend?from=${range.from}&to=${range.to}${storeParam}`,
+        `${apiUrl('shopify/revenue-trend')}?from=${range.from}&to=${range.to}${storeParam}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         },

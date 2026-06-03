@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Loader2 } from 'lucide-react'
 import { authFetch, fmtPrice, REFUND_REASONS } from '@/lib/inbox-utils'
+import { apiUrl } from '@/lib/api-client'
 import { parseJson } from '@/lib/utils/typed-json'
 
 export interface RefundLineItem {
@@ -63,7 +64,7 @@ export function RefundModal({ order, token, onClose, onSuccess }: RefundModalPro
       const lineItems = (order.lineItems || []).filter((li) => qtys[li.id] > 0).map((li) => ({ lineItemId: li.id, quantity: qtys[li.id] }));
       body = { lineItems, restock, notify, reason, shipping };
     }
-    const res = await authFetch(`/api/shopify/orders/${order.id}/refund`, { method: "POST", body: JSON.stringify(body) }, token);
+    const res = await authFetch(`${apiUrl(`shopify/orders/${order.id}/refund`)}`, { method: "POST", body: JSON.stringify(body) }, token);
     const data = await parseJson<{ success?: boolean; error?: string }>(res);
     setLoading(false);
     if (data.success) onSuccess("Refund processed!");

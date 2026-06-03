@@ -15,6 +15,7 @@ import { lynqAdminRoutes } from './routes/lynq-admin.ts'
 import { adminRoutes } from './routes/admin.ts'
 import { inviteRoutes } from './routes/invites.ts'
 import { inboxConversationRoutes } from './routes/inbox-conversations.ts'
+import { shopifyRoutes } from './routes/shopify.ts'
 
 const app = new Hono().basePath('/api')
 
@@ -37,6 +38,7 @@ app.route('/lynq-admin', lynqAdminRoutes)
 app.route('/admin', adminRoutes)
 app.route('/invites', inviteRoutes)
 app.route('/inbox/conversations', inboxConversationRoutes)
+app.route('/shopify', shopifyRoutes)
 
 Deno.serve(app.fetch)
 

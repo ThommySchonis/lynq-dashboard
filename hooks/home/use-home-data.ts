@@ -5,6 +5,7 @@ import { useAuthStore } from '@/stores/auth'
 import { rpc } from '@/lib/rpc'
 import { parseJson } from '@/lib/utils/typed-json'
 import { useStoreStore } from '@/stores/store'
+import { apiUrl } from '@/lib/api-client'
 
 export interface ShopifyContext {
   kpis: Record<string, unknown>
@@ -52,9 +53,9 @@ export function useHomeKpis() {
       const headers = { Authorization: `Bearer ${token}` }
       const storeParam = activeStoreId ? `?store_id=${activeStoreId}` : ''
       const [kpisRes, ordersRes, refundsRes] = await Promise.all([
-        fetch(`/api/shopify/kpis${storeParam}`, { headers }),
-        fetch(`/api/shopify/orders${storeParam}`, { headers }),
-        fetch(`/api/shopify/refunds${storeParam}`, { headers }),
+        fetch(`${apiUrl('shopify/kpis')}${storeParam}`, { headers }),
+        fetch(`${apiUrl('shopify/orders')}${storeParam}`, { headers }),
+        fetch(`${apiUrl('shopify/refunds')}${storeParam}`, { headers }),
       ])
 
       const kpis = kpisRes.ok ? await parseJson<Record<string, unknown>>(kpisRes) : {}

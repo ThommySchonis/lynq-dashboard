@@ -86,7 +86,7 @@ export function useConnectShopify() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async ({ domain, access_token }: { domain: string; access_token: string }) => {
-      const res = await fetch('/api/shopify/manual-connect', {
+      const res = await fetch(apiUrl('shopify/manual-connect'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ shop: domain, accessToken: access_token }),
@@ -113,7 +113,7 @@ export function useDisconnectShopify() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async () => {
-      const res = await fetch('/api/shopify/manual-connect', {
+      const res = await fetch(apiUrl('shopify/manual-connect'), {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       })

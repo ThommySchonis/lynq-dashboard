@@ -6,6 +6,7 @@ import { authFetch } from '@/lib/inbox-utils'
 import { parseJson } from '@/lib/utils/typed-json'
 import { useAuthStore } from '@/stores/auth'
 import { useStoreStore } from '@/stores/store'
+import { apiUrl } from '@/lib/api-client'
 import type {
   ProductSearchResult,
   ProductSearchVariant,
@@ -41,7 +42,7 @@ export function useProductSearch(rawQuery: string) {
         store_id: activeStoreId as string,
       })
       const res = await authFetch(
-        `/api/shopify/products?${params.toString()}`,
+        `${apiUrl('shopify/products')}?${params.toString()}`,
         {},
         token
       )

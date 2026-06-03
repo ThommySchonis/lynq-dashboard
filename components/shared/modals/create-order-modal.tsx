@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { ChevronDown, Loader2, Plus, Search, X } from 'lucide-react'
 import { authFetch, fmtPrice } from '@/lib/inbox-utils'
+import { apiUrl } from '@/lib/api-client'
 import { parseJson } from '@/lib/utils/typed-json'
 import { useStoreStore } from '@/stores/store'
 import { useProductSearch } from '@/hooks/inbox/use-shopify-products'
@@ -246,7 +247,7 @@ export function CreateOrderModal({
     try {
       const storeParam = activeStoreId ? `?store_id=${activeStoreId}` : ''
       const res = await authFetch(
-        `/api/shopify/orders/create${storeParam}`,
+        `${apiUrl('shopify/orders/create')}${storeParam}`,
         { method: 'POST', body: JSON.stringify(body) },
         token
       )

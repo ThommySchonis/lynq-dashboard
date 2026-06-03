@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Loader2 } from 'lucide-react'
 import { authFetch, CANCEL_REASONS } from '@/lib/inbox-utils'
+import { apiUrl } from '@/lib/api-client'
 import { parseJson } from '@/lib/utils/typed-json'
 
 export interface CancelOrder {
@@ -31,7 +32,7 @@ export function CancelModal({ order, token, onClose, onSuccess }: CancelModalPro
   async function handleCancel() {
     setLoading(true);
     const res = await authFetch(
-      `/api/shopify/orders/${order.id}/cancel`,
+      `${apiUrl(`shopify/orders/${order.id}/cancel`)}`,
       {
         method: "POST",
         body: JSON.stringify({ reason, restock, notify, refund }),

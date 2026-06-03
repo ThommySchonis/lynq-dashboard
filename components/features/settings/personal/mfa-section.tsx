@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/stores/auth'
+import { apiUrl } from '@/lib/api-client'
 import {
   Shield,
   ShieldCheck,
@@ -67,7 +68,7 @@ export function MfaSection() {
       await unenrollMfa.mutateAsync({ factorId: verifiedFactor.id })
 
       // Clear recovery codes
-      await fetch('/api/auth/recovery-codes', {
+      await fetch(apiUrl('auth/recovery-codes'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

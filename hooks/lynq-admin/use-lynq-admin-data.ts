@@ -2,6 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query'
 import { useAuthStore } from '@/stores/auth'
+import { apiUrl } from '@/lib/api-client'
 
 export interface FeedbackUser {
   name?: string
@@ -41,7 +42,7 @@ export function useFeedbackList() {
   return useQuery<FeedbackListResponse>({
     queryKey: lynqAdminKeys.feedback(),
     queryFn: async () => {
-      const res = await fetch('/api/lynq-admin/feedback', {
+      const res = await fetch(apiUrl('lynq-admin/feedback'), {
         headers: { Authorization: `Bearer ${token}` },
         cache: 'no-store',
       })

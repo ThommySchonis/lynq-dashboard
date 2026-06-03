@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/stores/auth'
 import { parseJson } from '@/lib/utils/typed-json'
 import { rpc } from '@/lib/rpc'
+import { apiUrl } from '@/lib/api-client'
 import type { Client, Broadcast, Notification, Inquiry, TeamMember, Masterclass, BroadcastReaction, FinanceData, TimeData } from '@/types/admin'
 
 interface FeedbackCountResponse {
@@ -186,7 +187,7 @@ export function useFeedbackCount() {
   return useQuery<number>({
     queryKey: adminKeys.feedbackCount(),
     queryFn: async () => {
-      const res = await fetch('/api/lynq-admin/feedback/count', {
+      const res = await fetch(apiUrl('lynq-admin/feedback/count'), {
         headers: { Authorization: `Bearer ${token}` },
         cache: 'no-store',
       })

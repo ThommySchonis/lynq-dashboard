@@ -6,6 +6,7 @@ import { Check, X, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { EASE, PASS_THRESHOLD } from '@/lib/academy-constants'
 import { useAuthStore } from '@/stores/auth'
+import { apiUrl } from '@/lib/api-client'
 import { useSubmitQuiz } from '@/hooks/academy/use-academy-mutations'
 import { parseJson } from '@/lib/utils/typed-json'
 import type { Module } from '@/types/academy'
@@ -113,7 +114,7 @@ export function QuizView({
         question_id: q.id,
         selected_index: answers[q.id as number] ?? null,
       }))
-      const res = await fetch('/api/exams/submit', {
+      const res = await fetch(apiUrl('exams/submit'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

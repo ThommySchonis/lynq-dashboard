@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/stores/auth'
 import { rpc } from '@/lib/rpc'
 import { toast } from 'sonner'
+import { apiUrl } from '@/lib/api-client'
 import { parseJson } from '@/lib/utils/typed-json'
 
 interface ErrorResponse {
@@ -48,7 +49,7 @@ export function useConnectParcelPanel() {
   const token = useToken()
   return useMutation({
     mutationFn: async (form: ParcelPanelForm) => {
-      const res = await fetch('/api/settings/integrations', {
+      const res = await fetch(apiUrl('settings/integrations'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

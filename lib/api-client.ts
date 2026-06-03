@@ -3,31 +3,43 @@ const SUPABASE_API_BASE =
 const NEXT_API_BASE = '/api'
 
 /**
- * Route group → backend mapping.
- * Flip a group from NEXT_API_BASE to SUPABASE_API_BASE as each phase migrates.
- * At migration end, replace this entire map with a single SUPABASE_API_BASE.
+ * Paths routed to Hono Edge Function.
+ * Each entry is matched as a prefix against the incoming path.
+ * Order: longest prefix first for correct matching.
  */
-const routeBackend: Record<string, string> = {
-  // Phase 0
-  health: SUPABASE_API_BASE,
-
-  // Phase 1: profile routes on Hono
-  profile: SUPABASE_API_BASE,
-}
+const honoRoutes: string[] = [
+  // Fully ported route groups
+  'health',
+  'profile',
+  'onboarding/',
+  'settings/brand',
+  'settings/integrations/email',
+  'settings/integrations',
+  'workspaces/logo',
+  'workspaces/repair-membership',
+  'inbox/counts',
+  'inbox/accounts',
+  'auth/impersonation-status',
+  'auth/consent-sync',
+  'auth/mfa/cleanup',
+  'auth/recovery-codes',
+  'email/dns',
+  'marketplace/',
+  'exams/questions',
+  'exams/result',
+  'lynq-admin/',
+]
 
 /**
  * Resolves the full URL for an API path.
  *
- * @param path - API path without leading slash (e.g., 'tags', 'shopify/orders/123/cancel')
+ * @param path - API path without leading slash (e.g., 'health', 'shopify/orders/123')
  * @returns Full URL pointing to the correct backend
- *
- * @example
- *   apiUrl('health')              → 'https://xxx.supabase.co/functions/v1/api/health'
- *   apiUrl('tags')                → '/api/tags'  (not yet migrated)
- *   apiUrl('shopify/orders/123')  → '/api/shopify/orders/123'  (not yet migrated)
  */
 export function apiUrl(path: string): string {
-  const group = path.split('/')[0]
-  const base = routeBackend[group] ?? NEXT_API_BASE
+  const isHono = honoRoutes.some(
+    (prefix) => path === prefix || path.startsWith(prefix)
+  )
+  const base = isHono ? SUPABASE_API_BASE : NEXT_API_BASE
   return `${base}/${path}`
 }

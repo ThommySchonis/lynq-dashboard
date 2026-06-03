@@ -3,6 +3,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { authFetch } from '@/lib/inbox-utils'
 import { useAuthStore } from '@/stores/auth'
+import { apiUrl } from '@/lib/api-client'
 import { parseJson } from '@/lib/utils/typed-json'
 import { useStoreStore } from '@/stores/store'
 import { useInboxUI } from '@/stores/inbox-ui'
@@ -198,7 +199,7 @@ export function useEmailConnected() {
   return useQuery({
     queryKey: inboxKeys.accounts(),
     queryFn: async () => {
-      const res = await authFetch('/api/inbox/accounts', {}, token)
+      const res = await authFetch(apiUrl('inbox/accounts'), {}, token)
       const data = await parseJson<AccountsResponse>(res).catch((): AccountsResponse => ({}))
       return Boolean(data?.accounts && data.accounts.length > 0)
     },
@@ -212,7 +213,7 @@ export function useEmailAccountInfo() {
   return useQuery({
     queryKey: [...inboxKeys.accounts(), 'info'] as const,
     queryFn: async () => {
-      const res = await authFetch('/api/inbox/accounts', {}, token)
+      const res = await authFetch(apiUrl('inbox/accounts'), {}, token)
       const data = await parseJson<AccountsResponse>(res).catch((): AccountsResponse => ({ accounts: [] }))
       const accounts = data?.accounts || []
       const active = accounts.find((a) => a.status === 'active')

@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { authFetch, extractEmail, sanitizeHtml, plainTextToSafeHtml } from '@/lib/inbox-utils'
+import { apiUrl } from '@/lib/api-client'
 import type {
   Thread,
   Message,
@@ -364,7 +365,7 @@ export const useInboxStore = create<InboxState>()((set, get) => ({
 
   fetchCounts: async (token) => {
     try {
-      const res = await authFetch('/api/inbox/counts', {}, token)
+      const res = await authFetch(apiUrl('inbox/counts'), {}, token)
       const data = (await res.json()) as CountsResponse
       set({
         counts: {
@@ -398,7 +399,7 @@ export const useInboxStore = create<InboxState>()((set, get) => ({
 
   checkEmailConnected: async (token) => {
     try {
-      const res = await authFetch('/api/inbox/accounts', {}, token)
+      const res = await authFetch(apiUrl('inbox/accounts'), {}, token)
       const data = (await res.json().catch(() => ({}))) as AccountsResponse
       set({ emailConnected: Boolean(data?.accounts && data.accounts.length > 0) })
     } catch {

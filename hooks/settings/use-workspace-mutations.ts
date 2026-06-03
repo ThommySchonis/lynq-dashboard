@@ -6,6 +6,7 @@ import { useToken } from './utils'
 import { toast } from 'sonner'
 import { parseJson } from '@/lib/utils/typed-json'
 import { rpc } from '@/lib/rpc'
+import { apiUrl } from '@/lib/api-client'
 
 interface ErrorResponse {
   error?: string
@@ -50,7 +51,7 @@ export function useUploadLogo() {
     mutationFn: async (file: File) => {
       const fd = new FormData()
       fd.append('file', file)
-      const res = await fetch('/api/workspaces/current/logo', {
+      const res = await fetch(apiUrl('workspaces/logo'), {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
         body: fd,
@@ -76,7 +77,7 @@ export function useDeleteLogo() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async () => {
-      const res = await fetch('/api/workspaces/current/logo', {
+      const res = await fetch(apiUrl('workspaces/logo'), {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       })

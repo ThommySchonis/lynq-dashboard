@@ -7,6 +7,7 @@ import { toast } from 'sonner'
 import { parseJson } from '@/lib/utils/typed-json'
 import type { CustomEmailConfig } from '@/types/settings'
 import { storeKeys } from '@/hooks/stores/use-stores-data'
+import { apiUrl } from '@/lib/api-client'
 
 interface ErrorResponse {
   error?: string
@@ -57,7 +58,7 @@ export function useDisconnectEmail() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async (id: string) => {
-      const res = await fetch(`/api/inbox/accounts/${id}`, {
+      const res = await fetch(apiUrl(`inbox/accounts/${id}`), {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       })

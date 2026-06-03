@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useAuthStore } from '@/stores/auth'
+import { apiUrl } from '@/lib/api-client'
 import { Copy, Download } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -29,7 +30,7 @@ export function RecoveryCodesDialog({ open, onOpenChange }: RecoveryCodesDialogP
   const loadCodes = useCallback(async () => {
     setLoading(true)
     try {
-      const res = await fetch('/api/auth/recovery-codes', {
+      const res = await fetch(apiUrl('auth/recovery-codes'), {
         headers: { Authorization: `Bearer ${token}` },
       })
       const json = await parseJson<{ recovery_codes?: string[] }>(res)
@@ -48,7 +49,7 @@ export function RecoveryCodesDialog({ open, onOpenChange }: RecoveryCodesDialogP
   async function handleRegenerate() {
     setLoading(true)
     try {
-      const res = await fetch('/api/auth/recovery-codes', {
+      const res = await fetch(apiUrl('auth/recovery-codes'), {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
       })

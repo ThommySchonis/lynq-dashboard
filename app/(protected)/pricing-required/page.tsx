@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useAuthStore } from '@/stores/auth'
+import { apiUrl } from '@/lib/api-client'
 import { useSignOut } from '@/hooks/auth'
 import { Button } from '@/components/ui/button'
 import { PRICING_PLANS, type PricingPlan } from '@/lib/pricing-constants'
@@ -86,7 +87,7 @@ export default function PricingRequiredPage() {
   // The is_platform_admin flag is set server-side and cannot be spoofed.
   useEffect(() => {
     if (!session?.access_token) return
-    void fetch('/api/onboarding/status', {
+    void fetch(apiUrl('onboarding/status'), {
       headers: { Authorization: `Bearer ${session.access_token}` },
       cache:   'no-store',
     })

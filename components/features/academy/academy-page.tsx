@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronRight, Award } from 'lucide-react'
 import { useAuthStore } from '@/stores/auth'
+import { apiUrl } from '@/lib/api-client'
 import { MODULES, EASE, readKey } from '@/lib/academy-constants'
 import { useAcademyUI } from '@/stores/academy-ui'
 import { AcademySidebar } from './academy-sidebar'
@@ -70,7 +71,7 @@ export function AcademyPage() {
 
     // Keep existing API call logic but use storeSession.access_token
     const token = storeSession.access_token
-    void fetch('/api/exams/result', {
+    void fetch(apiUrl('exams/result'), {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((r) => r.json() as Promise<{ submissions?: Array<{ passed: boolean; exam_type: string }> }>)
@@ -106,7 +107,7 @@ export function AcademyPage() {
   const handleQuizComplete = useCallback(() => {
     if (session) {
       const s = session as unknown as SessionWithToken
-      void fetch('/api/exams/result', { headers: { Authorization: `Bearer ${s.access_token}` } })
+      void fetch(apiUrl('exams/result'), { headers: { Authorization: `Bearer ${s.access_token}` } })
         .then((r) => r.json() as Promise<{ submissions?: Array<{ passed: boolean; exam_type: string }> }>)
         .then((data) => {
           const submissions = data.submissions || []

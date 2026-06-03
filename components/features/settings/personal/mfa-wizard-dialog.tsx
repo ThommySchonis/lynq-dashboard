@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import Image from 'next/image'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/stores/auth'
+import { apiUrl } from '@/lib/api-client'
 import { Copy, Download } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -90,7 +91,7 @@ export function MfaWizardDialog({ open, onOpenChange, onComplete }: MfaWizardDia
 
     if (needsServerCleanup) {
       try {
-        const res = await fetch('/api/auth/mfa/cleanup', {
+        const res = await fetch(apiUrl('auth/mfa/cleanup'), {
           method: 'DELETE',
           headers: { Authorization: `Bearer ${token}` },
         })
@@ -150,7 +151,7 @@ export function MfaWizardDialog({ open, onOpenChange, onComplete }: MfaWizardDia
     }
 
     try {
-      const res = await fetch('/api/auth/recovery-codes', {
+      const res = await fetch(apiUrl('auth/recovery-codes'), {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
       })

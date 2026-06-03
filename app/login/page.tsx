@@ -9,6 +9,7 @@ import { FloatField } from '@/components/features/auth/float-field'
 import { PasswordField } from '@/components/features/auth/password-field'
 import { useSignIn } from '@/hooks/auth/use-auth-mutations'
 import { useAuthStore } from '@/stores/auth'
+import { apiUrl } from '@/lib/api-client'
 import { WORD_REVEAL_DELAY_MS } from '@/lib/auth-constants'
 import { getConsent } from '@/lib/cookies/consent'
 
@@ -50,7 +51,7 @@ export default function LoginPage() {
           // Fire-and-forget consent sync to Supabase
           const consent = getConsent()
           if (consent && data.session?.access_token) {
-            fetch('/api/auth/consent-sync', {
+            fetch(apiUrl('auth/consent-sync'), {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',

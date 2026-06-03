@@ -3,6 +3,7 @@
 import { useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/stores/auth'
+import { apiUrl } from '@/lib/api-client'
 import type { Workspace, Role } from '@/types/database'
 
 interface ImpersonationStatusResponse {
@@ -21,7 +22,7 @@ export function AuthHydrator() {
   async function loadWorkspace(userId: string, accessToken: string) {
     // Check for active impersonation session first
     try {
-      const res = await fetch('/api/auth/impersonation-status', {
+      const res = await fetch(apiUrl('auth/impersonation-status'), {
         headers: { Authorization: `Bearer ${accessToken}` },
       })
       if (res.ok) {

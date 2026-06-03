@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useAuthStore } from "@/stores/auth";
 import { useStoreStore } from "@/stores/store";
 import { parseJson } from "@/lib/utils/typed-json";
+import { rpc } from "@/lib/rpc";
 import type {
   DateRange,
   KpiData,
@@ -192,16 +193,13 @@ export function useAiInsights(refunds: Refund[]) {
 export function useShopifyConnected() {
   const token = useToken();
   const activeStoreId = useStoreStore((s) => s.activeStoreId);
-  const storeParam = activeStoreId ? `?store_id=${activeStoreId}` : "";
   return useQuery<boolean>({
     queryKey: [...analyticsKeys.shopifyConnected(), activeStoreId],
     queryFn: async () => {
-      const res = await fetch(`/api/settings/integrations${storeParam}`, {
-        headers: { Authorization: `Bearer ${token}` },
-        cache: "no-store",
-      });
-      if (!res.ok) return false;
-      const data = await parseJson<ShopifyConnectedResponse>(res);
+      const data = await rpc<ShopifyConnectedResponse>(
+        "api_get_shopify_integration",
+        { p_store_id: activeStoreId ?? null },
+      );
       return Boolean(data?.shopify);
     },
     enabled: !!token && !!activeStoreId,

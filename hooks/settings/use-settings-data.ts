@@ -3,8 +3,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { useAuthStore } from '@/stores/auth'
 import { rpc } from '@/lib/rpc'
-import { apiUrl } from '@/lib/api-client'
-import { parseJson } from '@/lib/utils/typed-json'
 import { useStoreStore } from '@/stores/store'
 import type { WorkspaceSettings, Member, UserProfile, MacroFilter, MacroOnboarding, Tag, EmailAccount, ShopifyIntegration, MembersPageData } from '@/types/settings'
 import type { Macro } from '@/types/inbox'
@@ -117,12 +115,8 @@ export function useProfile() {
   return useQuery<UserProfile>({
     queryKey: settingsKeys.profile(),
     queryFn: async () => {
-      const res = await fetch(apiUrl('profile'), {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      if (!res.ok) throw new Error('Failed to load profile')
-      const { profile } = await parseJson<ProfileResponse>(res)
-      return profile
+      const data = await rpc<ProfileResponse>('api_get_profile')
+      return data.profile
     },
     enabled: !!token,
     staleTime: 5 * 60_000,
@@ -178,13 +172,8 @@ export function useEmailAccounts() {
   return useQuery<EmailAccount[]>({
     queryKey: settingsKeys.emailAccounts(),
     queryFn: async () => {
-      const res = await fetch('/api/inbox/accounts', {
-        headers: { Authorization: `Bearer ${token}` },
-        cache: 'no-store',
-      })
-      if (!res.ok) throw new Error('Failed to load email accounts')
-      const data = await parseJson<EmailAccount[] | EmailAccountsResponse>(res)
-      return Array.isArray(data) ? data : (data.accounts ?? [])
+      const data = await rpc<EmailAccountsResponse>('api_list_email_accounts')
+      return data.accounts ?? []
     },
     enabled: !!token,
     staleTime: 5 * 60_000,
@@ -197,13 +186,9 @@ export function useShopifyIntegration() {
   return useQuery<ShopifyIntegration>({
     queryKey: settingsKeys.shopify(activeStoreId),
     queryFn: async () => {
-      const storeParam = activeStoreId ? `?store_id=${activeStoreId}` : ''
-      const res = await fetch(`/api/settings/integrations/shopify${storeParam}`, {
-        headers: { Authorization: `Bearer ${token}` },
-        cache: 'no-store',
+      return rpc<ShopifyIntegration>('api_get_shopify_integration', {
+        p_store_id: activeStoreId ?? null,
       })
-      if (!res.ok) throw new Error('Failed to load Shopify integration')
-      return parseJson<ShopifyIntegration>(res)
     },
     enabled: !!token,
     staleTime: 5 * 60_000,

@@ -2,7 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query'
 import { useAuthStore } from '@/stores/auth'
-import { parseJson } from '@/lib/utils/typed-json'
+import { rpc } from '@/lib/rpc'
 import type {
   ResponseTimeData,
   ResolutionTimeData,
@@ -30,12 +30,12 @@ export const supportAnalyticsKeys = {
     [...supportAnalyticsKeys.all, 'refundReasons', range.from, range.to, agentId ?? ''] as const,
 }
 
-function buildParams(range: SupportAnalyticsDateRange, agentId?: string): string {
-  const params = new URLSearchParams()
-  params.set('date_from', range.from)
-  params.set('date_to', range.to)
-  if (agentId) params.set('agent_id', agentId)
-  return params.toString()
+function rpcParams(range: SupportAnalyticsDateRange, agentId?: string) {
+  return {
+    p_agent_id: agentId ?? null,
+    p_date_from: range.from,
+    p_date_to: range.to,
+  }
 }
 
 export function useResponseTime(range: SupportAnalyticsDateRange, agentId?: string) {
@@ -43,12 +43,8 @@ export function useResponseTime(range: SupportAnalyticsDateRange, agentId?: stri
   return useQuery<ResponseTimeData>({
     queryKey: supportAnalyticsKeys.responseTime(range, agentId),
     queryFn: async () => {
-      const res = await fetch(`/api/analytics/support/response-time?${buildParams(range, agentId)}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      if (!res.ok) throw new Error('Failed to fetch response time')
-      const json = await parseJson<{ data: ResponseTimeData }>(res)
-      return json.data
+      const d = await rpc<{ data: ResponseTimeData }>('api_get_response_times', rpcParams(range, agentId))
+      return d.data
     },
     enabled: !!token,
     staleTime: 5 * 60_000,
@@ -60,12 +56,8 @@ export function useResolutionTime(range: SupportAnalyticsDateRange, agentId?: st
   return useQuery<ResolutionTimeData>({
     queryKey: supportAnalyticsKeys.resolutionTime(range, agentId),
     queryFn: async () => {
-      const res = await fetch(`/api/analytics/support/resolution-time?${buildParams(range, agentId)}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      if (!res.ok) throw new Error('Failed to fetch resolution time')
-      const json = await parseJson<{ data: ResolutionTimeData }>(res)
-      return json.data
+      const d = await rpc<{ data: ResolutionTimeData }>('api_get_resolution_times', rpcParams(range, agentId))
+      return d.data
     },
     enabled: !!token,
     staleTime: 5 * 60_000,
@@ -77,12 +69,8 @@ export function useTicketVolume(range: SupportAnalyticsDateRange, agentId?: stri
   return useQuery<TicketVolumePoint[]>({
     queryKey: supportAnalyticsKeys.ticketVolume(range, agentId),
     queryFn: async () => {
-      const res = await fetch(`/api/analytics/support/ticket-volume?${buildParams(range, agentId)}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      if (!res.ok) throw new Error('Failed to fetch ticket volume')
-      const json = await parseJson<{ data: TicketVolumePoint[] }>(res)
-      return json.data
+      const d = await rpc<{ data: TicketVolumePoint[] }>('api_get_ticket_volume', rpcParams(range, agentId))
+      return d.data
     },
     enabled: !!token,
     staleTime: 5 * 60_000,
@@ -94,12 +82,8 @@ export function useAgentProductivity(range: SupportAnalyticsDateRange, agentId?:
   return useQuery<AgentProductivityRow[]>({
     queryKey: supportAnalyticsKeys.agentProductivity(range, agentId),
     queryFn: async () => {
-      const res = await fetch(`/api/analytics/support/agent-productivity?${buildParams(range, agentId)}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      if (!res.ok) throw new Error('Failed to fetch agent productivity')
-      const json = await parseJson<{ data: AgentProductivityRow[] }>(res)
-      return json.data
+      const d = await rpc<{ data: AgentProductivityRow[] }>('api_get_agent_productivity', rpcParams(range, agentId))
+      return d.data
     },
     enabled: !!token,
     staleTime: 5 * 60_000,
@@ -111,12 +95,8 @@ export function useRefundReasons(range: SupportAnalyticsDateRange, agentId?: str
   return useQuery<RefundReasonRow[]>({
     queryKey: supportAnalyticsKeys.refundReasons(range, agentId),
     queryFn: async () => {
-      const res = await fetch(`/api/analytics/support/refund-reasons?${buildParams(range, agentId)}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      if (!res.ok) throw new Error('Failed to fetch refund reasons')
-      const json = await parseJson<{ data: RefundReasonRow[] }>(res)
-      return json.data
+      const d = await rpc<{ data: RefundReasonRow[] }>('api_get_refund_reasons', rpcParams(range, agentId))
+      return d.data
     },
     enabled: !!token,
     staleTime: 5 * 60_000,

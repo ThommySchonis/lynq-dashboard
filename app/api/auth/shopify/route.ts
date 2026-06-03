@@ -11,7 +11,6 @@ const SCOPES = [
   // Orders — read, write, cancel, refund, note
   'read_orders',
   'write_orders',
-  'read_all_orders',
   // Draft orders — duplicate order flow
   'read_draft_orders',
   'write_draft_orders',

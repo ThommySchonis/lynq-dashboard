@@ -5,12 +5,6 @@ import type { NextRequest } from 'next/server'
 import { validateBody, validateQuery } from '@/lib/validation'
 import { saveIntegrationQuery, saveIntegrationBody } from '@/lib/schemas/settings'
 
-interface IntegrationRow {
-  shopify_domain?: string
-  shopify_connected_at?: string
-  parcelpanel_api_key?: string
-}
-
 const ALLOWED_FIELDS = [
   'parcelpanel_api_key',
 ]
@@ -48,29 +42,4 @@ export async function POST(request: NextRequest) {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
   return NextResponse.json({ success: true })
-}
-
-export async function GET(request: NextRequest) {
-  const ctx = await getAuthContext(request)
-  if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-  const storeId = request.nextUrl.searchParams.get('store_id')
-
-  let query = supabaseAdmin
-    .from('integrations')
-    .select('shopify_domain, shopify_connected_at, shopify_access_token, parcelpanel_api_key')
-    .eq('workspace_id', ctx.workspaceId)
-
-  if (storeId) {
-    query = query.eq('store_id', storeId)
-  }
-
-  const { data } = await query.maybeSingle()
-
-  const integration = data as (IntegrationRow & { shopify_access_token?: string }) | null
-  return NextResponse.json({
-    shopify: !!integration?.shopify_domain && !!integration?.shopify_access_token,
-    shopifyDomain: integration?.shopify_domain || null,
-    parcelpanel: !!integration?.parcelpanel_api_key,
-  })
 }

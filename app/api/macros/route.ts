@@ -1,11 +1,10 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import type { Role } from '@/types/database'
-import { getAuthContext, requireWriteAccess } from '@/lib/auth'
+import { getAuthContext } from '@/lib/auth'
 import { can } from '@/lib/permissions'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
-import { sanitizeMacroInput, relativeTime } from '@/lib/macros'
-import { ensureTagsByName, syncMacroTags } from '@/lib/tags'
+import { relativeTime } from '@/lib/macros'
 import { validateQuery } from '@/lib/validation'
 import { getMacrosQuery } from '@/lib/schemas/macros'
 import { sanitizeLikeInput } from '@/lib/sanitize'
@@ -13,11 +12,6 @@ import { logger } from '@/lib/logger'
 
 interface TagLink {
   tag: unknown
-}
-
-interface MacroInputError {
-  message?: string
-  code?: string
 }
 
 // GET /api/macros — list macros for the current workspace
@@ -72,68 +66,4 @@ export async function GET(request: NextRequest) {
   })
 
   return NextResponse.json({ macros, currentUserRole: ctx.role })
-}
-
-// POST /api/macros — create a new macro
-export async function POST(request: NextRequest) {
-  const ctx = await getAuthContext(request)
-  if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  const blocked = requireWriteAccess(ctx)
-  if (blocked) return blocked
-  if (!can.manageMacros(ctx.role as Role)) {
-    return NextResponse.json({ error: 'You do not have permission to create macros.', code: 'permission_denied' }, { status: 403 })
-  }
-
-  const body = await request.json().catch(() => ({})) as Record<string, unknown>
-
-  let payload
-  try {
-    payload = sanitizeMacroInput(body)
-  } catch (err: unknown) {
-    const e = err as MacroInputError
-    return NextResponse.json({ error: e.message, code: e.code }, { status: 400 })
-  }
-
-  const macroResult = await supabaseAdmin
-    .from('macros')
-    .insert({
-      workspace_id: ctx.workspaceId,
-      name:         payload.name,
-      body:         payload.body ?? '',
-      language:     payload.language ?? 'auto',
-      tags:         payload.tags ?? [],
-      created_by:   ctx.user.id,
-    })
-    .select()
-    .single()
-
-  const macro = macroResult.data as Record<string, unknown> | null
-
-  if (macroResult.error || !macro) {
-    logger.error('[macros]', 'insert failed', { error: macroResult.error?.message })
-    return NextResponse.json({ error: macroResult.error?.message ?? 'Failed to create macro', code: 'insert_failed' }, { status: 500 })
-  }
-
-  // Sync macro_tags (new join table) — ensures the tags exist as rows
-  // in the tags table and links them to this macro. Names that don't
-  // exist yet are auto-created with 'slate' color.
-  let tagObjects: unknown[] = []
-  if (Array.isArray(payload.tags) && payload.tags.length > 0) {
-    try {
-      const tagMap = await ensureTagsByName(supabaseAdmin, ctx.workspaceId, payload.tags as string[], ctx.user.id)
-      const tagIds = Array.from(tagMap.values()) as string[]
-      await syncMacroTags(supabaseAdmin, macro.id as string, tagIds)
-      // Fetch the linked tags so the response includes id+color (UI needs it)
-      const { data: linked } = await supabaseAdmin
-        .from('tags')
-        .select('id, name, color')
-        .in('id', tagIds)
-      tagObjects = linked || []
-    } catch (err: unknown) {
-      logger.error('[macros]', 'tag sync failed (macro itself was created)', { error: err instanceof Error ? err.message : 'Unknown error' })
-    }
-  }
-
-  logger.info('[macros]', 'created macro', { macroId: macro.id, workspaceId: ctx.workspaceId })
-  return NextResponse.json({ macro: { ...macro, tagObjects } }, { status: 201 })
 }

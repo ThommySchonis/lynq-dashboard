@@ -14,42 +14,6 @@ function sanitizeBio(raw: string): string {
   return raw.replace(/[\x00-\x1F\x7F]/g, '').trim().slice(0, 200)
 }
 
-// GET /api/profile — current user's profile + email (read-only)
-export async function GET(request: NextRequest) {
-  const authHeader = request.headers.get('authorization')
-  if (!authHeader) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  const user = await getUserFromToken(authHeader.replace('Bearer ', ''))
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-  const { data: row, error } = await supabaseAdmin
-    .from('user_profiles')
-    .select('display_name, bio, avatar_url, theme, welcome_dismissed_at, setup_checklist_dismissed_at, created_at, updated_at')
-    .eq('user_id', user.id)
-    .maybeSingle()
-
-  if (error) {
-    logger.error('[profile]', 'GET failed', { error: error.message })
-    return NextResponse.json({ error: error.message, code: 'lookup_failed' }, { status: 500 })
-  }
-
-  // Fall back to auth.users.raw_user_meta_data when no profile row yet.
-  // This is what existing UI (e.g. workspace_member_details view) reads,
-  // so the first PATCH will sync both layers and they stay aligned.
-  const typedRow = row as ProfileRow | null
-  const meta = (user.user_metadata || {}) as Record<string, unknown>
-  const profile = {
-    email:                          user.email,
-    display_name:                   typedRow?.display_name ?? meta.name ?? null,
-    bio:                            typedRow?.bio ?? null,
-    avatar_url:                     typedRow?.avatar_url ?? meta.avatar_url ?? null,
-    theme:                          typedRow?.theme ?? 'system',
-    welcome_dismissed_at:           typedRow?.welcome_dismissed_at ?? null,
-    setup_checklist_dismissed_at:   typedRow?.setup_checklist_dismissed_at ?? null,
-  }
-
-  return NextResponse.json({ profile })
-}
-
 // PATCH /api/profile — update name/bio/theme. Avatar handled separately.
 export async function PATCH(request: NextRequest) {
   const authHeader = request.headers.get('authorization')

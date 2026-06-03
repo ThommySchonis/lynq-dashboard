@@ -100,7 +100,7 @@ export function useDeleteWorkspace() {
   const token = useToken()
   return useMutation({
     mutationFn: async () => {
-      const res = await fetch('/api/workspaces/current/delete', {
+      const res = await fetch(apiUrl('workspaces/current/delete'), {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
       })

@@ -2,6 +2,7 @@ import { Hono } from 'hono'
 import { authMiddleware } from '../middleware/auth.ts'
 import { getAdminClient } from '../lib/supabase.ts'
 import { isPlatformAdmin } from '../lib/platform-admin.ts'
+import { sendSuspensionEmail } from '../lib/email.ts'
 import type { AuthContext } from '../lib/types.ts'
 
 const app = new Hono()
@@ -122,6 +123,60 @@ async function generateDisplayCode(sb: ReturnType<typeof getAdminClient>, userId
   const num = String(Math.floor(Math.random() * 900) + 100)
   return `${prefix}-${num}`
 }
+
+// ── Client suspend ────────────────────────────────────────────────
+
+app.post('/clients/:id/suspend', async (c) => {
+  const sb = getAdminClient()
+  const clientId = c.req.param('id')
+
+  const body = await c.req.json<{ reason?: string }>().catch(() => ({}))
+  const reason = (body as { reason?: string }).reason?.trim() || null
+
+  const { data: client } = await sb
+    .from('clients')
+    .select('workspace_id, company_name')
+    .eq('id', clientId)
+    .single()
+
+  if (!client?.workspace_id) return c.json({ error: 'Client not found' }, 404)
+
+  const { error } = await sb
+    .from('workspaces')
+    .update({
+      suspended_at: new Date().toISOString(),
+      suspension_reason: reason,
+    })
+    .eq('id', client.workspace_id)
+
+  if (error) return c.json({ error: 'Failed to suspend workspace' }, 500)
+
+  const { data: workspace } = await sb
+    .from('workspaces')
+    .select('name')
+    .eq('id', client.workspace_id)
+    .single()
+
+  const { data: ownerMember } = await sb
+    .from('workspace_members')
+    .select('user_id')
+    .eq('workspace_id', client.workspace_id)
+    .eq('role', 'owner')
+    .single()
+
+  if (ownerMember?.user_id) {
+    const { data: { user: ownerUser } } = await sb.auth.admin.getUserById(ownerMember.user_id)
+    if (ownerUser?.email) {
+      await sendSuspensionEmail({
+        to: ownerUser.email,
+        workspaceName: (workspace as { name?: string } | null)?.name || (client as { company_name?: string }).company_name || '',
+        reason,
+      })
+    }
+  }
+
+  return c.json({ ok: true })
+})
 
 // ── Client unsuspend ───────────────────────────────────────────────
 

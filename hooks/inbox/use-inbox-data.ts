@@ -2,6 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query'
 import { authFetch } from '@/lib/inbox-utils'
+import { apiUrl } from '@/lib/api-client'
 import { useAuthStore } from '@/stores/auth'
 import { apiUrl } from '@/lib/api-client'
 import { parseJson } from '@/lib/utils/typed-json'
@@ -173,7 +174,7 @@ export function useComposeMacros() {
   return useQuery<ComposeMacro[]>({
     queryKey: inboxKeys.macros(),
     queryFn: async (): Promise<ComposeMacro[]> => {
-      const res = await authFetch('/api/macros', {}, token)
+      const res = await authFetch(apiUrl('macros'), {}, token)
       const data = await parseJson<ComposeMacrosResponse>(res)
       if (data.macros?.length) return data.macros
       // Fallback to localStorage

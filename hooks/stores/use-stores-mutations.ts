@@ -4,6 +4,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAuthStore } from '@/stores/auth'
 import { storeKeys } from './use-stores-data'
 import { rpc } from '@/lib/rpc'
+import { apiUrl } from '@/lib/api-client'
 import { toast } from 'sonner'
 
 function useToken() {
@@ -29,7 +30,7 @@ export function useDisconnectStore() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async (storeId: string) => {
-      const res = await fetch(`/api/stores/${storeId}/disconnect`, {
+      const res = await fetch(apiUrl(`stores/${storeId}/disconnect`), {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
       })
@@ -51,7 +52,7 @@ export function useDeleteStore() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async (storeId: string) => {
-      const res = await fetch(`/api/stores/${storeId}`, {
+      const res = await fetch(apiUrl(`stores/${storeId}`), {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       })

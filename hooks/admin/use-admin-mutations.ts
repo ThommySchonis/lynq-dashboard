@@ -227,7 +227,7 @@ export function useSuspendClient() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async ({ id, reason }: { id: string; reason?: string }) => {
-      const res = await fetch(`/api/admin/clients/${id}/suspend`, {
+      const res = await fetch(apiUrl(`admin/clients/${id}/suspend`), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

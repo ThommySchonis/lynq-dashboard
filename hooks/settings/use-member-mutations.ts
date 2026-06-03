@@ -6,6 +6,7 @@ import { useToken } from './utils'
 import { toast } from 'sonner'
 import { parseJson } from '@/lib/utils/typed-json'
 import { rpc } from '@/lib/rpc'
+import { apiUrl } from '@/lib/api-client'
 import type { MemberRole } from '@/types/settings'
 
 interface ErrorResponse {
@@ -22,7 +23,7 @@ export function useInviteMember() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async ({ email, role }: { email: string; role: MemberRole }) => {
-      const res = await fetch('/api/workspaces/current/members', {
+      const res = await fetch(apiUrl('workspaces/current/members'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ email, role }),
@@ -80,7 +81,7 @@ export function useResendInvite() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async (id: string) => {
-      const res = await fetch(`/api/workspaces/current/invites/${id}/resend`, {
+      const res = await fetch(apiUrl(`workspaces/current/invites/${id}/resend`), {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
       })

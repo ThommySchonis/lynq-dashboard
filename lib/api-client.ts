@@ -33,6 +33,19 @@ const honoRoutes: string[] = [
   'invites/',
   'shopify/',
   'billing/',
+  'academy/',
+  'analytics/email-stats',
+  'macros',
+  'stores/',
+  'parcel-panel/',
+  'parcelpanel/',
+  'workspaces/current/delete',
+  'workspaces/current/members',
+  'workspaces/current/invites/',
+  'workspaces/current/transfer-ownership',
+  'cron/',
+  'account/',
+  'inbox/shopify-customer',
 ]
 
 /**

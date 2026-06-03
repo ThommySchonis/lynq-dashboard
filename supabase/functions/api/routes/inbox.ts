@@ -101,4 +101,55 @@ app.delete('/accounts/:id', async (c) => {
   return c.json({ success: true })
 })
 
+// ── Shopify customer lookup ─────────────────────────────────────────
+
+app.get('/shopify-customer', async (c) => {
+  const ctx = c.get('authContext') as AuthContext
+  const sb = getAdminClient()
+
+  const id = c.req.query('id')
+  const q = c.req.query('q')
+
+  if (!id && !q) return c.json({ error: 'q or id parameter required' }, 400)
+
+  const { data: client } = await sb
+    .from('clients')
+    .select('shopify_domain, shopify_api_key')
+    .eq('workspace_id', ctx.workspaceId)
+    .maybeSingle()
+
+  if (!client?.shopify_domain || !client?.shopify_api_key) {
+    return c.json({ customers: [] })
+  }
+
+  const apiVersion = '2025-04'
+  let url: string
+  if (id) {
+    url = `https://${client.shopify_domain}/admin/api/${apiVersion}/customers/${id}.json`
+  } else {
+    url = `https://${client.shopify_domain}/admin/api/${apiVersion}/customers/search.json?query=${encodeURIComponent(q!)}`
+  }
+
+  try {
+    const res = await fetch(url, {
+      headers: { 'X-Shopify-Access-Token': client.shopify_api_key },
+    })
+    if (!res.ok) return c.json({ customers: [] })
+    const data = await res.json() as { customer?: Record<string, unknown>; customers?: Record<string, unknown>[] }
+
+    const customers = id ? [data.customer] : (data.customers || [])
+    return c.json({
+      customers: customers.filter(Boolean).map((cust) => ({
+        id: String((cust as Record<string, unknown>).id),
+        email: (cust as Record<string, unknown>).email,
+        name: `${(cust as Record<string, unknown>).first_name || ''} ${(cust as Record<string, unknown>).last_name || ''}`.trim(),
+        ordersCount: (cust as Record<string, unknown>).orders_count,
+        totalSpent: (cust as Record<string, unknown>).total_spent,
+      }))
+    })
+  } catch {
+    return c.json({ customers: [] })
+  }
+})
+
 export { app as inboxRoutes }

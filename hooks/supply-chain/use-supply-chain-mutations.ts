@@ -4,6 +4,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAuthStore } from '@/stores/auth'
 import { supplyChainKeys } from './use-supply-chain-data'
 import { parseJson } from '@/lib/utils/typed-json'
+import { apiUrl } from '@/lib/api-client'
 
 interface ErrorResponse {
   error?: string
@@ -24,7 +25,7 @@ export function useConnectParcelPanel() {
 
   return useMutation({
     mutationFn: async (apiKey: string): Promise<ConnectResponse> => {
-      const res = await fetch('/api/parcel-panel/connect', {
+      const res = await fetch(apiUrl('parcel-panel/connect'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

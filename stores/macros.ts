@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { authFetch } from '@/lib/inbox-utils'
+import { apiUrl } from '@/lib/api-client'
 import { parseJson } from '@/lib/utils/typed-json'
 
 interface MacrosResponse { macros?: Macro[] }
@@ -74,7 +75,7 @@ export const useMacrosStore = create<MacrosState>()(
 
       fetchMacros: async (token) => {
         try {
-          const res = await authFetch('/api/macros', {}, token)
+          const res = await authFetch(apiUrl('macros'), {}, token)
           const data = await parseJson<MacrosResponse>(res)
           if (data.macros?.length) set({ macros: data.macros })
         } catch {}

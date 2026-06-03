@@ -17,6 +17,14 @@ import { inviteRoutes } from './routes/invites.ts'
 import { inboxConversationRoutes } from './routes/inbox-conversations.ts'
 import { shopifyRoutes } from './routes/shopify.ts'
 import { billingRoutes } from './routes/billing.ts'
+import { academyRoutes } from './routes/academy.ts'
+import { analyticsExtraRoutes } from './routes/analytics-extra.ts'
+import { macroRoutes } from './routes/macros.ts'
+import { storeRoutes } from './routes/stores.ts'
+import { parcelPanelRoutes, parcelPanelShipmentsRoutes } from './routes/parcel-panel.ts'
+import { workspaceActionRoutes } from './routes/workspace-actions.ts'
+import { cronRoutes } from './routes/cron.ts'
+import { accountRoutes } from './routes/account.ts'
 
 const app = new Hono().basePath('/api')
 
@@ -41,6 +49,15 @@ app.route('/invites', inviteRoutes)
 app.route('/inbox/conversations', inboxConversationRoutes)
 app.route('/shopify', shopifyRoutes)
 app.route('/billing', billingRoutes)
+app.route('/academy', academyRoutes)
+app.route('/analytics', analyticsExtraRoutes)
+app.route('/macros', macroRoutes)
+app.route('/stores', storeRoutes)
+app.route('/parcel-panel', parcelPanelRoutes)
+app.route('/parcelpanel', parcelPanelShipmentsRoutes)
+app.route('/workspaces/current', workspaceActionRoutes)
+app.route('/cron', cronRoutes)
+app.route('/account', accountRoutes)
 
 Deno.serve(app.fetch)
 

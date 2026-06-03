@@ -3,6 +3,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useAuthStore } from '@/stores/auth'
 import { parseJson } from '@/lib/utils/typed-json'
+import { apiUrl } from '@/lib/api-client'
 import type { Order } from '@/types/supply-chain'
 
 interface ShipmentsResponse {
@@ -23,7 +24,7 @@ export function useShipments() {
   return useQuery<Order[]>({
     queryKey: supplyChainKeys.shipments(),
     queryFn: async () => {
-      const res = await fetch('/api/parcel-panel/tracking', {
+      const res = await fetch(apiUrl('parcel-panel/tracking'), {
         headers: { Authorization: `Bearer ${token}` },
       })
       if (res.status === 404) return []

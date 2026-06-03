@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { Package, AlertCircle, CheckCircle2 } from 'lucide-react'
 import { useConnectParcelPanel } from '@/hooks/supply-chain/use-supply-chain-mutations'
+import { apiUrl } from '@/lib/api-client'
 
 interface SetupWizardProps {
   onConnected: () => void
@@ -29,7 +30,7 @@ export function SetupWizard({ onConnected }: SetupWizardProps) {
   const { mutate, isPending, error } = useConnectParcelPanel()
 
   const webhookUrl = webhookToken
-    ? `${typeof window !== 'undefined' ? window.location.origin : ''}/api/parcel-panel/webhook/${webhookToken}`
+    ? apiUrl(`parcel-panel/webhook/${webhookToken}`)
     : null
 
   const copyWebhook = () => {

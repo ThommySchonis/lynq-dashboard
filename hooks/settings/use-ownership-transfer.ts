@@ -5,15 +5,12 @@ import { settingsKeys } from './use-settings-data'
 import { useToken } from './utils'
 import { parseJson } from '@/lib/utils/typed-json'
 import { rpc } from '@/lib/rpc'
+import { apiUrl } from '@/lib/api-client'
 import { toast } from 'sonner'
 
 import type { OwnershipTransfer } from '@/types/database'
 
 export type { OwnershipTransfer }
-
-interface ErrorResponse {
-  error?: string
-}
 
 export const transferKeys = {
   pending: () => ['ownership-transfer', 'pending'] as const,
@@ -36,7 +33,7 @@ export function useInitiateTransfer() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async ({ toUserId, newRoleForOldOwner }: { toUserId: string; newRoleForOldOwner: string }) => {
-      const res = await fetch('/api/workspaces/current/transfer-ownership', {
+      const res = await fetch(apiUrl('workspaces/current/transfer-ownership'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ toUserId, newRoleForOldOwner }),

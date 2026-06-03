@@ -1,0 +1,242 @@
+import { getAdminClient } from '../supabase.ts'
+
+interface StorePublic {
+  id: string
+  name: string
+  shopify_domain: string | null
+  shopify_connected_at: string | null
+  store_currency: string | null
+  created_at: string
+}
+
+interface StoreRow {
+  id: string
+  name: string
+  created_at: string
+}
+
+interface IntegrationRow {
+  store_id: string
+  shopify_domain: string | null
+  shopify_connected_at: string | null
+  store_currency: string | null
+}
+
+interface IntegrationDetailRow {
+  shopify_domain: string | null
+  shopify_connected_at: string | null
+  store_currency: string | null
+}
+
+interface ShopifyCredentialsRow {
+  shopify_domain: string | null
+  shopify_access_token: string | null
+}
+
+export async function listStores(workspaceId: string): Promise<StorePublic[]> {
+  const sb = getAdminClient()
+  const { data: rawData, error } = await sb
+    .from('stores')
+    .select('id, name, created_at')
+    .eq('workspace_id', workspaceId)
+    .order('created_at', { ascending: true })
+
+  if (error) throw error
+
+  const data = (rawData || []) as unknown as StoreRow[]
+  const storeIds = data.map(s => s.id)
+  const { data: rawIntegrations } = await sb
+    .from('integrations')
+    .select('store_id, shopify_domain, shopify_connected_at, store_currency')
+    .in('store_id', storeIds)
+
+  const integrations = (rawIntegrations || []) as unknown as IntegrationRow[]
+  const integrationMap = new Map(
+    integrations.map(i => [i.store_id, i])
+  )
+
+  return data.map(store => {
+    const integration = integrationMap.get(store.id)
+    return {
+      id: store.id,
+      name: store.name,
+      shopify_domain: integration?.shopify_domain ?? null,
+      shopify_connected_at: integration?.shopify_connected_at ?? null,
+      store_currency: integration?.store_currency ?? null,
+      created_at: store.created_at,
+    }
+  })
+}
+
+export async function getStore(storeId: string, workspaceId: string): Promise<StorePublic | null> {
+  const sb = getAdminClient()
+  const { data: rawData, error } = await sb
+    .from('stores')
+    .select('id, name, created_at')
+    .eq('id', storeId)
+    .eq('workspace_id', workspaceId)
+    .maybeSingle()
+
+  if (error) throw error
+  if (!rawData) return null
+
+  const data = rawData as unknown as StoreRow
+  const { data: rawIntegration } = await sb
+    .from('integrations')
+    .select('shopify_domain, shopify_connected_at, store_currency')
+    .eq('store_id', storeId)
+    .maybeSingle()
+
+  const integration = rawIntegration as unknown as IntegrationDetailRow | null
+  return {
+    id: data.id,
+    name: data.name,
+    shopify_domain: integration?.shopify_domain ?? null,
+    shopify_connected_at: integration?.shopify_connected_at ?? null,
+    store_currency: integration?.store_currency ?? null,
+    created_at: data.created_at,
+  }
+}
+
+export async function updateStore(
+  storeId: string,
+  workspaceId: string,
+  fields: { name: string }
+): Promise<StorePublic> {
+  const sb = getAdminClient()
+  const { data, error } = await sb
+    .from('stores')
+    .update({ name: fields.name })
+    .eq('id', storeId)
+    .eq('workspace_id', workspaceId)
+    .select('id, name, created_at')
+    .single()
+
+  if (error) throw new Error(`Failed to update store: ${error.message}`)
+
+  const store = data as unknown as StoreRow
+  const { data: rawIntegration } = await sb
+    .from('integrations')
+    .select('shopify_domain, shopify_connected_at, store_currency')
+    .eq('store_id', storeId)
+    .maybeSingle()
+
+  const integration = rawIntegration as unknown as IntegrationDetailRow | null
+  return {
+    id: store.id,
+    name: store.name,
+    shopify_domain: integration?.shopify_domain ?? null,
+    shopify_connected_at: integration?.shopify_connected_at ?? null,
+    store_currency: integration?.store_currency ?? null,
+    created_at: store.created_at,
+  }
+}
+
+export async function disconnectStore(storeId: string, workspaceId: string) {
+  const sb = getAdminClient()
+  const { data: rawIntegration, error } = await sb
+    .from('integrations')
+    .select('shopify_domain, shopify_access_token')
+    .eq('store_id', storeId)
+    .eq('workspace_id', workspaceId)
+    .single()
+
+  if (error || !rawIntegration) throw new Error('Integration not found')
+  const integration = rawIntegration as unknown as ShopifyCredentialsRow
+
+  if (integration.shopify_access_token) {
+    try {
+      await fetch(
+        `https://${integration.shopify_domain}/admin/api/2024-01/api_tokens/current.json`,
+        {
+          method: 'DELETE',
+          headers: {
+            'X-Shopify-Access-Token': integration.shopify_access_token,
+          },
+        }
+      )
+    } catch {
+      // Token revocation is best-effort
+    }
+  }
+
+  const { error: updateError } = await sb
+    .from('integrations')
+    .update({
+      shopify_access_token: null,
+      shopify_client_secret: null,
+      shopify_scope: null,
+      shopify_connected_at: null,
+    })
+    .eq('store_id', storeId)
+    .eq('workspace_id', workspaceId)
+
+  if (updateError) throw updateError
+}
+
+export async function deleteStore(storeId: string, workspaceId: string) {
+  const sb = getAdminClient()
+
+  // Best-effort token revocation before deleting
+  try {
+    await disconnectStore(storeId, workspaceId)
+  } catch {
+    // Continue with deletion even if revocation fails
+  }
+
+  // Orphan shopify_orders (set store_id to null)
+  await sb
+    .from('shopify_orders')
+    .update({ store_id: null })
+    .eq('store_id', storeId)
+
+  // Orphan shopify_customers (set store_id to null)
+  await sb
+    .from('shopify_customers')
+    .update({ store_id: null })
+    .eq('store_id', storeId)
+
+  // Orphan email_conversations (set store_id to null)
+  await sb
+    .from('email_conversations')
+    .update({ store_id: null })
+    .eq('store_id', storeId)
+
+  // Delete the store — cascades to integrations and email_accounts
+  const { error } = await sb
+    .from('stores')
+    .delete()
+    .eq('id', storeId)
+    .eq('workspace_id', workspaceId)
+
+  if (error) throw error
+}
+
+export async function listStoreEmailAccounts(storeId: string, workspaceId: string) {
+  const sb = getAdminClient()
+  const { data, error } = await sb
+    .from('email_accounts')
+    .select('id, provider, email_address, status, connected_at, watch_expiry')
+    .eq('store_id', storeId)
+    .eq('workspace_id', workspaceId)
+    .order('connected_at', { ascending: true })
+
+  if (error) throw error
+  return data || []
+}
+
+export async function deleteStoreEmailAccount(
+  accountId: string,
+  storeId: string,
+  workspaceId: string
+) {
+  const sb = getAdminClient()
+  const { error } = await sb
+    .from('email_accounts')
+    .delete()
+    .eq('id', accountId)
+    .eq('store_id', storeId)
+    .eq('workspace_id', workspaceId)
+
+  if (error) throw error
+}

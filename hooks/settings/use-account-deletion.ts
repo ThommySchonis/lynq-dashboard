@@ -5,6 +5,7 @@ import { toast } from 'sonner'
 import { useToken } from '@/hooks/settings/utils'
 import { parseJson } from '@/lib/utils/typed-json'
 import { rpc } from '@/lib/rpc'
+import { apiUrl } from '@/lib/api-client'
 
 export const accountDeletionKeys = {
   status: () => ['account-deletion', 'status'] as const,
@@ -26,7 +27,7 @@ export function useScheduleAccountDeletion() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async () => {
-      const res = await fetch('/api/account/delete', {
+      const res = await fetch(apiUrl('account/delete'), {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,

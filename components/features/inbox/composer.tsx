@@ -55,6 +55,7 @@ interface ComposerProps {
   onSend: (html: string) => Promise<boolean>
   onSendResolve: (html: string) => Promise<void>
   onMacroTrigger: () => void
+  signaturePreview?: string | null
 }
 
 // ---------------------------------------------------------------------------
@@ -62,7 +63,7 @@ interface ComposerProps {
 // ---------------------------------------------------------------------------
 
 export const Composer = forwardRef<ComposerHandle, ComposerProps>(
-  function Composer({ threadId, threadEmail, onSend, onSendResolve, onMacroTrigger }, ref) {
+  function Composer({ threadId, threadEmail, onSend, onSendResolve, onMacroTrigger, signaturePreview }, ref) {
     // ----- state -----------------------------------------------------------
     const [composerTab, setComposerTab] = useState<'reply' | 'note'>('reply')
     const [attachments, setAttachments] = useState<{ name: string; size: number }[]>([])
@@ -292,6 +293,10 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(
           </div>
         )}
 
+        {signaturePreview && composerTab === 'reply' && (
+          <SignatureHint html={signaturePreview} />
+        )}
+
         {/* Toolbar + action bar */}
         <div className="flex items-center gap-0.5 border-t border-border bg-muted/20 px-2.5 py-1.5">
           {/* Formatting buttons */}
@@ -492,3 +497,24 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(
     )
   },
 )
+
+function SignatureHint({ html }: { html: string }) {
+  const [expanded, setExpanded] = useState(false)
+  return (
+    <div className="border-t border-border px-3.5 py-2">
+      <button
+        type="button"
+        onClick={() => setExpanded(!expanded)}
+        className="text-xs text-foreground-3 hover:text-foreground-2 transition-colors"
+      >
+        {expanded ? '▼' : '▶'} Signature
+      </button>
+      {expanded && (
+        <div
+          className="mt-2 text-xs text-foreground-3 prose prose-sm max-w-none"
+          dangerouslySetInnerHTML={{ __html: html }}
+        />
+      )}
+    </div>
+  )
+}

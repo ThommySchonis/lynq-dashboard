@@ -5,6 +5,7 @@ import { healthRoutes } from './routes/health.ts'
 import { profileRoutes } from './routes/profile.ts'
 import { onboardingRoutes } from './routes/onboarding.ts'
 import { settingsRoutes } from './routes/settings.ts'
+import { emailDisplayRoutes } from './routes/email-display.ts'
 import { workspaceRoutes } from './routes/workspaces.ts'
 import { inboxRoutes } from './routes/inbox.ts'
 import { authRoutes } from './routes/auth.ts'
@@ -43,6 +44,7 @@ app.route('/health', healthRoutes)
 app.route('/profile', profileRoutes)
 app.route('/onboarding', onboardingRoutes)
 app.route('/settings', settingsRoutes)
+app.route('/settings/email-display', emailDisplayRoutes)
 app.route('/workspaces', workspaceRoutes)
 app.route('/inbox', inboxRoutes)
 app.route('/auth', authRoutes)

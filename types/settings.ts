@@ -155,3 +155,19 @@ export interface ShopifyIntegration {
   status: ConnectionStatus
   connected_at: string | null
 }
+
+export interface EmailDisplaySettings {
+  id: string
+  workspace_id: string
+  store_id: string | null
+  email_account_id: string | null
+  display_name: string | null
+  closing_text: string | null
+  signature_html: string | null
+  logo_url: string | null
+  logo_width: number
+  logo_link_url: string | null
+  is_active: boolean
+  created_at: string
+  updated_at: string
+}

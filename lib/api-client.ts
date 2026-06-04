@@ -13,6 +13,7 @@ const honoRoutes: string[] = [
   'profile',
   'onboarding/',
   'settings/brand',
+  'settings/email-display',
   'settings/integrations/email',
   'settings/integrations',
   'workspaces/logo',

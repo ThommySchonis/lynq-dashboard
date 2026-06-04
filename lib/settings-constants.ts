@@ -32,6 +32,9 @@ export const SETTINGS_NAV: SettingsNavGroup[] = [
     { label: 'Lessons',    href: '/settings/ai-agent/lessons' },
     { label: 'Rules',      href: '/settings/ai-agent/rules' },
   ]},
+  { label: 'INTEGRATIONS', items: [
+    { label: 'Email Display', href: '/settings/integrations/email-display' },
+  ]},
   { label: 'PERSONAL', items: [
     { label: 'Profile',        href: '/settings/personal/profile' },
     { label: 'Password & 2FA', href: '/settings/personal/security' },

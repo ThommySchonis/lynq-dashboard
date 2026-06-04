@@ -59,6 +59,7 @@ export const settingsKeys = {
   tags: () => [...settingsKeys.all, 'tags'] as const,
   emailAccounts: () => [...settingsKeys.all, 'email-accounts'] as const,
   shopify: (storeId: string | null) => [...settingsKeys.all, 'shopify', storeId] as const,
+  emailDisplay: (storeId: string) => [...settingsKeys.all, 'email-display', storeId] as const,
 }
 
 export function useWorkspace() {
@@ -172,7 +173,7 @@ export function useEmailAccounts() {
   return useQuery<EmailAccount[]>({
     queryKey: settingsKeys.emailAccounts(),
     queryFn: async () => {
-      const data = await rpc<EmailAccountsResponse>('api_list_email_accounts')
+      const data = await rpc<EmailAccountsResponse>('api_list_email_accounts', { p_store_id: null })
       return data.accounts ?? []
     },
     enabled: !!token,

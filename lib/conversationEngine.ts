@@ -7,6 +7,7 @@ import { recordOutboundMessage } from './services/billing'
 import { parseJson } from './utils/typed-json'
 import { trackEvent } from '@/lib/analytics/track'
 import { EVENT_TYPES } from '@/lib/analytics/events'
+import { resolveDisplaySettings, buildSignatureHtml } from '@/lib/services/email-display'
 
 const UPGRADE_URL = '/settings/workspace/billing'
 
@@ -436,15 +437,29 @@ export async function sendReply(workspaceId: string, conversationId: string, _us
 
   const lastMsgRow = lastMsg as MessageIdRow | null
 
+  const displaySettings = await resolveDisplaySettings(workspaceId, account.store_id || null, account.id)
+  let finalBodyHtml = bodyHtml
+  let senderDisplayName: string | undefined
+  if (displaySettings?.is_active) {
+    finalBodyHtml = bodyHtml + buildSignatureHtml(displaySettings)
+    if (displaySettings.display_name) {
+      senderDisplayName = displaySettings.display_name
+    }
+  }
+
   const adapter = getAdapter(account.provider)
   const refreshedAccount = await adapter.refreshTokenIfNeeded(account)
+
+  if (senderDisplayName) {
+    (refreshedAccount as Record<string, unknown>).display_name = senderDisplayName
+  }
 
   const result = await adapter.sendReply(refreshedAccount, {
     to: to || [{ email: convRow.customer_email, name: convRow.customer_name }],
     cc,
     bcc,
     subject: subject || `Re: ${convRow.subject}`,
-    bodyHtml,
+    bodyHtml: finalBodyHtml,
     bodyText,
     inReplyTo: lastMsgRow?.message_id || '',
     references: lastMsgRow?.message_id || '',
@@ -458,7 +473,7 @@ export async function sendReply(workspaceId: string, conversationId: string, _us
       provider_message_id: result.providerMessageId,
       message_id: result.messageId,
       from_email: account.email_address,
-      from_name: account.display_name || '',
+      from_name: senderDisplayName || account.display_name || '',
       to_email: to?.[0]?.email || convRow.customer_email,
       to_name: to?.[0]?.name || convRow.customer_name,
       cc: cc || [],
@@ -515,11 +530,26 @@ export async function sendNewEmail(workspaceId: string, _userEmail: string, acco
   if (!accountResult.data) throw new Error('Email account not found')
 
   const accountRow = accountResult.data as EmailAccountRow
+
+  const displaySettings = await resolveDisplaySettings(workspaceId, accountRow.store_id || null, accountRow.id)
+  let finalBodyHtml = bodyHtml
+  let senderDisplayName: string | undefined
+  if (displaySettings?.is_active) {
+    finalBodyHtml = bodyHtml + buildSignatureHtml(displaySettings)
+    if (displaySettings.display_name) {
+      senderDisplayName = displaySettings.display_name
+    }
+  }
+
   const adapter = getAdapter(accountRow.provider)
   const refreshedAccount = await adapter.refreshTokenIfNeeded(accountRow)
 
+  if (senderDisplayName) {
+    (refreshedAccount as Record<string, unknown>).display_name = senderDisplayName
+  }
+
   const result = await adapter.sendNew(refreshedAccount, {
-    to, cc, bcc, subject, bodyHtml, bodyText,
+    to, cc, bcc, subject, bodyHtml: finalBodyHtml, bodyText,
   })
 
   const shopifyCustomerId = await matchShopifyCustomer(accountRow.store_id || null, workspaceId, to[0]?.email)
@@ -554,7 +584,7 @@ export async function sendNewEmail(workspaceId: string, _userEmail: string, acco
         provider_message_id: result.providerMessageId,
         message_id: result.messageId,
         from_email: accountRow.email_address,
-        from_name: accountRow.display_name || '',
+        from_name: senderDisplayName || accountRow.display_name || '',
         to_email: to[0]?.email || '',
         to_name: to[0]?.name || '',
         cc: cc || [],

@@ -32,12 +32,13 @@ All design tokens live in `app/globals.css` as CSS variables, mapped to Tailwind
 app/
   admin/            — Admin panel (clients, broadcasts, notifications)
   login/            — Client login
-  api/              — Thin API route wrappers (auth + service call + JSON)
+  api/              — Legacy Next.js API routes (being migrated to Hono)
   page.tsx          — Root redirect
 lib/
-  services/         — All business logic (shopify.ts, refunds.ts, inbox.ts, billing.ts, tasks.ts)
+  services/         — Business logic for Next.js routes (shopify.ts, inbox.ts, etc.)
   providers/        — Email provider adapters (Gmail, Outlook, custom SMTP)
-  auth.ts           — getAuthContext() — workspace-scoped auth
+  auth.ts           — getAuthContext() — workspace-scoped auth (Next.js routes)
+  api-client.ts     — apiUrl() helper — routes requests to Hono or Next.js
   supabase.ts       — Supabase client (public key)
   supabaseAdmin.ts  — Supabase admin client (secret key, server-only)
   store-credentials.ts — getStoreCredentials(storeId, workspaceId)
@@ -52,7 +53,17 @@ stores/             — Zustand stores (UI state only)
 types/              — TypeScript type definitions
 supabase/
   migrations/       — PostgreSQL migrations
-  functions/        — Edge Functions (Deno runtime, NOT Next.js)
+  functions/
+    api/            — Main Hono app (Deno runtime) — most API endpoints
+      index.ts      — Route registration + global middleware
+      middleware/    — auth.ts, workspace.ts, cors.ts, error-handler.ts
+      routes/       — Route modules (Hono sub-apps)
+      lib/
+        types.ts    — AuthContext, AuthWorkspace
+        supabase.ts — getAdminClient(), getAuthClient(), getUserFromToken()
+        permissions.ts — can.* role checks
+        services/   — Business logic for Hono routes
+    (other functions) — Webhooks, cron jobs
 ```
 
 **Shopify integration flow:** OAuth or manual API key → credentials in `integrations` table (workspace-scoped) → `getAuthContext()` → `getShopifyCredentialsByWorkspace()` → service function → JSON response. Orders synced to `shopify_orders` via cron Edge Function.
@@ -89,16 +100,73 @@ Use `@/` path alias for all imports (e.g., `@/lib/auth`, `@/components/ui/button
 
 Four roles in `workspace_members.role`: `owner`, `admin`, `agent`, `observer`. See `lib/permissions.ts` for `can.*` capability checks.
 
-## Edge Function Decision Rule
+## API Architecture: Hono Edge Functions (Primary) + Next.js API Routes (Legacy)
 
-Use **Supabase Edge Functions** (not Next.js API routes) when:
-- The operation is triggered by an external webhook (not a user request)
+Most API endpoints live in the **Hono app** at `supabase/functions/api/`. A few legacy endpoints remain as Next.js API routes in `app/api/` (AI streaming, OAuth callbacks, email sync). **All new API endpoints MUST be Hono routes** unless they require Next.js-specific features (streaming, OAuth redirects).
+
+### Hono Route Pattern
+
+Each route module is a Hono sub-app mounted in `supabase/functions/api/index.ts`:
+
+```typescript
+// supabase/functions/api/routes/my-feature.ts
+import { Hono } from 'hono'
+import { authMiddleware } from '../middleware/auth.ts'
+import { requireWriteAccess } from '../middleware/workspace.ts'
+import { getAdminClient } from '../lib/supabase.ts'
+import type { AuthContext } from '../lib/types.ts'
+
+const app = new Hono()
+app.use('*', authMiddleware)
+
+app.get('/', async (c) => {
+  const ctx = c.get('authContext') as AuthContext
+  const sb = getAdminClient()
+  const { data } = await sb.from('table').select('*').eq('workspace_id', ctx.workspaceId)
+  return c.json({ data })
+})
+
+app.post('/', async (c) => {
+  const ctx = c.get('authContext') as AuthContext
+  const blocked = requireWriteAccess(c)
+  if (blocked) return blocked
+  const body = await c.req.json()
+  // ... validate, call service, return response
+  return c.json({ success: true })
+})
+
+export { app as myFeatureRoutes }
+```
+
+Then register in `index.ts`:
+```typescript
+import { myFeatureRoutes } from './routes/my-feature.ts'
+app.route('/my-feature', myFeatureRoutes)
+```
+
+And add the path prefix to `lib/api-client.ts` `honoRoutes` array so the frontend routes to Hono.
+
+### Frontend API Routing
+
+`lib/api-client.ts` has `apiUrl(path)` which checks if a path prefix is in the `honoRoutes` array. If yes → routes to `SUPABASE_URL/functions/v1/api/{path}`. If no → routes to Next.js `/api/{path}`. **When adding a new Hono route, always add its prefix to `honoRoutes`.**
+
+### Hono Auth & Middleware
+
+- **Auth:** `authMiddleware` extracts Bearer token → validates via Supabase Auth → loads workspace membership → sets `c.set('authContext', ctx)`
+- **Write access:** `requireWriteAccess(c)` blocks writes to suspended workspaces
+- **Permissions:** `can.*` functions in `lib/permissions.ts` for role-based checks
+- **Supabase client:** `getAdminClient()` returns service-role client (bypasses RLS)
+
+### Edge Function Decision Rule
+
+Use **Hono Edge Functions** (default for all new endpoints) when:
+- The operation is a standard CRUD API endpoint
+- The operation is triggered by a webhook
 - The operation is a scheduled/cron job
-- The operation needs to run independently of the Next.js deployment
 
-Use **Next.js API routes** when:
-- The operation is initiated by a user action in the frontend
-- The operation needs access to Next.js-specific features
+Use **Next.js API routes** only when:
+- The operation requires streaming responses (AI chat)
+- The operation requires Next.js-specific features (OAuth redirects with cookies)
 
 ## Database Migrations
 

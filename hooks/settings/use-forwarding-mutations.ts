@@ -5,6 +5,7 @@ import { settingsKeys } from './use-settings-data'
 import { useToken } from './utils'
 import { toast } from 'sonner'
 import { parseJson } from '@/lib/utils/typed-json'
+import { apiUrl } from '@/lib/api-client'
 import type { ForwardingConnectResponse, ForwardingStatusResponse, ForwardingVerifyDnsResponse } from '@/types/forwarding'
 
 interface ErrorResponse {
@@ -16,7 +17,7 @@ export function useConnectForwardingEmail() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async (config: { email: string; store_id?: string }) => {
-      const res = await fetch('/api/auth/forwarding-email/connect', {
+      const res = await fetch(apiUrl('auth/forwarding-email/connect'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify(config),
@@ -40,7 +41,7 @@ export function useVerifyForwardingDns() {
   const token = useToken()
   return useMutation({
     mutationFn: async (accountId: string) => {
-      const res = await fetch('/api/auth/forwarding-email/verify-dns', {
+      const res = await fetch(apiUrl('auth/forwarding-email/verify-dns'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ account_id: accountId }),
@@ -58,7 +59,7 @@ export function useVerifyForwarding() {
   const token = useToken()
   return useMutation({
     mutationFn: async (accountId: string) => {
-      const res = await fetch('/api/auth/forwarding-email/verify-forwarding', {
+      const res = await fetch(apiUrl('auth/forwarding-email/verify-forwarding'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ account_id: accountId }),
@@ -83,7 +84,7 @@ export function useDisconnectForwardingEmail() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async (accountId: string) => {
-      const res = await fetch('/api/auth/forwarding-email/disconnect', {
+      const res = await fetch(apiUrl('auth/forwarding-email/disconnect'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ account_id: accountId }),
@@ -108,7 +109,7 @@ export function useForwardingStatus(accountId: string | null) {
   return useQuery<ForwardingStatusResponse>({
     queryKey: [...settingsKeys.all, 'forwarding-status', accountId],
     queryFn: async () => {
-      const res = await fetch(`/api/auth/forwarding-email/status?account_id=${accountId}`, {
+      const res = await fetch(`${apiUrl('auth/forwarding-email/status')}?account_id=${accountId}`, {
         headers: { Authorization: `Bearer ${token}` },
       })
       if (!res.ok) throw new Error('Failed to load forwarding status')

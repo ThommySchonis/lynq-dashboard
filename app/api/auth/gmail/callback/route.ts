@@ -1,12 +1,8 @@
+import type { NextRequest } from 'next/server'
+import { NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import { encrypt } from '@/lib/encryption'
-import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
 import { verifyOAuthState } from '@/lib/oauthState'
-import { parseJson } from '@/lib/utils/typed-json'
-import { syncAllAccounts } from '@/lib/conversationEngine'
-import { validateQuery } from '@/lib/validation'
-import { gmailCallbackQuery } from '@/lib/schemas/auth'
 import { logger } from '@/lib/logger'
 
 interface OAuthTokenResponse {
@@ -21,12 +17,15 @@ interface GoogleProfileResponse {
 
 export async function GET(request: NextRequest) {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL
+  const url = new URL(request.url)
+  const code = url.searchParams.get('code')
+  const state = url.searchParams.get('state')
 
-  const [query, queryErr] = validateQuery(request, gmailCallbackQuery)
-  if (queryErr) return NextResponse.redirect(`${appUrl}/settings?provider=gmail&status=error`)
+  if (!code || !state) {
+    return NextResponse.redirect(`${appUrl}/settings?provider=gmail&status=error`)
+  }
 
-  const verifiedState = verifyOAuthState(query.state, 'gmail')
-
+  const verifiedState = verifyOAuthState(state, 'gmail')
   if (!verifiedState) {
     return NextResponse.redirect(`${appUrl}/settings?provider=gmail&status=error`)
   }
@@ -37,30 +36,32 @@ export async function GET(request: NextRequest) {
   const clientSecret = process.env.GOOGLE_CLIENT_SECRET?.trim()
   const redirectUri = `${appUrl}/api/auth/gmail/callback`
 
-  // Exchange code for tokens
   const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({ code: query.code, client_id: clientId!, client_secret: clientSecret!, redirect_uri: redirectUri!, grant_type: 'authorization_code' }),
+    body: new URLSearchParams({
+      code,
+      client_id: clientId!,
+      client_secret: clientSecret!,
+      redirect_uri: redirectUri!,
+      grant_type: 'authorization_code',
+    }),
   })
 
-  const tokens = await parseJson<OAuthTokenResponse>(tokenRes)
+  const tokens = (await tokenRes.json()) as OAuthTokenResponse
   if (!tokens.access_token) {
     return NextResponse.redirect(`${appUrl}/settings?provider=gmail&status=error&reason=token_failed`)
   }
 
-  // Get Gmail address
   const profileRes = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
     headers: { Authorization: `Bearer ${tokens.access_token}` },
   })
-  const profile = await parseJson<GoogleProfileResponse>(profileRes)
+  const profile = (await profileRes.json()) as GoogleProfileResponse
   const emailAddress = profile.email
 
-  // Encrypt tokens
   const encryptedAccessToken = encrypt(tokens.access_token)
   const encryptedRefreshToken = tokens.refresh_token ? encrypt(tokens.refresh_token) : null
 
-  // Check if this is the first email account for the workspace (to set is_default)
   let isDefault = false
   if (workspaceId) {
     const { count } = await supabaseAdmin
@@ -70,7 +71,6 @@ export async function GET(request: NextRequest) {
     isDefault = count === 0
   }
 
-  // NEW: write to unified email_accounts table
   const emailAccountRecord = {
     client_id: userId,
     workspace_id: workspaceId,
@@ -94,7 +94,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(`${appUrl}/settings?provider=gmail&status=error&reason=save_failed`)
   }
 
-  // Register Gmail Watch for push notifications
   const gmailPushTopic = process.env.GMAIL_PUSH_TOPIC
   if (gmailPushTopic && tokens.access_token) {
     try {
@@ -125,14 +124,6 @@ export async function GET(request: NextRequest) {
       const msg = err instanceof Error ? err.message : String(err)
       logger.error('[gmail/callback]', 'Watch registration error', { error: msg })
     }
-  }
-
-  // Fire-and-forget: sync emails in the background so inbox is populated after redirect
-  if (workspaceId) {
-    syncAllAccounts(workspaceId).catch((err: unknown) => {
-      const msg = err instanceof Error ? err.message : String(err)
-      logger.error('[gmail/callback]', 'background sync failed', { error: msg })
-    })
   }
 
   return NextResponse.redirect(`${appUrl}/settings?provider=gmail&status=connected`)

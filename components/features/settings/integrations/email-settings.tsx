@@ -12,7 +12,6 @@ import { ForwardingSetupWizard } from '@/components/features/settings/integratio
 import { useEmailAccounts, useDisconnectEmail } from '@/hooks/settings'
 import { useAuthStore } from '@/stores/auth'
 import { useStoreStore } from '@/stores/store'
-
 function useOAuthRedirectToast() {
   const searchParams = useSearchParams()
 

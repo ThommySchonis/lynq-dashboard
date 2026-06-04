@@ -25,6 +25,12 @@ import { parcelPanelRoutes, parcelPanelShipmentsRoutes } from './routes/parcel-p
 import { workspaceActionRoutes } from './routes/workspace-actions.ts'
 import { cronRoutes } from './routes/cron.ts'
 import { accountRoutes } from './routes/account.ts'
+import { authForwardingRoutes } from './routes/auth-forwarding.ts'
+import { webhooksShopifyRoutes } from './routes/webhooks-shopify.ts'
+import { webhooksWhopRoutes } from './routes/webhooks-whop.ts'
+import { webhooksEmailRoutes } from './routes/webhooks-email.ts'
+import { webhooksShopifyComplianceRoutes } from './routes/webhooks-shopify-compliance.ts'
+import { webhooksRetryRoutes } from './routes/webhooks-retry.ts'
 
 const app = new Hono().basePath('/api')
 
@@ -58,6 +64,12 @@ app.route('/parcelpanel', parcelPanelShipmentsRoutes)
 app.route('/workspaces/current', workspaceActionRoutes)
 app.route('/cron', cronRoutes)
 app.route('/account', accountRoutes)
+app.route('/auth/forwarding-email', authForwardingRoutes)
+app.route('/webhooks/shopify', webhooksShopifyRoutes)
+app.route('/webhooks/shopify/compliance', webhooksShopifyComplianceRoutes)
+app.route('/webhooks/whop', webhooksWhopRoutes)
+app.route('/webhooks/email/inbound', webhooksEmailRoutes)
+app.route('/webhooks/retry', webhooksRetryRoutes)
 
 Deno.serve(app.fetch)
 

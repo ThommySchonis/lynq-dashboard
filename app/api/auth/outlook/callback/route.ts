@@ -1,12 +1,8 @@
+import type { NextRequest } from 'next/server'
+import { NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import { encrypt } from '@/lib/encryption'
-import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
 import { verifyOAuthState } from '@/lib/oauthState'
-import { parseJson } from '@/lib/utils/typed-json'
-import { syncAllAccounts } from '@/lib/conversationEngine'
-import { validateQuery } from '@/lib/validation'
-import { outlookCallbackQuery } from '@/lib/schemas/auth'
 import { logger } from '@/lib/logger'
 
 interface OAuthTokenResponse {
@@ -22,12 +18,15 @@ interface OutlookProfileResponse {
 
 export async function GET(request: NextRequest) {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL
+  const url = new URL(request.url)
+  const code = url.searchParams.get('code')
+  const state = url.searchParams.get('state')
 
-  const [query, queryErr] = validateQuery(request, outlookCallbackQuery)
-  if (queryErr) return NextResponse.redirect(`${appUrl}/settings?provider=outlook&status=error`)
+  if (!code || !state) {
+    return NextResponse.redirect(`${appUrl}/settings?provider=outlook&status=error`)
+  }
 
-  const oauthState = verifyOAuthState(query.state, 'outlook')
-
+  const oauthState = verifyOAuthState(state, 'outlook')
   if (!oauthState) {
     return NextResponse.redirect(`${appUrl}/settings?provider=outlook&status=error`)
   }
@@ -43,7 +42,7 @@ export async function GET(request: NextRequest) {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: new URLSearchParams({
-      code: query.code,
+      code,
       client_id: clientId!,
       client_secret: clientSecret!,
       redirect_uri: redirectUri!,
@@ -51,7 +50,7 @@ export async function GET(request: NextRequest) {
     }),
   })
 
-  const tokens = await parseJson<OAuthTokenResponse>(tokenRes)
+  const tokens = (await tokenRes.json()) as OAuthTokenResponse
   if (!tokens.access_token) {
     return NextResponse.redirect(`${appUrl}/settings?provider=outlook&status=error&reason=token_failed`)
   }
@@ -59,14 +58,12 @@ export async function GET(request: NextRequest) {
   const profileRes = await fetch('https://graph.microsoft.com/v1.0/me', {
     headers: { Authorization: `Bearer ${tokens.access_token}` },
   })
-  const profile = await parseJson<OutlookProfileResponse>(profileRes)
+  const profile = (await profileRes.json()) as OutlookProfileResponse
   const emailAddress = profile.mail || profile.userPrincipalName
 
-  // Encrypt tokens
   const encryptedAccessToken = encrypt(tokens.access_token)
   const encryptedRefreshToken = tokens.refresh_token ? encrypt(tokens.refresh_token) : null
 
-  // Check if this is the first email account for the workspace (to set is_default)
   let isDefault = false
   if (workspaceId) {
     const { count } = await supabaseAdmin
@@ -76,7 +73,6 @@ export async function GET(request: NextRequest) {
     isDefault = count === 0
   }
 
-  // NEW: write to unified email_accounts table
   const emailAccountRecord = {
     client_id: userId,
     workspace_id: workspaceId,
@@ -98,14 +94,6 @@ export async function GET(request: NextRequest) {
   if (emailAccountError) {
     logger.error('[outlook/callback]', 'email_accounts upsert error', { error: emailAccountError.message })
     return NextResponse.redirect(`${appUrl}/settings?provider=outlook&status=error&reason=save_failed`)
-  }
-
-  // Fire-and-forget: sync emails in the background so inbox is populated after redirect
-  if (workspaceId) {
-    syncAllAccounts(workspaceId).catch((err: unknown) => {
-      const msg = err instanceof Error ? err.message : String(err)
-      logger.error('[outlook/callback]', 'background sync failed', { error: msg })
-    })
   }
 
   return NextResponse.redirect(`${appUrl}/settings?provider=outlook&status=connected`)

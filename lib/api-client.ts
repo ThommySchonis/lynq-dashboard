@@ -46,6 +46,8 @@ const honoRoutes: string[] = [
   'cron/',
   'account/',
   'inbox/shopify-customer',
+  'auth/forwarding-email/',
+  'webhooks/',
 ]
 
 /**

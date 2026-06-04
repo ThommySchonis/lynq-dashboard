@@ -1,30 +1,28 @@
-import { getUserFromToken, supabaseAdmin } from '@/lib/supabaseAdmin'
-import { createOAuthState } from '@/lib/oauthState'
-import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { validateQuery } from '@/lib/validation'
-import { oauthStartQuery } from '@/lib/schemas/auth'
+import { NextResponse } from 'next/server'
+import { getUserFromToken } from '@/lib/supabaseAdmin'
+import { supabaseAdmin } from '@/lib/supabaseAdmin'
+import { createOAuthState } from '@/lib/oauthState'
 
 interface WorkspaceMemberRow {
   workspace_id?: string
 }
 
 export async function GET(request: NextRequest) {
-  const [query, queryErr] = validateQuery(request, oauthStartQuery)
-  if (queryErr) return queryErr
-
-  const userToken = query.t ?? null
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL
+  const url = new URL(request.url)
+  const userToken = url.searchParams.get('t')
+  const storeId = url.searchParams.get('store_id')
 
   if (!userToken) {
-    return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/settings?provider=outlook&status=error`)
+    return NextResponse.redirect(`${appUrl}/settings?provider=outlook&status=error`)
   }
 
   const user = await getUserFromToken(userToken)
   if (!user) {
-    return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/settings?provider=outlook&status=error`)
+    return NextResponse.redirect(`${appUrl}/settings?provider=outlook&status=error`)
   }
 
-  // Look up the user's workspace so we can embed workspaceId in the state
   const { data: membership } = await supabaseAdmin
     .from('workspace_members')
     .select('workspace_id')
@@ -33,11 +31,9 @@ export async function GET(request: NextRequest) {
 
   const workspaceId = (membership as WorkspaceMemberRow | null)?.workspace_id ?? ''
 
-  const storeId = query.store_id ?? null
-
   const clientId = process.env.MICROSOFT_CLIENT_ID
-  const redirectUri = `${process.env.NEXT_PUBLIC_APP_URL}/api/auth/outlook/callback`
-  const tenantId = 'common' // supports both personal and business accounts
+  const redirectUri = `${appUrl}/api/auth/outlook/callback`
+  const tenantId = 'common'
 
   const scope = [
     'https://graph.microsoft.com/Mail.Read',
@@ -47,13 +43,21 @@ export async function GET(request: NextRequest) {
     'offline_access',
   ].join(' ')
 
-  const url = new URL(`https://login.microsoftonline.com/${tenantId}/oauth2/v2.0/authorize`)
-  url.searchParams.set('client_id', clientId!)
-  url.searchParams.set('redirect_uri', redirectUri)
-  url.searchParams.set('response_type', 'code')
-  url.searchParams.set('scope', scope)
-  url.searchParams.set('response_mode', 'query')
-  url.searchParams.set('state', createOAuthState({ userId: user.id, workspaceId, provider: 'outlook', storeId: storeId || undefined }))
+  const authUrl = new URL(`https://login.microsoftonline.com/${tenantId}/oauth2/v2.0/authorize`)
+  authUrl.searchParams.set('client_id', clientId!)
+  authUrl.searchParams.set('redirect_uri', redirectUri)
+  authUrl.searchParams.set('response_type', 'code')
+  authUrl.searchParams.set('scope', scope)
+  authUrl.searchParams.set('response_mode', 'query')
+  authUrl.searchParams.set(
+    'state',
+    createOAuthState({
+      userId: user.id,
+      workspaceId,
+      provider: 'outlook',
+      storeId: storeId || undefined,
+    }),
+  )
 
-  return NextResponse.redirect(url.toString())
+  return NextResponse.redirect(authUrl.toString())
 }

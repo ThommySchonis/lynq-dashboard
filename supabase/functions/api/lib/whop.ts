@@ -229,6 +229,16 @@ export async function deletePaymentMethod(_input: {
   )
 }
 
+export interface WhopPayment {
+  id:             string
+  amount?:        number
+  currency?:      string
+  status?:        'succeeded' | 'failed' | 'pending' | string
+  membership_id?: string
+  metadata?:      Record<string, unknown>
+  [key: string]: unknown
+}
+
 // Web Crypto HMAC-SHA256 webhook verification
 export async function verifyWebhookSignature({
   webhookId,

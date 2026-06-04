@@ -1,38 +1,36 @@
-import { getUserFromToken, supabaseAdmin } from '@/lib/supabaseAdmin'
-import { createOAuthState } from '@/lib/oauthState'
-import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { validateQuery } from '@/lib/validation'
-import { oauthStartQuery } from '@/lib/schemas/auth'
+import { NextResponse } from 'next/server'
+import { getUserFromToken } from '@/lib/supabaseAdmin'
+import { supabaseAdmin } from '@/lib/supabaseAdmin'
+import { createOAuthState } from '@/lib/oauthState'
 
 interface WorkspaceMemberRow {
   workspace_id?: string
 }
 
 export async function GET(request: NextRequest) {
-  const [query, queryErr] = validateQuery(request, oauthStartQuery)
-  if (queryErr) return queryErr
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL
+  const url = new URL(request.url)
+  const tokenParam = url.searchParams.get('t')
+  const authHeader = request.headers.get('Authorization')
+  const storeId = url.searchParams.get('store_id')
 
-  const authHeader = request.headers.get('authorization')
-
-  // Support both Authorization header and ?t= query param (for direct browser redirects)
   let userToken: string | null = null
   if (authHeader) {
     userToken = authHeader.replace('Bearer ', '')
   } else {
-    userToken = query.t ?? null
+    userToken = tokenParam
   }
 
   if (!userToken) {
-    return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/settings?provider=gmail&status=error`)
+    return NextResponse.redirect(`${appUrl}/settings?provider=gmail&status=error`)
   }
 
   const user = await getUserFromToken(userToken)
   if (!user) {
-    return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/settings?provider=gmail&status=error`)
+    return NextResponse.redirect(`${appUrl}/settings?provider=gmail&status=error`)
   }
 
-  // Look up the user's workspace so we can embed workspaceId in the state
   const { data: membership } = await supabaseAdmin
     .from('workspace_members')
     .select('workspace_id')
@@ -41,10 +39,8 @@ export async function GET(request: NextRequest) {
 
   const workspaceId = (membership as WorkspaceMemberRow | null)?.workspace_id ?? ''
 
-  const storeId = query.store_id ?? null
-
   const clientId = process.env.GOOGLE_CLIENT_ID?.trim()
-  const redirectUri = `${process.env.NEXT_PUBLIC_APP_URL}/api/auth/gmail/callback`
+  const redirectUri = `${appUrl}/api/auth/gmail/callback`
 
   const scope = [
     'https://www.googleapis.com/auth/gmail.readonly',
@@ -53,14 +49,22 @@ export async function GET(request: NextRequest) {
     'https://www.googleapis.com/auth/userinfo.email',
   ].join(' ')
 
-  const url = new URL('https://accounts.google.com/o/oauth2/v2/auth')
-  url.searchParams.set('client_id', clientId!)
-  url.searchParams.set('redirect_uri', redirectUri)
-  url.searchParams.set('response_type', 'code')
-  url.searchParams.set('scope', scope)
-  url.searchParams.set('access_type', 'offline')
-  url.searchParams.set('prompt', 'consent')
-  url.searchParams.set('state', createOAuthState({ userId: user.id, workspaceId, provider: 'gmail', storeId: storeId || undefined }))
+  const authUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth')
+  authUrl.searchParams.set('client_id', clientId!)
+  authUrl.searchParams.set('redirect_uri', redirectUri)
+  authUrl.searchParams.set('response_type', 'code')
+  authUrl.searchParams.set('scope', scope)
+  authUrl.searchParams.set('access_type', 'offline')
+  authUrl.searchParams.set('prompt', 'consent')
+  authUrl.searchParams.set(
+    'state',
+    createOAuthState({
+      userId: user.id,
+      workspaceId,
+      provider: 'gmail',
+      storeId: storeId || undefined,
+    }),
+  )
 
-  return NextResponse.redirect(url.toString())
+  return NextResponse.redirect(authUrl.toString())
 }

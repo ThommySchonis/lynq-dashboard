@@ -1,23 +1,29 @@
+import type { NextRequest } from 'next/server'
+import { NextResponse } from 'next/server'
 import { getAuthContext } from '@/lib/auth'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import { decrypt } from '@/lib/encryption'
-import { validateBody } from '@/lib/validation'
-import { disconnectGmailBody } from '@/lib/schemas/auth'
-import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
 
 export async function POST(request: NextRequest) {
   const ctx = await getAuthContext(request)
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const [body, bErr] = await validateBody(request, disconnectGmailBody)
-  if (bErr) return bErr
+  let body: { account_id?: string }
+  try {
+    body = (await request.json()) as { account_id?: string }
+  } catch {
+    return NextResponse.json({ error: 'Invalid request body' }, { status: 400 })
+  }
 
-  // Fetch the email account — scoped to workspace + gmail provider
+  const accountId = body.account_id
+  if (!accountId) {
+    return NextResponse.json({ error: 'account_id is required' }, { status: 400 })
+  }
+
   const { data: account, error: fetchError } = await supabaseAdmin
     .from('email_accounts')
     .select('id, access_token')
-    .eq('id', body.account_id)
+    .eq('id', accountId)
     .eq('workspace_id', ctx.workspaceId)
     .eq('provider', 'gmail')
     .maybeSingle()
@@ -26,7 +32,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Email account not found' }, { status: 404 })
   }
 
-  // Revoke token at Google (must decrypt — tokens are stored encrypted)
   if (account.access_token) {
     try {
       const plainToken = decrypt(account.access_token as string)
@@ -34,11 +39,10 @@ export async function POST(request: NextRequest) {
         method: 'POST',
       }).catch(() => {})
     } catch {
-      // Decryption failure — token may already be invalid, proceed with disconnect
+      // Token may already be invalid
     }
   }
 
-  // Update the account: disconnect, clear tokens
   await supabaseAdmin
     .from('email_accounts')
     .update({

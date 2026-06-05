@@ -18,10 +18,11 @@ import { resilientSdkCall } from '@/lib/resilient-fetch'
 import { serviceCatchHandler } from '@/lib/service-catch-handler'
 import {
   getEnabledLessons,
+  getExamples,
   getOnboardingStatus,
   resolveStoreIdForThread,
 } from '@/lib/services/ai-onboarding'
-import type { AiLesson, AiScenario } from '@/lib/services/ai-onboarding'
+import type { AiExample, AiLesson, AiScenario } from '@/lib/services/ai-onboarding'
 import { buildEmmaSystemPrompt } from '@/lib/services/ai-prompt-builder'
 import { shouldAutoSend, type AutoSendBlockedReason } from '@/lib/services/ai-autonomy'
 import { sendReply } from '@/lib/conversationEngine'
@@ -135,10 +136,17 @@ export async function POST(request: NextRequest) {
         } catch (err) {
           logger.error('[ai/reply]', 'lessons load failed', err)
         }
+        let examples: AiExample[] = []
+        try {
+          examples = await getExamples(storeId, ctx.workspaceId)
+        } catch (err) {
+          logger.error('[ai/reply]', 'examples load failed', err)
+        }
         systemPrompt = buildEmmaSystemPrompt(
           onboarding.policies,
           onboarding.scenarios,
           lessons,
+          examples,
         )
         scenarios = onboarding.scenarios
         promptPath = 'emma'

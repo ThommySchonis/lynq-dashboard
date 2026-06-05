@@ -1,17 +1,17 @@
 // lib/services/ai-prompt-builder.ts
 //
-// Emma Phase 1 — builds the system prompt from completed onboarding data
-// (ai_policies + enabled ai_scenarios). Used by /api/ai/reply ONLY when
-// getOnboardingStatus(...).isComplete is true; otherwise the route keeps its
-// legacy ai_settings / DEFAULT_SYSTEM_PROMPT path.
+// Emma — builds the system prompt from completed onboarding data
+// (ai_policies + enabled ai_scenarios + ai_lessons + ai_examples). Used by
+// /api/ai/reply ONLY when getOnboardingStatus(...).isComplete is true;
+// otherwise the route keeps its legacy ai_settings / DEFAULT_SYSTEM_PROMPT
+// path.
 //
-// Section/template style mirrors lib/aiMacros.ts (SYSTEM_PROMPT + builder).
-// The conversation/customer context is NOT added here — the route appends it
-// as the user prompt exactly as before. autonomy_pct is intentionally omitted
-// (Phase 2 concern).
+// Section/template style mirrors lib/aiMacros.ts. The conversation/customer
+// context is NOT added here — the route appends it as the user prompt
+// exactly as before.
 
 import { CANONICAL_SCENARIO_TITLES } from './ai-onboarding'
-import type { AiLesson, AiPolicies, AiScenario } from './ai-onboarding'
+import type { AiExample, AiLesson, AiPolicies, AiScenario } from './ai-onboarding'
 
 const has = (v: string | null | undefined): v is string => !!v && v.trim().length > 0
 const hasList = (v: string[] | null | undefined): v is string[] => Array.isArray(v) && v.length > 0
@@ -20,20 +20,36 @@ const bullets = (items: string[]): string => items.map((i) => `- ${i}`).join('\n
 export function buildEmmaSystemPrompt(
   policies: AiPolicies,
   scenarios: AiScenario[],
-  lessons: AiLesson[] = []
+  lessons: AiLesson[] = [],
+  examples: AiExample[] = [],
 ): string {
   const sections: string[] = []
 
   const brandName = has(policies.brand_name) ? policies.brand_name.trim() : 'the brand'
   sections.push(
-    `You are the customer support agent for ${brandName}. Write a helpful, on-brand reply to the customer using the brand identity, policies, and scenario guidance below. Never invent order details, tracking numbers, or policies you do not have.`
+    `You are the customer support agent for ${brandName}. Write a helpful, on-brand reply to the customer using the brand identity, policies, and scenario guidance below. Never invent order details, tracking numbers, or policies you do not have.`,
   )
 
   // ── Brand identity ──
   const brand: string[] = ['## Brand identity']
-  if (has(policies.brand_name)) brand.push(`Brand name: ${policies.brand_name.trim()}`)
+  if (has(policies.brand_name))        brand.push(`Brand name: ${policies.brand_name.trim()}`)
   if (has(policies.brand_description)) brand.push(`About: ${policies.brand_description.trim()}`)
-  if (has(policies.tone_of_voice)) brand.push(`Tone of voice: ${policies.tone_of_voice.trim()}`)
+  if (has(policies.industry))          brand.push(`Industry: ${policies.industry.trim()}`)
+  if (hasList(policies.product_categories)) {
+    brand.push(`Product categories: ${policies.product_categories.join(', ')}`)
+  }
+  // Structured tone block (formality / style / personality), then free-text
+  // tone_of_voice override last so it has the strongest position.
+  if (has(policies.formality_level))   brand.push(`Formality: ${policies.formality_level.trim()}`)
+  if (hasList(policies.communication_style)) {
+    brand.push(`Communication style: ${policies.communication_style.join(', ')}`)
+  }
+  if (has(policies.personality_preferences)) {
+    brand.push(`Personality: ${policies.personality_preferences.trim()}`)
+  }
+  if (has(policies.tone_of_voice)) {
+    brand.push(`Tone of voice (additional notes): ${policies.tone_of_voice.trim()}`)
+  }
   if (has(policies.sign_off)) brand.push(`Sign off with: ${policies.sign_off.trim()}`)
   if (hasList(policies.languages)) brand.push(`Languages: ${policies.languages.join(', ')}`)
   if (has(policies.website_url)) brand.push(`Website: ${policies.website_url.trim()}`)
@@ -41,13 +57,14 @@ export function buildEmmaSystemPrompt(
 
   // ── Policies ──
   const pol: string[] = ['## Policies']
-  if (has(policies.shipping_policy)) pol.push(`Shipping policy: ${policies.shipping_policy.trim()}`)
-  if (has(policies.refund_policy)) pol.push(`Refund policy: ${policies.refund_policy.trim()}`)
-  if (has(policies.customs_policy)) pol.push(`Customs policy: ${policies.customs_policy.trim()}`)
-  if (hasList(policies.can_decide)) pol.push(`You may decide on your own:\n${bullets(policies.can_decide)}`)
-  if (hasList(policies.cannot_decide)) pol.push(`You may NOT decide on your own:\n${bullets(policies.cannot_decide)}`)
+  if (has(policies.shipping_policy))     pol.push(`Shipping policy: ${policies.shipping_policy.trim()}`)
+  if (has(policies.refund_policy))       pol.push(`Returns & refunds policy: ${policies.refund_policy.trim()}`)
+  if (has(policies.cancellation_policy)) pol.push(`Cancellation policy: ${policies.cancellation_policy.trim()}`)
+  if (has(policies.customs_policy))      pol.push(`Customs policy: ${policies.customs_policy.trim()}`)
+  if (hasList(policies.can_decide))      pol.push(`You may decide on your own:\n${bullets(policies.can_decide)}`)
+  if (hasList(policies.cannot_decide))   pol.push(`You may NOT decide on your own:\n${bullets(policies.cannot_decide)}`)
   if (hasList(policies.escalate_triggers)) pol.push(`Always escalate to a human when:\n${bullets(policies.escalate_triggers)}`)
-  if (has(policies.tracking_url)) pol.push(`Tracking URL template: ${policies.tracking_url.trim()}`)
+  if (has(policies.tracking_url))        pol.push(`Tracking URL template: ${policies.tracking_url.trim()}`)
   if (pol.length > 1) sections.push(pol.join('\n'))
 
   // ── Scenarios (enabled only) ──
@@ -60,7 +77,6 @@ export function buildEmmaSystemPrompt(
       if (hasList(s.questions_to_ask)) lines.push(`Ask first:\n${bullets(s.questions_to_ask)}`)
       if (has(s.response_template)) lines.push(`Response template: ${s.response_template.trim()}`)
       if (has(s.escalate_when)) lines.push(`Escalate when: ${s.escalate_when.trim()}`)
-      // Only emit a block if the scenario carries real guidance beyond its title.
       return lines.length > 1 ? lines.join('\n') : ''
     })
     .filter(Boolean)
@@ -69,12 +85,25 @@ export function buildEmmaSystemPrompt(
     sections.push(['## Scenarios', ...scenarioBlocks].join('\n\n'))
   }
 
-  // ── Recent learnings (manual lessons from Settings → AI agent → Lessons) ──
-  // Placed AFTER scenarios so brand + policies + scenarios anchor the
-  // response shape first, and lessons refine it. The query-side LIMIT lives
-  // in getEnabledLessons (lib/services/ai-onboarding.ts) — this builder
-  // formats whatever it receives. Section is omitted entirely when the list
-  // is empty (no empty header).
+  // ── Examples (per-store sample replies, newest first) ──
+  // Placed AFTER scenarios so brand + policies + scenarios anchor the response
+  // shape first, BEFORE lessons so manual corrections still dominate.
+  const exampleBlocks = examples
+    .map((e) => e.example_text.trim())
+    .filter((text) => text.length > 0)
+    .map((text, i) => `Example ${i + 1}:\n${text}`)
+
+  if (exampleBlocks.length > 0) {
+    sections.push(
+      [
+        '## Examples',
+        'Below are sample replies that reflect the desired voice and structure. Match this style.',
+        ...exampleBlocks,
+      ].join('\n\n'),
+    )
+  }
+
+  // ── Recent learnings (manual lessons) ──
   const lessonBullets = lessons
     .map((l) => {
       const text = l.lesson_text.trim()
@@ -88,11 +117,6 @@ export function buildEmmaSystemPrompt(
   }
 
   // ── Structured output guidance ──
-  // Emma replies are generated as a structured object (see emmaReplyOutput in
-  // lib/schemas/ai.ts). Tell the model how to fill the classification fields
-  // alongside the reply text. Instructive, not verbose. Placed LAST so the
-  // model has all brand + policy + scenario + lesson context before being
-  // told the output format.
   sections.push(
     `## Output
 Return the reply together with a short classification:
@@ -100,7 +124,7 @@ Return the reply together with a short classification:
 - intent: the customer's underlying question. Map to one of: wismo, long_delivery, lost_package, wrong_or_damaged, refund_or_cancel, customs_fees, angry_or_chargeback. Use 'other' for on-topic but unmapped requests, 'unknown' for genuinely unclear or off-topic messages.
 - confidence: 0–1, be honest. >=0.85 when the scenario maps cleanly and the policies cover the case; 0.5–0.85 when handleable but uncertain; <0.5 when the policies don't cover this or the intent is unclear.
 - should_escalate: true when an escalate trigger above applies, when intent is angry_or_chargeback, or when confidence is low.
-- escalate_reason: a short phrase explaining why — only when should_escalate is true, otherwise null.`
+- escalate_reason: a short phrase explaining why — only when should_escalate is true, otherwise null.`,
   )
 
   return sections.join('\n\n')

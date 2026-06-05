@@ -26,6 +26,12 @@ export function useUpsertAiPolicies(storeId: string) {
         p_cannot_decide: body.cannot_decide ?? null,
         p_escalate_triggers: body.escalate_triggers ?? null,
         p_tracking_url: body.tracking_url ?? null,
+        p_industry: body.industry ?? null,
+        p_product_categories: body.product_categories ?? null,
+        p_formality_level: body.formality_level ?? null,
+        p_communication_style: body.communication_style ?? null,
+        p_personality_preferences: body.personality_preferences ?? null,
+        p_cancellation_policy: body.cancellation_policy ?? null,
       })
       return data.policies
     },

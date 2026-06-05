@@ -35,6 +35,13 @@ export interface AiPoliciesRow {
   cannot_decide?: string[]
   escalate_triggers?: string[]
   tracking_url?: string | null
+  // Phase 3 extension — design 2026-06-05
+  industry?: string | null
+  product_categories?: string[]
+  formality_level?: 'casual' | 'balanced' | 'formal' | null
+  communication_style?: string[]
+  personality_preferences?: string | null
+  cancellation_policy?: string | null
 }
 
 export interface AiScenarioRow {

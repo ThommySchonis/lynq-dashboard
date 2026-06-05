@@ -30,6 +30,13 @@ export interface AiPolicies {
   cannot_decide: string[] | null
   escalate_triggers: string[] | null
   tracking_url: string | null
+  // Phase 3 extension — design 2026-06-05
+  industry: string | null
+  product_categories: string[] | null
+  formality_level: 'casual' | 'balanced' | 'formal' | null
+  communication_style: string[] | null
+  personality_preferences: string | null
+  cancellation_policy: string | null
 }
 
 export interface AiScenario {
@@ -49,6 +56,19 @@ export interface AiLesson {
   applies_to_scenario: string | null
   created_at: string
 }
+
+export interface AiExample {
+  id: string
+  example_text: string
+  created_at: string
+}
+
+/**
+ * Cap on examples injected into a single Emma prompt. Tighter than the
+ * lessons cap because examples are long. Surfaced in the Examples UI
+ * as "the 10 newest are used".
+ */
+export const EXAMPLE_PROMPT_LIMIT = 10
 
 export interface OnboardingStatus {
   isComplete: boolean
@@ -107,9 +127,9 @@ export async function resolveStoreIdForThread(
  * completeness. Two queries, run in parallel — no per-row fetch loops.
  *
  * Completeness rules (mirror the UI exactly):
- *  • Fundament — brand_name + tone_of_voice + sign_off all non-empty.
- *  • Policies  — shipping_policy + refund_policy non-empty AND can_decide
- *                non-empty array AND escalate_triggers non-empty array.
+ *  • Fundament — brand_name + industry + tone_of_voice + sign_off all non-empty.
+ *  • Policies  — shipping_policy + refund_policy + cancellation_policy non-empty
+ *                AND can_decide non-empty array AND escalate_triggers non-empty array.
  *  • Scenarios — every one of the 7 canonical scenario_keys has a row with
  *                non-empty approach AND non-empty escalate_when.
  */
@@ -123,7 +143,9 @@ export async function getOnboardingStatus(
       .select(
         'brand_name, brand_description, tone_of_voice, sign_off, languages, website_url, ' +
           'shipping_policy, refund_policy, customs_policy, can_decide, cannot_decide, ' +
-          'escalate_triggers, tracking_url'
+          'escalate_triggers, tracking_url, ' +
+          'industry, product_categories, formality_level, communication_style, ' +
+          'personality_preferences, cancellation_policy'
       )
       .eq('workspace_id', workspaceId)
       .eq('store_id', storeId)
@@ -146,12 +168,14 @@ export async function getOnboardingStatus(
 
   const fundamentComplete =
     nonEmpty(policies?.brand_name) &&
+    nonEmpty(policies?.industry) &&
     nonEmpty(policies?.tone_of_voice) &&
     nonEmpty(policies?.sign_off)
 
   const policiesComplete =
     nonEmpty(policies?.shipping_policy) &&
     nonEmpty(policies?.refund_policy) &&
+    nonEmpty(policies?.cancellation_policy) &&
     nonEmptyList(policies?.can_decide) &&
     nonEmptyList(policies?.escalate_triggers)
 
@@ -195,4 +219,29 @@ export async function getEnabledLessons(
     .limit(limit)
   if (error) throw error
   return (data as unknown as AiLesson[] | null) ?? []
+}
+
+/**
+ * Read examples for a store, newest first, capped at `limit`. Used by
+ * the Emma prompt builder via /api/ai/reply. Single indexed query
+ * (idx_ai_examples_store covers the store_id predicate).
+ *
+ * Throws on DB error — callers wrap in try/catch and fall back to an
+ * empty array so AI Suggest never 500s because of an examples read.
+ * Mirrors getEnabledLessons's "throw, caller decides" contract.
+ */
+export async function getExamples(
+  storeId: string,
+  workspaceId: string,
+  limit: number = EXAMPLE_PROMPT_LIMIT,
+): Promise<AiExample[]> {
+  const { data, error } = await supabaseAdmin
+    .from('ai_examples')
+    .select('id, example_text, created_at')
+    .eq('workspace_id', workspaceId)
+    .eq('store_id', storeId)
+    .order('created_at', { ascending: false })
+    .limit(limit)
+  if (error) throw error
+  return (data as unknown as AiExample[] | null) ?? []
 }

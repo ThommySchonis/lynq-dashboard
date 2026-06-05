@@ -1,7 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useMemo } from 'react'
-import { useRouter, usePathname, useSearchParams } from 'next/navigation'
+import { useState, useMemo } from 'react'
 import { Bot } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Label } from '@/components/ui/label'
@@ -18,8 +17,12 @@ import { SettingsSection, SettingsCard } from '@/components/features/settings/se
 import { SettingsField } from '@/components/features/settings/settings-field'
 import { EmptyState } from '@/components/shared/empty-state'
 import { useAuthStore } from '@/stores/auth'
-import { useStores } from '@/hooks/stores'
-import { useAiLessons, useAddAiLesson, useDisableAiLesson } from '@/hooks/ai'
+import {
+  useAiLessons,
+  useAddAiLesson,
+  useDisableAiLesson,
+  useAiStoreSelection,
+} from '@/hooks/ai'
 import type { AiLessonRow } from '@/hooks/ai'
 import { relativeTime } from '@/lib/macros'
 import { SCENARIOS } from './scenarios-section'
@@ -79,33 +82,12 @@ function LessonCard({
 }
 
 export function LessonsSettings() {
-  const router = useRouter()
-  const pathname = usePathname()
-  const searchParams = useSearchParams()
-
   const role = useAuthStore((s) => s.role)
   const isSuspended = useAuthStore((s) => s.isSuspended)
   const canEdit = !isSuspended && (role === 'owner' || role === 'admin')
 
   // ── Store selection (persisted in ?store=) ──
-  const { data: stores, isLoading: storesLoading } = useStores()
-  const storeId = searchParams.get('store') ?? ''
-
-  const setStore = useCallback(
-    (id: string) => {
-      const sp = new URLSearchParams(searchParams.toString())
-      sp.set('store', id)
-      router.replace(`${pathname}?${sp.toString()}`, { scroll: false })
-    },
-    [pathname, router, searchParams]
-  )
-
-  // Default to the first store when none is selected yet.
-  useEffect(() => {
-    if (!storeId && stores && stores.length > 0) {
-      setStore(stores[0].id)
-    }
-  }, [storeId, stores, setStore])
+  const { storeId, setStore, stores, storesLoading } = useAiStoreSelection()
 
   // ── Server data for the selected store ──
   const { data: lessons, isLoading: lessonsLoading } = useAiLessons(storeId)

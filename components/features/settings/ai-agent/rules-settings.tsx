@@ -1,7 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
-import { useRouter, usePathname, useSearchParams } from 'next/navigation'
+import { useState, useEffect } from 'react'
 import { Bot, Lock } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Label } from '@/components/ui/label'
@@ -20,8 +19,12 @@ import { SettingsField } from '@/components/features/settings/settings-field'
 import { SettingsToggle } from '@/components/features/settings/settings-toggle'
 import { EmptyState } from '@/components/shared/empty-state'
 import { useAuthStore } from '@/stores/auth'
-import { useStores } from '@/hooks/stores'
-import { useAiAutonomyRules, useUpsertAiAutonomyRules, useAiScenarios } from '@/hooks/ai'
+import {
+  useAiAutonomyRules,
+  useUpsertAiAutonomyRules,
+  useAiScenarios,
+  useAiStoreSelection,
+} from '@/hooks/ai'
 import type { AiAutonomyRulesConfig } from '@/lib/schemas/ai'
 import { REPLY_INTENTS, DEFAULT_AUTONOMY_CONFIG } from '@/lib/schemas/ai'
 import { SCENARIOS } from './scenarios-section'
@@ -54,33 +57,12 @@ const freshDefaultConfig = (): AiAutonomyRulesConfig => ({
 })
 
 export function RulesSettings() {
-  const router = useRouter()
-  const pathname = usePathname()
-  const searchParams = useSearchParams()
-
   const role = useAuthStore((s) => s.role)
   const isSuspended = useAuthStore((s) => s.isSuspended)
   const canEdit = !isSuspended && (role === 'owner' || role === 'admin')
 
   // ── Store selection (persisted in ?store=) ──
-  const { data: stores, isLoading: storesLoading } = useStores()
-  const storeId = searchParams.get('store') ?? ''
-
-  const setStore = useCallback(
-    (id: string) => {
-      const sp = new URLSearchParams(searchParams.toString())
-      sp.set('store', id)
-      router.replace(`${pathname}?${sp.toString()}`, { scroll: false })
-    },
-    [pathname, router, searchParams]
-  )
-
-  // Default to the first store when none is selected yet.
-  useEffect(() => {
-    if (!storeId && stores && stores.length > 0) {
-      setStore(stores[0].id)
-    }
-  }, [storeId, stores, setStore])
+  const { storeId, setStore, stores, storesLoading } = useAiStoreSelection()
 
   // ── Server data ──
   const { data: rulesResp, isLoading: rulesLoading } = useAiAutonomyRules(storeId)

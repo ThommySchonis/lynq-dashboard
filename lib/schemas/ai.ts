@@ -111,6 +111,15 @@ export const aiPoliciesBody = z.object({
   cannot_decide:     z.array(z.string()).optional(),
   escalate_triggers: z.array(z.string()).optional(),
   tracking_url:      z.string().optional(),
+  // Brand identity (Phase 3 extension — design 2026-06-05)
+  industry:                z.string().max(200).optional(),
+  product_categories:      z.array(z.string().min(1).max(100)).max(50).optional(),
+  // Structured tone fields. `tone_of_voice` (above) remains as a free-text override.
+  formality_level:         z.enum(['casual', 'balanced', 'formal']).optional(),
+  communication_style:     z.array(z.string().min(1).max(100)).max(50).optional(),
+  personality_preferences: z.string().max(2000).optional(),
+  // Policies extension
+  cancellation_policy:     z.string().max(5000).optional(),
 })
 
 // --- AI Scenarios (Emma Phase 3) ---
@@ -227,3 +236,20 @@ export const aiAutonomyRulesBody = z.object({
 })
 
 export type AiAutonomyRulesConfig = z.infer<typeof aiAutonomyRulesConfig>
+
+// --- AI Examples (Emma Phase 3 extension — per-store sample replies) ---
+// Add/delete only — mirrors the ai_lessons pattern (no patch/update).
+// See docs/superpowers/specs/2026-06-05-ai-agent-settings-extension-design.md
+
+export const aiExamplesQuery = z.object({
+  store_id: z.string().uuid(),
+})
+
+export const aiExampleBody = z.object({
+  store_id:     z.string().uuid(),
+  example_text: z.string().trim().min(1).max(5000),
+})
+
+export const aiExampleParams = z.object({
+  id: z.string().uuid(),
+})

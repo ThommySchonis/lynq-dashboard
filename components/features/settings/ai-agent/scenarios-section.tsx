@@ -2,7 +2,7 @@
 
 import { SettingsSection, SettingsCard } from '@/components/features/settings/settings-section'
 import { StatusBadge } from '@/components/features/settings/status-badge'
-import type { AiScenarioRow } from '@/hooks/ai'
+import { useAiScenarios } from '@/hooks/ai'
 import { ScenarioRow } from './scenario-row'
 
 export interface ScenarioMeta {
@@ -12,25 +12,29 @@ export interface ScenarioMeta {
   lockAutonomy?: boolean
 }
 
-// The 7 canonical scenarios, in the exact order required by the spec.
 export const SCENARIOS: ScenarioMeta[] = [
-  { key: 'wismo',             title: 'Where is my order?' },
-  { key: 'long_delivery',     title: 'Long delivery time' },
-  { key: 'lost_package',      title: 'Lost package' },
-  { key: 'wrong_or_damaged',  title: 'Wrong or damaged item' },
-  { key: 'refund_or_cancel',  title: 'Refund or cancellation' },
-  { key: 'customs_fees',      title: 'Customs fees' },
+  { key: 'wismo',               title: 'Where is my order?' },
+  { key: 'long_delivery',       title: 'Long delivery time' },
+  { key: 'lost_package',        title: 'Lost package' },
+  { key: 'wrong_or_damaged',    title: 'Wrong or damaged item' },
+  { key: 'refund_or_cancel',    title: 'Refund or cancellation' },
+  { key: 'customs_fees',        title: 'Customs fees' },
   { key: 'angry_or_chargeback', title: 'Angry customer or chargeback', lockAutonomy: true },
 ]
 
 interface ScenariosSectionProps {
   storeId: string
-  scenarios: AiScenarioRow[]
   canEdit: boolean
-  isComplete: boolean
 }
 
-export function ScenariosSection({ storeId, scenarios, canEdit, isComplete }: ScenariosSectionProps) {
+export function ScenariosSection({ storeId, canEdit }: ScenariosSectionProps) {
+  const { data: scenarios } = useAiScenarios(storeId)
+
+  const isComplete = SCENARIOS.every((s) => {
+    const row = scenarios?.find((r) => r.scenario_key === s.key)
+    return !!(row?.approach?.trim() && row?.escalate_when?.trim())
+  })
+
   return (
     <SettingsSection
       title="Scenarios"
@@ -50,7 +54,7 @@ export function ScenariosSection({ storeId, scenarios, canEdit, isComplete }: Sc
               meta={meta}
               storeId={storeId}
               canEdit={canEdit}
-              row={scenarios.find((r) => r.scenario_key === meta.key)}
+              row={scenarios?.find((r) => r.scenario_key === meta.key)}
               first={i === 0}
               last={i === SCENARIOS.length - 1}
             />

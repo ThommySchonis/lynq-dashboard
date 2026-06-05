@@ -168,6 +168,10 @@ Use **Next.js API routes** only when:
 - The operation requires streaming responses (AI chat)
 - The operation requires Next.js-specific features (OAuth redirects with cookies)
 
+### Exception — AI agent settings CRUD
+
+CRUD for the AI agent settings tables (`ai_policies`, `ai_scenarios`, `ai_autonomy_rules`, `ai_lessons`, `ai_examples`) is handled by Postgres `SECURITY DEFINER` functions in `supabase/migrations/`, called from the frontend via `lib/rpc.ts`. New endpoints for this area follow the same RPC pattern, not Hono. AI generation routes (`/api/ai/reply`, `/api/ai/chat`, `/api/ai/analyze`, `/api/ai/translate`, `/api/ai/macros`) remain Next.js routes for streaming/structured-output support.
+
 ## Database Migrations
 
 - All schema changes must go through `supabase migration new <name>`

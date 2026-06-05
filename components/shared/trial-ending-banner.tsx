@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { isBillingUIEnabled } from "@/lib/billing-ui";
 
 const DISMISS_KEY = "trial_banner_dismissed_until";
 
@@ -10,7 +11,7 @@ interface TrialEndingBannerProps {
   onDismissed?: () => void;
 }
 
-export function TrialEndingBanner({ onDismissed }: TrialEndingBannerProps) {
+function TrialEndingBannerInner({ onDismissed }: TrialEndingBannerProps) {
   const [hidden, setHidden] = useState(false);
 
   useEffect(() => {
@@ -59,6 +60,11 @@ export function TrialEndingBanner({ onDismissed }: TrialEndingBannerProps) {
       </div>
     </div>
   );
+}
+
+export function TrialEndingBanner(props: TrialEndingBannerProps) {
+  if (!isBillingUIEnabled()) return null;
+  return <TrialEndingBannerInner {...props} />;
 }
 
 export default TrialEndingBanner;

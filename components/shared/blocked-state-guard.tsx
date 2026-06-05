@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { Suspense, useEffect, useState, type ReactNode } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { rpc } from "@/lib/rpc";
 import { isTrialExpired } from "@/lib/trialStatus";
+import { isBillingUIEnabled } from "@/lib/billing-ui";
 
 interface OnboardingStatus {
   subscription_status?: string
@@ -30,7 +31,7 @@ function isAllowed(pathname: string | null) {
   );
 }
 
-export function BlockedStateGuard({ children }: { children: ReactNode }) {
+function BlockedStateGuardInner({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const [checked, setChecked] = useState(false);
@@ -98,6 +99,16 @@ export function BlockedStateGuard({ children }: { children: ReactNode }) {
 
   if (!checked) return null;
   return children;
+}
+
+export function BlockedStateGuard({ children }: { children: ReactNode }) {
+  // When the flag is off the gate is a no-op, but descendant components
+  // (notably AuthGuard) call useSearchParams(), which requires a Suspense
+  // boundary during static prerendering. The original guard returned null
+  // initially, which incidentally satisfied that requirement; this wrapper
+  // restores it explicitly.
+  if (!isBillingUIEnabled()) return <Suspense fallback={null}>{children}</Suspense>;
+  return <BlockedStateGuardInner>{children}</BlockedStateGuardInner>;
 }
 
 export default BlockedStateGuard;

@@ -1,10 +1,14 @@
 'use client'
 
+import { isBillingUIEnabled } from '@/lib/billing-ui'
+
 interface SuspensionBannerProps {
   reason: string | null
 }
 
 export function SuspensionBanner({ reason }: SuspensionBannerProps) {
+  if (!isBillingUIEnabled()) return null
+
   return (
     <div className="border-b border-amber-500/20 bg-amber-50 px-4 py-2.5 dark:bg-amber-950/30">
       <p className="text-center text-[13px] font-medium text-amber-800 dark:text-amber-200">

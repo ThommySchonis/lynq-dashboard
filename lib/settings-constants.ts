@@ -5,6 +5,7 @@
 
 import { Monitor, Moon, Sun } from 'lucide-react'
 import type { MemberRole, Theme } from '@/types/settings'
+import { isBillingUIEnabled } from './billing-ui'
 
 // ── Navigation ──
 
@@ -18,7 +19,7 @@ export interface SettingsNavGroup {
   items: SettingsNavItem[]
 }
 
-export const SETTINGS_NAV: SettingsNavGroup[] = [
+const RAW_SETTINGS_NAV: SettingsNavGroup[] = [
   { label: 'WORKSPACE', items: [
     { label: 'General',  href: '/settings/workspace/general' },
     { label: 'Users',    href: '/settings/workspace/members' },
@@ -40,6 +41,13 @@ export const SETTINGS_NAV: SettingsNavGroup[] = [
     { label: 'Password & 2FA', href: '/settings/personal/security' },
   ]},
 ]
+
+export const SETTINGS_NAV: SettingsNavGroup[] = isBillingUIEnabled()
+  ? RAW_SETTINGS_NAV
+  : RAW_SETTINGS_NAV.map(group => ({
+      ...group,
+      items: group.items.filter(item => item.href !== '/settings/workspace/billing'),
+    }))
 
 /** Flat list of all settings items — use for search/filtering. */
 export const ALL_SETTINGS_ITEMS: Array<SettingsNavItem & { group: string }> =

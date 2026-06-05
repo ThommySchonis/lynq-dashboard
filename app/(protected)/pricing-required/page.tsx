@@ -8,6 +8,7 @@ import { apiUrl } from '@/lib/api-client'
 import { useSignOut } from '@/hooks/auth'
 import { Button } from '@/components/ui/button'
 import { PRICING_PLANS, type PricingPlan } from '@/lib/pricing-constants'
+import { isBillingUIEnabled } from '@/lib/billing-ui'
 
 // Minimal stub voor /pricing-required (ONBOARDING_SPEC v1.1 §10.2).
 // De definitieve premium UX wordt opgebouwd in een latere sprint
@@ -68,8 +69,13 @@ function PlanCard({ plan }: PlanCardProps) {
 }
 
 export default function PricingRequiredPage() {
-  const [firstName, setFirstName] = useState('')
   const router = useRouter()
+
+  useEffect(() => {
+    if (!isBillingUIEnabled()) router.replace('/home')
+  }, [router])
+
+  const [firstName, setFirstName] = useState('')
   const signOut = useSignOut()
   const user    = useAuthStore((s) => s.user)
   const session = useAuthStore((s) => s.session)
@@ -97,6 +103,8 @@ export default function PricingRequiredPage() {
       })
       .catch(() => { /* fail-open: toon de normale pagina als de check mislukt */ })
   }, [session, router])
+
+  if (!isBillingUIEnabled()) return null
 
   function handleLogout() {
     signOut.mutate(undefined, {

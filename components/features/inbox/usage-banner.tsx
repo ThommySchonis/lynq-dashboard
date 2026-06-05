@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { AlertTriangle, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useUsage } from '@/hooks/billing'
+import { isBillingUIEnabled } from '@/lib/billing-ui'
 
 /**
  * Workspace usage banner shown above the inbox when the workspace
@@ -22,7 +23,7 @@ import { useUsage } from '@/hooks/billing'
  * directs the customer to upgrade; the backend blocks further usage
  * once the limit is reached. See docs/billing-model.md.
  */
-export function InboxUsageBanner() {
+function InboxUsageBannerInner() {
   const { data: usage } = useUsage()
   const [dismissed, setDismissed] = useState<'80' | '100' | null>(
     typeof window !== 'undefined' ? (sessionStorage.getItem('usage-banner-dismissed') as '80' | '100' | null) : null,
@@ -101,4 +102,9 @@ export function InboxUsageBanner() {
       </div>
     </div>
   )
+}
+
+export function InboxUsageBanner() {
+  if (!isBillingUIEnabled()) return null
+  return <InboxUsageBannerInner />
 }

@@ -1,0 +1,25 @@
+project_id = "cvrzvhnsltjubmfkcxql"
+
+# Webhook + cron functions: gateway must NOT enforce JWT verification.
+# External callers (Resend, Shopify, Whop, ParcelPanel, internal cron) do not
+# send a Supabase user JWT. Each function still verifies its own signature
+# (HMAC / x-webhook-secret / svix / shared secret) inside the handler, and
+# protected API routes inside the `api` function are guarded by authMiddleware.
+
+[functions.api]
+verify_jwt = false
+
+[functions.shopify-webhook]
+verify_jwt = false
+
+[functions.webhook-retry]
+verify_jwt = false
+
+[functions.webhook-cleanup]
+verify_jwt = false
+
+[functions.shopify-sync]
+verify_jwt = false
+
+[functions.gmail-watch-renewal]
+verify_jwt = false

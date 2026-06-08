@@ -1,5 +1,6 @@
 import { streamText } from 'ai'
-import { anthropic } from '@ai-sdk/anthropic'
+import { getAiModel, getAiModelId } from '@/lib/ai/model'
+import { computeCost } from '@/lib/ai/pricing'
 import { supabaseAdmin, getUserFromToken } from '../../../../lib/supabaseAdmin'
 import { checkRateLimit } from '@/lib/rate-limit'
 import { NextResponse } from 'next/server'
@@ -74,7 +75,7 @@ Be concise, confident, and data-driven. Reference specific numbers when availabl
 
   try {
     const result = streamText({
-      model: anthropic('claude-haiku-4-5-20251001'),
+      model: getAiModel(),
       system: systemPrompt,
       messages: [
         ...historyMessages,
@@ -84,10 +85,10 @@ Be concise, confident, and data-driven. Reference specific numbers when availabl
       onFinish: async ({ usage }) => {
         await supabaseAdmin.from('ai_usage').insert({
           route: 'chat',
-          model: 'claude-haiku-4-5-20251001',
+          model: getAiModelId(),
           input_tokens: usage.inputTokens,
           output_tokens: usage.outputTokens,
-          cost_usd: ((usage.inputTokens ?? 0) * 0.0000008) + ((usage.outputTokens ?? 0) * 0.000004),
+          cost_usd: computeCost(getAiModelId(), usage),
           user_email: user.email,
         }).then(undefined, () => {})
       },

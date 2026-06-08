@@ -1,6 +1,6 @@
 import { generateText } from 'ai'
-import { anthropic } from '@ai-sdk/anthropic'
-import { getUserFromToken, supabaseAdmin } from '../../../../lib/supabaseAdmin'
+import { supabaseAdmin } from '../../../../lib/supabaseAdmin'
+import { getAuthContext } from '@/lib/auth'
 import { checkRateLimit } from '@/lib/rate-limit'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
@@ -8,18 +8,18 @@ import { aiAnalyzeBody } from '@/lib/schemas/ai'
 import { logger } from '@/lib/logger'
 import { resilientSdkCall } from '@/lib/resilient-fetch'
 import { serviceCatchHandler } from '@/lib/service-catch-handler'
+import { getAiModel, getAiModelId } from '@/lib/ai/model'
+import { computeCost } from '@/lib/ai/pricing'
+import { loadWorkspaceBrandContext, buildBrandContextLine } from '@/lib/ai/brand-context'
 
 interface AnalyzeResult {
   results?: Record<string, unknown>
 }
 
 export async function POST(request: NextRequest) {
-  const authHeader = request.headers.get('authorization')
-  if (!authHeader) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-  const token = authHeader.replace('Bearer ', '')
-  const user = await getUserFromToken(token)
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const ctx = await getAuthContext(request)
+  if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const user = ctx.user
 
   const rl = checkRateLimit(`user:${user.id}:ai`, 10, 60_000)
   if (!rl.allowed) {
@@ -43,7 +43,10 @@ export async function POST(request: NextRequest) {
   }
   const { threads } = parsed.data
 
-  const prompt = `You are a customer support triage AI for an e-commerce dropshipping store. Analyze these support emails and classify each one.
+  const policies = await loadWorkspaceBrandContext(ctx.workspaceId)
+  const brandLine = buildBrandContextLine(policies)
+
+  const promptBody = `You are a customer support triage AI for an e-commerce dropshipping store. Analyze these support emails and classify each one.
 
 For each email return:
 - urgency: one of "critical" | "high" | "medium" | "low"
@@ -61,10 +64,12 @@ Return ONLY a valid JSON object, no markdown, no explanation:
 Emails:
 ${threads.slice(0, 25).map(t => `ID: ${t.id}\nSubject: ${t.subject || '(no subject)'}\nPreview: ${t.snippet || ''}`).join('\n\n')}`
 
+  const prompt = brandLine ? `${brandLine}\n\n${promptBody}` : promptBody
+
   try {
     const { text, usage } = await resilientSdkCall('anthropic', () =>
       generateText({
-        model: anthropic('claude-haiku-4-5-20251001'),
+        model: getAiModel(),
         prompt,
         maxOutputTokens: 1200,
       })
@@ -72,10 +77,10 @@ ${threads.slice(0, 25).map(t => `ID: ${t.id}\nSubject: ${t.subject || '(no subje
 
     const { error: usageErr } = await supabaseAdmin.from('ai_usage').insert({
       route: 'analyze',
-      model: 'claude-haiku-4-5-20251001',
+      model: getAiModelId(),
       input_tokens: usage.inputTokens,
       output_tokens: usage.outputTokens,
-      cost_usd: ((usage.inputTokens ?? 0) * 0.0000008) + ((usage.outputTokens ?? 0) * 0.000004),
+      cost_usd: computeCost(getAiModelId(), usage),
       user_email: user.email,
     })
     if (usageErr) logger.error('[ai/analyze]', 'usage log failed', { error: usageErr.message })

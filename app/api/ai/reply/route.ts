@@ -1,5 +1,7 @@
 import { generateText, Output } from 'ai'
-import { anthropic } from '@ai-sdk/anthropic'
+import type { JSONObject } from '@ai-sdk/provider'
+import { getAiModel, getAiModelId, getCachableSystemOptions } from '@/lib/ai/model'
+import { computeCost } from '@/lib/ai/pricing'
 import { supabaseAdmin } from '../../../../lib/supabaseAdmin'
 import { getAuthContext, requireWriteAccess } from '../../../../lib/auth'
 import { checkAiSuggestLimit } from '../../../../lib/services/limit-check'
@@ -171,7 +173,6 @@ export async function POST(request: NextRequest) {
     ? `\n\nIMPORTANT: Write your reply in ${language}. The customer is communicating in ${language}.`
     : ''
 
-  const MODEL = 'claude-haiku-4-5-20251001'
   const userPrompt = `Here is the full email conversation. Write a professional reply to the latest message from the customer.
 
 ${conversationContext}
@@ -184,7 +185,12 @@ Write only the reply body. Do not include subject lines, metadata, or explanatio
     // → existing plain-text generation, untouched. Classification metadata is
     // null unless the Emma structured call succeeds.
     let replyText = ''
-    let usage: { inputTokens?: number; outputTokens?: number } = {}
+    let usage: {
+      inputTokens?:               number
+      outputTokens?:              number
+      cacheReadInputTokens?:      number
+      cacheCreationInputTokens?:  number
+    } = {}
     let intent: ReplyIntent | null = null
     let confidence: number | null = null
     let shouldEscalate: boolean | null = null
@@ -194,9 +200,15 @@ Write only the reply body. Do not include subject lines, metadata, or explanatio
       try {
         const result = await resilientSdkCall('anthropic', () =>
           generateText({
-            model: anthropic(MODEL),
-            system: systemPrompt + languageInstruction,
-            prompt: userPrompt,
+            model: getAiModel(),
+            messages: [
+              {
+                role: 'system',
+                content: systemPrompt + languageInstruction,
+                providerOptions: getCachableSystemOptions() as Record<string, JSONObject>,
+              },
+              { role: 'user', content: userPrompt },
+            ],
             maxOutputTokens: 600,
             experimental_output: Output.object({ schema: emmaReplyOutput }),
           })
@@ -207,43 +219,72 @@ Write only the reply body. Do not include subject lines, metadata, or explanatio
         confidence = out.confidence
         shouldEscalate = out.should_escalate
         escalateReason = out.escalate_reason ?? null
-        usage = result.usage
+        usage = {
+          inputTokens:              result.usage.inputTokens,
+          outputTokens:             result.usage.outputTokens,
+          cacheReadInputTokens:     result.usage.inputTokenDetails?.cacheReadTokens,
+          cacheCreationInputTokens: result.usage.inputTokenDetails?.cacheWriteTokens,
+        }
       } catch (err) {
         // Structured-output failure: log (no content) and retry ONCE as plain
         // text for this call only. The draft persists null classification.
         logger.error('[ai/reply]', 'structured output failed; retrying as plain text', err)
         const result = await resilientSdkCall('anthropic', () =>
           generateText({
-            model: anthropic(MODEL),
-            system: systemPrompt + languageInstruction,
-            prompt: userPrompt,
+            model: getAiModel(),
+            messages: [
+              {
+                role: 'system',
+                content: systemPrompt + languageInstruction,
+                providerOptions: getCachableSystemOptions() as Record<string, JSONObject>,
+              },
+              { role: 'user', content: userPrompt },
+            ],
             maxOutputTokens: 600,
           })
         )
         replyText = result.text
-        usage = result.usage
+        usage = {
+          inputTokens:              result.usage.inputTokens,
+          outputTokens:             result.usage.outputTokens,
+          cacheReadInputTokens:     result.usage.inputTokenDetails?.cacheReadTokens,
+          cacheCreationInputTokens: result.usage.inputTokenDetails?.cacheWriteTokens,
+        }
       }
     } else {
       const result = await resilientSdkCall('anthropic', () =>
         generateText({
-          model: anthropic(MODEL),
-          system: systemPrompt + languageInstruction,
-          prompt: userPrompt,
+          model: getAiModel(),
+          messages: [
+            {
+              role: 'system',
+              content: systemPrompt + languageInstruction,
+              providerOptions: getCachableSystemOptions() as Record<string, JSONObject>,
+            },
+            { role: 'user', content: userPrompt },
+          ],
           maxOutputTokens: 600,
         })
       )
       replyText = result.text
-      usage = result.usage
+      usage = {
+        inputTokens:              result.usage.inputTokens,
+        outputTokens:             result.usage.outputTokens,
+        cacheReadInputTokens:     result.usage.inputTokenDetails?.cacheReadTokens,
+        cacheCreationInputTokens: result.usage.inputTokenDetails?.cacheWriteTokens,
+      }
     }
 
     replyText = replyText.trim()
 
     await supabaseAdmin.from('ai_usage').insert({
       route: 'reply',
-      model: MODEL,
+      model: getAiModelId(),
       input_tokens: usage.inputTokens,
       output_tokens: usage.outputTokens,
-      cost_usd: ((usage.inputTokens ?? 0) * 0.0000008) + ((usage.outputTokens ?? 0) * 0.000004),
+      cache_read_input_tokens:     usage.cacheReadInputTokens     ?? null,
+      cache_creation_input_tokens: usage.cacheCreationInputTokens ?? null,
+      cost_usd: computeCost(getAiModelId(), usage),
       user_email: user.email,
     })
 
@@ -372,7 +413,7 @@ Write only the reply body. Do not include subject lines, metadata, or explanatio
           user_id:                  user.id,
           prompt_path:              promptPath,
           suggested_text:           replyText,
-          model:                    MODEL,
+          model:                    getAiModelId(),
           prompt_tokens:            promptTokens,
           completion_tokens:        completionTokens,
           total_tokens:             totalTokens,

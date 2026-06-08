@@ -1,5 +1,6 @@
 import { generateText } from 'ai'
-import { anthropic } from '@ai-sdk/anthropic'
+import { getAiModel, getAiModelId } from '@/lib/ai/model'
+import { computeCost } from '@/lib/ai/pricing'
 import { getUserFromToken, supabaseAdmin } from '../../../../lib/supabaseAdmin'
 import { checkRateLimit } from '@/lib/rate-limit'
 import { NextResponse } from 'next/server'
@@ -62,7 +63,7 @@ ${text}`
   try {
     const { text: result, usage } = await resilientSdkCall('anthropic', () =>
       generateText({
-        model: anthropic('claude-haiku-4-5-20251001'),
+        model: getAiModel(),
         prompt,
         maxOutputTokens: 2000,
       })
@@ -70,10 +71,10 @@ ${text}`
 
     void supabaseAdmin.from('ai_usage').insert({
       route: 'translate',
-      model: 'claude-haiku-4-5-20251001',
+      model: getAiModelId(),
       input_tokens: usage.inputTokens,
       output_tokens: usage.outputTokens,
-      cost_usd: ((usage.inputTokens ?? 0) * 0.0000008) + ((usage.outputTokens ?? 0) * 0.000004),
+      cost_usd: computeCost(getAiModelId(), usage),
       user_email: user.email,
     }).then(undefined, () => {})
 

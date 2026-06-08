@@ -1,12 +1,15 @@
 import { generateText } from 'ai'
-import { anthropic } from '@ai-sdk/anthropic'
-import { supabaseAdmin, getUserFromToken } from '../../../../lib/supabaseAdmin'
+import { supabaseAdmin } from '../../../../lib/supabaseAdmin'
+import { getAuthContext } from '@/lib/auth'
 import { checkRateLimit } from '@/lib/rate-limit'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { aiMacrosBody } from '@/lib/schemas/ai'
 import { resilientSdkCall } from '@/lib/resilient-fetch'
 import { serviceCatchHandler } from '@/lib/service-catch-handler'
+import { getAiModel, getAiModelId } from '@/lib/ai/model'
+import { computeCost } from '@/lib/ai/pricing'
+import { loadWorkspaceBrandContext, buildBrandContextLine } from '@/lib/ai/brand-context'
 
 interface Macro {
   id: string
@@ -26,12 +29,9 @@ const MACROS: Macro[] = [
 ]
 
 export async function POST(request: NextRequest) {
-  const authHeader = request.headers.get('authorization')
-  if (!authHeader) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-  const token = authHeader.replace('Bearer ', '')
-  const user = await getUserFromToken(token)
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const ctx = await getAuthContext(request)
+  if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const user = ctx.user
 
   const rl = checkRateLimit(`user:${user.id}:ai`, 10, 60_000)
   if (!rl.allowed) {
@@ -61,11 +61,10 @@ export async function POST(request: NextRequest) {
 
   const macroList = MACROS.map(m => `${m.id}: ${m.name}`).join('\n')
 
-  try {
-    const { text, usage } = await resilientSdkCall('anthropic', () =>
-      generateText({
-        model: anthropic('claude-haiku-4-5-20251001'),
-        prompt: `You are a customer service assistant. Based on this customer email, pick the 3 most relevant macro IDs to suggest as quick replies. Return only the 3 IDs, comma-separated, nothing else.
+  const policies = await loadWorkspaceBrandContext(ctx.workspaceId)
+  const brandLine = buildBrandContextLine(policies)
+
+  const promptBody = `You are a customer service assistant. Based on this customer email, pick the 3 most relevant macro IDs to suggest as quick replies. Return only the 3 IDs, comma-separated, nothing else.
 
 Email subject: ${subject}
 Email content: ${snippet}
@@ -73,17 +72,25 @@ Email content: ${snippet}
 Available macros:
 ${macroList}
 
-Return exactly 3 IDs, comma-separated:`,
+Return exactly 3 IDs, comma-separated:`
+
+  const fullPrompt = brandLine ? `${brandLine}\n\n${promptBody}` : promptBody
+
+  try {
+    const { text, usage } = await resilientSdkCall('anthropic', () =>
+      generateText({
+        model: getAiModel(),
+        prompt: fullPrompt,
         maxOutputTokens: 60,
       })
     )
 
     await supabaseAdmin.from('ai_usage').insert({
       route: 'macros',
-      model: 'claude-haiku-4-5-20251001',
+      model: getAiModelId(),
       input_tokens: usage.inputTokens,
       output_tokens: usage.outputTokens,
-      cost_usd: ((usage.inputTokens ?? 0) * 0.0000008) + ((usage.outputTokens ?? 0) * 0.000004),
+      cost_usd: computeCost(getAiModelId(), usage),
       user_email: user.email,
     })
 

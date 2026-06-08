@@ -163,6 +163,44 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(`${appUrl}/settings/workspace/stores?error=save_failed`)
   }
 
+  // Determine whether this is the workspace's first connected store. If so,
+  // mark it as the billing store and create a pending subscription row.
+  const { data: existingBillingStore } = await supabaseAdmin
+    .from('integrations')
+    .select('id')
+    .eq('workspace_id', workspaceId)
+    .eq('is_billing_store', true)
+    .maybeSingle()
+
+  let isFirstStore = false
+  if (!existingBillingStore) {
+    isFirstStore = true
+    await supabaseAdmin
+      .from('integrations')
+      .update({ is_billing_store: true })
+      .eq('workspace_id', workspaceId)
+      .eq('shopify_domain', shop)
+
+    // Ensure a workspace_subscriptions row exists in pending state.
+    const { data: existingSub } = await supabaseAdmin
+      .from('workspace_subscriptions')
+      .select('workspace_id')
+      .eq('workspace_id', workspaceId)
+      .maybeSingle()
+    if (!existingSub) {
+      await supabaseAdmin.from('workspace_subscriptions').insert({
+        workspace_id: workspaceId,
+        status: 'pending_shopify_subscription',
+        shopify_billing_shop_domain: shop,
+      })
+    } else {
+      await supabaseAdmin
+        .from('workspace_subscriptions')
+        .update({ shopify_billing_shop_domain: shop })
+        .eq('workspace_id', workspaceId)
+    }
+  }
+
   // Register webhooks — point to Supabase Edge Function (server-to-server)
   const webhookBase = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1`
   const webhookTopics = ['orders/create', 'orders/updated', 'orders/cancelled', 'refunds/create']
@@ -194,5 +232,11 @@ export async function GET(request: NextRequest) {
     })
   }
 
+  if (isFirstStore) {
+    const handle = process.env.SHOPIFY_APP_HANDLE
+    if (handle) {
+      return NextResponse.redirect(`https://${shop}/admin/charges/${handle}/pricing_plans`)
+    }
+  }
   return NextResponse.redirect(`${appUrl}/settings/workspace/stores?shopify=connected`)
 }

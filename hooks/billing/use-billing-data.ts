@@ -5,14 +5,12 @@ import { useToken } from './utils'
 import { parseJson } from '@/lib/utils/typed-json'
 import { apiUrl } from '@/lib/api-client'
 import type {
-  SubscriptionResponse,
-  UsageResponse,
   Plan,
   Invoice,
   BillingInfo,
-  PaymentMethod,
-  SubscriptionAddon,
-  InvoicesListResponse,
+  BillingStore,
+  ManageUrlResponse,
+  SubscriptionWithUsageResponse,
 } from '@/types/billing'
 
 interface ErrorResponse {
@@ -22,13 +20,11 @@ interface ErrorResponse {
 export const billingKeys = {
   all:            ['billing'] as const,
   subscription:   () => [...billingKeys.all, 'subscription'] as const,
-  usage:          () => [...billingKeys.all, 'usage'] as const,
   plans:          () => [...billingKeys.all, 'plans'] as const,
-  invoices:       (page: number) => [...billingKeys.all, 'invoices', page] as const,
-  invoice:        (id: string) => [...billingKeys.all, 'invoice', id] as const,
+  invoices:       () => [...billingKeys.all, 'invoices'] as const,
   billingInfo:    () => [...billingKeys.all, 'billing-info'] as const,
-  paymentMethods: () => [...billingKeys.all, 'payment-methods'] as const,
-  addons:         () => [...billingKeys.all, 'addons'] as const,
+  manageUrl:      () => [...billingKeys.all, 'manage-url'] as const,
+  stores:         () => [...billingKeys.all, 'stores'] as const,
 }
 
 async function jsonFetch<T>(url: string, token: string): Promise<T> {
@@ -42,19 +38,65 @@ async function jsonFetch<T>(url: string, token: string): Promise<T> {
 
 export function useSubscription() {
   const token = useToken()
-  return useQuery<SubscriptionResponse>({
+  return useQuery<SubscriptionWithUsageResponse>({
     queryKey: billingKeys.subscription(),
-    queryFn:  () => jsonFetch<SubscriptionResponse>(apiUrl('billing/subscription'), token),
+    queryFn:  () => jsonFetch<SubscriptionWithUsageResponse>(apiUrl('billing/subscription'), token),
     enabled:  !!token,
     staleTime: 60_000,
   })
 }
 
-export function useUsage() {
+export function useManageUrl() {
   const token = useToken()
-  return useQuery<UsageResponse>({
-    queryKey: billingKeys.usage(),
-    queryFn:  () => jsonFetch<UsageResponse>(apiUrl('billing/usage'), token),
+  return useQuery<string | null>({
+    queryKey: billingKeys.manageUrl(),
+    queryFn: async () => {
+      const res = await fetch(apiUrl('billing/manage-url'), {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (!res.ok) return null
+      const data = await parseJson<ManageUrlResponse>(res).catch(() => null)
+      return data?.url ?? null
+    },
+    enabled:  !!token,
+    staleTime: 5 * 60_000,
+  })
+}
+
+export function useBillingStores() {
+  const token = useToken()
+  return useQuery<BillingStore[]>({
+    queryKey: billingKeys.stores(),
+    queryFn: async () => {
+      const data = await jsonFetch<{ stores: BillingStore[] }>(apiUrl('billing/stores'), token)
+      return data.stores ?? []
+    },
+    enabled:  !!token,
+    staleTime: 60_000,
+  })
+}
+
+export function useBillingInfo() {
+  const token = useToken()
+  return useQuery<BillingInfo | null>({
+    queryKey: billingKeys.billingInfo(),
+    queryFn: async () => {
+      const data = await jsonFetch<{ billing_address: BillingInfo | null }>(apiUrl('billing/info'), token)
+      return data.billing_address
+    },
+    enabled:  !!token,
+    staleTime: 5 * 60_000,
+  })
+}
+
+export function useInvoices() {
+  const token = useToken()
+  return useQuery<Invoice[]>({
+    queryKey: billingKeys.invoices(),
+    queryFn: async () => {
+      const data = await jsonFetch<{ invoices: Invoice[] }>(apiUrl('billing/invoices'), token)
+      return data.invoices ?? []
+    },
     enabled:  !!token,
     staleTime: 60_000,
   })
@@ -69,69 +111,6 @@ export function usePlans() {
       return data.plans ?? []
     },
     enabled:  !!token,
-    staleTime: 5 * 60_000,  // plans rarely change
-  })
-}
-
-export function useInvoices(page = 0, perPage = 25) {
-  const token = useToken()
-  return useQuery<InvoicesListResponse>({
-    queryKey: billingKeys.invoices(page),
-    queryFn:  () => jsonFetch<InvoicesListResponse>(`${apiUrl('billing/invoices')}?page=${page}&per_page=${perPage}`, token),
-    enabled:  !!token,
-    staleTime: 5 * 60_000,
-  })
-}
-
-export function useBillingInfo() {
-  const token = useToken()
-  return useQuery<BillingInfo | null>({
-    queryKey: billingKeys.billingInfo(),
-    queryFn: async () => {
-      const data = await jsonFetch<{ billing_info: BillingInfo | null }>(apiUrl('billing/info'), token)
-      return data.billing_info
-    },
-    enabled:  !!token,
-    staleTime: 5 * 60_000,
-  })
-}
-
-export function usePaymentMethods() {
-  const token = useToken()
-  return useQuery<PaymentMethod[]>({
-    queryKey: billingKeys.paymentMethods(),
-    queryFn: async () => {
-      const data = await jsonFetch<{ payment_methods: PaymentMethod[] }>(apiUrl('billing/payment-methods'), token)
-      return data.payment_methods ?? []
-    },
-    enabled:  !!token,
-    staleTime: 5 * 60_000,
-  })
-}
-
-export function useAddons() {
-  const token = useToken()
-  return useQuery<SubscriptionAddon[]>({
-    queryKey: billingKeys.addons(),
-    queryFn: async () => {
-      const data = await jsonFetch<{ addons: SubscriptionAddon[] }>(apiUrl('billing/addons'), token)
-      return data.addons ?? []
-    },
-    enabled:  !!token,
-    staleTime: 5 * 60_000,
-  })
-}
-
-export function useInvoice(id: string | null) {
-  const token = useToken()
-  return useQuery<Invoice | null>({
-    queryKey: billingKeys.invoice(id ?? ''),
-    queryFn: async () => {
-      if (!id) return null
-      const data = await jsonFetch<{ invoice: Invoice }>(apiUrl(`billing/invoices/${id}`), token)
-      return data.invoice
-    },
-    enabled:  !!token && !!id,
     staleTime: 5 * 60_000,
   })
 }

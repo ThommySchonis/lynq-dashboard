@@ -37,7 +37,7 @@ export async function getClientOverview(): Promise<ClientOverviewResponse> {
   ] = await Promise.all([
     supabaseAdmin
       .from('workspace_subscriptions')
-      .select('workspace_id, status, plans ( display_name )')
+      .select('workspace_id, status, is_grandfathered, grandfather_reason, plans ( display_name )')
       .in('workspace_id', workspaceIds),
     supabaseAdmin
       .from('integrations')
@@ -73,13 +73,15 @@ export async function getClientOverview(): Promise<ClientOverviewResponse> {
   }
 
   // Build lookup maps
-  const subMap = new Map<string, { status: SubscriptionStatus; planName: string | null }>()
+  const subMap = new Map<string, { status: SubscriptionStatus; planName: string | null; isGrandfathered: boolean; grandfatherReason: string | null }>()
   for (const sub of subscriptions ?? []) {
     const rawPlans = sub.plans as unknown
     const plans = (Array.isArray(rawPlans) ? rawPlans[0] : rawPlans) as { display_name: string } | null
     subMap.set(sub.workspace_id as string, {
       status: sub.status as SubscriptionStatus,
       planName: plans?.display_name ?? null,
+      isGrandfathered: (sub as Record<string, unknown>).is_grandfathered as boolean ?? false,
+      grandfatherReason: (sub as Record<string, unknown>).grandfather_reason as string | null ?? null,
     })
   }
 
@@ -128,6 +130,8 @@ export async function getClientOverview(): Promise<ClientOverviewResponse> {
       suspensionReason: ws?.suspension_reason ?? null,
       billingStatus: sub?.status ?? null,
       planName: sub?.planName ?? null,
+      isGrandfathered: sub?.isGrandfathered ?? false,
+      grandfatherReason: sub?.grandfatherReason ?? null,
       hasShopify,
       hasGmail,
       hasOutlook,

@@ -20,7 +20,44 @@ import {
 } from '@react-pdf/renderer'
 import React from 'react'
 import { ISSUER, isEUCountry } from './issuer'
-import type { Invoice } from '@/types/billing'
+
+// Legacy invoice shape used by PDF renderer (Whop-era billing records).
+// Kept here to avoid coupling with @/types/billing which now uses the
+// Shopify-native Invoice shape for the frontend.
+interface Invoice {
+  id: string
+  workspace_id: string
+  invoice_number: string
+  status: string
+  period_start: string
+  period_end: string
+  subtotal_eur: number
+  vat_amount_eur: number
+  total_eur: number
+  amount_paid_eur: number
+  amount_due_eur: number
+  description: string | null
+  line_items: Array<{
+    description: string
+    quantity: number
+    unit_price: number
+    total: number
+  }>
+  paid_at: string | null
+  pdf_url: string | null
+  billing_email: string | null
+  billing_org_name: string | null
+  billing_address: {
+    line1: string | null
+    line2: string | null
+    city: string | null
+    postal_code: string | null
+    country: string | null
+    state: string | null
+  } | null
+  vat_number: string | null
+  created_at: string
+}
 
 // ─── Font registration (system default — keep it simple) ────────────
 // react-pdf ships Helvetica/Times/Courier as built-ins. We use the

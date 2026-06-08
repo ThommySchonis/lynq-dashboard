@@ -4,8 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { AlertTriangle, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { useUsage } from '@/hooks/billing'
-import { isBillingUIEnabled } from '@/lib/billing-ui'
+import { useSubscription, useManageUrl } from '@/hooks/billing/use-billing-data'
 
 /**
  * Workspace usage banner shown above the inbox when the workspace
@@ -21,19 +20,30 @@ import { isBillingUIEnabled } from '@/lib/billing-ui'
  *
  * Model 3 (forced upgrade) — no overage charging. The 100%+ banner
  * directs the customer to upgrade; the backend blocks further usage
- * once the limit is reached. See docs/billing-model.md.
+ * once the limit is reached.
  */
 function InboxUsageBannerInner() {
-  const { data: usage } = useUsage()
+  const { data: subData } = useSubscription()
+  const { data: manageUrl } = useManageUrl()
   const [dismissed, setDismissed] = useState<'80' | '100' | null>(
     typeof window !== 'undefined' ? (sessionStorage.getItem('usage-banner-dismissed') as '80' | '100' | null) : null,
   )
 
-  if (!usage) return null
+  const usage = subData?.usage
+  const plan = subData?.plan
 
-  const ticketsPct    = usage.percentages.tickets
-  const aiPct         = usage.percentages.ai_suggest
-  const maxPct        = Math.max(ticketsPct, aiPct)
+  if (!usage || !plan) return null
+
+  const ticketLimit = plan.ticket_limit
+  const aiLimit = plan.ai_suggest_limit
+
+  const ticketsPct = ticketLimit != null && ticketLimit > 0
+    ? Math.round((usage.tickets_used / ticketLimit) * 100)
+    : 0
+  const aiPct = aiLimit != null && aiLimit > 0
+    ? Math.round((usage.ai_suggest_used / aiLimit) * 100)
+    : 0
+  const maxPct = Math.max(ticketsPct, aiPct)
 
   // Nothing to show
   if (maxPct < 80) return null
@@ -81,15 +91,29 @@ function InboxUsageBannerInner() {
         </div>
 
         <div className="flex items-center gap-2">
-          <Link
-            href="/settings/workspace/billing"
-            className={cn(
-              'rounded-md px-3 py-1 text-xs font-semibold underline-offset-2 hover:underline',
-              isLimitReached ? 'text-destructive' : 'text-amber-900 dark:text-amber-100',
-            )}
-          >
-            {isLimitReached ? 'Upgrade plan' : 'View plans'}
-          </Link>
+          {manageUrl ? (
+            <a
+              href={manageUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={cn(
+                'rounded-md px-3 py-1 text-xs font-semibold underline-offset-2 hover:underline',
+                isLimitReached ? 'text-destructive' : 'text-amber-900 dark:text-amber-100',
+              )}
+            >
+              {isLimitReached ? 'Upgrade plan in Shopify' : 'View plans in Shopify'}
+            </a>
+          ) : (
+            <Link
+              href="/settings/workspace/billing"
+              className={cn(
+                'rounded-md px-3 py-1 text-xs font-semibold underline-offset-2 hover:underline',
+                isLimitReached ? 'text-destructive' : 'text-amber-900 dark:text-amber-100',
+              )}
+            >
+              {isLimitReached ? 'Upgrade plan' : 'View plans'}
+            </Link>
+          )}
           <button
             type="button"
             onClick={dismiss}
@@ -105,6 +129,5 @@ function InboxUsageBannerInner() {
 }
 
 export function InboxUsageBanner() {
-  if (!isBillingUIEnabled()) return null
   return <InboxUsageBannerInner />
 }

@@ -15,6 +15,8 @@ export interface ClientOverviewItem {
   // Billing
   billingStatus: SubscriptionStatus | null
   planName: string | null
+  isGrandfathered: boolean
+  grandfatherReason: string | null
 
   // Integrations
   hasShopify: boolean

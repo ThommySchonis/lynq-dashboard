@@ -70,7 +70,7 @@ supabase/
 
 **Admin panel:** `/admin` (login via `/admin/login`), only for `info@lynqagency.com`. Tabs: Clients, Broadcasts, Notifications.
 
-**Environment variables:** `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SECRET_KEY` (server-only), `OAUTH_STATE_SECRET`, `EMAIL_WEBHOOK_SECRET`, `WHOP_WEBHOOK_SECRET`, `WEBHOOK_RETRY_SECRET` (server-only), `PAYMENTS_ENABLED`, `NEXT_PUBLIC_BILLING_UI_ENABLED` (set to `'true'` to show legacy billing UI; unset or any other value hides it — temporary, see `docs/superpowers/specs/2026-06-05-hide-billing-ui-temporarily-design.md`). Stored in `.env.local` and Vercel Settings.
+**Environment variables:** `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SECRET_KEY` (server-only), `OAUTH_STATE_SECRET`, `EMAIL_WEBHOOK_SECRET`, `WHOP_WEBHOOK_SECRET`, `WEBHOOK_RETRY_SECRET` (server-only), `SHOPIFY_APP_HANDLE` (App Store listing slug, used to construct Managed Pricing URLs), `PAYMENTS_ENABLED`. Stored in `.env.local` and Vercel Settings.
 
 ## Mandatory Rules
 

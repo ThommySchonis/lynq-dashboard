@@ -1,11 +1,12 @@
 'use client'
 
 import { useState } from 'react'
-import { Eye } from 'lucide-react'
+import { Eye, ShieldCheck } from 'lucide-react'
 import type { ClientOverviewItem } from '@/types/admin-client-overview'
 import { useSuspendClient, useUnsuspendClient } from '@/hooks/admin/use-admin-mutations'
 import { useAuthStore } from '@/stores/auth'
 import { apiUrl } from '@/lib/api-client'
+import { GrandfatherToggle } from '@/components/features/admin/grandfather-toggle'
 
 interface ClientRowProps {
   client: ClientOverviewItem
@@ -45,6 +46,7 @@ export function ClientRow({ client }: ClientRowProps) {
 
   const [showReasonPicker, setShowReasonPicker] = useState(false)
   const [reason, setReason] = useState('')
+  const [showGrandfatherPanel, setShowGrandfatherPanel] = useState(false)
 
   function handleSuspend() {
     if (!showReasonPicker) {
@@ -165,6 +167,21 @@ export function ClientRow({ client }: ClientRowProps) {
             </button>
           )}
 
+          {/* Grandfather toggle button */}
+          {client.workspaceId && (
+            <button
+              onClick={() => setShowGrandfatherPanel((v) => !v)}
+              className={`flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-[11px] font-medium transition-colors ${
+                client.isGrandfathered
+                  ? 'border-amber-500/30 bg-amber-500/10 text-amber-600 hover:bg-amber-500/15'
+                  : 'border-border text-muted-foreground hover:bg-muted'
+              }`}
+            >
+              <ShieldCheck className="h-3 w-3" />
+              {client.isGrandfathered ? 'Grandfathered' : 'Grandfather'}
+            </button>
+          )}
+
           {/* Existing suspend/unsuspend buttons */}
           {isSuspended ? (
             <button
@@ -236,6 +253,17 @@ export function ClientRow({ client }: ClientRowProps) {
               · Since {new Date(client.suspendedAt).toLocaleDateString()}
             </span>
           )}
+        </div>
+      )}
+
+      {/* Grandfather panel */}
+      {showGrandfatherPanel && client.workspaceId && (
+        <div className="border-t border-border/50 bg-muted/20 px-4 py-3">
+          <GrandfatherToggle
+            workspaceId={client.workspaceId}
+            initialEnabled={client.isGrandfathered}
+            initialReason={client.grandfatherReason}
+          />
         </div>
       )}
     </div>

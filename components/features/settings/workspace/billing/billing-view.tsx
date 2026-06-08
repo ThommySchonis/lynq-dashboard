@@ -3,38 +3,33 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useSearchParams, useRouter, usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
+import { BillingSummaryCard } from './billing-summary-card'
 import { UsagePlansTab } from './usage-plans-tab'
 import { PaymentInfoTab } from './payment-info-tab'
 import { PaymentHistoryTab } from './payment-history-tab'
 
-type TabId = 'usage' | 'payment' | 'history'
+type TabId = 'plans' | 'address' | 'history'
 
 const TABS: { id: TabId; label: string }[] = [
-  { id: 'usage',   label: 'Usage & Plans' },
-  { id: 'payment', label: 'Payment Information' },
-  { id: 'history', label: 'Payment History' },
+  { id: 'plans',   label: 'Plans' },
+  { id: 'address', label: 'Billing address' },
+  { id: 'history', label: 'Invoice history' },
 ]
 
 function isTabId(value: string | null): value is TabId {
-  return value === 'usage' || value === 'payment' || value === 'history'
+  return value === 'plans' || value === 'address' || value === 'history'
 }
 
-/**
- * Billing settings page. URL-driven tab state via ?tab=usage|payment|history.
- * Default tab when no param is "usage". Switching tabs uses router.replace
- * so back/forward in the browser works as expected.
- */
 export function BillingView() {
   const router       = useRouter()
   const pathname     = usePathname()
   const searchParams = useSearchParams()
 
   const paramTab    = searchParams.get('tab')
-  const initialTab: TabId = isTabId(paramTab) ? paramTab : 'usage'
+  const initialTab: TabId = isTabId(paramTab) ? paramTab : 'plans'
 
   const [activeTab, setActiveTab] = useState<TabId>(initialTab)
 
-  // Sync local state if URL changes (back/forward)
   useEffect(() => {
     if (isTabId(paramTab) && paramTab !== activeTab) setActiveTab(paramTab)
   }, [paramTab, activeTab])
@@ -54,13 +49,14 @@ export function BillingView() {
       <header className="flex flex-col gap-1">
         <h1 className="text-xl font-semibold">Billing</h1>
         <p className="text-sm text-muted-foreground">
-          Manage your plan, payment method, and invoice history.
+          Your subscription is managed by Shopify.
         </p>
       </header>
 
-      {/* Tab strip */}
+      <BillingSummaryCard />
+
       <div role="tablist" className="flex gap-1 border-b border-border">
-        {TABS.map(tab => {
+        {TABS.map((tab) => {
           const active = tab.id === activeTab
           return (
             <button
@@ -75,21 +71,15 @@ export function BillingView() {
               )}
             >
               {tab.label}
-              {active && (
-                // Gorgias-style 2px indicator in cosmic ink. Hardcoded
-                // (not bg-primary) because the brand strip uses the
-                // dark brand color, not the purple accent token.
-                <span className="absolute inset-x-0 -bottom-px h-[2px] bg-[#1C0F36]" />
-              )}
+              {active && <span className="absolute inset-x-0 -bottom-px h-[2px] bg-[#1C0F36]" />}
             </button>
           )
         })}
       </div>
 
-      {/* Tab content */}
       <div role="tabpanel">
-        {activeTab === 'usage'   && <UsagePlansTab />}
-        {activeTab === 'payment' && <PaymentInfoTab />}
+        {activeTab === 'plans'   && <UsagePlansTab />}
+        {activeTab === 'address' && <PaymentInfoTab />}
         {activeTab === 'history' && <PaymentHistoryTab />}
       </div>
     </div>

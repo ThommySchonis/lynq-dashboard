@@ -2,6 +2,7 @@ import { Hono } from 'hono'
 import { authMiddleware } from '../middleware/auth.ts'
 import { getAdminClient } from '../lib/supabase.ts'
 import { isPlatformAdmin } from '../lib/platform-admin.ts'
+import { grandfatherWorkspace, ShopifyBillingError } from '../lib/services/shopify-billing.ts'
 import type { AuthContext } from '../lib/types.ts'
 
 const app = new Hono()
@@ -73,6 +74,25 @@ app.get('/feedback/count', async (c) => {
   if (error) return c.json({ error: 'Query failed' }, 500)
 
   return c.json({ count: count || 0 })
+})
+
+// ── Grandfather workspace ───────────────────────────────────────────
+
+app.post('/billing/grandfather/:workspaceId', async (c) => {
+  const workspaceId = c.req.param('workspaceId')
+  const body = (await c.req.json()) as { enabled?: boolean; reason?: string }
+  if (typeof body.enabled !== 'boolean') {
+    return c.json({ error: 'enabled (boolean) required' }, 400)
+  }
+  try {
+    await grandfatherWorkspace(workspaceId, body.enabled, body.reason ?? null)
+    return c.json({ ok: true })
+  } catch (err) {
+    if (err instanceof ShopifyBillingError) {
+      return c.json({ error: err.message, code: err.code }, err.statusCode as 400)
+    }
+    return c.json({ error: err instanceof Error ? err.message : 'Internal error' }, 500)
+  }
 })
 
 export { app as lynqAdminRoutes }

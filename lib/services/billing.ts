@@ -14,17 +14,136 @@ import { logger } from '@/lib/logger'
 import type {
   Plan,
   PlanFeatures,
-  WorkspaceSubscription,
-  UsageCounter,
-  Invoice,
-  BillingInfo,
-  PaymentMethod,
   SubscriptionAddon,
-  SubscriptionResponse,
-  UsageResponse,
-  UpdateBillingInfoInput,
   WorkspaceAddonStatus,
 } from '@/types/billing'
+
+// ─── Legacy types (Whop-era, kept for server-side service compat) ─────
+
+type SubscriptionStatus = 'trial' | 'active' | 'past_due' | 'canceled' | 'paused'
+
+interface WorkspaceSubscription {
+  id:                    string
+  workspace_id:          string
+  plan_id:               string
+  status:                SubscriptionStatus
+  trial_ends_at:         string | null
+  current_period_start:  string
+  current_period_end:    string
+  canceled_at:           string | null
+  cancel_at_period_end:  boolean
+  whop_subscription_id:  string | null
+  whop_customer_id:      string | null
+}
+
+interface UsageCounter {
+  id:                   string
+  workspace_id:         string
+  period_start:         string
+  period_end:           string
+  tickets_used:         number
+  ai_suggest_used:      number
+  ai_resolutions_used:  number
+  tickets_overage:      number
+  ai_suggest_overage:   number
+}
+
+interface LegacyInvoice {
+  id:                string
+  workspace_id:      string
+  invoice_number:    string
+  status:            string
+  period_start:      string
+  period_end:        string
+  subtotal_eur:      number
+  vat_amount_eur:    number
+  total_eur:         number
+  amount_paid_eur:   number
+  amount_due_eur:    number
+  description:       string | null
+  line_items:        unknown[]
+  paid_at:           string | null
+  pdf_url:           string | null
+  billing_email:     string | null
+  billing_org_name:  string | null
+  billing_address:   unknown | null
+  vat_number:        string | null
+  created_at:        string
+}
+
+type Invoice = LegacyInvoice
+
+interface LegacyBillingInfo {
+  id:                string
+  workspace_id:      string
+  billing_email:     string
+  organization_name: string
+  phone_number:      string | null
+  address_line1:     string
+  address_line2:     string | null
+  city:              string
+  postal_code:       string
+  country:           string
+  state:             string | null
+  vat_number:        string | null
+}
+
+type BillingInfo = LegacyBillingInfo
+
+interface PaymentMethod {
+  id:          string
+  workspace_id: string
+  type:        string
+  last_four:   string | null
+  brand:       string | null
+  is_default:  boolean
+}
+
+interface SubscriptionResponse {
+  subscription: WorkspaceSubscription | null
+  plan:         Plan | null
+  usage:        UsageCounter | null
+  percentages: {
+    tickets:    number
+    ai_suggest: number
+  }
+  limits: {
+    tickets_reached:    boolean
+    ai_suggest_reached: boolean
+    tickets_at_80:      boolean
+    ai_suggest_at_80:   boolean
+  }
+  trial_days_remaining: number | null
+}
+
+interface UsageResponse {
+  period_start:        string
+  period_end:          string
+  tickets_used:        number
+  tickets_limit:       number | null
+  tickets_overage:     number
+  ai_suggest_used:     number
+  ai_suggest_limit:    number | null
+  ai_suggest_overage:  number
+  ai_resolutions_used: number
+  percentages: {
+    tickets:    number
+    ai_suggest: number
+  }
+}
+
+interface UpdateBillingInfoInput {
+  billing_email?:     string
+  organization_name?: string
+  phone_number?:      string | null
+  address_line1?:     string
+  address_line2?:     string | null
+  city?:              string
+  postal_code?:       string
+  country?:           string
+  state?:             string | null
+  vat_number?:        string | null
+}
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000
 

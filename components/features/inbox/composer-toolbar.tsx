@@ -15,7 +15,7 @@ import { EMOJIS } from '@/lib/inbox-utils'
 import { useInboxUI } from '@/stores/inbox-ui'
 import { useAIStore } from '@/stores/ai'
 import { useMacrosStore } from '@/stores/macros'
-import { useUsage } from '@/hooks/billing'
+import { useSubscription } from '@/hooks/billing'
 
 interface ComposerToolbarProps {
   onFormatDoc: (cmd: string) => void
@@ -57,15 +57,10 @@ export function ComposerToolbar({
   const _aiMacros = useMacrosStore((s) => s.aiMacros)
 
   // Model 3 (forced upgrade) — refuse outbound when the plan limit is reached.
-  // We compute this from the existing usage query rather than reading
-  // workspace_subscriptions.write_locked directly; the comparison mirrors
-  // the server-side checkTicketLimit so the UI stays in sync without
-  // extending the /api/billing/usage response shape.
-  const { data: usage } = useUsage()
-  const planLocked =
-    usage != null &&
-    usage.tickets_limit != null &&
-    usage.tickets_used + usage.tickets_overage >= usage.tickets_limit
+  // We derive this from the subscription response blocked flags, which mirror
+  // the server-side checkTicketLimit so the UI stays in sync.
+  const { data: subData } = useSubscription()
+  const planLocked = subData?.blocked?.tickets === true
   const sendDisabledReason = planLocked
     ? 'Upgrade your plan to send more replies'
     : undefined

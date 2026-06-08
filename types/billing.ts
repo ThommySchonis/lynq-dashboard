@@ -1,13 +1,20 @@
 // types/billing.ts
 //
-// Shared TS types for the billing surface. Mirrors the DB schema
-// from supabase/migrations/20260512_billing_system.sql.
+// Shared TS types for the billing surface. Shopify-backed billing.
 
-// ─── Enums (matches CHECK constraints) ───────────────────────────────
+// ─── Enums ────────────────────────────────────────────────────────────
 
+/** @deprecated Legacy Whop-era status — use ShopifySubscriptionStatus for new code */
 export type SubscriptionStatus = 'trial' | 'active' | 'past_due' | 'canceled' | 'paused'
-export type InvoiceStatus      = 'draft' | 'open' | 'paid' | 'void' | 'failed'
-export type PaymentMethodType  = 'card' | 'sepa' | 'paypal'
+
+export type ShopifySubscriptionStatus =
+  | 'trial'
+  | 'active'
+  | 'past_due'
+  | 'canceled'
+  | 'paused'
+  | 'pending_shopify_subscription'
+
 export type AddonStatus        = 'coming_soon' | 'beta' | 'live'
 export type WorkspaceAddonStatus = 'active' | 'inactive' | 'pending'
 
@@ -35,93 +42,30 @@ export interface Plan {
   features:         PlanFeatures
 }
 
-export interface WorkspaceSubscription {
-  id:                    string
-  workspace_id:          string
-  plan_id:               string
-  status:                SubscriptionStatus
-  trial_ends_at:         string | null
-  current_period_start:  string
-  current_period_end:    string
-  canceled_at:           string | null
-  cancel_at_period_end:  boolean
-  whop_subscription_id:  string | null
-  whop_customer_id:      string | null
-}
-
-export interface UsageCounter {
-  id:                   string
-  workspace_id:         string
-  period_start:         string
-  period_end:           string
-  tickets_used:         number
-  ai_suggest_used:      number
-  ai_resolutions_used:  number
-  tickets_overage:      number
-  ai_suggest_overage:   number
-}
-
-export interface InvoiceLineItem {
-  description: string
-  quantity:    number
-  unit_price:  number
-  total:       number
-}
-
-export interface InvoiceBillingAddress {
-  line1:       string | null
-  line2:       string | null
-  city:        string | null
-  postal_code: string | null
-  country:     string | null
-  state:       string | null
+export interface BillingInfo {
+  address1: string | null
+  address2: string | null
+  city: string | null
+  province: string | null
+  country: string | null
+  zip: string | null
+  company: string | null
 }
 
 export interface Invoice {
-  id:                string
-  workspace_id:      string
-  invoice_number:    string
-  status:            InvoiceStatus
-  period_start:      string
-  period_end:        string
-  subtotal_eur:      number
-  vat_amount_eur:    number
-  total_eur:         number
-  amount_paid_eur:   number
-  amount_due_eur:    number
-  description:       string | null
-  line_items:        InvoiceLineItem[]
-  paid_at:           string | null
-  pdf_url:           string | null
-  billing_email:     string | null
-  billing_org_name:  string | null
-  billing_address:   InvoiceBillingAddress | null
-  vat_number:        string | null
-  created_at:        string
+  id: string           // Shopify GID
+  date: string         // ISO timestamp
+  amount: number
+  currency: string
+  status: string
+  receiptUrl: string | null
+  planName: string
 }
 
-export interface BillingInfo {
-  id:                string
-  workspace_id:      string
-  billing_email:     string
-  organization_name: string
-  phone_number:      string | null
-  address_line1:     string
-  address_line2:     string | null
-  city:              string
-  postal_code:       string
-  country:           string  // ISO-3166-1 alpha-2
-  state:             string | null
-  vat_number:        string | null
-}
-
-export interface PaymentMethod {
-  id:          string
-  workspace_id: string
-  type:        PaymentMethodType
-  last_four:   string | null
-  brand:       string | null
-  is_default:  boolean
+export interface BillingStore {
+  id: string
+  shopifyDomain: string
+  isBillingStore: boolean
 }
 
 export interface SubscriptionAddon {
@@ -139,81 +83,49 @@ export interface SubscriptionAddon {
 
 // ─── API response shapes ─────────────────────────────────────────────
 
-export interface SubscriptionResponse {
-  subscription: WorkspaceSubscription | null
-  plan:         Plan | null
-  usage:        UsageCounter | null
-  percentages: {
-    tickets:    number
-    ai_suggest: number
-  }
-  limits: {
-    tickets_reached:    boolean
-    ai_suggest_reached: boolean
-    tickets_at_80:      boolean
-    ai_suggest_at_80:   boolean
-  }
-  trial_days_remaining: number | null
-}
-
-export interface UsageResponse {
-  period_start:        string
-  period_end:          string
-  tickets_used:        number
-  tickets_limit:       number | null
-  tickets_overage:     number
-  ai_suggest_used:     number
-  ai_suggest_limit:    number | null
-  ai_suggest_overage:  number
-  ai_resolutions_used: number
-  percentages: {
-    tickets:    number
-    ai_suggest: number
-  }
-}
-
 export interface InvoicesListResponse {
   invoices: Invoice[]
-  total:    number
-  page:     number
-  per_page: number
 }
 
 export interface AddonsListResponse {
   addons: SubscriptionAddon[]
 }
 
-// ─── Mutation inputs ─────────────────────────────────────────────────
+// ─── Shopify-billing API response shapes ─────────────────────────────
 
-export interface ChangePlanInput {
-  plan_id: string
+/** Mirrors ShopifyBillingSubscription from the Hono service layer */
+export interface ShopifyBillingSubscription {
+  planId:               string | null
+  status:               ShopifySubscriptionStatus
+  shopifyChargeStatus:  string | null
+  trialEndsAt:          string | null
+  currentPeriodEnd:     string | null
+  isGrandfathered:      boolean
+  billingShopDomain:    string | null
 }
 
-/**
- * Response from POST /api/billing/subscription/change-plan.
- *
- * Discriminated by `mode`:
- *   - 'updated'    → an existing Whop membership was PATCHed in place;
- *                    return shape mirrors the subscription row.
- *   - 'checkout'   → no existing membership yet (first-time purchase
- *                    or post-trial upgrade); the client must redirect
- *                    the user to `checkout_url` to complete payment.
- *                    Our workspace_subscriptions row is created later
- *                    by the `membership.activated` webhook.
- */
-export type ChangePlanResponse =
-  | { ok: true; mode: 'updated';  subscription: WorkspaceSubscription }
-  | { ok: true; mode: 'checkout'; checkout_url: string }
+/** Response shape of GET /billing/subscription (Shopify-based) */
+export interface SubscriptionWithUsageResponse {
+  subscription: ShopifyBillingSubscription
+  plan: {
+    id: string
+    display_name: string
+    ticket_limit: number | null
+    ai_suggest_limit: number | null
+  } | null
+  usage: {
+    tickets_used: number
+    ai_suggest_used: number
+    period_start: string
+    period_end: string
+  } | null
+  blocked: {
+    tickets: boolean
+    aiSuggest: boolean
+  }
+}
 
-export interface UpdateBillingInfoInput {
-  billing_email?:     string
-  organization_name?: string
-  phone_number?:      string | null
-  address_line1?:     string
-  address_line2?:     string | null
-  city?:              string
-  postal_code?:       string
-  country?:           string
-  state?:             string | null
-  vat_number?:        string | null
+/** Response shape of GET /billing/manage-url */
+export interface ManageUrlResponse {
+  url: string
 }

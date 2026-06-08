@@ -223,7 +223,7 @@ app.get('/clients/overview', async (c) => {
     { data: emailAccounts },
     { data: owners },
   ] = await Promise.all([
-    sb.from('workspace_subscriptions').select('workspace_id, status, plans ( display_name )').in('workspace_id', workspaceIds),
+    sb.from('workspace_subscriptions').select('workspace_id, status, is_grandfathered, grandfather_reason, plans ( display_name )').in('workspace_id', workspaceIds),
     sb.from('integrations').select('workspace_id').in('workspace_id', workspaceIds).eq('provider', 'shopify'),
     sb.from('email_accounts').select('workspace_id, provider').in('workspace_id', workspaceIds),
     sb.from('workspace_members').select('workspace_id, user_id').in('workspace_id', workspaceIds).eq('role', 'owner'),
@@ -240,11 +240,16 @@ app.get('/clients/overview', async (c) => {
     await Promise.all(loginPromises)
   }
 
-  const subMap = new Map<string, { status: string; planName: string | null }>()
+  const subMap = new Map<string, { status: string; planName: string | null; isGrandfathered: boolean; grandfatherReason: string | null }>()
   for (const sub of (subscriptions ?? []) as Array<Record<string, unknown>>) {
     const rawPlans = sub.plans as unknown
     const plans = (Array.isArray(rawPlans) ? rawPlans[0] : rawPlans) as { display_name: string } | null
-    subMap.set(sub.workspace_id as string, { status: sub.status as string, planName: plans?.display_name ?? null })
+    subMap.set(sub.workspace_id as string, {
+      status: sub.status as string,
+      planName: plans?.display_name ?? null,
+      isGrandfathered: (sub.is_grandfathered as boolean) ?? false,
+      grandfatherReason: (sub.grandfather_reason as string | null) ?? null,
+    })
   }
 
   const shopifySet = new Set<string>()
@@ -286,6 +291,8 @@ app.get('/clients/overview', async (c) => {
       suspensionReason: ws?.suspension_reason ?? null,
       billingStatus: sub?.status ?? null,
       planName: sub?.planName ?? null,
+      isGrandfathered: sub?.isGrandfathered ?? false,
+      grandfatherReason: sub?.grandfatherReason ?? null,
       hasShopify,
       hasGmail,
       hasOutlook,

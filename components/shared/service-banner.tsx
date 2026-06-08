@@ -5,8 +5,6 @@ import { X } from 'lucide-react'
 import { useServiceHealthStore } from '@/stores/service-health'
 import { useServiceHealthPoller } from '@/hooks/use-service-health-poller'
 import type { ServiceName, ServiceStatus } from '@/types/service-health'
-import { isBillingUIEnabled } from '@/lib/billing-ui'
-
 const SERVICE_LABELS: Record<ServiceName, string> = {
   shopify: 'Shopify',
   gmail: 'Email (Gmail)',
@@ -29,7 +27,6 @@ export function ServiceBanner() {
 
   const unhealthy = (Object.entries(statuses) as [ServiceName, ServiceStatus][])
     .filter(([service, status]) => status !== 'healthy' && !dismissed.has(service))
-    .filter(([service]) => isBillingUIEnabled() || service !== 'whop')
 
   if (unhealthy.length === 0) return null
 

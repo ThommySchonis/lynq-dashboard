@@ -1,114 +1,66 @@
-"use client";
+'use client'
 
-import { Suspense, useEffect, useState, type ReactNode } from "react";
-import { usePathname, useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabase";
-import { rpc } from "@/lib/rpc";
-import { isTrialExpired } from "@/lib/trialStatus";
-import { isBillingUIEnabled } from "@/lib/billing-ui";
-
-interface OnboardingStatus {
-  subscription_status?: string
-  trial_ends_at?: string | null
-  is_platform_admin?: boolean
-  is_payment_exempt?: boolean
-}
+import { useEffect, type ReactNode } from 'react'
+import { usePathname, useRouter } from 'next/navigation'
+import { useAuthStore } from '@/stores/auth'
+import { useSubscription } from '@/hooks/billing/use-billing-data'
 
 const ALLOW_PATHS = [
-  "/pricing-required",
-  "/settings/billing",
-  "/login",
-  "/signup",
-  "/forgot-password",
-  "/invites",
-  "/admin",
-];
+  '/pricing-required',
+  '/settings/billing',
+  '/login',
+  '/signup',
+  '/forgot-password',
+  '/invites',
+  '/admin',
+]
 
 function isAllowed(pathname: string | null) {
-  if (!pathname) return true;
-  return ALLOW_PATHS.some(
-    (p) => pathname === p || pathname.startsWith(p + "/"),
-  );
+  if (!pathname) return true
+  return ALLOW_PATHS.some((p) => pathname === p || pathname.startsWith(p + '/'))
 }
 
 function BlockedStateGuardInner({ children }: { children: ReactNode }) {
-  const pathname = usePathname();
-  const router = useRouter();
-  const [checked, setChecked] = useState(false);
+  const pathname = usePathname()
+  const router = useRouter()
+  const session = useAuthStore((s) => s.session)
+  const isLoading = useAuthStore((s) => s.isLoading)
+  const { data: subData, isLoading: subLoading } = useSubscription()
 
   useEffect(() => {
-    if (isAllowed(pathname)) {
-      setChecked(true); // eslint-disable-line react-hooks/set-state-in-effect
-      return;
+    if (!session || isLoading || subLoading || isAllowed(pathname)) return
+
+    const sub = subData?.subscription
+    const blocked = subData?.blocked
+
+    // No subscription data yet — wait
+    if (!sub) return
+
+    // Grandfathered workspaces always pass
+    if (sub.isGrandfathered) return
+
+    // Active or trialing — allow
+    if (sub.status === 'active' || sub.status === 'trial') return
+
+    // Blocked on ticket or AI suggest limit
+    if (blocked?.tickets || blocked?.aiSuggest) {
+      router.replace('/pricing-required')
+      return
     }
 
-    let cancelled = false;
-
-    async function check() {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (!session) {
-        setChecked(true);
-        return;
-      }
-
-      try {
-        const data = await rpc<OnboardingStatus>('api_get_onboarding_status');
-
-        // Platform admins bypass the gate regardless of workspace
-        // subscription status — they are internal operators, not customers.
-        // The flag is set server-side in /api/onboarding/status and cannot
-        // be spoofed from the client.
-        if (data?.is_payment_exempt) {
-          if (!cancelled) setChecked(true);
-          return;
-        }
-
-        if (data?.subscription_status === "active") {
-          if (!cancelled) setChecked(true);
-          return;
-        }
-
-        const subStatus = data?.subscription_status;
-        const trialEndsAt = data?.trial_ends_at;
-        const blocked =
-          subStatus === "past_due" ||
-          subStatus === "canceled" ||
-          subStatus === "paused" ||
-          isTrialExpired({
-            subscription_status: subStatus,
-            trial_ends_at: trialEndsAt,
-          });
-
-        if (blocked && !cancelled) {
-          router.replace("/pricing-required");
-        } else if (!cancelled) {
-          setChecked(true);
-        }
-      } catch {
-        if (!cancelled) setChecked(true);
-      }
+    // Suspended Shopify charge status
+    const shopifyStatus = sub.shopifyChargeStatus?.toLowerCase() ?? ''
+    if (['frozen', 'expired', 'cancelled'].includes(shopifyStatus)) {
+      router.replace('/pricing-required')
     }
+  }, [session, isLoading, subLoading, subData, pathname, router])
 
-    void check();
-    return () => {
-      cancelled = true;
-    };
-  }, [pathname, router]);
-
-  if (!checked) return null;
-  return children;
+  if (isLoading || (session && subLoading && !isAllowed(pathname))) return null
+  return children
 }
 
 export function BlockedStateGuard({ children }: { children: ReactNode }) {
-  // When the flag is off the gate is a no-op, but descendant components
-  // (notably AuthGuard) call useSearchParams(), which requires a Suspense
-  // boundary during static prerendering. The original guard returned null
-  // initially, which incidentally satisfied that requirement; this wrapper
-  // restores it explicitly.
-  if (!isBillingUIEnabled()) return <Suspense fallback={null}>{children}</Suspense>;
-  return <BlockedStateGuardInner>{children}</BlockedStateGuardInner>;
+  return <BlockedStateGuardInner>{children}</BlockedStateGuardInner>
 }
 
-export default BlockedStateGuard;
+export default BlockedStateGuard

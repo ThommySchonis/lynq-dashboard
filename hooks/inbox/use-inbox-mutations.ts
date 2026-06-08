@@ -78,7 +78,14 @@ export function useComposeEmail() {
         '/api/inbox/compose',
         {
           method: 'POST',
-          body: JSON.stringify({ to, subject, bodyHtml, bodyText, cc, bcc }),
+          body: JSON.stringify({
+            to: to.map((r) => r.email),
+            subject,
+            bodyHtml,
+            bodyText,
+            cc: cc?.map((r) => r.email),
+            bcc: bcc?.map((r) => r.email),
+          }),
         },
         token,
       )

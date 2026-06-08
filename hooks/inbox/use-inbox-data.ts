@@ -124,7 +124,7 @@ export function useInboxCounts() {
   return useQuery({
     queryKey: inboxKeys.counts(showAllStores ? 'all' : activeStoreId),
     queryFn: async () => {
-      const res = await authFetch(`/api/inbox/counts${params}`, {}, token)
+      const res = await authFetch(`${apiUrl('inbox/counts')}${params}`, {}, token)
       const data = await parseJson<InboxCountsResponse>(res)
       return {
         open: data.open || 0,

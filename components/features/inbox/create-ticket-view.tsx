@@ -100,12 +100,12 @@ export function CreateTicketView({ token, connectedEmail, onClose, onSuccess, ma
       {
         method: "POST",
         body: JSON.stringify({
-          to: to.trim(),
+          to: to.split(",").map((e) => e.trim()).filter(Boolean),
           subject: subject.trim(),
           bodyHtml: safeBody,
           bodyText: bodyRef.current?.textContent || "",
-          cc: cc.trim() || undefined,
-          bcc: bcc.trim() || undefined,
+          cc: cc.trim() ? cc.split(",").map((e) => e.trim()).filter(Boolean) : undefined,
+          bcc: bcc.trim() ? bcc.split(",").map((e) => e.trim()).filter(Boolean) : undefined,
         }),
       },
       token,

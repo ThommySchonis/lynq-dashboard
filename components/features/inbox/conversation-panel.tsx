@@ -44,6 +44,9 @@ import {
 } from '@/hooks/inbox/use-inbox-mutations'
 import { useComposerActions } from '@/hooks/inbox/use-composer-actions'
 import { useQueryClient } from '@tanstack/react-query'
+import { EmmaSuggestionCard } from './emma-suggestion-card'
+import { usePendingDraft, useUpdateDraftStatus } from '@/hooks/ai'
+import type { FeedbackCategory } from '@/types/ai-drafts'
 
 const REFUND_REASONS = [
   { value: 'customer', label: 'Customer changed mind' },
@@ -98,6 +101,13 @@ export function ConversationPanel() {
   const setAutoTranslate = useAIStore((s) => s.setAutoTranslate)
   const generateReply = useAIStore((s) => s.generateReply)
 
+  // Draft workflow
+  const editingDraftId = useInboxUI((s) => s.editingDraftId)
+  const setEditingDraftId = useInboxUI((s) => s.setEditingDraftId)
+  const { data: pendingDraft, isFetched: draftFetched } = usePendingDraft(selectedThreadId)
+  const updateDraft = useUpdateDraftStatus(selectedThreadId ?? '')
+  const autoTriggeredRef = useRef<string | null>(null)
+
   // Macros
   const macros = useMacrosStore((s) => s.macros)
   const aiMacros = useMacrosStore((s) => s.aiMacros)
@@ -141,6 +151,25 @@ export function ConversationPanel() {
   useEffect(() => {
     msgEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
+
+  // Auto-generate AI reply when opening a conversation with a new inbound message
+  useEffect(() => {
+    if (
+      !selectedThreadId ||
+      !selectedThread?.store_id ||
+      !messages.length ||
+      !draftFetched ||
+      pendingDraft ||
+      aiLoading ||
+      autoTriggeredRef.current === selectedThreadId
+    ) return
+
+    const lastMsg = messages[messages.length - 1]
+    if (lastMsg.direction !== 'inbound') return
+
+    autoTriggeredRef.current = selectedThreadId
+    void generateReply(selectedThread, messages, token)
+  }, [selectedThreadId, selectedThread, messages, draftFetched, pendingDraft, aiLoading, generateReply, token])
 
   // Status helpers
   const getStatus = useCallback(
@@ -223,6 +252,14 @@ export function ConversationPanel() {
       bodyText,
     })
     if (data.success || data.messageId || data.id) {
+      if (editingDraftId) {
+        await updateDraft.mutateAsync({
+          draftId: editingDraftId,
+          status: 'edited',
+          editedText: bodyText,
+        })
+        setEditingDraftId(null)
+      }
       sonnerToast.success('Message sent!')
       if (composerRef.current) composerRef.current.innerHTML = ''
       setReply('')
@@ -268,6 +305,52 @@ export function ConversationPanel() {
       composerRef.current.innerHTML = plainTextToSafeHtml(result.reply)
       setReply(composerRef.current.textContent)
     } else setReply(result.reply)
+  }
+
+  // Draft workflow actions
+  async function handleDraftApprove() {
+    if (!pendingDraft || !selectedThreadId) return
+    try {
+      await sendReplyMutation.mutateAsync({
+        threadId: selectedThreadId,
+        bodyHtml: plainTextToSafeHtml(pendingDraft.suggested_text),
+        bodyText: pendingDraft.suggested_text,
+      })
+      await updateDraft.mutateAsync({
+        draftId: pendingDraft.id,
+        status: 'approved',
+      })
+      sonnerToast.success('Reply sent')
+    } catch {
+      sonnerToast.error('Failed to send reply')
+    }
+  }
+
+  function handleDraftEdit() {
+    if (!pendingDraft || !composerRef.current) return
+    composerRef.current.innerHTML = plainTextToSafeHtml(pendingDraft.suggested_text)
+    setReply(composerRef.current.textContent ?? '')
+    setEditingDraftId(pendingDraft.id)
+  }
+
+  async function handleDraftDecline(category: FeedbackCategory, comment?: string) {
+    if (!pendingDraft) return
+    await updateDraft.mutateAsync({
+      draftId: pendingDraft.id,
+      status: 'declined',
+      feedbackCategory: category,
+      feedbackComment: comment,
+    })
+    sonnerToast.success('Suggestion declined')
+  }
+
+  async function handleDraftRegenerate() {
+    if (!pendingDraft || !selectedThread) return
+    await updateDraft.mutateAsync({
+      draftId: pendingDraft.id,
+      status: 'regenerated',
+    })
+    await generateReply(selectedThread, messages, token)
   }
 
   if (!selectedThread) {
@@ -356,6 +439,20 @@ export function ConversationPanel() {
         <MessageList msgEndRef={msgEndRef} />
         <NotesSection />
       </div>
+
+      {/* Emma suggestion card */}
+      {pendingDraft && pendingDraft.status === 'pending' && (
+        <EmmaSuggestionCard
+          draft={pendingDraft}
+          onApprove={() => void handleDraftApprove()}
+          onEdit={handleDraftEdit}
+          onDecline={(cat, comment) => void handleDraftDecline(cat, comment)}
+          onRegenerate={() => void handleDraftRegenerate()}
+          isApproving={sendReplyMutation.isPending}
+          isDeclining={updateDraft.isPending}
+          isRegenerating={updateDraft.isPending}
+        />
+      )}
 
       {/* Composer */}
       <div className="border-t border-border shrink-0 bg-card">

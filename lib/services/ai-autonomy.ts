@@ -24,6 +24,7 @@ export type AutoSendBlockedReason =
   // never returned by shouldAutoSend itself. Kept here for the type
   // that the route persists onto ai_drafts.
   | 'send_failed'
+  | 'store_disabled'
 
 export type ShouldAutoSendResult =
   | { send: true }

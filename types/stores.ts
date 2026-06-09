@@ -5,6 +5,8 @@ export interface Store {
   workspace_id: string
   name: string
   created_at: string
+  ai_auto_generate: boolean
+  ai_auto_send_enabled: boolean
 }
 
 export interface StorePublic {

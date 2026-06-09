@@ -13,9 +13,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { SettingsSection, SettingsCard } from '@/components/features/settings/settings-section'
 import { SettingsField } from '@/components/features/settings/settings-field'
 import { EmptyState } from '@/components/shared/empty-state'
+import { FeedbackHistory } from './feedback-history'
 import { useAuthStore } from '@/stores/auth'
 import {
   useAiLessons,
@@ -174,99 +176,112 @@ export function LessonsSettings() {
             </Select>
           </div>
 
-          {!showSections ? (
-            <div className="flex flex-col gap-10">
-              <Skeleton className="h-40 w-full rounded-xl" />
-              <Skeleton className="h-52 w-full rounded-xl" />
-            </div>
-          ) : (
-            <div className="flex flex-col gap-10">
-              {/* Recent learnings */}
-              <SettingsSection
-                title="Recent learnings"
-                description="Active lessons Emma uses when drafting replies for this store."
-                actions={
-                  <span className="text-xs text-muted-foreground tabular-nums">
-                    {activeCount} of {LESSON_PROMPT_CAP} active
-                  </span>
-                }
-              >
-                {(!lessons || lessons.length === 0) ? (
-                  <SettingsCard>
-                    <p className="text-sm text-muted-foreground text-center py-6">
-                      No lessons yet. Add Emma&rsquo;s first lesson below.
-                    </p>
-                  </SettingsCard>
-                ) : (
-                  <div className="flex flex-col gap-2.5">
-                    {lessons.map((lesson) => (
-                      <LessonCard
-                        key={lesson.id}
-                        lesson={lesson}
-                        canEdit={canEdit}
-                        isDisabling={
-                          disableLesson.isPending && disableLesson.variables === lesson.id
-                        }
-                        onDisable={() => disableLesson.mutate(lesson.id)}
-                      />
-                    ))}
-                  </div>
-                )}
-              </SettingsSection>
+          <Tabs defaultValue="lessons">
+            <TabsList variant="line" className="mb-6">
+              <TabsTrigger value="lessons">Lessons</TabsTrigger>
+              <TabsTrigger value="feedback">Feedback history</TabsTrigger>
+            </TabsList>
 
-              {/* Add a new lesson */}
-              <SettingsSection
-                title="Add a lesson"
-                description="Saved lessons are injected into Emma's prompt right after the scenarios section."
-              >
-                <SettingsCard
-                  footer={
-                    canEdit ? (
-                      <Button onClick={() => void handleAdd()} disabled={!canSubmit}>
-                        {addLesson.isPending ? 'Adding…' : 'Add lesson'}
-                      </Button>
-                    ) : undefined
-                  }
-                >
-                  <div className="flex flex-col gap-5">
-                    <SettingsField label="Lesson" htmlFor="ai-lesson-text">
-                      <Textarea
-                        id="ai-lesson-text"
-                        value={draftText}
-                        onChange={(e) => setDraftText(e.target.value)}
-                        placeholder="What should Emma learn for this store?"
-                        disabled={!canEdit}
-                        rows={4}
-                      />
-                    </SettingsField>
+            <TabsContent value="lessons">
+              {!showSections ? (
+                <div className="flex flex-col gap-10">
+                  <Skeleton className="h-40 w-full rounded-xl" />
+                  <Skeleton className="h-52 w-full rounded-xl" />
+                </div>
+              ) : (
+                <div className="flex flex-col gap-10">
+                  {/* Recent learnings */}
+                  <SettingsSection
+                    title="Recent learnings"
+                    description="Active lessons Emma uses when drafting replies for this store."
+                    actions={
+                      <span className="text-xs text-muted-foreground tabular-nums">
+                        {activeCount} of {LESSON_PROMPT_CAP} active
+                      </span>
+                    }
+                  >
+                    {(!lessons || lessons.length === 0) ? (
+                      <SettingsCard>
+                        <p className="text-sm text-muted-foreground text-center py-6">
+                          No lessons yet. Add Emma&rsquo;s first lesson below.
+                        </p>
+                      </SettingsCard>
+                    ) : (
+                      <div className="flex flex-col gap-2.5">
+                        {lessons.map((lesson) => (
+                          <LessonCard
+                            key={lesson.id}
+                            lesson={lesson}
+                            canEdit={canEdit}
+                            isDisabling={
+                              disableLesson.isPending && disableLesson.variables === lesson.id
+                            }
+                            onDisable={() => disableLesson.mutate(lesson.id)}
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </SettingsSection>
 
-                    <SettingsField
-                      label="Applies to"
-                      htmlFor="ai-lesson-scenario"
-                      hint="Pick a scenario, or leave on “All scenarios” so the lesson applies everywhere."
+                  {/* Add a new lesson */}
+                  <SettingsSection
+                    title="Add a lesson"
+                    description="Saved lessons are injected into Emma's prompt right after the scenarios section."
+                  >
+                    <SettingsCard
+                      footer={
+                        canEdit ? (
+                          <Button onClick={() => void handleAdd()} disabled={!canSubmit}>
+                            {addLesson.isPending ? 'Adding…' : 'Add lesson'}
+                          </Button>
+                        ) : undefined
+                      }
                     >
-                      <Select
-                        value={draftScenario}
-                        onValueChange={(v) => v && setDraftScenario(v)}
-                      >
-                        <SelectTrigger id="ai-lesson-scenario" className="w-full max-w-xs">
-                          <SelectValue placeholder="All scenarios" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value={ALL_SCENARIOS_VALUE}>All scenarios</SelectItem>
-                          {SCENARIOS.map((s) => (
-                            <SelectItem key={s.key} value={s.key}>
-                              {s.title}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </SettingsField>
-                  </div>
-                </SettingsCard>
-              </SettingsSection>
-            </div>
-          )}
+                      <div className="flex flex-col gap-5">
+                        <SettingsField label="Lesson" htmlFor="ai-lesson-text">
+                          <Textarea
+                            id="ai-lesson-text"
+                            value={draftText}
+                            onChange={(e) => setDraftText(e.target.value)}
+                            placeholder="What should Emma learn for this store?"
+                            disabled={!canEdit}
+                            rows={4}
+                          />
+                        </SettingsField>
+
+                        <SettingsField
+                          label="Applies to"
+                          htmlFor="ai-lesson-scenario"
+                          hint={'Pick a scenario, or leave on "All scenarios" so the lesson applies everywhere.'}
+                        >
+                          <Select
+                            value={draftScenario}
+                            onValueChange={(v) => v && setDraftScenario(v)}
+                          >
+                            <SelectTrigger id="ai-lesson-scenario" className="w-full max-w-xs">
+                              <SelectValue placeholder="All scenarios" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value={ALL_SCENARIOS_VALUE}>All scenarios</SelectItem>
+                              {SCENARIOS.map((s) => (
+                                <SelectItem key={s.key} value={s.key}>
+                                  {s.title}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </SettingsField>
+                      </div>
+                    </SettingsCard>
+                  </SettingsSection>
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="feedback">
+              {storeId && <FeedbackHistory storeId={storeId} />}
+            </TabsContent>
+          </Tabs>
         </>
       )}
     </div>

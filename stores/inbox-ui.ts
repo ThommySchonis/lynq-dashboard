@@ -32,6 +32,7 @@ interface InboxUIState {
   addingNote: boolean
   syncing: boolean
   showAllStores: boolean
+  editingDraftId: string | null
 
   // Actions
   setSelectedThreadId: (id: string | null) => void
@@ -65,6 +66,7 @@ interface InboxUIState {
   setAddingNote: (v: boolean) => void
   setSyncing: (v: boolean) => void
   setShowAllStores: (v: boolean) => void
+  setEditingDraftId: (v: string | null) => void
   resetForNewThread: () => void
 }
 
@@ -92,6 +94,7 @@ export const useInboxUI = create<InboxUIState>()((set) => ({
   addingNote: false,
   syncing: false,
   showAllStores: false,
+  editingDraftId: null,
 
   setSelectedThreadId: (id) => set({ selectedThreadId: id }),
   setReply: (v) => set({ reply: v }),
@@ -116,6 +119,7 @@ export const useInboxUI = create<InboxUIState>()((set) => ({
   setAddingNote: (v) => set({ addingNote: v }),
   setSyncing: (v) => set({ syncing: v }),
   setShowAllStores: (v) => set({ showAllStores: v }),
+  setEditingDraftId: (v) => set({ editingDraftId: v }),
   resetForNewThread: () => set({
     reply: '',
     showMacros: false,
@@ -123,5 +127,6 @@ export const useInboxUI = create<InboxUIState>()((set) => ({
     attachments: [],
     noteInput: '',
     showNotes: true,
+    editingDraftId: null,
   }),
 }))

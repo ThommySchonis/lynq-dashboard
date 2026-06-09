@@ -7,13 +7,14 @@ interface AnalyzeResponse { analyses?: Record<string, ThreadAnalysis> }
 // Emma Phase 2: auto_sent is an optional addition to the response payload —
 // when true, /api/ai/reply already sent the message and the caller should
 // refresh the conversation thread instead of populating the composer.
-interface ReplyResponse { reply?: string; auto_sent?: boolean }
+interface ReplyResponse { reply?: string; auto_sent?: boolean; draft_id?: string }
 interface TranslateResponse { translated?: string }
 interface DetectLanguageResponse { code?: string; name?: string }
 
 export interface GenerateReplyResult {
   reply:    string
   autoSent: boolean
+  draftId:  string | null
 }
 
 interface ThreadAnalysis {
@@ -116,7 +117,7 @@ export const useAIStore = create<AIState>()((set, get) => ({
       )
       const data = await parseJson<ReplyResponse>(res)
       set({ aiLoading: false })
-      if (data.reply) return { reply: data.reply, autoSent: data.auto_sent === true }
+      if (data.reply) return { reply: data.reply, autoSent: data.auto_sent === true, draftId: data.draft_id ?? null }
       return null
     } catch {
       set({ aiLoading: false })

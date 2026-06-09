@@ -8,6 +8,8 @@ import { useInboxUI } from '@/stores/inbox-ui'
 import { useAIStore } from '@/stores/ai'
 import { useAuthStore } from '@/stores/auth'
 import { useConversation } from '@/hooks/inbox/use-inbox-data'
+import { useAutoSentDraftTimes } from '@/hooks/ai'
+import { AutoSentBadge } from './auto-sent-badge'
 import { useMemo } from 'react'
 
 interface MessageListProps {
@@ -24,6 +26,23 @@ export function MessageList({ msgEndRef }: MessageListProps) {
 
   const { data: conversationData, isLoading: loadingMsgs } = useConversation(selectedThreadId)
   const messages = useMemo(() => conversationData?.messages || [], [conversationData?.messages])
+  const { data: autoSentTimes = [] } = useAutoSentDraftTimes(selectedThreadId)
+
+  const autoSentMsgIds = useMemo(() => {
+    if (!autoSentTimes.length) return new Set<string>()
+    const ids = new Set<string>()
+    for (const msg of messages) {
+      if (msg.direction !== 'outbound') continue
+      const msgTime = new Date(msg.date || msg.created_at).getTime()
+      for (const t of autoSentTimes) {
+        if (Math.abs(msgTime - new Date(t).getTime()) < 120_000) {
+          ids.add(msg.id)
+          break
+        }
+      }
+    }
+    return ids
+  }, [messages, autoSentTimes])
 
   return (
     <>
@@ -62,9 +81,10 @@ export function MessageList({ msgEndRef }: MessageListProps) {
               </ShadAvatar>
             )}
             <div className="max-w-[72%]">
-              <div className={`text-xs mb-[5px] ${isAgent ? 'text-right' : 'text-left'}`}>
+              <div className={`text-xs mb-[5px] flex items-center gap-1.5 ${isAgent ? 'justify-end' : 'justify-start'}`}>
                 <span className="text-[10.5px] text-foreground-2 font-bold tracking-[.01em]">{name}</span>
-                <span className="text-[10px] text-muted-foreground ml-[7px] font-normal">{formatDate(msg.date)}</span>
+                <span className="text-[10px] text-muted-foreground font-normal">{formatDate(msg.date)}</span>
+                {autoSentMsgIds.has(msg.id) && <AutoSentBadge />}
               </div>
               <div className={isNote ? 'bg-[#FFFBEB] border border-[#FDE68A] border-l-[3px] border-l-[#F59E0B] rounded-[2px_14px_14px_14px] px-[18px] py-[14px] text-[13.5px] leading-[1.75] text-[#0F172A] whitespace-pre-wrap break-words dark:bg-[rgba(251,191,36,0.08)] dark:border-[rgba(251,191,36,0.2)] dark:border-l-[rgba(251,191,36,0.5)] dark:text-(--foreground)' : isAgent ? 'bg-(--secondary) border border-[rgba(0,0,0,0.06)] rounded-[12px_4px_12px_12px] px-4 py-3 text-sm leading-[1.6] text-(--foreground) whitespace-pre-wrap break-words dark:bg-[rgba(255,255,255,0.06)] dark:border-[rgba(255,255,255,0.1)] dark:shadow-none dark:backdrop-blur-[12px]' : 'bg-(--card) border border-(--border) rounded-[4px_12px_12px_12px] px-4 py-3 text-sm leading-[1.6] text-(--foreground) whitespace-pre-wrap break-words dark:bg-[rgba(255,255,255,0.06)] dark:border-[rgba(255,255,255,0.1)] dark:shadow-none dark:backdrop-blur-[12px]'}>
                 {isNote && (

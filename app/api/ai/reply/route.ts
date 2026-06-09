@@ -303,6 +303,7 @@ Write only the reply body. Do not include subject lines, metadata, or explanatio
     // is logged in any of these paths.
     let autoSentAt: string | null = null
     let autoSendBlockedReason: AutoSendBlockedReason | null = null
+    let draftId: string | null = null
 
     // Narrow intent/confidence/shouldEscalate to non-null via an explicit
     // local snapshot. TypeScript can't propagate the narrowing through a
@@ -320,6 +321,22 @@ Write only the reply body. Do not include subject lines, metadata, or explanatio
       storeId  !== null &&
       threadId !== undefined
     ) {
+      // 0) Check store-level auto-send toggle. When off, skip autonomy entirely.
+      let storeAutoSendEnabled = false
+      try {
+        const { data: storeRow } = await supabaseAdmin
+          .from('stores')
+          .select('ai_auto_send_enabled')
+          .eq('id', storeId)
+          .single<{ ai_auto_send_enabled: boolean }>()
+        storeAutoSendEnabled = storeRow?.ai_auto_send_enabled ?? false
+      } catch (err) {
+        logger.error('[ai/reply]', 'store ai settings load failed', err)
+      }
+
+      if (!storeAutoSendEnabled) {
+        autoSendBlockedReason = 'store_disabled'
+      } else {
       // 1) Load rules — default to suggest mode on any failure.
       let rules: AiAutonomyRulesConfig = {
         master_enabled:       DEFAULT_AUTONOMY_CONFIG.master_enabled,
@@ -392,6 +409,7 @@ Write only the reply body. Do not include subject lines, metadata, or explanatio
       } else {
         autoSendBlockedReason = decision.reason
       }
+      } // end else (storeAutoSendEnabled)
     }
 
     // Best-effort: persist the suggestion as an ai_drafts row. This must NEVER
@@ -406,7 +424,7 @@ Write only the reply body. Do not include subject lines, metadata, or explanatio
           promptTokens != null || completionTokens != null
             ? (promptTokens ?? 0) + (completionTokens ?? 0)
             : null
-        await supabaseAdmin.from('ai_drafts').insert({
+        const { data: insertedDraft } = await supabaseAdmin.from('ai_drafts').insert({
           workspace_id:             ctx.workspaceId,
           store_id:                 storeId,
           conversation_id:          threadId,
@@ -423,7 +441,9 @@ Write only the reply body. Do not include subject lines, metadata, or explanatio
           escalate_reason:          escalateReason,
           auto_sent_at:             autoSentAt,
           auto_send_blocked_reason: autoSendBlockedReason,
-        })
+          status:                   autoSentAt ? 'auto_sent' : 'pending',
+        }).select('id').single()
+        draftId = insertedDraft?.id ?? null
       } catch (err) {
         logger.error('[ai/reply]', 'ai_drafts insert failed', err)
       }
@@ -433,8 +453,8 @@ Write only the reply body. Do not include subject lines, metadata, or explanatio
     // optional `auto_sent: true` flag ONLY when auto-send actually fired,
     // so existing UI behaviour stays backwards-compatible when absent.
     const responseBody = autoSentAt
-      ? { reply: replyText, threadId, auto_sent: true }
-      : { reply: replyText, threadId }
+      ? { reply: replyText, threadId, auto_sent: true, draft_id: draftId }
+      : { reply: replyText, threadId, draft_id: draftId }
 
     return NextResponse.json(responseBody, {
       headers: {

@@ -2,7 +2,8 @@
 
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAuthStore } from '@/stores/auth'
-import { storeKeys } from './use-stores-data'
+import { storeKeys, type StoreAiSettings } from './use-stores-data'
+import { supabase } from '@/lib/supabase'
 import { rpc } from '@/lib/rpc'
 import { apiUrl } from '@/lib/api-client'
 import { toast } from 'sonner'
@@ -64,6 +65,23 @@ export function useDeleteStore() {
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: storeKeys.list() })
       toast.success('Store deleted')
+    },
+    onError: (err: Error) => toast.error(err.message),
+  })
+}
+
+export function useUpdateStoreAiSettings(storeId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (settings: Partial<StoreAiSettings>) => {
+      const { error } = await supabase
+        .from('stores')
+        .update(settings)
+        .eq('id', storeId)
+      if (error) throw new Error(error.message)
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: storeKeys.aiSettings(storeId) })
     },
     onError: (err: Error) => toast.error(err.message),
   })

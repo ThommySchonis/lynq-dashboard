@@ -25,6 +25,7 @@ import {
   useAiScenarios,
   useAiStoreSelection,
 } from '@/hooks/ai'
+import { useStoreAiSettings, useUpdateStoreAiSettings } from '@/hooks/stores'
 import type { AiAutonomyRulesConfig } from '@/lib/schemas/ai'
 import { REPLY_INTENTS, DEFAULT_AUTONOMY_CONFIG } from '@/lib/schemas/ai'
 import { SCENARIOS } from './scenarios-section'
@@ -68,6 +69,8 @@ export function RulesSettings() {
   const { data: rulesResp, isLoading: rulesLoading } = useAiAutonomyRules(storeId)
   const { data: scenarios } = useAiScenarios(storeId)
   const upsertRules = useUpsertAiAutonomyRules(storeId)
+  const { data: aiSettings } = useStoreAiSettings(storeId)
+  const updateAiSettings = useUpdateStoreAiSettings(storeId)
 
   // ── Local form state, seeded from the server (or default) config ──
   const [form, setForm] = useState<AiAutonomyRulesConfig>(freshDefaultConfig)
@@ -181,6 +184,37 @@ export function RulesSettings() {
             </div>
           ) : (
             <div className="flex flex-col gap-10">
+              {/* AI generation & auto-send store-level toggles */}
+              <SettingsSection
+                title="AI suggestions"
+                description="Control whether Emma automatically generates draft replies when new customer messages arrive."
+              >
+                <SettingsCard>
+                  <div className="flex flex-col gap-4">
+                    <SettingsToggle
+                      id="ai-auto-generate"
+                      label="Auto-generate suggestions"
+                      description="Emma drafts a reply when a new inbound message arrives. Agents review before sending."
+                      checked={aiSettings?.ai_auto_generate ?? true}
+                      onCheckedChange={(checked) =>
+                        void updateAiSettings.mutateAsync({ ai_auto_generate: checked })
+                      }
+                      disabled={!canEdit}
+                    />
+                    <SettingsToggle
+                      id="ai-auto-send-enabled"
+                      label="Enable auto-send"
+                      description="Allow high-confidence replies to be sent automatically, subject to the rules below. When off, every reply goes through suggest mode."
+                      checked={aiSettings?.ai_auto_send_enabled ?? false}
+                      onCheckedChange={(checked) =>
+                        void updateAiSettings.mutateAsync({ ai_auto_send_enabled: checked })
+                      }
+                      disabled={!canEdit}
+                    />
+                  </div>
+                </SettingsCard>
+              </SettingsSection>
+
               {/* Master toggle */}
               <SettingsSection
                 title="Master switch"

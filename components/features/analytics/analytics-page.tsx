@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useMemo, useEffect } from 'react'
-import { BarChart3, Info, Loader2, RefreshCw } from 'lucide-react'
+import { BarChart3, Info, Loader2, RefreshCw, Sparkles } from 'lucide-react'
 import { EmptyState } from '@/components/shared/empty-state'
 import { DEMO_REFUNDS, DEMO_KPIS, DEMO_TREND, DEMO_INSIGHTS } from '@/lib/demoData'
 import {
@@ -19,6 +19,8 @@ import {
   useShopifyConnected,
 } from '@/hooks/analytics/use-analytics-data'
 import { useGeneratePatternTasks } from '@/hooks/tasks'
+import { useEmmaStats, useEmmaOnboarded, EMPTY_EMMA_STATS } from '@/hooks/ai/use-emma-stats'
+import { EmmaPerformance } from './emma-performance'
 import type {
   DateRangeId,
   DateRange,
@@ -62,9 +64,12 @@ function AnalyticsContent() {
   const [customFrom, setCustomFrom] = useState('')
   const [customTo, setCustomTo] = useState('')
   const [demoMode, setDemoMode] = useState(false)
+  const [activeTab, setActiveTab] = useState<'refunds' | 'emma'>('refunds')
 
   const token = useAuthStore(s => s.session?.access_token ?? '')
   const activeStoreId = useStoreStore(s => s.activeStoreId)
+  const emmaOnboardedQuery = useEmmaOnboarded()
+  const emmaOnboarded = emmaOnboardedQuery.data === true
 
   // Compute date ranges from UI state
   const range: DateRange = useMemo(() => {
@@ -85,6 +90,7 @@ function AnalyticsContent() {
   const refundData = demoMode ? DEMO_CURRENT_REFUNDS : (refundsQuery.data ?? [])
   const allRefundData = demoMode ? DEMO_REFUND_DATA : (allRefundsQuery.data ?? [])
   const aiInsightsQuery = useAiInsights(refundData)
+  const emmaStatsQuery = useEmmaStats(range)
   const generateTasks = useGeneratePatternTasks()
 
   // Generate pattern tasks from refund data on load
@@ -135,10 +141,16 @@ function AnalyticsContent() {
           <div className="mb-6 animate-fade-up">
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="mb-1 text-xl font-bold tracking-tight text-gray-900">Refund Intelligence</h1>
-                <p className="text-[13px] text-gray-500">Where money is lost &middot; {rangeLabel}</p>
+                <h1 className="mb-1 text-xl font-bold tracking-tight text-gray-900">
+                  {activeTab === 'refunds' ? 'Refund Intelligence' : 'Emma Performance'}
+                </h1>
+                <p className="text-[13px] text-gray-500">
+                  {activeTab === 'refunds' ? 'Where money is lost' : 'AI assistant metrics'} &middot; {rangeLabel}
+                </p>
               </div>
               <div className="flex items-center gap-2">
+                {activeTab === 'refunds' && (
+                  <>
                 <ExportButton
                   formats={[
                     { label: 'Orders CSV', value: 'csv' },
@@ -186,6 +198,8 @@ function AnalyticsContent() {
                   >
                     Preview Demo
                   </button>
+                )}
+                  </>
                 )}
                 <div
                   className={`flex items-center gap-1.5 rounded-[7px] border px-3 py-[5px] ${
@@ -243,8 +257,39 @@ function AnalyticsContent() {
                 </div>
               ) : null}
             </div>
+            {emmaOnboarded && (
+              <div className="mt-3 flex gap-1" role="tablist">
+                <button
+                  role="tab"
+                  aria-selected={activeTab === 'refunds'}
+                  onClick={() => setActiveTab('refunds')}
+                  className={`rounded-lg px-3.5 py-1.5 text-[12px] font-semibold transition-all duration-150 ${
+                    activeTab === 'refunds'
+                      ? 'bg-gray-900 text-white'
+                      : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'
+                  }`}
+                >
+                  Refund Intelligence
+                </button>
+                <button
+                  role="tab"
+                  aria-selected={activeTab === 'emma'}
+                  onClick={() => setActiveTab('emma')}
+                  className={`flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 text-[12px] font-semibold transition-all duration-150 ${
+                    activeTab === 'emma'
+                      ? 'bg-gray-900 text-white'
+                      : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'
+                  }`}
+                >
+                  <Sparkles size={12} />
+                  Emma Performance
+                </button>
+              </div>
+            )}
           </div>
 
+          {activeTab === 'refunds' ? (
+          <>
           {demoMode ? (
             <div className="mb-4 flex animate-fade-up items-center gap-2.5 rounded-md border border-black/[0.07] bg-gray-50 px-3.5 py-2">
               <Info size={13} className="shrink-0 text-gray-400" />
@@ -301,6 +346,18 @@ function AnalyticsContent() {
           <div className="mt-4 text-center text-[10.5px] tracking-[.04em] text-muted-foreground">
             Lynq Analytics &middot; Shopify data &middot; AI by Claude &middot; Refreshed on load
           </div>
+          </>
+          ) : (
+          <>
+            <EmmaPerformance
+              stats={emmaStatsQuery.data ?? EMPTY_EMMA_STATS}
+              loaded={!emmaStatsQuery.isPending}
+            />
+            <div className="mt-4 text-center text-[10.5px] tracking-[.04em] text-muted-foreground">
+              Lynq Analytics &middot; Emma AI &middot; Refreshed on load
+            </div>
+          </>
+          )}
         </div>
       </main>
     )

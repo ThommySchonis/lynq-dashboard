@@ -63,3 +63,16 @@ export interface PromoteToDraftInput {
   text: string
   appliesToScenario?: string
 }
+
+export interface EmmaStats {
+  total_suggestions: number
+  pending: number
+  approved: number
+  declined: number
+  edited: number
+  auto_sent: number
+  regenerated: number
+  total_resolved: number
+  conversations_with_draft: number
+  total_conversations: number
+}

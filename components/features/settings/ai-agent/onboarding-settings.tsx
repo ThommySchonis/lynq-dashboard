@@ -70,7 +70,9 @@ export function OnboardingSettings() {
             </Label>
             <Select value={storeId} onValueChange={(v) => v && setStore(v)}>
               <SelectTrigger id="ai-store-select" className="w-full">
-                <SelectValue placeholder="Select a store" />
+                <SelectValue placeholder="Select a store">
+                  {stores?.find((s) => s.id === storeId)?.name}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {stores.map((s) => (

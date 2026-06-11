@@ -52,10 +52,10 @@ export function LinkMailboxes({ migrationId, sourceMailboxes, emailAccounts, onS
             </div>
             <Select
               value={links[sm.source_id] ?? ''}
-              onValueChange={(v) => {
+              onValueChange={(v: string | null) => {
                 setLinks((cur) => {
                   const next = { ...cur }
-                  if (v === '__skip__') delete next[sm.source_id]
+                  if (!v || v === '__skip__') delete next[sm.source_id]
                   else next[sm.source_id] = v
                   return next
                 })

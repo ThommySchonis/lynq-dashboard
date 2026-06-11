@@ -186,6 +186,77 @@ CRUD for the AI agent settings tables (`ai_policies`, `ai_scenarios`, `ai_autono
 - All errors must be resolved before considering work done
 - No `any` types allowed — enforced by ESLint (`no-explicit-any`, `no-unsafe-*`)
 
+## Design Principles
+
+Apply these on every change. They're not aspirational — violations get caught in review.
+
+### DRY — Don't Repeat Yourself
+- Shared config, constants, and types live in a dedicated module. Examples: `lib/settings-constants.ts` (nav, roles, defaults), `components/features/migrations/platforms.ts` (per-platform config used by multiple step components). Never inline the same `const PLATFORMS = [...]` in two component files.
+- If the same shape is declared in two places (e.g. an interface in a hook AND a component), one of them should import the other.
+- One source of truth for platform / role / status labels. If a label changes, only one file should need editing.
+
+### KISS — Keep It Simple
+- Prefer the simplest thing that works. No abstractions until there are at least two real call-sites that need them.
+- Don't introduce wrappers, configs, factories, or generic utilities for a single use case.
+- A flat function with explicit logic beats an indirected pipeline that's "extensible."
+- Don't add error handling, fallbacks, validation, or feature flags for scenarios that can't happen.
+
+### SOLID
+- **Single Responsibility:** one file = one clear job. Step components render UI and own local state; they import config from a sibling module. Adapters fetch + normalize source data; the orchestrator persists. Don't mix concerns.
+- **Open/Closed:** the source-platform adapter pattern (`SourceAdapter` contract + registry) is the canonical example. Adding a new platform = new file under `adapters/` + registry entry. Never modify existing adapters when adding a new one.
+- **Liskov:** components and adapters that implement a shared contract must be drop-in interchangeable. Don't add hidden assumptions about which concrete platform is in play.
+- **Interface Segregation:** don't bloat a contract with optional fields nobody uses. If `fetchMacros` would be empty for a source, return an empty page — don't add an `isSupported` flag.
+- **Dependency Inversion:** modules depend on stable contracts (types in `types/` and the `SourceAdapter` interface), not on each other directly. The orchestrator depends on the adapter interface, not on Gorgias.
+
+## Common Pitfalls
+
+These are gotchas that have already bitten this codebase. Check the relevant rule before touching the area.
+
+### base-ui Select (NOT Radix)
+`components/ui/select.tsx` wraps `@base-ui/react/select`. Behavior differs from Radix in two ways:
+- **`<SelectValue>` shows the raw `value`** unless given a render-function child. The `label` prop on `<SelectItem>` is for keyboard text navigation only — it does NOT affect the trigger display. To show a friendly label in the trigger:
+  ```tsx
+  <SelectValue placeholder="…">
+    {(value: string | null) => members.find((m) => m.id === value)?.name ?? value}
+  </SelectValue>
+  ```
+- **`onValueChange` signature is `(value: string | null) => void`.** Handle null explicitly — base-ui emits null when selection is cleared. A typed callback `(v: string) => ...` will fail TypeScript build.
+
+### Settings pages
+- All settings pages live under `app/(protected)/settings/<category>/<page>/`. The `(protected)` route group supplies `AppShell` + `SettingsSidebar` via the parent `layout.tsx`. Putting a page under `app/settings/...` produces an unstyled, sidebar-less page.
+- New pages also need a `SettingsNavItem` entry in `lib/settings-constants.ts` `SETTINGS_NAV` to appear in the sidebar. The sidebar is data-driven, not auto-discovered.
+- Standard page shell: `<div className="max-w-3xl mx-auto px-10 py-12">` wrapping `<SettingsSection title=… description=… actions=…>` and `<SettingsCard>` from `components/features/settings/settings-section.tsx`. Don't roll your own header/card.
+
+### shadcn `Card` has built-in `py-4`
+Wrapping an interactive element (e.g. `<Button>`) inside `<Card>` creates visible top/bottom gutters that the hover background can't fill. Either drop the `Card` wrapper or pass `className="py-0"` to strip the padding.
+
+### Postgres SETOF → JSON aggregation
+When wrapping a table-returning function inside `json_build_object` (the standard `api_*` wrapper pattern), you MUST aggregate explicitly. The naive form silently returns only the first row, or errors with "more than one row returned by a subquery used as an expression":
+```sql
+-- WRONG
+return (select json_build_object('data', my_setof_function(...)));
+
+-- RIGHT
+return (select json_build_object('data',
+  coalesce(
+    (select json_agg(row_to_json(t)) from my_setof_function(...) t),
+    '[]'::json
+  )
+));
+```
+
+### Edge function deployments are separate from migrations
+- SQL: `supabase db push` (remote) and `supabase migration up --local` (local). The two are independent — pushing to remote doesn't apply locally and vice versa.
+- Edge functions: `supabase functions deploy <name>` per function, from `lynq-dashboard/`. Adding a new Hono route to `routes/` does NOT take effect on prod until the `api` function is redeployed.
+- The CLI looks for the `supabase/` directory relative to cwd — run deploys from `lynq-dashboard/`, not the workspace root.
+
+### Deno tests
+Edge-function Deno tests must run from `supabase/functions/api/` (where `deno.json` with the import map lives), not from `supabase/functions/`:
+```bash
+cd supabase/functions/api && deno test --allow-read tests/<name>.test.ts
+```
+The `--allow-read` flag is required for any test that reads fixtures from disk.
+
 ## Skills Reference
 
 You **MUST** invoke the relevant skill before creating or editing these files. Check this table on every file operation.

@@ -1,0 +1,33 @@
+{
+  "data": [
+    {
+      "id": 5001,
+      "account_id": 1,
+      "inbox_id": 10,
+      "contact_id": 900,
+      "assignee_id": null,
+      "status": "open",
+      "display_id": 1234,
+      "labels": ["refund"],
+      "custom_attributes": {},
+      "created_at": "2026-05-01T10:00:00Z",
+      "updated_at": "2026-05-02T11:00:00Z",
+      "last_activity_at": "2026-05-02T11:00:00Z"
+    },
+    {
+      "id": 5002,
+      "account_id": 1,
+      "inbox_id": 11,
+      "contact_id": 901,
+      "assignee_id": null,
+      "status": "resolved",
+      "display_id": 1235,
+      "labels": [],
+      "custom_attributes": {},
+      "created_at": "2026-05-03T10:00:00Z",
+      "updated_at": "2026-05-04T11:00:00Z",
+      "last_activity_at": "2026-05-04T11:00:00Z"
+    }
+  ],
+  "meta": { "next_cursor": null, "prev_cursor": null, "limit": 100 }
+}

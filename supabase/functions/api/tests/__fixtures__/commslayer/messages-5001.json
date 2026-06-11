@@ -1,0 +1,8 @@
+{
+  "data": [
+    { "id": 70001, "conversation_id": 5001, "content": "Want refund", "message_type": "incoming", "private": false, "sender_type": "Contact", "sender_id": 900, "created_at": "2026-05-01T10:00:00Z", "updated_at": "2026-05-01T10:00:00Z", "attachments": [] },
+    { "id": 70002, "conversation_id": 5001, "content": "Internal: gave full refund", "message_type": "outgoing", "private": true, "sender_type": "User", "sender_id": 1, "created_at": "2026-05-01T11:00:00Z", "updated_at": "2026-05-01T11:00:00Z", "attachments": [] },
+    { "id": 70003, "conversation_id": 5001, "content": "Refunded!", "message_type": "outgoing", "private": false, "sender_type": "User", "sender_id": 1, "created_at": "2026-05-02T11:00:00Z", "updated_at": "2026-05-02T11:00:00Z", "attachments": [] }
+  ],
+  "meta": { "next_cursor": null }
+}

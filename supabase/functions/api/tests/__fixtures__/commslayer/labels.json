@@ -1,0 +1,7 @@
+{
+  "data": [
+    { "id": 1, "title": "Refund",   "description": null, "color": "#FF0000", "show_on_sidebar": true, "ai_enabled": false, "built_in": false, "inbox_ids": [], "created_at": "2026-01-01T00:00:00Z", "updated_at": "2026-01-01T00:00:00Z" },
+    { "id": 2, "title": "Shipping", "description": null, "color": null,      "show_on_sidebar": true, "ai_enabled": false, "built_in": false, "inbox_ids": [], "created_at": "2026-01-01T00:00:00Z", "updated_at": "2026-01-01T00:00:00Z" }
+  ],
+  "meta": { "next_cursor": null, "prev_cursor": null, "limit": 100 }
+}

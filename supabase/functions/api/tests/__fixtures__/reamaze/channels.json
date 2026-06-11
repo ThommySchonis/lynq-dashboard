@@ -1,0 +1,8 @@
+{
+  "channels": [
+    { "slug": "support",  "name": "Support",  "email": "support@brand.com",  "channel": 1, "visibility": 1, "verified": true },
+    { "slug": "billing",  "name": "Billing",  "email": "billing@brand.com",  "channel": 1, "visibility": 1, "verified": true },
+    { "slug": "twitter",  "name": "Twitter",  "email": null,                  "channel": 2, "visibility": 1, "verified": true }
+  ],
+  "page_size": 30, "page_count": 1, "total_count": 3
+}

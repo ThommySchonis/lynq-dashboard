@@ -1,19 +1,7 @@
 'use client'
 
+import { PLATFORMS } from '@/components/features/migrations/platforms'
 import type { SourcePlatform } from '@/types/migrations'
-
-interface PlatformOption {
-  value: SourcePlatform
-  label: string
-  enabled: boolean
-}
-
-const PLATFORMS: PlatformOption[] = [
-  { value: 'gorgias',    label: 'Gorgias',    enabled: true  },
-  { value: 'zendesk',    label: 'Zendesk',    enabled: true  },
-  { value: 'reamaze',    label: 'Re:amaze',   enabled: false },
-  { value: 'commslayer', label: 'CommSlayer', enabled: false },
-]
 
 export function SelectPlatform({ onSelect }: { onSelect: (p: SourcePlatform) => void }) {
   return (

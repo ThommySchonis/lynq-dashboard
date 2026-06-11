@@ -1,0 +1,7 @@
+{
+  "response_templates": [
+    { "slug": "tpl-shipping", "name": "Shipping delay", "body": "<p>Sorry for the delay.</p>" },
+    { "slug": "tpl-refund",   "name": "Refund issued",  "body": "<p>Your refund is on the way.</p>" }
+  ],
+  "page_size": 30, "page_count": 1, "total_count": 2
+}

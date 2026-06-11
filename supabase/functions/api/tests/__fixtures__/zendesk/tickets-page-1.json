@@ -1,0 +1,15 @@
+{
+  "tickets": [
+    {
+      "id": 200001,
+      "subject": "Refund request",
+      "brand_id": 360001,
+      "requester_id": 9001,
+      "status": "open",
+      "tags": ["refund"],
+      "created_at": "2026-04-01T10:00:00Z",
+      "updated_at": "2026-04-02T11:00:00Z"
+    }
+  ],
+  "next_page": null
+}

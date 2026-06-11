@@ -1,0 +1,19 @@
+{
+  "data": [
+    {
+      "id": 7001,
+      "channel": 101,
+      "subject": "Where is my order?",
+      "customer": { "email": "alice@example.com", "name": "Alice" },
+      "status": "open",
+      "tags": [{ "id": 5001 }],
+      "created_datetime": "2026-05-01T10:00:00Z",
+      "updated_datetime": "2026-05-02T11:00:00Z",
+      "messages": [
+        { "id": 70011, "from_agent": false, "sender": { "email": "alice@example.com", "name": "Alice" }, "body_html": "Hi, where is my order?", "body_text": "Hi, where is my order?", "created_datetime": "2026-05-01T10:00:00Z" },
+        { "id": 70012, "from_agent": true,  "sender": { "email": "agent@brand.com", "name": "Bob" },    "body_html": "Shipping tomorrow", "body_text": "Shipping tomorrow", "created_datetime": "2026-05-02T11:00:00Z" }
+      ]
+    }
+  ],
+  "meta": { "next_page": null }
+}

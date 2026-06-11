@@ -19,6 +19,7 @@ import { FieldLabel } from '@/components/features/onboarding/field-label'
 import { ConnectedBadge } from '@/components/features/onboarding/connected-badge'
 import { ConnectCard } from '@/components/features/onboarding/connect-card'
 import { ProgressBar } from '@/components/features/onboarding/progress-bar'
+import { OnboardingMigrateStep } from '@/components/features/onboarding/migrate-step'
 import { brandSchema, TONE_OPTIONS, LANGUAGE_OPTIONS } from '@/lib/onboarding-constants'
 import type { BrandFormData, Tone, Language } from '@/lib/onboarding-constants'
 
@@ -85,7 +86,7 @@ export default function OnboardingPage() {
     const stepParam = searchParams.get('step')
     if (stepParam) {
       const parsed = parseInt(stepParam, 10)
-      if (!isNaN(parsed) && parsed >= 1 && parsed <= 4) {
+      if (!isNaN(parsed) && parsed >= 1 && parsed <= 5) {
         setStep(parsed)
       }
     }
@@ -369,8 +370,13 @@ export default function OnboardingPage() {
           </div>
         )}
 
-        {/* ── Step 4: Done ── */}
+        {/* ── Step 4: Import Data ── */}
         {step === 4 && (
+          <OnboardingMigrateStep onAdvance={() => setStep(5)} />
+        )}
+
+        {/* ── Step 5: Done ── */}
+        {step === 5 && (
           <div className="text-center">
             <div className="w-[72px] h-[72px] rounded-full bg-primary/15 border-2 border-primary flex items-center justify-center text-[32px] mx-auto mb-6">
               ✓

@@ -11,7 +11,7 @@ export const brandSchema = z.object({
 
 export type BrandFormData = z.infer<typeof brandSchema>
 
-export const STEPS = ['Welcome', 'Brand Setup', 'Connect Tools', 'Done'] as const
+export const STEPS = ['Welcome', 'Brand Setup', 'Connect Tools', 'Import Data', 'Done'] as const
 
 export const TONE_OPTIONS: { value: Tone; label: string; example: string }[] = [
   { value: 'friendly',     label: 'Friendly & informal',  example: '"Hey! Thanks for reaching out 😊"' },

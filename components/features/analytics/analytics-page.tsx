@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useMemo, useEffect } from 'react'
+import Link from 'next/link'
 import { BarChart3, Info, Loader2, RefreshCw, Sparkles } from 'lucide-react'
 import { EmptyState } from '@/components/shared/empty-state'
 import { DEMO_REFUNDS, DEMO_KPIS, DEMO_TREND, DEMO_INSIGHTS } from '@/lib/demoData'
@@ -21,6 +22,7 @@ import {
 import { useGeneratePatternTasks } from '@/hooks/tasks'
 import { useEmmaStats, useEmmaOnboarded, EMPTY_EMMA_STATS } from '@/hooks/ai/use-emma-stats'
 import { EmmaPerformance } from './emma-performance'
+import { EmmaActivityFeed } from './emma-activity-feed'
 import type {
   DateRangeId,
   DateRange,
@@ -257,35 +259,33 @@ function AnalyticsContent() {
                 </div>
               ) : null}
             </div>
-            {emmaOnboarded && (
-              <div className="mt-3 flex gap-1" role="tablist">
-                <button
-                  role="tab"
-                  aria-selected={activeTab === 'refunds'}
-                  onClick={() => setActiveTab('refunds')}
-                  className={`rounded-lg px-3.5 py-1.5 text-[12px] font-semibold transition-all duration-150 ${
-                    activeTab === 'refunds'
-                      ? 'bg-gray-900 text-white'
-                      : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'
-                  }`}
-                >
-                  Refund Intelligence
-                </button>
-                <button
-                  role="tab"
-                  aria-selected={activeTab === 'emma'}
-                  onClick={() => setActiveTab('emma')}
-                  className={`flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 text-[12px] font-semibold transition-all duration-150 ${
-                    activeTab === 'emma'
-                      ? 'bg-gray-900 text-white'
-                      : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'
-                  }`}
-                >
-                  <Sparkles size={12} />
-                  Emma Performance
-                </button>
-              </div>
-            )}
+            <div className="mt-3 flex gap-1" role="tablist">
+              <button
+                role="tab"
+                aria-selected={activeTab === 'refunds'}
+                onClick={() => setActiveTab('refunds')}
+                className={`rounded-lg px-3.5 py-1.5 text-[12px] font-semibold transition-all duration-150 ${
+                  activeTab === 'refunds'
+                    ? 'bg-gray-900 text-white'
+                    : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'
+                }`}
+              >
+                Refund Intelligence
+              </button>
+              <button
+                role="tab"
+                aria-selected={activeTab === 'emma'}
+                onClick={() => setActiveTab('emma')}
+                className={`flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 text-[12px] font-semibold transition-all duration-150 ${
+                  activeTab === 'emma'
+                    ? 'bg-gray-900 text-white'
+                    : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'
+                }`}
+              >
+                <Sparkles size={12} />
+                Emma Performance
+              </button>
+            </div>
           </div>
 
           {activeTab === 'refunds' ? (
@@ -349,10 +349,22 @@ function AnalyticsContent() {
           </>
           ) : (
           <>
+            {!emmaOnboarded && !emmaOnboardedQuery.isPending && (
+              <Link
+                href="/settings/ai-agent/onboarding"
+                className="mb-4 flex items-start gap-2 rounded-lg border border-purple-500/20 bg-purple-500/5 p-3 text-sm text-purple-700 transition-colors hover:bg-purple-500/10"
+              >
+                <Sparkles size={16} className="mt-0.5 shrink-0" />
+                <span>
+                  Emma isn&apos;t set up for this store yet. Complete onboarding to start seeing AI suggestions and activity.
+                </span>
+              </Link>
+            )}
             <EmmaPerformance
               stats={emmaStatsQuery.data ?? EMPTY_EMMA_STATS}
               loaded={!emmaStatsQuery.isPending}
             />
+            <EmmaActivityFeed range={range} />
             <div className="mt-4 text-center text-[10.5px] tracking-[.04em] text-muted-foreground">
               Lynq Analytics &middot; Emma AI &middot; Refreshed on load
             </div>

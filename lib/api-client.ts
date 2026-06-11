@@ -49,6 +49,7 @@ const honoRoutes: string[] = [
   'inbox/shopify-customer',
   'auth/forwarding-email/',
   'webhooks/',
+  'migrations',
 ]
 
 /**

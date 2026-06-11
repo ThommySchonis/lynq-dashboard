@@ -1,0 +1,6 @@
+{
+  "data": [
+    { "id": 101, "type": "email", "address": "support@brand.com", "name": "Support" },
+    { "id": 102, "type": "email", "address": "orders@brand.com", "name": "Orders" }
+  ]
+}

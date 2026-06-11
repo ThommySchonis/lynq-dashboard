@@ -76,3 +76,35 @@ export interface EmmaStats {
   conversations_with_draft: number
   total_conversations: number
 }
+
+// ── Emma Activity Feed (analytics page) ──────────────────────
+
+export interface EmmaActivityEvent {
+  id: string
+  conversation_id: string
+  status: DraftStatus
+  generated_at: string
+  resolved_at: string | null
+  /** Pre-computed COALESCE(resolved_at, generated_at) used for display + sort */
+  event_at: string
+  suggested_text: string
+  edited_text: string | null
+  feedback_category: FeedbackCategory | null
+  feedback_comment: string | null
+  conversation_subject: string | null
+  customer_email: string | null
+}
+
+export interface EmmaActivityPage {
+  items: EmmaActivityEvent[]
+  has_more: boolean
+  total: number
+}
+
+export interface EmmaActivityFilters {
+  storeId: string
+  from: string
+  to: string
+  /** Empty array = no filter (all statuses) */
+  statuses: DraftStatus[]
+}

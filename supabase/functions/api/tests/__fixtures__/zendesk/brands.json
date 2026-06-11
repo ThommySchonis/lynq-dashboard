@@ -1,0 +1,6 @@
+{
+  "brands": [
+    { "id": 360001, "name": "Brand Support", "subdomain": "brand", "active": true, "default": true, "has_help_center": false }
+  ],
+  "next_page": null
+}

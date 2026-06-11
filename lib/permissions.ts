@@ -40,4 +40,7 @@ export const can = {
   viewTasks:       (_role: Role) => true,
   manageTasks:     (role: Role) => ['owner', 'admin', 'agent'].includes(role),
   deleteTasks:     (role: Role) => ['owner', 'admin'].includes(role),
+
+  // Workspace migrations — owner/admin only (destructive, touches all workspace data)
+  manageMigrations: (role: Role) => ['owner', 'admin'].includes(role),
 }

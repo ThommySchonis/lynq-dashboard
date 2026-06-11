@@ -114,7 +114,12 @@ export function PerformancePage() {
             onValueChange={handleAgentChange}
           >
             <SelectTrigger className="w-44" size="sm">
-              <SelectValue placeholder="All agents" />
+              <SelectValue placeholder="All agents">
+                {(value: string | null) => {
+                  if (!value || value === 'all') return 'All agents'
+                  return members.find((m) => m.id === value)?.name ?? value
+                }}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All agents</SelectItem>

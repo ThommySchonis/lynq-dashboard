@@ -14,4 +14,5 @@ export const can = {
   deleteMacros:    (role: Role) => ['owner', 'admin'].includes(role),
   manageTags:      (role: Role) => ['owner', 'admin', 'agent'].includes(role),
   manageTasks:     (role: Role) => ['owner', 'admin', 'agent'].includes(role),
+  manageMigrations: (role: Role) => ['owner', 'admin'].includes(role),
 }

@@ -1,0 +1,7 @@
+{
+  "comments": [
+    { "id": 1, "author_id": 9001, "via": { "channel": "email" }, "html_body": "<p>Want refund</p>", "body": "Want refund", "created_at": "2026-04-01T10:00:00Z", "public": true },
+    { "id": 2, "author_id": 9002, "via": { "channel": "email" }, "html_body": "<p>Refunded</p>",   "body": "Refunded",   "created_at": "2026-04-02T11:00:00Z", "public": true }
+  ],
+  "next_page": null
+}

@@ -26,6 +26,7 @@ import { parcelPanelRoutes, parcelPanelShipmentsRoutes } from './routes/parcel-p
 import { workspaceActionRoutes } from './routes/workspace-actions.ts'
 import { cronRoutes } from './routes/cron.ts'
 import { accountRoutes } from './routes/account.ts'
+import { migrationRoutes } from './routes/migrations.ts'
 import { authForwardingRoutes } from './routes/auth-forwarding.ts'
 import { webhooksShopifyRoutes } from './routes/webhooks-shopify.ts'
 import { webhooksWhopRoutes } from './routes/webhooks-whop.ts'
@@ -67,6 +68,7 @@ app.route('/parcelpanel', parcelPanelShipmentsRoutes)
 app.route('/workspaces/current', workspaceActionRoutes)
 app.route('/cron', cronRoutes)
 app.route('/account', accountRoutes)
+app.route('/migrations', migrationRoutes)
 app.route('/auth/forwarding-email', authForwardingRoutes)
 app.route('/webhooks/shopify', webhooksShopifyRoutes)
 app.route('/webhooks/shopify/compliance', webhooksShopifyComplianceRoutes)

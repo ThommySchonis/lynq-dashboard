@@ -1,0 +1,7 @@
+{
+  "data": [
+    { "id": 5001, "name": "VIP", "color": "#FF0000" },
+    { "id": 5002, "name": "Refund", "color": null }
+  ],
+  "meta": { "next_page": null }
+}

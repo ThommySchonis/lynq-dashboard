@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useAuthStore } from '@/stores/auth'
 import { WelcomeBanner } from '@/components/shared/welcome-banner'
 import { TrialEndingBanner } from '@/components/shared/trial-ending-banner'
+import { BookOnboardingCallBanner } from '@/components/shared/book-onboarding-call-banner'
 import { isTrialEndingSoon } from '@/lib/trialStatus'
 import { useHomeKpis, useOnboardingStatus, useAiChat } from '@/hooks/home'
 import { Search, ArrowUp, Send } from 'lucide-react'
@@ -100,6 +101,7 @@ export default function HomePage() {
             onDismissed={() => setWelcomeHidden(true)}
           />
         )}
+        <BookOnboardingCallBanner />
 
         {/* Orbs */}
         <div

@@ -32,7 +32,8 @@ const RAW_SETTINGS_NAV: SettingsNavGroup[] = [
     { label: 'Rules',      href: '/settings/ai-agent/rules' },
   ]},
   { label: 'INTEGRATIONS', items: [
-    { label: 'Email Display', href: '/settings/integrations/email-display' },
+    { label: 'Email Display',    href: '/settings/integrations/email-display' },
+    { label: 'Data Migration',   href: '/settings/integrations/migrations'    },
   ]},
   { label: 'PERSONAL', items: [
     { label: 'Profile',        href: '/settings/personal/profile' },

@@ -1,7 +1,5 @@
 'use client'
 
-import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
 import type { SourcePlatform } from '@/types/migrations'
 
 interface PlatformOption {
@@ -26,18 +24,21 @@ export function SelectPlatform({ onSelect }: { onSelect: (p: SourcePlatform) => 
       </div>
       <div className="grid grid-cols-2 gap-3">
         {PLATFORMS.map((p) => (
-          <Card key={p.value} className={p.enabled ? 'cursor-pointer hover:border-border-hover' : 'opacity-50'}>
-            <Button
-              type="button"
-              variant="ghost"
-              disabled={!p.enabled}
-              onClick={() => onSelect(p.value)}
-              className="h-24 w-full flex-col gap-1"
-            >
-              <span className="text-base font-medium">{p.label}</span>
-              {!p.enabled && <span className="text-xs text-foreground-4">Coming soon</span>}
-            </Button>
-          </Card>
+          <button
+            key={p.value}
+            type="button"
+            disabled={!p.enabled}
+            onClick={() => p.enabled && onSelect(p.value)}
+            className={[
+              'flex h-24 w-full flex-col items-center justify-center gap-1 rounded-xl border border-border bg-card text-sm transition-colors',
+              p.enabled
+                ? 'cursor-pointer hover:border-primary hover:bg-primary/5'
+                : 'cursor-not-allowed opacity-50',
+            ].join(' ')}
+          >
+            <span className="text-base font-medium text-foreground">{p.label}</span>
+            {!p.enabled && <span className="text-xs text-foreground-4">Coming soon</span>}
+          </button>
         ))}
       </div>
     </div>

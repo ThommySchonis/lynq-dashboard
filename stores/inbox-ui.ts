@@ -1,5 +1,26 @@
 import { create } from 'zustand'
 
+const EMAIL_ACCOUNT_LS_KEY = 'lynq-inbox-email-account'
+
+function readPersistedEmailAccount(): string | null {
+  if (typeof window === 'undefined') return null
+  try {
+    return window.localStorage.getItem(EMAIL_ACCOUNT_LS_KEY)
+  } catch {
+    return null
+  }
+}
+
+function writePersistedEmailAccount(v: string | null) {
+  if (typeof window === 'undefined') return
+  try {
+    if (v === null) window.localStorage.removeItem(EMAIL_ACCOUNT_LS_KEY)
+    else window.localStorage.setItem(EMAIL_ACCOUNT_LS_KEY, v)
+  } catch {
+    /* ignore quota / privacy errors */
+  }
+}
+
 interface InboxUIState {
   selectedThreadId: string | null
   reply: string
@@ -31,7 +52,7 @@ interface InboxUIState {
   sending: boolean
   addingNote: boolean
   syncing: boolean
-  showAllStores: boolean
+  selectedEmailAccountId: string | null
   editingDraftId: string | null
 
   // Actions
@@ -65,7 +86,7 @@ interface InboxUIState {
   setSending: (v: boolean) => void
   setAddingNote: (v: boolean) => void
   setSyncing: (v: boolean) => void
-  setShowAllStores: (v: boolean) => void
+  setSelectedEmailAccountId: (v: string | null) => void
   setEditingDraftId: (v: string | null) => void
   resetForNewThread: () => void
 }
@@ -93,7 +114,7 @@ export const useInboxUI = create<InboxUIState>()((set) => ({
   sending: false,
   addingNote: false,
   syncing: false,
-  showAllStores: false,
+  selectedEmailAccountId: readPersistedEmailAccount(),
   editingDraftId: null,
 
   setSelectedThreadId: (id) => set({ selectedThreadId: id }),
@@ -118,7 +139,10 @@ export const useInboxUI = create<InboxUIState>()((set) => ({
   setSending: (v) => set({ sending: v }),
   setAddingNote: (v) => set({ addingNote: v }),
   setSyncing: (v) => set({ syncing: v }),
-  setShowAllStores: (v) => set({ showAllStores: v }),
+  setSelectedEmailAccountId: (v) => {
+    writePersistedEmailAccount(v)
+    set({ selectedEmailAccountId: v })
+  },
   setEditingDraftId: (v) => set({ editingDraftId: v }),
   resetForNewThread: () => set({
     reply: '',

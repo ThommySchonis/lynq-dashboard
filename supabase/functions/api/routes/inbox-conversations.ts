@@ -50,6 +50,7 @@ app.get('/', async (c) => {
   const status = c.req.query('status')
   const unlinked = c.req.query('unlinked')
   const storeId = c.req.query('store_id')
+  const emailAccountId = c.req.query('email_account_id')
   const page = parseInt(c.req.query('page') || '0', 10)
   const limit = 50
 
@@ -62,6 +63,7 @@ app.get('/', async (c) => {
       if (status) q = q.eq('status', status)
       if (unlinked === 'true') q = q.is('shopify_customer_id', null).neq('status', 'closed')
       if (storeId) q = q.eq('store_id', storeId)
+      if (emailAccountId) q = q.eq('email_account_id', emailAccountId)
       return q
     }
 
@@ -94,6 +96,7 @@ app.get('/', async (c) => {
     if (status) finalQ = finalQ.eq('status', status)
     if (unlinked === 'true') finalQ = finalQ.is('shopify_customer_id', null).neq('status', 'closed')
     if (storeId) finalQ = finalQ.eq('store_id', storeId)
+    if (emailAccountId) finalQ = finalQ.eq('email_account_id', emailAccountId)
 
     const { data: conversations, error } = await finalQ
     if (error) return c.json({ error: error.message }, 500)
@@ -115,6 +118,7 @@ app.get('/', async (c) => {
   if (status) dbQuery = dbQuery.eq('status', status)
   if (unlinked === 'true') dbQuery = dbQuery.is('shopify_customer_id', null).neq('status', 'closed')
   if (storeId) dbQuery = dbQuery.eq('store_id', storeId)
+  if (emailAccountId) dbQuery = dbQuery.eq('email_account_id', emailAccountId)
 
   const { data: conversations, error } = await dbQuery
   if (error) return c.json({ error: error.message }, 500)

@@ -15,11 +15,18 @@ function useToken() {
 
 export const inboxKeys = {
   all: ['inbox'] as const,
-  conversations: (folder: string, search?: string, storeId?: string | null) =>
-    [...inboxKeys.all, 'conversations', folder, search, storeId] as const,
+  conversations: (
+    folder: string,
+    search?: string,
+    storeId?: string | null,
+    emailAccountId?: string | null,
+  ) => [...inboxKeys.all, 'conversations', folder, search, storeId, emailAccountId] as const,
   conversation: (id: string) => [...inboxKeys.all, 'conversation', id] as const,
-  counts: (storeId?: string | null) => [...inboxKeys.all, 'counts', storeId] as const,
+  counts: (storeId?: string | null, emailAccountId?: string | null) =>
+    [...inboxKeys.all, 'counts', storeId, emailAccountId] as const,
   accounts: () => [...inboxKeys.all, 'accounts'] as const,
+  accountsByStore: (storeId: string | null) =>
+    [...inboxKeys.all, 'accounts', 'by-store', storeId] as const,
   customer: (query: string, storeId: string | null) => ['customer', query, storeId] as const,
   macros: () => [...inboxKeys.all, 'macros'] as const,
 }
@@ -54,17 +61,17 @@ interface AccountsResponse {
 export function useConversations(folder: string, search: string) {
   const token = useToken()
   const activeStoreId = useStoreStore((s) => s.activeStoreId)
-  const showAllStores = useInboxUI((s) => s.showAllStores)
-  const effectiveStoreId = showAllStores ? null : activeStoreId
+  const selectedEmailAccountId = useInboxUI((s) => s.selectedEmailAccountId)
   return useQuery<Thread[]>({
-    queryKey: inboxKeys.conversations(folder, search, showAllStores ? 'all' : activeStoreId),
+    queryKey: inboxKeys.conversations(folder, search, activeStoreId, selectedEmailAccountId),
     queryFn: async () => {
       const params = new URLSearchParams()
       if (folder === 'unlinked') params.set('unlinked', 'true')
       else if (folder === 'trash') params.set('status', 'closed')
       else params.set('status', folder)
       if (search) params.set('search', search)
-      if (effectiveStoreId) params.set('store_id', effectiveStoreId)
+      if (activeStoreId) params.set('store_id', activeStoreId)
+      if (selectedEmailAccountId) params.set('email_account_id', selectedEmailAccountId)
       const res = await authFetch(`${apiUrl('inbox/conversations')}?${params}`, {}, token)
       const data = await parseJson<ConversationsResponse>(res)
       return ((data.conversations || []) as Array<Record<string, string | boolean | null>>).map((c) => ({
@@ -118,13 +125,16 @@ export function useConversation(threadId: string | null) {
 export function useInboxCounts() {
   const token = useToken()
   const activeStoreId = useStoreStore((s) => s.activeStoreId)
-  const showAllStores = useInboxUI((s) => s.showAllStores)
-  const effectiveStoreId = showAllStores ? null : activeStoreId
-  const params = effectiveStoreId ? `?store_id=${effectiveStoreId}` : ''
+  const selectedEmailAccountId = useInboxUI((s) => s.selectedEmailAccountId)
   return useQuery({
-    queryKey: inboxKeys.counts(showAllStores ? 'all' : activeStoreId),
+    queryKey: inboxKeys.counts(activeStoreId, selectedEmailAccountId),
     queryFn: async () => {
-      const res = await authFetch(`${apiUrl('inbox/counts')}${params}`, {}, token)
+      const params = new URLSearchParams()
+      if (activeStoreId) params.set('store_id', activeStoreId)
+      if (selectedEmailAccountId) params.set('email_account_id', selectedEmailAccountId)
+      const qs = params.toString()
+      const url = qs ? `${apiUrl('inbox/counts')}?${qs}` : apiUrl('inbox/counts')
+      const res = await authFetch(url, {}, token)
       const data = await parseJson<InboxCountsResponse>(res)
       return {
         open: data.open || 0,
@@ -193,6 +203,15 @@ interface AccountRecord {
   email_address?: string
 }
 
+export interface EmailAccountForStore {
+  id: string
+  provider: string
+  email_address: string
+  display_name: string | null
+  status: string
+  is_default: boolean
+}
+
 /** Check if email account is connected */
 export function useEmailConnected() {
   const token = useToken()
@@ -227,5 +246,30 @@ export function useEmailAccountInfo() {
       return { connected: false, provider: null, email: null }
     },
     enabled: !!token,
+  })
+}
+
+interface AccountsByStoreResponse {
+  accounts?: EmailAccountForStore[]
+}
+
+/** Fetch email accounts for a specific store (used by the Inbox mailbox switcher). */
+export function useEmailAccountsForStore(storeId: string | null) {
+  const token = useToken()
+  return useQuery<EmailAccountForStore[]>({
+    queryKey: inboxKeys.accountsByStore(storeId),
+    queryFn: async () => {
+      const res = await authFetch(
+        `${apiUrl('inbox/accounts')}?store_id=${encodeURIComponent(storeId ?? '')}`,
+        {},
+        token,
+      )
+      const data = await parseJson<AccountsByStoreResponse>(res).catch(
+        (): AccountsByStoreResponse => ({ accounts: [] }),
+      )
+      return data.accounts ?? []
+    },
+    enabled: !!token && !!storeId,
+    staleTime: 5 * 60_000,
   })
 }

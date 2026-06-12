@@ -1,12 +1,11 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Check, Mail, MoreHorizontal, MoreVertical, Plus, RefreshCw, Search, Store, User } from "lucide-react";
+import { Check, Mail, MoreHorizontal, MoreVertical, Plus, RefreshCw, Search, User } from "lucide-react";
 import { extractName } from "@/lib/inbox-utils";
 import { relTime as formatDate } from "@/lib/inbox-utils";
 import { useInboxUI } from "@/stores/inbox-ui";
 import { useAuthStore } from "@/stores/auth";
-import { useStoreStore } from "@/stores/store";
 import { useConversations, useInboxCounts } from "@/hooks/inbox/use-inbox-data";
 import { useSyncInbox } from "@/hooks/inbox/use-inbox-mutations";
 import { useAIStore } from "@/stores/ai";
@@ -14,6 +13,7 @@ import { URGENCY_SCORE } from "@/lib/inbox-constants";
 import { useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import type { Thread } from "@/types/inbox";
+import { MailboxSwitcher } from "@/components/features/inbox/mailbox-switcher";
 
 export function ThreadListPanel() {
   const router = useRouter();
@@ -31,9 +31,6 @@ export function ThreadListPanel() {
   const setCheckedThreads = useInboxUI((s) => s.setCheckedThreads);
   const setSyncing = useInboxUI((s) => s.setSyncing);
   const resetForNewThread = useInboxUI((s) => s.resetForNewThread);
-  const showAllStores = useInboxUI((s) => s.showAllStores);
-  const setShowAllStores = useInboxUI((s) => s.setShowAllStores);
-  const storeCount = useStoreStore((s) => s.stores.length);
 
   // TanStack data
   const { data: threads = [], isLoading: loadingThreads, refetch: refetchThreads } = useConversations(activeFolder, search);
@@ -150,18 +147,6 @@ export function ThreadListPanel() {
             </span>
           </div>
           <div className="flex items-center gap-1">
-            {storeCount > 1 && (
-              <Button
-                variant={showAllStores ? "secondary" : "ghost"}
-                size="sm"
-                onClick={() => setShowAllStores(!showAllStores)}
-                className="flex items-center gap-1 px-2 py-1 text-[10.5px] font-medium h-auto"
-                title={showAllStores ? "Viewing all stores" : "View all stores"}
-              >
-                <Store size={12} />
-                {showAllStores ? "All" : "Store"}
-              </Button>
-            )}
             <Button
               variant="ghost"
               size="icon"
@@ -184,6 +169,9 @@ export function ThreadListPanel() {
             </Button>
           </div>
         </div>
+
+        {/* Mailbox switcher */}
+        <MailboxSwitcher />
 
         {/* Search */}
         <div className="relative mb-2.5">
@@ -352,12 +340,6 @@ export function ThreadListPanel() {
                 </div>
                 {/* Row 3: snippet — 2 lines */}
                 <div className="line-clamp-2 text-[11.5px] text-foreground leading-[1.45]">{thread.snippet}</div>
-                {/* Row 4: store badge (All Stores mode only) */}
-                {showAllStores && (
-                  <span className="inline-block mt-1 text-[10px] text-muted-foreground bg-secondary px-1.5 py-0.5 rounded max-w-fit truncate">
-                    {(thread as Thread & { store_name?: string | null }).store_name || "Unlinked"}
-                  </span>
-                )}
               </div>
             </div>
           );

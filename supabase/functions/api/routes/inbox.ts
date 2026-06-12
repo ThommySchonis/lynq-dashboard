@@ -14,10 +14,13 @@ app.get('/counts', async (c) => {
   const ctx = c.get('authContext') as AuthContext
   const sb = getAdminClient()
   const storeId = c.req.query('store_id')
+  const emailAccountId = c.req.query('email_account_id')
 
   const baseQuery = () => {
-    const q = sb.from('email_conversations').select('id', { count: 'exact', head: true }).eq('workspace_id', ctx.workspaceId)
-    return storeId ? q.eq('store_id', storeId) : q
+    let q = sb.from('email_conversations').select('id', { count: 'exact', head: true }).eq('workspace_id', ctx.workspaceId)
+    if (storeId) q = q.eq('store_id', storeId)
+    if (emailAccountId) q = q.eq('email_account_id', emailAccountId)
+    return q
   }
 
   const [open, pending, resolved, unlinked, trash] = await Promise.all([

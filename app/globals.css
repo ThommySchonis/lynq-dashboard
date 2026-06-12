@@ -222,6 +222,18 @@
   transition: background-color 5000s ease-in-out 0s;
 }
 
+/* Light-tone variant — used on white-card screens (e.g. invite signup). */
+.float-field-light:-webkit-autofill,
+.float-field-light:-webkit-autofill:hover,
+.float-field-light:-webkit-autofill:focus,
+.float-field-light:-webkit-autofill:active {
+  -webkit-background-clip: text;
+  -webkit-box-shadow: 0 0 0 1000px transparent inset !important;
+  -webkit-text-fill-color: var(--foreground) !important;
+  caret-color: var(--foreground);
+  transition: background-color 5000s ease-in-out 0s;
+}
+
 /* ── Contenteditable placeholder ────────────────────────────────────────────── */
 .compose-ta[contenteditable=true]:empty:before {
   content: attr(data-placeholder);

@@ -172,7 +172,8 @@ export default function InviteSignupPage({
             value={invite.invite_email}
             readOnly
             disabled
-            className="bg-secondary text-muted-foreground cursor-not-allowed opacity-100 border-[#E5E0EB] text-[14px] text-muted-foreground [&]:text-muted-foreground"
+            tone="light"
+            className="cursor-not-allowed opacity-100 text-muted-foreground"
           />
           <p className="text-xs text-foreground-4 -mt-2">Locked to your invite address</p>
 
@@ -186,6 +187,7 @@ export default function InviteSignupPage({
             required
             maxLength={100}
             autoFocus
+            tone="light"
             {...register('fullName')}
           />
 
@@ -197,6 +199,7 @@ export default function InviteSignupPage({
             error={errors.password?.message}
             required
             minLength={8}
+            tone="light"
             {...register('password')}
           />
 
@@ -207,6 +210,7 @@ export default function InviteSignupPage({
             autoComplete="new-password"
             error={errors.confirm?.message}
             required
+            tone="light"
             {...register('confirm')}
           />
 

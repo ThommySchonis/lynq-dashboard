@@ -167,7 +167,7 @@ app.post('/members', async (c) => {
   const origin = c.req.header('origin')
     || c.req.header('referer')?.replace(/\/[^/]*$/, '')
     || null
-  const inviteLink = origin ? `${origin}/invite/${token}` : null
+  const inviteLink = origin ? `${origin}/invites/${token}` : null
 
   // Send invite email
   const emailResult = await sendInviteEmail({
@@ -232,7 +232,7 @@ app.post('/invites/:id/resend', async (c) => {
     || c.req.header('referer')?.replace(/\/[^/]*$/, '')
     || null
   const token = (updated as Record<string, unknown>).token as string
-  const inviteLink = origin ? `${origin}/invite/${token}` : null
+  const inviteLink = origin ? `${origin}/invites/${token}` : null
 
   // Send email
   const emailResult = await sendInviteEmail({

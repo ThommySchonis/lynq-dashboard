@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { Eye, EyeOff } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
-import { FloatField } from './float-field'
+import { FloatField, type FloatFieldTone } from './float-field'
 import {
   calcPasswordStrength,
   STRENGTH_COLORS,
@@ -17,6 +17,17 @@ interface PasswordFieldProps extends Omit<React.ComponentPropsWithoutRef<'input'
   error?: string
   showStrength?: boolean
   id?: string
+  tone?: FloatFieldTone
+}
+
+const EYE_TONE: Record<FloatFieldTone, string> = {
+  dark: 'text-white/40 hover:text-white/70 hover:bg-transparent focus-visible:ring-[#7F77DD]',
+  light: 'text-foreground-4 hover:text-foreground hover:bg-transparent focus-visible:ring-primary',
+}
+
+const STRENGTH_LABEL_TONE: Record<FloatFieldTone, string> = {
+  dark: 'text-white/55',
+  light: 'text-foreground-3',
 }
 
 export function PasswordField({
@@ -26,6 +37,7 @@ export function PasswordField({
   id,
   value,
   className,
+  tone = 'dark',
   ...props
 }: PasswordFieldProps) {
   const [visible, setVisible] = useState(false)
@@ -40,6 +52,7 @@ export function PasswordField({
         id={id}
         label={label}
         error={error}
+        tone={tone}
         type={visible ? 'text' : 'password'}
         value={value}
         className={cn('pr-11', className)}
@@ -53,8 +66,8 @@ export function PasswordField({
         onClick={() => setVisible(v => !v)}
         className={cn(
           'absolute right-3 top-[27px] -translate-y-1/2',
-          'text-white/40 hover:text-white/70 hover:bg-transparent',
-          'focus-visible:ring-[#7F77DD] focus-visible:ring-offset-transparent',
+          EYE_TONE[tone],
+          'focus-visible:ring-offset-transparent',
         )}
         tabIndex={0}
       >
@@ -75,7 +88,7 @@ export function PasswordField({
             ))}
           </div>
           {score > 0 && (
-            <p className="text-[11px] text-white/55 leading-none">
+            <p className={cn('text-[11px] leading-none', STRENGTH_LABEL_TONE[tone])}>
               {STRENGTH_LABELS[score - 1]}
             </p>
           )}

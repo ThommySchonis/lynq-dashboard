@@ -33,6 +33,7 @@ const honoRoutes: string[] = [
   'admin/',
   'invites/',
   'shopify/',
+  'search',
   'billing/',
   'academy/',
   'analytics/email-stats',

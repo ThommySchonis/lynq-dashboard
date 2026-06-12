@@ -13,6 +13,8 @@ import { Separator } from '@/components/ui/separator'
 import { SidebarItem } from './sidebar-item'
 import { SidebarUser } from './sidebar-user'
 import { StoreSwitcher } from './store-switcher'
+import { SearchButton } from '@/components/features/search/search-button'
+import { SearchDialog } from '@/components/features/search/search-dialog'
 
 const NAV_ITEMS = [
   { href: '/home',          icon: Home,           label: 'Home'          },
@@ -51,28 +53,36 @@ export function Sidebar() {
         collapsed ? 'w-16' : 'w-56',
       )}
     >
-      {/* Logo / brand */}
-      <Link
-        href="/home"
+      {/* Logo / brand + search */}
+      <div
         className={cn(
-          'flex h-14 items-center shrink-0',
-          collapsed ? 'justify-center px-2' : 'gap-2.5 px-3',
+          'flex shrink-0',
+          collapsed ? 'flex-col items-center gap-1 py-2' : 'h-14 flex-row items-center gap-2.5 px-3',
         )}
       >
-        <Image
-          src="/brand/lynq-flow-icon.png"
-          alt="Lynq & Flow"
-          width={40}
-          height={40}
-          className="shrink-0"
-          priority
-        />
-        {!collapsed && (
-          <span className="truncate text-sm font-semibold text-white">
-            Lynq &amp; Flow
-          </span>
-        )}
-      </Link>
+        <Link
+          href="/home"
+          className={cn(
+            'flex items-center',
+            collapsed ? 'justify-center' : 'gap-2.5',
+          )}
+        >
+          <Image
+            src="/brand/lynq-flow-icon.png"
+            alt="Lynq & Flow"
+            width={40}
+            height={40}
+            className="shrink-0"
+            priority
+          />
+          {!collapsed && (
+            <span className="truncate text-sm font-semibold text-white">
+              Lynq &amp; Flow
+            </span>
+          )}
+        </Link>
+        <SearchButton collapsed={collapsed} />
+      </div>
 
       {/* Store switcher */}
       <div className="px-3 py-1">
@@ -96,6 +106,8 @@ export function Sidebar() {
         <Separator className="my-2 bg-zinc-800/60" />
         <SidebarUser collapsed={collapsed} />
       </div>
+
+      <SearchDialog />
     </aside>
   )
 }

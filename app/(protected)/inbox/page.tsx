@@ -82,6 +82,9 @@ function InboxPage() {
   // Auto-select conversation matching ?customer_email param
   const customerEmailParam = searchParams?.get("customer_email");
 
+  // Auto-select conversation by id from ?conversation_id param (global search).
+  const conversationIdParam = searchParams?.get("conversation_id");
+
   // ── TanStack queries ──
   const { data: threads = [] } = useConversations(activeFolder, search);
 
@@ -156,6 +159,16 @@ function InboxPage() {
       }
     }
   }, [customerEmailParam, threads, selectedThreadId, openThread]);
+
+  // ── Auto-select thread from conversation_id param ──
+  useEffect(() => {
+    if (conversationIdParam && threads?.length) {
+      const match = threads.find((t: Thread) => t.id === conversationIdParam)
+      if (match && match.id !== selectedThreadId) {
+        openThread(match)
+      }
+    }
+  }, [conversationIdParam, threads, selectedThreadId, openThread]);
 
   // ── Keyboard shortcuts ──
   useKeyboardShortcuts({

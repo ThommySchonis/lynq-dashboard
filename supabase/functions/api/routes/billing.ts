@@ -12,6 +12,7 @@ import {
   syncFromShopify,
 } from '../lib/services/shopify-billing.ts'
 import { BillingServiceError, listAddons, subscribeAddon, listPlans } from '../lib/services/billing.ts'
+import { getEmmaUsage } from '../lib/services/emma-usage.ts'
 import type { AuthContext } from '../lib/types.ts'
 
 type Role = 'owner' | 'admin' | 'agent' | 'observer'
@@ -116,6 +117,17 @@ billing.get('/subscription', async (c) => {
   try {
     const data = await getSubscriptionWithUsage(ctx.workspaceId)
     return c.json(data)
+  } catch (err) {
+    return billingError(c, err)
+  }
+})
+
+// GET /billing/emma-usage
+billing.get('/emma-usage', async (c) => {
+  const ctx = getCtx(c)
+  try {
+    const usage = await getEmmaUsage(ctx.workspaceId)
+    return c.json(usage)
   } catch (err) {
     return billingError(c, err)
   }

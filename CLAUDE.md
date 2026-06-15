@@ -70,7 +70,7 @@ supabase/
 
 **Admin panel:** `/admin` (login via `/admin/login`), only for `info@lynqagency.com`. Tabs: Clients, Broadcasts, Notifications.
 
-**Environment variables:** `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SECRET_KEY` (server-only), `OAUTH_STATE_SECRET`, `EMAIL_WEBHOOK_SECRET`, `WHOP_WEBHOOK_SECRET`, `WEBHOOK_RETRY_SECRET` (server-only), `SHOPIFY_APP_HANDLE` (App Store listing slug, used to construct Managed Pricing URLs), `PAYMENTS_ENABLED`. Stored in `.env.local` and Vercel Settings.
+**Environment variables:** `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SECRET_KEY` (server-only), `OAUTH_STATE_SECRET`, `EMAIL_WEBHOOK_SECRET`, `WHOP_WEBHOOK_SECRET`, `WEBHOOK_RETRY_SECRET` (server-only), `SHOPIFY_APP_HANDLE` (App Store listing slug, used to construct Managed Pricing URLs), `PAYMENTS_ENABLED`, `EMMA_COST_PER_TRIGGER_EUR` (edge function secret, cost in EUR per Emma generation, default 0). Stored in `.env.local` and Vercel Settings (for Vercel env vars), or via `npx supabase secrets set` (for edge function secrets).
 
 ## Mandatory Rules
 

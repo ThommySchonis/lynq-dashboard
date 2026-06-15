@@ -11,6 +11,7 @@ import type {
   BillingStore,
   ManageUrlResponse,
   SubscriptionWithUsageResponse,
+  EmmaUsageResponse,
 } from '@/types/billing'
 
 interface ErrorResponse {
@@ -25,6 +26,7 @@ export const billingKeys = {
   billingInfo:    () => [...billingKeys.all, 'billing-info'] as const,
   manageUrl:      () => [...billingKeys.all, 'manage-url'] as const,
   stores:         () => [...billingKeys.all, 'stores'] as const,
+  emmaUsage:      () => [...billingKeys.all, 'emma-usage'] as const,
 }
 
 async function jsonFetch<T>(url: string, token: string): Promise<T> {
@@ -41,6 +43,16 @@ export function useSubscription() {
   return useQuery<SubscriptionWithUsageResponse>({
     queryKey: billingKeys.subscription(),
     queryFn:  () => jsonFetch<SubscriptionWithUsageResponse>(apiUrl('billing/subscription'), token),
+    enabled:  !!token,
+    staleTime: 60_000,
+  })
+}
+
+export function useEmmaUsage() {
+  const token = useToken()
+  return useQuery<EmmaUsageResponse>({
+    queryKey: billingKeys.emmaUsage(),
+    queryFn:  () => jsonFetch<EmmaUsageResponse>(apiUrl('billing/emma-usage'), token),
     enabled:  !!token,
     staleTime: 60_000,
   })

@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useSearchParams, useRouter, usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { BillingSummaryCard } from './billing-summary-card'
+import { EmmaUsageCard } from './emma-usage-card'
 import { UsagePlansTab } from './usage-plans-tab'
 import { PaymentInfoTab } from './payment-info-tab'
 import { PaymentHistoryTab } from './payment-history-tab'
@@ -54,6 +55,8 @@ export function BillingView() {
       </header>
 
       <BillingSummaryCard />
+
+      <EmmaUsageCard />
 
       <div role="tablist" className="flex gap-1 border-b border-border">
         {TABS.map((tab) => {

@@ -129,3 +129,22 @@ export interface SubscriptionWithUsageResponse {
 export interface ManageUrlResponse {
   url: string
 }
+
+// ─── Emma AI usage API response shapes ───────────────────────────────
+
+export interface EmmaUsageStore {
+  store_id: string
+  store_name: string
+  count: number
+  cost_eur: number
+}
+
+export interface EmmaUsageResponse {
+  rate_eur: number
+  currency: 'EUR'
+  period_start: string | null
+  period_end: string | null
+  total_count: number
+  total_cost_eur: number
+  stores: EmmaUsageStore[]
+}

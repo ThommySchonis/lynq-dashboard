@@ -9,10 +9,14 @@ import { useInboxUI } from '@/stores/inbox-ui'
 import { useAuthStore } from '@/stores/auth'
 import { useConversation } from '@/hooks/inbox/use-inbox-data'
 import { useAddNote } from '@/hooks/inbox/use-inbox-mutations'
+import { usePermissions } from '@/hooks/use-permissions'
 import { useMemo } from 'react'
 import { toast as sonnerToast } from 'sonner'
 
 export function NotesSection() {
+  const { can } = usePermissions()
+  const canManage = can.manageConversations
+  const notePermissionTitle = !canManage ? 'View-only access — ask an admin to add notes.' : undefined
   const isSuspended = useAuthStore((s) => s.isSuspended)
   const selectedThreadId = useInboxUI((s) => s.selectedThreadId)
   const showNotes = useInboxUI((s) => s.showNotes)
@@ -83,13 +87,16 @@ export function NotesSection() {
             if (e.key === 'Enter' && !e.shiftKey) void handleAddNote()
           }}
           placeholder="Add an internal note..."
-          className="flex-1 px-3 py-2 border border-[#FDE68A] rounded-lg text-[12.5px] text-foreground bg-[rgba(251,191,36,0.04)] font-inherit outline-none transition-[border-color] duration-200"
+          disabled={isSuspended || !canManage}
+          title={notePermissionTitle}
+          className="flex-1 px-3 py-2 border border-[#FDE68A] rounded-lg text-[12.5px] text-foreground bg-[rgba(251,191,36,0.04)] font-inherit outline-none transition-[border-color] duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
         />
         <Button
           variant="outline"
           onClick={() => void handleAddNote()}
-          disabled={isSuspended || addingNote || !noteInput.trim()}
-          className={`px-3.5 py-2 rounded-lg border border-[#FDE68A] bg-[rgba(251,191,36,0.08)] text-[#F59E0B] text-xs font-semibold font-inherit transition-all duration-150 shrink-0 whitespace-nowrap ${addingNote || !noteInput.trim() ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+          disabled={isSuspended || addingNote || !noteInput.trim() || !canManage}
+          title={notePermissionTitle}
+          className={`px-3.5 py-2 rounded-lg border border-[#FDE68A] bg-[rgba(251,191,36,0.08)] text-[#F59E0B] text-xs font-semibold font-inherit transition-all duration-150 shrink-0 whitespace-nowrap ${addingNote || !noteInput.trim() || !canManage ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
         >
           {addingNote ? 'Adding...' : 'Add Note'}
         </Button>

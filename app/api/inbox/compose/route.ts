@@ -1,4 +1,6 @@
 import { getAuthContext, requireWriteAccess } from '@/lib/auth'
+import { can } from '@/lib/permissions'
+import type { Role } from '@/types/database'
 import { sendNewEmail } from '@/lib/conversationEngine'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import { NextResponse } from 'next/server'
@@ -17,6 +19,9 @@ export async function POST(request: NextRequest) {
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const blocked = requireWriteAccess(ctx)
   if (blocked) return blocked
+  if (!can.replyToTickets(ctx.role as Role)) {
+    return NextResponse.json({ error: 'forbidden' }, { status: 403 })
+  }
 
   const rl = checkRateLimit(`ws:${ctx.workspaceId}:inbox`, 60, 60_000)
   if (!rl.allowed) {

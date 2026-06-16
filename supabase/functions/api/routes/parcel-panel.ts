@@ -1,5 +1,6 @@
 import { Hono } from 'hono'
 import { authMiddleware } from '../middleware/auth.ts'
+import { requireCapability } from '../middleware/workspace.ts'
 import { getAdminClient } from '../lib/supabase.ts'
 import type { AuthContext } from '../lib/types.ts'
 
@@ -43,9 +44,8 @@ async function verifyHmac(
 parcelPanel.post('/connect', async (c) => {
   const ctx = getCtx(c)
 
-  if (ctx.role === 'observer') {
-    return c.json({ error: 'Observers cannot connect integrations', code: 'permission_denied' }, 403)
-  }
+  const blocked = requireCapability('manageWorkspace')(c)
+  if (blocked) return blocked
 
   const body = await c.req.json<{ apiKey: string }>()
   if (!body.apiKey) {

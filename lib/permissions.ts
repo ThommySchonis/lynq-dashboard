@@ -22,7 +22,12 @@ export const can = {
 
   // Ticket operations
   replyToTickets:  (role: Role) => ['owner', 'admin', 'agent'].includes(role),
+  // Conversation edits — status, assignment, internal notes
+  manageConversations: (role: Role) => ['owner', 'admin', 'agent'].includes(role),
   viewTickets:     (_role: Role) => true,  // all four roles can view
+
+  // Shopify order write actions — refund, cancel, edit, duplicate, fulfill, note, address
+  manageOrders:    (role: Role) => ['owner', 'admin', 'agent'].includes(role),
 
   // Macros — observers are read-only; agents+ can create/edit/archive
   viewMacros:      (_role: Role) => true,

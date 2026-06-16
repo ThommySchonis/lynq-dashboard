@@ -1,5 +1,6 @@
 import { Hono } from 'hono'
 import { authMiddleware } from '../middleware/auth.ts'
+import { requireCapability } from '../middleware/workspace.ts'
 import { getAdminClient } from '../lib/supabase.ts'
 import { getStoreCredentials } from '../lib/store-credentials.ts'
 import { logger } from '../lib/logger.ts'
@@ -438,6 +439,8 @@ interface ShopifyShopResponse {
 shopify.post('/manual-connect', async (c) => {
   const ctx = c.get('authContext') as AuthContext
   if (requireWriteAccess(ctx)) return c.json({ error: 'workspace_suspended' }, 403)
+  const capBlocked = requireCapability('manageWorkspace')(c)
+  if (capBlocked) return capBlocked
 
   const body = await c.req.json<{ shop?: string; accessToken?: string }>()
   if (!body.shop || !body.accessToken) {
@@ -534,6 +537,8 @@ shopify.post('/manual-connect', async (c) => {
 shopify.delete('/manual-connect', async (c) => {
   const ctx = c.get('authContext') as AuthContext
   if (requireWriteAccess(ctx)) return c.json({ error: 'workspace_suspended' }, 403)
+  const capBlocked = requireCapability('manageWorkspace')(c)
+  if (capBlocked) return capBlocked
 
   const sb = getAdminClient()
   await sb.from('integrations').update({
@@ -562,6 +567,8 @@ function normalizeShopDomain(shop: unknown): string {
 shopify.post('/link', async (c) => {
   const ctx = c.get('authContext') as AuthContext
   if (requireWriteAccess(ctx)) return c.json({ error: 'workspace_suspended' }, 403)
+  const capBlocked = requireCapability('manageWorkspace')(c)
+  if (capBlocked) return capBlocked
 
   const body = await c.req.json<{ shop?: unknown }>()
   const shopDomain = normalizeShopDomain(body.shop)
@@ -601,6 +608,8 @@ shopify.post('/link', async (c) => {
 shopify.post('/orders/:id/refund', async (c) => {
   const ctx = c.get('authContext') as AuthContext
   if (requireWriteAccess(ctx)) return c.json({ error: 'workspace_suspended' }, 403)
+  const capBlocked = requireCapability('manageOrders')(c)
+  if (capBlocked) return capBlocked
 
   const storeId = requireStoreId(c)
   if (!storeId) return c.json({ error: 'store_id is required' }, 400)
@@ -621,6 +630,8 @@ shopify.post('/orders/:id/refund', async (c) => {
 shopify.post('/orders/:id/cancel', async (c) => {
   const ctx = c.get('authContext') as AuthContext
   if (requireWriteAccess(ctx)) return c.json({ error: 'workspace_suspended' }, 403)
+  const capBlocked = requireCapability('manageOrders')(c)
+  if (capBlocked) return capBlocked
 
   const storeId = requireStoreId(c)
   if (!storeId) return c.json({ error: 'store_id is required' }, 400)
@@ -641,6 +652,8 @@ shopify.post('/orders/:id/cancel', async (c) => {
 shopify.post('/orders/:id/edit', async (c) => {
   const ctx = c.get('authContext') as AuthContext
   if (requireWriteAccess(ctx)) return c.json({ error: 'workspace_suspended' }, 403)
+  const capBlocked = requireCapability('manageOrders')(c)
+  if (capBlocked) return capBlocked
 
   const storeId = requireStoreId(c)
   if (!storeId) return c.json({ error: 'store_id is required' }, 400)
@@ -661,6 +674,8 @@ shopify.post('/orders/:id/edit', async (c) => {
 shopify.post('/orders/:id/duplicate', async (c) => {
   const ctx = c.get('authContext') as AuthContext
   if (requireWriteAccess(ctx)) return c.json({ error: 'workspace_suspended' }, 403)
+  const capBlocked = requireCapability('manageOrders')(c)
+  if (capBlocked) return capBlocked
 
   const storeId = requireStoreId(c)
   if (!storeId) return c.json({ error: 'store_id is required' }, 400)
@@ -681,6 +696,8 @@ shopify.post('/orders/:id/duplicate', async (c) => {
 shopify.put('/orders/:id/note', async (c) => {
   const ctx = c.get('authContext') as AuthContext
   if (requireWriteAccess(ctx)) return c.json({ error: 'workspace_suspended' }, 403)
+  const capBlocked = requireCapability('manageOrders')(c)
+  if (capBlocked) return capBlocked
 
   const storeId = requireStoreId(c)
   if (!storeId) return c.json({ error: 'store_id is required' }, 400)
@@ -701,6 +718,8 @@ shopify.put('/orders/:id/note', async (c) => {
 shopify.put('/orders/:id/address', async (c) => {
   const ctx = c.get('authContext') as AuthContext
   if (requireWriteAccess(ctx)) return c.json({ error: 'workspace_suspended' }, 403)
+  const capBlocked = requireCapability('manageOrders')(c)
+  if (capBlocked) return capBlocked
 
   const storeId = requireStoreId(c)
   if (!storeId) return c.json({ error: 'store_id is required' }, 400)
@@ -721,6 +740,8 @@ shopify.put('/orders/:id/address', async (c) => {
 shopify.post('/orders/:id/fulfill', async (c) => {
   const ctx = c.get('authContext') as AuthContext
   if (requireWriteAccess(ctx)) return c.json({ error: 'workspace_suspended' }, 403)
+  const capBlocked = requireCapability('manageOrders')(c)
+  if (capBlocked) return capBlocked
 
   const storeId = requireStoreId(c)
   if (!storeId) return c.json({ error: 'store_id is required' }, 400)
@@ -741,6 +762,8 @@ shopify.post('/orders/:id/fulfill', async (c) => {
 shopify.post('/orders/create', async (c) => {
   const ctx = c.get('authContext') as AuthContext
   if (requireWriteAccess(ctx)) return c.json({ error: 'workspace_suspended' }, 403)
+  const capBlocked = requireCapability('manageOrders')(c)
+  if (capBlocked) return capBlocked
 
   const storeId = requireStoreId(c)
   if (!storeId) return c.json({ error: 'store_id is required' }, 400)
@@ -762,6 +785,8 @@ shopify.post('/orders/create', async (c) => {
 shopify.post('/cancel-order', async (c) => {
   const ctx = c.get('authContext') as AuthContext
   if (requireWriteAccess(ctx)) return c.json({ error: 'workspace_suspended' }, 403)
+  const capBlocked = requireCapability('manageOrders')(c)
+  if (capBlocked) return capBlocked
 
   const storeId = requireStoreId(c)
   if (!storeId) return c.json({ error: 'store_id is required' }, 400)
@@ -782,6 +807,8 @@ shopify.post('/cancel-order', async (c) => {
 shopify.post('/refund-order', async (c) => {
   const ctx = c.get('authContext') as AuthContext
   if (requireWriteAccess(ctx)) return c.json({ error: 'workspace_suspended' }, 403)
+  const capBlocked = requireCapability('manageOrders')(c)
+  if (capBlocked) return capBlocked
 
   const storeId = requireStoreId(c)
   if (!storeId) return c.json({ error: 'store_id is required' }, 400)
@@ -802,6 +829,8 @@ shopify.post('/refund-order', async (c) => {
 shopify.post('/duplicate-order', async (c) => {
   const ctx = c.get('authContext') as AuthContext
   if (requireWriteAccess(ctx)) return c.json({ error: 'workspace_suspended' }, 403)
+  const capBlocked = requireCapability('manageOrders')(c)
+  if (capBlocked) return capBlocked
 
   const storeId = requireStoreId(c)
   if (!storeId) return c.json({ error: 'store_id is required' }, 400)
@@ -822,6 +851,8 @@ shopify.post('/duplicate-order', async (c) => {
 shopify.post('/edit-address', async (c) => {
   const ctx = c.get('authContext') as AuthContext
   if (requireWriteAccess(ctx)) return c.json({ error: 'workspace_suspended' }, 403)
+  const capBlocked = requireCapability('manageOrders')(c)
+  if (capBlocked) return capBlocked
 
   const storeId = requireStoreId(c)
   if (!storeId) return c.json({ error: 'store_id is required' }, 400)

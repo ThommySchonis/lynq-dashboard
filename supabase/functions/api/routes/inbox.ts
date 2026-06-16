@@ -1,6 +1,6 @@
 import { Hono } from 'hono'
 import { authMiddleware } from '../middleware/auth.ts'
-import { requireWriteAccess } from '../middleware/workspace.ts'
+import { requireWriteAccess, requireCapability } from '../middleware/workspace.ts'
 import { getAdminClient } from '../lib/supabase.ts'
 import type { AuthContext } from '../lib/types.ts'
 
@@ -65,7 +65,7 @@ app.get('/accounts', async (c) => {
 
 app.delete('/accounts/:id', async (c) => {
   const ctx = c.get('authContext') as AuthContext
-  const blocked = requireWriteAccess(c)
+  const blocked = requireWriteAccess(c) ?? requireCapability('manageWorkspace')(c)
   if (blocked) return blocked
 
   const sb = getAdminClient()

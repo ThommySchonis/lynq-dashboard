@@ -1,6 +1,6 @@
 import { Hono } from 'hono'
 import { authMiddleware } from '../middleware/auth.ts'
-import { requireWriteAccess } from '../middleware/workspace.ts'
+import { requireWriteAccess, requireCapability } from '../middleware/workspace.ts'
 import { getAdminClient } from '../lib/supabase.ts'
 import type { AuthContext } from '../lib/types.ts'
 
@@ -166,7 +166,7 @@ app.get('/:id', async (c) => {
 
 app.patch('/:id', async (c) => {
   const ctx = c.get('authContext') as AuthContext
-  const blocked = requireWriteAccess(c)
+  const blocked = requireWriteAccess(c) ?? requireCapability('manageConversations')(c)
   if (blocked) return blocked
   const sb = getAdminClient()
   const id = c.req.param('id')
@@ -247,7 +247,7 @@ app.get('/:id/notes', async (c) => {
 
 app.post('/:id/notes', async (c) => {
   const ctx = c.get('authContext') as AuthContext
-  const blocked = requireWriteAccess(c)
+  const blocked = requireWriteAccess(c) ?? requireCapability('manageConversations')(c)
   if (blocked) return blocked
   const sb = getAdminClient()
   const id = c.req.param('id')

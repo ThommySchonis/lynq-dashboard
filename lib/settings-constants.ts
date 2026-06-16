@@ -5,11 +5,14 @@
 
 import { Monitor, Moon, Sun } from 'lucide-react'
 import type { MemberRole, Theme } from '@/types/settings'
+import type { can } from '@/lib/permissions'
 // ── Navigation ──
 
 export interface SettingsNavItem {
   label: string
   href: string
+  /** Capability required to see this item. Omitted = always visible. */
+  capability?: keyof typeof can
 }
 
 export interface SettingsNavGroup {
@@ -19,21 +22,21 @@ export interface SettingsNavGroup {
 
 const RAW_SETTINGS_NAV: SettingsNavGroup[] = [
   { label: 'WORKSPACE', items: [
-    { label: 'General',  href: '/settings/workspace/general' },
-    { label: 'Users',    href: '/settings/workspace/members' },
-    { label: 'Macros',   href: '/settings/workspace/macros' },
-    { label: 'Tags',     href: '/settings/workspace/tags' },
-    { label: 'Stores',   href: '/settings/workspace/stores' },
-    { label: 'Billing',  href: '/settings/workspace/billing' },
+    { label: 'General',  href: '/settings/workspace/general', capability: 'manageWorkspace' },
+    { label: 'Users',    href: '/settings/workspace/members', capability: 'inviteMembers'  },
+    { label: 'Macros',   href: '/settings/workspace/macros',  capability: 'viewMacros'     },
+    { label: 'Tags',     href: '/settings/workspace/tags',    capability: 'viewTags'       },
+    { label: 'Stores',   href: '/settings/workspace/stores',  capability: 'manageWorkspace' },
+    { label: 'Billing',  href: '/settings/workspace/billing', capability: 'manageBilling'  },
   ]},
   { label: 'AI AGENT', items: [
-    { label: 'Onboarding', href: '/settings/ai-agent/onboarding' },
-    { label: 'Lessons',    href: '/settings/ai-agent/lessons' },
-    { label: 'Rules',      href: '/settings/ai-agent/rules' },
+    { label: 'Onboarding', href: '/settings/ai-agent/onboarding', capability: 'manageWorkspace' },
+    { label: 'Lessons',    href: '/settings/ai-agent/lessons',    capability: 'manageWorkspace' },
+    { label: 'Rules',      href: '/settings/ai-agent/rules',      capability: 'manageWorkspace' },
   ]},
   { label: 'INTEGRATIONS', items: [
-    { label: 'Email Display',    href: '/settings/integrations/email-display' },
-    { label: 'Data Migration',   href: '/settings/integrations/migrations'    },
+    { label: 'Email Display',    href: '/settings/integrations/email-display', capability: 'manageWorkspace' },
+    { label: 'Data Migration',   href: '/settings/integrations/migrations',    capability: 'manageMigrations' },
   ]},
   { label: 'PERSONAL', items: [
     { label: 'Profile',        href: '/settings/personal/profile' },
@@ -46,6 +49,21 @@ export const SETTINGS_NAV: SettingsNavGroup[] = RAW_SETTINGS_NAV
 /** Flat list of all settings items — use for search/filtering. */
 export const ALL_SETTINGS_ITEMS: Array<SettingsNavItem & { group: string }> =
   SETTINGS_NAV.flatMap(g => g.items.map(item => ({ ...item, group: g.label })))
+
+/**
+ * Filters the settings nav by the current role's capabilities.
+ * Items without a `capability` are always kept; groups left empty are dropped.
+ */
+export function visibleSettingsNav(
+  caps: Record<keyof typeof can, boolean>,
+): SettingsNavGroup[] {
+  return SETTINGS_NAV
+    .map(group => ({
+      ...group,
+      items: group.items.filter(item => !item.capability || caps[item.capability]),
+    }))
+    .filter(group => group.items.length > 0)
+}
 
 // ── Roles ──
 

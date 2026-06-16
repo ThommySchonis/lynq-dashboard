@@ -14,6 +14,7 @@ import { ForwardingSetupWizard } from '@/components/features/settings/integratio
 import { useUpdateStore, useDisconnectStore, useDeleteStore, useDeleteStoreEmailAccount } from '@/hooks/stores'
 import { useStoreEmailAccounts } from '@/hooks/stores'
 import { useAuthStore } from '@/stores/auth'
+import { usePermissions } from '@/hooks/use-permissions'
 import type { StorePublic } from '@/types/stores'
 
 interface StoreCardProps {
@@ -37,6 +38,9 @@ export function StoreCard({ store }: StoreCardProps) {
   const { data: emailConfigs } = useStoreEmailAccounts(store.id)
   const token = useAuthStore((s) => s.session?.access_token ?? '')
   const isSuspended = useAuthStore((s) => s.isSuspended)
+  const { can } = usePermissions()
+  const canManage = can.manageWorkspace
+  const adminTitle = canManage ? undefined : 'Admin access required to manage store connections.'
 
   const isConnected = !!store.shopify_connected_at
 
@@ -106,7 +110,8 @@ export function StoreCard({ store }: StoreCardProps) {
               size="sm"
               variant="outline"
               onClick={() => setDisconnectOpen(true)}
-              disabled={isSuspended || disconnectMutation.isPending}
+              disabled={isSuspended || disconnectMutation.isPending || !canManage}
+              title={adminTitle}
             >
               <Unplug className="size-3.5" />
               Disconnect
@@ -116,7 +121,8 @@ export function StoreCard({ store }: StoreCardProps) {
             size="sm"
             variant="destructive"
             onClick={() => setDeleteOpen(true)}
-            disabled={isSuspended || deleteMutation.isPending}
+            disabled={isSuspended || deleteMutation.isPending || !canManage}
+            title={adminTitle}
           >
             <Trash2 className="size-3.5" />
             Delete
@@ -148,7 +154,8 @@ export function StoreCard({ store }: StoreCardProps) {
                     size="sm"
                     variant="ghost"
                     onClick={() => deleteEmailMutation.mutate({ storeId: store.id, configId: config.id })}
-                    disabled={deleteEmailMutation.isPending}
+                    disabled={deleteEmailMutation.isPending || !canManage}
+                    title={adminTitle}
                   >
                     <X className="size-3.5" />
                   </Button>
@@ -160,7 +167,9 @@ export function StoreCard({ store }: StoreCardProps) {
                 <button
                   type="button"
                   onClick={() => setForwardingModalOpen(true)}
-                  className="flex items-center gap-2.5 rounded-lg border border-border bg-card px-3 py-2.5 text-left text-xs font-semibold text-foreground transition-colors hover:border-primary/50 hover:shadow-sm"
+                  disabled={!canManage}
+                  title={adminTitle}
+                  className="flex items-center gap-2.5 rounded-lg border border-border bg-card px-3 py-2.5 text-left text-xs font-semibold text-foreground transition-colors hover:border-primary/50 hover:shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <span className="flex size-5 items-center justify-center flex-shrink-0">
                     <Mail className="size-4 text-muted-foreground" />
@@ -175,7 +184,9 @@ export function StoreCard({ store }: StoreCardProps) {
                   onClick={() => {
                     window.location.href = `/api/auth/gmail?t=${token}&store_id=${store.id}`
                   }}
-                  className="flex items-center gap-2.5 rounded-lg border border-border bg-card px-3 py-2.5 text-left text-xs font-semibold text-foreground transition-colors hover:border-primary/50 hover:shadow-sm"
+                  disabled={!canManage}
+                  title={adminTitle}
+                  className="flex items-center gap-2.5 rounded-lg border border-border bg-card px-3 py-2.5 text-left text-xs font-semibold text-foreground transition-colors hover:border-primary/50 hover:shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <span className="flex size-5 items-center justify-center flex-shrink-0">
                     <Image src="/icons/gmail.svg" alt="Gmail" width={18} height={14} />
@@ -190,7 +201,9 @@ export function StoreCard({ store }: StoreCardProps) {
                   onClick={() => {
                     window.location.href = `/api/auth/outlook?t=${token}&store_id=${store.id}`
                   }}
-                  className="flex items-center gap-2.5 rounded-lg border border-border bg-card px-3 py-2.5 text-left text-xs font-semibold text-foreground transition-colors hover:border-primary/50 hover:shadow-sm"
+                  disabled={!canManage}
+                  title={adminTitle}
+                  className="flex items-center gap-2.5 rounded-lg border border-border bg-card px-3 py-2.5 text-left text-xs font-semibold text-foreground transition-colors hover:border-primary/50 hover:shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <span className="flex size-5 items-center justify-center flex-shrink-0">
                     <Image src="/icons/outlook.svg" alt="Outlook" width={18} height={18} />
@@ -203,7 +216,9 @@ export function StoreCard({ store }: StoreCardProps) {
                 <button
                   type="button"
                   onClick={() => setCustomModalOpen(true)}
-                  className="flex items-center gap-2.5 rounded-lg border border-border bg-card px-3 py-2.5 text-left text-xs font-semibold text-foreground transition-colors hover:border-primary/50 hover:shadow-sm"
+                  disabled={!canManage}
+                  title={adminTitle}
+                  className="flex items-center gap-2.5 rounded-lg border border-border bg-card px-3 py-2.5 text-left text-xs font-semibold text-foreground transition-colors hover:border-primary/50 hover:shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <span className="flex size-5 items-center justify-center flex-shrink-0">
                     <Mail className="size-4 text-muted-foreground" />

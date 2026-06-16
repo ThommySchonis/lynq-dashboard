@@ -43,6 +43,7 @@ import {
   useTranslateMessage,
 } from '@/hooks/inbox/use-inbox-mutations'
 import { useComposerActions } from '@/hooks/inbox/use-composer-actions'
+import { usePermissions } from '@/hooks/use-permissions'
 import { useQueryClient } from '@tanstack/react-query'
 import { EmmaSuggestionCard } from './emma-suggestion-card'
 import { usePendingDraft, useUpdateDraftStatus } from '@/hooks/ai'
@@ -75,6 +76,10 @@ export function ConversationPanel() {
   const session = useAuthStore((s) => s.session)
   const token = session?.access_token ?? ''
   const isSuspended = useAuthStore((s) => s.isSuspended)
+
+  // Permissions
+  const { can } = usePermissions()
+  const canReply = can.replyToTickets
 
   // Zustand UI state
   const selectedThreadId = useInboxUI((s) => s.selectedThreadId)
@@ -555,17 +560,24 @@ export function ConversationPanel() {
               {/* Attachments */}
               <AttachmentBar />
 
+              {/* View-only hint */}
+              {!canReply && (
+                <p className="px-4 py-2 text-xs text-muted-foreground">
+                  View-only access — you cannot reply to tickets.
+                </p>
+              )}
+
               {/* Contenteditable composer */}
               <div
                 ref={composerRef}
-                contentEditable
+                contentEditable={canReply}
                 suppressContentEditableWarning
                 data-placeholder={composerTab === 'reply' ? 'Click here to reply, or press r.' : 'Internal note — not visible to customer…'}
                 onInput={(e) => setReply(e.currentTarget.textContent)}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) void handleSend()
                 }}
-                className={`compose-ta w-full resize-none outline-none bg-transparent px-4 py-3 text-sm text-foreground leading-relaxed min-h-[90px] tracking-[.005em] min-h-[150px] ${composerTab === 'note' ? 'bg-[rgba(251,191,36,0.03)]' : 'bg-transparent'}`}
+                className={`compose-ta w-full resize-none outline-none bg-transparent px-4 py-3 text-sm text-foreground leading-relaxed min-h-[90px] tracking-[.005em] min-h-[150px] ${composerTab === 'note' ? 'bg-[rgba(251,191,36,0.03)]' : 'bg-transparent'} ${!canReply ? 'opacity-50 cursor-not-allowed' : ''}`}
               />
 
               {/* AI generating dots */}
@@ -619,7 +631,7 @@ export function ConversationPanel() {
                 onSend={() => void handleSend()}
                 onSendResolve={() => void handleSendResolve()}
                 hasMessages={messages.length > 0}
-                disabled={isSuspended}
+                disabled={isSuspended || !canReply}
               />
             </div>
           </>

@@ -15,6 +15,7 @@ import { SidebarUser } from './sidebar-user'
 import { StoreSwitcher } from './store-switcher'
 import { SearchButton } from '@/components/features/search/search-button'
 import { SearchDialog } from '@/components/features/search/search-dialog'
+import { NotificationBell } from '@/components/features/notifications/notification-bell'
 
 const NAV_ITEMS = [
   { href: '/home',          icon: Home,           label: 'Home'          },
@@ -82,6 +83,7 @@ export function Sidebar() {
           )}
         </Link>
         <SearchButton collapsed={collapsed} />
+        <NotificationBell collapsed={collapsed} />
       </div>
 
       {/* Store switcher */}

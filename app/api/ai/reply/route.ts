@@ -442,10 +442,33 @@ Write only the reply body. Do not include subject lines, metadata, or explanatio
           auto_sent_at:             autoSentAt,
           auto_send_blocked_reason: autoSendBlockedReason,
           status:                   autoSentAt ? 'auto_sent' : 'pending',
-        }).select('id').single()
+        }).select('id').single<{ id: string }>()
         draftId = insertedDraft?.id ?? null
       } catch (err) {
         logger.error('[ai/reply]', 'ai_drafts insert failed', err)
+      }
+
+      // Surface a review notification only when the draft awaits the agent
+      // (not auto-sent). The conversation subject / customer email aren't
+      // loaded in this route, so we use the generic review fallback. The
+      // partial UNIQUE index on (source_type, source_id) makes this
+      // idempotent. This write must never block reply generation.
+      if (!autoSentAt && draftId) {
+        try {
+          await supabaseAdmin.from('notifications').insert({
+            category:    'emma_pending_draft',
+            type:        'info',
+            workspace_id: ctx.workspaceId,
+            title:       'Emma drafted a reply',
+            body:        'A new reply is ready for your review',
+            link:        `/inbox?conversation_id=${threadId}`,
+            source_type: 'ai_draft',
+            source_id:   draftId,
+          })
+        } catch (err) {
+          // best-effort: never block reply generation on a notification write
+          logger.error('[ai/reply]', 'notification insert failed', err)
+        }
       }
     }
 

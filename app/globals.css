@@ -13,7 +13,7 @@
 /* ── Theme tokens — light is default ────────────────────────────────────────── */
 :root {
   /* Standard shadcn tokens */
-  --background: #F9F8FF;
+  --background: #F8FAFC;
   --foreground: #0F0F10;
   --card: #FFFFFF;
   --card-foreground: #0F0F10;
@@ -308,9 +308,9 @@
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 1.4);
-  --radius-2xl: calc(var(--radius) * 1.8);
-  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-xl: calc(var(--radius) * 1.2);
+  --radius-2xl: calc(var(--radius) * 1.6);
+  --radius-3xl: calc(var(--radius) * 2.4);
   --radius-4xl: calc(var(--radius) * 2.6);
 
   /* Animations */

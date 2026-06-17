@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { ShoppingBag, Store, Plus, MoreVertical } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Badge } from '@/components/ui/badge'
 import { AddStoreModal } from '@/components/features/settings/stores/add-store-modal'
 import { useConnectShopify } from '@/hooks/onboarding'
 import { WizardShell } from '../wizard-shell'
@@ -12,11 +13,12 @@ import { StepHeading } from '../step-heading'
 import { IconBadge } from '../icon-badge'
 
 interface StepConnectStoreProps {
+  stepIndex: number
   onBack: () => void
   onNext: () => void
 }
 
-export function StepConnectStore({ onBack, onNext }: StepConnectStoreProps) {
+export function StepConnectStore({ stepIndex, onBack, onNext }: StepConnectStoreProps) {
   const [shop, setShop] = useState('')
   const [addStoreOpen, setAddStoreOpen] = useState(false)
   const connectShopify = useConnectShopify()
@@ -34,7 +36,7 @@ export function StepConnectStore({ onBack, onNext }: StepConnectStoreProps) {
   }
 
   return (
-    <WizardShell footer={<ProgressFooter stepIndex={3} onBack={onBack} onNext={onNext} />}>
+    <WizardShell footer={<ProgressFooter stepIndex={stepIndex} onBack={onBack} onNext={onNext} />}>
       <div className="flex flex-col gap-6">
         <IconBadge icon={ShoppingBag} />
 
@@ -72,12 +74,8 @@ export function StepConnectStore({ onBack, onNext }: StepConnectStoreProps) {
             <Store className="size-5" />
           </div>
           <span className="text-sm font-medium text-foreground">5u3z59-ct</span>
-          <span className="rounded-md bg-success-soft px-2 py-0.5 text-xs font-medium text-success">
-            Active
-          </span>
-          <span className="rounded-md bg-info-soft px-2 py-0.5 text-xs font-medium text-info">
-            Payment
-          </span>
+          <Badge variant="success" className="rounded-md">Active</Badge>
+          <Badge variant="info" className="rounded-md">Payment</Badge>
           <button
             type="button"
             aria-label="Store options"

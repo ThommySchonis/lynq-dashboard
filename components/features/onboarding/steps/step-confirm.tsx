@@ -8,14 +8,15 @@ import { StepHeading } from '../step-heading'
 import { IconBadge } from '../icon-badge'
 
 interface StepConfirmProps {
+  stepIndex: number
   email: string
   onBack: () => void
   onNext: () => void
 }
 
-export function StepConfirm({ email, onBack, onNext }: StepConfirmProps) {
+export function StepConfirm({ stepIndex, email, onBack, onNext }: StepConfirmProps) {
   return (
-    <WizardShell footer={<ProgressFooter stepIndex={2} onBack={onBack} onNext={onNext} />}>
+    <WizardShell footer={<ProgressFooter stepIndex={stepIndex} onBack={onBack} onNext={onNext} />}>
       <div className="mx-auto flex max-w-md flex-col items-center gap-6 text-center">
         <IconBadge icon={Mail} />
 

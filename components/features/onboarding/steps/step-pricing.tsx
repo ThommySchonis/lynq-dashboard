@@ -8,6 +8,7 @@ import { PRICING_PLANS } from '@/lib/onboarding-constants'
 import type { PricingPlan } from '@/lib/onboarding-constants'
 
 interface StepPricingProps {
+  stepIndex: number
   account: { name: string; email: string }
   plan: PricingPlan['id'] | null
   onSelect: (plan: PricingPlan['id']) => void
@@ -15,12 +16,12 @@ interface StepPricingProps {
   onNext: () => void
 }
 
-export function StepPricing({ account, plan, onSelect, onBack, onNext }: StepPricingProps) {
+export function StepPricing({ stepIndex, account, plan, onSelect, onBack, onNext }: StepPricingProps) {
   return (
     <WizardShell
       wide
       account={account}
-      footer={<ProgressFooter stepIndex={6} onBack={onBack} onNext={onNext} nextDisabled={!plan} />}
+      footer={<ProgressFooter stepIndex={stepIndex} onBack={onBack} onNext={onNext} nextDisabled={!plan} />}
     >
       <div className="flex flex-col gap-8">
         <StepHeading

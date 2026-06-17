@@ -12,12 +12,13 @@ import { accountSchema } from '@/lib/onboarding-constants'
 import type { AccountFormData } from '@/lib/onboarding-constants'
 
 interface StepAccountProps {
+  stepIndex: number
   defaultValues: AccountFormData
   onBack: () => void
   onNext: (values: AccountFormData) => void
 }
 
-export function StepAccount({ defaultValues, onBack, onNext }: StepAccountProps) {
+export function StepAccount({ stepIndex, defaultValues, onBack, onNext }: StepAccountProps) {
   const [showPassword, setShowPassword] = useState(false)
   const {
     register,
@@ -33,7 +34,7 @@ export function StepAccount({ defaultValues, onBack, onNext }: StepAccountProps)
     <WizardShell
       footer={
         <ProgressFooter
-          stepIndex={1}
+          stepIndex={stepIndex}
           onBack={onBack}
           onNext={() => void handleSubmit(onNext)()}
           nextLabel="Create account"

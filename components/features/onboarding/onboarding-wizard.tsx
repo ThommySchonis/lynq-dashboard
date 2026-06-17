@@ -12,7 +12,7 @@ import { StepTeamVolume } from './steps/step-team-volume'
 import { StepHearAbout } from './steps/step-hear-about'
 import { StepPricing } from './steps/step-pricing'
 import { INITIAL_WIZARD_DATA } from '@/lib/onboarding-constants'
-import type { WizardData, GoalFormData, AccountFormData, PricingPlan } from '@/lib/onboarding-constants'
+import type { WizardData, PricingPlan } from '@/lib/onboarding-constants'
 
 /** Orchestrates the 7-step onboarding wizard. UI-first — state is client-side only. */
 export function OnboardingWizard() {
@@ -56,7 +56,8 @@ export function OnboardingWizard() {
     case 0:
       return (
         <StepGoal
-          defaultValues={{ name: data.name, brandName: data.brandName, goal: (data.goal ?? undefined) as GoalFormData['goal'] }}
+          stepIndex={stepIndex}
+          defaultValues={{ name: data.name, brandName: data.brandName, goal: data.goal ?? undefined }}
           onNext={(values) => {
             patch(values)
             next()
@@ -66,7 +67,8 @@ export function OnboardingWizard() {
     case 1:
       return (
         <StepAccount
-          defaultValues={{ email: data.email, password: data.password } as AccountFormData}
+          stepIndex={stepIndex}
+          defaultValues={{ email: data.email, password: data.password }}
           onBack={back}
           onNext={(values) => {
             patch(values)
@@ -75,12 +77,13 @@ export function OnboardingWizard() {
         />
       )
     case 2:
-      return <StepConfirm email={data.email} onBack={back} onNext={handleConfirmNext} />
+      return <StepConfirm stepIndex={stepIndex} email={data.email} onBack={back} onNext={handleConfirmNext} />
     case 3:
-      return <StepConnectStore onBack={back} onNext={next} />
+      return <StepConnectStore stepIndex={stepIndex} onBack={back} onNext={next} />
     case 4:
       return (
         <StepTeamVolume
+          stepIndex={stepIndex}
           account={account}
           agentCount={data.agentCount}
           ticketVolume={data.ticketVolume}
@@ -92,6 +95,7 @@ export function OnboardingWizard() {
     case 5:
       return (
         <StepHearAbout
+          stepIndex={stepIndex}
           account={account}
           referral={data.referral}
           referralDetails={data.referralDetails}
@@ -103,6 +107,7 @@ export function OnboardingWizard() {
     case 6:
       return (
         <StepPricing
+          stepIndex={stepIndex}
           account={account}
           plan={data.plan}
           onSelect={(plan: PricingPlan['id']) => patch({ plan })}

@@ -1,6 +1,7 @@
 'use client'
 
 import { useForm, Controller } from 'react-hook-form'
+import type { DefaultValues } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Input } from '@/components/ui/input'
 import { WizardShell } from '../wizard-shell'
@@ -11,11 +12,12 @@ import { goalSchema, GOAL_OPTIONS } from '@/lib/onboarding-constants'
 import type { GoalFormData } from '@/lib/onboarding-constants'
 
 interface StepGoalProps {
-  defaultValues: GoalFormData
+  stepIndex: number
+  defaultValues: DefaultValues<GoalFormData>
   onNext: (values: GoalFormData) => void
 }
 
-export function StepGoal({ defaultValues, onNext }: StepGoalProps) {
+export function StepGoal({ stepIndex, defaultValues, onNext }: StepGoalProps) {
   const {
     register,
     handleSubmit,
@@ -31,7 +33,7 @@ export function StepGoal({ defaultValues, onNext }: StepGoalProps) {
     <WizardShell
       footer={
         <ProgressFooter
-          stepIndex={0}
+          stepIndex={stepIndex}
           onNext={() => void handleSubmit(onNext)()}
           nextLabel="Next"
           nextDisabled={!isValid}

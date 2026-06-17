@@ -8,6 +8,7 @@ import { ChoiceChip } from '../choice-chip'
 import { REFERRAL_OPTIONS } from '@/lib/onboarding-constants'
 
 interface StepHearAboutProps {
+  stepIndex: number
   account: { name: string; email: string }
   referral: string | null
   referralDetails: string
@@ -17,6 +18,7 @@ interface StepHearAboutProps {
 }
 
 export function StepHearAbout({
+  stepIndex,
   account,
   referral,
   referralDetails,
@@ -27,7 +29,7 @@ export function StepHearAbout({
   return (
     <WizardShell
       account={account}
-      footer={<ProgressFooter stepIndex={5} onBack={onBack} onNext={onNext} nextDisabled={!referral} />}
+      footer={<ProgressFooter stepIndex={stepIndex} onBack={onBack} onNext={onNext} nextDisabled={!referral} />}
     >
       <div className="flex flex-col gap-8">
         <StepHeading

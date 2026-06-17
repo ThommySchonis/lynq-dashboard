@@ -7,6 +7,7 @@ import { PillGroup } from '../pill-group'
 import { AGENT_COUNT_OPTIONS, TICKET_VOLUME_OPTIONS } from '@/lib/onboarding-constants'
 
 interface StepTeamVolumeProps {
+  stepIndex: number
   account: { name: string; email: string }
   agentCount: string | null
   ticketVolume: string | null
@@ -16,6 +17,7 @@ interface StepTeamVolumeProps {
 }
 
 export function StepTeamVolume({
+  stepIndex,
   account,
   agentCount,
   ticketVolume,
@@ -28,7 +30,7 @@ export function StepTeamVolume({
       account={account}
       footer={
         <ProgressFooter
-          stepIndex={4}
+          stepIndex={stepIndex}
           onBack={onBack}
           onNext={onNext}
           nextDisabled={!agentCount || !ticketVolume}

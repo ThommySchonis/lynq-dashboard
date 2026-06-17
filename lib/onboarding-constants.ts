@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import type { LucideIcon } from 'lucide-react'
+import { LOCALES } from '@/lib/settings-constants'
 import {
   Sparkles,
   ArrowLeftRight,
@@ -31,7 +32,15 @@ export type OnboardingStep = (typeof ONBOARDING_STEPS)[number]
 export const TOTAL_STEPS = ONBOARDING_STEPS.length
 
 // ── Header — language selector ────────────────────────────────────────────────
-// Mirrors the workspace locales in settings (regional-section): en/nl/de/fr/es.
+// Derived from the shared workspace LOCALES (settings) + flags for the header pill.
+
+const LOCALE_FLAGS: Record<string, string> = {
+  en: '🇬🇧',
+  nl: '🇳🇱',
+  de: '🇩🇪',
+  fr: '🇫🇷',
+  es: '🇪🇸',
+}
 
 export interface LocaleOption {
   value: string
@@ -40,13 +49,11 @@ export interface LocaleOption {
   flag: string
 }
 
-export const LOCALE_OPTIONS: LocaleOption[] = [
-  { value: 'en', label: 'English', short: 'EN', flag: '🇬🇧' },
-  { value: 'nl', label: 'Nederlands', short: 'NL', flag: '🇳🇱' },
-  { value: 'de', label: 'Deutsch', short: 'DE', flag: '🇩🇪' },
-  { value: 'fr', label: 'Français', short: 'FR', flag: '🇫🇷' },
-  { value: 'es', label: 'Español', short: 'ES', flag: '🇪🇸' },
-]
+export const LOCALE_OPTIONS: LocaleOption[] = LOCALES.map((locale) => ({
+  ...locale,
+  short: locale.value.toUpperCase(),
+  flag: LOCALE_FLAGS[locale.value] ?? '🏳️',
+}))
 
 // ── Step 1 — Goal ─────────────────────────────────────────────────────────────
 
@@ -160,7 +167,7 @@ const SHARED_TIER_FEATURES = [
 export interface WizardData {
   name: string
   brandName: string
-  goal: string | null
+  goal: GoalFormData['goal'] | null
   email: string
   password: string
   storeConnected: boolean

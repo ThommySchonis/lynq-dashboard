@@ -33,6 +33,7 @@ export function StepHearAbout({
     >
       <div className="flex flex-col gap-6">
         <StepHeading
+          center
           title="How did you find out about us?"
           description="This assists us in comprehending how to connect with more individuals like you."
         />

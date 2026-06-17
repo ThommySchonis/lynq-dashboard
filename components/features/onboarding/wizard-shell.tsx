@@ -4,7 +4,7 @@ import { AccountChip } from './account-chip'
 
 interface WizardShellProps {
   /** Identity chip in the header — shown on later steps once an account exists. */
-  account?: { name: string; email: string }
+  account?: { name: string; email: string; storeName: string }
   /** Footer slot (progress bar + navigation buttons). */
   footer: React.ReactNode
   /** Wider container for the pricing step (3 plan cards). */
@@ -34,7 +34,7 @@ export function WizardShell({ account, footer, wide, children }: WizardShellProp
               exists (5–7) the header's left slot becomes the account chip, whose
               compact brand mark is the only logo — matching the Figma header. */}
           {account ? (
-            <AccountChip name={account.name} email={account.email} />
+            <AccountChip name={account.name} email={account.email} storeName={account.storeName} />
           ) : (
             // eslint-disable-next-line @next/next/no-img-element
             <img src="/logo.png" alt="Lynq & Flow" className="h-[14px] w-[127px]" />

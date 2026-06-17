@@ -8,7 +8,7 @@ import { AGENT_COUNT_OPTIONS, TICKET_VOLUME_OPTIONS } from '@/lib/onboarding-con
 
 interface StepTeamVolumeProps {
   stepIndex: number
-  account: { name: string; email: string }
+  account: { name: string; email: string; storeName: string }
   agentCount: string | null
   ticketVolume: string | null
   onChange: (patch: { agentCount?: string; ticketVolume?: string }) => void

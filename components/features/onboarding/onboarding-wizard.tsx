@@ -29,7 +29,7 @@ export function OnboardingWizard() {
   const back = () => setStepIndex((i) => i - 1)
   const patch = (values: Partial<WizardData>) => setData((d) => ({ ...d, ...values }))
 
-  const account = { name: data.name, email: data.email }
+  const account = { name: data.name, email: data.email, storeName: data.brandName }
 
   // Leaving the email-confirm step into the authenticated portion: persist the
   // brand captured on step 1. No-op until a real session exists (account

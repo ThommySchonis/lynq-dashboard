@@ -9,7 +9,7 @@ import { REFERRAL_OPTIONS } from '@/lib/onboarding-constants'
 
 interface StepHearAboutProps {
   stepIndex: number
-  account: { name: string; email: string }
+  account: { name: string; email: string; storeName: string }
   referral: string | null
   referralDetails: string
   onChange: (patch: { referral?: string; referralDetails?: string }) => void

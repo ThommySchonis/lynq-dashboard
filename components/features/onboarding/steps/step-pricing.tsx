@@ -9,7 +9,7 @@ import type { PricingPlan } from '@/lib/onboarding-constants'
 
 interface StepPricingProps {
   stepIndex: number
-  account: { name: string; email: string }
+  account: { name: string; email: string; storeName: string }
   plan: PricingPlan['id'] | null
   onSelect: (plan: PricingPlan['id']) => void
   onBack: () => void

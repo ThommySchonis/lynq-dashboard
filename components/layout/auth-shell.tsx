@@ -20,7 +20,7 @@ export function AuthShell({ title, subtitle, children, className }: AuthShellPro
         <div className="absolute left-1/4 top-1/4 h-64 w-64 animate-[orbFloat1_20s_ease-in-out_infinite] rounded-full bg-purple-600/20 blur-3xl" />
         <div className="absolute bottom-1/3 right-1/4 h-48 w-48 animate-[orbFloat2_25s_ease-in-out_infinite] rounded-full bg-indigo-600/15 blur-3xl" />
         <div className="relative z-10 text-center">
-          <Image src="/logo.png" alt="Lynq & Flow" width={64} height={64} className="mx-auto mb-6" />
+          <Image src="/logo-icon.png" alt="Lynq & Flow" width={55} height={64} className="mx-auto mb-6" />
           <h2 className="text-2xl font-bold text-white">Lynq & Flow</h2>
           <p className="mt-2 text-sm text-white/50">Customer support, simplified.</p>
         </div>

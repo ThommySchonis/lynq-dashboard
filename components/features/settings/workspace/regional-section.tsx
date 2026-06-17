@@ -10,15 +10,7 @@ import {
 } from '@/components/ui/select'
 import { SettingsSection, SettingsCard } from '@/components/features/settings/settings-section'
 import { SettingsField } from '@/components/features/settings/settings-field'
-import { TIMEZONES } from '@/lib/settings-constants'
-
-const LOCALES = [
-  { value: 'en', label: 'English' },
-  { value: 'nl', label: 'Nederlands' },
-  { value: 'de', label: 'Deutsch' },
-  { value: 'fr', label: 'Français' },
-  { value: 'es', label: 'Español' },
-] as const
+import { TIMEZONES, LOCALES } from '@/lib/settings-constants'
 
 const DATE_FORMATS = [
   { value: 'MM/DD/YYYY', label: 'MM/DD/YYYY' },

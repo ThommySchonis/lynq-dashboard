@@ -13,8 +13,8 @@ interface PillGroupProps {
 export function PillGroup({ label, options, value, onChange }: PillGroupProps) {
   return (
     <fieldset>
-      <legend className="mb-3 text-sm font-medium text-foreground-2">{label}</legend>
-      <div className="flex flex-wrap gap-3">
+      <legend className="mb-3 text-sm font-medium text-foreground">{label}</legend>
+      <div className="flex flex-wrap gap-2.5">
         {options.map((option) => {
           const selected = value === option
           return (
@@ -26,7 +26,7 @@ export function PillGroup({ label, options, value, onChange }: PillGroupProps) {
               className={cn(
                 'rounded-lg border px-4 py-2.5 text-sm font-medium transition-colors',
                 selected
-                  ? 'border-primary bg-accent-soft text-primary'
+                  ? 'border-primary bg-card text-foreground'
                   : 'border-border bg-card text-foreground hover:border-border-hover',
               )}
             >

@@ -11,9 +11,9 @@ interface StepHeadingProps {
 export function StepHeading({ title, description, center, className }: StepHeadingProps) {
   return (
     <div className={cn(center && 'text-center', className)}>
-      <h1 className="text-2xl font-semibold tracking-tight text-foreground">{title}</h1>
+      <h1 className="text-lg font-semibold text-foreground">{title}</h1>
       {description && (
-        <p className="mt-2 text-sm leading-relaxed text-foreground-3">{description}</p>
+        <p className="mt-1.5 text-sm leading-relaxed text-foreground-2">{description}</p>
       )}
     </div>
   )

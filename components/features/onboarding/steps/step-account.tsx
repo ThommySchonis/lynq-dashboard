@@ -49,7 +49,7 @@ export function StepAccount({ stepIndex, defaultValues, onBack, onNext }: StepAc
         />
 
         <div className="flex flex-col gap-2">
-          <label htmlFor="email" className="text-sm font-medium text-foreground-2">
+          <label htmlFor="email" className="text-sm font-medium text-foreground">
             Work email
           </label>
           <div className="relative">
@@ -66,7 +66,7 @@ export function StepAccount({ stepIndex, defaultValues, onBack, onNext }: StepAc
         </div>
 
         <div className="flex flex-col gap-2">
-          <label htmlFor="password" className="text-sm font-medium text-foreground-2">
+          <label htmlFor="password" className="text-sm font-medium text-foreground">
             Password
           </label>
           <div className="relative">
@@ -95,11 +95,11 @@ export function StepAccount({ stepIndex, defaultValues, onBack, onNext }: StepAc
 
         <p className="text-xs leading-relaxed text-foreground-3">
           By proceeding, you agree to the{' '}
-          <a href="/terms" className="text-primary hover:underline">
+          <a href="/terms" className="text-foreground-3 underline">
             Terms and Conditions
           </a>{' '}
           and{' '}
-          <a href="/privacy" className="text-primary hover:underline">
+          <a href="/privacy" className="text-foreground-3 underline">
             Privacy Policy
           </a>
           .

@@ -31,13 +31,13 @@ export function StepHearAbout({
       account={account}
       footer={<ProgressFooter stepIndex={stepIndex} onBack={onBack} onNext={onNext} nextDisabled={!referral} />}
     >
-      <div className="flex flex-col gap-8">
+      <div className="flex flex-col gap-6">
         <StepHeading
           title="How did you find out about us?"
           description="This assists us in comprehending how to connect with more individuals like you."
         />
 
-        <div className="flex flex-wrap gap-3">
+        <div className="mx-auto grid w-fit grid-cols-4 gap-5">
           {REFERRAL_OPTIONS.map((option) => (
             <ChoiceChip
               key={option.value}
@@ -50,7 +50,7 @@ export function StepHearAbout({
         </div>
 
         <div className="flex flex-col gap-2">
-          <label htmlFor="referral-details" className="text-sm font-medium text-foreground-2">
+          <label htmlFor="referral-details" className="text-sm font-medium text-foreground">
             Share additional details (optional)
           </label>
           <Textarea

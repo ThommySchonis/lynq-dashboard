@@ -11,11 +11,11 @@ export function IconBadge({ icon: Icon, className }: IconBadgeProps) {
   return (
     <div
       className={cn(
-        'flex size-12 items-center justify-center rounded-xl border border-border bg-card shadow-card',
+        'flex size-8 items-center justify-center rounded-lg bg-card',
         className,
       )}
     >
-      <Icon className="size-6 text-primary" />
+      <Icon className="size-5 text-primary" />
     </div>
   )
 }

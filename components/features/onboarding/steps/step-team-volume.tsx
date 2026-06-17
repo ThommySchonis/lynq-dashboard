@@ -37,7 +37,7 @@ export function StepTeamVolume({
         />
       }
     >
-      <div className="flex flex-col gap-8">
+      <div className="flex flex-col gap-6">
         <StepHeading title="Your team and volume" description="This helps us tailor your experience." />
 
         <PillGroup

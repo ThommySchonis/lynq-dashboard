@@ -1,19 +1,5 @@
 import { z } from 'zod'
-import type { LucideIcon } from 'lucide-react'
 import { LOCALES } from '@/lib/settings-constants'
-import {
-  Sparkles,
-  ArrowLeftRight,
-  Rocket,
-  Search,
-  ShoppingBag,
-  MessageCircle,
-  Share2,
-  Mic,
-  Store,
-  Users,
-  MoreHorizontal,
-} from 'lucide-react'
 
 // ── Step machine ──────────────────────────────────────────────────────────────
 // The Figma flow is a 7-step signup wizard (node 776-17277).
@@ -61,7 +47,8 @@ export interface GoalOption {
   value: string
   title: string
   description: string
-  icon: LucideIcon
+  /** Illustration SVG exported from Figma, served from /public. */
+  icon: string
 }
 
 export const GOAL_OPTIONS: GoalOption[] = [
@@ -69,19 +56,19 @@ export const GOAL_OPTIONS: GoalOption[] = [
     value: 'automate',
     title: 'Automate using artificial intelligence.',
     description: "AI manages 'where's my package' and the other 50 inquiries you receive daily.",
-    icon: Sparkles,
+    icon: '/icons/onboarding/goal-automate.svg',
   },
   {
     value: 'migrate',
     title: 'Transition from a different support system.',
     description: 'Transfer everything from your existing support system.',
-    icon: ArrowLeftRight,
+    icon: '/icons/onboarding/goal-migrate.svg',
   },
   {
     value: 'scratch',
     title: 'Begin anew.',
     description: "New to support? We'll guide you through the process.",
-    icon: Rocket,
+    icon: '/icons/onboarding/goal-scratch.svg',
   },
 ]
 
@@ -120,18 +107,19 @@ export const TICKET_VOLUME_OPTIONS = [
 export interface ReferralOption {
   value: string
   label: string
-  icon: LucideIcon
+  /** Brand SVG exported from Figma, served from /public. */
+  icon: string
 }
 
 export const REFERRAL_OPTIONS: ReferralOption[] = [
-  { value: 'google', label: 'Google', icon: Search },
-  { value: 'shopify', label: 'Shopify', icon: ShoppingBag },
-  { value: 'whatsapp', label: 'WhatsApp', icon: MessageCircle },
-  { value: 'social', label: 'Social media', icon: Share2 },
-  { value: 'podcast', label: 'Podcast', icon: Mic },
-  { value: 'ecommerce', label: 'Ecommerce', icon: Store },
-  { value: 'friends', label: 'Friends', icon: Users },
-  { value: 'other', label: 'Other', icon: MoreHorizontal },
+  { value: 'google', label: 'Google', icon: '/icons/onboarding/google.svg' },
+  { value: 'shopify', label: 'Shopify', icon: '/icons/onboarding/shopify.svg' },
+  { value: 'whatsapp', label: 'WhatsApp', icon: '/icons/onboarding/whatsapp.svg' },
+  { value: 'social', label: 'Social media', icon: '/icons/onboarding/social.svg' },
+  { value: 'podcast', label: 'Podcast', icon: '/icons/onboarding/podcast.svg' },
+  { value: 'ecommerce', label: 'Ecommerce', icon: '/icons/onboarding/ecommerce.svg' },
+  { value: 'friends', label: 'Friends', icon: '/icons/onboarding/friends.svg' },
+  { value: 'other', label: 'Other', icon: '/icons/onboarding/other.svg' },
 ]
 
 // ── Step 7 — Pricing ──────────────────────────────────────────────────────────

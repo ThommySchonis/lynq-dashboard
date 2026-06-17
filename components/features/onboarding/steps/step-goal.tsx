@@ -47,7 +47,7 @@ export function StepGoal({ stepIndex, defaultValues, onNext }: StepGoalProps) {
         />
 
         <div className="flex flex-col gap-2">
-          <label htmlFor="name" className="text-sm font-medium text-foreground-2">
+          <label htmlFor="name" className="text-sm font-medium text-foreground">
             What is your name?
           </label>
           <p className="text-xs text-foreground-3">So we understand how to address you.</p>
@@ -56,7 +56,7 @@ export function StepGoal({ stepIndex, defaultValues, onNext }: StepGoalProps) {
         </div>
 
         <div className="flex flex-col gap-2">
-          <label htmlFor="brandName" className="text-sm font-medium text-foreground-2">
+          <label htmlFor="brandName" className="text-sm font-medium text-foreground">
             What is the name of your brand?
           </label>
           <p className="text-xs text-foreground-3">
@@ -72,7 +72,7 @@ export function StepGoal({ stepIndex, defaultValues, onNext }: StepGoalProps) {
         </div>
 
         <div className="flex flex-col gap-2">
-          <p className="text-sm font-medium text-foreground-2">What&apos;s your primary objective?</p>
+          <p className="text-sm font-medium text-foreground">What&apos;s your primary objective?</p>
           <p className="text-xs text-foreground-3">
             This assists us in establishing the appropriate elements first.
           </p>
@@ -80,7 +80,7 @@ export function StepGoal({ stepIndex, defaultValues, onNext }: StepGoalProps) {
             name="goal"
             control={control}
             render={({ field }) => (
-              <div className="mt-1 flex gap-3">
+              <div className="mt-1 grid grid-cols-2 gap-3">
                 {GOAL_OPTIONS.map((option) => (
                   <SelectableCard
                     key={option.value}

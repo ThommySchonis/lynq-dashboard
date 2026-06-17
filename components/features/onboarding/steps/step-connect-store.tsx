@@ -38,7 +38,7 @@ export function StepConnectStore({ stepIndex, onBack, onNext }: StepConnectStore
       <div className="flex flex-col gap-6">
         {/* Heading: centered Shopify badge + title, with a refresh action on the right */}
         <div className="flex flex-col items-center gap-2.5">
-          <div className="flex size-8 items-center justify-center rounded-lg border border-border bg-card shadow-card">
+          <div className="flex size-8 items-center justify-center rounded-lg bg-card">
             <ShoppingBag className="size-4 text-primary" />
           </div>
           <div className="flex w-full items-center justify-between gap-2">

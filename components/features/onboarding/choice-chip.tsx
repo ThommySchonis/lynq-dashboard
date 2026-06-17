@@ -1,30 +1,31 @@
 'use client'
 
-import type { LucideIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface ChoiceChipProps {
-  icon: LucideIcon
+  /** Brand SVG URL served from /public. */
+  icon: string
   label: string
   selected: boolean
   onSelect: () => void
 }
 
 /** Icon + label tile (step 6 — how did you hear about us). */
-export function ChoiceChip({ icon: Icon, label, selected, onSelect }: ChoiceChipProps) {
+export function ChoiceChip({ icon, label, selected, onSelect }: ChoiceChipProps) {
   return (
     <button
       type="button"
       onClick={onSelect}
       aria-pressed={selected}
       className={cn(
-        'flex items-center gap-2.5 rounded-lg border px-4 py-3 text-sm font-medium transition-colors',
+        'flex h-[70px] w-[100px] flex-col items-center justify-center gap-1.5 rounded-lg border text-xs font-medium transition-colors',
         selected
-          ? 'border-primary bg-accent-soft text-primary'
+          ? 'border-primary bg-accent-soft text-foreground'
           : 'border-border bg-card text-foreground hover:border-border-hover',
       )}
     >
-      <Icon className={cn('size-4', selected ? 'text-primary' : 'text-foreground-3')} />
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={icon} alt="" className="size-5" />
       {label}
     </button>
   )

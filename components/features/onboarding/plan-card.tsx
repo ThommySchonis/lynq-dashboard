@@ -1,7 +1,6 @@
 'use client'
 
 import { Check } from 'lucide-react'
-import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import type { PricingPlan } from '@/lib/onboarding-constants'
 
@@ -17,48 +16,51 @@ export function PlanCard({ plan, selected, onSelect }: PlanCardProps) {
   return (
     <div
       className={cn(
-        'relative flex flex-1 flex-col rounded-2xl border p-6',
-        emphasized
-          ? 'border-primary bg-accent-soft shadow-card ring-1 ring-primary'
-          : 'border-border bg-card',
+        'relative flex flex-1 flex-col gap-[18px] rounded-2xl border bg-card p-6',
+        emphasized ? 'border-primary' : 'border-border',
       )}
     >
       {plan.badge && (
-        <span className="absolute -top-3 left-6 inline-flex items-center rounded-full bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground">
+        <span className="absolute -top-3 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-md border border-primary bg-background px-2.5 py-1 text-xs font-medium text-primary">
           {plan.badge}
         </span>
       )}
 
-      <h3 className="text-lg font-semibold text-foreground">{plan.name}</h3>
-
-      <div className="mt-4 flex items-baseline gap-1">
-        {plan.pricePrefix && <span className="text-sm text-foreground-3">{plan.pricePrefix}</span>}
-        <span className="font-[family-name:var(--font-display)] text-4xl font-bold text-foreground">
-          {plan.price}
+      <div className="flex items-baseline justify-between gap-2">
+        <span className="text-[22px] font-bold tracking-[-0.01em] text-foreground">{plan.name}</span>
+        <span className="flex items-baseline gap-1">
+          {plan.pricePrefix && <span className="text-sm text-foreground-3">{plan.pricePrefix}</span>}
+          <span className="text-[22px] font-bold tracking-[-0.01em] text-foreground">{plan.price}</span>
+          <span className="text-sm text-foreground-3">{plan.period}</span>
         </span>
-        <span className="text-sm text-foreground-3">{plan.period}</span>
       </div>
 
-      <p className="mt-2 min-h-10 text-sm text-foreground-3">{plan.tagline}</p>
+      <p className="text-sm text-foreground-3">{plan.tagline}</p>
 
-      <Button
-        variant={plan.highlighted ? 'default' : 'secondary'}
-        size="lg"
-        className="mt-6 w-full"
+      <button
+        type="button"
         onClick={onSelect}
+        className={cn(
+          'h-11 w-full rounded-[10px] text-sm font-semibold transition-colors',
+          plan.highlighted
+            ? 'bg-primary text-primary-foreground hover:bg-primary-hover'
+            : 'border border-primary bg-transparent text-primary hover:bg-accent-soft',
+        )}
       >
         {plan.cta}
-      </Button>
+      </button>
 
-      <p className="mt-8 text-sm font-medium text-foreground">{plan.featuresHeading}</p>
-      <ul className="mt-4 flex flex-col gap-3">
-        {plan.features.map((feature) => (
-          <li key={feature} className="flex items-start gap-3 text-sm">
-            <Check className="mt-0.5 size-4 shrink-0 text-primary" />
-            <span className="text-foreground-3">{feature}</span>
-          </li>
-        ))}
-      </ul>
+      <div className="flex flex-col gap-4">
+        <p className="text-sm text-foreground-3">{plan.featuresHeading}</p>
+        <ul className="flex flex-col gap-4">
+          {plan.features.map((feature) => (
+            <li key={feature} className="flex items-start gap-3 text-sm">
+              <Check className="mt-0.5 size-5 shrink-0 text-primary" />
+              <span className="text-foreground">{feature}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
     </div>
   )
 }

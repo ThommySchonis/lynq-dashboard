@@ -6,6 +6,7 @@ import { useAuthStore } from '@/stores/auth'
 import { parseJson } from '@/lib/utils/typed-json'
 import { inboxKeys } from './use-inbox-data'
 import { apiUrl } from '@/lib/api-client'
+import type { BulkActionId, BulkActionPayload } from '@/types/inbox'
 
 function useToken() {
   return useAuthStore((s) => s.session?.access_token ?? '')
@@ -27,6 +28,12 @@ interface ReplyResponse {
 
 interface StatusResponse {
   success?: boolean
+  error?: string
+}
+
+interface BulkActionResponse {
+  success?: boolean
+  count?: number
   error?: string
 }
 
@@ -150,6 +157,35 @@ export function useUpdateStatus() {
         token,
       )
       return parseJson<StatusResponse>(res)
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: inboxKeys.all })
+    },
+  })
+}
+
+/** Apply an action to many conversations at once */
+export function useBulkConversationAction() {
+  const token = useToken()
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({
+      ids,
+      action,
+      payload,
+    }: {
+      ids: string[]
+      action: BulkActionId
+      payload?: BulkActionPayload
+    }) => {
+      const res = await authFetch(
+        apiUrl('inbox/conversations/bulk'),
+        { method: 'POST', body: JSON.stringify({ ids, action, payload }) },
+        token,
+      )
+      const data = await parseJson<BulkActionResponse>(res)
+      if (!data.success) throw new Error(data.error || 'Bulk action failed')
+      return data
     },
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: inboxKeys.all })

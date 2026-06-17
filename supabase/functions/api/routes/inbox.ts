@@ -23,10 +23,12 @@ app.get('/counts', async (c) => {
     return q
   }
 
-  const [open, pending, resolved, unlinked, trash] = await Promise.all([
-    baseQuery().eq('status', 'open'),
-    baseQuery().eq('status', 'pending'),
-    baseQuery().eq('status', 'resolved'),
+  const [open, pending, resolved, snoozed, spam, unlinked, trash] = await Promise.all([
+    baseQuery().eq('status', 'open').neq('is_spam', true),
+    baseQuery().eq('status', 'pending').neq('is_spam', true),
+    baseQuery().eq('status', 'resolved').neq('is_spam', true),
+    baseQuery().eq('status', 'snoozed').neq('is_spam', true),
+    baseQuery().eq('is_spam', true),
     baseQuery().is('shopify_customer_id', null).neq('status', 'closed'),
     baseQuery().eq('status', 'closed'),
   ])
@@ -35,9 +37,41 @@ app.get('/counts', async (c) => {
     open: open.count || 0,
     pending: pending.count || 0,
     resolved: resolved.count || 0,
+    snoozed: snoozed.count || 0,
+    spam: spam.count || 0,
     unlinked: unlinked.count || 0,
     trash: trash.count || 0,
   }, 200, { 'Cache-Control': 'private, max-age=60' })
+})
+
+// ── Assignable members ─────────────────────────────────────────────
+
+app.get('/members', async (c) => {
+  const ctx = c.get('authContext') as AuthContext
+  const sb = getAdminClient()
+
+  const { data: members, error } = await sb
+    .from('workspace_members')
+    .select('id, user_id, role')
+    .eq('workspace_id', ctx.workspace.id)
+  if (error) return c.json({ error: error.message }, 500)
+
+  const userIds = (members ?? []).map((m: Record<string, unknown>) => m.user_id as string)
+  const { data: profiles } = await sb
+    .from('user_profiles')
+    .select('user_id, display_name')
+    .in('user_id', userIds)
+
+  const nameByUser = new Map<string, string>()
+  for (const p of (profiles ?? []) as Array<{ user_id: string; display_name: string | null }>) {
+    if (p.display_name) nameByUser.set(p.user_id, p.display_name)
+  }
+
+  const result = (members ?? []).map((m: Record<string, unknown>) => ({
+    id: m.id as string,
+    name: nameByUser.get(m.user_id as string) ?? 'Teammate',
+  }))
+  return c.json({ members: result })
 })
 
 // ── Email accounts list ─────────────────────────────────────────────

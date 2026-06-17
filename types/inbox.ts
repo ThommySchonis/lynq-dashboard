@@ -1,5 +1,11 @@
 // types/inbox.ts
 
+export interface ConversationTag {
+  id: string
+  name: string
+  color: string
+}
+
 export interface Thread {
   id: string
   subject: string
@@ -9,7 +15,7 @@ export interface Thread {
   from_name: string
   customer_email?: string
   customer_name?: string
-  status: 'open' | 'pending' | 'resolved' | 'unlinked' | 'trash' | 'closed'
+  status: 'open' | 'pending' | 'resolved' | 'snoozed' | 'unlinked' | 'trash' | 'closed'
   created_at: string
   updated_at: string
   last_message_at?: string
@@ -18,6 +24,10 @@ export interface Thread {
   is_unread?: boolean
   store_id?: string | null
   store_name?: string | null
+  is_spam?: boolean
+  snoozed_until?: string | null
+  assigned_to?: string | null
+  tags?: ConversationTag[]
 }
 
 export interface Message {
@@ -117,19 +127,39 @@ export interface Macro {
 }
 
 export interface TicketMeta {
-  tags: string[]
   tier: string | null
   contactReason: string | null
   product: string | null
   resolution: string | null
 }
 
-export type InboxFolder = 'open' | 'pending' | 'resolved' | 'unlinked' | 'trash'
+export type InboxFolder = 'open' | 'pending' | 'resolved' | 'snoozed' | 'spam' | 'unlinked' | 'trash'
 
 export interface FolderCounts {
   open: number
   pending: number
   resolved: number
+  snoozed: number
+  spam: number
   unlinked: number
   trash: number
+}
+
+export type BulkActionId =
+  | 'mark_read'
+  | 'resolve'
+  | 'snooze'
+  | 'assign'
+  | 'move'
+  | 'spam'
+  | 'delete'
+  | 'add_tag'
+  | 'remove_tag'
+  | 'emma_handoff'
+
+export interface BulkActionPayload {
+  until?: string | null
+  memberId?: string | null
+  status?: 'open' | 'pending' | 'resolved'
+  tagId?: string
 }

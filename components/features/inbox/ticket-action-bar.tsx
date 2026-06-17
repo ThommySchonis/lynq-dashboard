@@ -1,14 +1,15 @@
 'use client'
 
-import type { TicketMeta } from '@/types/inbox'
+import type { TicketMeta, ConversationTag } from '@/types/inbox'
 import { usePermissions } from '@/hooks/use-permissions'
 
-export function TicketActionBar({ meta, status, onClose, onAddTag, onRemoveTag, onFieldChange, assignedTo, onAssign, members }: {
+export function TicketActionBar({ meta, tags, status, onClose, onAddTag, onRemoveTag, onFieldChange, assignedTo, onAssign, members }: {
   meta: TicketMeta;
+  tags: ConversationTag[];
   status: string;
   onClose: () => void;
   onAddTag: () => void;
-  onRemoveTag: (tag: string) => void;
+  onRemoveTag: (tag: ConversationTag) => void;
   onFieldChange: (key: string, value: string) => void;
   assignedTo: string | null;
   onAssign: (memberId: string | null) => void;
@@ -43,15 +44,15 @@ export function TicketActionBar({ meta, status, onClose, onAddTag, onRemoveTag, 
       </button>
 
       <div className="flex items-center gap-1.5 flex-wrap">
-        {(meta.tags || []).map((tag: string) => (
+        {tags.map((tag) => (
           <button
-            key={tag}
+            key={tag.id}
             onClick={() => onRemoveTag(tag)}
             disabled={!canManage}
             title={canManage ? "Remove tag" : viewOnlyTitle}
             className="inline-flex items-center gap-1 h-[22px] px-2 border border-black/9 rounded-full bg-[#F5F5F5] text-foreground-2 text-[11px] font-medium font-[inherit] disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {tag}
+            {tag.name}
             <span className="text-muted-foreground">×</span>
           </button>
         ))}

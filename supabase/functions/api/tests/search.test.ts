@@ -142,3 +142,48 @@ Deno.test('groupContactsByEmail: skips rows with null/empty email', () => {
   assertEquals(out.length, 1)
   assertEquals(out[0].email, 'a@x')
 })
+
+import { parseFilterParams } from '../lib/services/search.ts'
+
+Deno.test('parseFilterParams: empty input yields empty filters', () => {
+  const r = parseFilterParams({})
+  assertEquals(r.error, undefined)
+  assertEquals(r.filters, { status: [], assignee: [], dateFrom: null, dateTo: null })
+})
+
+Deno.test('parseFilterParams: valid status list', () => {
+  const r = parseFilterParams({ status: 'open,ai_staged,spam' })
+  assertEquals(r.error, undefined)
+  assertEquals(r.filters?.status, ['open', 'ai_staged', 'spam'])
+})
+
+Deno.test('parseFilterParams: rejects unknown status', () => {
+  const r = parseFilterParams({ status: 'open,snoozed' })
+  assertEquals(r.filters, undefined)
+  assertEquals(typeof r.error, 'string')
+})
+
+Deno.test('parseFilterParams: assignee accepts uuid and unassigned', () => {
+  const id = '11111111-1111-1111-1111-111111111111'
+  const r = parseFilterParams({ assignee: `${id},unassigned` })
+  assertEquals(r.error, undefined)
+  assertEquals(r.filters?.assignee, [id, 'unassigned'])
+})
+
+Deno.test('parseFilterParams: rejects non-uuid assignee', () => {
+  const r = parseFilterParams({ assignee: 'not-a-uuid' })
+  assertEquals(r.filters, undefined)
+  assertEquals(typeof r.error, 'string')
+})
+
+Deno.test('parseFilterParams: valid ISO dates pass through', () => {
+  const r = parseFilterParams({ dateFrom: '2026-06-01T00:00:00.000Z', dateTo: '2026-06-16T00:00:00.000Z' })
+  assertEquals(r.error, undefined)
+  assertEquals(r.filters?.dateFrom, '2026-06-01T00:00:00.000Z')
+})
+
+Deno.test('parseFilterParams: rejects malformed date', () => {
+  const r = parseFilterParams({ dateFrom: 'last-tuesday' })
+  assertEquals(r.filters, undefined)
+  assertEquals(typeof r.error, 'string')
+})

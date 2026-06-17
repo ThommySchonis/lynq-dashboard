@@ -2,11 +2,14 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { Filter } from 'lucide-react'
 import { Command, CommandInput } from '@/components/ui/command'
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog'
 import { useSearchStore } from '@/stores/search'
 import { useGlobalSearch, type SearchTab } from '@/hooks/use-global-search'
 import { SearchResultsList } from './search-results-list'
+import { FilterPanel } from './filter-panel'
+import { type SearchFilters, emptyFilters, hasActiveFilters, activeFilterCount } from './search-filters'
 import { cn } from '@/lib/utils'
 
 const DEBOUNCE_MS = 300
@@ -31,6 +34,9 @@ export function SearchDialog() {
   const [query, setQuery] = useState('')
   const [debounced, setDebounced] = useState('')
   const [activeTab, setActiveTab] = useState<SearchTab>('all')
+  const [mode, setMode] = useState<'results' | 'filters'>('results')
+  const [staged, setStaged] = useState<SearchFilters>(emptyFilters())
+  const [applied, setApplied] = useState<SearchFilters>(emptyFilters())
 
   // Reset state on close.
   useEffect(() => {
@@ -39,6 +45,9 @@ export function SearchDialog() {
       setQuery('')
       setDebounced('')
       setActiveTab('all')
+      setMode('results')
+      setStaged(emptyFilters())
+      setApplied(emptyFilters())
     }
   }, [isOpen])
 
@@ -50,9 +59,9 @@ export function SearchDialog() {
   const {
     conversations, messages, contacts, shopifyCustomers,
     isLoading, supabaseError, shopifyError, hasAnyResult,
-  } = useGlobalSearch(debounced, activeTab)
+  } = useGlobalSearch(debounced, activeTab, applied)
 
-  const showRecents = debounced.length < QUERY_MIN_LENGTH
+  const showRecents = debounced.length < QUERY_MIN_LENGTH && !hasActiveFilters(applied)
 
   // Save recent only when there's at least one result.
   useEffect(() => {
@@ -88,6 +97,16 @@ export function SearchDialog() {
 
   const handleSeeAll = (tab: Exclude<SearchTab, 'all'>) => setActiveTab(tab)
 
+  const openFilters = () => {
+    setStaged(applied)
+    setMode('filters')
+  }
+  const applyFilters = () => {
+    setApplied(staged)
+    setMode('results')
+  }
+  const appliedCount = activeFilterCount(applied)
+
   return (
     <Dialog open={isOpen} onOpenChange={(v) => !v && close()}>
       <DialogContent className="max-w-2xl p-0 overflow-hidden">
@@ -97,32 +116,61 @@ export function SearchDialog() {
         </DialogDescription>
 
         <Command shouldFilter={false} className="rounded-none border-0">
-          <CommandInput
-            value={query}
-            onValueChange={setQuery}
-            placeholder="Search conversations, messages, contacts, Shopify customers…"
-            autoFocus
-          />
-
-          <div className="flex gap-1 px-3 py-2 border-b border-border overflow-x-auto">
-            {TABS.map((tab) => (
-              <button
-                key={tab.value}
-                type="button"
-                onClick={() => setActiveTab(tab.value)}
-                className={cn(
-                  'px-2.5 py-1 text-xs rounded-md whitespace-nowrap',
-                  activeTab === tab.value
-                    ? 'bg-accent text-foreground'
-                    : 'text-foreground-3 hover:text-foreground-2 hover:bg-accent/50',
-                )}
-              >
-                {tab.label}
-              </button>
-            ))}
+          <div className="flex items-center gap-1 pr-3">
+            <CommandInput
+              value={query}
+              onValueChange={setQuery}
+              placeholder="Search conversations, messages, contacts, Shopify customers…"
+              autoFocus
+              className="flex-1"
+            />
+            <button
+              type="button"
+              onClick={() => (mode === 'filters' ? setMode('results') : openFilters())}
+              className={cn(
+                'relative shrink-0 rounded-md p-1.5 hover:bg-accent',
+                mode === 'filters' || appliedCount > 0 ? 'text-primary' : 'text-foreground-3',
+              )}
+              aria-label="Filters"
+            >
+              <Filter className="size-4" />
+              {appliedCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 rounded-full bg-primary text-primary-foreground text-[10px] leading-4 text-center">
+                  {appliedCount}
+                </span>
+              )}
+            </button>
           </div>
 
-          {showRecents ? (
+          {mode === 'results' && (
+            <div className="flex gap-1 px-3 py-2 border-b border-border overflow-x-auto">
+              {TABS.map((tab) => (
+                <button
+                  key={tab.value}
+                  type="button"
+                  onClick={() => setActiveTab(tab.value)}
+                  className={cn(
+                    'px-2.5 py-1 text-xs rounded-md whitespace-nowrap',
+                    activeTab === tab.value
+                      ? 'bg-accent text-foreground'
+                      : 'text-foreground-3 hover:text-foreground-2 hover:bg-accent/50',
+                  )}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {mode === 'filters' ? (
+            <FilterPanel
+              scope={activeTab}
+              onScopeChange={setActiveTab}
+              staged={staged}
+              onChange={setStaged}
+              onApply={applyFilters}
+            />
+          ) : showRecents ? (
             <div className="px-3 py-3 max-h-[420px] overflow-y-auto">
               {recentSearches.length === 0 ? (
                 <p className="text-xs text-foreground-3 px-1">Start typing to search…</p>

@@ -302,7 +302,48 @@ app.post('/bulk', async (c) => {
   }
 
   if (plan.kind === 'emma') {
-    return c.json({ error: 'Emma handoff is not available yet' }, 501)
+    // Validate ownership (only conversations in this workspace are eligible) and
+    // dedupe: skip conversations that already have a pending ai_draft OR an
+    // active queue row (pending/processing), so re-clicking handoff doesn't
+    // double-bill.
+    const [{ data: ownedConvs }, { data: pendingDrafts }, { data: activeJobs }] = await Promise.all([
+      sb.from('email_conversations')
+        .select('id')
+        .eq('workspace_id', ctx.workspace.id)
+        .in('id', ids),
+      sb.from('ai_drafts')
+        .select('conversation_id')
+        .eq('workspace_id', ctx.workspace.id)
+        .eq('status', 'pending')
+        .in('conversation_id', ids),
+      sb.from('emma_draft_queue')
+        .select('conversation_id')
+        .eq('workspace_id', ctx.workspace.id)
+        .in('status', ['pending', 'processing'])
+        .in('conversation_id', ids),
+    ])
+
+    const owned = new Set<string>()
+    for (const r of (ownedConvs ?? []) as Array<{ id: string }>) owned.add(r.id)
+    const skip = new Set<string>()
+    for (const r of (pendingDrafts ?? []) as Array<{ conversation_id: string }>) skip.add(r.conversation_id)
+    for (const r of (activeJobs ?? []) as Array<{ conversation_id: string }>) skip.add(r.conversation_id)
+
+    const toQueue = ids.filter((id) => owned.has(id) && !skip.has(id))
+    if (toQueue.length > 0) {
+      const rows = toQueue.map((id) => ({
+        workspace_id: ctx.workspace.id,
+        conversation_id: id,
+        user_id: ctx.user.id,
+        user_email: ctx.user.email ?? null,
+        member_id: ctx.memberId,
+        status: 'pending',
+      }))
+      const { error: qErr } = await sb.from('emma_draft_queue').insert(rows)
+      if (qErr) return c.json({ error: qErr.message }, 500)
+    }
+
+    return c.json({ success: true, queued: toQueue.length, skipped: ids.length - toQueue.length })
   }
 
   if (plan.kind === 'update') {

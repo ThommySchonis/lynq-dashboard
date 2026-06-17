@@ -117,9 +117,18 @@ export function ThreadListPanel() {
       if (checkedIds.length === 0) return;
       try {
         const res = await bulkAction.mutateAsync({ ids: checkedIds, action, payload });
-        const n = res.count ?? checkedIds.length;
         setCheckedThreads({});
-        toast.success(`Updated ${n} conversation${n === 1 ? "" : "s"}`);
+        if (action === "emma_handoff") {
+          const r = res as { queued?: number; skipped?: number };
+          const q = r.queued ?? 0;
+          const s = r.skipped ?? 0;
+          toast.success(
+            `Emma is generating ${q} draft${q === 1 ? "" : "s"}${s > 0 ? ` (${s} skipped — already pending)` : ""}. They'll appear as they're ready.`,
+          );
+        } else {
+          const n = res.count ?? checkedIds.length;
+          toast.success(`Updated ${n} conversation${n === 1 ? "" : "s"}`);
+        }
       } catch (e) {
         toast.error(e instanceof Error ? e.message : "Action failed");
       }
@@ -258,7 +267,7 @@ export function ThreadListPanel() {
               >
                 <Check size={15} />
               </Button>
-              <BulkActionsMenu count={checkedCount} onAction={onBulkAction} />
+              <BulkActionsMenu count={checkedCount} onAction={(action, payload) => void onBulkAction(action, payload)} />
             </>
           )}
         </div>

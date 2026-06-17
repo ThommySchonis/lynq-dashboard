@@ -32,7 +32,7 @@ export function BulkActionsMenu({ count, onAction }: { count: number; onAction: 
   const { data: tags = [] } = useTags();
   const { data: members = [] } = useInboxMembers();
   const createTag = useCreateTag();
-  const [confirm, setConfirm] = useState<null | "delete" | "spam">(null);
+  const [confirm, setConfirm] = useState<null | "delete" | "spam" | "emma">(null);
   const [newTagName, setNewTagName] = useState("");
 
   const handleCreateTag = async () => {
@@ -125,7 +125,7 @@ export function BulkActionsMenu({ count, onAction }: { count: number; onAction: 
 
           <DropdownMenuSeparator />
 
-          <DropdownMenuItem disabled title="Coming soon">
+          <DropdownMenuItem onClick={() => setConfirm("emma")}>
             Hand off to Emma
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => setConfirm("spam")}>Mark as spam</DropdownMenuItem>
@@ -151,6 +151,17 @@ export function BulkActionsMenu({ count, onAction }: { count: number; onAction: 
         description="They will be moved to the Spam folder and hidden from your open queues."
         confirmLabel="Mark as spam"
         onConfirm={() => onAction("spam")}
+        onOpenChange={(o) => {
+          if (!o) setConfirm(null);
+        }}
+      />
+      <BulkConfirmDialog
+        open={confirm === "emma"}
+        title={`Hand off ${count} conversation${count === 1 ? "" : "s"} to Emma?`}
+        description="Emma will generate a draft reply for each (for your review — nothing is sent automatically). Each generated draft uses 1 Emma credit; conversations that already have a pending draft are skipped."
+        confirmLabel="Generate drafts"
+        destructive={false}
+        onConfirm={() => onAction("emma_handoff")}
         onOpenChange={(o) => {
           if (!o) setConfirm(null);
         }}

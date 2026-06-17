@@ -20,7 +20,7 @@ import { useAIStore } from "@/stores/ai";
 import { useMacrosStore } from "@/stores/macros";
 import { useTicketMetaStore } from "@/stores/ticket-meta";
 import { useConversations, useConversation, inboxKeys } from "@/hooks/inbox/use-inbox-data";
-import { useSendReply, useUpdateStatus, useTranslateMessage, useBulkConversationAction } from "@/hooks/inbox/use-inbox-mutations";
+import { useSendReply, useUpdateStatus, useTranslateMessage, useBulkConversationAction, useAddNote } from "@/hooks/inbox/use-inbox-mutations";
 import { useTags, useCreateTag } from "@/hooks/inbox/use-tags";
 import { useComposerActions } from "@/hooks/inbox/use-composer-actions";
 import { usePermissions } from "@/hooks/use-permissions";
@@ -119,6 +119,7 @@ export function ConversationPanel() {
 
   // Mutations
   const sendReplyMutation = useSendReply();
+  const addNoteMutation = useAddNote();
   const updateStatusMutation = useUpdateStatus();
   const translateMutation = useTranslateMessage();
 
@@ -226,6 +227,25 @@ export function ConversationPanel() {
     const textContent = composerRef.current?.textContent || reply;
     if (!textContent.trim() || !selectedThreadId) return false;
     setSending(true);
+    // Internal note mode → persist a note instead of sending an email reply.
+    // Notes are plain text (rendered with whitespace-pre-wrap in NotesSection).
+    if (composerTab === "note") {
+      try {
+        await addNoteMutation.mutateAsync({
+          threadId: selectedThreadId,
+          body: textContent.trim(),
+        });
+        sonnerToast.success("Note added");
+        if (composerRef.current) composerRef.current.innerHTML = "";
+        setReply("");
+        return true;
+      } catch {
+        sonnerToast.error("Failed to add note");
+        return false;
+      } finally {
+        setSending(false);
+      }
+    }
     let bodyHtml = sanitizeHtml(composerRef.current?.innerHTML || reply);
     let bodyText = textContent;
     // Auto-translate outgoing message to customer's language

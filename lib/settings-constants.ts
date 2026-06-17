@@ -96,12 +96,12 @@ export interface WorkspaceLocale {
 }
 
 export const LOCALES: WorkspaceLocale[] = [
-  { value: 'en', label: 'English' },
-  { value: 'nl', label: 'Nederlands' },
-  { value: 'de', label: 'Deutsch' },
-  { value: 'fr', label: 'Français' },
-  { value: 'es', label: 'Español' },
-]
+  { value: "en", label: "English" },
+  // { value: 'nl', label: 'Nederlands' },
+  // { value: 'de', label: 'Deutsch' },
+  // { value: 'fr', label: 'Français' },
+  // { value: 'es', label: 'Español' },
+];
 
 export interface WorkspaceDefaults {
   name: string

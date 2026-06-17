@@ -1,7 +1,11 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Check, Mail, MoreHorizontal, MoreVertical, Plus, RefreshCw, Search, User } from "lucide-react";
+import { Check, Mail, Plus, RefreshCw, Search } from "lucide-react";
+import { BulkActionsMenu } from "@/components/features/inbox/bulk-actions-menu";
+import { useBulkConversationAction } from "@/hooks/inbox/use-inbox-mutations";
+import { toast } from "sonner";
+import type { BulkActionId, BulkActionPayload } from "@/types/inbox";
 import { extractName } from "@/lib/inbox-utils";
 import { relTime as formatDate } from "@/lib/inbox-utils";
 import { useInboxUI } from "@/stores/inbox-ui";
@@ -34,7 +38,7 @@ export function ThreadListPanel() {
 
   // TanStack data
   const { data: threads = [], isLoading: loadingThreads, refetch: refetchThreads } = useConversations(activeFolder, search);
-  const { data: counts = { open: 0, pending: 0, resolved: 0, unlinked: 0, trash: 0 } } = useInboxCounts();
+  const { data: counts = { open: 0, pending: 0, resolved: 0, snoozed: 0, spam: 0, unlinked: 0, trash: 0 } } = useInboxCounts();
 
   // AI analyses from Zustand
   const analyses = useAIStore((s) => s.analyses);
@@ -104,10 +108,40 @@ export function ThreadListPanel() {
   const anyChecked = listIds.some((id) => checkedThreads[id]);
   const checkedCount = listIds.filter((id) => checkedThreads[id]).length;
 
+  const bulkAction = useBulkConversationAction();
+
+  const checkedIds = useMemo(() => listIds.filter((id) => checkedThreads[id]), [listIds, checkedThreads]);
+
+  const onBulkAction = useCallback(
+    async (action: BulkActionId, payload?: BulkActionPayload) => {
+      if (checkedIds.length === 0) return;
+      try {
+        const res = await bulkAction.mutateAsync({ ids: checkedIds, action, payload });
+        setCheckedThreads({});
+        if (action === "emma_handoff") {
+          const r = res as { queued?: number; skipped?: number };
+          const q = r.queued ?? 0;
+          const s = r.skipped ?? 0;
+          toast.success(
+            `Emma is generating ${q} draft${q === 1 ? "" : "s"}${s > 0 ? ` (${s} skipped — already pending)` : ""}. They'll appear as they're ready.`,
+          );
+        } else {
+          const n = res.count ?? checkedIds.length;
+          toast.success(`Updated ${n} conversation${n === 1 ? "" : "s"}`);
+        }
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : "Action failed");
+      }
+    },
+    [checkedIds, bulkAction, setCheckedThreads],
+  );
+
   const FOLDERS = [
     { key: "open", label: "Open", count: counts.open },
     { key: "pending", label: "Pending", count: counts.pending },
+    { key: "snoozed", label: "Snoozed", count: counts.snoozed },
     { key: "resolved", label: "Resolved", count: counts.resolved },
+    { key: "spam", label: "Spam", count: counts.spam },
     { key: "unlinked", label: "Unlinked", count: counts.unlinked },
     { key: "trash", label: "Trash", count: counts.trash },
   ];
@@ -228,54 +262,12 @@ export function ThreadListPanel() {
                 variant="ghost"
                 size="icon"
                 title="Mark as read"
+                onClick={() => void onBulkAction("mark_read")}
                 className="text-foreground-2 flex p-1 rounded-[5px] transition-colors duration-150 hover:text-foreground"
               >
                 <Check size={15} />
               </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                title="Assign"
-                className="text-foreground-2 flex p-1 rounded-[5px] transition-colors duration-150 hover:text-foreground"
-              >
-                <User size={15} />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                title="More actions"
-                className="text-foreground-2 flex p-1 rounded-[5px] transition-colors duration-150 hover:text-foreground"
-              >
-                <MoreVertical size={15} />
-              </Button>
-            </>
-          )}
-          {!anyChecked && (
-            <>
-              <Button
-                variant="ghost"
-                size="icon"
-                title="Mark all read"
-                className="text-foreground-2 flex p-1 rounded-[5px] transition-colors duration-150 hover:text-foreground"
-              >
-                <Check size={15} />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                title="Assign"
-                className="text-foreground-2 flex p-1 rounded-[5px] transition-colors duration-150 hover:text-foreground"
-              >
-                <User size={15} />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                title="More"
-                className="text-foreground-2 flex p-1 rounded-[5px] transition-colors duration-150 hover:text-foreground"
-              >
-                <MoreHorizontal size={15} />
-              </Button>
+              <BulkActionsMenu count={checkedCount} onAction={(action, payload) => void onBulkAction(action, payload)} />
             </>
           )}
         </div>

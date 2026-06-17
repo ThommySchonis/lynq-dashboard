@@ -120,96 +120,131 @@ export interface SearchResult {
 
 const MESSAGE_SNIPPET_MAX = 200
 
-export async function searchConversations(
-  sb: SupabaseClient,
-  workspaceId: string,
-  q: string,
-  limit: number,
-): Promise<ConversationResult[]> {
-  const safe = escapeForOrFilter(q)
-  const { data, error } = await sb
-    .from('email_conversations')
-    .select('id, subject, snippet, customer_email, customer_name, last_message_at, status')
-    .eq('workspace_id', workspaceId)
-    .or(
-      `subject.ilike.%${safe}%,snippet.ilike.%${safe}%,` +
-      `customer_email.ilike.%${safe}%,customer_name.ilike.%${safe}%`,
-    )
-    .order('last_message_at', { ascending: false, nullsFirst: false })
-    .limit(limit)
-  if (error) throw error
-  return (data ?? []) as ConversationResult[]
-}
-
-export async function searchMessages(
-  sb: SupabaseClient,
-  workspaceId: string,
-  q: string,
-  limit: number,
-): Promise<MessageResult[]> {
-  const safe = escapeForOrFilter(q)
-  const { data, error } = await sb
-    .from('email_messages')
-    .select('id, conversation_id, body_text, from_email, from_name, is_outbound, created_at')
-    .eq('workspace_id', workspaceId)
-    .or(
-      `body_text.ilike.%${safe}%,from_email.ilike.%${safe}%,from_name.ilike.%${safe}%`,
-    )
-    .order('created_at', { ascending: false, nullsFirst: false })
-    .limit(limit)
-  if (error) throw error
-
-  return (data ?? []).map((row): MessageResult => ({
-    id: row.id,
-    conversation_id: row.conversation_id,
-    snippet: makeSnippet(row.body_text, q, MESSAGE_SNIPPET_MAX),
-    from_email: row.from_email,
-    from_name: row.from_name,
-    is_outbound: row.is_outbound,
-    created_at: row.created_at,
-  }))
-}
-
-export async function searchContacts(
-  sb: SupabaseClient,
-  workspaceId: string,
-  q: string,
-  limit: number,
-): Promise<ContactGroup[]> {
-  const safe = escapeForOrFilter(q)
-  // Over-fetch so the client-side dedupe still has `limit` distinct groups.
-  const fetchLimit = limit * 4
-  const { data, error } = await sb
-    .from('email_conversations')
-    .select('customer_email, customer_name, last_message_at')
-    .eq('workspace_id', workspaceId)
-    .or(`customer_email.ilike.%${safe}%,customer_name.ilike.%${safe}%`)
-    .order('last_message_at', { ascending: false, nullsFirst: false })
-    .limit(fetchLimit)
-  if (error) throw error
-  return groupContactsByEmail((data ?? []) as ContactRow[], limit)
-}
-
 export interface SearchParams {
   q: string
   types: SearchType[]
+  filters: SearchFilters
   limit: number
+}
+
+interface ApiSearchRow {
+  conversations: ConversationResult[]
+  messages: Array<{
+    id: string
+    conversation_id: string
+    body_text: string | null
+    from_email: string | null
+    from_name: string | null
+    is_outbound: boolean
+    created_at: string | null
+  }>
+  contacts: ContactRow[]
 }
 
 export async function searchService(
   sb: SupabaseClient,
   workspaceId: string,
-  { q, types, limit }: SearchParams,
+  { q, types, filters, limit }: SearchParams,
 ): Promise<SearchResult> {
+  const { data, error } = await sb.rpc('api_search', {
+    p_workspace_id: workspaceId,
+    p_q: q || null,
+    p_types: types,
+    p_status: filters.status,
+    p_assignee: filters.assignee,
+    p_date_from: filters.dateFrom,
+    p_date_to: filters.dateTo,
+    p_limit: limit,
+  })
+  if (error) throw error
+
+  const row = data as ApiSearchRow
   const wants = new Set(types)
-  const [conversations, messages, contacts] = await Promise.all([
-    wants.has('conversations') ? searchConversations(sb, workspaceId, q, limit) : Promise.resolve(undefined),
-    wants.has('messages')      ? searchMessages(sb, workspaceId, q, limit)      : Promise.resolve(undefined),
-    wants.has('contacts')      ? searchContacts(sb, workspaceId, q, limit)      : Promise.resolve(undefined),
-  ])
   const result: SearchResult = {}
-  if (conversations !== undefined) result.conversations = conversations
-  if (messages !== undefined) result.messages = messages
-  if (contacts !== undefined) result.contacts = contacts
+
+  if (wants.has('conversations')) {
+    result.conversations = row.conversations ?? []
+  }
+  if (wants.has('messages')) {
+    result.messages = (row.messages ?? []).map((m): MessageResult => ({
+      id: m.id,
+      conversation_id: m.conversation_id,
+      snippet: makeSnippet(m.body_text, q, MESSAGE_SNIPPET_MAX),
+      from_email: m.from_email,
+      from_name: m.from_name,
+      is_outbound: m.is_outbound,
+      created_at: m.created_at,
+    }))
+  }
+  if (wants.has('contacts')) {
+    result.contacts = groupContactsByEmail(row.contacts ?? [], limit)
+  }
   return result
+}
+
+// ---------------------------------------------------------------------------
+// Filter param parsing
+// ---------------------------------------------------------------------------
+
+export type StatusFilterValue = 'open' | 'pending' | 'resolved' | 'ai_staged' | 'spam'
+const ALLOWED_STATUSES: StatusFilterValue[] = ['open', 'pending', 'resolved', 'ai_staged', 'spam']
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+export interface SearchFilters {
+  status: StatusFilterValue[]
+  assignee: string[] // uuids + 'unassigned'
+  dateFrom: string | null
+  dateTo: string | null
+}
+
+export interface ParseFilterResult {
+  filters?: SearchFilters
+  error?: string
+}
+
+function splitList(raw: string | undefined): string[] {
+  if (!raw) return []
+  return raw.split(',').map((s) => s.trim()).filter(Boolean)
+}
+
+export function parseFilterParams(params: {
+  status?: string
+  assignee?: string
+  dateFrom?: string
+  dateTo?: string
+}): ParseFilterResult {
+  const status = splitList(params.status)
+  for (const s of status) {
+    if (!(ALLOWED_STATUSES as string[]).includes(s)) {
+      return { error: `invalid status: ${s}` }
+    }
+  }
+
+  const assignee = splitList(params.assignee)
+  for (const a of assignee) {
+    if (a !== 'unassigned' && !UUID_RE.test(a)) {
+      return { error: `invalid assignee: ${a}` }
+    }
+  }
+
+  function parseDate(raw: string | undefined, label: string): { value: string | null; error?: string } {
+    if (!raw) return { value: null }
+    const ts = Date.parse(raw)
+    if (Number.isNaN(ts)) return { value: null, error: `invalid ${label}` }
+    return { value: raw }
+  }
+
+  const from = parseDate(params.dateFrom, 'dateFrom')
+  if (from.error) return { error: from.error }
+  const to = parseDate(params.dateTo, 'dateTo')
+  if (to.error) return { error: to.error }
+
+  return {
+    filters: {
+      status: status as StatusFilterValue[],
+      assignee,
+      dateFrom: from.value,
+      dateTo: to.value,
+    },
+  }
 }

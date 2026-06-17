@@ -35,6 +35,7 @@ import { webhooksEmailRoutes } from './routes/webhooks-email.ts'
 import { webhooksShopifyComplianceRoutes } from './routes/webhooks-shopify-compliance.ts'
 import { webhooksRetryRoutes } from './routes/webhooks-retry.ts'
 import { webhooksShopifyBillingRoutes } from './routes/webhooks-shopify-billing.ts'
+import { tagRoutes } from './routes/tags.ts'
 
 const app = new Hono().basePath('/api')
 
@@ -78,6 +79,7 @@ app.route('/webhooks/whop', webhooksWhopRoutes)
 app.route('/webhooks/email/inbound', webhooksEmailRoutes)
 app.route('/webhooks/retry', webhooksRetryRoutes)
 app.route('/webhooks/shopify-billing', webhooksShopifyBillingRoutes)
+app.route('/tags', tagRoutes)
 
 Deno.serve(app.fetch)
 

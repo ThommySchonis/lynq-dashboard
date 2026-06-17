@@ -1,8 +1,9 @@
 import { Hono } from 'hono'
 import { authMiddleware } from '../middleware/auth.ts'
-import { requireWriteAccess } from '../middleware/workspace.ts'
+import { requireWriteAccess, requireCapability } from '../middleware/workspace.ts'
 import { getAdminClient } from '../lib/supabase.ts'
 import type { AuthContext } from '../lib/types.ts'
+import { resolveBulkAction, type BulkAction, type BulkPayload } from '../lib/services/bulk-conversation-actions.ts'
 
 const app = new Hono()
 
@@ -37,6 +38,29 @@ function rateLimitGuard(c: { json: (data: unknown, init?: number | Record<string
   return null
 }
 
+// ── Tag loader ────────────────────────────────────────────────────
+
+async function loadTagsByConversation(
+  sb: ReturnType<typeof getAdminClient>,
+  workspaceId: string,
+  conversationIds: string[],
+): Promise<Record<string, Array<{ id: string; name: string; color: string }>>> {
+  const result: Record<string, Array<{ id: string; name: string; color: string }>> = {}
+  if (conversationIds.length === 0) return result
+  const { data } = await sb
+    .from('email_conversation_tags')
+    .select('conversation_id, tags(id, name, color)')
+    .eq('workspace_id', workspaceId)
+    .in('conversation_id', conversationIds)
+  for (const row of (data ?? []) as Array<Record<string, unknown>>) {
+    const convId = row.conversation_id as string
+    const tag = row.tags as { id: string; name: string; color: string } | null
+    if (!tag) continue
+    ;(result[convId] ??= []).push(tag)
+  }
+  return result
+}
+
 // ── List conversations ─────────────────────────────────────────────
 
 app.get('/', async (c) => {
@@ -51,6 +75,7 @@ app.get('/', async (c) => {
   const unlinked = c.req.query('unlinked')
   const storeId = c.req.query('store_id')
   const emailAccountId = c.req.query('email_account_id')
+  const spam = c.req.query('spam')
   const page = parseInt(c.req.query('page') || '0', 10)
   const limit = 50
 
@@ -61,6 +86,8 @@ app.get('/', async (c) => {
     const convIdQuery = () => {
       let q = sb.from('email_conversations').select('id').eq('workspace_id', ctx.workspace.id)
       if (status) q = q.eq('status', status)
+      if (spam === 'true') q = q.eq('is_spam', true)
+      else q = q.neq('is_spam', true)
       if (unlinked === 'true') q = q.is('shopify_customer_id', null).neq('status', 'closed')
       if (storeId) q = q.eq('store_id', storeId)
       if (emailAccountId) q = q.eq('email_account_id', emailAccountId)
@@ -94,6 +121,8 @@ app.get('/', async (c) => {
       .range(page * limit, (page + 1) * limit - 1)
 
     if (status) finalQ = finalQ.eq('status', status)
+    if (spam === 'true') finalQ = finalQ.eq('is_spam', true)
+    else finalQ = finalQ.neq('is_spam', true)
     if (unlinked === 'true') finalQ = finalQ.is('shopify_customer_id', null).neq('status', 'closed')
     if (storeId) finalQ = finalQ.eq('store_id', storeId)
     if (emailAccountId) finalQ = finalQ.eq('email_account_id', emailAccountId)
@@ -101,9 +130,17 @@ app.get('/', async (c) => {
     const { data: conversations, error } = await finalQ
     if (error) return c.json({ error: error.message }, 500)
 
+    const convIds = (conversations || []).map((cv: Record<string, unknown>) => cv.id as string)
+    const tagsByConv = await loadTagsByConversation(sb, ctx.workspace.id, convIds)
+
     const mapped = (conversations || []).map((cv: Record<string, unknown>) => {
       const stores = cv.stores as { name: string } | null
-      return { ...cv, store_name: stores?.name ?? null, stores: undefined }
+      return {
+        ...cv,
+        store_name: stores?.name ?? null,
+        stores: undefined,
+        tags: tagsByConv[cv.id as string] ?? [],
+      }
     })
     return c.json({ conversations: mapped })
   }
@@ -116,6 +153,8 @@ app.get('/', async (c) => {
     .range(page * limit, (page + 1) * limit - 1)
 
   if (status) dbQuery = dbQuery.eq('status', status)
+  if (spam === 'true') dbQuery = dbQuery.eq('is_spam', true)
+  else dbQuery = dbQuery.neq('is_spam', true)
   if (unlinked === 'true') dbQuery = dbQuery.is('shopify_customer_id', null).neq('status', 'closed')
   if (storeId) dbQuery = dbQuery.eq('store_id', storeId)
   if (emailAccountId) dbQuery = dbQuery.eq('email_account_id', emailAccountId)
@@ -123,9 +162,17 @@ app.get('/', async (c) => {
   const { data: conversations, error } = await dbQuery
   if (error) return c.json({ error: error.message }, 500)
 
+  const convIds = (conversations || []).map((cv: Record<string, unknown>) => cv.id as string)
+  const tagsByConv = await loadTagsByConversation(sb, ctx.workspace.id, convIds)
+
   const mapped = (conversations || []).map((cv: Record<string, unknown>) => {
     const stores = cv.stores as { name: string } | null
-    return { ...cv, store_name: stores?.name ?? null, stores: undefined }
+    return {
+      ...cv,
+      store_name: stores?.name ?? null,
+      stores: undefined,
+      tags: tagsByConv[cv.id as string] ?? [],
+    }
   })
   return c.json({ conversations: mapped })
 })
@@ -159,14 +206,15 @@ app.get('/:id', async (c) => {
     await sb.from('email_conversations').update({ is_unread: false }).eq('id', id)
   }
 
-  return c.json({ conversation, messages: messages || [], notes: notes || [] })
+  const convTags = await loadTagsByConversation(sb, ctx.workspace.id, [id])
+  return c.json({ conversation, messages: messages || [], notes: notes || [], tags: convTags[id] ?? [] })
 })
 
 // ── Update conversation ────────────────────────────────────────────
 
 app.patch('/:id', async (c) => {
   const ctx = c.get('authContext') as AuthContext
-  const blocked = requireWriteAccess(c)
+  const blocked = requireWriteAccess(c) ?? requireCapability('manageConversations')(c)
   if (blocked) return blocked
   const sb = getAdminClient()
   const id = c.req.param('id')
@@ -225,6 +273,112 @@ app.patch('/:id', async (c) => {
   return c.json({ success: true })
 })
 
+// ── Bulk update conversations ──────────────────────────────────────
+
+app.post('/bulk', async (c) => {
+  const ctx = c.get('authContext') as AuthContext
+  const blocked = requireWriteAccess(c) ?? requireCapability('manageConversations')(c)
+  if (blocked) return blocked
+  const sb = getAdminClient()
+
+  const limited = rateLimitGuard(c, ctx.workspace.id)
+  if (limited) return limited
+
+  const body = await c.req.json<{ ids?: string[]; action?: string; payload?: BulkPayload }>()
+  const ids = body.ids ?? []
+  if (!Array.isArray(ids) || ids.length === 0) {
+    return c.json({ error: 'No conversation ids provided' }, 400)
+  }
+  if (ids.length > 500) {
+    return c.json({ error: 'Too many conversations selected (max 500)' }, 400)
+  }
+  if (!body.action) return c.json({ error: 'action is required' }, 400)
+
+  let plan
+  try {
+    plan = resolveBulkAction(body.action as BulkAction, body.payload ?? {})
+  } catch (e) {
+    return c.json({ error: e instanceof Error ? e.message : 'Invalid action' }, 400)
+  }
+
+  if (plan.kind === 'emma') {
+    // Validate ownership (only conversations in this workspace are eligible) and
+    // dedupe: skip conversations that already have a pending ai_draft OR an
+    // active queue row (pending/processing), so re-clicking handoff doesn't
+    // double-bill.
+    const [{ data: ownedConvs }, { data: pendingDrafts }, { data: activeJobs }] = await Promise.all([
+      sb.from('email_conversations')
+        .select('id')
+        .eq('workspace_id', ctx.workspace.id)
+        .in('id', ids),
+      sb.from('ai_drafts')
+        .select('conversation_id')
+        .eq('workspace_id', ctx.workspace.id)
+        .eq('status', 'pending')
+        .in('conversation_id', ids),
+      sb.from('emma_draft_queue')
+        .select('conversation_id')
+        .eq('workspace_id', ctx.workspace.id)
+        .in('status', ['pending', 'processing'])
+        .in('conversation_id', ids),
+    ])
+
+    const owned = new Set<string>()
+    for (const r of (ownedConvs ?? []) as Array<{ id: string }>) owned.add(r.id)
+    const skip = new Set<string>()
+    for (const r of (pendingDrafts ?? []) as Array<{ conversation_id: string }>) skip.add(r.conversation_id)
+    for (const r of (activeJobs ?? []) as Array<{ conversation_id: string }>) skip.add(r.conversation_id)
+
+    const toQueue = ids.filter((id) => owned.has(id) && !skip.has(id))
+    if (toQueue.length > 0) {
+      const rows = toQueue.map((id) => ({
+        workspace_id: ctx.workspace.id,
+        conversation_id: id,
+        user_id: ctx.user.id,
+        user_email: ctx.user.email ?? null,
+        member_id: ctx.memberId,
+        status: 'pending',
+      }))
+      const { error: qErr } = await sb.from('emma_draft_queue').insert(rows)
+      if (qErr) return c.json({ error: qErr.message }, 500)
+    }
+
+    return c.json({ success: true, queued: toQueue.length, skipped: ids.length - toQueue.length })
+  }
+
+  if (plan.kind === 'update') {
+    const { error, count } = await sb
+      .from('email_conversations')
+      .update(plan.updates, { count: 'exact' })
+      .eq('workspace_id', ctx.workspace.id)
+      .in('id', ids)
+    if (error) return c.json({ error: error.message }, 500)
+    return c.json({ success: true, count: count ?? ids.length })
+  }
+
+  // plan.kind === 'tag'
+  if (plan.op === 'add') {
+    const rows = ids.map((id) => ({
+      conversation_id: id,
+      tag_id: plan.tagId,
+      workspace_id: ctx.workspace.id,
+    }))
+    const { error } = await sb
+      .from('email_conversation_tags')
+      .upsert(rows, { onConflict: 'conversation_id,tag_id', ignoreDuplicates: true })
+    if (error) return c.json({ error: error.message }, 500)
+  } else {
+    const { error } = await sb
+      .from('email_conversation_tags')
+      .delete()
+      .eq('workspace_id', ctx.workspace.id)
+      .eq('tag_id', plan.tagId)
+      .in('conversation_id', ids)
+    if (error) return c.json({ error: error.message }, 500)
+  }
+  return c.json({ success: true, count: ids.length })
+})
+
 // ── Notes ──────────────────────────────────────────────────────────
 
 app.get('/:id/notes', async (c) => {
@@ -247,7 +401,7 @@ app.get('/:id/notes', async (c) => {
 
 app.post('/:id/notes', async (c) => {
   const ctx = c.get('authContext') as AuthContext
-  const blocked = requireWriteAccess(c)
+  const blocked = requireWriteAccess(c) ?? requireCapability('manageConversations')(c)
   if (blocked) return blocked
   const sb = getAdminClient()
   const id = c.req.param('id')

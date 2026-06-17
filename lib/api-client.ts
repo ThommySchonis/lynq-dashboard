@@ -20,6 +20,7 @@ const honoRoutes: string[] = [
   'workspaces/repair-membership',
   'inbox/counts',
   'inbox/accounts',
+  'inbox/members',
   'inbox/conversations',
   'auth/impersonation-status',
   'auth/consent-sync',
@@ -51,6 +52,7 @@ const honoRoutes: string[] = [
   'auth/forwarding-email/',
   'webhooks/',
   'migrations',
+  'tags',
 ]
 
 /**

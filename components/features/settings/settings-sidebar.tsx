@@ -5,18 +5,24 @@ import { usePathname, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Search } from 'lucide-react'
 import { Input } from '@/components/ui/input'
-import { SETTINGS_NAV, ALL_SETTINGS_ITEMS } from '@/lib/settings-constants'
+import { visibleSettingsNav, ALL_SETTINGS_ITEMS } from '@/lib/settings-constants'
+import { usePermissions } from '@/hooks/use-permissions'
 
 export function SettingsSidebar() {
   const pathname = usePathname()
   const router = useRouter()
+  const { can } = usePermissions()
+  const nav = visibleSettingsNav(can)
   const [query, setQuery] = useState('')
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const searchRef = useRef<HTMLDivElement>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
 
+  // Restrict search to items the current role can actually see.
+  const visibleHrefs = new Set(nav.flatMap(g => g.items.map(i => i.href)))
   const filtered = query.trim().length > 0
     ? ALL_SETTINGS_ITEMS.filter(item =>
+        visibleHrefs.has(item.href) &&
         item.label.toLowerCase().includes(query.toLowerCase())
       )
     : []
@@ -54,7 +60,7 @@ export function SettingsSidebar() {
     router.push(href)
   }
 
-  const personalGroupIndex = SETTINGS_NAV.findIndex(g => g.label === 'PERSONAL')
+  const personalGroupIndex = nav.findIndex(g => g.label === 'PERSONAL')
 
   return (
     <aside className="fixed left-16 top-0 bottom-0 w-[260px] bg-secondary border-r border-[#E5E0EB] flex flex-col z-40">
@@ -123,7 +129,7 @@ export function SettingsSidebar() {
 
       {/* Nav scroll area */}
       <nav className="flex-1 overflow-y-auto py-2 pb-5 [scrollbar-width:thin] [scrollbar-color:#E5E0EB_transparent] [&::-webkit-scrollbar]:w-[3px] [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-[#E5E0EB] [&::-webkit-scrollbar-thumb]:rounded-sm">
-        {SETTINGS_NAV.map((group, groupIdx) => (
+        {nav.map((group, groupIdx) => (
           <div key={group.label}>
             {groupIdx === personalGroupIndex && (
               <div className="h-px bg-[#F0EDF4] mx-4 my-2" />

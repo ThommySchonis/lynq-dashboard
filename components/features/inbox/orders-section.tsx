@@ -1,6 +1,7 @@
 'use client'
 
 import { Button } from '@/components/ui/button'
+import { Gate } from '@/components/shared/gate'
 import { ORDER_STATUS } from '@/lib/inbox-constants'
 import { fmtPrice } from '@/lib/inbox-utils'
 import {
@@ -207,15 +208,17 @@ export function OrdersSection({
                 </div>
                 {/* Action buttons */}
                 <div className="flex gap-1 flex-wrap mb-2.5">
-                  <button
-                    className="inline-flex items-center gap-1 text-[11px] font-medium px-[9px] py-1 rounded-md border border-border bg-card text-foreground cursor-pointer transition-all hover:border-(--border-hover) hover:bg-secondary"
-                    onClick={() => setModal({ type: 'duplicate', order })}
-                  >
-                    <span className="flex">
-                      <Copy size={12} />
-                    </span>
-                    Duplicate
-                  </button>
+                  <Gate capability="manageOrders" mode="disable" reason="View-only access — you cannot duplicate orders.">
+                    <button
+                      className="inline-flex items-center gap-1 text-[11px] font-medium px-[9px] py-1 rounded-md border border-border bg-card text-foreground cursor-pointer transition-all hover:border-(--border-hover) hover:bg-secondary disabled:opacity-50 disabled:cursor-not-allowed"
+                      onClick={() => setModal({ type: 'duplicate', order })}
+                    >
+                      <span className="flex">
+                        <Copy size={12} />
+                      </span>
+                      Duplicate
+                    </button>
+                  </Gate>
                   <button
                     className="inline-flex items-center gap-1 text-[11px] font-medium px-[9px] py-1 rounded-md border border-border bg-card text-foreground cursor-pointer transition-all hover:border-(--border-hover) hover:bg-secondary"
                     onClick={() => setModal({
@@ -229,28 +232,34 @@ export function OrdersSection({
                     Task
                   </button>
                   {canRefund && (
-                    <button
-                      className="inline-flex items-center gap-1 text-[11px] font-medium px-[9px] py-1 rounded-md border border-border bg-card text-foreground cursor-pointer transition-all hover:border-(--border-hover) hover:bg-secondary"
-                      onClick={() => setModal({ type: 'refund', order })}
-                    >
-                      <RotateCcw size={11} />$ Refund
-                    </button>
+                    <Gate capability="manageOrders" mode="disable" reason="View-only access — you cannot issue refunds.">
+                      <button
+                        className="inline-flex items-center gap-1 text-[11px] font-medium px-[9px] py-1 rounded-md border border-border bg-card text-foreground cursor-pointer transition-all hover:border-(--border-hover) hover:bg-secondary disabled:opacity-50 disabled:cursor-not-allowed"
+                        onClick={() => setModal({ type: 'refund', order })}
+                      >
+                        <RotateCcw size={11} />$ Refund
+                      </button>
+                    </Gate>
                   )}
                   {canCancel && (
-                    <button
-                      className="inline-flex items-center gap-1 text-[11px] font-medium px-[9px] py-1 rounded-md border border-border bg-card text-foreground cursor-pointer transition-all hover:border-[rgba(220,38,38,0.35)] hover:text-[#dc2626] hover:bg-[rgba(220,38,38,0.05)]"
-                      onClick={() => setModal({ type: 'cancel', order })}
-                    >
-                      <XCircle size={11} />
-                      Cancel
-                    </button>
+                    <Gate capability="manageOrders" mode="disable" reason="View-only access — you cannot cancel orders.">
+                      <button
+                        className="inline-flex items-center gap-1 text-[11px] font-medium px-[9px] py-1 rounded-md border border-border bg-card text-foreground cursor-pointer transition-all hover:border-[rgba(220,38,38,0.35)] hover:text-[#dc2626] hover:bg-[rgba(220,38,38,0.05)] disabled:opacity-50 disabled:cursor-not-allowed"
+                        onClick={() => setModal({ type: 'cancel', order })}
+                      >
+                        <XCircle size={11} />
+                        Cancel
+                      </button>
+                    </Gate>
                   )}
-                  <button
-                    className="inline-flex items-center gap-1 text-[11px] font-medium px-[9px] py-1 rounded-md border border-border bg-card text-foreground cursor-pointer transition-all hover:border-(--border-hover) hover:bg-secondary px-[7px] py-1"
-                    onClick={() => setModal({ type: 'note', order })}
-                  >
-                    <MoreHorizontal size={13} />
-                  </button>
+                  <Gate capability="manageOrders" mode="disable" reason="View-only access — you cannot edit order notes.">
+                    <button
+                      className="inline-flex items-center gap-1 text-[11px] font-medium px-[9px] py-1 rounded-md border border-border bg-card text-foreground cursor-pointer transition-all hover:border-(--border-hover) hover:bg-secondary px-[7px] py-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                      onClick={() => setModal({ type: 'note', order })}
+                    >
+                      <MoreHorizontal size={13} />
+                    </button>
+                  </Gate>
                 </div>
 
                 {/* Key-value rows */}
@@ -359,17 +368,19 @@ export function OrdersSection({
                     {shippingOpen && (
                       <div className="pb-1.5">
                         <div className="mb-1.5">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setModal({ type: 'address', order })}
-                            className="inline-flex items-center gap-1 text-foreground-2 text-[11px] font-semibold px-2 py-[3px] rounded-[6px] border border-border bg-transparent transition-all duration-150 font-inherit hover:text-foreground hover:border-(--border-hover)"
-                          >
-                            <span className="flex">
-                              <SquarePen size={12} />
-                            </span>{' '}
-                            Edit
-                          </Button>
+                          <Gate capability="manageOrders" mode="disable" reason="View-only access — you cannot edit the shipping address.">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setModal({ type: 'address', order })}
+                              className="inline-flex items-center gap-1 text-foreground-2 text-[11px] font-semibold px-2 py-[3px] rounded-[6px] border border-border bg-transparent transition-all duration-150 font-inherit hover:text-foreground hover:border-(--border-hover)"
+                            >
+                              <span className="flex">
+                                <SquarePen size={12} />
+                              </span>{' '}
+                              Edit
+                            </Button>
+                          </Gate>
                         </div>
                         {[
                           sa.firstName || sa.lastName

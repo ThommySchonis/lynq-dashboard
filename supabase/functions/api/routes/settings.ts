@@ -1,6 +1,6 @@
 import { Hono } from 'hono'
 import { authMiddleware } from '../middleware/auth.ts'
-import { requireWriteAccess } from '../middleware/workspace.ts'
+import { requireWriteAccess, requireCapability } from '../middleware/workspace.ts'
 import { getAdminClient } from '../lib/supabase.ts'
 import type { AuthContext } from '../lib/types.ts'
 
@@ -25,7 +25,7 @@ app.get('/brand', async (c) => {
 
 app.post('/brand', async (c) => {
   const ctx = c.get('authContext') as AuthContext
-  const blocked = requireWriteAccess(c)
+  const blocked = requireWriteAccess(c) ?? requireCapability('manageWorkspace')(c)
   if (blocked) return blocked
 
   const sb = getAdminClient()
@@ -68,7 +68,7 @@ app.get('/integrations/email', async (c) => {
 
 app.post('/integrations/email', async (c) => {
   const ctx = c.get('authContext') as AuthContext
-  const blocked = requireWriteAccess(c)
+  const blocked = requireWriteAccess(c) ?? requireCapability('manageWorkspace')(c)
   if (blocked) return blocked
 
   const sb = getAdminClient()
@@ -99,7 +99,7 @@ app.post('/integrations/email', async (c) => {
 
 app.post('/integrations', async (c) => {
   const ctx = c.get('authContext') as AuthContext
-  const blocked = requireWriteAccess(c)
+  const blocked = requireWriteAccess(c) ?? requireCapability('manageWorkspace')(c)
   if (blocked) return blocked
 
   const sb = getAdminClient()

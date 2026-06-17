@@ -7,7 +7,7 @@ import { useAuthStore } from '@/stores/auth'
 import { parseJson } from '@/lib/utils/typed-json'
 import { useStoreStore } from '@/stores/store'
 import { useInboxUI } from '@/stores/inbox-ui'
-import type { Thread, Message, Note } from '@/types/inbox'
+import type { Thread, Message, Note, ConversationTag } from '@/types/inbox'
 
 function useToken() {
   return useAuthStore((s) => s.session?.access_token ?? '')
@@ -39,12 +39,15 @@ interface ConversationDetailResponse {
   conversation?: Record<string, unknown>
   messages?: Array<Record<string, string | null>>
   notes?: Note[]
+  tags?: ConversationTag[]
 }
 
 interface InboxCountsResponse {
   open?: number
   pending?: number
   resolved?: number
+  snoozed?: number
+  spam?: number
   unlinked?: number
   trash?: number
 }
@@ -68,21 +71,23 @@ export function useConversations(folder: string, search: string) {
       const params = new URLSearchParams()
       if (folder === 'unlinked') params.set('unlinked', 'true')
       else if (folder === 'trash') params.set('status', 'closed')
-      else params.set('status', folder)
+      else if (folder === 'spam') params.set('spam', 'true')
+      else params.set('status', folder) // open | pending | resolved | snoozed
       if (search) params.set('search', search)
       if (activeStoreId) params.set('store_id', activeStoreId)
       if (selectedEmailAccountId) params.set('email_account_id', selectedEmailAccountId)
       const res = await authFetch(`${apiUrl('inbox/conversations')}?${params}`, {}, token)
       const data = await parseJson<ConversationsResponse>(res)
-      return ((data.conversations || []) as Array<Record<string, string | boolean | null>>).map((c) => ({
+      return ((data.conversations || []) as Array<Record<string, unknown>>).map((c) => ({
         ...c,
         from: c.customer_name
-          ? `${c.customer_name} <${c.customer_email || ''}>`
-          : (c.customer_email as string) || 'Unknown',
-        subject: (c.subject as string) || '(no subject)',
-        snippet: (c.snippet || c.preview || '') as string,
-        date: (c.last_message_at || c.created_at) as string,
+          ? `${String(c.customer_name)} <${String(c.customer_email || '')}>`
+          : String(c.customer_email || '') || 'Unknown',
+        subject: String(c.subject || '') || '(no subject)',
+        snippet: String(c.snippet || c.preview || ''),
+        date: String(c.last_message_at || c.created_at || ''),
         unread: (c.is_unread || false) as boolean,
+        tags: (c.tags as unknown as ConversationTag[]) || [],
       })) as Thread[]
     },
     enabled: !!token,
@@ -93,6 +98,7 @@ export interface ConversationData {
   conversation: Thread | null
   messages: Message[]
   notes: Note[]
+  tags: ConversationTag[]
 }
 
 /** Fetch a single conversation with messages and notes */
@@ -115,9 +121,34 @@ export function useConversation(threadId: string | null) {
         conversation: (data.conversation ?? null) as Thread | null,
         messages,
         notes: (data.notes || []) as Note[],
+        tags: (data.tags || []) as ConversationTag[],
       }
     },
     enabled: !!threadId && !!token,
+  })
+}
+
+export interface InboxMember {
+  id: string
+  name: string
+}
+
+interface InboxMembersResponse {
+  members?: InboxMember[]
+}
+
+/** Workspace members assignable to conversations (id = workspace_members.id) */
+export function useInboxMembers() {
+  const token = useToken()
+  return useQuery<InboxMember[]>({
+    queryKey: [...inboxKeys.all, 'members'],
+    queryFn: async () => {
+      const res = await authFetch(apiUrl('inbox/members'), {}, token)
+      const data = await parseJson<InboxMembersResponse>(res)
+      return data.members ?? []
+    },
+    enabled: !!token,
+    staleTime: 5 * 60_000,
   })
 }
 
@@ -140,6 +171,8 @@ export function useInboxCounts() {
         open: data.open || 0,
         pending: data.pending || 0,
         resolved: data.resolved || 0,
+        snoozed: data.snoozed || 0,
+        spam: data.spam || 0,
         unlinked: data.unlinked || 0,
         trash: data.trash || 0,
       }

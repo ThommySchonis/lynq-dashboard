@@ -1,4 +1,6 @@
 import { getAuthContext, requireWriteAccess } from '@/lib/auth'
+import { can } from '@/lib/permissions'
+import type { Role } from '@/types/database'
 import { sendReply } from '@/lib/conversationEngine'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
@@ -12,6 +14,9 @@ export async function POST(request: NextRequest, { params: routeParams }: RouteC
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const blocked = requireWriteAccess(ctx)
   if (blocked) return blocked
+  if (!can.replyToTickets(ctx.role as Role)) {
+    return NextResponse.json({ error: 'forbidden' }, { status: 403 })
+  }
 
   const rl = checkRateLimit(`ws:${ctx.workspaceId}:inbox`, 60, 60_000)
   if (!rl.allowed) {

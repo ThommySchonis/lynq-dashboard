@@ -67,6 +67,8 @@ interface CountsResponse {
   open?: number
   pending?: number
   resolved?: number
+  snoozed?: number
+  spam?: number
   unlinked?: number
   trash?: number
 }
@@ -146,7 +148,7 @@ export const useInboxStore = create<InboxState>()((set, get) => ({
   loadingCustomer: false,
 
   // Counts
-  counts: { open: 0, pending: 0, resolved: 0, unlinked: 0, trash: 0 },
+  counts: { open: 0, pending: 0, resolved: 0, snoozed: 0, spam: 0, unlinked: 0, trash: 0 },
 
   // Sync
   syncing: false,
@@ -372,6 +374,8 @@ export const useInboxStore = create<InboxState>()((set, get) => ({
           open: data.open ?? 0,
           pending: data.pending ?? 0,
           resolved: data.resolved ?? 0,
+          snoozed: data.snoozed ?? 0,
+          spam: data.spam ?? 0,
           unlinked: data.unlinked ?? 0,
           trash: data.trash ?? 0,
         },

@@ -2,7 +2,7 @@ import { Hono } from 'hono'
 import { authMiddleware } from '../middleware/auth.ts'
 import { getAdminClient } from '../lib/supabase.ts'
 import type { AuthContext } from '../lib/types.ts'
-import { searchService, type SearchType } from '../lib/services/search.ts'
+import { parseFilterParams, searchService, type SearchType } from '../lib/services/search.ts'
 
 const ALLOWED_TYPES: SearchType[] = ['conversations', 'messages', 'contacts']
 const Q_MIN = 2
@@ -18,9 +18,6 @@ app.get('/', async (c) => {
 
   const rawQ = c.req.query('q') ?? ''
   const q = rawQ.trim()
-  if (q.length < Q_MIN) {
-    return c.json({ error: `q must be at least ${Q_MIN} characters` }, 400)
-  }
   if (q.length > Q_MAX) {
     return c.json({ error: `q must be at most ${Q_MAX} characters` }, 400)
   }
@@ -49,8 +46,29 @@ app.get('/', async (c) => {
     limit = Math.min(n, LIMIT_MAX)
   }
 
+  const parsed = parseFilterParams({
+    status: c.req.query('status'),
+    assignee: c.req.query('assignee'),
+    dateFrom: c.req.query('dateFrom'),
+    dateTo: c.req.query('dateTo'),
+  })
+  if (parsed.error) {
+    return c.json({ error: parsed.error }, 400)
+  }
+  const filters = parsed.filters!
+
+  const hasFilters =
+    filters.status.length > 0 ||
+    filters.assignee.length > 0 ||
+    filters.dateFrom !== null ||
+    filters.dateTo !== null
+
+  if (q.length < Q_MIN && !hasFilters) {
+    return c.json({ error: `q must be at least ${Q_MIN} characters` }, 400)
+  }
+
   const sb = getAdminClient()
-  const result = await searchService(sb, ctx.workspaceId, { q, types, limit })
+  const result = await searchService(sb, ctx.workspaceId, { q, types, filters, limit })
   return c.json(result)
 })
 

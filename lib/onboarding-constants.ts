@@ -82,11 +82,19 @@ export type GoalFormData = z.infer<typeof goalSchema>
 
 // ── Step 2 — Account ──────────────────────────────────────────────────────────
 
+const PASSWORD_MESSAGE = 'At least 6 characters, incl. uppercase, lowercase, number & symbol.'
+
 export const accountSchema = z.object({
   email: z.string().email('Enter a valid email'),
-  password: z
-    .string()
-    .min(6, 'At least 6 characters, incl. uppercase, lowercase, number & symbol.'),
+  password: z.string().refine(
+    (value) =>
+      value.length >= 6 &&
+      /[a-z]/.test(value) &&
+      /[A-Z]/.test(value) &&
+      /[0-9]/.test(value) &&
+      /[^A-Za-z0-9]/.test(value),
+    PASSWORD_MESSAGE,
+  ),
 })
 
 export type AccountFormData = z.infer<typeof accountSchema>

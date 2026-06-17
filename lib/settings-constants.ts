@@ -89,6 +89,20 @@ export const TIMEZONES: string[] = [
   'Asia/Shanghai', 'Australia/Sydney', 'Pacific/Auckland',
 ]
 
+/** Workspace locales — single source of truth for the settings picker and onboarding header. */
+export interface WorkspaceLocale {
+  value: string
+  label: string
+}
+
+export const LOCALES: WorkspaceLocale[] = [
+  { value: 'en', label: 'English' },
+  { value: 'nl', label: 'Nederlands' },
+  { value: 'de', label: 'Deutsch' },
+  { value: 'fr', label: 'Français' },
+  { value: 'es', label: 'Español' },
+]
+
 export interface WorkspaceDefaults {
   name: string
   slug: string

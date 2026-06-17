@@ -10,6 +10,8 @@ interface PlanCardProps {
   onSelect: () => void
 }
 
+const PRICE_TEXT = 'text-[22px] font-bold tracking-[-0.01em] text-foreground'
+
 export function PlanCard({ plan, selected, onSelect }: PlanCardProps) {
   const emphasized = plan.highlighted || selected
 
@@ -27,10 +29,10 @@ export function PlanCard({ plan, selected, onSelect }: PlanCardProps) {
       )}
 
       <div className="flex items-baseline justify-between gap-2">
-        <span className="text-[22px] font-bold tracking-[-0.01em] text-foreground">{plan.name}</span>
+        <span className={PRICE_TEXT}>{plan.name}</span>
         <span className="flex items-baseline gap-1">
           {plan.pricePrefix && <span className="text-sm text-foreground-3">{plan.pricePrefix}</span>}
-          <span className="text-[22px] font-bold tracking-[-0.01em] text-foreground">{plan.price}</span>
+          <span className={PRICE_TEXT}>{plan.price}</span>
           <span className="text-sm text-foreground-3">{plan.period}</span>
         </span>
       </div>
@@ -41,7 +43,7 @@ export function PlanCard({ plan, selected, onSelect }: PlanCardProps) {
         type="button"
         onClick={onSelect}
         className={cn(
-          'h-11 w-full rounded-[10px] text-sm font-semibold transition-colors',
+          'h-11 w-full rounded-lg text-sm font-semibold transition-colors',
           plan.highlighted
             ? 'bg-primary text-primary-foreground hover:bg-primary-hover'
             : 'border border-primary bg-transparent text-primary hover:bg-accent-soft',

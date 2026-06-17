@@ -42,7 +42,7 @@ export function ProgressFooter({
           <Button
             variant="outline"
             onClick={onBack}
-            className="h-11 rounded-[10px] px-6 text-sm font-semibold text-foreground-3"
+            className="h-11 rounded-lg px-6 text-sm font-semibold text-foreground-3"
           >
             Previous
           </Button>
@@ -50,7 +50,7 @@ export function ProgressFooter({
         <Button
           onClick={onNext}
           disabled={nextDisabled}
-          className="h-11 min-w-[185px] rounded-[10px] bg-foreground px-10 text-sm font-semibold text-background hover:bg-foreground/90 active:bg-foreground/90"
+          className="h-11 min-w-[185px] rounded-lg bg-foreground px-10 text-sm font-semibold text-background hover:bg-foreground/90 active:bg-foreground/90"
         >
           {nextLabel}
         </Button>

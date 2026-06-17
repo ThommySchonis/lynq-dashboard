@@ -1,16 +1,18 @@
 'use client'
 
 import { useState } from 'react'
-import { ShoppingBag, Store, Plus, MoreVertical } from 'lucide-react'
+import { ShoppingBag, Store, Plus, MoreVertical, RefreshCw } from 'lucide-react'
+import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { AddStoreModal } from '@/components/features/settings/stores/add-store-modal'
 import { useConnectShopify } from '@/hooks/onboarding'
 import { WizardShell } from '../wizard-shell'
 import { ProgressFooter } from '../progress-footer'
 import { StepHeading } from '../step-heading'
-import { IconBadge } from '../icon-badge'
+
+// UI-first: the connected store shown in the row (mock until real store state is wired).
+const STORE_CODE = '5u3z59-ct'
 
 interface StepConnectStoreProps {
   stepIndex: number
@@ -19,16 +21,12 @@ interface StepConnectStoreProps {
 }
 
 export function StepConnectStore({ stepIndex, onBack, onNext }: StepConnectStoreProps) {
-  const [shop, setShop] = useState('')
   const [addStoreOpen, setAddStoreOpen] = useState(false)
   const connectShopify = useConnectShopify()
 
-  function handleConnect() {
-    const value = shop.trim()
-    if (!value) return
-    // Initiates Shopify OAuth and hands off to the returned authorize URL.
-    // Requires an authenticated session — active once account creation is wired.
-    connectShopify.mutate(value, {
+  // Re-sync / reconnect the store in the row via Shopify OAuth.
+  function handleSync() {
+    connectShopify.mutate(STORE_CODE, {
       onSuccess: (res) => {
         if (res?.url) window.location.href = res.url
       },
@@ -38,57 +36,54 @@ export function StepConnectStore({ stepIndex, onBack, onNext }: StepConnectStore
   return (
     <WizardShell footer={<ProgressFooter stepIndex={stepIndex} onBack={onBack} onNext={onNext} />}>
       <div className="flex flex-col gap-6">
-        <IconBadge icon={ShoppingBag} />
-
-        <StepHeading
-          title="Connect your Shopify store"
-          description="Link your store to sync products, orders, and customers."
-        />
-
-        <div className="flex flex-col gap-2">
-          <div className="flex gap-2">
-            <Input
-              value={shop}
-              onChange={(e) => setShop(e.target.value)}
-              placeholder="yourstore.myshopify.com"
-              autoComplete="off"
-              spellCheck={false}
-              className="h-11"
+        {/* Heading: centered Shopify badge + title, with a refresh action on the right */}
+        <div className="flex flex-col items-center gap-2.5">
+          <div className="flex size-8 items-center justify-center rounded-lg border border-border bg-card shadow-card">
+            <ShoppingBag className="size-4 text-primary" />
+          </div>
+          <div className="flex w-full items-center justify-between gap-2">
+            <span aria-hidden className="size-11 shrink-0" />
+            <StepHeading
+              center
+              className="flex-1"
+              title="Connect your Shopify store"
+              description="Link your store to sync products, orders, and customers"
             />
-            <Button
-              size="lg"
-              className="h-11 shrink-0"
-              onClick={handleConnect}
-              disabled={!shop.trim() || connectShopify.isPending}
+            <button
+              type="button"
+              aria-label="Reconnect store"
+              onClick={handleSync}
+              disabled={connectShopify.isPending}
+              className="flex size-11 shrink-0 items-center justify-center text-foreground-3 transition-colors hover:text-foreground disabled:opacity-50"
             >
-              {connectShopify.isPending ? 'Connecting…' : 'Connect Shopify'}
-            </Button>
+              <RefreshCw className={cn('size-4', connectShopify.isPending && 'animate-spin')} />
+            </button>
           </div>
-          {connectShopify.isError && (
-            <p className="text-xs text-destructive">Failed to connect Shopify. Try again.</p>
-          )}
         </div>
 
-        <div className="flex items-center gap-3 rounded-xl border border-border bg-card p-4">
-          <div className="flex size-9 items-center justify-center rounded-lg bg-secondary text-primary">
-            <Store className="size-5" />
+        {/* Connected stores + add another */}
+        <div className="flex flex-col items-center gap-2.5">
+          <div className="flex w-full items-center justify-between gap-3 rounded-xl border border-border bg-card px-4 py-3">
+            <div className="flex items-center gap-2.5">
+              <Store className="size-4 text-foreground-3" />
+              <span className="text-sm text-foreground">5u3z59-ct</span>
+              <Badge variant="success" className="rounded-md">Active</Badge>
+              <Badge variant="info" className="rounded-md">Payment</Badge>
+            </div>
+            <button
+              type="button"
+              aria-label="Store options"
+              className="text-foreground-3 transition-colors hover:text-foreground"
+            >
+              <MoreVertical className="size-4" />
+            </button>
           </div>
-          <span className="text-sm font-medium text-foreground">5u3z59-ct</span>
-          <Badge variant="success" className="rounded-md">Active</Badge>
-          <Badge variant="info" className="rounded-md">Payment</Badge>
-          <button
-            type="button"
-            aria-label="Store options"
-            className="ml-auto text-foreground-3 transition-colors hover:text-foreground"
-          >
-            <MoreVertical className="size-4" />
-          </button>
-        </div>
 
-        <Button variant="outline" size="lg" className="self-start" onClick={() => setAddStoreOpen(true)}>
-          <Plus className="size-4" />
-          Add more stores
-        </Button>
+          <Button variant="outline" size="lg" onClick={() => setAddStoreOpen(true)}>
+            <Plus className="size-4" />
+            Add more stores
+          </Button>
+        </div>
 
         <AddStoreModal open={addStoreOpen} onOpenChange={setAddStoreOpen} />
       </div>

@@ -1,6 +1,5 @@
 'use client'
 
-import { ArrowRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { TOTAL_STEPS } from '@/lib/onboarding-constants'
 
@@ -24,28 +23,36 @@ export function ProgressFooter({
   const progress = (current / TOTAL_STEPS) * 100
 
   return (
-    <div className="flex items-center justify-between gap-6 border-t border-border pt-6">
-      <div className="flex-1">
-        <div className="h-1 w-full max-w-56 overflow-hidden rounded-full bg-border">
+    <div className="flex items-center justify-between gap-6">
+      {/* Progress: track + caption in one row (Figma footer_progress, 244px) */}
+      <div className="flex w-[244px] items-center gap-3">
+        <div className="h-1 flex-1 overflow-hidden rounded-full bg-border">
           <div
-            className="h-full rounded-full bg-primary transition-[width] duration-300"
+            className="h-full rounded-full bg-success transition-[width] duration-300"
             style={{ width: `${progress}%` }}
           />
         </div>
-        <p className="mt-2 text-xs text-foreground-3">
+        <span className="whitespace-nowrap text-xs text-foreground-4">
           Step {current} of {TOTAL_STEPS}
-        </p>
+        </span>
       </div>
 
       <div className="flex items-center gap-3">
         {onBack && (
-          <Button variant="outline" size="lg" onClick={onBack}>
+          <Button
+            variant="outline"
+            onClick={onBack}
+            className="h-11 rounded-[10px] px-6 text-sm font-semibold text-foreground-3"
+          >
             Previous
           </Button>
         )}
-        <Button size="lg" onClick={onNext} disabled={nextDisabled}>
+        <Button
+          onClick={onNext}
+          disabled={nextDisabled}
+          className="h-11 min-w-[185px] rounded-[10px] bg-foreground px-10 text-sm font-semibold text-background hover:bg-foreground/90 active:bg-foreground/90"
+        >
           {nextLabel}
-          <ArrowRight className="size-4" />
         </Button>
       </div>
     </div>

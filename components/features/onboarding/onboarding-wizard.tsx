@@ -2,6 +2,8 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useAuthStore } from '@/stores/auth'
+import { useSaveBrand, useCompleteOnboarding } from '@/hooks/onboarding'
 import { StepGoal } from './steps/step-goal'
 import { StepAccount } from './steps/step-account'
 import { StepConfirm } from './steps/step-confirm'
@@ -15,6 +17,11 @@ import type { WizardData, GoalFormData, AccountFormData, PricingPlan } from '@/l
 /** Orchestrates the 7-step onboarding wizard. UI-first — state is client-side only. */
 export function OnboardingWizard() {
   const router = useRouter()
+  const user = useAuthStore((s) => s.user)
+  const session = useAuthStore((s) => s.session)
+  const saveBrand = useSaveBrand()
+  const completeOnboarding = useCompleteOnboarding()
+
   const [stepIndex, setStepIndex] = useState(0)
   const [data, setData] = useState<WizardData>(INITIAL_WIZARD_DATA)
 
@@ -23,6 +30,27 @@ export function OnboardingWizard() {
   const patch = (values: Partial<WizardData>) => setData((d) => ({ ...d, ...values }))
 
   const account = { name: data.name, email: data.email }
+
+  // Leaving the email-confirm step into the authenticated portion: persist the
+  // brand captured on step 1. No-op until a real session exists (account
+  // creation + email-confirm resume is the remaining backend gap).
+  // language/tone aren't collected in this flow yet — seed sensible defaults.
+  function handleConfirmNext() {
+    if (session) {
+      saveBrand.mutate({ brandName: data.brandName, language: 'English', tone: 'professional' })
+    }
+    next()
+  }
+
+  // Final step: mark onboarding complete, then continue. Real billing handoff to
+  // Shopify managed pricing is wired in a later pass.
+  function handleFinish() {
+    if (user) {
+      completeOnboarding.mutate(user.id, { onSuccess: () => router.push('/home') })
+    } else {
+      router.push('/login')
+    }
+  }
 
   switch (stepIndex) {
     case 0:
@@ -47,7 +75,7 @@ export function OnboardingWizard() {
         />
       )
     case 2:
-      return <StepConfirm email={data.email} onBack={back} onNext={next} />
+      return <StepConfirm email={data.email} onBack={back} onNext={handleConfirmNext} />
     case 3:
       return <StepConnectStore onBack={back} onNext={next} />
     case 4:
@@ -79,8 +107,7 @@ export function OnboardingWizard() {
           plan={data.plan}
           onSelect={(plan: PricingPlan['id']) => patch({ plan })}
           onBack={back}
-          // Backend pass: hand off to Shopify managed billing. UI-first stub routes to login.
-          onNext={() => router.push('/login')}
+          onNext={handleFinish}
         />
       )
     default:

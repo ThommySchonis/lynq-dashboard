@@ -87,7 +87,7 @@ export default function LoginPage() {
     <p className="m-0">
       New here?{' '}
       <Link
-        href="/signup"
+        href="/onboarding"
         className="text-[#C4B0FF] hover:underline transition-colors duration-150"
       >
         Start your free trial

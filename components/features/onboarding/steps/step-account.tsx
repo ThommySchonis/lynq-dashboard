@@ -95,11 +95,11 @@ export function StepAccount({ stepIndex, defaultValues, onBack, onNext }: StepAc
 
         <p className="text-xs leading-relaxed text-foreground-3">
           By proceeding, you agree to the{' '}
-          <a href="/terms" className="text-foreground-3 underline">
+          <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-foreground-3 underline">
             Terms and Conditions
           </a>{' '}
           and{' '}
-          <a href="/privacy" className="text-foreground-3 underline">
+          <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-foreground-3 underline">
             Privacy Policy
           </a>
           .

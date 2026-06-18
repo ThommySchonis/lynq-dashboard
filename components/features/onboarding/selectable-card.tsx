@@ -22,7 +22,7 @@ export function SelectableCard({ icon, title, description, selected, onSelect }:
         'flex flex-1 flex-col gap-2.5 rounded-[14px] border px-5 py-[18px] text-left transition-colors',
         selected
           ? 'border-accent-border bg-accent-soft'
-          : 'border-border bg-card hover:border-border-hover',
+          : 'border-border bg-card hover:border-border-hover hover:bg-muted',
       )}
     >
       <div className="flex items-center gap-2.5">

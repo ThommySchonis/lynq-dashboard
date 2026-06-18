@@ -14,6 +14,7 @@ import { apiUrl } from '@/lib/api-client'
 import { EMAIL_PLACEHOLDER } from '@/lib/auth-constants'
 import { getSafeRedirect } from '@/lib/auth-utils'
 import { getConsent } from '@/lib/cookies/consent'
+import ResendConfirmationButton from '@/components/features/auth/resend-confirmation-button'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -25,6 +26,12 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
 
   const signIn = useSignIn()
+
+  const signInErrorCode =
+    signIn.error && typeof signIn.error === 'object' && 'code' in signIn.error
+      ? (signIn.error as { code?: string }).code
+      : undefined
+  const isUnconfirmed = signInErrorCode === 'email_not_confirmed'
 
   useEffect(() => {
     if (!isLoading && session) router.replace(redirectTo)
@@ -100,14 +107,27 @@ export default function LoginPage() {
           }
         />
 
-        {signIn.error && (
-          <p
-            role="alert"
-            className="rounded-[10px] border border-destructive/30 bg-destructive/10 px-3.5 py-2.5 text-[13px] text-destructive"
-          >
-            Incorrect email or password
-          </p>
-        )}
+        {signIn.error &&
+          (isUnconfirmed ? (
+            <div
+              role="alert"
+              className="rounded-[10px] border border-warning/30 bg-warning/10 px-3.5 py-2.5 text-[13px] text-foreground-2"
+            >
+              <p className="m-0">
+                Please verify your email before signing in. Check your inbox for the confirmation link.
+              </p>
+              <div className="mt-2">
+                <ResendConfirmationButton email={email} variant="inline" />
+              </div>
+            </div>
+          ) : (
+            <p
+              role="alert"
+              className="rounded-[10px] border border-destructive/30 bg-destructive/10 px-3.5 py-2.5 text-[13px] text-destructive"
+            >
+              Incorrect email or password
+            </p>
+          ))}
 
         <AuthSubmitButton pending={signIn.isPending} pendingLabel="Signing in…">
           Sign in

@@ -5,6 +5,7 @@ import { authFetch } from '@/lib/inbox-utils'
 import { useAuthStore } from '@/stores/auth'
 import { parseJson } from '@/lib/utils/typed-json'
 import { inboxKeys } from './use-inbox-data'
+import { settingsKeys } from '@/hooks/settings'
 import { apiUrl } from '@/lib/api-client'
 import type { BulkActionId, BulkActionPayload } from '@/types/inbox'
 
@@ -228,6 +229,9 @@ export function useSyncInbox() {
     },
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: inboxKeys.all })
+      // A sync updates each account's last_sync_at; refresh the email-accounts
+      // query so the "syncing your inbox" loader clears once sync completes.
+      void qc.invalidateQueries({ queryKey: settingsKeys.emailAccounts() })
     },
   })
 }

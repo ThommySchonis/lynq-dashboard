@@ -2,33 +2,22 @@
 
 import { Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { useEmailAccounts } from '@/hooks/settings'
-import { isAccountSyncing } from '@/lib/email-sync'
 
 const SYNC_MESSAGE =
   'Syncing your inbox — importing your emails can take a few minutes. New messages will appear as they arrive.'
 
 /**
- * Presentational "still syncing" notice.
- *  - `inline`  → bordered info box, used per-account in settings.
- *  - `banner`  → fixed full-width bar, used at the top of the inbox.
+ * Presentational "still syncing" notice: an info-styled box with a spinner.
+ * Used per-account on the email settings page and in the empty inbox thread
+ * list while a freshly connected account is still importing.
  */
-export function SyncNotice({
-  variant = 'inline',
-  className,
-}: {
-  variant?: 'inline' | 'banner'
-  className?: string
-}) {
+export function SyncNotice({ className }: { className?: string }) {
   return (
     <div
       role="status"
       aria-live="polite"
       className={cn(
-        'flex items-center gap-2.5 text-sm',
-        variant === 'inline'
-          ? 'rounded-lg border border-info/20 bg-info-soft px-4 py-3 text-foreground-2'
-          : 'fixed top-0 right-0 left-0 z-50 border-b border-info/20 bg-info-soft px-4 py-2.5 text-foreground-2 shadow-sm',
+        'flex items-center gap-2.5 rounded-lg border border-info/20 bg-info-soft px-4 py-3 text-sm text-foreground-2',
         className,
       )}
     >
@@ -36,16 +25,4 @@ export function SyncNotice({
       <span>{SYNC_MESSAGE}</span>
     </div>
   )
-}
-
-/**
- * Inbox-mounted wrapper: shows a single banner notice whenever ANY connected
- * account is still performing its initial sync. Reuses the same
- * `useEmailAccounts()` query as settings, so no extra fetch.
- */
-export function InboxSyncNotice() {
-  const { data: accounts } = useEmailAccounts()
-  const syncing = (accounts ?? []).some(isAccountSyncing)
-  if (!syncing) return null
-  return <SyncNotice variant="banner" />
 }

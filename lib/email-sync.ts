@@ -9,7 +9,7 @@ import type { EmailAccount } from '@/types/settings'
  */
 export const SYNC_NOTICE_WINDOW_MS = 30 * 60 * 1000 // 30 minutes
 
-type SyncableAccount = Pick<EmailAccount, 'provider' | 'last_sync_at' | 'created_at'>
+type SyncableAccount = Pick<EmailAccount, 'provider' | 'last_sync_at' | 'connected_at'>
 
 /**
  * True when an account is still performing its initial inbox import:
@@ -20,7 +20,8 @@ type SyncableAccount = Pick<EmailAccount, 'provider' | 'last_sync_at' | 'created
 export function isAccountSyncing(account: SyncableAccount): boolean {
   if (account.provider === 'forwarding') return false
   if (account.last_sync_at != null) return false
-  const connectedMs = new Date(account.created_at).getTime()
+  if (account.connected_at == null) return false
+  const connectedMs = new Date(account.connected_at).getTime()
   if (Number.isNaN(connectedMs)) return false
   return Date.now() - connectedMs < SYNC_NOTICE_WINDOW_MS
 }

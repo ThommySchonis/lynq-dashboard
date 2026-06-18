@@ -14,10 +14,13 @@ import { useConversations, useInboxCounts } from "@/hooks/inbox/use-inbox-data";
 import { useSyncInbox } from "@/hooks/inbox/use-inbox-mutations";
 import { useAIStore } from "@/stores/ai";
 import { URGENCY_SCORE } from "@/lib/inbox-constants";
-import { useMemo, useCallback } from "react";
+import { useMemo, useCallback, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import type { Thread } from "@/types/inbox";
 import { MailboxSwitcher } from "@/components/features/inbox/mailbox-switcher";
+import { SyncNotice } from "@/components/features/inbox/sync-notice";
+import { useEmailAccounts } from "@/hooks/settings";
+import { isAccountSyncing } from "@/lib/email-sync";
 
 export function ThreadListPanel() {
   const router = useRouter();
@@ -39,6 +42,12 @@ export function ThreadListPanel() {
   // TanStack data
   const { data: threads = [], isLoading: loadingThreads, refetch: refetchThreads } = useConversations(activeFolder, search);
   const { data: counts = { open: 0, pending: 0, resolved: 0, snoozed: 0, spam: 0, unlinked: 0, trash: 0 } } = useInboxCounts();
+
+  // A freshly connected account is still importing its mailbox until its first
+  // sync completes (last_sync_at set). While that's true we show a "syncing"
+  // loader in the empty list and auto-kick one sync so messages actually land.
+  const { data: emailAccounts = [] } = useEmailAccounts();
+  const isSyncingInbox = emailAccounts.some(isAccountSyncing);
 
   // AI analyses from Zustand
   const analyses = useAIStore((s) => s.analyses);
@@ -89,6 +98,17 @@ export function ThreadListPanel() {
     setSyncing(false);
     void refetchThreads();
   }, [setSyncing, syncInboxMutation, refetchThreads]);
+
+  // Auto-trigger one sync when a freshly connected account is still importing,
+  // so its messages actually arrive (nothing else pulls them on inbox open).
+  // The ref guards against re-firing while the account stays in the syncing state.
+  const autoSyncedRef = useRef(false);
+  useEffect(() => {
+    if (isSyncingInbox && !autoSyncedRef.current && !syncing) {
+      autoSyncedRef.current = true;
+      void onSync();
+    }
+  }, [isSyncingInbox, syncing, onSync]);
 
   const onCreateTicket = useCallback(() => {
     router.push("/inbox/create");
@@ -283,7 +303,13 @@ export function ThreadListPanel() {
             </div>
           ))}
         {!loadingThreads && sortedFiltered.length === 0 && (
-          <div className="px-5 py-10 text-center text-muted-foreground text-[12.5px]">No conversations in this folder</div>
+          isSyncingInbox ? (
+            <div className="p-3">
+              <SyncNotice />
+            </div>
+          ) : (
+            <div className="px-5 py-10 text-center text-muted-foreground text-[12.5px]">No conversations in this folder</div>
+          )
         )}
         {sortedFiltered.map((thread) => {
           const active = selectedThreadId === thread.id;

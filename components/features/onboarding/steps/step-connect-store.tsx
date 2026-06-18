@@ -85,7 +85,7 @@ export function StepConnectStore({ stepIndex, onBack, onNext }: StepConnectStore
 
           <Button variant="outline" size="lg" onClick={() => setAddStoreOpen(true)}>
             <Plus className="size-4" />
-            Add more stores
+            {stores.length === 0 ? 'Add store' : 'Add more stores'}
           </Button>
         </div>
 

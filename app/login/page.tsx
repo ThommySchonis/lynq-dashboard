@@ -61,15 +61,12 @@ export default function LoginPage() {
       title="Welcome back"
       subtitle="Sign in to your Lynq & Flow workspace."
       footer={
-        <div className="mt-7">
-          <div className="h-px bg-border" />
-          <p className="mt-5 text-center text-sm text-foreground-3">
-            Don&apos;t have an account?{' '}
-            <Link href="/onboarding" className="font-semibold text-primary hover:opacity-80">
-              Sign up
-            </Link>
-          </p>
-        </div>
+        <p className="text-center text-sm text-foreground-3">
+          Don&apos;t have an account?{' '}
+          <Link href="/onboarding" className="font-semibold text-primary hover:opacity-80">
+            Sign up
+          </Link>
+        </p>
       }
     >
       <form onSubmit={handleSubmit} autoComplete="on" noValidate className="space-y-4">

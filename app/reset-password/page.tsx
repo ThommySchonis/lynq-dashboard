@@ -27,14 +27,7 @@ const resetSchema = z
 
 type ResetFormValues = z.infer<typeof resetSchema>
 
-const footer = (
-  <div className="mt-7">
-    <div className="h-px bg-border" />
-    <div className="mt-5">
-      <BackToSignIn />
-    </div>
-  </div>
-)
+const footer = <BackToSignIn />
 
 export default function ResetPasswordPage() {
   const router = useRouter()

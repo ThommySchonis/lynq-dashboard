@@ -9,14 +9,7 @@ import { BackToSignIn } from '@/components/features/auth/back-to-sign-in'
 import { useResetPasswordRequest } from '@/hooks/auth/use-auth-mutations'
 import { EMAIL_PLACEHOLDER } from '@/lib/auth-constants'
 
-const footer = (
-  <div className="mt-7">
-    <div className="h-px bg-border" />
-    <div className="mt-5">
-      <BackToSignIn />
-    </div>
-  </div>
-)
+const footer = <BackToSignIn />
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('')

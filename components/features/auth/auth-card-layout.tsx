@@ -3,6 +3,7 @@
 import type { ReactNode } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
+import { Separator } from '@/components/ui/separator'
 
 interface AuthCardLayoutProps {
   /** Card title (e.g. "Welcome back") */
@@ -11,7 +12,7 @@ interface AuthCardLayoutProps {
   subtitle?: string
   /** Form body content */
   children: ReactNode
-  /** Optional slot below the form (divider + sign-up row or back link) */
+  /** Optional content below the form; rendered under a divider (sign-up row or back link) */
   footer?: ReactNode
 }
 
@@ -66,7 +67,12 @@ export default function AuthCardLayout({
 
         <div className="mt-7">{children}</div>
 
-        {footer}
+        {footer && (
+          <div className="mt-7">
+            <Separator />
+            <div className="mt-5">{footer}</div>
+          </div>
+        )}
       </div>
 
       {/* ── Page footer ── */}

@@ -2,10 +2,14 @@ import type { Metadata } from 'next'
 import { Instrument_Serif, DM_Sans } from 'next/font/google'
 import './globals.css'
 
+// Secondary fonts — not used on every route (Switzer is the body font), so we
+// opt out of automatic preload to avoid "preloaded but not used" warnings.
+// `display: swap` still loads them on demand where they're actually rendered.
 const instrumentSerif = Instrument_Serif({
   subsets:  ['latin'],
   weight:   '400',
   display:  'swap',
+  preload:  false,
   variable: '--font-display',
   fallback: ['Cormorant Garamond', 'Georgia', 'Cambria', 'serif'],
 })
@@ -14,6 +18,7 @@ const dmSans = DM_Sans({
   subsets:  ['latin'],
   weight:   ['400', '500', '600'],
   display:  'swap',
+  preload:  false,
   variable: '--font-dm-sans',
   fallback: ['-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'sans-serif'],
 })

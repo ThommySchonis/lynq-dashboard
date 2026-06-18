@@ -18,8 +18,10 @@ export function PlanCard({ plan, selected, onSelect }: PlanCardProps) {
   return (
     <div
       className={cn(
-        'relative flex flex-1 flex-col gap-[18px] rounded-2xl border bg-card p-6',
+        'relative flex flex-1 flex-col gap-[18px] rounded-2xl border p-6 transition-colors',
+        plan.highlighted && 'md:z-10 md:scale-[1.04]',
         emphasized ? 'border-primary' : 'border-border',
+        selected ? 'bg-accent-soft ring-2 ring-primary' : 'bg-card',
       )}
     >
       {plan.badge && (
@@ -37,14 +39,14 @@ export function PlanCard({ plan, selected, onSelect }: PlanCardProps) {
         </span>
       </div>
 
-      <p className="text-sm text-foreground-3">{plan.tagline}</p>
+      <p className="min-h-10 text-sm text-foreground-3">{plan.tagline}</p>
 
       <button
         type="button"
         onClick={onSelect}
         className={cn(
           'h-11 w-full rounded-lg text-sm font-semibold transition-colors',
-          plan.highlighted
+          emphasized
             ? 'bg-primary text-primary-foreground hover:bg-primary-hover'
             : 'border border-primary bg-transparent text-primary hover:bg-accent-soft',
         )}

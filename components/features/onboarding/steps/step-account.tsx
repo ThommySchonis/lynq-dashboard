@@ -57,6 +57,7 @@ export function StepAccount({ stepIndex, defaultValues, onBack, onNext }: StepAc
             <Input
               id="email"
               type="email"
+              autoComplete="email"
               {...register('email')}
               placeholder="e.g., user_email@gmail.com"
               className="h-11 pl-10"
@@ -74,6 +75,7 @@ export function StepAccount({ stepIndex, defaultValues, onBack, onNext }: StepAc
             <Input
               id="password"
               type={showPassword ? 'text' : 'password'}
+              autoComplete="new-password"
               {...register('password')}
               placeholder="Create your Password"
               className="h-11 px-10"

@@ -17,6 +17,11 @@ export const ONBOARDING_STEPS = [
 export type OnboardingStep = (typeof ONBOARDING_STEPS)[number]
 export const TOTAL_STEPS = ONBOARDING_STEPS.length
 
+// Shared selectable-surface classes (pill-group, choice-chip).
+export const SELECT_SURFACE_SELECTED = 'border-primary bg-accent-soft text-foreground'
+export const SELECT_SURFACE_UNSELECTED =
+  'border-border bg-card text-foreground hover:border-border-hover hover:bg-muted'
+
 // ── Header — language selector ────────────────────────────────────────────────
 // Derived from the shared workspace LOCALES (settings) + flags for the header pill.
 

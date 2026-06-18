@@ -54,7 +54,7 @@ export default function ResendConfirmationButton({
         type="button"
         onClick={handleResend}
         disabled={disabled}
-        className="text-[13px] font-medium text-[#C4B0FF] hover:underline transition-colors duration-150 disabled:opacity-60 disabled:no-underline disabled:cursor-default"
+        className="text-[13px] font-medium text-primary hover:underline transition-colors duration-150 disabled:opacity-60 disabled:no-underline disabled:cursor-default"
       >
         {label}
       </button>

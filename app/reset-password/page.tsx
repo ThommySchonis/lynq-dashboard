@@ -7,10 +7,13 @@ import { Loader } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import AuthLayout from '@/components/features/auth/auth-layout'
-import { PasswordField } from '@/components/features/auth/password-field'
+import AuthCardLayout from '@/components/features/auth/auth-card-layout'
+import { AuthPasswordField } from '@/components/features/auth/auth-password-field'
+import { AuthSubmitButton } from '@/components/features/auth/auth-submit-button'
+import { BackToSignIn } from '@/components/features/auth/back-to-sign-in'
 import { useResetPassword } from '@/hooks/auth/use-auth-mutations'
 import { supabase } from '@/lib/supabase'
+import { PASSWORD_HINT_8 } from '@/lib/auth-constants'
 
 const resetSchema = z
   .object({
@@ -23,6 +26,8 @@ const resetSchema = z
   })
 
 type ResetFormValues = z.infer<typeof resetSchema>
+
+const footer = <BackToSignIn />
 
 export default function ResetPasswordPage() {
   const router = useRouter()
@@ -104,143 +109,95 @@ export default function ResetPasswordPage() {
   }
 
   const isLoading = resetPassword.isPending
-
-  // Collect the first field-level error to display (password takes priority, then confirm)
-  const fieldError = errors.password?.message ?? errors.confirm?.message ?? ''
-  const displayError = fieldError || clientError
+  const displayError = errors.password?.message ?? errors.confirm?.message ?? clientError
 
   // ── Loading: session check in flight ──────────────────────────
   if (sessionValid === null) {
     return (
-      <AuthLayout
-        headline="Set a new password"
-        subhead="Verifying your reset link…"
-        footer={
-          <>
-            Remember your password?{' '}
-            <Link href="/login" className="text-primary hover:text-[#C4B0FF] transition-colors">
-              Sign in
-            </Link>
-          </>
-        }
-      >
-        <div className="flex items-center justify-center gap-2 py-3 text-sm text-white/60">
+      <AuthCardLayout title="Set a new password" subtitle="Verifying your reset link…" footer={footer}>
+        <div className="flex items-center justify-center gap-2 py-3 text-sm text-foreground-3">
           <Loader size={16} className="animate-spin" />
           <span>Loading…</span>
         </div>
-      </AuthLayout>
+      </AuthCardLayout>
     )
   }
 
   // ── Invalid / expired link ─────────────────────────────────────
   if (!sessionValid) {
     return (
-      <AuthLayout
-        headline="Link expired"
-        subhead="This reset link is invalid or has expired. Request a new one to try again."
-        footer={
-          <>
-            Remember your password?{' '}
-            <Link href="/login" className="text-primary hover:text-[#C4B0FF] transition-colors">
-              Sign in
-            </Link>
-          </>
-        }
+      <AuthCardLayout
+        title="Link expired"
+        subtitle="This reset link is invalid or has expired. Request a new one to try again."
+        footer={footer}
       >
-        <div className="text-center">
-          <Link
-            href="/forgot-password"
-            className="flex items-center justify-center w-full h-14 rounded-xl text-[15px] font-medium text-white transition-all duration-200 hover:brightness-110 active:scale-[0.99]"
-            style={{
-              background: 'linear-gradient(135deg, #7F77DD 0%, #6366F1 100%)',
-              boxShadow: '0 8px 28px rgba(127, 119, 221, 0.35)',
-            }}
-          >
-            Request a new link
-          </Link>
-        </div>
-      </AuthLayout>
+        <Link
+          href="/forgot-password"
+          className="flex h-11 w-full items-center justify-center rounded-[10px] bg-primary text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90"
+        >
+          Request a new link
+        </Link>
+      </AuthCardLayout>
     )
   }
 
   // ── Success: password updated, auto-redirect ───────────────────
   if (success) {
     return (
-      <AuthLayout
-        headline="Password updated"
-        subhead="Redirecting you to sign in…"
-        footer={null}
-      >
-        <div className="flex items-center justify-center gap-2 py-3 text-sm text-white/60">
+      <AuthCardLayout title="Password updated" subtitle="Redirecting you to sign in…">
+        <div className="flex items-center justify-center gap-2 py-3 text-sm text-foreground-3">
           <Loader size={16} className="animate-spin" />
           <span>Redirecting…</span>
         </div>
-        <div className="mt-3 text-center">
-          <Link
-            href="/login"
-            className="text-sm text-primary hover:text-[#C4B0FF] transition-colors"
-          >
-            Continue to sign in →
-          </Link>
-        </div>
-      </AuthLayout>
+      </AuthCardLayout>
     )
   }
 
   // ── Form state ─────────────────────────────────────────────────
   return (
-    <AuthLayout
-      headline="Set a new password"
-      subhead="Choose a strong password to secure your account."
-      footer={
-        <>
-          Remember your password?{' '}
-          <Link href="/login" className="text-primary hover:text-[#C4B0FF] transition-colors">
-            Sign in
-          </Link>
-        </>
-      }
+    <AuthCardLayout
+      title="Set a new password"
+      subtitle="Create a new password for your account."
+      footer={footer}
     >
-      <form onSubmit={(e) => { void handleSubmit(onSubmit)(e) }} autoComplete="on" noValidate>
-        <PasswordField
+      <form
+        onSubmit={(e) => {
+          void handleSubmit(onSubmit)(e)
+        }}
+        autoComplete="on"
+        noValidate
+        className="space-y-4"
+      >
+        <AuthPasswordField
           id="new-password"
           label="New password"
+          placeholder="Enter new password"
+          helper={PASSWORD_HINT_8}
           autoComplete="new-password"
           {...register('password')}
         />
 
-        <div className="mt-3">
-          <PasswordField
-            id="confirm-password"
-            label="Confirm new password"
-            autoComplete="new-password"
-            {...register('confirm')}
-          />
-        </div>
+        <AuthPasswordField
+          id="confirm-password"
+          label="Confirm password"
+          placeholder="Re-enter new password"
+          autoComplete="new-password"
+          {...register('confirm')}
+        />
 
         {displayError && (
-          <div
+          <p
             role="alert"
-            className="mt-4 px-3.5 py-2.5 rounded-xl text-[13px] text-red-300 bg-red-500/10 border border-red-500/30"
+            className="rounded-[10px] border border-destructive/30 bg-destructive/10 px-3.5 py-2.5 text-[13px] text-destructive"
           >
             {displayError}
-          </div>
+          </p>
         )}
 
-        <div className="mt-6">
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="w-full h-14 rounded-xl text-[15px] font-medium text-white transition-all duration-200 hover:brightness-110 active:scale-[0.99] disabled:opacity-65 disabled:cursor-wait"
-            style={{
-              background: 'linear-gradient(135deg, #7F77DD 0%, #6366F1 100%)',
-              boxShadow: '0 8px 28px rgba(127, 119, 221, 0.35)',
-            }}
-          >
-            {isLoading ? 'Updating…' : 'Update password →'}
-          </button>
-        </div>
+        <AuthSubmitButton pending={isLoading} pendingLabel="Updating…">
+          Reset password
+        </AuthSubmitButton>
       </form>
-    </AuthLayout>
+    </AuthCardLayout>
   )
 }

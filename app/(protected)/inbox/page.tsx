@@ -12,6 +12,7 @@ import { ConversationPanel } from "@/components/features/inbox/conversation-pane
 import { CustomerSidebar } from "@/components/features/inbox/customer-sidebar";
 import { ThreadListPanel } from "@/components/features/inbox/thread-list-panel";
 import { InboxUsageBanner } from "@/components/features/inbox/usage-banner";
+import { InboxSyncNotice } from "@/components/features/inbox/sync-notice";
 import { CancelModal } from "@/components/shared/modals/cancel-modal";
 import { DuplicateModal } from "@/components/shared/modals/duplicate-modal";
 import { EditAddressModal } from "@/components/shared/modals/edit-address-modal";
@@ -200,6 +201,9 @@ function InboxPage() {
 
       {/* Workspace usage banner — fixed-positioned, conditionally rendered */}
       <InboxUsageBanner />
+
+      {/* Initial-sync notice — shown while any account is still importing */}
+      <InboxSyncNotice />
 
       <ThreadListPanel />
 

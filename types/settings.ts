@@ -136,6 +136,8 @@ export interface EmailAccount {
   email: string
   status: ConnectionStatus
   connected_at: string | null
+  last_sync_at: string | null
+  created_at: string
 }
 
 export interface CustomEmailConfig {

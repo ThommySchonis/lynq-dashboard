@@ -12,6 +12,9 @@ import { ForwardingSetupWizard } from '@/components/features/settings/integratio
 import { useEmailAccounts, useDisconnectEmail } from '@/hooks/settings'
 import { useAuthStore } from '@/stores/auth'
 import { useStoreStore } from '@/stores/store'
+import { SyncNotice } from '@/components/features/inbox/sync-notice'
+import { isAccountSyncing } from '@/lib/email-sync'
+
 function useOAuthRedirectToast() {
   const searchParams = useSearchParams()
 
@@ -129,11 +132,13 @@ export function EmailSettings() {
         ) : (
           <div className="flex flex-col gap-2">
             {accounts.map((account) => (
-              <EmailAccountRow
-                key={account.id}
-                account={account}
-                disconnectMutation={disconnectMutation}
-              />
+              <div key={account.id} className="flex flex-col gap-2">
+                <EmailAccountRow
+                  account={account}
+                  disconnectMutation={disconnectMutation}
+                />
+                {isAccountSyncing(account) && <SyncNotice />}
+              </div>
             ))}
           </div>
         )}

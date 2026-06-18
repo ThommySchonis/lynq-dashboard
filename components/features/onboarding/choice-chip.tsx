@@ -21,7 +21,7 @@ export function ChoiceChip({ icon, label, selected, onSelect }: ChoiceChipProps)
         'flex h-[70px] w-[100px] flex-col items-center justify-center gap-1.5 rounded-lg border text-xs font-medium transition-colors',
         selected
           ? 'border-primary bg-accent-soft text-foreground'
-          : 'border-border bg-card text-foreground hover:border-border-hover',
+          : 'border-border bg-card text-foreground hover:border-border-hover hover:bg-muted',
       )}
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}

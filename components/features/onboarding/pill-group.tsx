@@ -26,8 +26,8 @@ export function PillGroup({ label, options, value, onChange }: PillGroupProps) {
               className={cn(
                 'rounded-lg border px-4 py-2.5 text-sm font-medium transition-colors',
                 selected
-                  ? 'border-primary bg-card text-foreground'
-                  : 'border-border bg-card text-foreground hover:border-border-hover',
+                  ? 'border-primary bg-accent-soft text-foreground'
+                  : 'border-border bg-card text-foreground hover:border-border-hover hover:bg-muted',
               )}
             >
               {option}

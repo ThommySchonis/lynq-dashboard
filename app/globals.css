@@ -32,6 +32,7 @@
   --destructive-hover: #DC2626;
   --border: rgba(0,0,0,0.07);
   --input: rgba(0,0,0,0.03);
+  --input-strong: #E6E4EF;
   --ring: #8B5CF6;
 
   /* Semantic extensions */
@@ -111,6 +112,7 @@
   --border: rgba(255,255,255,0.07);
   --border-hover: rgba(255,255,255,0.18);
   --input: rgba(255,255,255,0.04);
+  --input-strong: rgba(255,255,255,0.10);
   --ring: #A175FC;
 
   --foreground-2: rgba(248,250,252,0.65);
@@ -269,6 +271,7 @@
   --color-info-foreground: var(--info-foreground);
   --color-border: var(--border);
   --color-input: var(--input);
+  --color-input-strong: var(--input-strong);
   --color-ring: var(--ring);
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);

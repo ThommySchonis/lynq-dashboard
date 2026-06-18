@@ -33,3 +33,8 @@ export const TRUST_ITEMS: TrustItem[] = [
 
 // ── Animation ──
 export const WORD_REVEAL_DELAY_MS = 100
+
+// ── Auth copy (shared across the redesigned auth screens) ──
+export const PASSWORD_HINT_8 =
+  'At least 8 characters, incl. uppercase, lowercase, number & symbol.'
+export const EMAIL_PLACEHOLDER = 'e.g., user_email@gmail.com'

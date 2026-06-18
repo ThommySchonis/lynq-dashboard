@@ -12,6 +12,7 @@ import { useAuthStore } from '@/stores/auth'
 import { apiUrl } from '@/lib/api-client'
 import { WORD_REVEAL_DELAY_MS } from '@/lib/auth-constants'
 import { getConsent } from '@/lib/cookies/consent'
+import ResendConfirmationButton from '@/components/features/auth/resend-confirmation-button'
 
 function getSafeRedirect(raw: string | null): string {
   if (!raw || !raw.startsWith('/') || raw.startsWith('//') || raw.includes('\\')) {
@@ -37,6 +38,12 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
 
   const signIn = useSignIn()
+
+  const signInErrorCode =
+    signIn.error && typeof signIn.error === 'object' && 'code' in signIn.error
+      ? (signIn.error as { code?: string }).code
+      : undefined
+  const isUnconfirmed = signInErrorCode === 'email_not_confirmed'
 
   useEffect(() => {
     if (!isLoading && session) router.replace(redirectTo)
@@ -133,12 +140,24 @@ export default function LoginPage() {
         </div>
 
         {signIn.error && (
-          <div
-            role="alert"
-            className="mt-4 px-3.5 py-2.5 rounded-[10px] text-[13px] text-[#FCA5A5] bg-red-400/10 border border-red-400/30"
-          >
-            Incorrect email or password
-          </div>
+          isUnconfirmed ? (
+            <div
+              role="alert"
+              className="mt-4 px-3.5 py-2.5 rounded-[10px] text-[13px] text-[#FCD34D] bg-amber-400/10 border border-amber-400/30"
+            >
+              <p className="m-0">Please verify your email before signing in. Check your inbox for the confirmation link.</p>
+              <div className="mt-2">
+                <ResendConfirmationButton email={email} variant="inline" />
+              </div>
+            </div>
+          ) : (
+            <div
+              role="alert"
+              className="mt-4 px-3.5 py-2.5 rounded-[10px] text-[13px] text-[#FCA5A5] bg-red-400/10 border border-red-400/30"
+            >
+              Incorrect email or password
+            </div>
+          )
         )}
 
         <div className="opacity-0 animate-fade-up motion-reduce:opacity-100 motion-reduce:animate-none delay-[560ms] mt-6">

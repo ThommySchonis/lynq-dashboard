@@ -1,5 +1,7 @@
 'use client'
 
+import ResendConfirmationButton from '@/components/features/auth/resend-confirmation-button'
+
 interface VerifyPanelProps {
   email: string
 }
@@ -25,6 +27,7 @@ export function VerifyPanel({ email }: VerifyPanelProps) {
         <strong className="text-white">{email}</strong>.{' '}
         Click it to activate your account.
       </p>
+      <ResendConfirmationButton email={email} variant="panel" />
     </div>
   )
 }

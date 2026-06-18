@@ -27,6 +27,10 @@ export interface ResetPasswordVariables {
   password: string
 }
 
+export interface ResendConfirmationVariables {
+  email: string
+}
+
 export interface AcceptInviteResult {
   ok: boolean
 }
@@ -66,6 +70,7 @@ export function useSignUp() {
         email: email.trim(),
         password,
         options: {
+          emailRedirectTo: `${window.location.origin}/auth/confirm`,
           data: {
             first_name: first_name.trim(),
             last_name: last_name.trim(),
@@ -94,6 +99,21 @@ export function useResetPassword() {
   return useMutation({
     mutationFn: async ({ password }: ResetPasswordVariables) => {
       const { error } = await supabase.auth.updateUser({ password })
+      if (error) throw error
+    },
+  })
+}
+
+export function useResendConfirmation() {
+  return useMutation({
+    mutationFn: async ({ email }: ResendConfirmationVariables) => {
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: email.trim(),
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth/confirm`,
+        },
+      })
       if (error) throw error
     },
   })

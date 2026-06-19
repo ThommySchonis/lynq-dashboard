@@ -39,3 +39,23 @@ export function formatPercent(value: number | string | undefined): string {
   if (n == null) return '—'
   return `${n.toFixed(1)}%`
 }
+
+interface NameUser {
+  email?: string | null
+  user_metadata?: Record<string, unknown>
+}
+
+/** Resolve a display name from onboarding profile → auth metadata → email local-part. */
+export function deriveUserName(
+  user: NameUser | null | undefined,
+  onboarding: { user?: { first_name?: string } } | null | undefined,
+): string {
+  const meta = user?.user_metadata
+  const rawEmail = (user?.email ?? '').split('@')[0]
+  return (
+    onboarding?.user?.first_name ??
+    (meta?.full_name as string) ??
+    (meta?.name as string) ??
+    (rawEmail.charAt(0).toUpperCase() + rawEmail.slice(1))
+  )
+}

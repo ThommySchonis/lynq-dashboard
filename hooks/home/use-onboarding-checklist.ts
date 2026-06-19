@@ -15,21 +15,16 @@ export interface ChecklistItem extends ChecklistStep {
 
 type ManualSteps = Record<string, boolean>
 
-/** Derive the done state of an auto-tracked step from the onboarding status. */
+/** Maps an auto-tracked step key to its done-state derivation from onboarding status. */
+const AUTO_STEP_CHECKS: Record<string, (s: OnboardingStatus) => boolean> = {
+  email: (s) => !!s.email_connected,
+  shopify: (s) => !!s.shopify_connected,
+  macros: (s) => (s.macros_count ?? 0) > 0,
+  team: (s) => (s.team_member_count ?? 0) > 1,
+}
+
 function isAutoStepDone(key: string, status: OnboardingStatus | null | undefined): boolean {
-  if (!status) return false
-  switch (key) {
-    case 'email':
-      return !!status.email_connected
-    case 'shopify':
-      return !!status.shopify_connected
-    case 'macros':
-      return (status.macros_count ?? 0) > 0
-    case 'team':
-      return (status.team_member_count ?? 0) > 1
-    default:
-      return false
-  }
+  return status ? (AUTO_STEP_CHECKS[key]?.(status) ?? false) : false
 }
 
 function readManualSteps(): ManualSteps {

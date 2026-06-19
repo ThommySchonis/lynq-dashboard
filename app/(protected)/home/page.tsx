@@ -19,6 +19,7 @@ import {
   ONBOARDING_CALL_PROMO,
   CALENDLY_ONBOARDING_URL,
 } from '@/lib/home-constants'
+import { deriveUserName } from '@/lib/home-utils'
 
 export default function HomePage() {
   const user = useAuthStore((s) => s.user)
@@ -32,14 +33,7 @@ export default function HomePage() {
     setMounted(true)
   }, [])
 
-  // Derive a display name from profile/auth metadata.
-  const meta = user?.user_metadata
-  const rawEmail = (user?.email ?? '').split('@')[0]
-  const userName =
-    onboarding?.user?.first_name ??
-    (meta?.full_name as string) ??
-    (meta?.name as string) ??
-    (rawEmail.charAt(0).toUpperCase() + rawEmail.slice(1))
+  const userName = deriveUserName(user, onboarding)
 
   const trialEndingShouldShow =
     !!onboarding &&

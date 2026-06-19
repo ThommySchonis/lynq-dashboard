@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { MessageSquare, Search, Sparkles } from 'lucide-react'
 import { Input } from '@/components/ui/input'
+import { cn } from '@/lib/utils'
 
 interface ChatHistoryPanelProps {
   /** Title of the current in-progress chat (first user message), if any. */
@@ -17,7 +18,7 @@ interface ChatHistoryPanelProps {
 export function ChatHistoryPanel({ activeTitle }: ChatHistoryPanelProps) {
   const [query, setQuery] = useState('')
 
-  const matches =
+  const isActive =
     !!activeTitle && activeTitle.toLowerCase().includes(query.trim().toLowerCase())
 
   return (
@@ -39,19 +40,24 @@ export function ChatHistoryPanel({ activeTitle }: ChatHistoryPanelProps) {
 
       <div className="flex flex-col gap-1">
         <span className="px-2 pb-1 pt-3 text-[12px] font-semibold text-foreground-4">TODAY</span>
-        {activeTitle && matches ? (
-          <div className="flex items-center gap-2.5 rounded-[8px] bg-accent-soft px-2.5 py-2.5">
-            <MessageSquare className="size-3.5 shrink-0 text-primary" />
-            <span className="truncate text-[13px] font-semibold text-primary">{activeTitle}</span>
-          </div>
-        ) : (
-          <div className="flex items-center gap-2.5 rounded-[8px] px-2.5 py-2.5">
-            <MessageSquare className="size-3.5 shrink-0 text-foreground-4" />
-            <span className="truncate text-[13px] text-foreground-3">
-              {query ? 'No matching chats' : 'Empty chat'}
-            </span>
-          </div>
-        )}
+        <div
+          className={cn(
+            'flex items-center gap-2.5 rounded-[8px] px-2.5 py-2.5',
+            isActive && 'bg-accent-soft',
+          )}
+        >
+          <MessageSquare
+            className={cn('size-3.5 shrink-0', isActive ? 'text-primary' : 'text-foreground-4')}
+          />
+          <span
+            className={cn(
+              'truncate text-[13px]',
+              isActive ? 'font-semibold text-primary' : 'text-foreground-3',
+            )}
+          >
+            {isActive ? activeTitle : query ? 'No matching chats' : 'Empty chat'}
+          </span>
+        </div>
       </div>
     </aside>
   )

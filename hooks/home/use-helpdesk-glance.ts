@@ -18,12 +18,14 @@ export function useHelpdeskGlance() {
   const kpis = useKpis(range)
   const refunds = useRefunds(range)
 
-  const refundCount = refunds.data?.length ?? 0
-  const refundTotal = (refunds.data ?? []).reduce(
-    (sum, r) => sum + parseFloat(String(r.refundAmount || 0)),
-    0,
-  )
-  const avgRefund = refundCount > 0 ? refundTotal / refundCount : undefined
+  const { refundCount, avgRefund } = useMemo(() => {
+    const list = refunds.data ?? []
+    const total = list.reduce((sum, r) => sum + parseFloat(String(r.refundAmount || 0)), 0)
+    return {
+      refundCount: list.length,
+      avgRefund: list.length > 0 ? total / list.length : undefined,
+    }
+  }, [refunds.data])
 
   return {
     firstResponse: {

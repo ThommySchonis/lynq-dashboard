@@ -111,23 +111,25 @@ export const CHECKLIST_STEPS: ChecklistStep[] = [
   {
     key: 'macros',
     label: "Build the Macro's",
-    description: 'Generate an AI macro library so your team can reply in one click.',
+    description: 'Pre-made responses with variables. Apply to tickets with one click.',
     href: '/settings/workspace/macros/generate',
-    cta: 'Build macros',
+    cta: 'Build',
     type: 'auto',
   },
   {
     key: 'configure_ai',
-    label: 'Configure AI Agent',
-    description: 'Set the rules and guardrails that shape how the AI agent replies.',
+    label: 'Configurate AI Agent',
+    description:
+      'Teach the AI agent about a store’s brand, policies, example replies, and how to handle common support scenarios.',
     href: '/settings/ai-agent/rules',
-    cta: 'Configure',
+    cta: 'Configurate',
     type: 'manual',
   },
   {
     key: 'train_ai',
     label: 'Train AI Agent',
-    description: 'Add lessons and examples so the AI agent matches your brand voice.',
+    description:
+      'Teach Emma specific corrections that the onboarding doesn’t cover. Lessons apply to one scenario or all.',
     href: '/settings/ai-agent/lessons',
     cta: 'Train',
     type: 'manual',
@@ -135,7 +137,7 @@ export const CHECKLIST_STEPS: ChecklistStep[] = [
   {
     key: 'team',
     label: 'Invite Team',
-    description: 'Bring teammates into the workspace to collaborate on the inbox.',
+    description: 'Manage who has access to this workspace and their roles.',
     href: '/settings/workspace/members',
     cta: 'Invite',
     type: 'auto',
@@ -143,9 +145,10 @@ export const CHECKLIST_STEPS: ChecklistStep[] = [
   {
     key: 'mcp',
     label: 'Connect Claude and ChatGPT via MCP',
-    description: 'Use Lynq from Claude and ChatGPT by connecting through MCP.',
-    href: '/settings/ai-agent/onboarding',
-    cta: 'Open guide',
+    description:
+      'Run your Lynq & Flow workspace straight from Claude or ChatGPT — look up tickets, refine Emma’s instructions and draft help articles right inside the chat.',
+    href: '/settings',
+    cta: 'Connect',
     type: 'manual',
   },
 ]

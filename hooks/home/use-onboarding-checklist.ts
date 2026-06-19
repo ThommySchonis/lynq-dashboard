@@ -62,9 +62,11 @@ export function useOnboardingChecklist() {
     })
   }, [])
 
+  // A step is done when its auto signal reports complete, or the user marked it
+  // manually. Every step supports a manual "Mark as done" override.
   const items: ChecklistItem[] = CHECKLIST_STEPS.map((step) => ({
     ...step,
-    done: step.type === 'auto' ? isAutoStepDone(step.key, status) : !!manual[step.key],
+    done: isAutoStepDone(step.key, status) || !!manual[step.key],
   }))
 
   const completed = items.filter((i) => i.done).length

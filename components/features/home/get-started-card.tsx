@@ -56,15 +56,13 @@ function ChecklistRow({ item, index, expanded, onToggleExpand, onMarkDone }: Che
             <Button size="sm" nativeButton={false} render={<Link href={item.href} />}>
               {item.cta}
             </Button>
-            {item.type === 'manual' && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => onMarkDone(item.key, !item.done)}
-              >
-                {item.done ? 'Mark as not done' : 'Mark as done'}
-              </Button>
-            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onMarkDone(item.key, !item.done)}
+            >
+              {item.done ? 'Mark as not done' : 'Mark as done'}
+            </Button>
           </div>
         </div>
       )}

@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation'
 import { ChevronDown } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { CountBadge } from '@/components/shared/count-badge'
 import { SidebarInboxFolders } from './sidebar-inbox-folders'
 
 interface SidebarInboxItemProps {
@@ -67,11 +68,7 @@ export function SidebarInboxItem({ href, icon: Icon, label, badge, collapsed }: 
                 className={cn('size-[18px] transition-transform duration-150', expanded ? '' : '-rotate-90')}
               />
             </button>
-            {badge !== undefined && badge > 0 && (
-              <span className="ml-auto rounded-full bg-border px-2 py-0.5 text-xs font-medium text-foreground-3">
-                {badge > 99 ? '99+' : badge}
-              </span>
-            )}
+            <CountBadge count={badge ?? 0} />
           </>
         )}
       </Link>

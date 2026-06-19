@@ -94,7 +94,7 @@ export function Sidebar() {
       {/* Main nav — primary items + collapsible groups */}
       <nav className="flex-1 space-y-0.5 overflow-y-auto px-3 py-2">
         {SIDEBAR_PRIMARY_NAV.map((item) =>
-          item.href === '/inbox' ? (
+          item.variant === 'submenu' ? (
             <SidebarInboxItem
               key={item.href}
               href={item.href}
@@ -110,7 +110,6 @@ export function Sidebar() {
               icon={item.icon}
               label={item.label}
               collapsed={collapsed}
-              badge={item.badgeKey === 'inbox' ? inboxBadge : undefined}
             />
           ),
         )}
@@ -140,19 +139,7 @@ export function Sidebar() {
             collapsed={collapsed}
           />
         ))}
-        <button
-          type="button"
-          onClick={openSearch}
-          aria-label="Help"
-          title="Help"
-          className={cn(
-            'group flex h-10 w-full items-center rounded-[9px] text-sm text-foreground-2 transition-colors hover:bg-muted hover:text-foreground',
-            collapsed ? 'justify-center px-3' : 'gap-3 px-3',
-          )}
-        >
-          <HelpCircle className="size-5 shrink-0 text-foreground-3 group-hover:text-foreground" />
-          {!collapsed && <span className="truncate">Help</span>}
-        </button>
+        <SidebarItem icon={HelpCircle} label="Help" onClick={openSearch} collapsed={collapsed} />
         {(role === 'owner' || role === 'admin') && (
           <SidebarItem href="/admin" icon={Shield} label="Admin" collapsed={collapsed} />
         )}

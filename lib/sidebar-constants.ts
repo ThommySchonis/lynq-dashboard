@@ -8,8 +8,8 @@ export interface SidebarNavItem {
   href: string
   icon: LucideIcon
   label: string
-  /** Optional badge source — wired to live data in the sidebar. */
-  badgeKey?: 'inbox'
+  /** Render a collapsible-submenu item (currently the Inbox folder menu) instead of a plain link. */
+  variant?: 'submenu'
 }
 
 export interface SidebarNavGroup {
@@ -21,7 +21,7 @@ export interface SidebarNavGroup {
 /** Top-level primary navigation (no header, not collapsible). */
 export const SIDEBAR_PRIMARY_NAV: SidebarNavItem[] = [
   { href: '/home',        icon: Home,      label: 'Home'        },
-  { href: '/inbox',       icon: Inbox,     label: 'Inbox', badgeKey: 'inbox' },
+  { href: '/inbox',       icon: Inbox,     label: 'Inbox', variant: 'submenu' },
   { href: '/analytics',   icon: BarChart3, label: 'Analytics'   },
   { href: '/performance', icon: Zap,       label: 'Performance' },
 ]

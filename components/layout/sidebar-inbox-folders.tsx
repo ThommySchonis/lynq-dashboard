@@ -2,6 +2,7 @@
 
 import { usePathname, useRouter } from 'next/navigation'
 import { cn } from '@/lib/utils'
+import { CountBadge } from '@/components/shared/count-badge'
 import { useInboxUI } from '@/stores/inbox-ui'
 import { useInboxCounts } from '@/hooks/inbox'
 import { INBOX_FOLDERS } from '@/lib/inbox-constants'
@@ -46,11 +47,7 @@ export function SidebarInboxFolders() {
             )}
           >
             <span className="truncate">{folder.label}</span>
-            {count > 0 && (
-              <span className="ml-auto rounded-full bg-border px-1.5 py-0.5 text-[11px] font-medium text-foreground-3">
-                {count > 99 ? '99+' : count}
-              </span>
-            )}
+            <CountBadge count={count} className="px-1.5 text-[11px]" />
           </button>
         )
       })}

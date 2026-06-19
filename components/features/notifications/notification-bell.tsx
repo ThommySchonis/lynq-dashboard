@@ -6,6 +6,7 @@ import { Bell } from 'lucide-react'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import { CountBadge } from '@/components/shared/count-badge'
 import { formatRelativeTime } from '@/lib/notification-utils'
 import {
   useNotifications,
@@ -48,11 +49,7 @@ export function NotificationBell({
             >
               <Bell className="size-5 shrink-0 text-foreground-3 group-hover:text-foreground" />
               <span className="truncate">Notifications</span>
-              {unreadCount > 0 && (
-                <span className="ml-auto rounded-full bg-border px-2 py-0.5 text-xs font-medium text-foreground-3">
-                  {unreadCount > 99 ? '99+' : unreadCount}
-                </span>
-              )}
+              <CountBadge count={unreadCount} />
             </button>
           ) : (
             <button

@@ -14,6 +14,7 @@ import { apiUrl } from '@/lib/api-client'
 import { EMAIL_PLACEHOLDER } from '@/lib/auth-constants'
 import { getSafeRedirect } from '@/lib/auth-utils'
 import { getConsent } from '@/lib/cookies/consent'
+import { getOnboardingStatus } from '@/lib/onboarding-status'
 import ResendConfirmationButton from '@/components/features/auth/resend-confirmation-button'
 
 export default function LoginPage() {
@@ -34,7 +35,10 @@ export default function LoginPage() {
   const isUnconfirmed = signInErrorCode === 'email_not_confirmed'
 
   useEffect(() => {
-    if (!isLoading && session) router.replace(redirectTo)
+    if (isLoading || !session) return
+    void getOnboardingStatus().then((complete) => {
+      router.replace(complete ? redirectTo : '/onboarding')
+    })
   }, [isLoading, session, router, redirectTo])
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -57,7 +61,9 @@ export default function LoginPage() {
               // Non-blocking — consent sync failure should not affect login
             })
           }
-          router.push(redirectTo)
+          void getOnboardingStatus().then((complete) => {
+            router.push(complete ? redirectTo : '/onboarding')
+          })
         },
       },
     )

@@ -16,9 +16,18 @@ interface StepAccountProps {
   defaultValues: AccountFormData
   onBack: () => void
   onNext: (values: AccountFormData) => void
+  submitting?: boolean
+  errorMessage?: string
 }
 
-export function StepAccount({ stepIndex, defaultValues, onBack, onNext }: StepAccountProps) {
+export function StepAccount({
+  stepIndex,
+  defaultValues,
+  onBack,
+  onNext,
+  submitting,
+  errorMessage,
+}: StepAccountProps) {
   const [showPassword, setShowPassword] = useState(false)
   const {
     register,
@@ -37,8 +46,8 @@ export function StepAccount({ stepIndex, defaultValues, onBack, onNext }: StepAc
           stepIndex={stepIndex}
           onBack={onBack}
           onNext={() => void handleSubmit(onNext)()}
-          nextLabel="Create account"
-          nextDisabled={!isValid}
+          nextLabel={submitting ? 'Creating…' : 'Create account'}
+          nextDisabled={!isValid || submitting}
         />
       }
     >
@@ -106,6 +115,12 @@ export function StepAccount({ stepIndex, defaultValues, onBack, onNext }: StepAc
           </a>
           .
         </p>
+
+        {errorMessage && (
+          <p role="alert" className="text-xs text-destructive">
+            {errorMessage}
+          </p>
+        )}
       </form>
     </WizardShell>
   )

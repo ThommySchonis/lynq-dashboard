@@ -17,6 +17,9 @@ export interface SignUpVariables {
   first_name: string
   last_name: string
   company_name: string
+  brand_name?: string
+  full_name?: string
+  goal?: string
 }
 
 export interface ResetPasswordRequestVariables {
@@ -65,7 +68,16 @@ export function useSignIn() {
 
 export function useSignUp() {
   return useMutation({
-    mutationFn: async ({ email, password, first_name, last_name, company_name }: SignUpVariables) => {
+    mutationFn: async ({
+      email,
+      password,
+      first_name,
+      last_name,
+      company_name,
+      brand_name,
+      full_name,
+      goal,
+    }: SignUpVariables) => {
       const { data, error } = await supabase.auth.signUp({
         email: email.trim(),
         password,
@@ -75,6 +87,9 @@ export function useSignUp() {
             first_name: first_name.trim(),
             last_name: last_name.trim(),
             company_name: company_name.trim(),
+            ...(brand_name ? { brand_name: brand_name.trim() } : {}),
+            ...(full_name ? { full_name: full_name.trim() } : {}),
+            ...(goal ? { goal } : {}),
           },
         },
       })

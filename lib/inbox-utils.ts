@@ -71,6 +71,16 @@ export function normalizeSafeUrl(href: string | null, opts?: { allowImages?: boo
   }
 }
 
+/** Parse a comma-separated recipient string into the {email, name} shape the compose API expects. */
+export function parseRecipientList(value: string | undefined): { email: string; name: string }[] {
+  if (!value) return []
+  return value
+    .split(',')
+    .map((e) => e.trim())
+    .filter(Boolean)
+    .map((email) => ({ email, name: '' }))
+}
+
 export function sanitizeHtml(html = ''): string {
   if (typeof document === 'undefined') return html.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>')
 

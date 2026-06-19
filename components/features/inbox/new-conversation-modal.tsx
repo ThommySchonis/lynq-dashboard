@@ -15,7 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
-import { sanitizeHtml, plainTextToSafeHtml } from '@/lib/inbox-utils'
+import { sanitizeHtml, plainTextToSafeHtml, parseRecipientList } from '@/lib/inbox-utils'
 import { useStoreStore } from '@/stores/store'
 import { useEmailAccountsForStore, useComposeMacros } from '@/hooks/inbox'
 import { useComposeEmail } from '@/hooks/inbox/use-inbox-mutations'
@@ -35,24 +35,15 @@ interface NewConversationModalProps {
   onOpenChange: (open: boolean) => void
 }
 
-/** Parse a comma-separated recipient string into the {email, name} shape the API expects. */
-function parseRecipients(value: string | undefined): { email: string; name: string }[] {
-  if (!value) return []
-  return value
-    .split(',')
-    .map((e) => e.trim())
-    .filter(Boolean)
-    .map((email) => ({ email, name: '' }))
-}
-
 /**
  * "New conversation" compose modal (Figma 332-28942 / 313-3892). Opened from the
  * sidebar's "New message" action. Reuses useComposeEmail for sending.
  */
 export function NewConversationModal({ open, onOpenChange }: NewConversationModalProps) {
   const activeStoreId = useStoreStore((s) => s.activeStoreId)
-  const { data: accounts = [] } = useEmailAccountsForStore(activeStoreId)
-  const { data: macros = [] } = useComposeMacros()
+  // Only fetch while the modal is open — it stays mounted in the sidebar otherwise.
+  const { data: accounts = [] } = useEmailAccountsForStore(activeStoreId, open)
+  const { data: macros = [] } = useComposeMacros(open)
   const compose = useComposeEmail()
 
   const bodyRef = useRef<HTMLDivElement>(null)
@@ -115,9 +106,9 @@ export function NewConversationModal({ open, onOpenChange }: NewConversationModa
     await compose.mutateAsync(
       {
         accountId: data.accountId,
-        to: parseRecipients(data.to),
-        cc: parseRecipients(data.cc),
-        bcc: parseRecipients(data.bcc),
+        to: parseRecipientList(data.to),
+        cc: parseRecipientList(data.cc),
+        bcc: parseRecipientList(data.bcc),
         subject: data.subject.trim(),
         bodyHtml: sanitizeHtml(bodyRef.current?.innerHTML ?? ''),
         bodyText: text,
@@ -135,7 +126,7 @@ export function NewConversationModal({ open, onOpenChange }: NewConversationModa
   }
 
   return (
-    <Dialog open={open} onOpenChange={(v) => (v ? onOpenChange(true) : close())}>
+    <Dialog open={open} onOpenChange={(v) => { if (!v) close() }}>
       <DialogContent
         showCloseButton={false}
         className="w-[calc(100%-2rem)] max-w-[660px] gap-0 overflow-hidden rounded-2xl p-0 shadow-[0_20px_48px_rgba(28,15,54,0.35)] sm:max-w-[660px]"
@@ -308,7 +299,7 @@ function Field({
         {required && <span className="text-destructive">*</span>}
       </span>
       {children}
-      <ErrorText message={error} />
+      {error && <ErrorText message={error} />}
     </div>
   )
 }

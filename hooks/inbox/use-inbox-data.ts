@@ -211,7 +211,7 @@ interface ComposeMacro {
 }
 
 /** Fetch macros for compose (with localStorage fallback) */
-export function useComposeMacros() {
+export function useComposeMacros(enabled = true) {
   const token = useToken()
   return useQuery<ComposeMacro[]>({
     queryKey: inboxKeys.macros(),
@@ -226,7 +226,7 @@ export function useComposeMacros() {
       } catch { /* ignore */ }
       return []
     },
-    enabled: !!token,
+    enabled: enabled && !!token,
   })
 }
 
@@ -287,7 +287,7 @@ interface AccountsByStoreResponse {
 }
 
 /** Fetch email accounts for a specific store (used by the Inbox mailbox switcher). */
-export function useEmailAccountsForStore(storeId: string | null) {
+export function useEmailAccountsForStore(storeId: string | null, enabled = true) {
   const token = useToken()
   return useQuery<EmailAccountForStore[]>({
     queryKey: inboxKeys.accountsByStore(storeId),
@@ -302,7 +302,7 @@ export function useEmailAccountsForStore(storeId: string | null) {
       )
       return data.accounts ?? []
     },
-    enabled: !!token && !!storeId,
+    enabled: enabled && !!token && !!storeId,
     staleTime: 5 * 60_000,
   })
 }

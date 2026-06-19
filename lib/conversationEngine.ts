@@ -455,7 +455,7 @@ export async function sendReply(workspaceId: string, conversationId: string, _us
   }
 
   const result = await adapter.sendReply(refreshedAccount, {
-    to: to || [{ email: convRow.customer_email, name: convRow.customer_name }],
+    to: to && to.length > 0 ? to : [{ email: convRow.customer_email, name: convRow.customer_name }],
     cc,
     bcc,
     subject: subject || `Re: ${convRow.subject}`,

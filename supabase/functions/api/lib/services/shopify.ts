@@ -1082,7 +1082,8 @@ export async function searchProducts(
 }
 
 export interface CreateDraftOrderParams {
-  customerId: string
+  customerId?: string
+  email?: string
   lineItems: Array<{ variantId: string; quantity: number }>
   shippingAddress?: {
     firstName?: string
@@ -1106,12 +1107,22 @@ export async function createDraftOrder(
   credentials: ShopifyCredentials,
   params: CreateDraftOrderParams,
 ) {
+  const email = params.email?.trim()
+  if (!params.customerId && !email) {
+    throw new Error('createDraftOrder requires a customer id or email')
+  }
+
   const draftOrder: Record<string, unknown> = {
     line_items: params.lineItems.map((li) => ({
       variant_id: Number(li.variantId),
       quantity: li.quantity,
     })),
-    customer: { id: Number(params.customerId) },
+  }
+
+  if (params.customerId) {
+    draftOrder.customer = { id: Number(params.customerId) }
+  } else {
+    draftOrder.email = email
   }
 
   if (params.note) draftOrder.note = params.note

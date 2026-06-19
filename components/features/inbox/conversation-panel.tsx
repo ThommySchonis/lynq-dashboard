@@ -24,6 +24,7 @@ import { useSendReply, useUpdateStatus, useTranslateMessage, useBulkConversation
 import { useTags, useCreateTag } from "@/hooks/inbox/use-tags";
 import { useComposerActions } from "@/hooks/inbox/use-composer-actions";
 import { usePermissions } from "@/hooks/use-permissions";
+import { useStoreAiSettings } from "@/hooks/stores/use-stores-data";
 import { useQueryClient } from "@tanstack/react-query";
 import { EmmaSuggestionCard } from "./emma-suggestion-card";
 import { usePendingDraft, useUpdateDraftStatus } from "@/hooks/ai";
@@ -112,6 +113,8 @@ export function ConversationPanel() {
 
   const selectedThread = useMemo(() => threads.find((t: Thread) => t.id === selectedThreadId) || null, [threads, selectedThreadId]);
 
+  const { data: storeAiSettings } = useStoreAiSettings(selectedThread?.store_id ?? "");
+
   // Tag DB hooks
   const bulkAction = useBulkConversationAction();
   const { data: allTags = [] } = useTags();
@@ -139,11 +142,13 @@ export function ConversationPanel() {
     msgEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Auto-generate AI reply when opening a conversation with a new inbound message
+  // Auto-generate AI reply when opening a conversation with a new inbound
+  // message — only when the store has auto-generate enabled.
   useEffect(() => {
     if (
       !selectedThreadId ||
       !selectedThread?.store_id ||
+      !storeAiSettings?.ai_auto_generate ||
       !messages.length ||
       !draftFetched ||
       pendingDraft ||
@@ -157,7 +162,7 @@ export function ConversationPanel() {
 
     autoTriggeredRef.current = selectedThreadId;
     void generateReply(selectedThread, messages, token);
-  }, [selectedThreadId, selectedThread, messages, draftFetched, pendingDraft, aiLoading, generateReply, token]);
+  }, [selectedThreadId, selectedThread, storeAiSettings, messages, draftFetched, pendingDraft, aiLoading, generateReply, token]);
 
   // Status helpers
   const getStatus = useCallback(

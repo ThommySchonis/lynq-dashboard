@@ -231,9 +231,10 @@ function InboxPage() {
         />
       )}
 
-      {modal?.type === "create-order" && modal.customer && (
+      {modal?.type === "create-order" && (
         <CreateOrderModal
-          customer={modal.customer as CreateOrderCustomer}
+          customer={modal.customer as CreateOrderCustomer | undefined}
+          customerEmail={modal.customerEmail}
           customerName={modal.customerName ?? ""}
           token={token}
           onClose={() => setModal(null)}

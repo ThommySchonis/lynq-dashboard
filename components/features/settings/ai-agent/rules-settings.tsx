@@ -197,7 +197,7 @@ export function RulesSettings() {
                       id="ai-auto-generate"
                       label="Auto-generate suggestions"
                       description="Emma drafts a reply when a new inbound message arrives. Agents review before sending."
-                      checked={aiSettings?.ai_auto_generate ?? true}
+                      checked={aiSettings?.ai_auto_generate ?? false}
                       onCheckedChange={(checked) =>
                         void updateAiSettings.mutateAsync({ ai_auto_generate: checked })
                       }

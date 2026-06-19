@@ -59,7 +59,8 @@ interface ShippingAddressState {
 }
 
 interface CreateOrderModalProps {
-  customer: CreateOrderCustomer
+  customer?: CreateOrderCustomer
+  customerEmail?: string
   customerName: string
   token: string
   onClose: () => void
@@ -81,9 +82,9 @@ function emptyAddress(): ShippingAddressState {
 }
 
 function prefillFromCustomer(
-  customer: CreateOrderCustomer
+  customer?: CreateOrderCustomer
 ): { address: ShippingAddressState; hasPrefill: boolean } {
-  const a = customer.defaultAddress
+  const a = customer?.defaultAddress
   if (!a) return { address: emptyAddress(), hasPrefill: false }
   return {
     address: {
@@ -103,13 +104,15 @@ function prefillFromCustomer(
 
 export function CreateOrderModal({
   customer,
+  customerEmail,
   customerName,
   token,
   onClose,
   onSuccess,
 }: CreateOrderModalProps) {
   const activeStoreId = useStoreStore((s) => s.activeStoreId)
-  const currency = customer.currency || 'EUR'
+  const hasCustomer = !!customer?.id
+  const currency = customer?.currency || 'EUR'
   const currencySymbol = useMemo(
     () =>
       new Intl.NumberFormat('en', {
@@ -133,6 +136,11 @@ export function CreateOrderModal({
   const [discountValue, setDiscountValue] = useState('')
   const [note, setNote] = useState('')
   const [loading, setLoading] = useState(false)
+
+  // Manual customer entry — used only when there is no matched Shopify customer.
+  const [email, setEmail] = useState(customer?.email ?? customerEmail ?? '')
+  const [name, setName] = useState(customerName)
+  const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())
 
   const { address: initialAddress, hasPrefill } = useMemo(
     () => prefillFromCustomer(customer),
@@ -207,32 +215,47 @@ export function CreateOrderModal({
     setAddress((prev) => ({ ...prev, [key]: value }))
   }
 
-  const addressHasAnyField = (Object.values(address) as string[]).some(
-    (v) => v.trim().length > 0
-  )
-
   async function handleSubmit() {
     if (cart.length === 0) return
     setLoading(true)
 
     const body: Record<string, unknown> = {
-      customerId: String(customer.id),
       lineItems: cart.map((l) => ({
         variantId: l.variantId,
         quantity: l.quantity,
       })),
     }
-    if (addressHasAnyField) {
+    if (hasCustomer) {
+      body.customerId = String(customer!.id)
+    } else {
+      body.email = email.trim()
+    }
+
+    // When there is no matched customer, fall back to the manually entered name
+    // for the shipping address so it isn't lost (spec: name feeds the address).
+    const nameParts = name.trim().split(/\s+/).filter(Boolean)
+    const shipping = {
+      ...address,
+      firstName:
+        address.firstName || (!hasCustomer ? nameParts[0] ?? '' : ''),
+      lastName:
+        address.lastName ||
+        (!hasCustomer && nameParts.length > 1 ? nameParts.slice(1).join(' ') : ''),
+    }
+    const shippingHasAnyField = (Object.values(shipping) as string[]).some(
+      (v) => v.trim().length > 0
+    )
+    if (shippingHasAnyField) {
       body.shippingAddress = {
-        firstName: address.firstName || undefined,
-        lastName: address.lastName || undefined,
-        address1: address.address1 || undefined,
-        address2: address.address2 || undefined,
-        city: address.city || undefined,
-        province: address.province || undefined,
-        country: address.country || undefined,
-        zip: address.zip || undefined,
-        phone: address.phone || undefined,
+        firstName: shipping.firstName || undefined,
+        lastName: shipping.lastName || undefined,
+        address1: shipping.address1 || undefined,
+        address2: shipping.address2 || undefined,
+        city: shipping.city || undefined,
+        province: shipping.province || undefined,
+        country: shipping.country || undefined,
+        zip: shipping.zip || undefined,
+        phone: shipping.phone || undefined,
       }
     }
     if (
@@ -281,8 +304,41 @@ export function CreateOrderModal({
     >
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{`Create order — ${customerName}`}</DialogTitle>
+          <DialogTitle>
+            {`Create order — ${hasCustomer ? customerName : name || 'New customer'}`}
+          </DialogTitle>
         </DialogHeader>
+
+        {!hasCustomer && (
+          <div className="mb-3.5">
+            <label className="text-[10.5px] font-bold tracking-[.07em] uppercase text-muted-foreground mb-[7px] block">
+              Customer
+            </label>
+            <div className="flex flex-col gap-1.5">
+              <Input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Email (required)"
+                className="w-full bg-secondary border border-border rounded-xl px-3.5 py-[11px] text-[13.5px] text-foreground outline-none"
+              />
+              <Input
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Name (optional)"
+                className="w-full bg-secondary border border-border rounded-xl px-3.5 py-[11px] text-[13.5px] text-foreground outline-none"
+              />
+              {!emailValid && email.trim().length > 0 && (
+                <span className="text-[11px] text-rose-400">
+                  Enter a valid email address.
+                </span>
+              )}
+              <span className="text-[11px] text-muted-foreground italic">
+                No matched Shopify customer — the draft order is created from this email.
+              </span>
+            </div>
+          </div>
+        )}
 
         {/* Add products */}
         <div className="mb-3.5">
@@ -597,7 +653,7 @@ export function CreateOrderModal({
           <Button
             className="flex items-center gap-[7px]"
             onClick={() => void handleSubmit()}
-            disabled={loading || cart.length === 0}
+            disabled={loading || cart.length === 0 || (!hasCustomer && !emailValid)}
           >
             {loading ? (
               <Loader2 size={13} className="animate-spin text-white" />

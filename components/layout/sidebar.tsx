@@ -18,6 +18,7 @@ import { PlanBadge } from './plan-badge'
 import { SearchButton } from '@/components/features/search/search-button'
 import { SearchDialog } from '@/components/features/search/search-dialog'
 import { NotificationBell } from '@/components/features/notifications/notification-bell'
+import { NewConversationModal } from '@/components/features/inbox/new-conversation-modal'
 import {
   SIDEBAR_PRIMARY_NAV,
   SIDEBAR_GROUPS,
@@ -32,6 +33,7 @@ export function Sidebar() {
   const role = useAuthStore((s) => s.role)
   const openSearch = useSearchStore((s) => s.open)
   const [hovered, setHovered] = useState(false)
+  const [composeOpen, setComposeOpen] = useState(false)
   const collapsed = !hovered
 
   const { data: inboxCounts } = useInboxCounts()
@@ -74,14 +76,15 @@ export function Sidebar() {
           )}
         </Link>
         {!collapsed && (
-          <Link
-            href="/inbox/create"
+          <button
+            type="button"
+            onClick={() => setComposeOpen(true)}
             aria-label="New message"
             title="New message"
             className="ml-auto flex size-7 items-center justify-center rounded-md text-foreground-3 transition-colors hover:bg-muted hover:text-foreground"
           >
             <PenSquare size={16} />
-          </Link>
+          </button>
         )}
         <SearchButton collapsed={collapsed} />
       </div>
@@ -148,6 +151,7 @@ export function Sidebar() {
       </div>
 
       <SearchDialog />
+      <NewConversationModal open={composeOpen} onOpenChange={setComposeOpen} />
     </aside>
   )
 }

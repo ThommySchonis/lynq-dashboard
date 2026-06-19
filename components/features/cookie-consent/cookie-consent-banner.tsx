@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import { hasConsented, setConsent, type ConsentLevel } from '@/lib/cookies/consent'
 
-const PUBLIC_ROUTES = ['/login', '/signup', '/forgot-password']
+const PUBLIC_ROUTES = ['/login', '/signup', '/onboarding', '/forgot-password']
 
 export function CookieConsentBanner() {
   const pathname = usePathname()

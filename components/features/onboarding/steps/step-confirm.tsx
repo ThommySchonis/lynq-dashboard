@@ -1,7 +1,7 @@
 'use client'
 
 import { Mail, TriangleAlert } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import ResendConfirmationButton from '@/components/features/auth/resend-confirmation-button'
 import { WizardShell } from '../wizard-shell'
 import { ProgressFooter } from '../progress-footer'
 import { StepHeading } from '../step-heading'
@@ -11,12 +11,12 @@ interface StepConfirmProps {
   stepIndex: number
   email: string
   onBack: () => void
-  onNext: () => void
+  onNext?: () => void
 }
 
-export function StepConfirm({ stepIndex, email, onBack, onNext }: StepConfirmProps) {
+export function StepConfirm({ stepIndex, email, onBack }: StepConfirmProps) {
   return (
-    <WizardShell footer={<ProgressFooter stepIndex={stepIndex} onBack={onBack} onNext={onNext} />}>
+    <WizardShell footer={<ProgressFooter stepIndex={stepIndex} onBack={onBack} hideNext />}>
       <div className="mx-auto flex max-w-md flex-col items-center gap-6 text-center">
         <IconBadge icon={Mail} />
 
@@ -36,9 +36,7 @@ export function StepConfirm({ stepIndex, email, onBack, onNext }: StepConfirmPro
             <p className="text-sm text-foreground">Didn&apos;t receive the email?</p>
             <p className="text-sm text-foreground-3">Check your spam folder before resending.</p>
           </div>
-          <Button variant="outline" size="lg">
-            Resend email
-          </Button>
+          <ResendConfirmationButton email={email} variant="inline" />
         </div>
 
         <div className="flex items-center gap-2.5 rounded-lg bg-warning-soft px-4 py-2.5 text-left text-xs text-foreground-2">

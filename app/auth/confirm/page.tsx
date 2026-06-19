@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { Loader } from 'lucide-react'
 import AuthLayout from '@/components/features/auth/auth-layout'
 import { supabase } from '@/lib/supabase'
+import { getOnboardingStatus } from '@/lib/onboarding-status'
 
 export default function ConfirmEmailPage() {
   const router = useRouter()
@@ -21,6 +22,11 @@ export default function ConfirmEmailPage() {
       if (cancelled || redirected) return
       redirected = true
       router.replace(path)
+    }
+    const settle = () => {
+      void getOnboardingStatus().then((complete) => {
+        goTo(complete ? '/home' : '/onboarding')
+      })
     }
 
     // Expired/used links come back with error params in the URL hash fragment
@@ -38,14 +44,14 @@ export default function ConfirmEmailPage() {
     } = supabase.auth.onAuthStateChange((event, session) => {
       if (cancelled) return
       if (event === 'SIGNED_IN' && session) {
-        goTo('/home')
+        settle()
       }
     })
 
     void supabase.auth.getSession().then(({ data: { session } }) => {
       if (cancelled) return
       if (session) {
-        goTo('/home')
+        settle()
         return
       }
       // Hash-parsing can be async; give the listener a brief window, then decide.
@@ -54,7 +60,7 @@ export default function ConfirmEmailPage() {
         void supabase.auth.getSession().then(({ data: { session: s2 } }) => {
           if (cancelled) return
           if (s2) {
-            goTo('/home')
+            settle()
           } else {
             // No session, no explicit error: ambiguous (e.g. direct navigation
             // to /auth/confirm without a valid link). Fall back to login.
@@ -87,7 +93,7 @@ export default function ConfirmEmailPage() {
       >
         <div className="text-center">
           <Link
-            href="/signup"
+            href="/onboarding"
             className="flex items-center justify-center w-full h-14 rounded-xl text-[15px] font-medium text-white transition-all duration-200 hover:brightness-110 active:scale-[0.99]"
             style={{
               background: 'linear-gradient(135deg, #7F77DD 0%, #6366F1 100%)',

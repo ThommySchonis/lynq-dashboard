@@ -7,9 +7,11 @@ interface ProgressFooterProps {
   /** Zero-based index of the current step. */
   stepIndex: number
   onBack?: () => void
-  onNext: () => void
+  onNext?: () => void
   nextLabel?: string
   nextDisabled?: boolean
+  /** Hide the Next button entirely (e.g. when progression is external). */
+  hideNext?: boolean
 }
 
 export function ProgressFooter({
@@ -18,6 +20,7 @@ export function ProgressFooter({
   onNext,
   nextLabel = 'Continue',
   nextDisabled,
+  hideNext,
 }: ProgressFooterProps) {
   const current = stepIndex + 1
   const progress = (current / TOTAL_STEPS) * 100
@@ -47,13 +50,15 @@ export function ProgressFooter({
             Previous
           </Button>
         )}
-        <Button
-          onClick={onNext}
-          disabled={nextDisabled}
-          className="h-11 min-w-[185px] rounded-lg bg-foreground px-10 text-sm font-semibold text-background hover:bg-foreground/90 active:bg-foreground/90"
-        >
-          {nextLabel}
-        </Button>
+        {!hideNext && (
+          <Button
+            onClick={onNext}
+            disabled={nextDisabled}
+            className="h-11 min-w-[185px] rounded-lg bg-foreground px-10 text-sm font-semibold text-background hover:bg-foreground/90 active:bg-foreground/90"
+          >
+            {nextLabel}
+          </Button>
+        )}
       </div>
     </div>
   )

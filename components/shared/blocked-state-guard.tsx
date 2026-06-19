@@ -10,6 +10,7 @@ const ALLOW_PATHS = [
   '/settings/billing',
   '/login',
   '/signup',
+  '/onboarding',
   '/forgot-password',
   '/invites',
   '/admin',

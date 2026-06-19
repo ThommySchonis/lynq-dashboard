@@ -74,6 +74,7 @@ export function useComposeEmail() {
       bodyText,
       cc,
       bcc,
+      accountId,
     }: {
       to: Array<{ email: string; name: string }>
       subject: string
@@ -81,6 +82,8 @@ export function useComposeEmail() {
       bodyText: string
       cc?: Array<{ email: string; name: string }>
       bcc?: Array<{ email: string; name: string }>
+      /** Email account to send from. Server falls back to the default account when omitted. */
+      accountId?: string
     }) => {
       const res = await authFetch(
         '/api/inbox/compose',
@@ -93,6 +96,7 @@ export function useComposeEmail() {
             bodyText,
             cc: cc?.map((r) => r.email),
             bcc: bcc?.map((r) => r.email),
+            accountId,
           }),
         },
         token,

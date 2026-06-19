@@ -3,45 +3,41 @@
 import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import {
-  Home, Inbox, BarChart3, Zap, Clock, Package, GraduationCap,
-  Rss, Sparkles, Settings, Shield,
-} from 'lucide-react'
+import { PenSquare, Shield, HelpCircle } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/stores/auth'
+import { useInboxCounts } from '@/hooks/inbox'
+import { useSearchStore } from '@/stores/search'
 import { Separator } from '@/components/ui/separator'
 import { SidebarItem } from './sidebar-item'
+import { SidebarGroup } from './sidebar-group'
+import { SidebarInboxItem } from './sidebar-inbox-item'
 import { SidebarUser } from './sidebar-user'
 import { StoreSwitcher } from './store-switcher'
+import { PlanBadge } from './plan-badge'
 import { SearchButton } from '@/components/features/search/search-button'
 import { SearchDialog } from '@/components/features/search/search-dialog'
 import { NotificationBell } from '@/components/features/notifications/notification-bell'
+import { NewConversationModal } from '@/components/features/inbox/new-conversation-modal'
+import {
+  SIDEBAR_PRIMARY_NAV,
+  SIDEBAR_GROUPS,
+  SIDEBAR_GROUPS_CAPTION,
+  SIDEBAR_FOOTER_NAV,
+} from '@/lib/sidebar-constants'
 
-const NAV_ITEMS = [
-  { href: '/home',          icon: Home,           label: 'Home'          },
-  { href: '/inbox',         icon: Inbox,          label: 'Inbox'         },
-  { href: '/analytics',     icon: BarChart3,      label: 'Analytics'     },
-  { href: '/performance',   icon: Zap,            label: 'Performance'   },
-  { href: '/time-tracking', icon: Clock,          label: 'Time Tracking' },
-  { href: '/supply-chain',  icon: Package,        label: 'Supply Chain'  },
-  { href: '/academy',       icon: GraduationCap,  label: 'Academy'       },
-  { href: '/value-feed',    icon: Rss,            label: 'Value Feed'    },
-  { href: '/services',      icon: Sparkles,       label: 'Services'      },
-] as const
-
-const BOTTOM_ITEMS = [
-  { href: '/settings', icon: Settings, label: 'Settings' },
-  { href: '/admin',    icon: Shield,   label: 'Admin'    },
-] as const
-
-// Iter 2: non-floating, edge-to-edge against the left viewport edge.
-// Hover-expand mechanic from iter 1 stays: w-16 default → w-56 on hover
-// via onMouseEnter/Leave + local React state, which keeps SidebarItem
-// and SidebarUser's existing `collapsed` prop contract intact.
+// Light theme redesign (Figma 776-17279). Hover-expand mechanic retained:
+// w-16 default → w-56 on hover via local React state, keeping the `collapsed`
+// prop contract that SidebarItem / SidebarUser / StoreSwitcher rely on.
 export function Sidebar() {
   const role = useAuthStore((s) => s.role)
+  const openSearch = useSearchStore((s) => s.open)
   const [hovered, setHovered] = useState(false)
+  const [composeOpen, setComposeOpen] = useState(false)
   const collapsed = !hovered
+
+  const { data: inboxCounts } = useInboxCounts()
+  const inboxBadge = inboxCounts?.open ?? 0
 
   return (
     <aside
@@ -49,24 +45,21 @@ export function Sidebar() {
       onMouseLeave={() => setHovered(false)}
       className={cn(
         'fixed inset-y-0 left-0 z-50 flex flex-col overflow-hidden',
-        'border-r border-zinc-800/60 bg-zinc-900',
+        'border-r border-border bg-card',
         'transition-[width] duration-200 ease-out',
         collapsed ? 'w-16' : 'w-56',
       )}
     >
-      {/* Logo / brand + search */}
+      {/* Logo / brand + header actions */}
       <div
         className={cn(
           'flex shrink-0',
-          collapsed ? 'flex-col items-center gap-1 py-2' : 'h-14 flex-row items-center gap-2.5 px-3',
+          collapsed ? 'flex-col items-center gap-1 py-2' : 'h-14 flex-row items-center gap-2 px-3',
         )}
       >
         <Link
           href="/home"
-          className={cn(
-            'flex items-center',
-            collapsed ? 'justify-center' : 'gap-2.5',
-          )}
+          className={cn('flex items-center', collapsed ? 'justify-center' : 'gap-2')}
         >
           <Image
             src="/brand/lynq-flow-icon.png"
@@ -77,13 +70,23 @@ export function Sidebar() {
             priority
           />
           {!collapsed && (
-            <span className="truncate text-sm font-semibold text-white">
+            <span className="truncate text-sm font-semibold text-foreground">
               Lynq &amp; Flow
             </span>
           )}
         </Link>
+        {!collapsed && (
+          <button
+            type="button"
+            onClick={() => setComposeOpen(true)}
+            aria-label="New message"
+            title="New message"
+            className="ml-auto flex size-7 items-center justify-center rounded-md text-foreground-3 transition-colors hover:bg-muted hover:text-foreground"
+          >
+            <PenSquare size={16} />
+          </button>
+        )}
         <SearchButton collapsed={collapsed} />
-        <NotificationBell collapsed={collapsed} />
       </div>
 
       {/* Store switcher */}
@@ -91,25 +94,64 @@ export function Sidebar() {
         <StoreSwitcher collapsed={collapsed} />
       </div>
 
-      {/* Main nav — keeps existing SidebarItem styling for iteration 1. */}
+      {/* Main nav — primary items + collapsible groups */}
       <nav className="flex-1 space-y-0.5 overflow-y-auto px-3 py-2">
-        {NAV_ITEMS.map((item) => (
-          <SidebarItem key={item.href} {...item} collapsed={collapsed} />
+        {SIDEBAR_PRIMARY_NAV.map((item) =>
+          item.variant === 'submenu' ? (
+            <SidebarInboxItem
+              key={item.href}
+              href={item.href}
+              icon={item.icon}
+              label={item.label}
+              collapsed={collapsed}
+              badge={inboxBadge}
+            />
+          ) : (
+            <SidebarItem
+              key={item.href}
+              href={item.href}
+              icon={item.icon}
+              label={item.label}
+              collapsed={collapsed}
+            />
+          ),
+        )}
+
+        <Separator className="my-1.5 bg-border" />
+        {!collapsed && (
+          <p className="px-3 pb-1 pt-1 text-xs font-medium text-foreground-4">
+            {SIDEBAR_GROUPS_CAPTION}
+          </p>
+        )}
+        {SIDEBAR_GROUPS.map((group) => (
+          <SidebarGroup key={group.label} label={group.label} items={group.items} collapsed={collapsed} />
         ))}
       </nav>
 
-      {/* Bottom items + user — iter 2 will polish this section. */}
+      {/* Footer: plan badge → secondary nav → user */}
       <div className="space-y-0.5 px-3 py-2">
-        <Separator className="mb-2 bg-zinc-800/60" />
-        {BOTTOM_ITEMS.map((item) => {
-          if (item.href === '/admin' && role !== 'owner' && role !== 'admin') return null
-          return <SidebarItem key={item.href} {...item} collapsed={collapsed} />
-        })}
-        <Separator className="my-2 bg-zinc-800/60" />
+        <PlanBadge collapsed={collapsed} />
+        <Separator className="my-2 bg-border" />
+        <NotificationBell collapsed={collapsed} variant="row" />
+        {SIDEBAR_FOOTER_NAV.map((item) => (
+          <SidebarItem
+            key={item.href}
+            href={item.href}
+            icon={item.icon}
+            label={item.label}
+            collapsed={collapsed}
+          />
+        ))}
+        <SidebarItem icon={HelpCircle} label="Help" onClick={openSearch} collapsed={collapsed} />
+        {(role === 'owner' || role === 'admin') && (
+          <SidebarItem href="/admin" icon={Shield} label="Admin" collapsed={collapsed} />
+        )}
+        <Separator className="my-2 bg-border" />
         <SidebarUser collapsed={collapsed} />
       </div>
 
       <SearchDialog />
+      <NewConversationModal open={composeOpen} onOpenChange={setComposeOpen} />
     </aside>
   )
 }

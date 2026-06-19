@@ -13,7 +13,7 @@ import { useAuthStore } from "@/stores/auth";
 import { useConversations, useInboxCounts } from "@/hooks/inbox/use-inbox-data";
 import { useSyncInbox } from "@/hooks/inbox/use-inbox-mutations";
 import { useAIStore } from "@/stores/ai";
-import { URGENCY_SCORE } from "@/lib/inbox-constants";
+import { URGENCY_SCORE, INBOX_FOLDERS } from "@/lib/inbox-constants";
 import { useMemo, useCallback, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import type { Thread } from "@/types/inbox";
@@ -156,15 +156,10 @@ export function ThreadListPanel() {
     [checkedIds, bulkAction, setCheckedThreads],
   );
 
-  const FOLDERS = [
-    { key: "open", label: "Open", count: counts.open },
-    { key: "pending", label: "Pending", count: counts.pending },
-    { key: "snoozed", label: "Snoozed", count: counts.snoozed },
-    { key: "resolved", label: "Resolved", count: counts.resolved },
-    { key: "spam", label: "Spam", count: counts.spam },
-    { key: "unlinked", label: "Unlinked", count: counts.unlinked },
-    { key: "trash", label: "Trash", count: counts.trash },
-  ];
+  const FOLDERS = INBOX_FOLDERS.map((f) => ({
+    ...f,
+    count: counts[f.key as keyof typeof counts] ?? 0,
+  }));
 
   const URGENCY_UI: Record<string, { color: string; bg: string; border: string }> = {
     critical: {

@@ -17,8 +17,8 @@ export function SearchButton({ collapsed }: Props) {
       aria-label="Search"
       title="Search"
       className={cn(
-        'flex items-center justify-center rounded-md text-zinc-300 hover:bg-zinc-800/60 hover:text-white',
-        collapsed ? 'h-8 w-8' : 'h-7 w-7 ml-auto',
+        'flex items-center justify-center rounded-md text-foreground-3 transition-colors hover:bg-muted hover:text-foreground',
+        collapsed ? 'size-8' : 'size-7',
       )}
     >
       <Search size={16} />

@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Filter } from 'lucide-react'
+import { Filter, Search } from 'lucide-react'
 import { Command, CommandInput } from '@/components/ui/command'
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog'
 import { useSearchStore } from '@/stores/search'
@@ -109,7 +109,7 @@ export function SearchDialog() {
 
   return (
     <Dialog open={isOpen} onOpenChange={(v) => !v && close()}>
-      <DialogContent className="max-w-2xl p-0 overflow-hidden">
+      <DialogContent className="max-w-2xl overflow-hidden rounded-2xl p-0 shadow-[0_24px_56px_rgba(28,15,54,0.28)]">
         <DialogTitle className="sr-only">Search</DialogTitle>
         <DialogDescription className="sr-only">
           Search across conversations, messages, contacts, and Shopify customers.
@@ -120,10 +120,16 @@ export function SearchDialog() {
             <CommandInput
               value={query}
               onValueChange={setQuery}
-              placeholder="Search conversations, messages, contacts, Shopify customers…"
+              placeholder="Search, or / for filter options"
               autoFocus
               className="flex-1"
             />
+            <kbd
+              onClick={close}
+              className="shrink-0 cursor-pointer rounded-md border border-border bg-background px-2 py-1 text-[11px] font-medium text-foreground-3"
+            >
+              Esc
+            </kbd>
             <button
               type="button"
               onClick={() => (mode === 'filters' ? setMode('results') : openFilters())}
@@ -173,7 +179,10 @@ export function SearchDialog() {
           ) : showRecents ? (
             <div className="px-3 py-3 max-h-[420px] overflow-y-auto">
               {recentSearches.length === 0 ? (
-                <p className="text-xs text-foreground-3 px-1">Start typing to search…</p>
+                <div className="flex flex-col items-center justify-center gap-2.5 py-11 text-center">
+                  <Search className="size-6 text-foreground-3" />
+                  <p className="text-sm font-medium text-foreground-3">Find anything in Lynq</p>
+                </div>
               ) : (
                 <>
                   <div className="flex items-center justify-between mb-2 px-1">
@@ -219,6 +228,19 @@ export function SearchDialog() {
             />
           )}
         </Command>
+
+        {/* Keyboard navigation hints (Figma 329-791) */}
+        <div className="flex items-center gap-4 border-t border-border bg-background px-[18px] py-3">
+          <span className="flex items-center gap-1.5 text-sm text-foreground-3">
+            <kbd className="rounded-[5px] border border-border bg-card px-1.5 py-0.5 text-[11px] text-foreground-3">↑</kbd>
+            <kbd className="rounded-[5px] border border-border bg-card px-1.5 py-0.5 text-[11px] text-foreground-3">↓</kbd>
+            to navigate
+          </span>
+          <span className="flex items-center gap-1.5 text-sm text-foreground-3">
+            <kbd className="rounded-[5px] border border-border bg-card px-1.5 py-0.5 text-[11px] text-foreground-3">↵</kbd>
+            to select
+          </span>
+        </div>
       </DialogContent>
     </Dialog>
   )

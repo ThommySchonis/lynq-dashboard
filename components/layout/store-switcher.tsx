@@ -2,16 +2,20 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { Check, ChevronDown, Plus, Store } from 'lucide-react'
+import { ChevronDown, Plus, Store } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useStoreStore } from '@/stores/store'
-import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover'
 import type { StorePublic } from '@/types/stores'
 
 interface StoreSwitcherProps {
   collapsed: boolean
 }
 
+/**
+ * Store switcher as an inline collapsible menu (Figma 189-13486): a header row
+ * with a chevron that expands a list of stores (active = purple dot + "Current"
+ * badge) plus an "Add Store" action. Collapsed rail shows just the icon.
+ */
 export function StoreSwitcher({ collapsed }: StoreSwitcherProps) {
   const [open, setOpen] = useState(false)
   const stores = useStoreStore((s) => s.stores)
@@ -21,25 +25,31 @@ export function StoreSwitcher({ collapsed }: StoreSwitcherProps) {
 
   if (isLoading) return null
 
+  // No stores yet → single "Add store" entry.
   if (stores.length === 0) {
     return (
       <Link
         href="/settings/workspace/stores"
         className={cn(
-          'flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left',
-          'transition-colors hover:bg-white/5',
+          'flex w-full items-center gap-2.5 rounded-[9px] px-2.5 py-2 text-left transition-colors hover:bg-muted',
           collapsed ? 'justify-center' : '',
         )}
       >
-        <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/15 text-primary">
+        <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-accent-soft text-primary">
           <Plus className="size-4" />
         </span>
-        {!collapsed && (
-          <p className="truncate text-sm font-medium text-zinc-400">
-            Add store
-          </p>
-        )}
+        {!collapsed && <p className="truncate text-sm font-medium text-foreground-3">Add store</p>}
       </Link>
+    )
+  }
+
+  if (collapsed) {
+    return (
+      <div className="flex justify-center px-2.5 py-2">
+        <span className="flex size-8 items-center justify-center rounded-lg text-foreground-3">
+          <Store className="size-5" />
+        </span>
+      </div>
     )
   }
 
@@ -48,92 +58,67 @@ export function StoreSwitcher({ collapsed }: StoreSwitcherProps) {
     setOpen(false)
   }
 
-  const hasMultiple = stores.length > 1
-
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger
-        render={
-          <button
-            className={cn(
-              'flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left',
-              'transition-colors hover:bg-white/5',
-              collapsed ? 'justify-center' : '',
-              !hasMultiple && 'cursor-default hover:bg-transparent'
-            )}
-            onClick={hasMultiple ? undefined : (e) => e.preventDefault()}
-            disabled={!hasMultiple}
-          />
-        }
-      >
-        <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/15 text-primary">
-          <Store className="size-4" />
-        </span>
-        {!collapsed && (
-          <>
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium text-white">
-                {activeStore?.name ?? 'No store'}
-              </p>
-              <p className="truncate text-xs text-zinc-400">
-                {activeStore?.shopify_domain ?? ''}
-              </p>
-            </div>
-            {hasMultiple && (
-              <ChevronDown className="size-3.5 shrink-0 text-zinc-500" />
-            )}
-          </>
+    <div className="space-y-0.5">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        className={cn(
+          'flex w-full items-center gap-2 rounded-[9px] px-2.5 py-2 text-left transition-colors hover:bg-muted',
+          open && 'shadow-[0_4px_20px_rgba(161,117,252,0.2)]',
         )}
-      </PopoverTrigger>
-
-      <PopoverContent
-        side="right"
-        align="start"
-        sideOffset={8}
-        className="w-64 p-1"
       >
-        <div className="flex flex-col">
+        <Store className="size-5 shrink-0 text-foreground-3" />
+        <span className="min-w-0 flex-1 truncate text-sm font-semibold text-foreground">
+          {activeStore?.name ?? 'Store'}
+        </span>
+        <ChevronDown
+          className={cn(
+            'size-[18px] shrink-0 text-foreground-4 transition-transform duration-150',
+            open ? '' : '-rotate-90',
+          )}
+        />
+      </button>
+
+      {open && (
+        <div className="relative flex flex-col gap-0.5 py-1 pl-3.5 before:absolute before:bottom-1 before:left-2 before:top-1 before:w-px before:bg-border">
           {stores.map((store) => {
             const isActive = store.id === activeStore?.id
-            const isConnected = !!store.shopify_connected_at
             return (
               <button
                 key={store.id}
+                type="button"
                 onClick={() => handleSelect(store)}
-                className={cn(
-                  'flex items-center gap-2.5 rounded-md px-2.5 py-2 text-left text-sm',
-                  'transition-colors hover:bg-accent',
-                  isActive && 'bg-accent'
-                )}
+                className="flex items-center gap-2 rounded-lg px-2.5 py-[7px] text-left transition-colors hover:bg-muted"
               >
                 <span
                   className={cn(
-                    'size-2 shrink-0 rounded-full',
-                    isConnected ? 'bg-green-500' : 'bg-red-500'
+                    'size-1.5 shrink-0 rounded-full',
+                    isActive ? 'bg-primary' : 'bg-foreground-4',
                   )}
                 />
-                <div className="min-w-0 flex-1">
-                  <p className="truncate font-medium text-foreground">
-                    {store.name}
-                  </p>
-                  <p className="truncate text-xs text-muted-foreground">
-                    {store.shopify_domain}
-                  </p>
-                </div>
-                {isActive && <Check className="size-3.5 shrink-0 text-primary" />}
+                <span className="min-w-0 flex-1 truncate text-sm text-foreground-3">{store.name}</span>
+                {isActive && (
+                  <span className="shrink-0 rounded-md bg-input px-2 py-0.5 text-xs font-medium text-foreground-3">
+                    Current
+                  </span>
+                )}
               </button>
             )
           })}
 
           <Link
             href="/settings/workspace/stores"
-            className="mt-1 flex items-center gap-2 rounded-md border-t border-border px-2.5 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+            className="flex items-center gap-2.5 rounded-lg px-2 py-1.5 text-sm font-medium text-primary transition-colors hover:bg-muted"
           >
-            <Plus className="size-3.5" />
-            Add store
+            <span className="flex size-[18px] shrink-0 items-center justify-center rounded-full bg-accent-soft">
+              <Plus className="size-3" />
+            </span>
+            Add Store
           </Link>
         </div>
-      </PopoverContent>
-    </Popover>
+      )}
+    </div>
   )
 }

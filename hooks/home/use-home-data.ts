@@ -19,6 +19,11 @@ export interface OnboardingStatus {
   trial_ends_at: string | null
   is_payment_exempt?: boolean
   is_platform_admin?: boolean
+  /** Checklist signals (returned by api_get_onboarding_status). */
+  email_connected?: boolean
+  shopify_connected?: boolean
+  macros_count?: number
+  team_member_count?: number
   user?: {
     first_name?: string
     welcome_dismissed_at?: string | null

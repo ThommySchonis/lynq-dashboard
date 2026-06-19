@@ -17,6 +17,11 @@ export const ONBOARDING_STEPS = [
 export type OnboardingStep = (typeof ONBOARDING_STEPS)[number]
 export const TOTAL_STEPS = ONBOARDING_STEPS.length
 
+// Shared selectable-surface classes (pill-group, choice-chip).
+export const SELECT_SURFACE_SELECTED = 'border-primary bg-accent-soft text-foreground'
+export const SELECT_SURFACE_UNSELECTED =
+  'border-border bg-card text-foreground hover:border-border-hover hover:bg-muted'
+
 // ── Header — language selector ────────────────────────────────────────────────
 // Derived from the shared workspace LOCALES (settings) + flags for the header pill.
 
@@ -66,7 +71,7 @@ export const GOAL_OPTIONS: GoalOption[] = [
   },
   {
     value: 'scratch',
-    title: 'Begin anew.',
+    title: 'Begin a new.',
     description: "New to support? We'll guide you through the process.",
     icon: '/icons/onboarding/goal-scratch.svg',
   },
@@ -195,7 +200,7 @@ export const PRICING_PLANS: PricingPlan[] = [
     price: '€59',
     period: '/month',
     tagline: 'Begin with the basics',
-    cta: 'Initiate free trial',
+    cta: '7 day free trial',
     featuresHeading: 'You will receive:',
     features: ['900 outbound emails / month', '600 AI agent replies included', ...SHARED_TIER_FEATURES],
   },
@@ -205,7 +210,7 @@ export const PRICING_PLANS: PricingPlan[] = [
     price: '€149',
     period: '/month',
     tagline: 'Includes 500 AI agent messages and unlimited human representatives',
-    cta: 'Initiate free trial',
+    cta: '7 day free trial',
     badge: 'Suggested for you',
     highlighted: true,
     featuresHeading: 'You will receive:',
@@ -217,7 +222,7 @@ export const PRICING_PLANS: PricingPlan[] = [
     price: '€399',
     period: '/month',
     tagline: 'Includes 3,000 AI agent messages and unlimited human representatives',
-    cta: 'Initiate free trial',
+    cta: '7 day free trial',
     featuresHeading: 'You will receive:',
     features: ['9,000 outbound emails / month', '6,000 AI agent replies included', ...SHARED_TIER_FEATURES],
   },

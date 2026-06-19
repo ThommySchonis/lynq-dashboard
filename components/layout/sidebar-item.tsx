@@ -4,64 +4,52 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import type { LucideIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { Badge } from '@/components/ui/badge'
 
 interface SidebarItemProps {
-  href: string
   icon: LucideIcon
   label: string
-  badge?: number
   collapsed?: boolean
+  /** Link target. Omit and pass `onClick` to render an action button instead. */
+  href?: string
+  onClick?: () => void
 }
 
-export function SidebarItem({ href, icon: Icon, label, badge, collapsed }: SidebarItemProps) {
+export function SidebarItem({ href, icon: Icon, label, collapsed, onClick }: SidebarItemProps) {
   const pathname = usePathname()
-  const isActive = pathname === href || pathname.startsWith(href + '/')
+  const isActive = href ? pathname === href || pathname.startsWith(href + '/') : false
 
-  return (
-    <Link
-      href={href}
-      className={cn(
-        'flex h-10 items-center rounded-xl text-sm transition-colors duration-150',
-        // Layout: centered icon (collapsed) vs icon + label (expanded).
-        collapsed ? 'justify-center px-3' : 'gap-3 px-3',
-        // Active = inverted (white tile, dark text). No hover override on active.
-        isActive
-          ? 'bg-white font-medium text-zinc-900'
-          : 'text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200',
-      )}
-    >
+  const className = cn(
+    'group relative flex h-10 w-full items-center rounded-[9px] text-sm transition-colors duration-150',
+    collapsed ? 'justify-center px-3' : 'gap-3 px-3',
+    // Active = soft purple tile, 2px left accent border + subtle glow (Figma 776-17279).
+    isActive
+      ? 'bg-accent-soft font-medium text-foreground shadow-[0_4px_20px_rgba(161,117,252,0.2)] before:absolute before:inset-y-1.5 before:left-0 before:w-0.5 before:rounded-full before:bg-primary'
+      : 'text-foreground-2 hover:bg-muted hover:text-foreground',
+  )
+
+  const content = (
+    <>
       <Icon
         className={cn(
           'size-5 shrink-0',
-          isActive ? 'text-zinc-900' : 'text-zinc-400',
+          isActive ? 'text-primary' : 'text-foreground-3 group-hover:text-foreground',
         )}
       />
-      {!collapsed && (
-        <>
-          <span
-            className={cn(
-              'truncate',
-              isActive ? 'text-zinc-900 font-medium' : 'text-zinc-300',
-            )}
-          >
-            {label}
-          </span>
-          {badge !== undefined && badge > 0 && (
-            <Badge
-              variant="secondary"
-              className={cn(
-                'ml-auto text-xs px-1.5 py-0',
-                isActive
-                  ? 'bg-zinc-900/10 text-zinc-900'
-                  : 'bg-zinc-700/40 text-zinc-300',
-              )}
-            >
-              {badge}
-            </Badge>
-          )}
-        </>
-      )}
-    </Link>
+      {!collapsed && <span className="truncate">{label}</span>}
+    </>
+  )
+
+  if (href) {
+    return (
+      <Link href={href} className={className}>
+        {content}
+      </Link>
+    )
+  }
+
+  return (
+    <button type="button" onClick={onClick} aria-label={label} title={label} className={className}>
+      {content}
+    </button>
   )
 }

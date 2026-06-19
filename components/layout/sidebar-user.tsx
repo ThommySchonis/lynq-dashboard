@@ -16,7 +16,8 @@ export function SidebarUser({ collapsed }: SidebarUserProps) {
   const router = useRouter()
   const user = useAuthStore((s) => s.user)
   const workspace = useAuthStore((s) => s.workspace)
-  const { theme, toggle } = useThemeStore()
+  const theme = useThemeStore((s) => s.theme)
+  const toggle = useThemeStore((s) => s.toggle)
 
   const displayName = workspace?.name || user?.email?.split('@')[0] || 'User'
   const initials = displayName.slice(0, 2).toUpperCase()
@@ -27,11 +28,14 @@ export function SidebarUser({ collapsed }: SidebarUserProps) {
     router.push('/login')
   }
 
+  const themeLabel = theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'
+  const ThemeIcon = theme === 'light' ? Moon : Sun
+
   if (collapsed) {
     return (
       <div className="flex flex-col items-center gap-1 py-1">
-        <Avatar className="h-8 w-8">
-          <AvatarFallback className="bg-gradient-to-br from-primary to-purple-700 text-white text-xs font-semibold">
+        <Avatar className="size-8">
+          <AvatarFallback className="bg-primary text-xs font-semibold text-primary-foreground">
             {initials}
           </AvatarFallback>
         </Avatar>
@@ -39,16 +43,16 @@ export function SidebarUser({ collapsed }: SidebarUserProps) {
           variant="ghost"
           size="icon"
           onClick={toggle}
-          className="h-7 w-7 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800"
-          aria-label={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
+          className="size-7 text-foreground-3 hover:text-foreground"
+          aria-label={themeLabel}
         >
-          {theme === 'light' ? <Moon size={14} /> : <Sun size={14} />}
+          <ThemeIcon size={14} />
         </Button>
         <Button
           variant="ghost"
           size="icon"
           onClick={() => void handleLogout()}
-          className="h-7 w-7 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800"
+          className="size-7 text-foreground-3 hover:text-foreground"
           aria-label="Log out"
         >
           <LogOut size={14} />
@@ -58,34 +62,30 @@ export function SidebarUser({ collapsed }: SidebarUserProps) {
   }
 
   return (
-    <div className="flex items-center gap-2.5 rounded-xl px-3 py-2">
-      <Avatar className="h-8 w-8 shrink-0">
-        <AvatarFallback className="bg-gradient-to-br from-primary to-purple-700 text-white text-xs font-semibold">
+    <div className="flex items-center gap-2.5 rounded-[9px] px-2 py-2">
+      <Avatar className="size-8 shrink-0">
+        <AvatarFallback className="bg-primary text-xs font-semibold text-primary-foreground">
           {initials}
         </AvatarFallback>
       </Avatar>
-      <div className="flex-1 min-w-0 overflow-hidden">
-        <p className="truncate text-sm font-medium text-zinc-300">
-          {displayName}
-        </p>
-        <p className="truncate text-xs text-zinc-500">
-          {email}
-        </p>
+      <div className="min-w-0 flex-1 overflow-hidden">
+        <p className="truncate text-sm font-medium text-foreground">{displayName}</p>
+        <p className="truncate text-xs text-foreground-3">{email}</p>
       </div>
       <Button
         variant="ghost"
         size="icon"
         onClick={toggle}
-        className="h-7 w-7 shrink-0 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800"
-        aria-label={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
+        className="size-7 shrink-0 text-foreground-3 hover:text-foreground"
+        aria-label={themeLabel}
       >
-        {theme === 'light' ? <Moon size={14} /> : <Sun size={14} />}
+        <ThemeIcon size={14} />
       </Button>
       <Button
         variant="ghost"
         size="icon"
         onClick={() => void handleLogout()}
-        className="h-7 w-7 shrink-0 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800"
+        className="size-7 shrink-0 text-foreground-3 hover:text-foreground"
         aria-label="Log out"
       >
         <LogOut size={14} />

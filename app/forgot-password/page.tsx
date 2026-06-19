@@ -1,10 +1,15 @@
 'use client'
 
 import { useState } from 'react'
-import Link from 'next/link'
-import AuthLayout from '@/components/features/auth/auth-layout'
-import { FloatField } from '@/components/features/auth/float-field'
+import { Mail } from 'lucide-react'
+import AuthCardLayout from '@/components/features/auth/auth-card-layout'
+import { AuthField } from '@/components/features/auth/auth-field'
+import { AuthSubmitButton } from '@/components/features/auth/auth-submit-button'
+import { BackToSignIn } from '@/components/features/auth/back-to-sign-in'
 import { useResetPasswordRequest } from '@/hooks/auth/use-auth-mutations'
+import { EMAIL_PLACEHOLDER } from '@/lib/auth-constants'
+
+const footer = <BackToSignIn />
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('')
@@ -16,12 +21,7 @@ export default function ForgotPasswordPage() {
     e.preventDefault()
     const trimmed = email.trim()
     if (!trimmed) return
-    mutation.mutate(
-      { email: trimmed },
-      {
-        onSuccess: () => setSent(true),
-      },
-    )
+    mutation.mutate({ email: trimmed }, { onSuccess: () => setSent(true) })
   }
 
   const errorMessage =
@@ -31,29 +31,19 @@ export default function ForgotPasswordPage() {
         ? 'Something went wrong. Please try again.'
         : null
 
-  const footer = (
-    <>
-      Remember your password?{' '}
-      <Link href="/login" className="text-[#C4B0FF] hover:text-white transition-colors">
-        Back to sign in
-      </Link>
-    </>
-  )
-
   // ── Success state ──────────────────────────────────────────
   if (sent) {
     return (
-      <AuthLayout
-        headline="Check your email"
-        subhead="We've sent you a reset link. Click it to choose a new password."
+      <AuthCardLayout
+        title="Check your email"
+        subtitle="We've sent you a reset link. Click it to choose a new password."
         footer={footer}
-        showOrbs={false}
       >
-        <div className="text-center py-2 space-y-4">
-          <p className="text-[15px] text-white/70">
-            ✉️ We sent a reset link to{' '}
-            <strong className="text-white font-medium">{email.trim()}</strong>.{' '}
-            Check your inbox (and spam folder, just in case).
+        <div className="space-y-4">
+          <p className="text-sm text-foreground-3">
+            We sent a reset link to{' '}
+            <strong className="font-medium text-foreground">{email.trim()}</strong>. Check your
+            inbox (and spam folder, just in case).
           </p>
           <button
             type="button"
@@ -61,57 +51,40 @@ export default function ForgotPasswordPage() {
               setSent(false)
               mutation.reset()
             }}
-            className="text-[14px] font-medium text-[#C4B0FF] underline underline-offset-2 hover:text-white transition-colors bg-transparent border-none cursor-pointer p-0"
+            className="text-sm font-semibold text-primary hover:opacity-80"
           >
             Didn&apos;t get it? Try again
           </button>
         </div>
-      </AuthLayout>
+      </AuthCardLayout>
     )
   }
 
   // ── Form state ─────────────────────────────────────────────
   return (
-    <AuthLayout
-      headline="Reset your password"
-      subhead="Enter your email and we'll send you a reset link."
+    <AuthCardLayout
+      title="Forgot password?"
+      subtitle="Enter your email and we'll send you a reset link."
       footer={footer}
-      showOrbs={false}
     >
-      <form onSubmit={handleSubmit} autoComplete="on" noValidate>
-        <FloatField
+      <form onSubmit={handleSubmit} autoComplete="on" noValidate className="space-y-4">
+        <AuthField
           id="email"
           label="Email"
           type="email"
+          icon={<Mail size={18} />}
+          placeholder={EMAIL_PLACEHOLDER}
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
           autoComplete="email"
+          error={errorMessage ?? undefined}
         />
 
-        {errorMessage && (
-          <div
-            role="alert"
-            className="mt-4 px-3.5 py-2.5 rounded-[10px] bg-red-500/10 border border-red-500/30 text-[13px] text-red-300"
-          >
-            {errorMessage}
-          </div>
-        )}
-
-        <div className="mt-6">
-          <button
-            type="submit"
-            disabled={mutation.isPending}
-            className="w-full h-14 rounded-xl text-[15px] font-medium text-white transition-[transform,box-shadow,opacity] duration-200 ease-[ease] disabled:opacity-65 disabled:cursor-wait hover:enabled:scale-[1.01]"
-            style={{
-              background: 'linear-gradient(135deg, #7F77DD 0%, #6366F1 100%)',
-              boxShadow: '0 8px 28px rgba(127,119,221,0.35)',
-            }}
-          >
-            {mutation.isPending ? 'Sending…' : 'Send reset link →'}
-          </button>
-        </div>
+        <AuthSubmitButton pending={mutation.isPending} pendingLabel="Sending…">
+          Send reset link
+        </AuthSubmitButton>
       </form>
-    </AuthLayout>
+    </AuthCardLayout>
   )
 }

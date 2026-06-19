@@ -45,3 +45,22 @@ export const URGENCY_SCORE: Record<string, number> = {
   medium: 2,
   low: 1,
 }
+
+// ─── Inbox folders ────────────────────────────────────────────
+/** Single source of truth for the inbox folder tabs (thread-list-panel) and
+ *  the sidebar Inbox submenu. Keys match useInboxCounts() fields; counts are
+ *  applied at render time. */
+export interface InboxFolder {
+  key: string
+  label: string
+}
+
+export const INBOX_FOLDERS: InboxFolder[] = [
+  { key: 'open',     label: 'Open'     },
+  { key: 'pending',  label: 'Pending'  },
+  { key: 'snoozed',  label: 'Snoozed'  },
+  { key: 'resolved', label: 'Resolved' },
+  { key: 'spam',     label: 'Spam'     },
+  { key: 'unlinked', label: 'Unlinked' },
+  { key: 'trash',    label: 'Trash'    },
+]

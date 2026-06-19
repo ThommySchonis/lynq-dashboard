@@ -14,8 +14,14 @@ import {
 } from '@/hooks/notifications'
 import type { AppNotification } from '@/types/notifications'
 
-export function NotificationBell({ collapsed = false }: { collapsed?: boolean }) {
-  void collapsed
+export function NotificationBell({
+  collapsed = false,
+  variant = 'icon',
+}: {
+  collapsed?: boolean
+  /** 'icon' = compact icon button; 'row' = full-width footer nav row (Figma sidebar). */
+  variant?: 'icon' | 'row'
+}) {
   const [open, setOpen] = useState(false)
   const router = useRouter()
   const { notifications, unreadCount, isLoading, error, refetch } = useNotifications()
@@ -28,25 +34,44 @@ export function NotificationBell({ collapsed = false }: { collapsed?: boolean })
     if (n.link) router.push(n.link)
   }
 
+  const asRow = variant === 'row' && !collapsed
+
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger
-        render={(props) => (
-          <button
-            {...props}
-            aria-label="Notifications"
-            className={cn(
-              'relative flex h-9 w-9 items-center justify-center rounded-md text-foreground-3 transition-colors hover:bg-muted hover:text-foreground'
-            )}
-          >
-            <Bell className="h-5 w-5" />
-            {unreadCount > 0 && (
-              <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-medium text-white">
-                {unreadCount > 9 ? '9+' : unreadCount}
-              </span>
-            )}
-          </button>
-        )}
+        render={(props) =>
+          asRow ? (
+            <button
+              {...props}
+              aria-label="Notifications"
+              className="group flex h-10 w-full items-center gap-3 rounded-[9px] px-3 text-sm text-foreground-2 transition-colors hover:bg-muted hover:text-foreground"
+            >
+              <Bell className="size-5 shrink-0 text-foreground-3 group-hover:text-foreground" />
+              <span className="truncate">Notifications</span>
+              {unreadCount > 0 && (
+                <span className="ml-auto rounded-full bg-border px-2 py-0.5 text-xs font-medium text-foreground-3">
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </span>
+              )}
+            </button>
+          ) : (
+            <button
+              {...props}
+              aria-label="Notifications"
+              className={cn(
+                'relative flex items-center justify-center rounded-md text-foreground-3 transition-colors hover:bg-muted hover:text-foreground',
+                collapsed ? 'size-8' : 'size-9',
+              )}
+            >
+              <Bell className="h-5 w-5" />
+              {unreadCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-medium text-white">
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
+              )}
+            </button>
+          )
+        }
       />
       <PopoverContent align="start" className="w-80 p-0">
         <div className="flex items-center justify-between border-b border-border px-3 py-2">

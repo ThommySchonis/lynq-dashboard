@@ -4,7 +4,6 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import type { LucideIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { Badge } from '@/components/ui/badge'
 
 interface SidebarItemProps {
   href: string
@@ -22,43 +21,27 @@ export function SidebarItem({ href, icon: Icon, label, badge, collapsed }: Sideb
     <Link
       href={href}
       className={cn(
-        'flex h-10 items-center rounded-xl text-sm transition-colors duration-150',
-        // Layout: centered icon (collapsed) vs icon + label (expanded).
+        'group relative flex h-10 items-center rounded-[9px] text-sm transition-colors duration-150',
         collapsed ? 'justify-center px-3' : 'gap-3 px-3',
-        // Active = inverted (white tile, dark text). No hover override on active.
+        // Active = soft purple tile, 2px left accent border + subtle glow (Figma 776-17279).
         isActive
-          ? 'bg-white font-medium text-zinc-900'
-          : 'text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200',
+          ? 'bg-accent-soft font-medium text-foreground shadow-[0_4px_20px_rgba(161,117,252,0.2)] before:absolute before:inset-y-1.5 before:left-0 before:w-0.5 before:rounded-full before:bg-primary'
+          : 'text-foreground-2 hover:bg-muted hover:text-foreground',
       )}
     >
       <Icon
         className={cn(
           'size-5 shrink-0',
-          isActive ? 'text-zinc-900' : 'text-zinc-400',
+          isActive ? 'text-primary' : 'text-foreground-3 group-hover:text-foreground',
         )}
       />
       {!collapsed && (
         <>
-          <span
-            className={cn(
-              'truncate',
-              isActive ? 'text-zinc-900 font-medium' : 'text-zinc-300',
-            )}
-          >
-            {label}
-          </span>
+          <span className="truncate">{label}</span>
           {badge !== undefined && badge > 0 && (
-            <Badge
-              variant="secondary"
-              className={cn(
-                'ml-auto text-xs px-1.5 py-0',
-                isActive
-                  ? 'bg-zinc-900/10 text-zinc-900'
-                  : 'bg-zinc-700/40 text-zinc-300',
-              )}
-            >
-              {badge}
-            </Badge>
+            <span className="ml-auto rounded-full bg-border px-2 py-0.5 text-xs font-medium text-foreground-3">
+              {badge > 99 ? '99+' : badge}
+            </span>
           )}
         </>
       )}

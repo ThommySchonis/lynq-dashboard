@@ -136,11 +136,11 @@ export function useDisconnectShopify() {
    Shopify OAuth
 ───────────────────────────────────────────── */
 
-export async function startShopifyOAuth(token: string, shop: string): Promise<string> {
+export async function startShopifyOAuth(token: string, shop: string, storeName?: string): Promise<string> {
   const res = await fetch('/api/auth/shopify', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-    body: JSON.stringify({ shop }),
+    body: JSON.stringify({ shop, store_name: storeName }),
   })
   if (!res.ok) {
     const d = await parseJson<ErrorResponse>(res).catch((): ErrorResponse => ({}))

@@ -15,6 +15,16 @@ export class ShopifyApiError extends Error {
   }
 }
 
+/**
+ * True when an error is Shopify rejecting a non-expiring Admin API access token
+ * (the deprecation that requires the store to reconnect via OAuth with expiring tokens).
+ */
+export function isNonExpiringTokenError(err: unknown): boolean {
+  return err instanceof ShopifyApiError
+    && err.statusCode === 403
+    && /non-expiring access tokens are no longer accepted/i.test(err.message)
+}
+
 // ── Shopify credential shape ────────────────────────────────────────────────
 export interface ShopifyCredentials {
   domain: string

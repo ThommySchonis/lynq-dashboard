@@ -16,6 +16,7 @@ export interface StorePublic {
   shopify_domain: string | null
   shopify_connected_at: string | null
   store_currency: string | null
+  status: string | null
   created_at: string
 }
 

@@ -139,6 +139,7 @@ export function CustomerSidebar() {
   const autoCustomerEmail = selectedThread ? extractEmail(selectedThread.from) || '' : ''
   const customerQuery = custSearch || autoCustomerEmail
   const { data: rawCustomer, isLoading: loadingCust } = useCustomerSearch(customerQuery)
+  const needsReauth = (rawCustomer as { code?: string } | undefined)?.code === 'reauth_required'
   const customer = rawCustomer as SidebarCustomerResult | undefined
 
   // Manual customer search handler
@@ -339,83 +340,99 @@ export function CustomerSidebar() {
           )}
           {!loadingCust && (
             <div className="pt-2.5 px-3.5 pb-1 flex flex-col">
-              {/* Note row */}
-              <div className="flex items-start gap-2 py-[5px] border-b border-border mb-0.5">
-                <span className="flex text-muted-foreground mt-px shrink-0">
-                  <FileText size={13} />
-                </span>
-                <span className={`text-xs leading-[1.5] ${customer?.customer?.note ? 'text-foreground-2' : 'text-muted-foreground italic'}`}>
-                  {customer?.customer?.note || 'This customer has no note.'}
-                </span>
-              </div>
-              {/* Email row */}
-              <div className="flex items-center gap-2 py-[5px]">
-                <span className="flex text-muted-foreground shrink-0">
-                  <Mail size={13} />
-                </span>
-                <a
-                  href={`mailto:${extractEmail(selectedThread.from)}`}
-                  className="text-xs text-foreground no-underline overflow-hidden text-ellipsis whitespace-nowrap hover:underline"
-                >
-                  {extractEmail(selectedThread.from)}
-                </a>
-              </div>
-              {/* Phone row */}
-              {customer?.customer?.phone && (
-                <div className="flex items-center gap-2 py-[5px]">
-                  <span className="flex text-muted-foreground shrink-0">
-                    <Phone size={13} />
-                  </span>
-                  <a href={`tel:${customer.customer.phone}`} className="text-xs text-foreground no-underline hover:underline">
-                    {customer.customer.phone}
+              {needsReauth ? (
+                <div className="flex flex-col items-start gap-2 rounded-md border border-amber-500/25 bg-amber-500/10 px-3 py-3">
+                  <p className="text-xs text-amber-700 dark:text-amber-400">
+                    This store&apos;s Shopify connection needs to be re-authorized before customer data can load.
+                  </p>
+                  <a
+                    href="/settings/workspace/stores"
+                    className="text-xs font-semibold text-primary hover:underline"
+                  >
+                    Go to store settings to reconnect →
                   </a>
                 </div>
-              )}
-              {/* Show more */}
-              {customer?.customer && (
-                <Button
-                  variant="ghost"
-                  onClick={() => setCustShowMore((v) => !v)}
-                  className="flex items-center gap-1 py-[5px] px-0 text-xs text-foreground-2 font-inherit font-medium"
-                >
-                  {custShowMore ? 'Show less' : 'Show more'}
-                  <ChevronDown size={10} className={`transition-transform duration-200 ${custShowMore ? 'rotate-180' : 'rotate-0'}`} />
-                </Button>
-              )}
-              {custShowMore && customer?.customer && (
-                <div className="flex flex-col pt-1 border-t border-border">
-                  {(customer.customer.city || customer.customer.country) && (
-                    <div className="flex items-baseline justify-between gap-4 px-3.5">
-                      <span className="text-xs text-muted-foreground shrink-0 min-w-[72px]">Location</span>
-                      <span className="text-xs font-medium text-foreground text-right break-words">
-                        {[customer.customer.city, customer.customer.country].filter(Boolean).join(', ')}
-                      </span>
-                    </div>
-                  )}
-                  {customer.customer.createdAt && (
-                    <div className="flex items-baseline justify-between gap-4 px-3.5">
-                      <span className="text-xs text-muted-foreground shrink-0 min-w-[72px]">Customer since</span>
-                      <span className="text-xs font-medium text-foreground text-right break-words">
-                        {new Date(customer.customer.createdAt).toLocaleDateString('en-US', {
-                          year: 'numeric',
-                          month: 'short',
-                        })}
-                      </span>
-                    </div>
-                  )}
-                  <div className="flex items-baseline justify-between gap-4 px-3.5">
-                    <span className="text-xs text-muted-foreground shrink-0 min-w-[72px]">Orders</span>
-                    <span className="text-xs font-medium text-foreground text-right break-words">{customer.customer.ordersCount ?? '—'}</span>
-                  </div>
-                  <div className="flex items-baseline justify-between gap-4 px-3.5">
-                    <span className="text-xs text-muted-foreground shrink-0 min-w-[72px]">Total spent</span>
-                    <span className="text-xs font-medium text-foreground text-right break-words font-bold text-foreground">
-                      {fmtPrice(customer.customer.totalSpent ?? 0, customer.customer.currency ?? '')}
+              ) : (
+                <>
+                  {/* Note row */}
+                  <div className="flex items-start gap-2 py-[5px] border-b border-border mb-0.5">
+                    <span className="flex text-muted-foreground mt-px shrink-0">
+                      <FileText size={13} />
+                    </span>
+                    <span className={`text-xs leading-[1.5] ${customer?.customer?.note ? 'text-foreground-2' : 'text-muted-foreground italic'}`}>
+                      {customer?.customer?.note || 'This customer has no note.'}
                     </span>
                   </div>
-                </div>
+                  {/* Email row */}
+                  <div className="flex items-center gap-2 py-[5px]">
+                    <span className="flex text-muted-foreground shrink-0">
+                      <Mail size={13} />
+                    </span>
+                    <a
+                      href={`mailto:${extractEmail(selectedThread.from)}`}
+                      className="text-xs text-foreground no-underline overflow-hidden text-ellipsis whitespace-nowrap hover:underline"
+                    >
+                      {extractEmail(selectedThread.from)}
+                    </a>
+                  </div>
+                  {/* Phone row */}
+                  {customer?.customer?.phone && (
+                    <div className="flex items-center gap-2 py-[5px]">
+                      <span className="flex text-muted-foreground shrink-0">
+                        <Phone size={13} />
+                      </span>
+                      <a href={`tel:${customer.customer.phone}`} className="text-xs text-foreground no-underline hover:underline">
+                        {customer.customer.phone}
+                      </a>
+                    </div>
+                  )}
+                  {/* Show more */}
+                  {customer?.customer && (
+                    <Button
+                      variant="ghost"
+                      onClick={() => setCustShowMore((v) => !v)}
+                      className="flex items-center gap-1 py-[5px] px-0 text-xs text-foreground-2 font-inherit font-medium"
+                    >
+                      {custShowMore ? 'Show less' : 'Show more'}
+                      <ChevronDown size={10} className={`transition-transform duration-200 ${custShowMore ? 'rotate-180' : 'rotate-0'}`} />
+                    </Button>
+                  )}
+                  {custShowMore && customer?.customer && (
+                    <div className="flex flex-col pt-1 border-t border-border">
+                      {(customer.customer.city || customer.customer.country) && (
+                        <div className="flex items-baseline justify-between gap-4 px-3.5">
+                          <span className="text-xs text-muted-foreground shrink-0 min-w-[72px]">Location</span>
+                          <span className="text-xs font-medium text-foreground text-right break-words">
+                            {[customer.customer.city, customer.customer.country].filter(Boolean).join(', ')}
+                          </span>
+                        </div>
+                      )}
+                      {customer.customer.createdAt && (
+                        <div className="flex items-baseline justify-between gap-4 px-3.5">
+                          <span className="text-xs text-muted-foreground shrink-0 min-w-[72px]">Customer since</span>
+                          <span className="text-xs font-medium text-foreground text-right break-words">
+                            {new Date(customer.customer.createdAt).toLocaleDateString('en-US', {
+                              year: 'numeric',
+                              month: 'short',
+                            })}
+                          </span>
+                        </div>
+                      )}
+                      <div className="flex items-baseline justify-between gap-4 px-3.5">
+                        <span className="text-xs text-muted-foreground shrink-0 min-w-[72px]">Orders</span>
+                        <span className="text-xs font-medium text-foreground text-right break-words">{customer.customer.ordersCount ?? '—'}</span>
+                      </div>
+                      <div className="flex items-baseline justify-between gap-4 px-3.5">
+                        <span className="text-xs text-muted-foreground shrink-0 min-w-[72px]">Total spent</span>
+                        <span className="text-xs font-medium text-foreground text-right break-words font-bold text-foreground">
+                          {fmtPrice(customer.customer.totalSpent ?? 0, customer.customer.currency ?? '')}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                  {!customer?.customer && <div className="py-2 text-xs text-muted-foreground">No Shopify customer found</div>}
+                </>
               )}
-              {!customer?.customer && <div className="py-2 text-xs text-muted-foreground">No Shopify customer found</div>}
             </div>
           )}
           {/* Open Timeline row */}

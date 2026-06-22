@@ -1,16 +1,18 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { BellOff, ChevronDown, ChevronLeft, ChevronRight, MoreHorizontal, User } from "lucide-react";
-import { STATUS, SNOOZE_OPTIONS } from "@/lib/inbox-constants";
-import { isoFromNow } from "@/lib/inbox-utils";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ConversationStatusMenu } from "./conversation-status-menu";
+import { ConversationAssignMenu } from "./conversation-assign-menu";
+import { ConversationSnoozeMenu } from "./conversation-snooze-menu";
+import { ConversationMoreMenu } from "./conversation-more-menu";
 import type { InboxMember } from "@/hooks/inbox/use-inbox-data";
 
 /**
  * Conversation detail top bar (Figma 1283-52902 "conv-topbar"): title + status
  * pill on row 1; assign + snooze (left) and Close / more / prev-next (right) on
- * row 2.
+ * row 2. The status / assign / snooze / "…" dropdowns match Figma 1145-40855 /
+ * -39158 / -40043 / -39347.
  */
 export function ConversationTopbar({
   title,
@@ -43,86 +45,19 @@ export function ConversationTopbar({
   canNext: boolean;
   disabled?: boolean;
 }) {
-  const st = STATUS[status as keyof typeof STATUS];
-  const assigneeName = members.find((m) => m.id === assignedTo)?.name ?? "Unassigned";
-
   return (
     <div className="flex flex-col gap-2.5 py-3.5 pr-3.5 pl-[18px] border-b border-border shrink-0 bg-card">
       {/* Row 1: title + status pill */}
       <div className="flex items-center justify-between gap-3">
         <span className="min-w-0 flex-1 truncate text-sm font-semibold text-foreground">{title}</span>
-
-        <DropdownMenu>
-          <DropdownMenuTrigger
-            render={
-              <button className="flex shrink-0 items-center gap-2 rounded-full border border-border bg-card px-[11px] py-[5px] text-xs font-semibold text-foreground shadow-sm transition-colors hover:bg-secondary" />
-            }
-          >
-            <span className="size-1.5 shrink-0 rounded-full" style={{ background: st?.color }} />
-            {st?.label ?? status}
-            <ChevronDown size={11} className="text-foreground-3" />
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            {Object.entries(STATUS).map(([key, s]) => (
-              <DropdownMenuItem key={key} disabled={disabled} onClick={() => onStatus(key)}>
-                <span className="size-2 shrink-0 rounded-full" style={{ background: s.color }} />
-                {s.label}
-                {status === key && <span className="ml-auto text-[10px] text-muted-foreground">✓</span>}
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <ConversationStatusMenu status={status} onStatus={onStatus} onSnooze={onSnooze} onSpam={onSpam} disabled={disabled} />
       </div>
 
       {/* Row 2: assign + snooze | close + more + nav */}
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          {/* Assign */}
-          <DropdownMenu>
-            <DropdownMenuTrigger
-              render={
-                <button className="flex items-center gap-1.5 rounded-lg border border-border bg-card px-2.5 py-1.5 text-[12px] text-foreground transition-colors hover:bg-secondary" />
-              }
-            >
-              <User size={14} className="text-foreground-3" />
-              <span className="max-w-[140px] truncate">{assigneeName}</span>
-              <ChevronDown size={11} className="text-foreground-3" />
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start">
-              <DropdownMenuItem disabled={disabled} onClick={() => onAssign("")}>
-                Unassigned
-                {!assignedTo && <span className="ml-auto text-[10px] text-muted-foreground">✓</span>}
-              </DropdownMenuItem>
-              {members.map((m) => (
-                <DropdownMenuItem key={m.id} disabled={disabled} onClick={() => onAssign(m.id)}>
-                  {m.name}
-                  {assignedTo === m.id && <span className="ml-auto text-[10px] text-muted-foreground">✓</span>}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-
-          {/* Snooze */}
-          <DropdownMenu>
-            <DropdownMenuTrigger
-              render={
-                <button
-                  title="Snooze"
-                  className="flex items-center gap-1 rounded-lg border border-border bg-card px-2 py-1.5 text-foreground-3 transition-colors hover:bg-secondary"
-                />
-              }
-            >
-              <BellOff size={14} />
-              <ChevronDown size={11} />
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start">
-              {SNOOZE_OPTIONS.map((o) => (
-                <DropdownMenuItem key={o.label} disabled={disabled} onClick={() => onSnooze(isoFromNow(o.hours))}>
-                  {o.label}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <ConversationAssignMenu assignedTo={assignedTo} members={members} onAssign={onAssign} disabled={disabled} />
+          <ConversationSnoozeMenu onSnooze={onSnooze} disabled={disabled} />
         </div>
 
         <div className="flex items-center gap-2">
@@ -134,29 +69,7 @@ export function ConversationTopbar({
             Close
           </Button>
 
-          {/* More */}
-          <DropdownMenu>
-            <DropdownMenuTrigger
-              render={
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  title="More actions"
-                  className="flex size-8 items-center justify-center rounded-lg text-foreground-3 transition-colors hover:bg-secondary hover:text-foreground"
-                />
-              }
-            >
-              <MoreHorizontal size={16} />
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem disabled={disabled} onClick={onSpam}>
-                Mark as spam
-              </DropdownMenuItem>
-              <DropdownMenuItem variant="destructive" disabled={disabled} onClick={onDelete}>
-                Delete
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <ConversationMoreMenu onSpam={onSpam} onDelete={onDelete} disabled={disabled} />
 
           {/* Prev / next */}
           <div className="flex items-center gap-1">

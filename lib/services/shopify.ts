@@ -1,6 +1,45 @@
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import { resilientFetch } from '@/lib/resilient-fetch'
 import { logger } from '@/lib/logger'
+import type {
+  ShopifyCredentials,
+  ShopifyCustomerRef,
+  ShopifyLineItem,
+  ShopifyFulfillment,
+  ShopifyTransaction,
+  ShopifyRefund,
+  ShopifyOrder,
+  ShopifyFulfillmentOrder,
+  ShopifyOrdersResponse,
+  ShopifySingleOrderResponse,
+  ShopifyCustomersResponse,
+  ShopifySingleCustomerResponse,
+  ShopifyTransactionsResponse,
+  ShopifyRefundResponse,
+  ShopifyRefundCalcResponse,
+  ShopifyCancelResponse,
+  ShopifyEditResponse,
+  ShopifyEditCommitResponse,
+  ShopifyDraftOrderResponse,
+  ShopifyUpdateAddressResponse,
+  ShopifyFulfillmentOrdersResponse,
+  ShopifyFulfillmentResponse,
+  ShopifyShopResponse,
+  PaginatedResult,
+  KPIData,
+  RevenueTrendRow,
+  RefundLineItemInput,
+  CreateRefundParams,
+  CancelOrderParams,
+  EditOrderParams,
+  DuplicateOrderParams,
+  UpdateOrderNoteFields,
+  UpdateAddressInput,
+  FulfillOrderParams,
+  GqlProductsResponse,
+  ProductSearchResult,
+  CreateDraftOrderParams,
+} from './shopify-types'
 
 // ── Error class ──────────────────────────────────────────────────────────────
 export class ShopifyApiError extends Error {
@@ -15,147 +54,6 @@ export class ShopifyApiError extends Error {
   }
 }
 
-// ── Shopify credential shape ────────────────────────────────────────────────
-interface ShopifyCredentials {
-  domain: string
-  accessToken: string
-}
-
-// ── Shopify API response interfaces ─────────────────────────────────────────
-
-interface ShopifyCustomerRef {
-  id: number
-  first_name?: string
-  last_name?: string
-  email?: string
-  phone?: string
-  orders_count?: number
-  total_spent?: string
-  default_address?: {
-    first_name?: string
-    last_name?: string
-    address1?: string
-    address2?: string
-    city?: string
-    province?: string
-    country?: string
-    country_code?: string
-    zip?: string
-    phone?: string
-  }
-  currency?: string
-  tags?: string
-  note?: string
-  created_at?: string
-}
-
-interface ShopifyAddress {
-  first_name?: string
-  last_name?: string
-  address1?: string
-  address2?: string
-  city?: string
-  province?: string
-  zip?: string
-  country?: string
-  country_code?: string
-  phone?: string
-}
-
-interface ShopifyLineItem {
-  id: number
-  title: string
-  variant_title?: string
-  sku?: string
-  quantity: number
-  price: string
-  variant_id?: number
-  discount_allocations?: Array<{ amount?: string }>
-}
-
-interface ShopifyFulfillment {
-  id: number
-  status: string
-  tracking_number?: string
-  tracking_url?: string
-  tracking_company?: string
-}
-
-interface ShopifyTransaction {
-  id: number
-  kind: string
-  gateway?: string
-  amount: string
-  parent_id?: number
-  amount_set?: { presentment_money?: { amount?: string } }
-}
-
-interface ShopifyRefund {
-  id?: number
-  created_at: string
-  note?: string
-  transactions?: ShopifyTransaction[]
-  refund_line_items?: Array<{
-    quantity?: number
-    line_item?: { title?: string }
-  }>
-}
-
-interface ShopifyOrder {
-  id: number
-  name: string
-  created_at: string
-  updated_at?: string
-  processed_at?: string
-  financial_status: string
-  fulfillment_status?: string | null
-  cancel_reason?: string | null
-  cancelled_at?: string | null
-  customer?: ShopifyCustomerRef | null
-  email?: string
-  shipping_address?: ShopifyAddress | null
-  billing_address?: ShopifyAddress | null
-  line_items?: ShopifyLineItem[]
-  subtotal_price?: string
-  total_price?: string
-  total_tax?: string
-  total_price_set?: { presentment_money?: { amount?: string } }
-  subtotal_price_set?: { presentment_money?: { amount?: string } }
-  total_discounts?: string
-  total_discounts_set?: { presentment_money?: { amount?: string } }
-  total_shipping_price_set?: { shop_money?: { amount?: string } }
-  currency?: string
-  presentment_currency?: string
-  source_name?: string
-  refunds?: ShopifyRefund[]
-  fulfillments?: ShopifyFulfillment[]
-  tags?: string
-  note?: string
-}
-
-interface ShopifyFulfillmentOrder {
-  id: number
-  status: string
-}
-
-// ── Shopify API response shapes (used as generics for shopifyFetchJSON) ──────
-
-interface ShopifyOrdersResponse { orders?: ShopifyOrder[] }
-interface ShopifySingleOrderResponse { order: ShopifyOrder }
-interface ShopifyCustomersResponse { customers?: ShopifyCustomerRef[] }
-interface ShopifySingleCustomerResponse { customer?: ShopifyCustomerRef }
-interface ShopifyTransactionsResponse { transactions?: ShopifyTransaction[] }
-interface ShopifyRefundResponse { refund?: unknown }
-interface ShopifyRefundCalcResponse { refund?: { transactions?: ShopifyTransaction[] } }
-interface ShopifyCancelResponse { order?: { id?: number; cancel_reason?: string } }
-interface ShopifyEditResponse { order_edit?: { id?: number } }
-interface ShopifyEditCommitResponse { order_edit?: unknown }
-interface ShopifyDraftOrderResponse { draft_order?: { id?: number; name?: string; invoice_url?: string } }
-interface ShopifyUpdateAddressResponse { order?: { shipping_address?: unknown } }
-interface ShopifyFulfillmentOrdersResponse { fulfillment_orders?: ShopifyFulfillmentOrder[] }
-interface ShopifyFulfillmentResponse { fulfillment?: { id?: number; status?: string } }
-interface ShopifyShopResponse { shop?: { currency?: string } }
-
 // ── Internal Shopify REST helper ─────────────────────────────────────────────
 const SHOPIFY_API_VERSION = '2025-04'
 
@@ -163,11 +61,6 @@ const SHOPIFY_API_VERSION = '2025-04'
  * Paginated fetch for Shopify REST endpoints that need Link-header pagination.
  * Uses retry logic consistent with resilientFetch (429 + Retry-After handling).
  */
-interface PaginatedResult<T> {
-  data: T
-  nextUrl: string | null
-}
-
 async function shopifyPaginatedFetch<T>(
   credentials: ShopifyCredentials,
   url: string,
@@ -222,16 +115,6 @@ async function shopifyFetchJSON<T = Record<string, unknown>>(credentials: Shopif
 
 // ── Supabase-backed functions ────────────────────────────────────────────────
 
-// Shape returned by the get_kpis RPC
-interface KPIData {
-  totalOrders: number
-  totalRefunds: number
-  netRevenue: number
-  returns: number
-  cancelledOrders: number
-  discounts: number
-}
-
 /**
  * KPIs from shopify_orders table via PostgreSQL stored function.
  */
@@ -274,12 +157,6 @@ export async function getKPIs(
     returns: Math.round(returns).toString(),
     refundAmount: Math.round(returns).toString(),
   }
-}
-
-// Shape returned by the get_revenue_trend RPC
-interface RevenueTrendRow {
-  date: string
-  revenue: number | string
 }
 
 /**
@@ -628,20 +505,6 @@ export async function getCustomer(credentials: ShopifyCredentials, query: { emai
 
 // ── Order action functions ───────────────────────────────────────────────────
 
-interface RefundLineItemInput {
-  lineItemId: number
-  quantity: number
-}
-
-interface CreateRefundParams {
-  lineItems?: RefundLineItemInput[]
-  restock?: boolean
-  notify?: boolean
-  reason?: string
-  shipping?: boolean
-  customAmount?: string | number
-}
-
 /**
  * Create a refund on an order (custom amount or line-item based).
  */
@@ -701,13 +564,6 @@ export async function createRefund(credentials: ShopifyCredentials, orderId: str
   return refundData.refund
 }
 
-interface CancelOrderParams {
-  reason?: string
-  restock?: boolean
-  refund?: boolean
-  notify?: boolean
-}
-
 /**
  * Cancel an order.
  */
@@ -730,17 +586,6 @@ export async function cancelOrder(credentials: ShopifyCredentials, orderId: stri
   })
 
   return { id: data.order?.id, cancelReason: data.order?.cancel_reason }
-}
-
-interface EditLineItemInput {
-  lineItemId: number
-  quantity: number
-}
-
-interface EditOrderParams {
-  lineItems?: EditLineItemInput[]
-  reason?: string
-  notify?: boolean
 }
 
 /**
@@ -791,15 +636,6 @@ export async function editOrder(credentials: ShopifyCredentials, orderId: string
   return commitData.order_edit
 }
 
-interface DuplicateOrderParams {
-  keepAddress?: boolean
-  note?: string
-  tags?: string
-  discountType?: string
-  discountValue?: string | number
-  applyDiscount?: boolean
-}
-
 /**
  * Duplicate an order by creating a draft order with copied line items.
  */
@@ -835,7 +671,7 @@ export async function duplicateOrder(credentials: ShopifyCredentials, orderId: s
       description: 'Discount',
       value_type: discountType === 'percentage' ? 'percentage' : 'fixed_amount',
       value: String(discountValue),
-      title: discountType === 'percentage' ? `${discountValue}% discount` : `\u20AC${discountValue} discount`,
+      title: discountType === 'percentage' ? `${discountValue}% discount` : `€${discountValue} discount`,
     }
   }
 
@@ -855,11 +691,6 @@ export async function duplicateOrder(credentials: ShopifyCredentials, orderId: s
   }
 }
 
-interface UpdateOrderNoteFields {
-  note?: string
-  tags?: string
-}
-
 /**
  * Update order note and/or tags.
  */
@@ -872,18 +703,6 @@ export async function updateOrderNote(credentials: ShopifyCredentials, orderId: 
     method: 'PUT',
     body: JSON.stringify(body),
   })
-}
-
-interface UpdateAddressInput {
-  firstName?: string
-  lastName?: string
-  address1?: string
-  address2?: string
-  city?: string
-  zip?: string
-  country?: string
-  countryCode?: string
-  phone?: string
 }
 
 /**
@@ -911,13 +730,6 @@ export async function updateOrderAddress(credentials: ShopifyCredentials, orderI
   })
 
   return data.order?.shipping_address
-}
-
-interface FulfillOrderParams {
-  trackingNumber?: string
-  trackingCompany?: string
-  trackingUrl?: string
-  notify?: boolean
 }
 
 /**
@@ -1046,44 +858,7 @@ export async function syncOrders(workspaceId: string, credentials: ShopifyCreden
   return { synced: rows.length }
 }
 
-export interface ProductSearchVariant {
-  variantId: string
-  title: string
-  price: string
-  sku?: string
-  available: boolean
-}
-
-export interface ProductSearchResult {
-  productId: string
-  productTitle: string
-  image?: string
-  variants: ProductSearchVariant[]
-}
-
 // GraphQL node shapes for the products browse/search connection.
-interface GqlProductVariantNode {
-  id: string
-  title: string | null
-  price: string | null
-  sku: string | null
-  availableForSale: boolean
-}
-interface GqlProductNode {
-  id: string
-  title: string
-  featuredImage: { url: string } | null
-  variants: { edges: Array<{ node: GqlProductVariantNode }> }
-}
-interface GqlProductsResponse {
-  data?: {
-    products: {
-      edges: Array<{ cursor: string; node: GqlProductNode }>
-      pageInfo: { hasNextPage: boolean; endCursor: string | null }
-    }
-  }
-  errors?: Array<{ message: string }>
-}
 
 const PRODUCTS_QUERY = `
   query browseProducts($first: Int!, $after: String, $query: String) {
@@ -1176,28 +951,6 @@ export async function searchProducts(
   }
 }
 
-export interface CreateDraftOrderParams {
-  customerId?: string
-  email?: string
-  lineItems: Array<{ variantId: string; quantity: number }>
-  shippingAddress?: {
-    firstName?: string
-    lastName?: string
-    address1?: string
-    address2?: string
-    city?: string
-    province?: string
-    country?: string
-    zip?: string
-    phone?: string
-  }
-  discount?: {
-    type: 'percentage' | 'fixed'
-    value: number
-  }
-  note?: string
-}
-
 /**
  * Create a Shopify draft order for an existing customer.
  * Used by the inbox CreateOrderModal.
@@ -1269,3 +1022,10 @@ export async function createDraftOrder(
     invoiceUrl: data.draft_order?.invoice_url,
   }
 }
+
+// ── Public type re-exports ───────────────────────────────────────────────────
+export type {
+  ProductSearchVariant,
+  ProductSearchResult,
+  CreateDraftOrderParams,
+} from './shopify-types'

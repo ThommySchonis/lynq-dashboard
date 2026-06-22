@@ -9,6 +9,7 @@ const supabase = createClient(Deno.env.get('SUPABASE_URL')!, serviceKey)
 Deno.serve(async (req) => {
   const url = new URL(req.url)
   const workspaceId = url.searchParams.get('workspace_id')
+  const storeId = url.searchParams.get('store_id')
 
   // On-demand single-workspace calls (from connect) must present the service-role key.
   if (workspaceId) {
@@ -24,9 +25,10 @@ Deno.serve(async (req) => {
   try {
     let query = supabase
       .from('integrations')
-      .select('workspace_id, parcelpanel_api_key')
+      .select('workspace_id, store_id, parcelpanel_api_key')
       .not('parcelpanel_api_key', 'is', null)
     if (workspaceId) query = query.eq('workspace_id', workspaceId)
+    if (storeId) query = query.eq('store_id', storeId)
 
     const { data: integrations, error } = await query
     if (error || !integrations) {
@@ -35,10 +37,11 @@ Deno.serve(async (req) => {
     }
 
     let totalProcessed = 0
-    for (const int of integrations as { workspace_id: string; parcelpanel_api_key: string | null }[]) {
+    for (const int of integrations as { workspace_id: string; store_id: string | null; parcelpanel_api_key: string | null }[]) {
       if (!int.parcelpanel_api_key) continue
+      if (!int.store_id) continue
       try {
-        const { processed } = await backfillTrackings(supabase, int.workspace_id, int.parcelpanel_api_key, { sinceDays: 90 })
+        const { processed } = await backfillTrackings(supabase, int.workspace_id, int.store_id, int.parcelpanel_api_key, { sinceDays: 90 })
         totalProcessed += processed
       } catch (e) {
         console.error('[parcelpanel-backfill] workspace failed', int.workspace_id, e instanceof Error ? e.message : String(e))

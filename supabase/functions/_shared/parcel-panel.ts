@@ -135,6 +135,7 @@ function toTimestamp(v: string | undefined): string | null {
 export async function persistTrackingOrders(
   sb: SupabaseClient,
   workspaceId: string,
+  storeId: string,
   orders: TrackingOrder[],
 ): Promise<number> {
   let count = 0
@@ -144,6 +145,7 @@ export async function persistTrackingOrders(
     const { error } = await sb.from('shipments').upsert(
       {
         workspace_id: workspaceId,
+        store_id: storeId,
         order_number: order.order_number || null,
         tracking_number: s.tracking_number,
         carrier: s.carrier_name ?? s.carrier?.name ?? null,
@@ -153,7 +155,7 @@ export async function persistTrackingOrders(
         last_updated: new Date().toISOString(),
         raw_data: order,
       },
-      { onConflict: 'workspace_id,tracking_number' },
+      { onConflict: 'workspace_id,store_id,tracking_number' },
     )
     if (error) {
       console.error('[parcel-panel] shipments upsert failed', error.message)
@@ -179,6 +181,7 @@ export function extractParcelEventId(body: unknown): string | null {
 export async function getTrackingsByOrderNumbers(
   sb: SupabaseClient,
   workspaceId: string,
+  storeId: string,
   orderNumbers: string[],
 ): Promise<Record<string, TrackingOrder[]>> {
   const numbers = [...new Set(orderNumbers.filter(Boolean))]
@@ -187,6 +190,7 @@ export async function getTrackingsByOrderNumbers(
     .from('shipments')
     .select('order_number, raw_data')
     .eq('workspace_id', workspaceId)
+    .eq('store_id', storeId)
     .in('order_number', numbers)
   const map: Record<string, TrackingOrder[]> = {}
   for (const row of (data ?? []) as { order_number: string | null; raw_data: TrackingOrder | null }[]) {
@@ -204,6 +208,7 @@ function sleep(ms: number): Promise<void> {
 export async function backfillTrackings(
   sb: SupabaseClient,
   workspaceId: string,
+  storeId: string,
   apiKey: string,
   opts?: { sinceDays?: number },
 ): Promise<{ processed: number; total: number }> {
@@ -213,6 +218,7 @@ export async function backfillTrackings(
     .from('shopify_orders')
     .select('order_number')
     .eq('workspace_id', workspaceId)
+    .eq('store_id', storeId)
     .gte('created_at_shopify', sinceIso)
   const orderNumbers = [
     ...new Set(
@@ -231,7 +237,7 @@ export async function backfillTrackings(
       if (res.status === 429) { await sleep(60000); continue }
       if (!res.ok) { await sleep(520); continue } // 404 = no tracking yet; skip quietly
       const payload = (await res.json()) as ParcelPanelPayload
-      processed += await persistTrackingOrders(sb, workspaceId, mapPayloadToOrders(payload))
+      processed += await persistTrackingOrders(sb, workspaceId, storeId, mapPayloadToOrders(payload))
       await sleep(520) // ~115 req/min
     } catch (e) {
       console.error('[parcel-panel] backfill order failed', e instanceof Error ? e.message : String(e))

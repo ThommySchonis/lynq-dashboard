@@ -314,7 +314,7 @@ shopify.get('/customer', async (c) => {
     const orderNumbers = (result.orders ?? [])
       .map((o) => o.name)
       .filter((n): n is string => !!n)
-    const trackings = await getTrackingsByOrderNumbers(getAdminClient(), ctx.workspaceId, orderNumbers)
+    const trackings = await getTrackingsByOrderNumbers(getAdminClient(), ctx.workspaceId, storeId, orderNumbers)
     const orders = (result.orders ?? []).map((o) => ({
       ...o,
       parcelTrackings: trackings[o.name] ?? [],

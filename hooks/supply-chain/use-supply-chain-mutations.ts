@@ -24,14 +24,14 @@ export function useConnectParcelPanel() {
   const qc = useQueryClient()
 
   return useMutation({
-    mutationFn: async (apiKey: string): Promise<ConnectResponse> => {
+    mutationFn: async ({ apiKey, storeId }: { apiKey: string; storeId: string }): Promise<ConnectResponse> => {
       const res = await fetch(apiUrl('parcel-panel/connect'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ apiKey }),
+        body: JSON.stringify({ apiKey, storeId }),
       })
       if (!res.ok) {
         const d = await parseJson<ErrorResponse>(res).catch((): ErrorResponse => ({}))
@@ -40,7 +40,7 @@ export function useConnectParcelPanel() {
       return parseJson<ConnectResponse>(res)
     },
     onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: supplyChainKeys.shipments() })
+      void qc.invalidateQueries({ queryKey: supplyChainKeys.all })
     },
   })
 }

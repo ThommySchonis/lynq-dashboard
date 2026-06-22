@@ -1,6 +1,7 @@
 import { getAdminClient } from '../../lib/supabase.ts'
 import { logger } from '../../lib/logger.ts'
 import { type WhopMembership, type WhopPayment } from '../../lib/whop.ts'
+import { mapPayloadToOrders, persistTrackingOrders, type ParcelPanelPayload } from '../../../_shared/parcel-panel.ts'
 
 // ─── Shopify ──────────────────────────────────────────────────
 
@@ -579,62 +580,18 @@ export async function handleEmailWebhook(
 
 // ─── ParcelPanel ──────────────────────────────────────────────
 
-interface ParcelPanelPayload {
-  order_number: string
-  tracking_number: string
-  carrier: { name: string }
-  status: string
-  customer?: { name?: string }
-  estimated_delivery_date?: string
-}
-
-function validateParcelPanelPayload(payload: unknown): ParcelPanelPayload | null {
-  if (!payload || typeof payload !== 'object') return null
-  const p = payload as Record<string, unknown>
-  if (typeof p.order_number !== 'string' || typeof p.tracking_number !== 'string') return null
-  if (!p.carrier || typeof p.carrier !== 'object') return null
-  const carrier = p.carrier as Record<string, unknown>
-  if (typeof carrier.name !== 'string') return null
-  if (typeof p.status !== 'string') return null
-  return p as unknown as ParcelPanelPayload
-}
-
 export async function handleParcelPanelWebhook(
   payload: unknown,
   workspaceId: string,
   storeId: string
 ): Promise<{ workspaceId: string }> {
-  const parsed = validateParcelPanelPayload(payload)
-  if (!parsed) {
-    logger.warn('[webhook-handler/parcelpanel]', 'payload validation failed')
+  if (!storeId) {
+    logger.warn('[webhook-handler/parcelpanel]', 'missing storeId, skipping persist')
     return { workspaceId }
   }
-
   const sb = getAdminClient()
-  const { error } = await sb.from('shipments').upsert(
-    {
-      workspace_id: workspaceId,
-      store_id: storeId,
-      order_number: parsed.order_number,
-      tracking_number: parsed.tracking_number,
-      carrier: parsed.carrier.name,
-      status: parsed.status,
-      customer_name: parsed.customer?.name ?? null,
-      estimated_delivery: parsed.estimated_delivery_date ?? null,
-      last_updated: new Date().toISOString(),
-      raw_data: payload,
-    },
-    { onConflict: 'workspace_id, tracking_number' }
-  )
-
-  if (error) {
-    logger.error('[webhook-handler/parcelpanel]', 'upsert error', { error: error.message })
-    throw error
-  }
-
-  logger.info('[webhook-handler/parcelpanel]', 'upserted', {
-    trackingNumber: parsed.tracking_number,
-  })
+  const orders = mapPayloadToOrders(payload as ParcelPanelPayload)
+  await persistTrackingOrders(sb, workspaceId, storeId, orders)
   return { workspaceId }
 }
 

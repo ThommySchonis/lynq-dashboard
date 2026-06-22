@@ -12,10 +12,10 @@ import {
   DropdownMenuSubContent,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { MoreVertical } from "lucide-react";
+import { Ban, CircleCheck, Clock, FolderInput, MailOpen, MoreVertical, Sparkles, Tag, Trash2, User } from "lucide-react";
 import { BulkConfirmDialog } from "./bulk-confirm-dialog";
-import { useTags, useCreateTag } from "@/hooks/inbox/use-tags";
-import { useInboxMembers } from "@/hooks/inbox/use-inbox-data";
+import { BulkAssignPanel } from "./bulk-assign-panel";
+import { BulkTagPanel } from "./bulk-tag-panel";
 import type { BulkActionId, BulkActionPayload } from "@/types/inbox";
 
 const SNOOZE_OPTIONS: { label: string; hours: number }[] = [
@@ -28,20 +28,18 @@ function isoFromNow(hours: number): string {
   return new Date(Date.now() + hours * 3600_000).toISOString();
 }
 
-export function BulkActionsMenu({ count, onAction }: { count: number; onAction: (action: BulkActionId, payload?: BulkActionPayload) => void }) {
-  const { data: tags = [] } = useTags();
-  const { data: members = [] } = useInboxMembers();
-  const createTag = useCreateTag();
-  const [confirm, setConfirm] = useState<null | "delete" | "spam" | "emma">(null);
-  const [newTagName, setNewTagName] = useState("");
+// Figma 1310-59297 "dropdown · bulk actions": roomier rows (9px/10px), 9px radius.
+const itemClass = "gap-3 rounded-[9px] px-2.5 py-2";
+// Move-to targets statuses only — moving to another mailbox (Support/Sales/…)
+// is backend-gated (BE task #1); see docs/inbox-figma-redesign-plan.md.
+const MOVE_TARGETS: { status: string; label: string }[] = [
+  { status: "open", label: "Open" },
+  { status: "pending", label: "Pending" },
+  { status: "resolved", label: "Resolved" },
+];
 
-  const handleCreateTag = async () => {
-    const name = newTagName.trim();
-    if (!name) return;
-    const tag = await createTag.mutateAsync({ name });
-    setNewTagName("");
-    onAction("add_tag", { tagId: tag.id });
-  };
+export function BulkActionsMenu({ count, onAction }: { count: number; onAction: (action: BulkActionId, payload?: BulkActionPayload) => void }) {
+  const [confirm, setConfirm] = useState<null | "delete" | "spam" | "emma">(null);
 
   return (
     <>
@@ -58,12 +56,22 @@ export function BulkActionsMenu({ count, onAction }: { count: number; onAction: 
         >
           <MoreVertical size={15} />
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-56">
-          <DropdownMenuItem onClick={() => onAction("mark_read")}>Mark as read</DropdownMenuItem>
-          <DropdownMenuItem onClick={() => onAction("resolve")}>Mark as resolved</DropdownMenuItem>
+        <DropdownMenuContent align="end" className="w-[246px] rounded-xl p-[7px]">
+          <div className="px-3 pt-1.5 pb-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-foreground-4">
+            {count} conversation{count === 1 ? "" : "s"}
+          </div>
+
+          <DropdownMenuItem className={itemClass} onClick={() => onAction("mark_read")}>
+            <MailOpen /> Mark as read
+          </DropdownMenuItem>
+          <DropdownMenuItem className={itemClass} onClick={() => onAction("resolve")}>
+            <CircleCheck /> Mark as resolved
+          </DropdownMenuItem>
 
           <DropdownMenuSub>
-            <DropdownMenuSubTrigger>Snooze…</DropdownMenuSubTrigger>
+            <DropdownMenuSubTrigger className={itemClass}>
+              <Clock /> Snooze…
+            </DropdownMenuSubTrigger>
             <DropdownMenuSubContent>
               {SNOOZE_OPTIONS.map((o) => (
                 <DropdownMenuItem key={o.label} onClick={() => onAction("snooze", { until: isoFromNow(o.hours) })}>
@@ -73,64 +81,49 @@ export function BulkActionsMenu({ count, onAction }: { count: number; onAction: 
             </DropdownMenuSubContent>
           </DropdownMenuSub>
 
+          <DropdownMenuSeparator />
+
           <DropdownMenuSub>
-            <DropdownMenuSubTrigger>Assign to…</DropdownMenuSubTrigger>
-            <DropdownMenuSubContent>
-              <DropdownMenuItem onClick={() => onAction("assign", { memberId: "" })}>Unassigned</DropdownMenuItem>
-              {members.map((m) => (
-                <DropdownMenuItem key={m.id} onClick={() => onAction("assign", { memberId: m.id })}>
-                  {m.name}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuSubContent>
+            <DropdownMenuSubTrigger className={itemClass}>
+              <User /> Assign to…
+            </DropdownMenuSubTrigger>
+            <BulkAssignPanel count={count} onAction={onAction} />
           </DropdownMenuSub>
 
           <DropdownMenuSub>
-            <DropdownMenuSubTrigger>Add tag…</DropdownMenuSubTrigger>
-            <DropdownMenuSubContent>
-              {tags.map((t) => (
-                <DropdownMenuItem key={t.id} onClick={() => onAction("add_tag", { tagId: t.id })}>
-                  {t.name}
-                </DropdownMenuItem>
-              ))}
-              <DropdownMenuSeparator />
-              <div className="flex items-center gap-1 px-1.5 py-1">
-                <input
-                  aria-label="Create tag"
-                  value={newTagName}
-                  onChange={(e) => setNewTagName(e.target.value)}
-                  onKeyDown={(e) => {
-                    e.stopPropagation();
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      void handleCreateTag();
-                    }
-                  }}
-                  onPointerDown={(e) => e.stopPropagation()}
-                  placeholder="Create tag…"
-                  className="w-full bg-input border border-border rounded px-2 py-1 text-xs outline-none"
-                />
-              </div>
-            </DropdownMenuSubContent>
+            <DropdownMenuSubTrigger className={itemClass}>
+              <Tag /> Add tag…
+            </DropdownMenuSubTrigger>
+            <BulkTagPanel count={count} onAction={onAction} />
           </DropdownMenuSub>
 
           <DropdownMenuSub>
-            <DropdownMenuSubTrigger>Move to…</DropdownMenuSubTrigger>
-            <DropdownMenuSubContent>
-              <DropdownMenuItem onClick={() => onAction("move", { status: "open" })}>Open</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onAction("move", { status: "pending" })}>Pending</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onAction("move", { status: "resolved" })}>Resolved</DropdownMenuItem>
+            <DropdownMenuSubTrigger className={itemClass}>
+              <FolderInput /> Move to…
+            </DropdownMenuSubTrigger>
+            <DropdownMenuSubContent className="w-56 p-[7px]">
+              <div className="px-3 pt-1.5 pb-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-foreground-4">Move {count} to</div>
+              {MOVE_TARGETS.map((t) => (
+                <DropdownMenuItem key={t.status} className={itemClass} onClick={() => onAction("move", { status: t.status })}>
+                  {t.label}
+                </DropdownMenuItem>
+              ))}
             </DropdownMenuSubContent>
           </DropdownMenuSub>
 
           <DropdownMenuSeparator />
 
-          <DropdownMenuItem onClick={() => setConfirm("emma")}>
-            Hand off to Emma
+          <DropdownMenuItem className={`${itemClass} text-primary`} onClick={() => setConfirm("emma")}>
+            <Sparkles /> Hand off to Emma
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => setConfirm("spam")}>Mark as spam</DropdownMenuItem>
-          <DropdownMenuItem variant="destructive" onClick={() => setConfirm("delete")}>
-            Delete
+
+          <DropdownMenuSeparator />
+
+          <DropdownMenuItem className={itemClass} onClick={() => setConfirm("spam")}>
+            <Ban /> Mark as spam
+          </DropdownMenuItem>
+          <DropdownMenuItem className={itemClass} variant="destructive" onClick={() => setConfirm("delete")}>
+            <Trash2 /> Delete
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

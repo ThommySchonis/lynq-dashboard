@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   Dialog,
   DialogContent,
@@ -136,6 +136,9 @@ export function CreateOrderModal({
   const [discountValue, setDiscountValue] = useState('')
   const [note, setNote] = useState('')
   const [loading, setLoading] = useState(false)
+  const [productFieldFocused, setProductFieldFocused] = useState(false)
+  const loadMoreRef = useRef<HTMLDivElement | null>(null)
+  const scrollBoxRef = useRef<HTMLDivElement | null>(null)
 
   // Manual customer entry — used only when there is no matched Shopify customer.
   const [email, setEmail] = useState(customer?.email ?? customerEmail ?? '')
@@ -153,6 +156,9 @@ export function CreateOrderModal({
     data: searchData,
     isFetching: isSearching,
     isError: searchErrored,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
   } = useProductSearch(searchInput)
 
   const subtotal = cart.reduce(
@@ -292,8 +298,24 @@ export function CreateOrderModal({
     }
   }
 
-  const searchResults = searchData?.products ?? []
-  const showSearchDropdown = searchInput.trim().length >= 2
+  const searchResults = searchData?.pages.flatMap((p) => p.products) ?? []
+  const showSearchDropdown = productFieldFocused || searchInput.trim().length > 0
+
+  useEffect(() => {
+    if (!showSearchDropdown) return
+    const el = loadMoreRef.current
+    if (!el) return
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting && hasNextPage && !isFetchingNextPage) {
+          void fetchNextPage()
+        }
+      },
+      { root: scrollBoxRef.current, rootMargin: '120px' },
+    )
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [showSearchDropdown, hasNextPage, isFetchingNextPage, fetchNextPage, searchResults.length])
 
   return (
     <Dialog
@@ -354,10 +376,12 @@ export function CreateOrderModal({
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
               placeholder="Search products..."
+              onFocus={() => setProductFieldFocused(true)}
+              onBlur={() => setTimeout(() => setProductFieldFocused(false), 150)}
             />
           </div>
           {showSearchDropdown && (
-            <div className="mt-1.5 border border-border rounded-xl bg-card max-h-[280px] overflow-y-auto thin-scrollbar">
+            <div ref={scrollBoxRef} className="mt-1.5 border border-border rounded-xl bg-card max-h-[280px] overflow-y-auto thin-scrollbar">
               {isSearching && searchResults.length === 0 && (
                 <div className="px-3 py-2 text-[12px] text-muted-foreground flex items-center gap-2">
                   <Loader2 size={12} className="animate-spin" />
@@ -409,6 +433,13 @@ export function CreateOrderModal({
                     </Button>
                   </div>
                 ))
+              )}
+              <div ref={loadMoreRef} />
+              {isFetchingNextPage && (
+                <div className="px-3 py-2 text-[12px] text-muted-foreground flex items-center gap-2">
+                  <Loader2 size={12} className="animate-spin" />
+                  Loading more...
+                </div>
               )}
             </div>
           )}

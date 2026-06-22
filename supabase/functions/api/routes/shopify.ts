@@ -391,8 +391,8 @@ shopify.get('/products', async (c) => {
   const storeId = requireStoreId(c)
   if (!storeId) return c.json({ error: 'store_id is required' }, 400)
 
-  const q = c.req.query('q')
-  if (!q) return c.json({ error: 'q is required' }, 400)
+  const q = c.req.query('q') ?? ''
+  const cursor = c.req.query('cursor') ?? null
 
   const limitParam = c.req.query('limit')
   const limit = limitParam ? Math.min(Math.max(parseInt(limitParam, 10) || 20, 1), 50) : 20
@@ -401,7 +401,7 @@ shopify.get('/products', async (c) => {
   if (!credentials) return c.json({ error: 'Store not connected to Shopify' }, 422)
 
   try {
-    const result = await searchProducts(credentials, q, limit)
+    const result = await searchProducts(credentials, q, limit, cursor)
     return c.json(result)
   } catch (err) {
     return await shopifyErrorResponse(c, err, ctx.workspaceId, storeId)

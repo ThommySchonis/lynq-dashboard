@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useInfiniteQuery } from '@tanstack/react-query'
 import { authFetch } from '@/lib/inbox-utils'
 import { parseJson } from '@/lib/utils/typed-json'
 import { useAuthStore } from '@/stores/auth'
@@ -14,6 +14,12 @@ import type {
 
 export type { ProductSearchResult, ProductSearchVariant }
 
+interface ProductsPage {
+  products: ProductSearchResult[]
+  nextCursor: string | null
+  hasNextPage: boolean
+}
+
 function useDebouncedValue<T>(value: T, delayMs: number): T {
   const [debounced, setDebounced] = useState(value)
   useEffect(() => {
@@ -24,33 +30,34 @@ function useDebouncedValue<T>(value: T, delayMs: number): T {
 }
 
 /**
- * Debounced live search of Shopify products by title.
- * Returns empty results when the trimmed query is shorter than 2 chars.
+ * Browse (empty query) or live-search Shopify products by title, with cursor
+ * pagination. Empty query is allowed — it browses the whole catalog.
  */
 export function useProductSearch(rawQuery: string) {
   const token = useAuthStore((s) => s.session?.access_token ?? '')
   const activeStoreId = useStoreStore((s) => s.activeStoreId)
   const debouncedQuery = useDebouncedValue(rawQuery, 250)
   const trimmed = debouncedQuery.trim()
-  const enabled = trimmed.length >= 2 && !!token && !!activeStoreId
+  const enabled = !!token && !!activeStoreId
 
-  return useQuery({
+  return useInfiniteQuery({
     queryKey: ['shopify-products', trimmed, activeStoreId] as const,
-    queryFn: async (): Promise<{ products: ProductSearchResult[] }> => {
-      const params = new URLSearchParams({
-        q: trimmed,
-        store_id: activeStoreId as string,
-      })
+    initialPageParam: null as string | null,
+    queryFn: async ({ pageParam }): Promise<ProductsPage> => {
+      const params = new URLSearchParams({ store_id: activeStoreId as string })
+      if (trimmed) params.set('q', trimmed)
+      if (pageParam) params.set('cursor', pageParam)
       const res = await authFetch(
         `${apiUrl('shopify/products')}?${params.toString()}`,
         {},
-        token
+        token,
       )
       if (!res.ok) {
         throw new Error(`Search failed (${res.status})`)
       }
-      return parseJson<{ products: ProductSearchResult[] }>(res)
+      return parseJson<ProductsPage>(res)
     },
+    getNextPageParam: (last) => (last.hasNextPage ? last.nextCursor : undefined),
     enabled,
     staleTime: 30_000,
   })

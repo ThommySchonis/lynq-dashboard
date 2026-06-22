@@ -1,17 +1,27 @@
 'use client'
 
-import { useForm } from 'react-hook-form'
+import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Loader2, Package } from 'lucide-react'
 import { useCreateTask, useWorkspaceMembers } from '@/hooks/tasks'
 import { useAuthStore } from '@/stores/auth'
 import type { CreateTaskInput } from '@/types/tasks'
 
 const CATEGORIES = ['Sizing', 'Quality', 'Damaged', 'Wrong Item', 'Late Delivery', 'Other'] as const
+
+const PRIORITIES = [
+  { value: 'low', label: 'Low', dot: 'bg-emerald-500' },
+  { value: 'medium', label: 'Medium', dot: 'bg-amber-500' },
+  { value: 'high', label: 'High', dot: 'bg-rose-500' },
+] as const
+
+const LABEL = 'mb-2 block text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground'
+const TRIGGER = 'w-full rounded-[10px] border-border bg-card py-[11px] text-[13.5px] data-[size=default]:h-auto'
 
 const createTaskSchema = z.object({
   title: z.string().min(1, 'Title is required'),
@@ -42,9 +52,9 @@ export function CreateTaskModal({ linkedOrder, onClose, onSuccess }: CreateTaskM
   const createTask = useCreateTask()
   const { data: members } = useWorkspaceMembers()
 
-  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<FormValues>({
+  const { register, handleSubmit, control, formState: { errors, isSubmitting } } = useForm<FormValues>({
     resolver: zodResolver(createTaskSchema),
-    defaultValues: { priority: 'medium' },
+    defaultValues: { priority: 'medium', category: '', assignedTo: '' },
   })
 
   async function onSubmit(values: FormValues) {
@@ -71,98 +81,124 @@ export function CreateTaskModal({ linkedOrder, onClose, onSuccess }: CreateTaskM
 
   return (
     <Dialog open onOpenChange={(open) => { if (!open) onClose() }}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Create task</DialogTitle>
+      <DialogContent className="gap-0 overflow-hidden rounded-[18px] p-0 sm:max-w-[540px]">
+        <DialogHeader className="px-6 py-[22px]">
+          <DialogTitle className="text-lg font-bold">Create task</DialogTitle>
         </DialogHeader>
-        <form onSubmit={(e) => void handleSubmit(onSubmit)(e)} className="flex flex-col gap-3.5">
+        <div className="h-px bg-border" />
+
+        <form onSubmit={(e) => void handleSubmit(onSubmit)(e)} className="flex flex-col gap-[18px] px-6 py-5">
           {/* Title */}
           <div>
-            <label className="text-[10.5px] font-bold tracking-[.07em] uppercase text-muted-foreground mb-[7px] block">
-              Title
-            </label>
+            <label className={LABEL}>Title</label>
             <Input
               {...register('title')}
               placeholder="e.g. Investigate sizing complaints on Nike Air Max"
-              className="bg-secondary border border-border"
+              className="rounded-[10px] border border-border bg-card"
             />
-            {errors.title && (
-              <p className="text-[11px] text-destructive mt-1">{errors.title.message}</p>
-            )}
+            {errors.title && <p className="mt-1 text-[11px] text-destructive">{errors.title.message}</p>}
           </div>
 
           {/* Description */}
           <div>
-            <label className="text-[10.5px] font-bold tracking-[.07em] uppercase text-muted-foreground mb-[7px] block">
-              Description
-            </label>
+            <label className={LABEL}>Description</label>
             <textarea
               {...register('description')}
-              placeholder="Optional details..."
-              className="w-full resize-y rounded-xl border border-border bg-secondary px-3.5 py-[11px] text-[13.5px] text-foreground outline-none min-h-[60px]"
+              placeholder="Optional details…"
+              className="min-h-[92px] w-full resize-y rounded-[10px] border border-border bg-card px-3.5 py-[11px] text-[13.5px] text-foreground outline-none"
             />
           </div>
 
-          {/* Priority + Category row */}
-          <div className="grid grid-cols-2 gap-2.5">
+          {/* Priority + Category */}
+          <div className="grid grid-cols-2 gap-3.5">
             <div>
-              <label className="text-[10.5px] font-bold tracking-[.07em] uppercase text-muted-foreground mb-[7px] block">
-                Priority
-              </label>
-              <select
-                {...register('priority')}
-                className="w-full rounded-xl border border-border bg-secondary px-3.5 py-[11px] text-[13.5px] text-foreground outline-none cursor-pointer"
-              >
-                <option value="medium">Medium</option>
-                <option value="high">High</option>
-                <option value="low">Low</option>
-              </select>
+              <label className={LABEL}>Priority</label>
+              <Controller
+                name="priority"
+                control={control}
+                render={({ field }) => (
+                  <Select value={field.value} onValueChange={(v) => field.onChange(v ?? 'medium')}>
+                    <SelectTrigger className={TRIGGER}>
+                      <SelectValue>
+                        {(value: string | null) => {
+                          const p = PRIORITIES.find((x) => x.value === value)
+                          return (
+                            <span className="flex items-center gap-2">
+                              <span className={`size-2 rounded-full ${p?.dot ?? 'bg-amber-500'}`} />
+                              {p?.label ?? 'Medium'}
+                            </span>
+                          )
+                        }}
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      {PRIORITIES.map((p) => (
+                        <SelectItem key={p.value} value={p.value}>
+                          <span className={`size-2 rounded-full ${p.dot}`} />
+                          {p.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
             </div>
             <div>
-              <label className="text-[10.5px] font-bold tracking-[.07em] uppercase text-muted-foreground mb-[7px] block">
-                Category
-              </label>
-              <select
-                {...register('category')}
-                className="w-full rounded-xl border border-border bg-secondary px-3.5 py-[11px] text-[13.5px] text-foreground outline-none cursor-pointer"
-              >
-                <option value="">Select...</option>
-                {CATEGORIES.map(c => (
-                  <option key={c} value={c}>{c}</option>
-                ))}
-              </select>
+              <label className={LABEL}>Category</label>
+              <Controller
+                name="category"
+                control={control}
+                render={({ field }) => (
+                  <Select value={field.value || ''} onValueChange={(v) => field.onChange(v ?? '')}>
+                    <SelectTrigger className={TRIGGER}>
+                      <SelectValue placeholder="Select…" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {CATEGORIES.map((c) => (
+                        <SelectItem key={c} value={c}>
+                          {c}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
             </div>
           </div>
 
           {/* Assign to */}
           <div>
-            <label className="text-[10.5px] font-bold tracking-[.07em] uppercase text-muted-foreground mb-[7px] block">
-              Assign to
-            </label>
-            <select
-              {...register('assignedTo')}
-              className="w-full rounded-xl border border-border bg-secondary px-3.5 py-[11px] text-[13.5px] text-foreground outline-none cursor-pointer"
-            >
-              <option value="">Unassigned</option>
-              {(members || []).map(m => (
-                <option key={m.id} value={m.id}>
-                  {m.displayName} ({m.role})
-                </option>
-              ))}
-            </select>
+            <label className={LABEL}>Assign to</label>
+            <Controller
+              name="assignedTo"
+              control={control}
+              render={({ field }) => (
+                <Select value={field.value || ''} onValueChange={(v) => field.onChange(v ?? '')}>
+                  <SelectTrigger className={TRIGGER}>
+                    <SelectValue placeholder="Unassigned">
+                      {(value: string | null) => members?.find((m) => m.id === value)?.displayName ?? 'Unassigned'}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Unassigned</SelectItem>
+                    {(members || []).map((m) => (
+                      <SelectItem key={m.id} value={m.id}>
+                        {m.displayName} ({m.role})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            />
           </div>
 
-          {/* Linked order (pre-filled from inbox) */}
+          {/* Linked order */}
           {linkedOrder && (
             <div>
-              <label className="text-[10.5px] font-bold tracking-[.07em] uppercase text-muted-foreground mb-[7px] block">
-                Linked order
-              </label>
-              <div className="flex items-center gap-2 rounded-xl border border-primary/20 bg-primary/5 px-3 py-2">
+              <label className={LABEL}>Linked order</label>
+              <div className="flex items-center gap-2 rounded-[10px] border border-accent-border bg-accent-soft px-3 py-2.5">
                 <Package size={14} className="text-primary" />
-                <span className="text-[12px] font-semibold text-primary">
-                  {linkedOrder.shopifyOrderName}
-                </span>
+                <span className="text-[12px] font-semibold text-primary">{linkedOrder.shopifyOrderName}</span>
                 {linkedOrder.customerName && (
                   <>
                     <span className="text-[12px] text-muted-foreground">·</span>
@@ -173,12 +209,13 @@ export function CreateTaskModal({ linkedOrder, onClose, onSuccess }: CreateTaskM
             </div>
           )}
 
-          <DialogFooter>
+          {/* Footer */}
+          <div className="-mx-6 -mb-5 mt-1 flex justify-end gap-3 border-t border-border bg-[#FAF9FF] px-6 py-4 dark:bg-[rgba(255,255,255,0.03)]">
             <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
             <Button type="submit" disabled={isSuspended || isSubmitting}>
               {isSubmitting ? <Loader2 size={13} className="animate-spin" /> : 'Create task'}
             </Button>
-          </DialogFooter>
+          </div>
         </form>
       </DialogContent>
     </Dialog>

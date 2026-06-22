@@ -15,6 +15,7 @@ import {
   MoreVertical,
   Phone,
   Search,
+  Star,
 } from 'lucide-react'
 import { useMemo, useCallback } from 'react'
 import { useInboxUI } from '@/stores/inbox-ui'
@@ -173,6 +174,12 @@ export function CustomerSidebar() {
     ? `${customer.customer.firstName || ''} ${customer.customer.lastName || ''}`.trim() || extractName(selectedThread.from)
     : extractName(selectedThread.from)
 
+  // VIP badge derived from the Shopify tags string until a structured VIP field
+  // exists (backend task #3).
+  const isVip = (customer?.customer?.tags ?? '')
+    .split(',')
+    .some((t) => t.trim().toLowerCase() === 'vip')
+
   return (
     <div className="thin-scrollbar w-[280px] border-l border-border flex flex-col shrink-0 overflow-y-auto bg-card">
       {/* Search */}
@@ -198,8 +205,16 @@ export function CustomerSidebar() {
         <div className="flex items-center gap-2.5">
           {renderAvatar(customerName, 28)}
           <div className="flex-1 min-w-0">
-            <div className="text-[13px] font-bold text-foreground overflow-hidden text-ellipsis whitespace-nowrap">
-              {customerName}
+            <div className="flex items-center gap-1.5">
+              <span className="text-[13px] font-bold text-foreground overflow-hidden text-ellipsis whitespace-nowrap">
+                {customerName}
+              </span>
+              {isVip && (
+                <span className="inline-flex shrink-0 items-center gap-0.5 rounded-full bg-amber-500/15 px-1.5 py-px text-[9px] font-bold uppercase tracking-[.04em] text-amber-600 dark:text-amber-400">
+                  <Star size={9} className="fill-current" />
+                  VIP
+                </span>
+              )}
             </div>
             <div className="text-[11px] text-muted-foreground mt-px overflow-hidden text-ellipsis whitespace-nowrap">{extractEmail(selectedThread.from)}</div>
           </div>

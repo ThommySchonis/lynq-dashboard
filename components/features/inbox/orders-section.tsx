@@ -119,7 +119,7 @@ export function OrdersSection({
               customerName,
             })
           }}
-          className="w-full px-3 py-[7px] rounded-lg border border-border bg-transparent text-foreground-2 text-xs font-semibold font-inherit flex items-center justify-center gap-1.5 transition-all duration-150 hover:bg-secondary hover:text-foreground disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full px-3 py-[7px] rounded-lg border border-dashed border-border bg-transparent text-foreground-2 text-xs font-semibold font-inherit flex items-center justify-center gap-1.5 transition-all duration-150 hover:bg-secondary hover:text-foreground disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <Plus size={12} />
           Create order
@@ -163,7 +163,7 @@ export function OrdersSection({
                 }))
               }
             >
-              <span className="text-[13.5px] font-bold text-foreground flex-1 text-left">{order.name}</span>
+              <span className="text-[13.5px] font-bold text-primary flex-1 text-left">{order.name}</span>
               <ChevronDown size={10} className={`transition-transform duration-200 text-muted-foreground shrink-0 ${isOpen ? 'rotate-180' : 'rotate-0'}`} />
             </button>
 
@@ -173,7 +173,7 @@ export function OrdersSection({
                 <div className="flex gap-1 mb-2 flex-wrap">
                   {finS && (
                     <span
-                      className="text-[10px] font-bold px-[7px] py-0.5 rounded tracking-[.05em] uppercase"
+                      className="text-[10px] font-bold px-[7px] py-0.5 rounded-md tracking-[.05em] uppercase"
                       style={{
                         background: finS.bg,
                         color: finS.color,
@@ -185,7 +185,7 @@ export function OrdersSection({
                   )}
                   {fulS && (
                     <span
-                      className="text-[10px] font-bold px-[7px] py-0.5 rounded tracking-[.05em] uppercase"
+                      className="text-[10px] font-bold px-[7px] py-0.5 rounded-md tracking-[.05em] uppercase"
                       style={{
                         background: fulS.bg,
                         color: fulS.color,
@@ -196,7 +196,7 @@ export function OrdersSection({
                     </span>
                   )}
                   {(order.refunds?.length ?? 0) > 0 && order.financialStatus !== 'refunded' && (
-                    <span className="text-[10px] font-bold px-[7px] py-0.5 rounded tracking-[.05em] uppercase bg-[rgba(248,113,133,0.12)] text-[#fb7185] border border-[rgba(248,113,133,0.22)]">
+                    <span className="text-[10px] font-bold px-[7px] py-0.5 rounded-md tracking-[.05em] uppercase bg-[rgba(248,113,133,0.12)] text-[#fb7185] border border-[rgba(248,113,133,0.22)]">
                       Partial refund
                     </span>
                   )}

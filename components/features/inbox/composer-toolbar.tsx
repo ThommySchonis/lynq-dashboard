@@ -32,6 +32,11 @@ interface ComposerToolbarProps {
   disabled?: boolean
 }
 
+// Formatting controls (B/I/U, link, image, emoji, attach, translate) aren't in
+// the Figma composer (1283-52943). Hidden behind this flag so the client can
+// restore them; typed `boolean` to keep dead-branch checks quiet.
+const SHOW_FORMATTING: boolean = false
+
 export function ComposerToolbar({
   onFormatDoc,
   onInsertLink,
@@ -67,6 +72,8 @@ export function ComposerToolbar({
 
   return (
     <div className="flex items-center gap-px px-2.5 py-[7px] border-t border-border">
+      {SHOW_FORMATTING && (
+       <>
       <button
         className="min-w-[30px] h-[30px] flex items-center justify-center rounded-[7px] cursor-pointer text-xs font-bold text-muted-foreground transition-all hover:bg-secondary hover:text-foreground"
         title="Bold (⌘B)"
@@ -157,33 +164,38 @@ export function ComposerToolbar({
         <Globe size={13} />
         <span>{customerLang ? customerLang.name : 'Translate'}</span>
       </button>
+       </>
+      )}
       <div className="flex-1" />
+      <span className="shrink-0 text-[11px] text-foreground-4 mr-1">Press R to reply</span>
+      {/* AI Reply — accent-soft tint + primary text (Figma 1283-52943) */}
       <Button
-        variant="outline"
-        className="h-8 px-3 text-[12.5px] font-semibold bg-secondary border border-border text-foreground rounded-[7px] transition-all hover:bg-input hover:border-(--border-hover) hover:text-foreground flex items-center gap-1.5 px-[13px] py-[7px]"
+        className="h-9 flex items-center gap-1.5 px-3.5 text-[12.5px] font-semibold bg-accent-soft border border-accent-border text-primary rounded-[10px] transition-opacity hover:opacity-90"
         onClick={onAiReply}
         disabled={aiLoading || !hasMessages}
       >
-        {aiLoading ? <Loader2 size={13} className="animate-spin" /> : <span className="text-primary text-[13px] leading-none">✦</span>}
+        {aiLoading ? <Loader2 size={13} className="animate-spin" /> : <span className="text-[13px] leading-none">✦</span>}
         {aiLoading ? 'Generating…' : 'AI Reply'}
       </Button>
+      {/* Send — solid dark */}
       <Button
-        className="px-[9px] py-[9px] text-[12.5px] font-semibold bg-[rgba(74,222,128,0.07)] border border-[rgba(74,222,128,0.2)] text-[rgba(74,222,128,0.75)] rounded-xl flex items-center gap-[5px] transition-all hover:bg-[rgba(74,222,128,0.13)] hover:border-[rgba(74,222,128,0.38)] hover:text-[#4ade80] ml-1.5"
+        className="h-9 flex items-center gap-1.5 px-4 ml-1.5 text-[12.5px] font-semibold bg-foreground text-background rounded-[10px] transition-opacity hover:opacity-90"
+        onClick={onSend}
+        disabled={disabled || !reply.trim() || sending || planLocked}
+        title={disabled ? 'Workspace is suspended' : sendDisabledReason}
+      >
+        {sending ? <Loader2 size={13} className="animate-spin" /> : <Send size={13} />}
+        {planLocked ? 'Upgrade to send' : sending ? 'Sending…' : 'Send'}
+      </Button>
+      {/* Send & Close — outline */}
+      <Button
+        className="h-9 flex items-center gap-1.5 px-4 ml-1.5 text-[12.5px] font-semibold bg-card border border-foreground text-foreground rounded-[10px] transition-colors hover:bg-secondary"
         onClick={onSendResolve}
         disabled={disabled || !reply.trim() || sending || planLocked}
         title={disabled ? 'Workspace is suspended' : sendDisabledReason}
       >
         <Check size={11} />
-        Send & Close
-      </Button>
-      <Button
-        className="flex items-center gap-1.5 ml-1.5"
-        onClick={onSend}
-        disabled={disabled || !reply.trim() || sending || planLocked}
-        title={disabled ? 'Workspace is suspended' : sendDisabledReason}
-      >
-        {sending ? <Loader2 size={13} className="animate-spin text-white" /> : <Send size={13} />}
-        {planLocked ? 'Upgrade to send' : sending ? 'Sending…' : 'Send'}
+        Send &amp; Close
       </Button>
     </div>
   )

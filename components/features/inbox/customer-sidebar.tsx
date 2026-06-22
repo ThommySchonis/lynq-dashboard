@@ -1,21 +1,11 @@
 'use client'
 
-import { AvatarFallback, Avatar as ShadAvatar } from '@/components/ui/avatar'
-import { Button } from '@/components/ui/button'
-import {
-  extractEmail,
-  extractName,
-} from '@/lib/inbox-utils'
-import {
-  ChevronDown,
-  MoreVertical,
-  Search,
-  Star,
-} from 'lucide-react'
+import { extractEmail, extractName } from '@/lib/inbox-utils'
+import { Search } from 'lucide-react'
 import { useMemo, useCallback } from 'react'
 import { useInboxUI } from '@/stores/inbox-ui'
 import { useConversations, useCustomerSearch } from '@/hooks/inbox/use-inbox-data'
-import { CustomerStats } from './customer-stats'
+import { CustomerSection } from './customer-section'
 import { OrdersSection } from './orders-section'
 
 interface SidebarFulfillment {
@@ -97,7 +87,7 @@ interface SidebarCustomerData {
   [key: string]: unknown
 }
 
-interface SidebarCustomerResult {
+export interface SidebarCustomerResult {
   customer?: SidebarCustomerData | null
   orders?: SidebarOrder[]
   [key: string]: unknown
@@ -158,23 +148,6 @@ export function CustomerSidebar() {
 
   if (!selectedThread) return null
 
-  // Inline avatar helper
-  const renderAvatar = (name: string, size: number) => {
-    const ini = (name || '?')
-      .split(' ')
-      .map((w) => w[0])
-      .join('')
-      .slice(0, 2)
-      .toUpperCase()
-    return (
-      <ShadAvatar className="shrink-0" style={{ width: size, height: size }}>
-        <AvatarFallback className="bg-[#F0F0F0] text-foreground-2" style={{ fontSize: size * 0.34 }}>
-          {ini}
-        </AvatarFallback>
-      </ShadAvatar>
-    )
-  }
-
   const customerName = customer?.customer
     ? `${customer.customer.firstName || ''} ${customer.customer.lastName || ''}`.trim() || extractName(selectedThread.from)
     : extractName(selectedThread.from)
@@ -223,133 +196,15 @@ export function CustomerSidebar() {
 
       {/* Customer tab */}
       {rightTab === 'info' && (
-        <>
-      {/* Customer header */}
-      <div className="px-3.5 py-4 border-b border-border shrink-0">
-        <div className="flex items-center gap-2.5">
-          {renderAvatar(customerName, 28)}
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-1.5">
-              <span className="text-[13px] font-bold text-foreground overflow-hidden text-ellipsis whitespace-nowrap">
-                {customerName}
-              </span>
-              {isVip && (
-                <span className="inline-flex shrink-0 items-center gap-0.5 rounded-full bg-amber-500/15 px-1.5 py-px text-[9px] font-bold uppercase tracking-[.04em] text-amber-600 dark:text-amber-400">
-                  <Star size={9} className="fill-current" />
-                  VIP
-                </span>
-              )}
-            </div>
-            <div className="text-[11px] text-muted-foreground mt-px overflow-hidden text-ellipsis whitespace-nowrap">{extractEmail(selectedThread.from)}</div>
-          </div>
-          <Button
-            variant="outline"
-            size="icon"
-            className="flex items-center justify-center w-7 h-7 rounded-[7px] text-muted-foreground transition-all duration-150 border border-border bg-transparent shrink-0 hover:text-foreground hover:bg-secondary"
-          >
-            <MoreVertical size={13} />
-          </Button>
-        </div>
-      </div>
-
-      {/* Customer Fields — collapsible */}
-      <div className="border-b border-border shrink-0">
-        <button
-          className="w-full flex items-center gap-1.5 py-[9px] px-3.5 bg-transparent cursor-pointer text-left transition-[background] duration-[120ms] hover:bg-secondary"
-          onClick={() => setCustFieldsOpen((v) => !v)}
-        >
-          <span className="text-[10px] font-bold text-muted-foreground flex-1 tracking-[.07em] uppercase">Customer Fields</span>
-          <ChevronDown size={10} className={`transition-transform duration-200 text-muted-foreground shrink-0 ${custFieldsOpen ? 'rotate-180' : 'rotate-0'}`} />
-        </button>
-        {custFieldsOpen && (
-          <div className="px-3.5 pb-2.5 pt-0 flex flex-col">
-            <div className="flex items-baseline justify-between gap-4 px-3.5">
-              <span className="text-xs text-muted-foreground shrink-0 min-w-[72px]">Email</span>
-              <span className="text-xs font-medium text-foreground text-right break-words text-[11px] break-all">{extractEmail(selectedThread.from)}</span>
-            </div>
-            {loadingCust &&
-              [0, 1].map((i) => (
-                <div
-                  key={i}
-                  className="bg-gradient-to-r from-(--skeleton-from) via-(--skeleton-to) to-(--skeleton-from) bg-[length:400%_100%] animate-[shimmer_1.8s_linear_infinite] rounded-md h-[18px] rounded-[5px] my-1"
-                />
-              ))}
-            {customer?.customer && !loadingCust && (
-              <>
-                {customer.customer.phone && (
-                  <div className="flex items-baseline justify-between gap-4 px-3.5">
-                    <span className="text-xs text-muted-foreground shrink-0 min-w-[72px]">Phone</span>
-                    <span className="text-xs font-medium text-foreground text-right break-words">{customer.customer.phone}</span>
-                  </div>
-                )}
-                {(customer.customer.city || customer.customer.country) && (
-                  <div className="flex items-baseline justify-between gap-4 px-3.5">
-                    <span className="text-xs text-muted-foreground shrink-0 min-w-[72px]">Location</span>
-                    <span className="text-xs font-medium text-foreground text-right break-words">
-                      {[customer.customer.city, customer.customer.country].filter(Boolean).join(', ')}
-                    </span>
-                  </div>
-                )}
-                {customer.customer.createdAt && (
-                  <div className="flex items-baseline justify-between gap-4 px-3.5">
-                    <span className="text-xs text-muted-foreground shrink-0 min-w-[72px]">Customer since</span>
-                    <span className="text-xs font-medium text-foreground text-right break-words">
-                      {new Date(customer.customer.createdAt).toLocaleDateString('en-US', {
-                        year: 'numeric',
-                        month: 'short',
-                      })}
-                    </span>
-                  </div>
-                )}
-                {customer.customer.note && (
-                  <div className="mt-1.5 px-[9px] py-1.5 bg-secondary rounded-[7px] border border-border">
-                    <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-[.06em] mb-0.5">Note</div>
-                    <div className="text-[11.5px] text-foreground-2 italic leading-[1.5]">{customer.customer.note}</div>
-                  </div>
-                )}
-              </>
-            )}
-          </div>
-        )}
-      </div>
-
-      {/* Stats bar */}
-      {customer?.customer &&
-        !loadingCust &&
-        (() => {
-          const orders = customer.orders || []
-          const withRefund = orders.filter((o) => o.refunds && o.refunds.length > 0)
-          const refundPct = orders.length > 0 ? Math.round((withRefund.length / orders.length) * 100) : 0
-          const approx = (customer.customer.ordersCount ?? 0) > 50
-          return (
-            <CustomerStats
-              totalSpent={customer.customer.totalSpent ?? 0}
-              currency={customer.customer.currency ?? ''}
-              ordersCount={customer.customer.ordersCount ?? 0}
-              refundPct={refundPct}
-              approx={approx}
-            />
-          )
-        })()}
-
-      {/* Tags */}
-      {customer?.customer?.tags && (
-        <div className="px-3.5 py-2 border-b border-border flex flex-wrap gap-1 shrink-0">
-          {customer.customer.tags
-            .split(',')
-            .filter(Boolean)
-            .map((tag) => (
-              <span key={tag} className="text-[10px] font-medium py-0.5 px-[7px] rounded bg-secondary text-foreground border border-border">
-                {tag.trim()}
-              </span>
-            ))}
-        </div>
-      )}
-
-          {!loadingCust && !customer?.customer && (
-            <div className="px-3.5 py-3 text-xs text-muted-foreground">No Shopify customer found</div>
-          )}
-        </>
+        <CustomerSection
+          customer={customer}
+          customerName={customerName}
+          isVip={isVip}
+          email={extractEmail(selectedThread.from)}
+          loadingCust={loadingCust}
+          custFieldsOpen={custFieldsOpen}
+          setCustFieldsOpen={setCustFieldsOpen}
+        />
       )}
 
       {/* Orders tab */}

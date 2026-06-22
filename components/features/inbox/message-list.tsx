@@ -70,7 +70,7 @@ export function MessageList({ msgEndRef }: MessageListProps) {
         return (
           <div
             key={msg.id || idx}
-            className="mb-5 flex gap-3 flex-row"
+            className="mb-5 flex gap-3"
             style={{ animation: 'msgIn .3s cubic-bezier(.16,1,.3,1) both' }}
           >
             {!isNote && (
@@ -81,7 +81,7 @@ export function MessageList({ msgEndRef }: MessageListProps) {
               </ShadAvatar>
             )}
             <div className="flex-1 min-w-0">
-              <div className="text-xs mb-[5px] flex items-center gap-1.5 justify-start">
+              <div className="text-xs mb-[5px] flex items-center gap-1.5">
                 <span className="text-[10.5px] text-foreground-2 font-bold tracking-[.01em]">{name}</span>
                 <span className="text-[10px] text-muted-foreground font-normal">{formatDate(msg.date)}</span>
                 {autoSentMsgIds.has(msg.id) && <AutoSentBadge />}

@@ -12,12 +12,14 @@ interface IntegrationRow {
   shopify_domain: string | null
   shopify_connected_at: string | null
   store_currency: string | null
+  status: string | null
 }
 
 interface IntegrationDetailRow {
   shopify_domain: string | null
   shopify_connected_at: string | null
   store_currency: string | null
+  status: string | null
 }
 
 interface ShopifyCredentialsRow {
@@ -38,7 +40,7 @@ export async function listStores(workspaceId: string): Promise<StorePublic[]> {
   const storeIds = data.map(s => s.id)
   const { data: rawIntegrations } = await supabaseAdmin
     .from('integrations')
-    .select('store_id, shopify_domain, shopify_connected_at, store_currency')
+    .select('store_id, shopify_domain, shopify_connected_at, store_currency, status')
     .in('store_id', storeIds)
 
   const integrations = (rawIntegrations || []) as unknown as IntegrationRow[]
@@ -54,6 +56,7 @@ export async function listStores(workspaceId: string): Promise<StorePublic[]> {
       shopify_domain: integration?.shopify_domain ?? null,
       shopify_connected_at: integration?.shopify_connected_at ?? null,
       store_currency: integration?.store_currency ?? null,
+      status: integration?.status ?? null,
       created_at: store.created_at,
     }
   })
@@ -73,7 +76,7 @@ export async function getStore(storeId: string, workspaceId: string): Promise<St
   const data = rawData as unknown as StoreRow
   const { data: rawIntegration } = await supabaseAdmin
     .from('integrations')
-    .select('shopify_domain, shopify_connected_at, store_currency')
+    .select('shopify_domain, shopify_connected_at, store_currency, status')
     .eq('store_id', storeId)
     .maybeSingle()
 
@@ -84,6 +87,7 @@ export async function getStore(storeId: string, workspaceId: string): Promise<St
     shopify_domain: integration?.shopify_domain ?? null,
     shopify_connected_at: integration?.shopify_connected_at ?? null,
     store_currency: integration?.store_currency ?? null,
+    status: integration?.status ?? null,
     created_at: data.created_at,
   }
 }
@@ -106,7 +110,7 @@ export async function updateStore(
   const store = data as unknown as StoreRow
   const { data: rawIntegration } = await supabaseAdmin
     .from('integrations')
-    .select('shopify_domain, shopify_connected_at, store_currency')
+    .select('shopify_domain, shopify_connected_at, store_currency, status')
     .eq('store_id', storeId)
     .maybeSingle()
 
@@ -117,6 +121,7 @@ export async function updateStore(
     shopify_domain: integration?.shopify_domain ?? null,
     shopify_connected_at: integration?.shopify_connected_at ?? null,
     store_currency: integration?.store_currency ?? null,
+    status: integration?.status ?? null,
     created_at: store.created_at,
   }
 }

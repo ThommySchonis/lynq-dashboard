@@ -67,7 +67,7 @@ export function SetupWizard({ onConnected }: SetupWizardProps) {
       <div className="w-full max-w-[440px] mb-7 py-[11px] px-3.5 bg-[rgba(217,119,6,0.06)] border border-[rgba(217,119,6,0.18)] rounded-[10px] text-left flex gap-[9px] items-start">
         <AlertCircle className="w-3.5 h-3.5 text-[#D97706] shrink-0 mt-px" />
         <p className="text-[12.5px] text-[#D97706] leading-[1.55]">
-          <strong>Note:</strong> Only new shipments from the moment of connection will be tracked. Existing orders will not appear retroactively.
+          <strong>Note:</strong> On connection we import tracking for your recent orders (last 90 days). After that, new status updates arrive automatically via the webhook.
         </p>
       </div>
 

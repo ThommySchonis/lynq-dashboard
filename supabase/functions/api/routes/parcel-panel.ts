@@ -3,6 +3,13 @@ import { authMiddleware } from '../middleware/auth.ts'
 import { requireCapability } from '../middleware/workspace.ts'
 import { getAdminClient } from '../lib/supabase.ts'
 import type { AuthContext } from '../lib/types.ts'
+import { withIdempotency } from '../lib/services/webhook-idempotency.ts'
+import {
+  mapPayloadToOrders,
+  persistTrackingOrders,
+  extractParcelEventId,
+  type ParcelPanelPayload,
+} from '../../_shared/parcel-panel.ts'
 
 const parcelPanel = new Hono()
 
@@ -82,6 +89,13 @@ parcelPanel.post('/connect', async (c) => {
     return c.json({ error: error.message }, 500)
   }
 
+  // Kick off a one-workspace backfill in the background (don't block the response).
+  const backfillUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/parcelpanel-backfill?workspace_id=${ctx.workspaceId}`
+  void fetch(backfillUrl, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}` },
+  }).catch(() => {})
+
   return c.json({ success: true, webhookToken })
 })
 
@@ -121,10 +135,10 @@ parcelPanel.get('/tracking', async (c) => {
     return c.json({ orders })
   }
 
-  // Mode B: query local shipments table
-  const { data: shipments, error } = await sb
+  // Mode B: query local shipments table — return the stored Order objects (raw_data)
+  const { data: rows, error } = await sb
     .from('shipments')
-    .select('*')
+    .select('raw_data, created_at')
     .eq('workspace_id', ctx.workspaceId)
     .order('created_at', { ascending: false })
 
@@ -132,10 +146,14 @@ parcelPanel.get('/tracking', async (c) => {
     return c.json({ error: error.message }, 500)
   }
 
-  return c.json({ orders: shipments })
+  const orders = (rows ?? [])
+    .map((r) => (r as { raw_data: unknown }).raw_data)
+    .filter(Boolean)
+
+  return c.json({ orders })
 })
 
-// POST /parcel-panel/webhook/:token — NO auth middleware
+// POST /parcel-panel/webhook/:token — NO auth middleware (verify_jwt=false + HMAC)
 parcelPanel.post('/webhook/:token', async (c) => {
   const token = c.req.param('token')
 
@@ -153,6 +171,7 @@ parcelPanel.post('/webhook/:token', async (c) => {
   const rawBody = await c.req.text()
   const signature = c.req.header('X-Parcelpanel-Hmac-Sha256') ?? ''
   const apiKey = (integration as Record<string, unknown>).parcelpanel_api_key as string
+  const workspaceId = (integration as Record<string, unknown>).workspace_id as string
 
   if (signature) {
     const valid = await verifyHmac(rawBody, signature, apiKey)
@@ -161,10 +180,25 @@ parcelPanel.post('/webhook/:token', async (c) => {
     }
   }
 
-  // Placeholder: log and acknowledge — full handler will be ported with webhooks batch
-  console.log('[parcel-panel] webhook received for workspace:', (integration as Record<string, unknown>).workspace_id)
-
-  return c.json({ received: true })
+  return withIdempotency({
+    rawBody,
+    request: c.req.raw,
+    source: 'parcelpanel',
+    eventType: 'shipment_status_update',
+    workspaceId,
+    extractEventId: (_req, body) => extractParcelEventId(body),
+    handler: async (body) => {
+      const orders = mapPayloadToOrders(body as ParcelPanelPayload)
+      await persistTrackingOrders(sb, workspaceId, orders)
+      return {
+        response: new Response(JSON.stringify({ received: true }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+        workspaceId,
+      }
+    },
+  })
 })
 
 export { parcelPanel as parcelPanelRoutes }

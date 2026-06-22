@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button'
 import { Gate } from '@/components/shared/gate'
 import { ORDER_STATUS } from '@/lib/inbox-constants'
 import { fmtPrice } from '@/lib/inbox-utils'
+import { ParcelTrackingSection } from './parcel-tracking-section'
+import type { Order as ParcelTrackingOrder } from '@/types/supply-chain'
 import {
   ChevronDown,
   ClipboardList,
@@ -67,6 +69,7 @@ interface OrdersOrder {
   shippingAddress?: OrdersAddress | null
   fulfillments?: OrdersFulfillment[]
   refunds?: OrdersRefund[]
+  parcelTrackings?: ParcelTrackingOrder[]
   [key: string]: unknown
 }
 
@@ -338,6 +341,9 @@ export function OrdersSection({
                       ))}
                   </>
                 )}
+
+                {/* ParcelPanel shipment tracking */}
+                <ParcelTrackingSection trackings={order.parcelTrackings} />
 
                 {/* Shipping address */}
                 {sa && (

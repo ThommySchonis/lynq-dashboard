@@ -3,6 +3,7 @@ import { authMiddleware } from '../middleware/auth.ts'
 import { requireCapability } from '../middleware/workspace.ts'
 import { getAdminClient } from '../lib/supabase.ts'
 import { getStoreCredentials } from '../lib/store-credentials.ts'
+import { getTrackingsByOrderNumbers } from '../../_shared/parcel-panel.ts'
 import { logger } from '../lib/logger.ts'
 import { DEMO_SHOP, DEMO_ORDERS, DEMO_REFUNDS, DEMO_KPIS, DEMO_TREND } from '../lib/demo-data.ts'
 import {
@@ -310,7 +311,15 @@ shopify.get('/customer', async (c) => {
 
   try {
     const result = await getCustomer(credentials, { email, order })
-    return c.json(result)
+    const orderNumbers = (result.orders ?? [])
+      .map((o) => o.name)
+      .filter((n): n is string => !!n)
+    const trackings = await getTrackingsByOrderNumbers(getAdminClient(), ctx.workspaceId, orderNumbers)
+    const orders = (result.orders ?? []).map((o) => ({
+      ...o,
+      parcelTrackings: trackings[o.name] ?? [],
+    }))
+    return c.json({ ...result, orders })
   } catch (err) {
     return shopifyErrorResponse(c, err)
   }

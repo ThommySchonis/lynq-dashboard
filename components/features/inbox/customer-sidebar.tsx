@@ -5,15 +5,10 @@ import { Button } from '@/components/ui/button'
 import {
   extractEmail,
   extractName,
-  fmtPrice,
 } from '@/lib/inbox-utils'
 import {
-  Calendar,
   ChevronDown,
-  FileText,
-  Mail,
   MoreVertical,
-  Phone,
   Search,
   Star,
 } from 'lucide-react'
@@ -108,6 +103,18 @@ interface SidebarCustomerResult {
   [key: string]: unknown
 }
 
+// Manual customer search isn't in the Figma rail (189-11179) — tabs sit at the
+// top, customer info lives inside the Customer tab. Kept behind this flag so the
+// client can restore the search; typed `boolean` to keep dead-branch lint quiet.
+const SHOW_LEGACY: boolean = false
+
+// Customer-rail tab (Figma 189-11179): active = 2px primary underline + dark
+// semibold label; inactive = grey medium.
+const railTabClass = (active: boolean) =>
+  `flex flex-1 items-center justify-center gap-1.5 py-2.5 text-[13px] border-b-2 transition-colors ${
+    active ? "border-b-primary text-foreground font-semibold" : "border-b-transparent text-muted-foreground font-medium hover:text-foreground-2"
+  }`
+
 export function CustomerSidebar() {
   // Zustand UI state
   const selectedThreadId = useInboxUI((s) => s.selectedThreadId)
@@ -116,7 +123,6 @@ export function CustomerSidebar() {
   const expandedOrders = useInboxUI((s) => s.expandedOrders)
   const expandedSubs = useInboxUI((s) => s.expandedSubs)
   const custFieldsOpen = useInboxUI((s) => s.custFieldsOpen)
-  const custShowMore = useInboxUI((s) => s.custShowMore)
   const activeFolder = useInboxUI((s) => s.activeFolder)
   const search = useInboxUI((s) => s.search)
 
@@ -125,7 +131,6 @@ export function CustomerSidebar() {
   const setExpandedOrders = useInboxUI((s) => s.setExpandedOrders)
   const setExpandedSubs = useInboxUI((s) => s.setExpandedSubs)
   const setCustFieldsOpen = useInboxUI((s) => s.setCustFieldsOpen)
-  const setCustShowMore = useInboxUI((s) => s.setCustShowMore)
   const setModal = useInboxUI((s) => s.setModal)
 
   // TanStack data
@@ -182,24 +187,43 @@ export function CustomerSidebar() {
 
   return (
     <div className="thin-scrollbar w-[280px] border-l border-border flex flex-col shrink-0 overflow-y-auto bg-card">
-      {/* Search */}
-      <div className="px-3 py-2.5 border-b border-border shrink-0">
-        <div className="relative">
-          <span className="absolute left-[9px] top-1/2 -translate-y-1/2 text-muted-foreground flex pointer-events-none">
-            <Search size={14} />
-          </span>
-          <input
-            className="w-full py-[7px] px-3 pl-[32px] bg-secondary border border-border rounded-lg text-foreground text-xs outline-none transition-[border-color] duration-200 focus:border-(--border-hover)"
-            placeholder="Search by email or #order number..."
-            value={custSearch}
-            onChange={(e) => setCustSearch(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') handleCustSearch(custSearch)
-            }}
-          />
+      {/* Search — hidden per Figma (restore via SHOW_LEGACY) */}
+      {SHOW_LEGACY && (
+        <div className="px-3 py-2.5 border-b border-border shrink-0">
+          <div className="relative">
+            <span className="absolute left-[9px] top-1/2 -translate-y-1/2 text-muted-foreground flex pointer-events-none">
+              <Search size={14} />
+            </span>
+            <input
+              className="w-full py-[7px] px-3 pl-[32px] bg-secondary border border-border rounded-lg text-foreground text-xs outline-none transition-[border-color] duration-200 focus:border-(--border-hover)"
+              placeholder="Search by email or #order number..."
+              value={custSearch}
+              onChange={(e) => setCustSearch(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') handleCustSearch(custSearch)
+              }}
+            />
+          </div>
         </div>
+      )}
+
+      {/* Tabs — top of the rail (Figma 189-11179): active = 2px primary
+          underline + dark semibold; inactive = grey medium */}
+      <div className="flex shrink-0 border-b border-border">
+        <button className={railTabClass(rightTab === 'info')} onClick={() => setRightTab('info')}>
+          Customer
+        </button>
+        <button className={railTabClass(rightTab === 'shopify')} onClick={() => setRightTab('shopify')}>
+          Orders
+          {(customer?.orders || []).length > 0 && (
+            <span className="rounded-md bg-border px-1.5 py-0.5 text-[11px] font-semibold text-muted-foreground">{customer?.orders?.length ?? 0}</span>
+          )}
+        </button>
       </div>
 
+      {/* Customer tab */}
+      {rightTab === 'info' && (
+        <>
       {/* Customer header */}
       <div className="px-3.5 py-4 border-b border-border shrink-0">
         <div className="flex items-center gap-2.5">
@@ -322,129 +346,10 @@ export function CustomerSidebar() {
         </div>
       )}
 
-      {/* Tabs */}
-      <div className="flex border-b border-border shrink-0">
-        <button
-          className={`flex-1 py-2 px-1.5 bg-transparent cursor-pointer text-[11.5px] font-medium text-foreground-2 border-b-2 border-transparent transition-all whitespace-nowrap text-center${rightTab === 'info' ? ' on' : ''}`}
-          onClick={() => setRightTab('info')}
-        >
-          Customer
-        </button>
-        <button
-          className={`flex-1 py-2 px-1.5 bg-transparent cursor-pointer text-[11.5px] font-medium text-foreground-2 border-b-2 border-transparent transition-all whitespace-nowrap text-center${rightTab === 'shopify' ? ' on' : ''}`}
-          onClick={() => setRightTab('shopify')}
-        >
-          Orders
-          {(customer?.orders || []).length > 0 ? ` (${customer?.orders?.length ?? 0})` : ''}
-        </button>
-      </div>
-
-      {/* Customer tab */}
-      {rightTab === 'info' && (
-        <div className="shrink-0">
-          {loadingCust && (
-            <div className="px-3.5 py-3">
-              {[0, 1, 2].map((i) => (
-                <div
-                  key={i}
-                  className="bg-gradient-to-r from-(--skeleton-from) via-(--skeleton-to) to-(--skeleton-from) bg-[length:400%_100%] animate-[shimmer_1.8s_linear_infinite] rounded-md h-5 rounded-[5px] mb-2"
-                />
-              ))}
-            </div>
+          {!loadingCust && !customer?.customer && (
+            <div className="px-3.5 py-3 text-xs text-muted-foreground">No Shopify customer found</div>
           )}
-          {!loadingCust && (
-            <div className="pt-2.5 px-3.5 pb-1 flex flex-col">
-              {/* Note row */}
-              <div className="flex items-start gap-2 py-[5px] border-b border-border mb-0.5">
-                <span className="flex text-muted-foreground mt-px shrink-0">
-                  <FileText size={13} />
-                </span>
-                <span className={`text-xs leading-[1.5] ${customer?.customer?.note ? 'text-foreground-2' : 'text-muted-foreground italic'}`}>
-                  {customer?.customer?.note || 'This customer has no note.'}
-                </span>
-              </div>
-              {/* Email row */}
-              <div className="flex items-center gap-2 py-[5px]">
-                <span className="flex text-muted-foreground shrink-0">
-                  <Mail size={13} />
-                </span>
-                <a
-                  href={`mailto:${extractEmail(selectedThread.from)}`}
-                  className="text-xs text-foreground no-underline overflow-hidden text-ellipsis whitespace-nowrap hover:underline"
-                >
-                  {extractEmail(selectedThread.from)}
-                </a>
-              </div>
-              {/* Phone row */}
-              {customer?.customer?.phone && (
-                <div className="flex items-center gap-2 py-[5px]">
-                  <span className="flex text-muted-foreground shrink-0">
-                    <Phone size={13} />
-                  </span>
-                  <a href={`tel:${customer.customer.phone}`} className="text-xs text-foreground no-underline hover:underline">
-                    {customer.customer.phone}
-                  </a>
-                </div>
-              )}
-              {/* Show more */}
-              {customer?.customer && (
-                <Button
-                  variant="ghost"
-                  onClick={() => setCustShowMore((v) => !v)}
-                  className="flex items-center gap-1 py-[5px] px-0 text-xs text-foreground-2 font-inherit font-medium"
-                >
-                  {custShowMore ? 'Show less' : 'Show more'}
-                  <ChevronDown size={10} className={`transition-transform duration-200 ${custShowMore ? 'rotate-180' : 'rotate-0'}`} />
-                </Button>
-              )}
-              {custShowMore && customer?.customer && (
-                <div className="flex flex-col pt-1 border-t border-border">
-                  {(customer.customer.city || customer.customer.country) && (
-                    <div className="flex items-baseline justify-between gap-4 px-3.5">
-                      <span className="text-xs text-muted-foreground shrink-0 min-w-[72px]">Location</span>
-                      <span className="text-xs font-medium text-foreground text-right break-words">
-                        {[customer.customer.city, customer.customer.country].filter(Boolean).join(', ')}
-                      </span>
-                    </div>
-                  )}
-                  {customer.customer.createdAt && (
-                    <div className="flex items-baseline justify-between gap-4 px-3.5">
-                      <span className="text-xs text-muted-foreground shrink-0 min-w-[72px]">Customer since</span>
-                      <span className="text-xs font-medium text-foreground text-right break-words">
-                        {new Date(customer.customer.createdAt).toLocaleDateString('en-US', {
-                          year: 'numeric',
-                          month: 'short',
-                        })}
-                      </span>
-                    </div>
-                  )}
-                  <div className="flex items-baseline justify-between gap-4 px-3.5">
-                    <span className="text-xs text-muted-foreground shrink-0 min-w-[72px]">Orders</span>
-                    <span className="text-xs font-medium text-foreground text-right break-words">{customer.customer.ordersCount ?? '—'}</span>
-                  </div>
-                  <div className="flex items-baseline justify-between gap-4 px-3.5">
-                    <span className="text-xs text-muted-foreground shrink-0 min-w-[72px]">Total spent</span>
-                    <span className="text-xs font-medium text-foreground text-right break-words font-bold text-foreground">
-                      {fmtPrice(customer.customer.totalSpent ?? 0, customer.customer.currency ?? '')}
-                    </span>
-                  </div>
-                </div>
-              )}
-              {!customer?.customer && <div className="py-2 text-xs text-muted-foreground">No Shopify customer found</div>}
-            </div>
-          )}
-          {/* Open Timeline row */}
-          <div className="pt-2 px-3.5 pb-3 flex items-center gap-2.5">
-            <Button
-              variant="outline"
-              className="flex items-center gap-1.5 py-[5px] px-3 rounded-[7px] border border-border bg-transparent text-foreground-2 text-[11.5px] font-semibold font-inherit transition-all duration-150 shrink-0 hover:bg-secondary hover:text-foreground"
-            >
-              <Calendar size={12} />
-              Open Timeline
-            </Button>
-            {selectedThread?.id && <span className="text-[11px] text-muted-foreground">1 ticket, 1 open</span>}
-          </div>
-        </div>
+        </>
       )}
 
       {/* Orders tab */}

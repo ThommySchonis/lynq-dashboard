@@ -49,7 +49,9 @@ export const URGENCY_SCORE: Record<string, number> = {
 // ─── Inbox folders ────────────────────────────────────────────
 /** Single source of truth for the inbox folder tabs (thread-list-panel) and
  *  the sidebar Inbox submenu. Keys match useInboxCounts() fields; counts are
- *  applied at render time. */
+ *  applied at render time. Rendered as a horizontally-scrolling pill row in the
+ *  thread list (Figma 782-21374), leading with Open / Pending / Resolved /
+ *  Unlink. */
 export interface InboxFolder {
   key: string
   label: string
@@ -58,9 +60,9 @@ export interface InboxFolder {
 export const INBOX_FOLDERS: InboxFolder[] = [
   { key: 'open',     label: 'Open'     },
   { key: 'pending',  label: 'Pending'  },
-  { key: 'snoozed',  label: 'Snoozed'  },
   { key: 'resolved', label: 'Resolved' },
+  { key: 'unlinked', label: 'Unlink'   },
+  { key: 'snoozed',  label: 'Snoozed'  },
   { key: 'spam',     label: 'Spam'     },
-  { key: 'unlinked', label: 'Unlinked' },
   { key: 'trash',    label: 'Trash'    },
 ]

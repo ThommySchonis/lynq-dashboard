@@ -16,6 +16,7 @@ import { Ban, CircleCheck, Clock, FolderInput, MailOpen, MoreVertical, Sparkles,
 import { BulkConfirmDialog } from "./bulk-confirm-dialog";
 import { BulkAssignPanel } from "./bulk-assign-panel";
 import { BulkTagPanel } from "./bulk-tag-panel";
+import { BULK_MENU_ROW_CLASS, BULK_MENU_HEADER_CLASS } from "@/lib/inbox-constants";
 import type { BulkActionId, BulkActionPayload } from "@/types/inbox";
 
 const SNOOZE_OPTIONS: { label: string; hours: number }[] = [
@@ -28,11 +29,9 @@ function isoFromNow(hours: number): string {
   return new Date(Date.now() + hours * 3600_000).toISOString();
 }
 
-// Figma 1310-59297 "dropdown · bulk actions": roomier rows (9px/10px), 9px radius.
-const itemClass = "gap-3 rounded-[9px] px-2.5 py-2";
 // Move-to targets statuses only — moving to another mailbox (Support/Sales/…)
 // is backend-gated (BE task #1); see docs/inbox-figma-redesign-plan.md.
-const MOVE_TARGETS: { status: string; label: string }[] = [
+const MOVE_STATUSES: { status: string; label: string }[] = [
   { status: "open", label: "Open" },
   { status: "pending", label: "Pending" },
   { status: "resolved", label: "Resolved" },
@@ -57,19 +56,19 @@ export function BulkActionsMenu({ count, onAction }: { count: number; onAction: 
           <MoreVertical size={15} />
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-[246px] rounded-xl p-[7px]">
-          <div className="px-3 pt-1.5 pb-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-foreground-4">
+          <div className={BULK_MENU_HEADER_CLASS}>
             {count} conversation{count === 1 ? "" : "s"}
           </div>
 
-          <DropdownMenuItem className={itemClass} onClick={() => onAction("mark_read")}>
+          <DropdownMenuItem className={BULK_MENU_ROW_CLASS} onClick={() => onAction("mark_read")}>
             <MailOpen /> Mark as read
           </DropdownMenuItem>
-          <DropdownMenuItem className={itemClass} onClick={() => onAction("resolve")}>
+          <DropdownMenuItem className={BULK_MENU_ROW_CLASS} onClick={() => onAction("resolve")}>
             <CircleCheck /> Mark as resolved
           </DropdownMenuItem>
 
           <DropdownMenuSub>
-            <DropdownMenuSubTrigger className={itemClass}>
+            <DropdownMenuSubTrigger className={BULK_MENU_ROW_CLASS}>
               <Clock /> Snooze…
             </DropdownMenuSubTrigger>
             <DropdownMenuSubContent>
@@ -84,27 +83,27 @@ export function BulkActionsMenu({ count, onAction }: { count: number; onAction: 
           <DropdownMenuSeparator />
 
           <DropdownMenuSub>
-            <DropdownMenuSubTrigger className={itemClass}>
+            <DropdownMenuSubTrigger className={BULK_MENU_ROW_CLASS}>
               <User /> Assign to…
             </DropdownMenuSubTrigger>
             <BulkAssignPanel count={count} onAction={onAction} />
           </DropdownMenuSub>
 
           <DropdownMenuSub>
-            <DropdownMenuSubTrigger className={itemClass}>
+            <DropdownMenuSubTrigger className={BULK_MENU_ROW_CLASS}>
               <Tag /> Add tag…
             </DropdownMenuSubTrigger>
             <BulkTagPanel count={count} onAction={onAction} />
           </DropdownMenuSub>
 
           <DropdownMenuSub>
-            <DropdownMenuSubTrigger className={itemClass}>
+            <DropdownMenuSubTrigger className={BULK_MENU_ROW_CLASS}>
               <FolderInput /> Move to…
             </DropdownMenuSubTrigger>
             <DropdownMenuSubContent className="w-56 p-[7px]">
-              <div className="px-3 pt-1.5 pb-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-foreground-4">Move {count} to</div>
-              {MOVE_TARGETS.map((t) => (
-                <DropdownMenuItem key={t.status} className={itemClass} onClick={() => onAction("move", { status: t.status })}>
+              <div className={BULK_MENU_HEADER_CLASS}>Move {count} to</div>
+              {MOVE_STATUSES.map((t) => (
+                <DropdownMenuItem key={t.status} className={BULK_MENU_ROW_CLASS} onClick={() => onAction("move", { status: t.status })}>
                   {t.label}
                 </DropdownMenuItem>
               ))}
@@ -113,16 +112,16 @@ export function BulkActionsMenu({ count, onAction }: { count: number; onAction: 
 
           <DropdownMenuSeparator />
 
-          <DropdownMenuItem className={`${itemClass} text-primary`} onClick={() => setConfirm("emma")}>
+          <DropdownMenuItem className={`${BULK_MENU_ROW_CLASS} text-primary`} onClick={() => setConfirm("emma")}>
             <Sparkles /> Hand off to Emma
           </DropdownMenuItem>
 
           <DropdownMenuSeparator />
 
-          <DropdownMenuItem className={itemClass} onClick={() => setConfirm("spam")}>
+          <DropdownMenuItem className={BULK_MENU_ROW_CLASS} onClick={() => setConfirm("spam")}>
             <Ban /> Mark as spam
           </DropdownMenuItem>
-          <DropdownMenuItem className={itemClass} variant="destructive" onClick={() => setConfirm("delete")}>
+          <DropdownMenuItem className={BULK_MENU_ROW_CLASS} variant="destructive" onClick={() => setConfirm("delete")}>
             <Trash2 /> Delete
           </DropdownMenuItem>
         </DropdownMenuContent>

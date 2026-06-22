@@ -66,3 +66,9 @@ export const INBOX_FOLDERS: InboxFolder[] = [
   { key: 'spam',     label: 'Spam'     },
   { key: 'trash',    label: 'Trash'    },
 ]
+
+// ─── Bulk-actions menu styling ────────────────────────────────
+// Shared row/header recipes for the bulk-actions dropdown and its sub-panels
+// (Figma 1310-59297 etc.) so a spacing/radius tweak lives in one place.
+export const BULK_MENU_ROW_CLASS = 'gap-3 rounded-[9px] px-2.5 py-2'
+export const BULK_MENU_HEADER_CLASS = 'px-3 pt-1.5 pb-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-foreground-4'

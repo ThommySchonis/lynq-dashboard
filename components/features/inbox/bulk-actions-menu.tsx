@@ -16,22 +16,13 @@ import { Ban, CircleCheck, Clock, FolderInput, MailOpen, MoreVertical, Sparkles,
 import { BulkConfirmDialog } from "./bulk-confirm-dialog";
 import { BulkAssignPanel } from "./bulk-assign-panel";
 import { BulkTagPanel } from "./bulk-tag-panel";
-import { BULK_MENU_ROW_CLASS, BULK_MENU_HEADER_CLASS } from "@/lib/inbox-constants";
+import { BULK_MENU_ROW_CLASS, BULK_MENU_HEADER_CLASS, SNOOZE_OPTIONS } from "@/lib/inbox-constants";
+import { isoFromNow } from "@/lib/inbox-utils";
 import type { BulkActionId, BulkActionPayload } from "@/types/inbox";
-
-const SNOOZE_OPTIONS: { label: string; hours: number }[] = [
-  { label: "Later today", hours: 4 },
-  { label: "Tomorrow", hours: 24 },
-  { label: "Next week", hours: 24 * 7 },
-];
-
-function isoFromNow(hours: number): string {
-  return new Date(Date.now() + hours * 3600_000).toISOString();
-}
 
 // Move-to targets statuses only — moving to another mailbox (Support/Sales/…)
 // is backend-gated (BE task #1); see docs/inbox-figma-redesign-plan.md.
-const MOVE_STATUSES: { status: string; label: string }[] = [
+const MOVE_STATUSES: { status: "open" | "pending" | "resolved"; label: string }[] = [
   { status: "open", label: "Open" },
   { status: "pending", label: "Pending" },
   { status: "resolved", label: "Resolved" },

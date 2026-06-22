@@ -72,3 +72,12 @@ export const INBOX_FOLDERS: InboxFolder[] = [
 // (Figma 1310-59297 etc.) so a spacing/radius tweak lives in one place.
 export const BULK_MENU_ROW_CLASS = 'gap-3 rounded-[9px] px-2.5 py-2'
 export const BULK_MENU_HEADER_CLASS = 'px-3 pt-1.5 pb-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-foreground-4'
+
+// ─── Snooze presets ───────────────────────────────────────────
+// Shared by the bulk-actions menu and the conversation top bar. Hours are
+// resolved to an ISO "until" timestamp at click time via isoFromNow().
+export const SNOOZE_OPTIONS: { label: string; hours: number }[] = [
+  { label: 'Later today', hours: 4 },
+  { label: 'Tomorrow', hours: 24 },
+  { label: 'Next week', hours: 24 * 7 },
+]

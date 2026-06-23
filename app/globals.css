@@ -89,10 +89,9 @@
   --sidebar-ring: #8B5CF6;
 
   /* Settings area */
-  --settings-border: #E5E0EB;
-  --settings-divider: #F0EDF4;
+  --settings-border: rgba(0,0,0,0.07);
+  --settings-divider: rgba(0,0,0,0.07);
   --settings-surface: #F6F7F9;
-  --settings-header-h: 86px;
 
 }
 
@@ -171,8 +170,9 @@
   --sidebar-ring: #A175FC;
 
   /* Settings area */
-  --settings-border: rgba(255,255,255,0.08);
-  --settings-divider: rgba(255,255,255,0.06);
+  --settings-border: rgba(255,255,255,0.07);
+  --settings-divider: rgba(255,255,255,0.07);
+  --settings-surface: #160e2e;
 }
 
 /* ── Base ───────────────────────────────────────────────────────────────────── */
@@ -314,6 +314,7 @@
   --color-divider: var(--divider);
   --color-settings-border: var(--settings-border);
   --color-settings-divider: var(--settings-divider);
+  --color-settings-surface: var(--settings-surface);
 
   /* Shadows */
   --shadow-card: var(--shadow-card);

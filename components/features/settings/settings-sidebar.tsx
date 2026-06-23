@@ -63,7 +63,7 @@ export function SettingsSidebar() {
   const personalGroupIndex = nav.findIndex(g => g.label === 'PERSONAL')
 
   return (
-    <aside className="w-[248px] shrink-0 h-full bg-background border-r border-border flex flex-col">
+    <aside className="w-[248px] shrink-0 h-full bg-settings-surface border-r border-settings-border flex flex-col">
       {/* Search — sidebar starts directly with the search field (no title), per Figma node 857-15422 */}
       <div className="px-4 pt-5 pb-1 flex-shrink-0">
         <div className="relative" ref={searchRef}>
@@ -80,11 +80,11 @@ export function SettingsSidebar() {
             onKeyDown={handleSearchKeyDown}
             onFocus={() => query.trim().length > 0 && setDropdownOpen(true)}
             autoComplete="off"
-            className="pl-8 pr-10 py-2 text-[13px] bg-card border-border text-foreground placeholder:text-foreground-4 focus-visible:ring-primary/20 focus-visible:border-primary"
+            className="pl-8 pr-10 py-2 text-[13px] bg-card border-settings-border text-foreground placeholder:text-foreground-4 focus-visible:ring-primary/20 focus-visible:border-primary"
           />
 
           {/* ⌘K hint badge */}
-          <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-foreground-4 bg-black/[0.04] rounded-[3px] px-1 leading-[1.6] pointer-events-none">
+          <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-foreground-4 bg-settings-divider rounded-[3px] px-1 leading-[1.6] pointer-events-none">
             ⌘K
           </span>
 
@@ -124,11 +124,11 @@ export function SettingsSidebar() {
       </div>
 
       {/* Nav scroll area */}
-      <nav className="flex-1 overflow-y-auto py-2 pb-5 [scrollbar-width:thin] [scrollbar-color:var(--border)_transparent] [&::-webkit-scrollbar]:w-[3px] [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-sm">
+      <nav className="flex-1 overflow-y-auto py-2 pb-5 [scrollbar-width:thin] [scrollbar-color:var(--settings-border)_transparent] [&::-webkit-scrollbar]:w-[3px] [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-settings-border [&::-webkit-scrollbar-thumb]:rounded-sm">
         {nav.map((group, groupIdx) => (
           <div key={group.label}>
             {groupIdx === personalGroupIndex && (
-              <div className="h-px bg-border mx-4 my-2" />
+              <div className="h-px bg-settings-divider mx-4 my-2" />
             )}
 
             <div className={`px-4 pb-1.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-foreground-4 select-none ${groupIdx === 0 ? 'pt-3' : 'pt-5'}`}>

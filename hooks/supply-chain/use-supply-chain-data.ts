@@ -2,6 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query'
 import { useAuthStore } from '@/stores/auth'
+import { useStoreStore } from '@/stores/store'
 import { parseJson } from '@/lib/utils/typed-json'
 import { apiUrl } from '@/lib/api-client'
 import type { Order } from '@/types/supply-chain'
@@ -16,15 +17,16 @@ function useToken() {
 
 export const supplyChainKeys = {
   all: ['supply-chain'] as const,
-  shipments: () => [...supplyChainKeys.all, 'shipments'] as const,
+  shipments: (storeId?: string | null) => [...supplyChainKeys.all, 'shipments', storeId ?? null] as const,
 }
 
 export function useShipments() {
   const token = useToken()
+  const activeStoreId = useStoreStore((s) => s.activeStoreId)
   return useQuery<Order[]>({
-    queryKey: supplyChainKeys.shipments(),
+    queryKey: supplyChainKeys.shipments(activeStoreId),
     queryFn: async () => {
-      const res = await fetch(apiUrl('parcel-panel/tracking'), {
+      const res = await fetch(apiUrl(`parcel-panel/tracking?store_id=${activeStoreId ?? ''}`), {
         headers: { Authorization: `Bearer ${token}` },
       })
       if (res.status === 404) return []
@@ -32,6 +34,6 @@ export function useShipments() {
       const data = await parseJson<ShipmentsResponse>(res)
       return data.orders ?? []
     },
-    enabled: !!token,
+    enabled: !!token && !!activeStoreId,
   })
 }

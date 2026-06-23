@@ -190,7 +190,7 @@ export function SupplyChainPage() {
                   {orders.length === 0 ? (
                     <>
                       <p className="font-semibold text-foreground-2 mb-1.5">No shipments received yet</p>
-                      <p>Shipments will appear here once Parcel Panel sends a status update. Existing orders will not appear retroactively.</p>
+                      <p>Tracking for recent orders is importing now and will appear shortly. New status updates arrive automatically once Parcel Panel sends them.</p>
                     </>
                   ) : (
                     'No shipments match this filter.'

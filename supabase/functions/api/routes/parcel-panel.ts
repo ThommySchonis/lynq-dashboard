@@ -3,6 +3,13 @@ import { authMiddleware } from '../middleware/auth.ts'
 import { requireCapability } from '../middleware/workspace.ts'
 import { getAdminClient } from '../lib/supabase.ts'
 import type { AuthContext } from '../lib/types.ts'
+import { withIdempotency } from '../lib/services/webhook-idempotency.ts'
+import {
+  mapPayloadToOrders,
+  persistTrackingOrders,
+  extractParcelEventId,
+  type ParcelPanelPayload,
+} from '../../_shared/parcel-panel.ts'
 
 const parcelPanel = new Hono()
 
@@ -47,40 +54,51 @@ parcelPanel.post('/connect', async (c) => {
   const blocked = requireCapability('manageWorkspace')(c)
   if (blocked) return blocked
 
-  const body = await c.req.json<{ apiKey: string }>()
+  const body = await c.req.json<{ apiKey?: string; storeId?: string }>()
   if (!body.apiKey) {
     return c.json({ error: 'apiKey is required' }, 400)
   }
+  if (!body.storeId) {
+    return c.json({ error: 'storeId is required' }, 400)
+  }
 
-  // Verify the API key against ParcelPanel
+  // Verify the API key against ParcelPanel. A 401/403 means a bad key; a 404
+  // (order #000 not found) means the key is valid but that order doesn't exist.
   const verifyRes = await fetch(
     'https://open.parcelwill.com/api/v2/tracking/order?order_number=%23000',
-    {
-      headers: { 'Parcel-Panel-Api-Token': body.apiKey },
-    },
+    { headers: { 'Parcel-Panel-Api-Token': body.apiKey } },
   )
-
-  if (!verifyRes.ok) {
+  if (verifyRes.status === 401 || verifyRes.status === 403) {
     return c.json({ error: 'Invalid ParcelPanel API key' }, 400)
   }
 
   const webhookToken = crypto.randomUUID()
 
   const sb = getAdminClient()
-  const { error } = await sb
+  // Store the key on the selected store's existing integration row.
+  const { data: updated, error } = await sb
     .from('integrations')
-    .upsert(
-      {
-        workspace_id: ctx.workspaceId,
-        parcelpanel_api_key: body.apiKey,
-        parcelpanel_webhook_token: webhookToken,
-      },
-      { onConflict: 'workspace_id' },
-    )
+    .update({
+      parcelpanel_api_key: body.apiKey,
+      parcelpanel_webhook_token: webhookToken,
+    })
+    .eq('workspace_id', ctx.workspaceId)
+    .eq('store_id', body.storeId)
+    .select('id')
 
   if (error) {
     return c.json({ error: error.message }, 500)
   }
+  if (!updated || updated.length === 0) {
+    return c.json({ error: 'Store not found. Connect the Shopify store first.' }, 404)
+  }
+
+  // Kick off a backfill for this store in the background (don't block the response).
+  const backfillUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/parcelpanel-backfill?workspace_id=${ctx.workspaceId}&store_id=${body.storeId}`
+  void fetch(backfillUrl, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}` },
+  }).catch(() => {})
 
   return c.json({ success: true, webhookToken })
 })
@@ -90,29 +108,29 @@ parcelPanel.get('/tracking', async (c) => {
   const ctx = getCtx(c)
 
   const ordersParam = c.req.query('orders')
+  const storeId = c.req.query('store_id')
 
   const sb = getAdminClient()
-  const { data: integration } = await sb
+  let integrationQuery = sb
     .from('integrations')
     .select('parcelpanel_api_key')
     .eq('workspace_id', ctx.workspaceId)
-    .maybeSingle()
+  if (storeId) integrationQuery = integrationQuery.eq('store_id', storeId)
+  const { data: integration } = await integrationQuery.maybeSingle()
 
   const apiKey = (integration as Record<string, unknown> | null)?.parcelpanel_api_key as string | null
   if (!apiKey) {
     return c.json({ error: 'ParcelPanel is not connected' }, 400)
   }
 
-  // Mode A: fetch specific orders from ParcelPanel API
+  // Mode A: fetch specific orders live from ParcelPanel
   if (ordersParam) {
     const orderNumbers = ordersParam.split(',').map((o) => o.trim()).filter(Boolean)
     const orders = await Promise.all(
       orderNumbers.map(async (orderNumber) => {
         const res = await fetch(
           `https://open.parcelwill.com/api/v2/tracking/order?order_number=${encodeURIComponent(orderNumber)}`,
-          {
-            headers: { 'Parcel-Panel-Api-Token': apiKey },
-          },
+          { headers: { 'Parcel-Panel-Api-Token': apiKey } },
         )
         if (!res.ok) return { order_number: orderNumber, error: 'Failed to fetch' }
         return await res.json()
@@ -121,28 +139,33 @@ parcelPanel.get('/tracking', async (c) => {
     return c.json({ orders })
   }
 
-  // Mode B: query local shipments table
-  const { data: shipments, error } = await sb
+  // Mode B: query local shipments table — return stored Order objects (raw_data)
+  let shipmentsQuery = sb
     .from('shipments')
-    .select('*')
+    .select('raw_data, created_at')
     .eq('workspace_id', ctx.workspaceId)
-    .order('created_at', { ascending: false })
+  if (storeId) shipmentsQuery = shipmentsQuery.eq('store_id', storeId)
+  const { data: rows, error } = await shipmentsQuery.order('created_at', { ascending: false })
 
   if (error) {
     return c.json({ error: error.message }, 500)
   }
 
-  return c.json({ orders: shipments })
+  const orders = (rows ?? [])
+    .map((r) => (r as { raw_data: unknown }).raw_data)
+    .filter(Boolean)
+
+  return c.json({ orders })
 })
 
-// POST /parcel-panel/webhook/:token — NO auth middleware
+// POST /parcel-panel/webhook/:token — NO auth middleware (verify_jwt=false + HMAC)
 parcelPanel.post('/webhook/:token', async (c) => {
   const token = c.req.param('token')
 
   const sb = getAdminClient()
   const { data: integration } = await sb
     .from('integrations')
-    .select('workspace_id, parcelpanel_api_key')
+    .select('workspace_id, store_id, parcelpanel_api_key')
     .eq('parcelpanel_webhook_token', token)
     .maybeSingle()
 
@@ -153,6 +176,8 @@ parcelPanel.post('/webhook/:token', async (c) => {
   const rawBody = await c.req.text()
   const signature = c.req.header('X-Parcelpanel-Hmac-Sha256') ?? ''
   const apiKey = (integration as Record<string, unknown>).parcelpanel_api_key as string
+  const workspaceId = (integration as Record<string, unknown>).workspace_id as string
+  const storeId = (integration as Record<string, unknown>).store_id as string
 
   if (signature) {
     const valid = await verifyHmac(rawBody, signature, apiKey)
@@ -161,10 +186,26 @@ parcelPanel.post('/webhook/:token', async (c) => {
     }
   }
 
-  // Placeholder: log and acknowledge — full handler will be ported with webhooks batch
-  console.log('[parcel-panel] webhook received for workspace:', (integration as Record<string, unknown>).workspace_id)
-
-  return c.json({ received: true })
+  return withIdempotency({
+    rawBody,
+    request: c.req.raw,
+    source: 'parcelpanel',
+    eventType: 'shipment_status_update',
+    workspaceId,
+    metadata: { storeId },
+    extractEventId: (_req, body) => extractParcelEventId(body),
+    handler: async (body) => {
+      const orders = mapPayloadToOrders(body as ParcelPanelPayload)
+      await persistTrackingOrders(sb, workspaceId, storeId, orders)
+      return {
+        response: new Response(JSON.stringify({ received: true }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+        workspaceId,
+      }
+    },
+  })
 })
 
 export { parcelPanel as parcelPanelRoutes }

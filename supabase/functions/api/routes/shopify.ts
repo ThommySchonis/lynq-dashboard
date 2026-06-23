@@ -3,6 +3,7 @@ import { authMiddleware } from '../middleware/auth.ts'
 import { requireCapability } from '../middleware/workspace.ts'
 import { getAdminClient } from '../lib/supabase.ts'
 import { getStoreCredentials } from '../lib/store-credentials.ts'
+import { getTrackingsByOrderNumbers } from '../../_shared/parcel-panel.ts'
 import { logger } from '../lib/logger.ts'
 import { DEMO_SHOP, DEMO_ORDERS, DEMO_REFUNDS, DEMO_KPIS, DEMO_TREND } from '../lib/demo-data.ts'
 import {
@@ -25,6 +26,7 @@ import {
   searchProducts,
   createDraftOrder,
   ShopifyApiError,
+  isNonExpiringTokenError,
 } from '../lib/services/shopify.ts'
 import type { AuthContext } from '../lib/types.ts'
 
@@ -52,7 +54,31 @@ function parseDateRange(c: { req: { query: (k: string) => string | undefined } }
   return { from, to }
 }
 
-function shopifyErrorResponse(c: { json: (data: unknown, status: number) => Response }, err: unknown) {
+async function flagReauthRequired(workspaceId: string, storeId: string): Promise<void> {
+  try {
+    await getAdminClient()
+      .from('integrations')
+      .update({ status: 'reauth_required' })
+      .eq('workspace_id', workspaceId)
+      .eq('store_id', storeId)
+  } catch (e) {
+    logger.error('[shopify]', 'failed to flag reauth_required', { error: e instanceof Error ? e.message : String(e) })
+  }
+}
+
+async function shopifyErrorResponse(
+  c: { json: (data: unknown, status: number) => Response },
+  err: unknown,
+  workspaceId?: string,
+  storeId?: string,
+): Promise<Response> {
+  if (isNonExpiringTokenError(err)) {
+    if (workspaceId && storeId) await flagReauthRequired(workspaceId, storeId)
+    return c.json(
+      { error: 'Shopify connection needs to be re-authorized', code: 'reauth_required' },
+      403,
+    )
+  }
   if (err instanceof ShopifyApiError) {
     return c.json({ error: err.message, status: err.statusCode }, err.statusCode >= 500 ? 502 : err.statusCode)
   }
@@ -105,6 +131,11 @@ shopify.get('/kpis', async (c) => {
   } catch (err) {
     logger.error('[shopify/kpis]', 'error fetching KPIs', { error: err instanceof Error ? err.message : String(err) })
 
+    if (isNonExpiringTokenError(err)) {
+      await flagReauthRequired(ctx.workspaceId, storeId)
+      return c.json({ error: 'Shopify connection needs to be re-authorized', code: 'reauth_required' }, 403)
+    }
+
     const sb = getAdminClient()
     const { data: cached } = await sb
       .from('shopify_orders')
@@ -127,7 +158,7 @@ shopify.get('/kpis', async (c) => {
         message: 'Showing cached KPIs — Shopify is temporarily unavailable',
       })
     }
-    return shopifyErrorResponse(c, err)
+    return await shopifyErrorResponse(c, err, ctx.workspaceId, storeId)
   }
 })
 
@@ -154,6 +185,11 @@ shopify.get('/revenue-trend', async (c) => {
     return c.json({ trend }, 200, { 'Cache-Control': 'private, max-age=300' })
   } catch (err) {
     logger.error('[shopify/revenue-trend]', 'error fetching revenue trend', { error: err instanceof Error ? err.message : String(err) })
+
+    if (isNonExpiringTokenError(err)) {
+      await flagReauthRequired(ctx.workspaceId, storeId)
+      return c.json({ error: 'Shopify connection needs to be re-authorized', code: 'reauth_required' }, 403)
+    }
 
     const sb = getAdminClient()
     const { data: cached } = await sb
@@ -183,7 +219,7 @@ shopify.get('/revenue-trend', async (c) => {
         message: 'Showing cached revenue trend — Shopify is temporarily unavailable',
       })
     }
-    return shopifyErrorResponse(c, err)
+    return await shopifyErrorResponse(c, err, ctx.workspaceId, storeId)
   }
 })
 
@@ -217,6 +253,11 @@ shopify.get('/orders', async (c) => {
     const orders = await getOrders(credentials)
     return c.json({ orders })
   } catch (err) {
+    if (isNonExpiringTokenError(err)) {
+      await flagReauthRequired(ctx.workspaceId, storeId)
+      return c.json({ error: 'Shopify connection needs to be re-authorized', code: 'reauth_required' }, 403)
+    }
+
     const sb = getAdminClient()
     const { data: cached } = await sb
       .from('shopify_orders')
@@ -233,7 +274,7 @@ shopify.get('/orders', async (c) => {
         message: 'Showing cached orders — Shopify is temporarily unavailable',
       })
     }
-    return shopifyErrorResponse(c, err)
+    return await shopifyErrorResponse(c, err, ctx.workspaceId, storeId)
   }
 })
 
@@ -251,7 +292,7 @@ shopify.get('/orders/:id', async (c) => {
     const order = await getOrderDetail(credentials, c.req.param('id'))
     return c.json({ order })
   } catch (err) {
-    return shopifyErrorResponse(c, err)
+    return await shopifyErrorResponse(c, err, ctx.workspaceId, storeId)
   }
 })
 
@@ -273,6 +314,11 @@ shopify.get('/refunds', async (c) => {
     const refunds = await getRefunds(credentials, dateRange)
     return c.json({ refunds }, 200, { 'Cache-Control': 'private, max-age=300' })
   } catch (err) {
+    if (isNonExpiringTokenError(err)) {
+      await flagReauthRequired(ctx.workspaceId, storeId)
+      return c.json({ error: 'Shopify connection needs to be re-authorized', code: 'reauth_required' }, 403)
+    }
+
     const sb = getAdminClient()
     const { data: cached } = await sb
       .from('shopify_orders')
@@ -290,7 +336,7 @@ shopify.get('/refunds', async (c) => {
         message: 'Showing cached refunds — Shopify is temporarily unavailable',
       })
     }
-    return shopifyErrorResponse(c, err)
+    return await shopifyErrorResponse(c, err, ctx.workspaceId, storeId)
   }
 })
 
@@ -310,9 +356,17 @@ shopify.get('/customer', async (c) => {
 
   try {
     const result = await getCustomer(credentials, { email, order })
-    return c.json(result)
+    const orderNumbers = (result.orders ?? [])
+      .map((o) => o.name)
+      .filter((n): n is string => !!n)
+    const trackings = await getTrackingsByOrderNumbers(getAdminClient(), ctx.workspaceId, storeId, orderNumbers)
+    const orders = (result.orders ?? []).map((o) => ({
+      ...o,
+      parcelTrackings: trackings[o.name] ?? [],
+    }))
+    return c.json({ ...result, orders })
   } catch (err) {
-    return shopifyErrorResponse(c, err)
+    return await shopifyErrorResponse(c, err, ctx.workspaceId, storeId)
   }
 })
 
@@ -337,8 +391,8 @@ shopify.get('/products', async (c) => {
   const storeId = requireStoreId(c)
   if (!storeId) return c.json({ error: 'store_id is required' }, 400)
 
-  const q = c.req.query('q')
-  if (!q) return c.json({ error: 'q is required' }, 400)
+  const q = c.req.query('q') ?? ''
+  const cursor = c.req.query('cursor') ?? null
 
   const limitParam = c.req.query('limit')
   const limit = limitParam ? Math.min(Math.max(parseInt(limitParam, 10) || 20, 1), 50) : 20
@@ -347,10 +401,10 @@ shopify.get('/products', async (c) => {
   if (!credentials) return c.json({ error: 'Store not connected to Shopify' }, 422)
 
   try {
-    const result = await searchProducts(credentials, q, limit)
+    const result = await searchProducts(credentials, q, limit, cursor)
     return c.json(result)
   } catch (err) {
-    return shopifyErrorResponse(c, err)
+    return await shopifyErrorResponse(c, err, ctx.workspaceId, storeId)
   }
 })
 
@@ -622,7 +676,7 @@ shopify.post('/orders/:id/refund', async (c) => {
     const refund = await createRefund(credentials, c.req.param('id'), body)
     return c.json({ refund })
   } catch (err) {
-    return shopifyErrorResponse(c, err)
+    return await shopifyErrorResponse(c, err, ctx.workspaceId, storeId)
   }
 })
 
@@ -644,7 +698,7 @@ shopify.post('/orders/:id/cancel', async (c) => {
     const order = await cancelOrder(credentials, c.req.param('id'), body)
     return c.json({ order })
   } catch (err) {
-    return shopifyErrorResponse(c, err)
+    return await shopifyErrorResponse(c, err, ctx.workspaceId, storeId)
   }
 })
 
@@ -666,7 +720,7 @@ shopify.post('/orders/:id/edit', async (c) => {
     const orderEdit = await editOrder(credentials, c.req.param('id'), body)
     return c.json({ orderEdit })
   } catch (err) {
-    return shopifyErrorResponse(c, err)
+    return await shopifyErrorResponse(c, err, ctx.workspaceId, storeId)
   }
 })
 
@@ -688,7 +742,7 @@ shopify.post('/orders/:id/duplicate', async (c) => {
     const draftOrder = await duplicateOrder(credentials, c.req.param('id'), body)
     return c.json({ draftOrder })
   } catch (err) {
-    return shopifyErrorResponse(c, err)
+    return await shopifyErrorResponse(c, err, ctx.workspaceId, storeId)
   }
 })
 
@@ -710,7 +764,7 @@ shopify.put('/orders/:id/note', async (c) => {
     await updateOrderNote(credentials, c.req.param('id'), body)
     return c.json({ success: true })
   } catch (err) {
-    return shopifyErrorResponse(c, err)
+    return await shopifyErrorResponse(c, err, ctx.workspaceId, storeId)
   }
 })
 
@@ -732,7 +786,7 @@ shopify.put('/orders/:id/address', async (c) => {
     const shippingAddress = await updateOrderAddress(credentials, c.req.param('id'), body)
     return c.json({ shippingAddress })
   } catch (err) {
-    return shopifyErrorResponse(c, err)
+    return await shopifyErrorResponse(c, err, ctx.workspaceId, storeId)
   }
 })
 
@@ -754,7 +808,7 @@ shopify.post('/orders/:id/fulfill', async (c) => {
     const fulfillment = await fulfillOrder(credentials, c.req.param('id'), body)
     return c.json({ fulfillment })
   } catch (err) {
-    return shopifyErrorResponse(c, err)
+    return await shopifyErrorResponse(c, err, ctx.workspaceId, storeId)
   }
 })
 
@@ -776,7 +830,7 @@ shopify.post('/orders/create', async (c) => {
     const draftOrder = await createDraftOrder(credentials, body)
     return c.json({ draftOrder })
   } catch (err) {
-    return shopifyErrorResponse(c, err)
+    return await shopifyErrorResponse(c, err, ctx.workspaceId, storeId)
   }
 })
 
@@ -800,7 +854,7 @@ shopify.post('/cancel-order', async (c) => {
     const order = await cancelOrder(credentials, body.orderId, body)
     return c.json({ order })
   } catch (err) {
-    return shopifyErrorResponse(c, err)
+    return await shopifyErrorResponse(c, err, ctx.workspaceId, storeId)
   }
 })
 
@@ -822,7 +876,7 @@ shopify.post('/refund-order', async (c) => {
     const refund = await createRefund(credentials, body.orderId, body)
     return c.json({ refund })
   } catch (err) {
-    return shopifyErrorResponse(c, err)
+    return await shopifyErrorResponse(c, err, ctx.workspaceId, storeId)
   }
 })
 
@@ -844,7 +898,7 @@ shopify.post('/duplicate-order', async (c) => {
     const draftOrder = await duplicateOrder(credentials, body.orderId, body)
     return c.json({ draftOrder })
   } catch (err) {
-    return shopifyErrorResponse(c, err)
+    return await shopifyErrorResponse(c, err, ctx.workspaceId, storeId)
   }
 })
 
@@ -866,7 +920,7 @@ shopify.post('/edit-address', async (c) => {
     const shippingAddress = await updateOrderAddress(credentials, body.orderId, body)
     return c.json({ shippingAddress })
   } catch (err) {
-    return shopifyErrorResponse(c, err)
+    return await shopifyErrorResponse(c, err, ctx.workspaceId, storeId)
   }
 })
 

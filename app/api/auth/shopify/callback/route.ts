@@ -85,7 +85,7 @@ export async function GET(request: NextRequest) {
   const tokenRes = await fetch(`https://${shop}/admin/oauth/access_token`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ client_id: clientId, client_secret: clientSecret, code }),
+    body: JSON.stringify({ client_id: clientId, client_secret: clientSecret, code, expiring: '1' }),
   })
 
   const tokenData = (await tokenRes.json()) as ShopifyTokenResponse

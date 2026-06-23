@@ -128,7 +128,7 @@ export interface TagForm {
 
 // ── Integrations ──
 export type EmailProvider = 'gmail' | 'outlook' | 'custom' | 'forwarding'
-export type ConnectionStatus = 'active' | 'pending' | 'error' | 'disconnected'
+export type ConnectionStatus = 'active' | 'pending' | 'error' | 'disconnected' | 'reauth'
 
 export interface EmailAccount {
   id: string

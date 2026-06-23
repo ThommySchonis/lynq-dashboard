@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { extractEmail, extractName } from '@/lib/inbox-utils'
 import { Search } from 'lucide-react'
 import { useMemo, useCallback } from 'react'
@@ -135,6 +136,7 @@ export function CustomerSidebar() {
   const autoCustomerEmail = selectedThread ? extractEmail(selectedThread.from) || '' : ''
   const customerQuery = custSearch || autoCustomerEmail
   const { data: rawCustomer, isLoading: loadingCust } = useCustomerSearch(customerQuery)
+  const needsReauth = (rawCustomer as { code?: string } | undefined)?.code === 'reauth_required'
   const customer = rawCustomer as SidebarCustomerResult | undefined
 
   // Manual customer search handler
@@ -196,15 +198,31 @@ export function CustomerSidebar() {
 
       {/* Customer tab */}
       {rightTab === 'info' && (
-        <CustomerSection
-          customer={customer}
-          customerName={customerName}
-          isVip={isVip}
-          email={extractEmail(selectedThread.from)}
-          loadingCust={loadingCust}
-          custFieldsOpen={custFieldsOpen}
-          setCustFieldsOpen={setCustFieldsOpen}
-        />
+        needsReauth ? (
+          <div className="shrink-0 px-3.5 pt-2.5 pb-1">
+            <div className="flex flex-col items-start gap-2 rounded-md border border-amber-500/25 bg-amber-500/10 px-3 py-3">
+              <p className="text-xs text-amber-700 dark:text-amber-400">
+                This store&apos;s Shopify connection needs to be re-authorized before customer data can load.
+              </p>
+              <Link
+                href="/settings/workspace/stores"
+                className="text-xs font-semibold text-primary hover:underline"
+              >
+                Go to store settings to reconnect →
+              </Link>
+            </div>
+          </div>
+        ) : (
+          <CustomerSection
+            customer={customer}
+            customerName={customerName}
+            isVip={isVip}
+            email={extractEmail(selectedThread.from)}
+            loadingCust={loadingCust}
+            custFieldsOpen={custFieldsOpen}
+            setCustFieldsOpen={setCustFieldsOpen}
+          />
+        )
       )}
 
       {/* Orders tab */}

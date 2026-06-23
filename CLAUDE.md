@@ -12,19 +12,15 @@ A client dashboard platform for Lynq & Flow agency. Each client gets their own l
 
 ## Design System
 
+> **Source of truth:** `app/globals.css` is the authoritative definition of all concrete colors, fonts, and styles — **not this file**. A redesign is in progress (owned by **tkvlad1966**), so palette, fonts, and visual styling may change. Never hardcode or "restore" specific hex values from documentation; always read the current token values from `app/globals.css`. If `globals.css` and any example below disagree, `globals.css` wins.
+
 All design tokens live in `app/globals.css` as CSS variables, mapped to Tailwind via `@theme inline`. Colors use shadcn naming (hex/rgba, not oklch).
 
-**Tokens:** Standard shadcn (`--background`, `--foreground`, `--card`, `--primary`, `--secondary`, `--muted`, `--destructive`, `--border`, `--input`, `--ring`) + semantic extensions (`--foreground-2`, `--foreground-3`, `--foreground-4`, `--success`, `--warning`, `--info`, `--border-hover`, `--accent-soft`).
+**Token names** (structural — stable across the redesign; values live in `globals.css`): Standard shadcn (`--background`, `--foreground`, `--card`, `--primary`, `--secondary`, `--muted`, `--destructive`, `--border`, `--input`, `--ring`) + semantic extensions (`--foreground-2`, `--foreground-3`, `--foreground-4`, `--success`, `--warning`, `--info`, `--border-hover`, `--accent-soft`).
 
-| Token | Light | Dark | Usage |
-|-------|-------|------|-------|
-| `--background` | `#F9F8FF` | `#1C0F36` | Page background |
-| `--card` | `#FFFFFF` | `#241352` | Card/surface background |
-| `--primary` | `#8B5CF6` | `#A175FC` | Brand accent (purple) |
-| `--foreground` | `#0F0F10` | `#F8FAFC` | Primary text |
-| `--border` | `rgba(0,0,0,0.07)` | `rgba(255,255,255,0.07)` | Borders |
+**Fonts:** loaded globally and referenced via CSS variables (`--font-display`, `--font-dm-sans`, `font-sans`). Light/dark mode via `:root` / `.dark` blocks. Exact font families and palette are defined in `globals.css` and may change with the redesign.
 
-**Fonts:** Switzer (body, Fontshare CDN → `font-sans`), Instrument Serif (display, `--font-display`), DM Sans (value feed, `--font-dm-sans`). Light/dark mode via `:root` / `.dark` blocks.
+See `ui-rules` for how to consume tokens (token classes only, no hardcoded hex).
 
 ## Architecture
 
@@ -66,7 +62,7 @@ supabase/
     (other functions) — Webhooks, cron jobs
 ```
 
-**Shopify integration flow:** OAuth or manual API key → credentials in `integrations` table (workspace-scoped) → `getAuthContext()` → `getShopifyCredentialsByWorkspace()` → service function → JSON response. Orders synced to `shopify_orders` via cron Edge Function.
+**Shopify integration flow:** OAuth or manual API key → credentials in `integrations` table (workspace-scoped) → `getAuthContext()` → `getStoreCredentials(storeId, workspaceId)` → service function → JSON response. Orders synced to `shopify_orders` via cron Edge Function.
 
 **Admin panel:** `/admin` (login via `/admin/login`), only for `info@lynqagency.com`. Tabs: Clients, Broadcasts, Notifications.
 
@@ -76,17 +72,15 @@ supabase/
 
 ### Workspace Scoping
 
-Every table with a `workspace_id` column must be queried with a `workspace_id` filter. Omitting it leaks data across workspaces. Use `getAuthContext(request)` → `ctx.workspaceId`. Use `scoped()` helper from `lib/db.ts` or explicit `.eq("workspace_id", ctx.workspaceId)`.
-
-**Workspace-scoped tables:** `workspace_members`, `workspace_invites`, `clients`, `integrations`, `email_accounts`, `email_conversations`, `email_messages`, `conversation_notes`, `shopify_orders`, `shipments`, `analytics_actions`, `ai_settings`, `time_sessions`, `time_session_edits`, `macros`, `macro_onboarding`, `tags`, `team_members`, `tasks`, `feedback_submissions`, `workspace_subscriptions`, `usage_counters`, `invoices`, `billing_info`, `payment_methods`, `workspace_addons`, `workspace_deletion_log`, `oauth_states`, `stores`. Any new table with `workspace_id` follows the same rule.
+Every table with a `workspace_id` column must be queried with a `workspace_id` filter. Omitting it leaks data across workspaces. Use `getAuthContext(request)` → `ctx.workspaceId`. Use `scoped()` helper from `lib/db.ts` or explicit `.eq("workspace_id", ctx.workspaceId)`. (full rule + table list in `supabase-auth-rules`)
 
 ### Backend Service Layer
 
-API routes are thin wrappers only — auth + credentials + service call + JSON response. All business logic in `lib/services/`. Service functions are pure (accept data, return data, throw on errors). Never put business logic in route handlers.
+API routes are thin wrappers only — auth + credentials + service call + JSON response. All business logic in `lib/services/`. Service functions are pure (accept data, return data, throw on errors). Never put business logic in route handlers. (see `hono-api-rules`)
 
 ### Auth
 
-Always use `getAuthContext(request)` in API routes — returns `{ user, workspace, workspaceId, role, memberId }`. Never use `getUserFromToken()` directly.
+Always use `getAuthContext(request)` in API routes — returns `{ user, workspace, workspaceId, role, memberId }`. Never use `getUserFromToken()` directly. (see `supabase-auth-rules`)
 
 ### TypeScript Only
 
@@ -100,91 +94,34 @@ Use `@/` path alias for all imports (e.g., `@/lib/auth`, `@/components/ui/button
 
 Four roles in `workspace_members.role`: `owner`, `admin`, `agent`, `observer`. See `lib/permissions.ts` for `can.*` capability checks.
 
-## API Architecture: Hono Edge Functions (Primary) + Next.js API Routes (Legacy)
+### Linter
 
-Most API endpoints live in the **Hono app** at `supabase/functions/api/`. A few legacy endpoints remain as Next.js API routes in `app/api/` (AI streaming, OAuth callbacks, email sync). **All new API endpoints MUST be Hono routes** unless they require Next.js-specific features (streaming, OAuth redirects).
+Run `npm run lint` after every task; resolve all errors. No `any` (ESLint-enforced).
 
-### Hono Route Pattern
+## How We Split Logic
 
-Each route module is a Hono sub-app mounted in `supabase/functions/api/index.ts`:
+Two runtimes, one architecture. **Next.js side** (`lib/`, `app/`) and **Hono/Deno side** (`supabase/functions/api/`). They mirror each other: services exist in both `lib/services/` and `supabase/functions/api/lib/services/`.
 
-```typescript
-// supabase/functions/api/routes/my-feature.ts
-import { Hono } from 'hono'
-import { authMiddleware } from '../middleware/auth.ts'
-import { requireWriteAccess } from '../middleware/workspace.ts'
-import { getAdminClient } from '../lib/supabase.ts'
-import type { AuthContext } from '../lib/types.ts'
+- **Routes are thin wrappers** (Hono or Next.js): auth → credentials → service call → JSON. No business logic. → `hono-api-rules`
+- **Services are pure**: accept data, return data, throw on errors. All business logic here. DB access via the admin client.
+- **Heavy data work** (aggregations) → PostgreSQL stored functions. → `db-rules`
+- **UI never talks to services directly** — it calls the API via TanStack Query hooks. → `ui-rules`
+- **Cross-cutting platform concerns** (auth, workspace scoping, clients) → `supabase-auth-rules`.
 
-const app = new Hono()
-app.use('*', authMiddleware)
+When deciding where code goes, ask: is it a request/response wrapper (route), reusable logic (service), heavy data math (stored function), or rendering/state (component/hook)?
 
-app.get('/', async (c) => {
-  const ctx = c.get('authContext') as AuthContext
-  const sb = getAdminClient()
-  const { data } = await sb.from('table').select('*').eq('workspace_id', ctx.workspaceId)
-  return c.json({ data })
-})
+## Third-Party Integrations
 
-app.post('/', async (c) => {
-  const ctx = c.get('authContext') as AuthContext
-  const blocked = requireWriteAccess(c)
-  if (blocked) return blocked
-  const body = await c.req.json()
-  // ... validate, call service, return response
-  return c.json({ success: true })
-})
+| Integration | Pattern | Where |
+|---|---|---|
+| Email (Gmail, Outlook, SMTP, forwarding) | **Adapter registry** — `ProviderAdapter` contract + `getAdapter(provider)` | `lib/providers/`; webhooks in `supabase/functions/api/routes/webhooks-email.ts` |
+| AI (Anthropic default, OpenAI, Groq) | Pluggable provider via `AI_PROVIDER` / `AI_MODEL` env | `lib/ai/model.ts`; generation routes stay Next.js (streaming) |
+| Billing (Whop) | HMAC webhook + API client | `supabase/functions/api/lib/whop.ts`, `routes/webhooks-whop.ts` |
+| Transactional email (Resend) | Service + webhook | `lib/services/resend-domains.ts` |
+| Error tracking (Sentry) | Config-only | `sentry.server.config.ts`, `sentry.edge.config.ts` |
+| Shopify | OAuth/manual key + cron + webhooks | → `shopify-rules` |
 
-export { app as myFeatureRoutes }
-```
-
-Then register in `index.ts`:
-```typescript
-import { myFeatureRoutes } from './routes/my-feature.ts'
-app.route('/my-feature', myFeatureRoutes)
-```
-
-And add the path prefix to `lib/api-client.ts` `honoRoutes` array so the frontend routes to Hono.
-
-### Frontend API Routing
-
-`lib/api-client.ts` has `apiUrl(path)` which checks if a path prefix is in the `honoRoutes` array. If yes → routes to `SUPABASE_URL/functions/v1/api/{path}`. If no → routes to Next.js `/api/{path}`. **When adding a new Hono route, always add its prefix to `honoRoutes`.**
-
-### Hono Auth & Middleware
-
-- **Auth:** `authMiddleware` extracts Bearer token → validates via Supabase Auth → loads workspace membership → sets `c.set('authContext', ctx)`
-- **Write access:** `requireWriteAccess(c)` blocks writes to suspended workspaces
-- **Permissions:** `can.*` functions in `lib/permissions.ts` for role-based checks
-- **Supabase client:** `getAdminClient()` returns service-role client (bypasses RLS)
-
-### Edge Function Decision Rule
-
-Use **Hono Edge Functions** (default for all new endpoints) when:
-- The operation is a standard CRUD API endpoint
-- The operation is triggered by a webhook
-- The operation is a scheduled/cron job
-
-Use **Next.js API routes** only when:
-- The operation requires streaming responses (AI chat)
-- The operation requires Next.js-specific features (OAuth redirects with cookies)
-
-### Exception — AI agent settings CRUD
-
-CRUD for the AI agent settings tables (`ai_policies`, `ai_scenarios`, `ai_autonomy_rules`, `ai_lessons`, `ai_examples`) is handled by Postgres `SECURITY DEFINER` functions in `supabase/migrations/`, called from the frontend via `lib/rpc.ts`. New endpoints for this area follow the same RPC pattern, not Hono. AI generation routes (`/api/ai/reply`, `/api/ai/chat`, `/api/ai/analyze`, `/api/ai/translate`, `/api/ai/macros`) remain Next.js routes for streaming/structured-output support.
-
-## Database Migrations
-
-- All schema changes must go through `supabase migration new <name>`
-- Write SQL in the generated file in `supabase/migrations/`
-- Apply via `supabase db push` (remote) or `supabase db reset` (local)
-- **Never** run SQL directly in Supabase SQL Editor or any SQL terminal
-- New tables must include `workspace_id` column + RLS policies
-
-## Linter
-
-- Run `npm run lint` after completing any task
-- All errors must be resolved before considering work done
-- No `any` types allowed — enforced by ESLint (`no-explicit-any`, `no-unsafe-*`)
+**Adding an integration of an existing kind** (e.g. a new email provider): add a new adapter file implementing the contract + register it. Never modify existing adapters (Open/Closed). Webhook receivers are Hono routes with `verify_jwt = false` + HMAC verification (see `deployment-rules`).
 
 ## Design Principles
 
@@ -208,67 +145,19 @@ Apply these on every change. They're not aspirational — violations get caught 
 - **Interface Segregation:** don't bloat a contract with optional fields nobody uses. If `fetchMacros` would be empty for a source, return an empty page — don't add an `isSupported` flag.
 - **Dependency Inversion:** modules depend on stable contracts (types in `types/` and the `SourceAdapter` interface), not on each other directly. The orchestrator depends on the adapter interface, not on Gorgias.
 
-## Common Pitfalls
-
-These are gotchas that have already bitten this codebase. Check the relevant rule before touching the area.
-
-### base-ui Select (NOT Radix)
-`components/ui/select.tsx` wraps `@base-ui/react/select`. Behavior differs from Radix in two ways:
-- **`<SelectValue>` shows the raw `value`** unless given a render-function child. The `label` prop on `<SelectItem>` is for keyboard text navigation only — it does NOT affect the trigger display. To show a friendly label in the trigger:
-  ```tsx
-  <SelectValue placeholder="…">
-    {(value: string | null) => members.find((m) => m.id === value)?.name ?? value}
-  </SelectValue>
-  ```
-- **`onValueChange` signature is `(value: string | null) => void`.** Handle null explicitly — base-ui emits null when selection is cleared. A typed callback `(v: string) => ...` will fail TypeScript build.
-
-### Settings pages
-- All settings pages live under `app/(protected)/settings/<category>/<page>/`. The `(protected)` route group supplies `AppShell` + `SettingsSidebar` via the parent `layout.tsx`. Putting a page under `app/settings/...` produces an unstyled, sidebar-less page.
-- New pages also need a `SettingsNavItem` entry in `lib/settings-constants.ts` `SETTINGS_NAV` to appear in the sidebar. The sidebar is data-driven, not auto-discovered.
-- Standard page shell: `<div className="max-w-3xl mx-auto px-10 py-12">` wrapping `<SettingsSection title=… description=… actions=…>` and `<SettingsCard>` from `components/features/settings/settings-section.tsx`. Don't roll your own header/card.
-
-### shadcn `Card` has built-in `py-4`
-Wrapping an interactive element (e.g. `<Button>`) inside `<Card>` creates visible top/bottom gutters that the hover background can't fill. Either drop the `Card` wrapper or pass `className="py-0"` to strip the padding.
-
-### Postgres SETOF → JSON aggregation
-When wrapping a table-returning function inside `json_build_object` (the standard `api_*` wrapper pattern), you MUST aggregate explicitly. The naive form silently returns only the first row, or errors with "more than one row returned by a subquery used as an expression":
-```sql
--- WRONG
-return (select json_build_object('data', my_setof_function(...)));
-
--- RIGHT
-return (select json_build_object('data',
-  coalesce(
-    (select json_agg(row_to_json(t)) from my_setof_function(...) t),
-    '[]'::json
-  )
-));
-```
-
-### Edge function deployments are separate from migrations
-- SQL: `supabase db push` (remote) and `supabase migration up --local` (local). The two are independent — pushing to remote doesn't apply locally and vice versa.
-- Edge functions: `supabase functions deploy <name>` per function, from `lynq-dashboard/`. Adding a new Hono route to `routes/` does NOT take effect on prod until the `api` function is redeployed.
-- The CLI looks for the `supabase/` directory relative to cwd — run deploys from `lynq-dashboard/`, not the workspace root.
-
-### Deno tests
-Edge-function Deno tests must run from `supabase/functions/api/` (where `deno.json` with the import map lives), not from `supabase/functions/`:
-```bash
-cd supabase/functions/api && deno test --allow-read tests/<name>.test.ts
-```
-The `--allow-read` flag is required for any test that reads fixtures from disk.
-
 ## Skills Reference
 
-You **MUST** invoke the relevant skill before creating or editing these files. Check this table on every file operation.
+You **MUST** invoke the relevant skill before the matching work. Check this table on every file operation and task.
 
-| When you are about to... | Invoke skill |
+| When you are about to… | Invoke skill |
 |---|---|
-| Create/edit a React component (`components/**/*.tsx`, any `.tsx` exporting a component) | `component-rules` |
-| Create/edit hooks (`hooks/**/*.ts`, `hooks/**/*.tsx`) | `component-rules` |
-| Create/edit a page or layout (`app/**/page.tsx`, `app/**/layout.tsx`) | `page-rules` |
-| Create/edit an API route (`app/api/**`) | `api-route-rules` |
-| Create/edit a Supabase Edge Function (`supabase/functions/**`) | `edge-function-rules` |
-| Change database schema, tables, stored functions, or RLS policies | `migration-rules` |
+| Edit a component, hook, page, layout, store, or styling | `ui-rules` |
+| Build/edit an API endpoint (Hono route or legacy Next.js route) | `hono-api-rules` |
+| Touch auth, Supabase clients, or workspace scoping | `supabase-auth-rules` |
+| Change DB schema, migrations, stored functions, or RLS | `db-rules` |
+| Deploy edge functions, push migrations, or ship to Vercel | `deployment-rules` |
+| Debug a bug, test failure, or unexpected behavior | `debug-rules` |
+| Touch Shopify integration (sync, webhooks, credentials, OAuth) | `shopify-rules` |
 
 ### Installed Skills
 

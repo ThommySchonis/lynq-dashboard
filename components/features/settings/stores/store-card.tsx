@@ -12,6 +12,7 @@ import { ConfirmDialog } from '@/components/features/settings/confirm-dialog'
 import { CustomEmailModal } from '@/components/features/settings/integrations/custom-email-modal'
 import { ForwardingSetupWizard } from '@/components/features/settings/integrations/forwarding/forwarding-setup-wizard'
 import { useUpdateStore, useDisconnectStore, useDeleteStore, useDeleteStoreEmailAccount } from '@/hooks/stores'
+import { startShopifyOAuth } from '@/hooks/settings/use-integration-mutations'
 import { useStoreEmailAccounts } from '@/hooks/stores'
 import { useAuthStore } from '@/stores/auth'
 import { usePermissions } from '@/hooks/use-permissions'
@@ -43,6 +44,19 @@ export function StoreCard({ store }: StoreCardProps) {
   const adminTitle = canManage ? undefined : 'Admin access required to manage store connections.'
 
   const isConnected = !!store.shopify_connected_at
+  const needsReauth = store.status === 'reauth_required'
+  const [reconnecting, setReconnecting] = useState(false)
+
+  async function handleReconnect() {
+    if (!store.shopify_domain) return
+    setReconnecting(true)
+    try {
+      const url = await startShopifyOAuth(token, store.shopify_domain, store.name)
+      window.location.href = url
+    } catch {
+      setReconnecting(false)
+    }
+  }
 
   function handleSaveName() {
     if (!name.trim() || name === store.name) {
@@ -90,8 +104,8 @@ export function StoreCard({ store }: StoreCardProps) {
           </div>
 
           <StatusBadge
-            status={isConnected ? 'active' : 'disconnected'}
-            label={isConnected ? 'Connected' : 'Disconnected'}
+            status={needsReauth ? 'reauth' : isConnected ? 'active' : 'disconnected'}
+            label={needsReauth ? 'Reconnect required' : isConnected ? 'Connected' : 'Disconnected'}
           />
         </div>
 
@@ -102,6 +116,24 @@ export function StoreCard({ store }: StoreCardProps) {
             <p>Connected {new Date(store.shopify_connected_at).toLocaleDateString()}</p>
           )}
         </div>
+
+        {needsReauth && (
+          <div className="flex flex-col gap-2 rounded-md border border-amber-500/25 bg-amber-500/10 px-3 py-2.5">
+            <p className="text-xs text-amber-700 dark:text-amber-400">
+              Shopify rejected this store&apos;s access token. Reconnect to restore order, refund and customer data.
+            </p>
+            <Button
+              size="sm"
+              onClick={() => { void handleReconnect() }}
+              disabled={isSuspended || reconnecting || !canManage || !store.shopify_domain}
+              title={adminTitle}
+              className="self-start"
+            >
+              {reconnecting ? <Loader2 className="size-3.5 animate-spin" /> : <ArrowUpRight className="size-3.5" />}
+              Reconnect Shopify
+            </Button>
+          </div>
+        )}
 
         {/* Actions */}
         <div className="flex items-center gap-2 pt-1">

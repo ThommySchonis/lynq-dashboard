@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { Package, AlertCircle, CheckCircle2 } from 'lucide-react'
 import { useConnectParcelPanel } from '@/hooks/supply-chain/use-supply-chain-mutations'
+import { useStoreStore } from '@/stores/store'
 import { apiUrl } from '@/lib/api-client'
 
 interface SetupWizardProps {
@@ -28,6 +29,7 @@ export function SetupWizard({ onConnected }: SetupWizardProps) {
   const [webhookToken, setWebhookToken] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
   const { mutate, isPending, error } = useConnectParcelPanel()
+  const activeStore = useStoreStore((s) => s.activeStore)
 
   const webhookUrl = webhookToken
     ? apiUrl(`parcel-panel/webhook/${webhookToken}`)
@@ -41,8 +43,8 @@ export function SetupWizard({ onConnected }: SetupWizardProps) {
   }
 
   const handleConnect = () => {
-    if (!apiKey.trim()) return
-    mutate(apiKey.trim(), {
+    if (!apiKey.trim() || !activeStore) return
+    mutate({ apiKey: apiKey.trim(), storeId: activeStore.id }, {
       onSuccess: (data) => {
         setWebhookToken(data.webhookToken)
       },
@@ -59,15 +61,18 @@ export function SetupWizard({ onConnected }: SetupWizardProps) {
       <h2 className="text-[26px] font-extrabold tracking-[-0.04em] text-foreground mb-2.5">
         Connect Parcel Panel
       </h2>
-      <p className="text-sm text-foreground-2 max-w-[440px] leading-[1.7] mb-7">
+      <p className="text-sm text-foreground-2 max-w-[440px] leading-[1.7] mb-3">
         Link your Parcel Panel account to automatically track all shipments and get proactive alerts.
       </p>
+      {activeStore && (
+        <p className="text-[12.5px] text-foreground-3 mb-5">Connecting for <span className="font-semibold text-foreground-2">{activeStore.name}</span></p>
+      )}
 
       {/* Amber notice */}
       <div className="w-full max-w-[440px] mb-7 py-[11px] px-3.5 bg-[rgba(217,119,6,0.06)] border border-[rgba(217,119,6,0.18)] rounded-[10px] text-left flex gap-[9px] items-start">
         <AlertCircle className="w-3.5 h-3.5 text-[#D97706] shrink-0 mt-px" />
         <p className="text-[12.5px] text-[#D97706] leading-[1.55]">
-          <strong>Note:</strong> Only new shipments from the moment of connection will be tracked. Existing orders will not appear retroactively.
+          <strong>Note:</strong> On connection we import tracking for your recent orders (last 90 days). After that, new status updates arrive automatically via the webhook.
         </p>
       </div>
 
@@ -146,12 +151,12 @@ export function SetupWizard({ onConnected }: SetupWizardProps) {
             {/* Connect button */}
             <button
               onClick={handleConnect}
-              disabled={isPending || !apiKey.trim()}
+              disabled={isPending || !apiKey.trim() || !activeStore}
               className="w-full py-3 rounded-[10px] border text-sm font-bold cursor-pointer transition-all duration-150 disabled:cursor-not-allowed"
               style={{
-                background: isPending || !apiKey.trim() ? '#F5F5F5' : '#111111',
-                color: isPending || !apiKey.trim() ? '#BDBDBD' : '#FFFFFF',
-                borderColor: isPending || !apiKey.trim() ? 'rgba(0,0,0,0.08)' : 'transparent',
+                background: isPending || !apiKey.trim() || !activeStore ? '#F5F5F5' : '#111111',
+                color: isPending || !apiKey.trim() || !activeStore ? '#BDBDBD' : '#FFFFFF',
+                borderColor: isPending || !apiKey.trim() || !activeStore ? 'rgba(0,0,0,0.08)' : 'transparent',
               }}
             >
               {isPending ? 'Connecting...' : 'Connect Parcel Panel'}

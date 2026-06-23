@@ -26,3 +26,6 @@ verify_jwt = false
 
 [functions.migrations-tick]
 verify_jwt = false
+
+[functions.parcelpanel-backfill]
+verify_jwt = false

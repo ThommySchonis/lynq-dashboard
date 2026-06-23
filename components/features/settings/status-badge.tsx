@@ -37,6 +37,13 @@ const statusConfig: Record<
     borderClass: 'border-border',
     defaultLabel: 'Disconnected',
   },
+  reauth: {
+    dotClass: 'bg-amber-500',
+    textClass: 'text-amber-700 dark:text-amber-400',
+    bgClass: 'bg-amber-500/10',
+    borderClass: 'border-amber-500/25',
+    defaultLabel: 'Reconnect required',
+  },
 }
 
 export function StatusBadge({ status, label }: StatusBadgeProps) {

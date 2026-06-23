@@ -1,5 +1,6 @@
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import { resilientFetch } from '@/lib/resilient-fetch'
+import { logger } from '@/lib/logger'
 import { shopifyFetchJSON, shopifyPaginatedFetch, SHOPIFY_API_VERSION } from './shopify-core'
 import type {
   ShopifyCredentials,
@@ -205,11 +206,12 @@ interface DraftOrdersGraphQLResponse {
       }>
     }
   }
+  errors?: Array<{ message: string }>
 }
 
 const CUSTOMER_DRAFT_ORDERS_QUERY = `
   query customerDraftOrders($query: String!) {
-    draftOrders(first: 50, query: $query, sortKey: CREATED_AT, reverse: true) {
+    draftOrders(first: 50, query: $query) {
       edges {
         node {
           id
@@ -254,7 +256,14 @@ async function getCustomerDraftOrders(credentials: ShopifyCredentials, customerI
     },
   )
 
-  if (!res.ok) return []
+  if (!res.ok) {
+    logger.error('[shopify]', 'draft orders fetch failed', { status: res.status, error: res.error })
+    return []
+  }
+  if (res.data.errors?.length) {
+    logger.error('[shopify]', 'draft orders GraphQL errors', { errors: res.data.errors })
+    return []
+  }
 
   return (res.data.data?.draftOrders.edges ?? [])
     .filter(({ node }) => node.status !== 'COMPLETED')

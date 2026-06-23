@@ -47,8 +47,9 @@ export function NoteModal({ order, token, onClose, onSuccess }: NoteModalProps) 
           <DialogTitle>{`Note — ${order.name}`}</DialogTitle>
         </DialogHeader>
         <div>
-          <label className="text-[10.5px] font-bold tracking-[.07em] uppercase text-muted-foreground mb-[7px] block">Internal note (visible in Shopify)</label>
-          <textarea className="w-full bg-secondary border border-border rounded-[11px] px-3.5 py-[13px] text-[13.5px] text-foreground outline-none resize-y min-h-[170px]"
+          <label className="text-[10.5px] font-bold tracking-[.07em] uppercase text-muted-foreground mb-[7px] block">Internal note</label>
+          <textarea
+            className="w-full bg-secondary border border-border rounded-[11px] px-3.5 py-[13px] text-[13.5px] text-foreground outline-none resize-y min-h-[170px]"
             value={note}
             onChange={(e) => setNote(e.target.value)}
             rows={5}

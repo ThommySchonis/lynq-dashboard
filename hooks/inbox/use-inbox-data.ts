@@ -68,6 +68,11 @@ export function useConversations(folder: string, search: string) {
   return useQuery<Thread[]>({
     queryKey: inboxKeys.conversations(folder, search, activeStoreId, selectedEmailAccountId),
     queryFn: async () => {
+      // AI Staged is backed by emma_draft_queue, not yet a list filter (BE #8).
+      // Short-circuit to empty instead of hitting the endpoint with an
+      // unsupported status. When #8 lands, drop this branch and let the request
+      // below set a `status=ai_staged` param — rows are already Thread-shaped.
+      if (folder === 'ai_staged') return []
       const params = new URLSearchParams()
       if (folder === 'unlinked') params.set('unlinked', 'true')
       else if (folder === 'trash') params.set('status', 'closed')

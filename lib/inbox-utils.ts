@@ -29,6 +29,12 @@ export function fmtPrice(v: string | number, c = 'EUR'): string {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency: c || 'EUR' }).format(Number(v) || 0)
 }
 
+/** A Shopify customer is VIP when its comma-separated tags string contains "vip"
+ *  (case-insensitive). Temporary until a structured VIP field exists (BE #3). */
+export function deriveIsVip(tags: string | null | undefined): boolean {
+  return (tags ?? '').split(',').some((t) => t.trim().toLowerCase() === 'vip')
+}
+
 export function relTime(s: string | null | undefined): string {
   if (!s) return ''
   const diff = Date.now() - new Date(s).getTime()

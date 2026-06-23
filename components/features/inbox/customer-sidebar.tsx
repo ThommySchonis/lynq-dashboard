@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { extractEmail, extractName } from '@/lib/inbox-utils'
+import { extractEmail, extractName, deriveIsVip } from '@/lib/inbox-utils'
 import { Search } from 'lucide-react'
 import { useMemo, useCallback } from 'react'
 import { useInboxUI } from '@/stores/inbox-ui'
@@ -156,9 +156,7 @@ export function CustomerSidebar() {
 
   // VIP badge derived from the Shopify tags string until a structured VIP field
   // exists (backend task #3).
-  const isVip = (customer?.customer?.tags ?? '')
-    .split(',')
-    .some((t) => t.trim().toLowerCase() === 'vip')
+  const isVip = deriveIsVip(customer?.customer?.tags)
 
   return (
     <div className="thin-scrollbar w-[280px] border-l border-border flex flex-col shrink-0 overflow-y-auto bg-card">

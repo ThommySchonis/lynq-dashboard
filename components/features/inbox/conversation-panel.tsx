@@ -26,9 +26,8 @@ import { useComposerActions } from "@/hooks/inbox/use-composer-actions";
 import { usePermissions } from "@/hooks/use-permissions";
 import { useStoreAiSettings } from "@/hooks/stores/use-stores-data";
 import { useQueryClient } from "@tanstack/react-query";
-import { EmmaSuggestionCard } from "./emma-suggestion-card";
+import { AiDraftReview } from "./ai-draft-review";
 import { usePendingDraft, useUpdateDraftStatus } from "@/hooks/ai";
-import type { FeedbackCategory } from "@/types/ai-drafts";
 
 const REFUND_REASONS = [
   { value: "customer", label: "Customer changed mind" },
@@ -101,6 +100,8 @@ export function ConversationPanel() {
   const { data: pendingDraft, isFetched: draftFetched } = usePendingDraft(selectedThreadId);
   const updateDraft = useUpdateDraftStatus(selectedThreadId ?? "");
   const autoTriggeredRef = useRef<string | null>(null);
+  const loadedDraftRef = useRef<string | null>(null);
+  const draftPending = pendingDraft?.status === "pending";
 
   // Macros
   const macros = useMacrosStore((s) => s.macros);
@@ -172,6 +173,18 @@ export function ConversationPanel() {
     autoTriggeredRef.current = selectedThreadId;
     void generateReply(selectedThread, messages, token);
   }, [selectedThreadId, selectedThread, storeAiSettings, messages, draftFetched, pendingDraft, aiLoading, generateReply, token]);
+
+  // Load a pending AI draft into the composer once (inline review, Figma 517).
+  useEffect(() => {
+    if (draftPending && pendingDraft && loadedDraftRef.current !== pendingDraft.id) {
+      loadedDraftRef.current = pendingDraft.id;
+      if (composerRef.current) {
+        composerRef.current.innerHTML = plainTextToSafeHtml(pendingDraft.suggested_text);
+        setReply(composerRef.current.textContent ?? "");
+      }
+      setEditingDraftId(pendingDraft.id);
+    }
+  }, [draftPending, pendingDraft, setReply, setEditingDraftId]);
 
   // Status helpers
   const getStatus = useCallback(
@@ -362,50 +375,22 @@ export function ConversationPanel() {
     } else setReply(result.reply);
   }
 
-  // Draft workflow actions
-  async function handleDraftApprove() {
-    if (!pendingDraft || !selectedThreadId) return;
-    try {
-      await sendReplyMutation.mutateAsync({
-        threadId: selectedThreadId,
-        bodyHtml: plainTextToSafeHtml(pendingDraft.suggested_text),
-        bodyText: pendingDraft.suggested_text,
-      });
-      await updateDraft.mutateAsync({
-        draftId: pendingDraft.id,
-        status: "approved",
-      });
-      sonnerToast.success("Reply sent");
-    } catch {
-      sonnerToast.error("Failed to send reply");
-    }
-  }
-
-  function handleDraftEdit() {
-    if (!pendingDraft || !composerRef.current) return;
-    composerRef.current.innerHTML = plainTextToSafeHtml(pendingDraft.suggested_text);
-    setReply(composerRef.current.textContent ?? "");
-    setEditingDraftId(pendingDraft.id);
-  }
-
-  async function handleDraftDecline(category: FeedbackCategory, comment?: string) {
+  // AI draft (inline): the pending draft loads into the composer so Send
+  // approves it and editing happens in place. "No" sends comment-only feedback
+  // (and discards); Discard declines without feedback; "Yes" is a positive ack
+  // (no backend feedback endpoint yet — BE task #7).
+  async function handleDraftDecline(comment?: string) {
     if (!pendingDraft) return;
-    await updateDraft.mutateAsync({
-      draftId: pendingDraft.id,
-      status: "declined",
-      feedbackCategory: category,
-      feedbackComment: comment,
-    });
-    sonnerToast.success("Suggestion declined");
+    loadedDraftRef.current = pendingDraft.id; // don't reload this draft
+    await updateDraft.mutateAsync({ draftId: pendingDraft.id, status: "declined", feedbackComment: comment });
+    if (composerRef.current) composerRef.current.innerHTML = "";
+    setReply("");
+    setEditingDraftId(null);
+    sonnerToast.success(comment ? "Feedback sent" : "Draft discarded");
   }
 
-  async function handleDraftRegenerate() {
-    if (!pendingDraft || !selectedThread) return;
-    await updateDraft.mutateAsync({
-      draftId: pendingDraft.id,
-      status: "regenerated",
-    });
-    await generateReply(selectedThread, messages, token);
+  function handleDraftHelpfulYes() {
+    sonnerToast.success("Thanks — glad it helped!");
   }
 
   if (!selectedThread) {
@@ -465,20 +450,6 @@ export function ConversationPanel() {
         <MessageList msgEndRef={msgEndRef} />
         <NotesSection />
       </div>
-
-      {/* Emma suggestion card */}
-      {pendingDraft && pendingDraft.status === "pending" && (
-        <EmmaSuggestionCard
-          draft={pendingDraft}
-          onApprove={() => void handleDraftApprove()}
-          onEdit={handleDraftEdit}
-          onDecline={(cat, comment) => void handleDraftDecline(cat, comment)}
-          onRegenerate={() => void handleDraftRegenerate()}
-          isApproving={sendReplyMutation.isPending}
-          isDeclining={updateDraft.isPending}
-          isRegenerating={updateDraft.isPending}
-        />
-      )}
 
       {/* Composer */}
       <div className="border-t border-border shrink-0 bg-card">
@@ -580,6 +551,15 @@ export function ConversationPanel() {
               {/* View-only hint */}
               {!canReply && <p className="px-4 py-2 text-xs text-muted-foreground">View-only access — you cannot reply to tickets.</p>}
 
+              {/* AI draft review (inline) — Figma 517 */}
+              {draftPending && (
+                <AiDraftReview
+                  onHelpfulYes={handleDraftHelpfulYes}
+                  onHelpfulNo={(comment) => void handleDraftDecline(comment)}
+                  disabled={updateDraft.isPending}
+                />
+              )}
+
               {/* Contenteditable composer — bordered box (Figma 1283-52943) */}
               <div className="mx-3.5 my-2 overflow-hidden rounded-xl border border-accent-soft bg-background dark:bg-[rgba(255,255,255,0.025)]">
                 <div
@@ -605,9 +585,26 @@ export function ConversationPanel() {
                 />
               </div>
 
-              {/* AI generating dots */}
+              {/* AI draft: Discard (Figma footer) */}
+              {draftPending && (
+                <div className="px-3.5 pb-1">
+                  <button
+                    type="button"
+                    onClick={() => void handleDraftDecline()}
+                    disabled={updateDraft.isPending}
+                    className="text-[12px] font-medium text-muted-foreground transition-colors hover:text-foreground disabled:opacity-50"
+                  >
+                    Discard
+                  </button>
+                </div>
+              )}
+
+              {/* AI loading — "Lynq AI is reading…" + animated dots in one row.
+                  Bound to aiLoading (settles on success and error), so it never
+                  sticks; covers both the explicit AI Reply click and auto-draft. */}
               {aiLoading && (
-                <div className="pt-1 px-4 pb-0 flex items-center gap-1">
+                <div className="pt-1 px-4 pb-0 flex items-center gap-1.5">
+                  <span className="text-[12px] font-medium text-foreground-3">Lynq AI is reading…</span>
                   {[0, 0.18, 0.36].map((d) => (
                     <span
                       key={d}

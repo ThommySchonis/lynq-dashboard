@@ -166,6 +166,7 @@ export function ThreadListPanel() {
 
   const folders = INBOX_FOLDERS.map((f) => ({
     ...f,
+    // ai_staged isn't in /counts yet (BE #8) → resolves to 0, badge stays hidden.
     count: counts[f.key as keyof typeof counts] ?? 0,
   }));
 
@@ -301,7 +302,9 @@ export function ThreadListPanel() {
               <SyncNotice />
             </div>
           ) : (
-            <div className="px-5 py-10 text-center text-muted-foreground text-[12.5px]">No conversations in this folder</div>
+            <div className="px-5 py-10 text-center text-muted-foreground text-[12.5px]">
+              {activeFolder === "ai_staged" ? "No AI drafts yet" : "No conversations in this folder"}
+            </div>
           )
         )}
         {sortedFiltered.map((thread) => {

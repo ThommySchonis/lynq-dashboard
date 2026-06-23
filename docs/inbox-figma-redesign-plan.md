@@ -55,13 +55,14 @@
 - 🟡 **Helpful? Yes/No** + submit feedback → ендпоінта прийому фідбеку нема (BE-task #7): UI робимо, сабміт за фіче-флагом/no-op до готовності.
 - 🟡 **Tone popover** (Match customer/Friendly/Professional/Concise/Apologetic) → `/api/ai/reply` не приймає tone (BE-task #9): UI робимо, параметр почнемо слати після BE.
 
-### Фаза 5 — Create Ticket + Drop-Downs + Search customers
-Файли: `components/features/inbox/new-conversation-modal.tsx`, `create-ticket-view.tsx`
+### Фаза 5 — Create Ticket + Drop-Downs + Search customers ✅ ЗАКРИТО
+Реалізовано: `app/(protected)/inbox/create/page.tsx` (тонкий orchestrator) + `components/features/inbox/create-ticket/{recent-panel,composer,details-panel}.tsx` + хук `hooks/inbox/use-create-ticket.ts`. Мертвий `create-ticket-view.tsx` видалено.
 
-- ✅ Create Ticket: Subject + inline priority/assign, composer TO/From/**Cc/Bcc**, форматування, macros, Send (compose endpoint є).
-- ✅ Drop-Downs: priority/customer-search/assign — перевикористати компоненти з Фази 2.
-- ✅ Search customers: пошук по email/order# (як зараз), рядок результату з тим, що бекенд дає (ім'я, email, order#, location, totalSpent).
-- 🟡 Пошук по location/lifetime value (BE-task #10) і **Create new contact** (нема create-customer ендпоінта, BE-task #12): форму малюємо, сабміт за флагом до готовності BE.
+- ✅ Create Ticket: 3-колонковий Figma-layout (recent · composer · ticket-details). Subject + **priority/assign у subject-хедері**, composer TO/From/**Cc/Bcc**, форматування, macros, Send/Send & Close. UI піксельно звірено з Figma (`1372:68435`, `1372:68437`, `782:25968`).
+- ✅ Drop-Downs: priority (Select) + assign (перевикористаний `ConversationAssignMenu` з Фази 2).
+- ✅ **Двокрокова персистенція** (`use-create-ticket.ts`): compose → `conversationId` → best-effort PATCH `metadata` (priority/contact_reason/product/resolution) + bulk `assign` + `add_tag` (з `createTag` за потреби).
+- ✅ Картка клієнта — **auto з TO-email** (`useCustomerSearch`), без окремого поля пошуку. 🟡 Location/LTV/VIP деградують у «—» (BE #2/#3).
+- **Рішення по скоупу:** поле **Search customers** на Create Ticket **прибрано** (за вимогою). Standalone-екрани **Search customers** і **Create new contact** (BE #10/#12) **не робимо** — Фазу 5 закрито без них; повернутись можна після закриття BE-боргу.
 
 ---
 
@@ -90,5 +91,7 @@
 ## Послідовність робіт
 0. Токени → 1. Список + bulk → 2. Conversation detail + up drop-downs → 3. Модалки → 4. AI Staged → 5. Create Ticket + Search customers.
 
-## Відкрите питання
-**Contact reason / Product / Resolution / tier** (BE-task #11): записувати тимчасово в наявне `metadata` (фронт може зараз), чи чекати окремих колонок? Визначає, скільки тікет-полів запрацюють одразу.
+**Статус: Фази 1–5 завершені.** Лишається паралельний BE-трек (Частина B) — після закриття задач знімаємо 🟡-флаги/stub-и.
+
+## Відкрите питання — ВИРІШЕНО
+**Contact reason / Product / Resolution / tier** (BE-task #11): обрано записувати в наявне `metadata` (Create Ticket пише `priority`/`contact_reason`/`product`/`resolution` у `metadata` через PATCH). Окремі колонки — за бажанням у BE #11; фронт уже працює.

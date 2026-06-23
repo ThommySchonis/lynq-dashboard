@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useAuthStore } from '@/stores/auth'
 import { useWorkspace, useUpdateWorkspace, useUploadLogo, useDeleteLogo } from '@/hooks/settings'
@@ -58,7 +59,7 @@ export function GeneralSettings() {
     logoFile: null,
   })
   const [slugError, setSlugError] = useState('')
-  const [savingIdentity, setSavingIdentity] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
   const [initIdentity, setInitIdentity] = useState<Pick<IdentityState, 'name' | 'slug' | 'logoUrl'>>({
     name: '',
     slug: '',
@@ -73,7 +74,6 @@ export function GeneralSettings() {
     time_format: WORKSPACE_DEFAULTS.time_format,
     first_day_of_week: WORKSPACE_DEFAULTS.first_day_of_week,
   })
-  const [savingRegional, setSavingRegional] = useState(false)
   const [initRegional, setInitRegional] = useState<RegionalValues>({
     timezone: WORKSPACE_DEFAULTS.timezone,
     locale: WORKSPACE_DEFAULTS.locale,
@@ -88,7 +88,6 @@ export function GeneralSettings() {
     auto_translate: WORKSPACE_DEFAULTS.auto_translate,
     allow_deletion: WORKSPACE_DEFAULTS.allow_deletion,
   })
-  const [savingPreferences, setSavingPreferences] = useState(false)
   const [initPreferences, setInitPreferences] = useState<PreferencesValues>({
     show_order_data: WORKSPACE_DEFAULTS.show_order_data,
     auto_translate: WORKSPACE_DEFAULTS.auto_translate,
@@ -147,27 +146,46 @@ export function GeneralSettings() {
     preferences.allow_deletion !== initPreferences.allow_deletion
 
   const canEdit = !isSuspended && (role === 'owner' || role === 'admin')
+  const anyDirty = identityDirty || regionalDirty || preferencesDirty
 
-  // ── Save handlers ─────────────────────────────────────────────────────────────
-  async function handleSaveIdentity() {
-    if (!canEdit) return
-    setSavingIdentity(true)
+  // ── Save / discard — one global save-bar for the whole page ───────────────────
+  async function handleSaveAll() {
+    if (!canEdit || !anyDirty) return
+    setIsSaving(true)
     setSlugError('')
     try {
-      let newLogoUrl = identity.logoUrl
+      if (identityDirty) {
+        let newLogoUrl = identity.logoUrl
 
-      if (identity.logoFile) {
-        const result = await uploadLogo.mutateAsync(identity.logoFile)
-        newLogoUrl = result.logo_url
-        setIdentity((prev) => ({ ...prev, logoFile: null, logoUrl: newLogoUrl }))
-      } else if (identity.logoPreview === null && initIdentity.logoUrl !== null) {
-        await deleteLogo.mutateAsync()
-        newLogoUrl = null
-        setIdentity((prev) => ({ ...prev, logoUrl: null }))
+        if (identity.logoFile) {
+          const result = await uploadLogo.mutateAsync(identity.logoFile)
+          newLogoUrl = result.logo_url
+          setIdentity((prev) => ({ ...prev, logoFile: null, logoUrl: newLogoUrl }))
+        } else if (identity.logoPreview === null && initIdentity.logoUrl !== null) {
+          await deleteLogo.mutateAsync()
+          newLogoUrl = null
+          setIdentity((prev) => ({ ...prev, logoUrl: null }))
+        }
+
+        await updateWorkspace.mutateAsync({ name: identity.name, slug: identity.slug })
+        setInitIdentity({ name: identity.name, slug: identity.slug, logoUrl: newLogoUrl })
       }
 
-      await updateWorkspace.mutateAsync({ name: identity.name, slug: identity.slug })
-      setInitIdentity({ name: identity.name, slug: identity.slug, logoUrl: newLogoUrl })
+      if (regionalDirty) {
+        await updateWorkspace.mutateAsync({
+          timezone: regional.timezone,
+          locale: regional.locale,
+          date_format: regional.date_format,
+          time_format: regional.time_format,
+          first_day_of_week: regional.first_day_of_week,
+        })
+        setInitRegional({ ...regional })
+      }
+
+      if (preferencesDirty) {
+        await updateWorkspace.mutateAsync({ ...preferences })
+        setInitPreferences({ ...preferences })
+      }
     } catch (err) {
       if (err instanceof Error && err.message.includes('taken')) {
         setSlugError('This URL is already taken')
@@ -175,110 +193,90 @@ export function GeneralSettings() {
       }
       // mutations show their own toasts on error
     } finally {
-      setSavingIdentity(false)
+      setIsSaving(false)
     }
   }
 
-  async function handleSaveRegional() {
-    if (!canEdit) return
-    setSavingRegional(true)
-    try {
-      await updateWorkspace.mutateAsync({
-        timezone: regional.timezone,
-        locale: regional.locale,
-        date_format: regional.date_format,
-        time_format: regional.time_format,
-        first_day_of_week: regional.first_day_of_week,
-      })
-      setInitRegional({ ...regional })
-    } finally {
-      setSavingRegional(false)
-    }
-  }
-
-  async function handleSavePreferences() {
-    if (!canEdit) return
-    setSavingPreferences(true)
-    try {
-      await updateWorkspace.mutateAsync({ ...preferences })
-      setInitPreferences({ ...preferences })
-    } finally {
-      setSavingPreferences(false)
-    }
+  function handleDiscard() {
+    if (!anyDirty) return
+    setIdentity({ ...initIdentity, logoPreview: null, logoFile: null })
+    setRegional({ ...initRegional })
+    setPreferences({ ...initPreferences })
+    setSlugError('')
   }
 
   // ── Loading skeleton ─────────────────────────────────────────────────────────
   if (isLoading) {
     return (
-      <div className="max-w-3xl mx-auto px-12 py-12 space-y-10">
-        <div className="space-y-2 pb-6 border-b border-border">
-          <Skeleton className="h-3.5 w-28" />
-          <Skeleton className="h-8 w-48" />
-          <Skeleton className="h-3.5 w-80" />
+      <div className="mx-auto max-w-[800px] px-6 py-10 space-y-5">
+        <div className="space-y-2">
+          <Skeleton className="h-6 w-40" />
+          <Skeleton className="h-4 w-96" />
         </div>
-        <Skeleton className="h-52 w-full rounded-xl" />
-        <Skeleton className="h-64 w-full rounded-xl" />
-        <Skeleton className="h-40 w-full rounded-xl" />
+        <Skeleton className="h-52 w-full rounded-2xl" />
+        <Skeleton className="h-72 w-full rounded-2xl" />
+        <Skeleton className="h-44 w-full rounded-2xl" />
       </div>
     )
   }
 
   return (
-    <div className="max-w-3xl mx-auto px-12 py-12">
-      {/* Header */}
-      <div className="pb-6 mb-8 border-b border-border">
-        <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1.5 flex-wrap">
-          <span>Settings</span>
-          <span>/</span>
-          <span>Workspace</span>
-          <span>/</span>
-          <span>General</span>
+    <div className="mx-auto max-w-[800px] px-6 py-10">
+      <div className="flex flex-col gap-5">
+        {/* Header + global save bar */}
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h1 className="text-xl font-bold text-foreground leading-tight mb-1">General</h1>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              Manage your workspace identity, regional preferences and global settings.
+            </p>
+          </div>
+          {canEdit && (
+            <div className="flex items-center gap-2.5 flex-shrink-0">
+              <Button
+                variant="outline"
+                onClick={handleDiscard}
+                disabled={!anyDirty || isSaving}
+              >
+                Discard
+              </Button>
+              <Button
+                onClick={() => void handleSaveAll()}
+                disabled={!anyDirty || isSaving}
+              >
+                {isSaving ? 'Saving…' : 'Save changes'}
+              </Button>
+            </div>
+          )}
         </div>
-        <h1 className="text-[28px] font-semibold text-foreground leading-tight mb-1">General</h1>
-        <p className="text-sm text-muted-foreground leading-relaxed">
-          Manage your workspace identity, regional preferences, and global settings.
-        </p>
-      </div>
 
-      {currentUserId && pendingTransfer && (
-        <div className="mb-6">
+        {currentUserId && pendingTransfer && (
           <PendingTransferBanner
             transfer={pendingTransfer}
             currentUserId={currentUserId}
           />
-        </div>
-      )}
+        )}
 
-      <div className="flex flex-col gap-10">
         <IdentitySection
           values={identity}
           slugError={slugError}
           canEdit={canEdit}
-          isSaving={savingIdentity}
-          isDirty={identityDirty}
           onChange={(patch) => {
             setIdentity((prev) => ({ ...prev, ...patch }))
             if ('slug' in patch) setSlugError('')
           }}
-          onSave={() => void handleSaveIdentity()}
         />
 
         <RegionalSection
           values={regional}
           canEdit={canEdit}
-          isSaving={savingRegional}
-          isDirty={regionalDirty}
           onChange={(patch) => setRegional((prev) => ({ ...prev, ...patch }))}
-          onSave={() => void handleSaveRegional()}
         />
 
         <PreferencesSection
           values={preferences}
           canEdit={canEdit}
-          isSaving={savingPreferences}
-          isDirty={preferencesDirty}
           onChange={(patch) => setPreferences((prev) => ({ ...prev, ...patch }))}
-          onSave={() => void handleSavePreferences()}
         />
 
         <DangerZoneSection

@@ -10,8 +10,7 @@ import {
   InputGroupText,
   InputGroupInput,
 } from '@/components/ui/input-group'
-import { SettingsSection, SettingsCard } from '@/components/features/settings/settings-section'
-import { SettingsField } from '@/components/features/settings/settings-field'
+import { SettingsPanel, SettingsRow } from '@/components/features/settings/settings-panel'
 import { toast } from 'sonner'
 
 interface IdentityValues {
@@ -28,20 +27,14 @@ interface IdentitySectionProps {
   values: IdentityValues
   slugError?: string
   canEdit: boolean
-  isSaving: boolean
-  isDirty: boolean
   onChange: (patch: Partial<IdentityValues>) => void
-  onSave: () => void
 }
 
 export function IdentitySection({
   values,
   slugError,
   canEdit,
-  isSaving,
-  isDirty,
   onChange,
-  onSave,
 }: IdentitySectionProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -67,106 +60,99 @@ export function IdentitySection({
   }
 
   return (
-    <SettingsSection
+    <SettingsPanel
       title="Workspace identity"
-      description="Your workspace name, URL, and logo are shown to all members."
+      description="Your workspace name, URL and logo are shown to all members."
     >
-      <SettingsCard
-        footer={
-          canEdit ? (
-            <Button onClick={onSave} disabled={!isDirty || isSaving}>
-              {isSaving ? 'Saving…' : 'Save changes'}
-            </Button>
-          ) : undefined
-        }
+      <SettingsRow
+        label="Workspace name"
+        hint="The name shown across your workspace."
+        htmlFor="ws-name"
       >
-        <div className="flex flex-col gap-5">
-          <SettingsField label="Workspace name" htmlFor="ws-name">
-            <Input
-              id="ws-name"
-              type="text"
-              value={values.name}
-              onChange={(e) => onChange({ name: e.target.value })}
-              placeholder="Your workspace name"
-              disabled={!canEdit}
-            />
-          </SettingsField>
+        <Input
+          id="ws-name"
+          type="text"
+          value={values.name}
+          onChange={(e) => onChange({ name: e.target.value })}
+          placeholder="Your workspace name"
+          disabled={!canEdit}
+          className="w-[300px]"
+        />
+      </SettingsRow>
 
-          <SettingsField
-            label="Workspace URL"
-            htmlFor="ws-slug"
-            hint="lynqflow.app/your-workspace"
-            error={slugError}
-          >
-            <InputGroup>
-              <InputGroupAddon align="inline-start">
-                <InputGroupText>lynqflow.app/</InputGroupText>
-              </InputGroupAddon>
-              <InputGroupInput
-                id="ws-slug"
-                type="text"
-                value={values.slug}
-                onChange={(e) => {
-                  const slug = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '')
-                  onChange({ slug })
-                }}
-                placeholder="your-workspace"
-                disabled={!canEdit}
+      <SettingsRow
+        label="Workspace URL"
+        hint="Your unique Lynq address — lynqflow.app/your-workspace."
+        error={slugError}
+        htmlFor="ws-slug"
+      >
+        <InputGroup className="w-[300px]">
+          <InputGroupAddon align="inline-start">
+            <InputGroupText>lynqflow.app/</InputGroupText>
+          </InputGroupAddon>
+          <InputGroupInput
+            id="ws-slug"
+            type="text"
+            value={values.slug}
+            onChange={(e) => {
+              const slug = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '')
+              onChange({ slug })
+            }}
+            placeholder="your-workspace"
+            disabled={!canEdit}
+          />
+        </InputGroup>
+      </SettingsRow>
+
+      <SettingsRow
+        label="Workspace logo"
+        hint="PNG or JPG · max 2 MB · square recommended."
+      >
+        <div className="flex items-center gap-3">
+          <div className="size-14 rounded-xl border border-dashed border-border overflow-hidden shrink-0 flex items-center justify-center bg-muted/40">
+            {displayLogo ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={displayLogo}
+                alt="Workspace logo"
+                className="w-full h-full object-cover"
               />
-            </InputGroup>
-          </SettingsField>
-
-          <SettingsField
-            label="Workspace logo"
-            hint="PNG or JPG, max 2 MB, square recommended"
-          >
-            <div className="flex items-center gap-5 mt-1">
-              <div className="size-20 rounded-xl border border-border overflow-hidden shrink-0 flex items-center justify-center bg-muted/40">
-                {displayLogo ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={displayLogo}
-                    alt="Workspace logo"
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <ImageIcon size={24} strokeWidth={1.5} className="text-muted-foreground/50" />
-                )}
-              </div>
-              {canEdit && (
-                <div className="flex flex-col gap-2">
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/png,image/jpeg,image/webp"
-                    className="hidden"
-                    onChange={handleFileChange}
-                  />
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                  >
-                    Upload image
-                  </Button>
-                  {displayLogo && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      type="button"
-                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                      onClick={handleRemoveLogo}
-                    >
-                      Remove
-                    </Button>
-                  )}
-                </div>
+            ) : (
+              <ImageIcon size={22} strokeWidth={1.5} className="text-muted-foreground/50" />
+            )}
+          </div>
+          {canEdit && (
+            <div className="flex items-center gap-2">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                className="hidden"
+                onChange={handleFileChange}
+              />
+              <Button
+                variant="outline"
+                size="sm"
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                Upload image
+              </Button>
+              {displayLogo && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  type="button"
+                  className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                  onClick={handleRemoveLogo}
+                >
+                  Remove
+                </Button>
               )}
             </div>
-          </SettingsField>
+          )}
         </div>
-      </SettingsCard>
-    </SettingsSection>
+      </SettingsRow>
+    </SettingsPanel>
   )
 }

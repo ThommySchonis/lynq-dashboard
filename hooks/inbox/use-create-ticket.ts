@@ -6,7 +6,8 @@ import { toast } from 'sonner'
 import { sanitizeHtml } from '@/lib/inbox-utils'
 import { useAuthStore } from '@/stores/auth'
 import { useCustomerSearch, useEmailAccountInfo } from './use-inbox-data'
-import { useComposeEmail } from './use-inbox-mutations'
+import { useComposeEmail, useUpdateStatus, useBulkConversationAction } from './use-inbox-mutations'
+import { useTags, useCreateTag } from './use-tags'
 
 /** Shopify customer shape returned by useCustomerSearch (subset the ticket card reads). */
 export interface TicketCustomer {
@@ -33,14 +34,19 @@ function looksLikeEmail(v: string): boolean {
 /**
  * Owns all Create Ticket form state + the send flow, so the page stays a thin
  * orchestrator. The customer card auto-resolves from the To address (no separate
- * search field). Submit currently maps to the compose endpoint; the two-step
- * persist (metadata + assignee + tags) lands in a follow-up once wired.
+ * search field). Submit is two-step: compose the email, then best-effort persist
+ * ticket meta (priority + contact fields → metadata, assignee, tags) onto the
+ * created conversation.
  */
 export function useCreateTicketForm() {
   const router = useRouter()
   const isSuspended = useAuthStore((s) => s.isSuspended)
   const { data: accountInfo } = useEmailAccountInfo()
   const composeEmail = useComposeEmail()
+  const updateStatus = useUpdateStatus()
+  const bulkAction = useBulkConversationAction()
+  const createTag = useCreateTag()
+  const { data: allTags = [] } = useTags()
 
   // Recipients + subject
   const [to, setTo] = useState('')
@@ -67,7 +73,42 @@ export function useCreateTicketForm() {
 
   const goBack = useCallback(() => router.push('/inbox'), [router])
 
-  /** Send the new outgoing email. Body is owned by the composer and passed in. */
+  /** Step 2 — persist ticket meta onto the freshly created conversation:
+   *  priority + contact fields into metadata (BE #11), assignee via bulk `assign`,
+   *  and each tag name resolved to an id (existing or newly created) then attached.
+   *  Best-effort: the email is already sent, so failures here are swallowed. */
+  const persistTicketMeta = useCallback(
+    async (conversationId: string) => {
+      const tasks: Array<Promise<unknown>> = []
+
+      // priority + contact meta → conversation metadata
+      const metadata: Record<string, string> = { priority }
+      if (contactReason.trim()) metadata.contact_reason = contactReason.trim()
+      if (product.trim()) metadata.product = product.trim()
+      if (resolution.trim()) metadata.resolution = resolution.trim()
+      tasks.push(updateStatus.mutateAsync({ threadId: conversationId, status: 'open', metadata }))
+
+      // assignee
+      if (assignedTo) {
+        tasks.push(bulkAction.mutateAsync({ ids: [conversationId], action: 'assign', payload: { memberId: assignedTo } }))
+      }
+
+      // tags — resolve each name to an id, creating the tag if it doesn't exist
+      for (const name of tags) {
+        const trimmed = name.trim()
+        if (!trimmed) continue
+        const existing = allTags.find((t) => t.name.toLowerCase() === trimmed.toLowerCase())
+        const tagId = existing?.id ?? (await createTag.mutateAsync({ name: trimmed })).id
+        tasks.push(bulkAction.mutateAsync({ ids: [conversationId], action: 'add_tag', payload: { tagId } }))
+      }
+
+      await Promise.allSettled(tasks)
+    },
+    [priority, contactReason, product, resolution, assignedTo, tags, updateStatus, bulkAction, createTag, allTags],
+  )
+
+  /** Send the new outgoing email, then persist ticket meta (two-step). Body is
+   *  owned by the composer and passed in. */
   const send = useCallback(
     async (bodyHtml: string, bodyText: string) => {
       if (isSuspended) {
@@ -78,32 +119,33 @@ export function useCreateTicketForm() {
         toast.error('Please enter a recipient email')
         return
       }
-      // Demo mode (no provider connected) — mirror the live page's stub.
+      // Demo mode (no provider connected) — no conversation to persist against.
       if (!accountInfo?.connected) {
         await new Promise((r) => setTimeout(r, 800))
         toast.success('Message sent!')
         setTimeout(goBack, 700)
         return
       }
-      composeEmail.mutate(
-        {
+      try {
+        const data = await composeEmail.mutateAsync({
           to: [{ email: to.trim(), name: '' }],
           subject: subject.trim() || '(no subject)',
           bodyHtml: sanitizeHtml(bodyHtml),
           bodyText,
           cc: cc.trim() ? [{ email: cc.trim(), name: '' }] : undefined,
           bcc: bcc.trim() ? [{ email: bcc.trim(), name: '' }] : undefined,
-        },
-        {
-          onSuccess: () => {
-            toast.success('Message sent!')
-            setTimeout(goBack, 700)
-          },
-          onError: (err) => toast.error(err instanceof Error ? err.message : 'Failed to send'),
-        },
-      )
+        })
+        if (data.conversationId) {
+          // Best-effort: a meta failure must not surface as a send failure.
+          try { await persistTicketMeta(data.conversationId) } catch { /* email already sent */ }
+        }
+        toast.success('Message sent!')
+        setTimeout(goBack, 700)
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : 'Failed to send')
+      }
     },
-    [to, subject, cc, bcc, accountInfo?.connected, composeEmail, goBack, isSuspended],
+    [to, subject, cc, bcc, accountInfo?.connected, composeEmail, goBack, isSuspended, persistTicketMeta],
   )
 
   return useMemo(

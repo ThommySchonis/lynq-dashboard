@@ -1,5 +1,10 @@
 // lib/inbox-utils.ts
 
+/** ISO timestamp `hours` from now — used to resolve snooze presets. */
+export function isoFromNow(hours: number): string {
+  return new Date(Date.now() + hours * 3600_000).toISOString()
+}
+
 export function authFetch(url: string, opts: RequestInit = {}, token: string) {
   return fetch(url, {
     ...opts,

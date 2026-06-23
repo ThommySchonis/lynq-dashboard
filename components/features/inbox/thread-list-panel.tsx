@@ -6,8 +6,7 @@ import { BulkActionsMenu } from "@/components/features/inbox/bulk-actions-menu";
 import { useBulkConversationAction } from "@/hooks/inbox/use-inbox-mutations";
 import { toast } from "sonner";
 import type { BulkActionId, BulkActionPayload } from "@/types/inbox";
-import { extractName } from "@/lib/inbox-utils";
-import { relTime as formatDate } from "@/lib/inbox-utils";
+import { extractName, relTime as formatDate } from "@/lib/inbox-utils";
 import { useInboxUI } from "@/stores/inbox-ui";
 import { useAuthStore } from "@/stores/auth";
 import { useConversations, useInboxCounts } from "@/hooks/inbox/use-inbox-data";
@@ -21,6 +20,15 @@ import { MailboxSwitcher } from "@/components/features/inbox/mailbox-switcher";
 import { SyncNotice } from "@/components/features/inbox/sync-notice";
 import { useEmailAccounts } from "@/hooks/settings";
 import { isAccountSyncing } from "@/lib/email-sync";
+
+// Figma 782-21374: tabs are pills — active = soft fill (#F5F4FF → secondary)
+// + dark semibold label; inactive = grey label, no fill. Count badge = subtle
+// rounded pill (rgba(0,0,0,0.07) → border token).
+const tabClass = (active: boolean) =>
+  `flex shrink-0 items-center gap-1.5 px-3 py-[7px] rounded-lg text-xs font-inherit whitespace-nowrap tracking-[.01em] transition-colors duration-150 cursor-pointer ${
+    active ? "bg-secondary text-foreground font-semibold" : "text-muted-foreground font-medium hover:text-foreground hover:bg-secondary/60"
+  }`;
+const tabBadgeClass = "text-[10px] font-semibold px-1.5 py-px rounded-full bg-border text-muted-foreground";
 
 export function ThreadListPanel() {
   const router = useRouter();
@@ -156,7 +164,7 @@ export function ThreadListPanel() {
     [checkedIds, bulkAction, setCheckedThreads],
   );
 
-  const FOLDERS = INBOX_FOLDERS.map((f) => ({
+  const folders = INBOX_FOLDERS.map((f) => ({
     ...f,
     count: counts[f.key as keyof typeof counts] ?? 0,
   }));
@@ -210,7 +218,7 @@ export function ThreadListPanel() {
             <Button
               onClick={onCreateTicket}
               disabled={isSuspended}
-              className="flex items-center gap-[5px] px-[11px] py-[5px] rounded-lg bg-[#111111] text-white text-[11.5px] font-semibold font-inherit transition-all duration-[180ms] tracking-[.01em] hover:bg-[#333333]"
+              className="flex items-center gap-[5px] px-3 py-2 rounded-[10px] bg-card text-foreground border border-foreground text-[11.5px] font-semibold font-inherit transition-colors duration-150 tracking-[.01em] hover:bg-secondary"
               title={isSuspended ? "Workspace is suspended" : "Create Ticket"}
             >
               <Plus size={12} />
@@ -235,22 +243,12 @@ export function ThreadListPanel() {
           />
         </div>
 
-        {/* Folder tabs */}
-        <div className="thin-scrollbar flex border-b border-border overflow-x-auto">
-          {FOLDERS.map((f) => (
-            <button
-              key={f.key}
-              className={`py-2 px-1.5 bg-transparent cursor-pointer text-xs font-medium font-inherit rounded-none transition-all duration-[180ms] text-foreground-3 whitespace-nowrap tracking-[.01em] border-none border-b-2 border-b-transparent ${activeFolder === f.key ? "text-foreground border-b-foreground font-semibold" : "hover:text-foreground-2"}`}
-              onClick={() => onSwitchFolder(f.key)}
-            >
+        {/* Folder tabs — all folders in one horizontally-scrolling pill row */}
+        <div className="thin-scrollbar flex items-center gap-0.5 border-b border-border overflow-x-auto py-1.5">
+          {folders.map((f) => (
+            <button key={f.key} className={tabClass(activeFolder === f.key)} onClick={() => onSwitchFolder(f.key)}>
               {f.label}
-              {f.count > 0 && (
-                <span
-                  className={`ml-1 text-[9px] font-bold px-[5px] py-px rounded-full border border-border ${activeFolder === f.key ? "bg-[#111111] text-white" : "bg-secondary text-muted-foreground"}`}
-                >
-                  {f.count}
-                </span>
-              )}
+              {f.count > 0 && <span className={tabBadgeClass}>{f.count}</span>}
             </button>
           ))}
         </div>
@@ -334,25 +332,27 @@ export function ThreadListPanel() {
               />
               {/* Content */}
               <div className="flex-1 min-w-0">
-                {/* Row 1: name + email icon + time + unread dot */}
-                <div className="flex items-center gap-[5px] mb-0.5">
+                {/* Row 1: email icon + name + time */}
+                <div className="flex items-center gap-1.5 mb-[3px]">
+                  <Mail size={14} className="text-foreground-3 shrink-0" />
                   <span
                     className={`text-[12.5px] ${thread.unread ? "font-bold" : "font-semibold"} text-foreground overflow-hidden text-ellipsis whitespace-nowrap flex-1`}
                   >
                     {thread.customer_name || name}
                   </span>
-                  <Mail size={11} className="text-foreground shrink-0" />
-                  <span className="text-[10.5px] text-foreground shrink-0 whitespace-nowrap">{formatDate(thread.date)}</span>
-                  {thread.unread && <span className="w-[7px] h-[7px] rounded-full bg-primary shrink-0 shadow-[0_0_0_1.5px_rgba(161,117,252,0.25)]" />}
+                  <span className="text-[10.5px] text-muted-foreground shrink-0 whitespace-nowrap">{formatDate(thread.date)}</span>
                 </div>
-                {/* Row 2: subject */}
-                <div
-                  className={`text-xs ${thread.unread ? "font-semibold text-foreground" : "font-medium text-foreground-2"} overflow-hidden text-ellipsis whitespace-nowrap mb-[3px]`}
-                >
-                  {thread.subject || "(no subject)"}
+                {/* Row 2: unread dot + subject */}
+                <div className="flex items-center gap-1.5 mb-[3px]">
+                  {thread.unread && <span className="w-[7px] h-[7px] rounded-full bg-primary shrink-0 shadow-[0_0_0_1.5px_rgba(161,117,252,0.25)]" />}
+                  <span
+                    className={`text-xs ${thread.unread ? "font-semibold text-foreground" : "font-medium text-foreground-2"} overflow-hidden text-ellipsis whitespace-nowrap flex-1`}
+                  >
+                    {thread.subject || "(no subject)"}
+                  </span>
                 </div>
                 {/* Row 3: snippet — 2 lines */}
-                <div className="line-clamp-2 text-[11.5px] text-foreground leading-[1.45]">{thread.snippet}</div>
+                <div className="line-clamp-2 text-[11.5px] text-foreground-3 leading-[1.45]">{thread.snippet}</div>
               </div>
             </div>
           );

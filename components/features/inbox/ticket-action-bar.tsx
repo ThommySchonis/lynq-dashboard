@@ -3,17 +3,12 @@
 import type { TicketMeta, ConversationTag } from '@/types/inbox'
 import { usePermissions } from '@/hooks/use-permissions'
 
-export function TicketActionBar({ meta, tags, status, onClose, onAddTag, onRemoveTag, onFieldChange, assignedTo, onAssign, members }: {
+export function TicketActionBar({ meta, tags, onAddTag, onRemoveTag, onFieldChange }: {
   meta: TicketMeta;
   tags: ConversationTag[];
-  status: string;
-  onClose: () => void;
   onAddTag: () => void;
   onRemoveTag: (tag: ConversationTag) => void;
   onFieldChange: (key: string, value: string) => void;
-  assignedTo: string | null;
-  onAssign: (memberId: string | null) => void;
-  members: { id: string; name: string }[];
 }) {
   const { can } = usePermissions()
   const canManage = can.manageConversations
@@ -32,17 +27,7 @@ export function TicketActionBar({ meta, tags, status, onClose, onAddTag, onRemov
   );
 
   return (
-    <div className="flex items-center gap-2 pt-2 mt-[9px] border-t border-border min-h-[42px] flex-wrap">
-      <button
-        onClick={onClose}
-        disabled={!canManage}
-        className="inline-flex items-center gap-[5px] h-[26px] px-2.5 border border-black/9 rounded-[5px] bg-[#FAFAFA] text-foreground-2 text-xs font-semibold font-[inherit] disabled:opacity-50 disabled:cursor-not-allowed"
-        title={canManage ? "Close ticket" : viewOnlyTitle}
-      >
-        <span className="text-xs">✓</span>
-        {status === "closed" ? "Closed" : "Close"}
-      </button>
-
+    <div className="flex items-center gap-2 min-h-[42px] flex-wrap">
       <div className="flex items-center gap-1.5 flex-wrap">
         {tags.map((tag) => (
           <button
@@ -71,19 +56,6 @@ export function TicketActionBar({ meta, tags, status, onClose, onAddTag, onRemov
         {fieldButton("product", "Product")}
         {fieldButton("resolution", "Resolution")}
       </div>
-
-      <select
-        value={assignedTo || ""}
-        onChange={(e) => onAssign(e.target.value || null)}
-        disabled={!canManage}
-        title={viewOnlyTitle}
-        className="border border-border rounded-lg bg-card text-foreground-2 text-[11px] py-1 px-2 font-[inherit] outline-none disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        <option value="">Unassigned</option>
-        {members.map((m) => (
-          <option key={m.id} value={m.id}>{m.name}</option>
-        ))}
-      </select>
 
       <select
         value={meta.tier || "Unassigned"}

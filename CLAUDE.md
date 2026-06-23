@@ -159,6 +159,12 @@ You **MUST** invoke the relevant skill before the matching work. Check this tabl
 | Debug a bug, test failure, or unexpected behavior | `debug-rules` |
 | Touch Shopify integration (sync, webhooks, credentials, OAuth) | `shopify-rules` |
 
+### Installed Skills
+
+| Skill | Path | Notes |
+|---|---|---|
+| `grill-me` | `.agents/skills/grill-me/SKILL.md` (symlinked at `.claude/skills/grill-me`) | A relentless interview to sharpen a plan or design. User-invoked only (`/grill-me` → runs a `/grilling` session). **When this skill is active, all communication with the user MUST be exclusively in Ukrainian.** |
+
 ## Git Branch Management
 
 ### Dev vs. Client detection

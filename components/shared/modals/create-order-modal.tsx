@@ -6,16 +6,26 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { ChevronDown, Loader2, Plus, Search, X } from 'lucide-react'
+import { Loader2, Minus, Plus, Search, X } from 'lucide-react'
 import { authFetch, fmtPrice } from '@/lib/inbox-utils'
 import { apiUrl } from '@/lib/api-client'
 import { parseJson } from '@/lib/utils/typed-json'
 import { useStoreStore } from '@/stores/store'
 import { useProductSearch } from '@/hooks/inbox/use-shopify-products'
+import { OrderDiscountCard } from './order-discount-card'
+
+// VAT shown as a client-side estimate; Shopify computes the real tax on the
+// draft order (BE task #5).
+const VAT_RATE = 0.2
+
+// The Figma frame (693:32590) assumes a matched customer and has no top
+// customer block. Kept behind this flag for the no-customer fallback (the
+// backend needs an email when there's no customerId); typed boolean to keep
+// dead-branch lint quiet.
+const SHOW_LEGACY: boolean = false
 import type {
   ProductSearchResult,
   ProductSearchVariant,
@@ -150,7 +160,8 @@ export function CreateOrderModal({
     [customer]
   )
   const [address, setAddress] = useState<ShippingAddressState>(initialAddress)
-  const [addressOpen, setAddressOpen] = useState(!hasPrefill)
+  const [showShipping, setShowShipping] = useState(hasPrefill)
+  const [tags, setTags] = useState('')
 
   const {
     data: searchData,
@@ -171,7 +182,9 @@ export function CreateOrderModal({
       : discountType === 'fixed'
         ? Math.min(Number(discountValue) || 0, subtotal)
         : 0
-  const newTotal = Math.max(0, subtotal - discountAmount)
+  const taxBase = Math.max(0, subtotal - discountAmount)
+  const vat = taxBase * VAT_RATE
+  const grandTotal = taxBase + vat
 
   function addVariant(
     product: ProductSearchResult,
@@ -272,6 +285,8 @@ export function CreateOrderModal({
       body.discount = { type: discountType, value: Number(discountValue) }
     }
     if (note.trim()) body.note = note.trim()
+    const tagList = tags.split(',').map((t) => t.trim()).filter(Boolean)
+    if (tagList.length) body.tags = tagList
 
     try {
       const storeParam = activeStoreId ? `?store_id=${activeStoreId}` : ''
@@ -324,378 +339,225 @@ export function CreateOrderModal({
         if (!open) onClose()
       }}
     >
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>
-            {`Create order — ${hasCustomer ? customerName : name || 'New customer'}`}
-          </DialogTitle>
+      <DialogContent className="sm:max-w-[760px] gap-0 overflow-hidden p-0">
+        <DialogHeader className="px-7 py-[22px]">
+          <DialogTitle className="text-lg font-bold">Create order</DialogTitle>
         </DialogHeader>
+        <div className="h-px bg-border" />
 
-        {!hasCustomer && (
-          <div className="mb-3.5">
-            <label className="text-[10.5px] font-bold tracking-[.07em] uppercase text-muted-foreground mb-[7px] block">
-              Customer
-            </label>
+        <div className="thin-scrollbar flex max-h-[68vh] flex-col gap-6 overflow-y-auto px-7 py-6">
+          {/* No-customer fallback — email needed by the backend (not in Figma) */}
+          {SHOW_LEGACY && !hasCustomer && (
             <div className="flex flex-col gap-1.5">
+              <label className="text-[10.5px] font-bold tracking-[.07em] uppercase text-muted-foreground">Customer</label>
               <Input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="Email (required)"
-                className="w-full bg-secondary border border-border rounded-xl px-3.5 py-[11px] text-[13.5px] text-foreground outline-none"
+                className="rounded-[10px] border border-border bg-card"
               />
               <Input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Name (optional)"
-                className="w-full bg-secondary border border-border rounded-xl px-3.5 py-[11px] text-[13.5px] text-foreground outline-none"
+                className="rounded-[10px] border border-border bg-card"
               />
-              {!emailValid && email.trim().length > 0 && (
-                <span className="text-[11px] text-rose-400">
-                  Enter a valid email address.
-                </span>
-              )}
-              <span className="text-[11px] text-muted-foreground italic">
-                No matched Shopify customer — the draft order is created from this email.
-              </span>
+              {!emailValid && email.trim().length > 0 && <span className="text-[11px] text-rose-400">Enter a valid email address.</span>}
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Add products */}
-        <div className="mb-3.5">
-          <label className="text-[10.5px] font-bold tracking-[.07em] uppercase text-muted-foreground mb-[7px] block">
-            Add products
-          </label>
-          <div className="relative">
-            <span className="absolute left-[11px] top-1/2 -translate-y-1/2 text-muted-foreground flex pointer-events-none">
-              <Search size={14} />
-            </span>
-            <Input
-              className="w-full bg-secondary border border-border rounded-xl px-3.5 py-[11px] pl-9 text-[13.5px] text-foreground outline-none"
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              placeholder="Search products..."
-              onFocus={() => setProductFieldFocused(true)}
-              onBlur={() => setTimeout(() => setProductFieldFocused(false), 150)}
-            />
-          </div>
-          {showSearchDropdown && (
-            <div ref={scrollBoxRef} className="mt-1.5 border border-border rounded-xl bg-card max-h-[280px] overflow-y-auto thin-scrollbar">
-              {isSearching && searchResults.length === 0 && (
-                <div className="px-3 py-2 text-[12px] text-muted-foreground flex items-center gap-2">
-                  <Loader2 size={12} className="animate-spin" />
-                  Searching...
-                </div>
-              )}
-              {searchErrored && !isSearching && (
-                <div className="px-3 py-2 text-[12px] text-rose-400">
-                  Search failed — try again
-                </div>
-              )}
-              {!isSearching &&
-                !searchErrored &&
-                searchResults.length === 0 && (
-                  <div className="px-3 py-2 text-[12px] text-muted-foreground">
-                    No products found
+          {/* Product search + add custom item */}
+          <div className="flex items-start gap-3">
+            <div className="relative flex-1">
+            <div className="flex h-11 items-center gap-2.5 rounded-[10px] border border-border bg-card px-3.5">
+              <Search size={15} className="shrink-0 text-muted-foreground" />
+              <input
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                onFocus={() => setProductFieldFocused(true)}
+                onBlur={() => setTimeout(() => setProductFieldFocused(false), 150)}
+                placeholder="Search products…"
+                className="flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-foreground-4"
+              />
+            </div>
+            {showSearchDropdown && (
+              <div ref={scrollBoxRef} className="thin-scrollbar absolute z-10 mt-1.5 max-h-[280px] w-full overflow-y-auto rounded-[10px] border border-border bg-card shadow-lg">
+                {isSearching && searchResults.length === 0 && (
+                  <div className="flex items-center gap-2 px-3 py-2 text-[12px] text-muted-foreground">
+                    <Loader2 size={12} className="animate-spin" /> Searching…
                   </div>
                 )}
-              {searchResults.flatMap((product) =>
-                product.variants.map((variant) => (
-                  <div
-                    key={`${product.productId}_${variant.variantId}`}
-                    className="flex items-center gap-2 px-3 py-2 border-b border-border last:border-b-0"
-                  >
-                    <div className="flex-1 min-w-0">
-                      <div className="text-[12.5px] text-foreground overflow-hidden text-ellipsis whitespace-nowrap">
-                        {product.productTitle}
-                        {variant.title && variant.title !== 'Default Title'
-                          ? ` · ${variant.title}`
-                          : ''}
+                {searchErrored && !isSearching && <div className="px-3 py-2 text-[12px] text-rose-400">Search failed — try again</div>}
+                {!isSearching && !searchErrored && searchResults.length === 0 && <div className="px-3 py-2 text-[12px] text-muted-foreground">No products found</div>}
+                {searchResults.flatMap((product) =>
+                  product.variants.map((variant) => (
+                    <div key={`${product.productId}_${variant.variantId}`} className="flex items-center gap-2 border-b border-border px-3 py-2 last:border-b-0">
+                      <div className="min-w-0 flex-1">
+                        <div className="truncate text-[12.5px] text-foreground">
+                          {product.productTitle}
+                          {variant.title && variant.title !== 'Default Title' ? ` · ${variant.title}` : ''}
+                        </div>
+                        {!variant.available && <span className="text-[10px] font-bold uppercase tracking-[.04em] text-rose-400">Out of stock</span>}
                       </div>
-                      {!variant.available && (
-                        <span className="text-[10px] font-bold px-1.5 py-px rounded bg-[rgba(248,113,133,0.12)] text-[#fb7185] border border-[rgba(248,113,133,0.22)] tracking-[.04em] uppercase">
-                          Out of stock
-                        </span>
+                      <span className="shrink-0 text-[12.5px] text-foreground-2">{fmtPrice(variant.price, currency)}</span>
+                      <Button variant="outline" size="sm" onClick={() => addVariant(product, variant)} className="shrink-0 inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium">
+                        <Plus size={11} /> Add
+                      </Button>
+                    </div>
+                  )),
+                )}
+                <div ref={loadMoreRef} />
+                {isFetchingNextPage && (
+                  <div className="flex items-center gap-2 px-3 py-2 text-[12px] text-muted-foreground">
+                    <Loader2 size={12} className="animate-spin" /> Loading more…
+                  </div>
+                )}
+              </div>
+            )}
+            </div>
+            <Button
+              variant="outline"
+              disabled
+              title="Custom items need backend support"
+              className="h-11 shrink-0 gap-1.5 rounded-[10px] border-foreground/80 px-5 text-sm font-semibold"
+            >
+              <Plus size={14} /> Add custom item
+            </Button>
+          </div>
+
+          {/* Product table */}
+          <div className="flex flex-col">
+            <div className="flex items-center gap-4 px-0.5 pb-3 text-[12px] font-semibold uppercase tracking-[.08em] text-foreground-4">
+              <span className="flex-1">Product</span>
+              <span className="w-[90px]">In stock</span>
+              <span className="w-[90px]">Item price</span>
+              <span className="w-[100px]">Qty</span>
+              <span className="w-[90px] text-right">Item total</span>
+            </div>
+            <div className="h-px bg-border" />
+            {cart.length === 0 ? (
+              <div className="py-8 text-center text-sm text-muted-foreground">Search products to add them to the order</div>
+            ) : (
+              cart.map((line) => (
+                <div key={line.variantId} className="flex items-center gap-4 border-b border-border py-3.5 last:border-b-0">
+                  <div className="flex min-w-0 flex-1 items-center gap-3">
+                    <div className="flex size-10 shrink-0 items-center justify-center rounded-[10px] bg-violet-100 text-base font-semibold text-primary">
+                      {line.productTitle.charAt(0).toUpperCase()}
+                    </div>
+                    <div className="min-w-0">
+                      <div className="truncate text-sm font-semibold text-foreground">{line.productTitle}</div>
+                      {line.variantTitle && line.variantTitle !== 'Default Title' && (
+                        <div className="truncate text-[12px] text-muted-foreground">{line.variantTitle}</div>
                       )}
                     </div>
-                    <span className="text-[12.5px] text-foreground-2 shrink-0">
-                      {fmtPrice(variant.price, currency)}
-                    </span>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => addVariant(product, variant)}
-                      className="shrink-0 inline-flex items-center gap-1 text-[11px] font-medium px-2 py-1 rounded-md"
-                    >
-                      <Plus size={11} />
-                      Add
-                    </Button>
                   </div>
-                ))
-              )}
-              <div ref={loadMoreRef} />
-              {isFetchingNextPage && (
-                <div className="px-3 py-2 text-[12px] text-muted-foreground flex items-center gap-2">
-                  <Loader2 size={12} className="animate-spin" />
-                  Loading more...
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* Cart */}
-        {cart.length > 0 && (
-          <div className="mb-3.5">
-            <label className="text-[10.5px] font-bold tracking-[.07em] uppercase text-muted-foreground mb-[7px] block">
-              Cart ({cart.length} {cart.length === 1 ? 'item' : 'items'})
-            </label>
-            <div className="bg-secondary border border-border rounded-xl px-3.5 py-2.5">
-              {cart.map((line) => (
-                <div
-                  key={line.variantId}
-                  className="flex items-center gap-2 py-1.5 border-b border-white/5 last:border-b-0"
-                >
-                  <span className="flex-1 text-[12.5px] text-foreground-2 overflow-hidden text-ellipsis whitespace-nowrap">
-                    {line.productTitle}
-                    {line.variantTitle && line.variantTitle !== 'Default Title'
-                      ? ` · ${line.variantTitle}`
-                      : ''}
-                  </span>
-                  <div className="flex items-center gap-1 shrink-0">
-                    <button
-                      type="button"
-                      onClick={() => changeQty(line.variantId, -1)}
-                      className="w-6 h-6 rounded-md border border-border bg-card text-foreground-2 text-xs leading-none cursor-pointer hover:bg-secondary"
-                      aria-label="Decrease quantity"
-                    >
-                      −
-                    </button>
-                    <span className="text-[12.5px] text-foreground w-6 text-center">
-                      {line.quantity}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => changeQty(line.variantId, 1)}
-                      className="w-6 h-6 rounded-md border border-border bg-card text-foreground-2 text-xs leading-none cursor-pointer hover:bg-secondary"
-                      aria-label="Increase quantity"
-                    >
-                      +
+                  <span className="w-[90px] text-sm text-muted-foreground">—</span>
+                  <span className="w-[90px] text-sm text-foreground-2">{fmtPrice(line.price, currency)}</span>
+                  <div className="w-[100px]">
+                    <div className="flex h-8 w-24 items-stretch rounded-lg border border-border">
+                      <button type="button" onClick={() => changeQty(line.variantId, -1)} className="flex w-7 items-center justify-center text-muted-foreground hover:text-foreground" aria-label="Decrease quantity">
+                        <Minus size={12} />
+                      </button>
+                      <div className="flex flex-1 items-center justify-center border-x border-border text-sm font-semibold text-foreground">{line.quantity}</div>
+                      <button type="button" onClick={() => changeQty(line.variantId, 1)} className="flex w-7 items-center justify-center text-muted-foreground hover:text-foreground" aria-label="Increase quantity">
+                        <Plus size={12} />
+                      </button>
+                    </div>
+                  </div>
+                  <div className="flex w-[90px] items-center justify-end gap-2">
+                    <span className="text-sm font-semibold text-foreground">{fmtPrice(Number(line.price) * line.quantity, currency)}</span>
+                    <button type="button" onClick={() => removeLine(line.variantId)} className="text-muted-foreground hover:text-rose-400" aria-label="Remove line item">
+                      <X size={13} />
                     </button>
                   </div>
-                  <span className="text-[12.5px] text-foreground-2 shrink-0 w-16 text-right">
-                    {fmtPrice(Number(line.price) * line.quantity, currency)}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => removeLine(line.variantId)}
-                    className="text-muted-foreground hover:text-rose-400 shrink-0"
-                    aria-label="Remove line item"
-                  >
-                    <X size={13} />
-                  </button>
                 </div>
-              ))}
-              <div className="flex justify-between pt-2 mt-1">
-                <span className="text-[12.5px] text-foreground-2">Subtotal</span>
-                <span className="text-[13px] font-bold text-foreground">
-                  {fmtPrice(subtotal, currency)}
-                </span>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Discount */}
-        <div className="mb-3.5">
-          <label className="text-[10.5px] font-bold tracking-[.07em] uppercase text-muted-foreground mb-[7px] block">
-            Discount
-          </label>
-          <div className={`flex gap-1.5 ${discountType !== 'none' ? 'mb-2.5' : 'mb-0'}`}>
-            {[
-              { v: 'none', l: 'None' },
-              { v: 'percentage', l: 'Percentage %' },
-              { v: 'fixed', l: 'Fixed amount' },
-            ].map((o) => (
-              <button
-                key={o.v}
-                onClick={() => {
-                  setDiscountType(o.v as 'none' | 'percentage' | 'fixed')
-                  setDiscountValue('')
-                }}
-                className={`flex-1 px-2 py-[7px] rounded-lg text-[11.5px] font-semibold font-[inherit] cursor-pointer transition-all border border-transparent ${
-                  discountType === o.v
-                    ? 'bg-foreground text-white'
-                    : 'bg-input text-muted-foreground'
-                }`}
-              >
-                {o.l}
-              </button>
-            ))}
-          </div>
-          {discountType !== 'none' && (
-            <div className="flex items-center gap-2.5">
-              <Input
-                type="number"
-                className="w-full bg-secondary border border-border rounded-xl px-3.5 py-[11px] text-[13.5px] text-foreground outline-none flex-1"
-                value={discountValue}
-                onChange={(e) => setDiscountValue(e.target.value)}
-                placeholder={
-                  discountType === 'percentage' ? 'e.g. 10' : 'e.g. 5.00'
-                }
-                min="0"
-                max={discountType === 'percentage' ? 100 : undefined}
-              />
-              <span className="text-[12.5px] font-bold text-foreground-2 shrink-0">
-                {discountType === 'percentage' ? '%' : currencySymbol}
-              </span>
-            </div>
-          )}
-        </div>
-
-        {discountType !== 'none' && Number(discountValue) > 0 && (
-          <div className="bg-secondary border border-border rounded-xl px-3.5 py-2.5 mb-3.5 flex justify-between items-center">
-            <div>
-              <div className="text-[11px] text-muted-foreground mb-[2px]">
-                After discount
-              </div>
-              <div className="text-[12.5px] font-bold text-rose-400">
-                − {fmtPrice(discountAmount, currency)}
-              </div>
-            </div>
-            <div className="text-right">
-              <div className="text-[11px] text-muted-foreground mb-[2px]">
-                New total
-              </div>
-              <div className="text-[15px] font-extrabold text-green-400">
-                {fmtPrice(newTotal, currency)}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Shipping address */}
-        <div className="mb-3.5">
-          <button
-            type="button"
-            onClick={() => setAddressOpen((v) => !v)}
-            className="w-full flex items-center gap-1.5 mb-[7px] bg-transparent cursor-pointer text-left"
-          >
-            <span className="text-[10.5px] font-bold tracking-[.07em] uppercase text-muted-foreground flex-1">
-              Shipping address {hasPrefill ? '(prefilled)' : ''}
-            </span>
-            <ChevronDown
-              size={10}
-              className={`transition-transform duration-200 text-muted-foreground ${
-                addressOpen ? 'rotate-180' : 'rotate-0'
-              }`}
-            />
-          </button>
-          {addressOpen && (
-            <div className="flex flex-col gap-1.5">
-              {!hasPrefill && (
-                <div className="text-[11px] text-muted-foreground italic mb-1">
-                  No default address on file — fill in if shipping is needed.
-                </div>
-              )}
-              <div className="flex gap-1.5">
-                <Input
-                  placeholder="First name"
-                  value={address.firstName}
-                  onChange={(e) => updateAddress('firstName', e.target.value)}
-                  className="bg-secondary border border-border rounded-xl px-3 py-2 text-[12.5px]"
-                />
-                <Input
-                  placeholder="Last name"
-                  value={address.lastName}
-                  onChange={(e) => updateAddress('lastName', e.target.value)}
-                  className="bg-secondary border border-border rounded-xl px-3 py-2 text-[12.5px]"
-                />
-              </div>
-              <Input
-                placeholder="Address 1"
-                value={address.address1}
-                onChange={(e) => updateAddress('address1', e.target.value)}
-                className="bg-secondary border border-border rounded-xl px-3 py-2 text-[12.5px]"
-              />
-              <Input
-                placeholder="Address 2"
-                value={address.address2}
-                onChange={(e) => updateAddress('address2', e.target.value)}
-                className="bg-secondary border border-border rounded-xl px-3 py-2 text-[12.5px]"
-              />
-              <div className="flex gap-1.5">
-                <Input
-                  placeholder="City"
-                  value={address.city}
-                  onChange={(e) => updateAddress('city', e.target.value)}
-                  className="bg-secondary border border-border rounded-xl px-3 py-2 text-[12.5px]"
-                />
-                <Input
-                  placeholder="Province"
-                  value={address.province}
-                  onChange={(e) => updateAddress('province', e.target.value)}
-                  className="bg-secondary border border-border rounded-xl px-3 py-2 text-[12.5px]"
-                />
-              </div>
-              <div className="flex gap-1.5">
-                <Input
-                  placeholder="ZIP"
-                  value={address.zip}
-                  onChange={(e) => updateAddress('zip', e.target.value)}
-                  className="bg-secondary border border-border rounded-xl px-3 py-2 text-[12.5px]"
-                />
-                <Input
-                  placeholder="Country"
-                  value={address.country}
-                  onChange={(e) => updateAddress('country', e.target.value)}
-                  className="bg-secondary border border-border rounded-xl px-3 py-2 text-[12.5px]"
-                />
-              </div>
-              <Input
-                placeholder="Phone"
-                value={address.phone}
-                onChange={(e) => updateAddress('phone', e.target.value)}
-                className="bg-secondary border border-border rounded-xl px-3 py-2 text-[12.5px]"
-              />
-            </div>
-          )}
-        </div>
-
-        {/* Note */}
-        <div className="mb-3.5">
-          <label className="text-[10.5px] font-bold tracking-[.07em] uppercase text-muted-foreground mb-[7px] block">
-            Note (optional)
-          </label>
-          <textarea
-            className="w-full bg-secondary border border-border rounded-xl px-3.5 py-[11px] text-[13.5px] text-foreground outline-none resize-y"
-            rows={3}
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-            placeholder="Internal note for the draft order"
-          />
-        </div>
-
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button
-            className="flex items-center gap-[7px]"
-            onClick={() => void handleSubmit()}
-            disabled={loading || cart.length === 0 || (!hasCustomer && !emailValid)}
-          >
-            {loading ? (
-              <Loader2 size={13} className="animate-spin text-white" />
-            ) : (
-              <span className="flex">
-                <Plus size={12} />
-              </span>
+              ))
             )}
-            {loading ? 'Creating...' : 'Create draft order'}
-          </Button>
-        </DialogFooter>
+            <div className="h-px bg-border" />
+          </div>
+
+          {/* Notes + Tags (left) + discount/totals (right) */}
+          <div className="flex gap-12">
+            <div className="flex flex-1 flex-col gap-4">
+              <div className="flex flex-col gap-2">
+                <span className="text-sm font-semibold text-foreground">Notes</span>
+                <textarea
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                  placeholder="Add a note…"
+                  className="min-h-[72px] resize-y rounded-[10px] border border-border bg-card px-3.5 py-3 text-sm text-foreground outline-none"
+                />
+              </div>
+              <div className="flex flex-col gap-2">
+                <span className="text-sm font-semibold text-foreground">Tags</span>
+                <Input
+                  value={tags}
+                  onChange={(e) => setTags(e.target.value)}
+                  placeholder="Add tags…"
+                  className="rounded-[10px] border border-border bg-card"
+                />
+              </div>
+            </div>
+            <OrderDiscountCard
+              currency={currency}
+              symbol={currencySymbol}
+              subtotal={subtotal}
+              discountType={discountType}
+              discountValue={discountValue}
+              setDiscountType={(t) => {
+                setDiscountType(t)
+                setDiscountValue('')
+              }}
+              setDiscountValue={setDiscountValue}
+              discountAmount={discountAmount}
+              tax={vat}
+              total={grandTotal}
+              shippingAdded={showShipping}
+              onAddShipping={() => setShowShipping(true)}
+            />
+          </div>
+
+          {/* Shipping address — revealed by "Add shipping" (or prefilled) */}
+          {showShipping && (
+            <div>
+              <div className="mb-[7px] flex items-center gap-1.5">
+                <span className="flex-1 text-[10.5px] font-bold uppercase tracking-[.07em] text-muted-foreground">Shipping address {hasPrefill ? '(prefilled)' : ''}</span>
+              </div>
+              <div>
+                <div className="flex flex-col gap-1.5">
+                  <div className="flex gap-1.5">
+                    <Input placeholder="First name" value={address.firstName} onChange={(e) => updateAddress('firstName', e.target.value)} className="rounded-[10px] border border-border bg-card px-3 py-2 text-[12.5px]" />
+                    <Input placeholder="Last name" value={address.lastName} onChange={(e) => updateAddress('lastName', e.target.value)} className="rounded-[10px] border border-border bg-card px-3 py-2 text-[12.5px]" />
+                  </div>
+                  <Input placeholder="Address 1" value={address.address1} onChange={(e) => updateAddress('address1', e.target.value)} className="rounded-[10px] border border-border bg-card px-3 py-2 text-[12.5px]" />
+                  <Input placeholder="Address 2" value={address.address2} onChange={(e) => updateAddress('address2', e.target.value)} className="rounded-[10px] border border-border bg-card px-3 py-2 text-[12.5px]" />
+                  <div className="flex gap-1.5">
+                    <Input placeholder="City" value={address.city} onChange={(e) => updateAddress('city', e.target.value)} className="rounded-[10px] border border-border bg-card px-3 py-2 text-[12.5px]" />
+                    <Input placeholder="Province" value={address.province} onChange={(e) => updateAddress('province', e.target.value)} className="rounded-[10px] border border-border bg-card px-3 py-2 text-[12.5px]" />
+                  </div>
+                  <div className="flex gap-1.5">
+                    <Input placeholder="ZIP" value={address.zip} onChange={(e) => updateAddress('zip', e.target.value)} className="rounded-[10px] border border-border bg-card px-3 py-2 text-[12.5px]" />
+                    <Input placeholder="Country" value={address.country} onChange={(e) => updateAddress('country', e.target.value)} className="rounded-[10px] border border-border bg-card px-3 py-2 text-[12.5px]" />
+                  </div>
+                  <Input placeholder="Phone" value={address.phone} onChange={(e) => updateAddress('phone', e.target.value)} className="rounded-[10px] border border-border bg-card px-3 py-2 text-[12.5px]" />
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="h-px bg-border" />
+        <div className="flex items-center justify-between gap-3 bg-[#FAF9FF] px-7 py-[18px] dark:bg-[rgba(255,255,255,0.03)]">
+          <span className="text-sm text-muted-foreground">Create draft order &amp; send Shopify invoice</span>
+          <div className="flex items-center gap-3">
+            <Button variant="outline" onClick={onClose}>Cancel</Button>
+            <Button onClick={() => void handleSubmit()} disabled={loading || cart.length === 0 || (!hasCustomer && !emailValid)}>
+              {loading ? <Loader2 size={13} className="animate-spin" /> : 'Create Draft order'}
+            </Button>
+          </div>
+        </div>
       </DialogContent>
     </Dialog>
   )

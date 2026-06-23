@@ -1,17 +1,17 @@
 "use client";
 
-import type { Thread, ConversationTag } from "@/types/inbox";
+import type { Thread, ConversationTag, BulkActionId, BulkActionPayload } from "@/types/inbox";
 import { MacroPanel } from "@/components/features/inbox/macro-panel";
 import { TicketActionBar } from "@/components/features/inbox/ticket-action-bar";
+import { ConversationTopbar } from "@/components/features/inbox/conversation-topbar";
+import { ComposerMacros } from "@/components/features/inbox/composer-macros";
 import { MessageList } from "@/components/features/inbox/message-list";
 import { NotesSection } from "@/components/features/inbox/notes-section";
 import { AttachmentBar } from "@/components/features/inbox/attachment-bar";
 import { ComposerToolbar } from "@/components/features/inbox/composer-toolbar";
 import { Button } from "@/components/ui/button";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { STATUS } from "@/lib/inbox-constants";
 import { extractEmail, extractName, plainTextToSafeHtml, sanitizeHtml } from "@/lib/inbox-utils";
-import { ChevronDown, Globe, Mail, Radio, X, Zap } from "lucide-react";
+import { ChevronDown, Globe, Mail, X } from "lucide-react";
 import { useRef, useCallback, useEffect, useMemo, useState } from "react";
 import { toast as sonnerToast } from "sonner";
 import { useInboxUI } from "@/stores/inbox-ui";
@@ -19,7 +19,7 @@ import { useAuthStore } from "@/stores/auth";
 import { useAIStore } from "@/stores/ai";
 import { useMacrosStore } from "@/stores/macros";
 import { useTicketMetaStore } from "@/stores/ticket-meta";
-import { useConversations, useConversation, inboxKeys } from "@/hooks/inbox/use-inbox-data";
+import { useConversations, useConversation, useInboxMembers, inboxKeys } from "@/hooks/inbox/use-inbox-data";
 import { useSendReply, useUpdateStatus, useTranslateMessage, useBulkConversationAction, useAddNote } from "@/hooks/inbox/use-inbox-mutations";
 import { useTags, useCreateTag } from "@/hooks/inbox/use-tags";
 import { useComposerActions } from "@/hooks/inbox/use-composer-actions";
@@ -40,6 +40,12 @@ const REFUND_REASONS = [
   { value: "wrong_item", label: "Wrong item received" },
   { value: "other", label: "Other" },
 ] as const;
+
+// Hidden per Figma chat view (1283-52898): the To: row, ticket tags/meta bar,
+// attachments and auto-translate aren't shown there. Kept behind this flag so
+// the client can restore them by flipping it to true. Typed `boolean` so the
+// dead-branch checks stay quiet.
+const SHOW_LEGACY: boolean = false;
 
 export function ConversationPanel() {
   // Refs (local to this component)
@@ -80,12 +86,14 @@ export function ConversationPanel() {
   const setShowMacroManager = useInboxUI((s) => s.setShowMacroManager);
   const setSending = useInboxUI((s) => s.setSending);
   const setSelectedThreadId = useInboxUI((s) => s.setSelectedThreadId);
+  const resetForNewThread = useInboxUI((s) => s.resetForNewThread);
 
   // AI state
   const queryClient = useQueryClient();
   const aiLoading = useAIStore((s) => s.aiLoading);
   const setAutoTranslate = useAIStore((s) => s.setAutoTranslate);
   const generateReply = useAIStore((s) => s.generateReply);
+  const resetAIForThread = useAIStore((s) => s.resetForThread);
 
   // Draft workflow
   const editingDraftId = useInboxUI((s) => s.editingDraftId);
@@ -118,6 +126,7 @@ export function ConversationPanel() {
   // Tag DB hooks
   const bulkAction = useBulkConversationAction();
   const { data: allTags = [] } = useTags();
+  const { data: members = [] } = useInboxMembers();
   const createTag = useCreateTag();
 
   // Mutations
@@ -226,6 +235,32 @@ export function ConversationPanel() {
 
   // Sorted threads for send & resolve navigation
   const sortedFiltered = useMemo(() => threads, [threads]);
+
+  // Prev/next conversation navigation (conv-topbar arrows)
+  const currentIndex = sortedFiltered.findIndex((t: Thread) => t.id === selectedThreadId);
+  const navigateThread = useCallback(
+    (dir: -1 | 1) => {
+      const next = sortedFiltered[currentIndex + dir];
+      if (!next) return;
+      setSelectedThreadId(next.id);
+      resetForNewThread();
+      resetAIForThread();
+    },
+    [sortedFiltered, currentIndex, setSelectedThreadId, resetForNewThread, resetAIForThread],
+  );
+
+  // Single-conversation bulk action (assign / snooze / spam / delete from top bar)
+  const singleAction = useCallback(
+    async (action: BulkActionId, payload?: BulkActionPayload) => {
+      if (!selectedThreadId) return;
+      try {
+        await bulkAction.mutateAsync({ ids: [selectedThreadId], action, payload });
+      } catch (e) {
+        sonnerToast.error(e instanceof Error ? e.message : "Action failed");
+      }
+    },
+    [selectedThreadId, bulkAction],
+  );
 
   // Send reply
   async function handleSend() {
@@ -389,77 +424,41 @@ export function ConversationPanel() {
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden min-w-0 relative z-[1]">
-      {/* Ticket header */}
-      <div className="py-3.5 px-[22px] border-b border-border shrink-0 bg-card">
-        <div className="flex items-center gap-3.5">
-          <div className="flex-1 min-w-0">
-            <div className="text-sm font-bold text-foreground overflow-hidden text-ellipsis whitespace-nowrap mb-0.5 tracking-[-0.01em]">
-              {selectedThread.subject}
-            </div>
-            <div className="text-[11.5px] text-muted-foreground">
-              {extractName(selectedThread.from)} · {messages.length} message
-              {messages.length !== 1 ? "s" : ""}
-            </div>
-          </div>
-          <div className="flex gap-1.5 items-center shrink-0">
-            {/* Status dropdown */}
-            <DropdownMenu>
-              <DropdownMenuTrigger
-                render={
-                  <button
-                    className="flex items-center gap-1.5 px-[11px] py-[5px] rounded-[20px] cursor-pointer text-xs font-semibold font-inherit transition-all duration-150"
-                    style={{
-                      background: STATUS[getStatus(selectedThread.id) as keyof typeof STATUS]?.bg,
-                      border: `1px solid ${STATUS[getStatus(selectedThread.id) as keyof typeof STATUS]?.border}`,
-                      color: STATUS[getStatus(selectedThread.id) as keyof typeof STATUS]?.color,
-                    }}
-                  />
-                }
-              >
-                <span
-                  className="w-1.5 h-1.5 rounded-full shrink-0"
-                  style={{
-                    background: STATUS[getStatus(selectedThread.id) as keyof typeof STATUS]?.color,
-                  }}
-                />
-                {STATUS[getStatus(selectedThread.id) as keyof typeof STATUS]?.label}
-                <ChevronDown size={11} />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                {Object.entries(STATUS).map(([k, s]) => (
-                  <DropdownMenuItem
-                    key={k}
-                    onClick={isSuspended ? undefined : () => void saveStatus(selectedThread.id, k)}
-                    disabled={isSuspended}
-                    style={{ color: s.color }}
-                  >
-                    <span className="w-2 h-2 rounded-full shrink-0" style={{ background: s.color }} />
-                    {s.label}
-                    {getStatus(selectedThread.id) === k && <span className="ml-auto text-[10px] text-muted-foreground">&#10003;</span>}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
+      {/* Ticket header — conv-topbar (Figma 1283-52902) */}
+      <ConversationTopbar
+        title={selectedThread.subject}
+        status={getStatus(selectedThread.id)}
+        assignedTo={selectedThread.assigned_to ?? null}
+        members={members}
+        onStatus={(s) => void saveStatus(selectedThread.id, s)}
+        onAssign={(memberId) => void singleAction("assign", { memberId })}
+        onSnooze={(until) => void singleAction("snooze", { until })}
+        onSpam={() => void singleAction("spam")}
+        onDelete={() => void singleAction("delete")}
+        onPrev={() => navigateThread(-1)}
+        onNext={() => navigateThread(1)}
+        canPrev={currentIndex > 0}
+        canNext={currentIndex >= 0 && currentIndex < sortedFiltered.length - 1}
+        disabled={isSuspended}
+      />
+
+      {/* Tags + ticket meta — hidden per Figma (restore via SHOW_LEGACY) */}
+      {SHOW_LEGACY && (
+        <div className="py-2.5 px-[18px] border-b border-border shrink-0 bg-card">
+          <TicketActionBar
+            meta={getTicketMeta(selectedThread.id)}
+            tags={conversationTags}
+            onAddTag={() => {
+              const name = window.prompt("Tag name");
+              if (name) void handleAddTag(name);
+            }}
+            onRemoveTag={(tag) => void handleRemoveTag(tag)}
+            onFieldChange={(field, labelOrValue) =>
+              field === "tier" ? updateMeta(selectedThread.id, { tier: labelOrValue }) : updateTicketField(selectedThread.id, field, labelOrValue)
+            }
+          />
         </div>
-        <TicketActionBar
-          meta={getTicketMeta(selectedThread.id)}
-          tags={conversationTags}
-          status={getStatus(selectedThread.id)}
-          onClose={() => void saveStatus(selectedThread.id, "closed")}
-          onAddTag={() => {
-            const name = window.prompt("Tag name");
-            if (name) void handleAddTag(name);
-          }}
-          onRemoveTag={(tag) => void handleRemoveTag(tag)}
-          onFieldChange={(field, labelOrValue) =>
-            field === "tier" ? updateMeta(selectedThread.id, { tier: labelOrValue }) : updateTicketField(selectedThread.id, field, labelOrValue)
-          }
-          assignedTo={null}
-          onAssign={() => {}}
-          members={[]}
-        />
-      </div>
+      )}
 
       {/* Messages + Notes + Note input */}
       <div className="thin-scrollbar conv-area flex-1 overflow-y-auto px-6 py-5 bg-[#FAFAFA]">
@@ -516,60 +515,52 @@ export function ConversationPanel() {
         {/* Composer */}
         {!showMacros && (
           <>
-            {/* Tab strip */}
-            <div className="flex border-b border-border pl-4">
+            {/* Tab strip — pills (Figma 1283-52943: active = accent-soft + primary) */}
+            <div className="flex items-center gap-1 px-4 pt-3 pb-1">
               {[
                 { id: "reply", label: "Reply" },
-                { id: "note", label: "Internal note" },
-              ].map((t) => (
-                <button
-                  key={t.id}
-                  className={`py-[9px] px-4 bg-transparent cursor-pointer text-[13px] font-medium font-inherit border-b-2 border-b-transparent transition-[color,border-color] duration-150 text-foreground-3 ${composerTab === t.id ? "text-foreground border-b-foreground font-semibold" : "hover:text-foreground-2"}`}
-                  onClick={() => setComposerTab(t.id as "reply" | "note")}
-                >
-                  {t.label}
-                </button>
-              ))}
+                { id: "note", label: "Private note" },
+              ].map((t) => {
+                const tabActive = composerTab === t.id;
+                return (
+                  <button
+                    key={t.id}
+                    className={`px-3 py-1.5 rounded-lg text-[13px] font-inherit transition-colors duration-150 ${tabActive ? "bg-accent-soft text-primary font-semibold" : "text-foreground-3 font-medium hover:text-foreground-2 hover:bg-secondary"}`}
+                    onClick={() => setComposerTab(t.id as "reply" | "note")}
+                  >
+                    {t.label}
+                  </button>
+                );
+              })}
             </div>
 
-            {/* To: row */}
-            <div className="flex items-center gap-2 px-3.5 py-2 border-b border-border">
-              <span className="flex text-muted-foreground shrink-0">
-                <Mail size={14} />
-              </span>
-              <span className="text-[11.5px] text-foreground-2 font-semibold shrink-0">To:</span>
-              <span className="flex-1 text-xs text-foreground overflow-hidden text-ellipsis whitespace-nowrap">
-                {extractName(selectedThread.from)}
-                {extractEmail(selectedThread.from) ? ` (${extractEmail(selectedThread.from)})` : ""}
-              </span>
-              <ChevronDown size={11} className="text-muted-foreground shrink-0" />
-            </div>
-
-            {/* Macro search row */}
-            <div
-              className="flex items-center gap-2 px-3.5 py-[7px] border-b border-border cursor-pointer transition-[background] duration-[120ms] hover:bg-secondary"
-              onClick={() => setShowMacros(true)}
-            >
-              <span className="text-muted-foreground flex shrink-0">
-                <Zap size={13} />
-              </span>
-              <span className="flex-1 text-xs text-muted-foreground">Search macros by name, tags or body...</span>
-              {aiMacros.length > 0 && (
-                <span className="text-[9px] font-bold px-1.5 py-px rounded bg-secondary text-foreground-2 tracking-[.04em] shrink-0 border border-border">
-                  AI
+            {/* To: row — hidden per Figma (restore via SHOW_LEGACY) */}
+            {SHOW_LEGACY && (
+              <div className="flex items-center gap-2 px-3.5 py-2 border-b border-border">
+                <span className="flex text-muted-foreground shrink-0">
+                  <Mail size={14} />
                 </span>
-              )}
-              <ChevronDown size={11} className="text-muted-foreground shrink-0" />
-            </div>
+                <span className="text-[11.5px] text-foreground-2 font-semibold shrink-0">To:</span>
+                <span className="flex-1 text-xs text-foreground overflow-hidden text-ellipsis whitespace-nowrap">
+                  {extractName(selectedThread.from)}
+                  {extractEmail(selectedThread.from) ? ` (${extractEmail(selectedThread.from)})` : ""}
+                </span>
+                <ChevronDown size={11} className="text-muted-foreground shrink-0" />
+              </div>
+            )}
 
-            {/* Hidden file inputs */}
-            <input ref={imgUploadRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
-            <input ref={fileUploadRef} type="file" multiple className="hidden" onChange={handleFileAttach} />
+            {/* Hidden file inputs (attachments — restore via SHOW_LEGACY) */}
+            {SHOW_LEGACY && (
+              <>
+                <input ref={imgUploadRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
+                <input ref={fileUploadRef} type="file" multiple className="hidden" onChange={handleFileAttach} />
+              </>
+            )}
 
             {/* Flat compose area */}
             <div className="bg-card dark:bg-[rgba(255,255,255,0.025)]" onClick={() => showEmoji && setShowEmoji(false)}>
-              {/* Auto-translate banner */}
-              {autoTranslate && customerLang && customerLang.code !== "en" && (
+              {/* Auto-translate banner — hidden per Figma (restore via SHOW_LEGACY) */}
+              {SHOW_LEGACY && autoTranslate && customerLang && customerLang.code !== "en" && (
                 <div className="flex items-center gap-2 px-3.5 py-1.5 bg-secondary border-b border-border text-[11.5px] text-foreground-2">
                   <span className="flex">
                     <Globe size={13} />
@@ -583,24 +574,36 @@ export function ConversationPanel() {
                 </div>
               )}
 
-              {/* Attachments */}
-              <AttachmentBar />
+              {/* Attachments — hidden per Figma (restore via SHOW_LEGACY) */}
+              {SHOW_LEGACY && <AttachmentBar />}
 
               {/* View-only hint */}
               {!canReply && <p className="px-4 py-2 text-xs text-muted-foreground">View-only access — you cannot reply to tickets.</p>}
 
-              {/* Contenteditable composer */}
-              <div
-                ref={composerRef}
-                contentEditable={canReply}
-                suppressContentEditableWarning
-                data-placeholder={composerTab === "reply" ? "Click here to reply, or press r." : "Internal note — not visible to customer…"}
-                onInput={(e) => setReply(e.currentTarget.textContent)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) void handleSend();
-                }}
-                className={`compose-ta w-full resize-none outline-none bg-transparent px-4 py-3 text-sm text-foreground leading-relaxed min-h-[90px] tracking-[.005em] min-h-[150px] ${composerTab === "note" ? "bg-[rgba(251,191,36,0.03)]" : "bg-transparent"} ${!canReply ? "opacity-50 cursor-not-allowed" : ""}`}
-              />
+              {/* Contenteditable composer — bordered box (Figma 1283-52943) */}
+              <div className="mx-3.5 my-2 overflow-hidden rounded-xl border border-accent-soft bg-background dark:bg-[rgba(255,255,255,0.025)]">
+                <div
+                  ref={composerRef}
+                  contentEditable={canReply}
+                  suppressContentEditableWarning
+                  data-placeholder={composerTab === "reply" ? "Write a reply…  type / to insert a macro" : "Internal note — not visible to customer…"}
+                  onInput={(e) => {
+                    const text = e.currentTarget.textContent ?? "";
+                    // "/" on an empty reply opens the macro panel (Figma hint).
+                    if (composerTab === "reply" && text === "/") {
+                      e.currentTarget.innerHTML = "";
+                      setReply("");
+                      setShowMacros(true);
+                      return;
+                    }
+                    setReply(text);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) void handleSend();
+                  }}
+                  className={`compose-ta w-full resize-none outline-none bg-transparent px-3.5 py-3 text-sm text-foreground leading-relaxed min-h-[120px] tracking-[.005em] ${composerTab === "note" ? "bg-[rgba(251,191,36,0.03)]" : ""} ${!canReply ? "opacity-50 cursor-not-allowed" : ""}`}
+                />
+              </div>
 
               {/* AI generating dots */}
               {aiLoading && (
@@ -615,32 +618,19 @@ export function ConversationPanel() {
                 </div>
               )}
 
-              {/* Suggested macros */}
-              {(aiMacros.length > 0 || macros.length > 0) && (
-                <div className="flex items-center gap-1.5 px-3.5 py-1.5 border-t border-border flex-wrap">
-                  <Radio size={12} className="text-muted-foreground shrink-0" />
-                  <span className="text-[10.5px] text-foreground-2 font-semibold shrink-0">Suggested macros</span>
-                  {(aiMacros.length > 0 ? aiMacros : macros).slice(0, 3).map((m) => {
-                    const firstName = extractName(selectedThread?.from || "").split(" ")[0] || "there";
-                    const body = (m.body || "").replace(/{{name}}/gi, firstName).replace(/{{firstname}}/gi, firstName);
-                    return (
-                      <button
-                        key={m.id}
-                        className="inline-flex items-center text-xs font-medium px-2.5 py-[3px] rounded-[5px] border border-black/[0.08] bg-secondary text-foreground-2 cursor-pointer transition-all hover:border-(--border-hover) hover:text-foreground"
-                        onClick={() => {
-                          if (composerRef.current) {
-                            composerRef.current.innerHTML = body.replace(/\n/g, "<br>");
-                            setReply(composerRef.current.textContent);
-                          } else setReply(body);
-                          setTimeout(() => composerRef.current?.focus(), 10);
-                        }}
-                      >
-                        {m.name}
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
+              {/* Macros row + suggested pills */}
+              <ComposerMacros
+                macros={macros.filter((m) => !m.archived)}
+                aiMacros={aiMacros}
+                customerName={extractName(selectedThread?.from || "")}
+                onInsert={(body) => {
+                  if (composerRef.current) {
+                    composerRef.current.innerHTML = body.replace(/\n/g, "<br>");
+                    setReply(composerRef.current.textContent);
+                  } else setReply(body);
+                  setTimeout(() => composerRef.current?.focus(), 10);
+                }}
+              />
 
               {/* Toolbar + Send buttons */}
               <ComposerToolbar

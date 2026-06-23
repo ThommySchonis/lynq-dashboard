@@ -42,13 +42,13 @@ export function NoteModal({ order, token, onClose, onSuccess }: NoteModalProps) 
         if (!open) onClose();
       }}
     >
-      <DialogContent>
+      <DialogContent className="sm:max-w-[540px]">
         <DialogHeader>
           <DialogTitle>{`Note — ${order.name}`}</DialogTitle>
         </DialogHeader>
         <div>
           <label className="text-[10.5px] font-bold tracking-[.07em] uppercase text-muted-foreground mb-[7px] block">Internal note (visible in Shopify)</label>
-          <textarea className="w-full bg-secondary border border-border rounded-xl px-3.5 py-[11px] text-[13.5px] text-foreground outline-none resize-y min-h-[100px]"
+          <textarea className="w-full bg-secondary border border-border rounded-[11px] px-3.5 py-[13px] text-[13.5px] text-foreground outline-none resize-y min-h-[170px]"
             value={note}
             onChange={(e) => setNote(e.target.value)}
             rows={5}

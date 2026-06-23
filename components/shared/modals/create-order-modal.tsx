@@ -145,6 +145,8 @@ export function CreateOrderModal({
   >('none')
   const [discountValue, setDiscountValue] = useState('')
   const [note, setNote] = useState('')
+  const [invoiceSubject, setInvoiceSubject] = useState('')
+  const [invoiceMessage, setInvoiceMessage] = useState('')
   const [loading, setLoading] = useState(false)
   const [productFieldFocused, setProductFieldFocused] = useState(false)
   const loadMoreRef = useRef<HTMLDivElement | null>(null)
@@ -285,6 +287,8 @@ export function CreateOrderModal({
       body.discount = { type: discountType, value: Number(discountValue) }
     }
     if (note.trim()) body.note = note.trim()
+    if (invoiceSubject.trim()) body.invoiceSubject = invoiceSubject.trim()
+    if (invoiceMessage.trim()) body.invoiceMessage = invoiceMessage.trim()
     const tagList = tags.split(',').map((t) => t.trim()).filter(Boolean)
     if (tagList.length) body.tags = tagList
 
@@ -298,10 +302,19 @@ export function CreateOrderModal({
       const data = await parseJson<{
         error?: string
         draftOrder?: { name?: string }
+        invoiceSent?: boolean
       }>(res)
 
       if (res.ok) {
-        onSuccess(`Draft ${data.draftOrder?.name || ''} created!`)
+        const name = data.draftOrder?.name || ''
+        if (data.invoiceSent) {
+          onSuccess(`Draft ${name} created & invoice sent`)
+        } else {
+          onSuccess(
+            `Draft ${name} created, but invoice email failed — resend it in Shopify`,
+            'warning'
+          )
+        }
       } else {
         onSuccess(data.error || 'Create order failed', 'error')
       }
@@ -514,6 +527,23 @@ export function CreateOrderModal({
               total={grandTotal}
               shippingAdded={showShipping}
               onAddShipping={() => setShowShipping(true)}
+            />
+          </div>
+
+          {/* Invoice email — optional overrides; blank uses Shopify's default template */}
+          <div className="flex flex-col gap-2">
+            <span className="text-sm font-semibold text-foreground">Invoice email (optional)</span>
+            <Input
+              value={invoiceSubject}
+              onChange={(e) => setInvoiceSubject(e.target.value)}
+              placeholder="Subject — leave blank for Shopify default"
+              className="rounded-[10px] border border-border bg-card"
+            />
+            <textarea
+              value={invoiceMessage}
+              onChange={(e) => setInvoiceMessage(e.target.value)}
+              placeholder="Message — leave blank for Shopify default"
+              className="min-h-[72px] resize-y rounded-[10px] border border-border bg-card px-3.5 py-3 text-sm text-foreground outline-none"
             />
           </div>
 

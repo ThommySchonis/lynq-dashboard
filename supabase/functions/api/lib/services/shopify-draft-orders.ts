@@ -1,5 +1,12 @@
 import { shopifyFetchJSON } from "./shopify-core.ts";
-import type { CreateDraftOrderParams, ShopifyCredentials, ShopifyDraftOrderResponse } from "./shopify-types.ts";
+import { logger } from "../logger.ts";
+import type {
+  CreateDraftOrderParams,
+  DraftOrderWithInvoiceResult,
+  ShopifyCredentials,
+  ShopifyDraftOrderInvoiceResponse,
+  ShopifyDraftOrderResponse,
+} from "./shopify-types.ts";
 
 export async function createDraftOrder(credentials: ShopifyCredentials, params: CreateDraftOrderParams) {
   const email = params.email?.trim();
@@ -56,4 +63,47 @@ export async function createDraftOrder(credentials: ShopifyCredentials, params: 
     name: data.draft_order?.name,
     invoiceUrl: data.draft_order?.invoice_url,
   };
+}
+
+export async function sendDraftOrderInvoice(
+  credentials: ShopifyCredentials,
+  draftOrderId: number,
+  opts: { to?: string; subject?: string; customMessage?: string } = {},
+): Promise<void> {
+  const invoice: Record<string, unknown> = {};
+  if (opts.to?.trim()) invoice.to = opts.to.trim();
+  if (opts.subject?.trim()) invoice.subject = opts.subject.trim();
+  if (opts.customMessage?.trim()) invoice.custom_message = opts.customMessage.trim();
+
+  await shopifyFetchJSON<ShopifyDraftOrderInvoiceResponse>(
+    credentials,
+    `/draft_orders/${draftOrderId}/send_invoice.json`,
+    { method: "POST", body: JSON.stringify({ draft_order_invoice: invoice }) },
+  );
+}
+
+export async function createDraftOrderWithInvoice(
+  credentials: ShopifyCredentials,
+  params: CreateDraftOrderParams,
+): Promise<DraftOrderWithInvoiceResult> {
+  const draftOrder = await createDraftOrder(credentials, params);
+
+  if (!draftOrder.id) {
+    return { draftOrder, invoiceSent: false, invoiceError: "Draft order has no id" };
+  }
+
+  try {
+    await sendDraftOrderInvoice(credentials, draftOrder.id, {
+      subject: params.invoiceSubject,
+      customMessage: params.invoiceMessage,
+    });
+    return { draftOrder, invoiceSent: true };
+  } catch (err) {
+    const invoiceError = err instanceof Error ? err.message : "Invoice send failed";
+    logger.warn("[shopify-draft-orders]", "invoice send failed; draft kept", {
+      draftOrderId: draftOrder.id,
+      error: invoiceError,
+    });
+    return { draftOrder, invoiceSent: false, invoiceError };
+  }
 }

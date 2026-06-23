@@ -67,13 +67,9 @@ export const INBOX_FOLDERS: InboxFolder[] = [
   { key: 'spam',      label: 'Spam'      },
   { key: 'trash',     label: 'Trash'     },
 ]
-
-// AI Staged drafts come from `emma_draft_queue`, which the conversation list
-// endpoint does not yet expose as a filter (Backend task #8). Until it does, the
-// tab shows an empty state in production. Set NEXT_PUBLIC_AI_STAGED_MOCK=1 in dev
-// to preview the tab with mock rows (see lib/inbox-ai-staged-mock.ts). Default
-// OFF — never enable in production.
-export const AI_STAGED_MOCK = process.env.NEXT_PUBLIC_AI_STAGED_MOCK === '1'
+// The 'ai_staged' folder is backed by `emma_draft_queue`, which the conversation
+// list endpoint does not yet expose as a filter (Backend task #8). Until it does,
+// the tab renders an empty state — see the short-circuit in useConversations().
 
 // ─── Bulk-actions menu styling ────────────────────────────────
 // Shared row/header recipes for the bulk-actions dropdown and its sub-panels

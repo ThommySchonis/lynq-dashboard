@@ -12,8 +12,7 @@ import { useAuthStore } from "@/stores/auth";
 import { useConversations, useInboxCounts } from "@/hooks/inbox/use-inbox-data";
 import { useSyncInbox } from "@/hooks/inbox/use-inbox-mutations";
 import { useAIStore } from "@/stores/ai";
-import { URGENCY_SCORE, INBOX_FOLDERS, AI_STAGED_MOCK } from "@/lib/inbox-constants";
-import { AI_STAGED_MOCK_COUNT } from "@/lib/inbox-ai-staged-mock";
+import { URGENCY_SCORE, INBOX_FOLDERS } from "@/lib/inbox-constants";
 import { useMemo, useCallback, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import type { Thread } from "@/types/inbox";
@@ -167,9 +166,8 @@ export function ThreadListPanel() {
 
   const folders = INBOX_FOLDERS.map((f) => ({
     ...f,
-    // AI Staged count isn't in /counts yet (BE #8) — show the mock count in dev,
-    // 0 (hidden badge) in prod.
-    count: f.key === "ai_staged" ? (AI_STAGED_MOCK ? AI_STAGED_MOCK_COUNT : 0) : counts[f.key as keyof typeof counts] ?? 0,
+    // ai_staged isn't in /counts yet (BE #8) → resolves to 0, badge stays hidden.
+    count: counts[f.key as keyof typeof counts] ?? 0,
   }));
 
   const URGENCY_UI: Record<string, { color: string; bg: string; border: string }> = {

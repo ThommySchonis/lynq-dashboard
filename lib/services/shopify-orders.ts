@@ -166,6 +166,135 @@ export async function getRefunds(credentials: ShopifyCredentials, dateRange: { f
 /**
  * Look up customer by email or order number, including recent orders.
  */
+// GraphQL shape for a customer's draft orders (REST /draft_orders.json can't
+// filter by customer_id, so we use the GraphQL draftOrders connection).
+interface DraftOrdersGraphQLResponse {
+  data?: {
+    draftOrders: {
+      edges: Array<{
+        node: {
+          id: string
+          name: string
+          createdAt: string
+          status: string
+          totalPriceSet: { shopMoney: { amount: string; currencyCode: string } } | null
+          lineItems: {
+            edges: Array<{
+              node: {
+                id: string
+                title: string | null
+                variantTitle: string | null
+                sku: string | null
+                quantity: number
+                originalUnitPriceSet: { shopMoney: { amount: string } } | null
+              }
+            }>
+          }
+          shippingAddress: {
+            firstName: string | null
+            lastName: string | null
+            address1: string | null
+            address2: string | null
+            city: string | null
+            zip: string | null
+            country: string | null
+            countryCode: string | null
+            phone: string | null
+          } | null
+        }
+      }>
+    }
+  }
+}
+
+const CUSTOMER_DRAFT_ORDERS_QUERY = `
+  query customerDraftOrders($query: String!) {
+    draftOrders(first: 50, query: $query, sortKey: CREATED_AT, reverse: true) {
+      edges {
+        node {
+          id
+          name
+          createdAt
+          status
+          totalPriceSet { shopMoney { amount currencyCode } }
+          lineItems(first: 50) {
+            edges {
+              node { id title variantTitle sku quantity originalUnitPriceSet { shopMoney { amount } } }
+            }
+          }
+          shippingAddress { firstName lastName address1 address2 city zip country countryCode phone }
+        }
+      }
+    }
+  }
+`
+
+// gid://shopify/DraftOrder/123 -> "123"
+function draftLegacyId(gid: string): string {
+  return gid.split('/').pop() ?? gid
+}
+
+// Fetch a customer's non-completed draft orders, mapped into the same shape as
+// regular orders (with isDraft: true) so the sidebar can render them inline.
+// Completed drafts are skipped — they become real orders that already appear via /orders.json.
+async function getCustomerDraftOrders(credentials: ShopifyCredentials, customerId: number) {
+  const res = await resilientFetch<DraftOrdersGraphQLResponse>(
+    'shopify',
+    `https://${credentials.domain}/admin/api/${SHOPIFY_API_VERSION}/graphql.json`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Shopify-Access-Token': credentials.accessToken,
+      },
+      body: JSON.stringify({
+        query: CUSTOMER_DRAFT_ORDERS_QUERY,
+        variables: { query: `customer_id:${customerId}` },
+      }),
+    },
+  )
+
+  if (!res.ok) return []
+
+  return (res.data.data?.draftOrders.edges ?? [])
+    .filter(({ node }) => node.status !== 'COMPLETED')
+    .map(({ node }) => ({
+      id: `draft_${draftLegacyId(node.id)}`,
+      name: node.name,
+      createdAt: node.createdAt,
+      financialStatus: 'draft',
+      fulfillmentStatus: '',
+      cancelReason: null,
+      cancelledAt: null,
+      isDraft: true,
+      totalPrice: node.totalPriceSet?.shopMoney.amount ?? '0',
+      currency: node.totalPriceSet?.shopMoney.currencyCode ?? '',
+      lineItems: node.lineItems.edges.map(({ node: li }) => ({
+        id: draftLegacyId(li.id),
+        title: li.title ?? '',
+        variantTitle: li.variantTitle,
+        sku: li.sku,
+        quantity: li.quantity,
+        price: li.originalUnitPriceSet?.shopMoney.amount ?? '0',
+      })),
+      fulfillments: [],
+      refunds: [],
+      shippingAddress: node.shippingAddress
+        ? {
+            firstName: node.shippingAddress.firstName || '',
+            lastName: node.shippingAddress.lastName || '',
+            address1: node.shippingAddress.address1 || '',
+            address2: node.shippingAddress.address2 || '',
+            city: node.shippingAddress.city || '',
+            zip: node.shippingAddress.zip || '',
+            country: node.shippingAddress.country || '',
+            countryCode: node.shippingAddress.countryCode || '',
+            phone: node.shippingAddress.phone || '',
+          }
+        : null,
+    }))
+}
+
 export async function getCustomer(credentials: ShopifyCredentials, query: { email?: string; order?: string }) {
   let customer: ShopifyCustomerRef | null = null
 
@@ -236,6 +365,11 @@ export async function getCustomer(credentials: ShopifyCredentials, query: { emai
     } : null,
   }))
 
+  const draftOrders = await getCustomerDraftOrders(credentials, customer.id)
+  const allOrders = [...orders, ...draftOrders].sort(
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+  )
+
   return {
     customer: {
       id: customer.id,
@@ -266,7 +400,7 @@ export async function getCustomer(credentials: ShopifyCredentials, query: { emai
       note: customer.note,
       createdAt: customer.created_at,
     },
-    orders,
+    orders: allOrders,
   }
 }
 

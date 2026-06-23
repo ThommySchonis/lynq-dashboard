@@ -1,15 +1,16 @@
 'use client'
 
 import { useState } from 'react'
+import { AlertTriangle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { SettingsSection } from '@/components/features/settings/settings-section'
-import { ConfirmDialog } from '@/components/features/settings/confirm-dialog'
+import { SettingsRow } from '@/components/features/settings/settings-panel'
 import { TransferOwnershipDialog } from './transfer-ownership-dialog'
+import { DeleteWorkspaceDialog } from './delete-workspace-dialog'
 import {
   usePendingTransfer,
   useCancelTransfer,
 } from '@/hooks/settings/use-ownership-transfer'
-import { useMembers } from '@/hooks/settings/use-settings-data'
+import { useMembers, useWorkspace } from '@/hooks/settings/use-settings-data'
 import { useAuthStore } from '@/stores/auth'
 import { useDeleteWorkspace } from '@/hooks/settings/use-workspace-mutations'
 
@@ -28,7 +29,10 @@ export function DangerZoneSection({
   const { data: pendingTransfer } = usePendingTransfer()
   const cancelTransfer = useCancelTransfer()
   const { data: members } = useMembers()
+  const { data: ws } = useWorkspace()
   const deleteWorkspace = useDeleteWorkspace()
+
+  const workspaceName = (ws as { name?: string } | undefined)?.name ?? ''
 
   const isSuspended = useAuthStore((s) => s.isSuspended)
   const isImpersonating = useAuthStore((s) => s.isImpersonating)
@@ -51,89 +55,83 @@ export function DangerZoneSection({
     : null
 
   return (
-    <SettingsSection title="Danger zone">
+    <div className="bg-destructive/[0.04] border-[1.5px] border-destructive/30 rounded-2xl px-[22px] pb-2 divide-y divide-border">
       <TransferOwnershipDialog
         open={transferOpen}
         onOpenChange={setTransferOpen}
       />
 
-      <ConfirmDialog
+      <DeleteWorkspaceDialog
         open={deleteOpen}
         onOpenChange={setDeleteOpen}
-        title="Delete workspace"
-        description="This will permanently delete the workspace and all associated data. This action cannot be undone."
-        confirmLabel="Delete workspace"
-        typeToConfirm="DELETE"
+        workspaceName={workspaceName}
         onConfirm={() => {
           deleteWorkspace.mutate(undefined, {
             onSuccess: () => setDeleteOpen(false),
           })
         }}
         loading={deleteWorkspace.isPending}
-        variant="danger"
       />
 
-      <div className="border border-destructive/25 rounded-xl overflow-hidden">
-        <div className="px-6 py-5 border-b border-destructive/[0.12] bg-destructive/[0.02]">
-          <h3 className="text-lg font-medium text-destructive mb-1">Danger zone</h3>
-          <p className="text-sm text-muted-foreground">
+      <div className="flex items-start gap-2.5 pt-5 pb-3.5">
+        <AlertTriangle size={18} strokeWidth={2} className="text-destructive mt-px shrink-0" />
+        <div>
+          <h3 className="text-base font-bold text-destructive leading-snug">Danger zone</h3>
+          <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
             These actions are irreversible. Please proceed with caution.
           </p>
         </div>
+      </div>
 
-        <div className="px-6 py-[18px] flex items-center justify-between gap-6 border-b border-destructive/[0.08]">
-          <div>
-            <p className="text-sm font-medium text-foreground mb-0.5">Transfer ownership</p>
-            <p className="text-sm text-muted-foreground">
-              {hasPendingTransfer
-                ? `Pending transfer to ${targetMemberName}. Expires ${transferExpiresAt}.`
-                : 'Transfer this workspace to another member'}
-            </p>
-          </div>
-          {hasPendingTransfer ? (
-            <Button
-              variant="outline"
-              type="button"
-              onClick={() => cancelTransfer.mutate()}
-              disabled={isSuspended || isImpersonating || cancelTransfer.isPending}
-              title={isImpersonating ? 'Not available during impersonation' : undefined}
-              className="shrink-0"
-            >
-              {cancelTransfer.isPending ? 'Cancelling…' : 'Cancel transfer'}
-            </Button>
-          ) : (
-            <Button
-              variant="outline"
-              type="button"
-              disabled={isSuspended || isImpersonating || !isOwner}
-              title={isImpersonating ? 'Not available during impersonation' : undefined}
-              onClick={() => setTransferOpen(true)}
-              className="shrink-0"
-            >
-              Transfer…
-            </Button>
-          )}
-        </div>
-
-        <div className="px-6 py-[18px] flex items-center justify-between gap-6">
-          <div>
-            <p className="text-sm font-medium text-destructive mb-0.5">Delete workspace</p>
-            <p className="text-sm text-muted-foreground">
-              Permanently delete this workspace and all data
-            </p>
-          </div>
+      <SettingsRow
+        label="Transfer ownership"
+        hint={
+          hasPendingTransfer
+            ? `Pending transfer to ${targetMemberName}. Expires ${transferExpiresAt}.`
+            : 'Transfer this workspace to another member.'
+        }
+      >
+        {hasPendingTransfer ? (
           <Button
-            variant="destructive"
+            variant="outline"
+            type="button"
+            onClick={() => cancelTransfer.mutate()}
+            disabled={isSuspended || isImpersonating || cancelTransfer.isPending}
+            title={isImpersonating ? 'Not available during impersonation' : undefined}
+          >
+            {cancelTransfer.isPending ? 'Cancelling…' : 'Cancel transfer'}
+          </Button>
+        ) : (
+          <Button
+            variant="outline"
             type="button"
             disabled={isSuspended || isImpersonating || !isOwner}
             title={isImpersonating ? 'Not available during impersonation' : undefined}
-            onClick={() => setDeleteOpen(true)}
-            className="shrink-0"
+            onClick={() => setTransferOpen(true)}
           >
-            Delete workspace…
+            Transfer…
           </Button>
+        )}
+      </SettingsRow>
+
+      <div className="flex items-center justify-between gap-6 py-[15px]">
+        <div className="flex flex-col gap-[3px] min-w-0">
+          <p className="text-sm font-semibold text-destructive">Delete workspace</p>
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            Permanently delete this workspace and all of its data.
+          </p>
         </div>
+        <Button
+          variant="destructive"
+          type="button"
+          disabled={isSuspended || isImpersonating || !isOwner}
+          title={isImpersonating ? 'Not available during impersonation' : undefined}
+          onClick={() => setDeleteOpen(true)}
+          className="shrink-0"
+        >
+          Delete workspace…
+        </Button>
       </div>
-    </SettingsSection>
+    </div>
   )
 }

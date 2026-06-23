@@ -63,13 +63,9 @@ export function SettingsSidebar() {
   const personalGroupIndex = nav.findIndex(g => g.label === 'PERSONAL')
 
   return (
-    <aside className="fixed left-16 top-0 bottom-0 w-[260px] bg-secondary border-r border-[#E5E0EB] flex flex-col z-40">
-      {/* Header */}
-      <div className="px-4 pt-5 pb-4 border-b border-[#E5E0EB] flex-shrink-0">
-        <h2 className="text-[22px] font-semibold text-foreground mb-3 mt-0 leading-tight">
-          Settings
-        </h2>
-
+    <aside className="w-[248px] shrink-0 h-full bg-background border-r border-border flex flex-col">
+      {/* Search — sidebar starts directly with the search field (no title), per Figma node 857-15422 */}
+      <div className="px-4 pt-5 pb-1 flex-shrink-0">
         <div className="relative" ref={searchRef}>
           {/* Search icon */}
           <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-foreground-4 flex items-center pointer-events-none z-10">
@@ -84,11 +80,11 @@ export function SettingsSidebar() {
             onKeyDown={handleSearchKeyDown}
             onFocus={() => query.trim().length > 0 && setDropdownOpen(true)}
             autoComplete="off"
-            className="pl-8 pr-10 py-2 text-[13px] bg-white border-[#E5E0EB] text-foreground placeholder:text-foreground-4 focus-visible:ring-primary/20 focus-visible:border-primary"
+            className="pl-8 pr-10 py-2 text-[13px] bg-card border-border text-foreground placeholder:text-foreground-4 focus-visible:ring-primary/20 focus-visible:border-primary"
           />
 
           {/* ⌘K hint badge */}
-          <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-foreground-4 bg-[#F0EDF4] rounded-[3px] px-1 leading-[1.6] pointer-events-none">
+          <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-foreground-4 bg-black/[0.04] rounded-[3px] px-1 leading-[1.6] pointer-events-none">
             ⌘K
           </span>
 
@@ -96,7 +92,7 @@ export function SettingsSidebar() {
           {dropdownOpen && filtered.length > 0 && (
             <div
               ref={dropdownRef}
-              className="absolute top-[calc(100%+4px)] left-0 right-0 bg-white border border-[#E5E0EB] rounded-lg shadow-[0_4px_16px_rgba(0,0,0,0.08)] z-[100] max-h-[280px] overflow-y-auto"
+              className="absolute top-[calc(100%+4px)] left-0 right-0 bg-white border border-border rounded-lg shadow-[0_4px_16px_rgba(0,0,0,0.08)] z-[100] max-h-[280px] overflow-y-auto"
             >
               {filtered.map(item => (
                 <div
@@ -117,7 +113,7 @@ export function SettingsSidebar() {
           {dropdownOpen && filtered.length === 0 && query.trim().length > 0 && (
             <div
               ref={dropdownRef}
-              className="absolute top-[calc(100%+4px)] left-0 right-0 bg-white border border-[#E5E0EB] rounded-lg shadow-[0_4px_16px_rgba(0,0,0,0.08)] z-[100]"
+              className="absolute top-[calc(100%+4px)] left-0 right-0 bg-white border border-border rounded-lg shadow-[0_4px_16px_rgba(0,0,0,0.08)] z-[100]"
             >
               <p className="py-3 px-3 text-[13px] text-foreground-4 text-center">
                 No results for &ldquo;{query}&rdquo;
@@ -128,11 +124,11 @@ export function SettingsSidebar() {
       </div>
 
       {/* Nav scroll area */}
-      <nav className="flex-1 overflow-y-auto py-2 pb-5 [scrollbar-width:thin] [scrollbar-color:#E5E0EB_transparent] [&::-webkit-scrollbar]:w-[3px] [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-[#E5E0EB] [&::-webkit-scrollbar-thumb]:rounded-sm">
+      <nav className="flex-1 overflow-y-auto py-2 pb-5 [scrollbar-width:thin] [scrollbar-color:var(--border)_transparent] [&::-webkit-scrollbar]:w-[3px] [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-sm">
         {nav.map((group, groupIdx) => (
           <div key={group.label}>
             {groupIdx === personalGroupIndex && (
-              <div className="h-px bg-[#F0EDF4] mx-4 my-2" />
+              <div className="h-px bg-border mx-4 my-2" />
             )}
 
             <div className={`px-4 pb-1.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-foreground-4 select-none ${groupIdx === 0 ? 'pt-3' : 'pt-5'}`}>
@@ -144,13 +140,14 @@ export function SettingsSidebar() {
                 <Link
                   href={item.href}
                   className={[
-                    'flex items-center w-full px-2 py-[7px] rounded-md text-sm no-underline transition-colors',
+                    'flex items-center gap-2.5 w-full px-3 py-[9px] rounded-[10px] text-sm no-underline transition-colors',
                     pathname === item.href
-                      ? 'bg-primary/10 text-primary font-medium'
-                      : 'text-muted-foreground font-normal hover:bg-black/[0.04] hover:text-foreground',
+                      ? 'bg-accent-soft text-primary font-semibold'
+                      : 'text-foreground-2 font-medium hover:bg-black/[0.04] hover:text-foreground',
                     'focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-[-2px]',
                   ].join(' ')}
                 >
+                  <item.Icon size={16} strokeWidth={1.75} className="shrink-0" />
                   {item.label}
                 </Link>
               </div>

@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { sanitizeHtml } from '@/lib/inbox-utils'
+import { sanitizeHtml, parseRecipientList } from '@/lib/inbox-utils'
 import { useAuthStore } from '@/stores/auth'
 import { useCustomerSearch, useEmailAccountInfo } from './use-inbox-data'
 import { useComposeEmail, useUpdateStatus, useBulkConversationAction } from './use-inbox-mutations'
@@ -93,12 +93,18 @@ export function useCreateTicketForm() {
         tasks.push(bulkAction.mutateAsync({ ids: [conversationId], action: 'assign', payload: { memberId: assignedTo } }))
       }
 
-      // tags — resolve each name to an id, creating the tag if it doesn't exist
-      for (const name of tags) {
-        const trimmed = name.trim()
-        if (!trimmed) continue
-        const existing = allTags.find((t) => t.name.toLowerCase() === trimmed.toLowerCase())
-        const tagId = existing?.id ?? (await createTag.mutateAsync({ name: trimmed })).id
+      // tags — resolve each name to an id concurrently (creating missing ones),
+      // then attach. Runs in parallel with the status/assign mutations above.
+      const tagIds = await Promise.all(
+        tags
+          .map((name) => name.trim())
+          .filter(Boolean)
+          .map(async (trimmed) => {
+            const existing = allTags.find((t) => t.name.toLowerCase() === trimmed.toLowerCase())
+            return existing?.id ?? (await createTag.mutateAsync({ name: trimmed })).id
+          }),
+      )
+      for (const tagId of tagIds) {
         tasks.push(bulkAction.mutateAsync({ ids: [conversationId], action: 'add_tag', payload: { tagId } }))
       }
 
@@ -128,12 +134,12 @@ export function useCreateTicketForm() {
       }
       try {
         const data = await composeEmail.mutateAsync({
-          to: [{ email: to.trim(), name: '' }],
+          to: parseRecipientList(to),
           subject: subject.trim() || '(no subject)',
           bodyHtml: sanitizeHtml(bodyHtml),
           bodyText,
-          cc: cc.trim() ? [{ email: cc.trim(), name: '' }] : undefined,
-          bcc: bcc.trim() ? [{ email: bcc.trim(), name: '' }] : undefined,
+          cc: cc.trim() ? parseRecipientList(cc) : undefined,
+          bcc: bcc.trim() ? parseRecipientList(bcc) : undefined,
         })
         if (data.conversationId) {
           // Best-effort: a meta failure must not surface as a send failure.
@@ -148,18 +154,17 @@ export function useCreateTicketForm() {
     [to, subject, cc, bcc, accountInfo?.connected, composeEmail, goBack, isSuspended, persistTicketMeta],
   )
 
-  return useMemo(
-    () => ({
-      to, setTo, subject, setSubject, cc, setCc, bcc, setBcc, showCC, setShowCC,
-      priority, setPriority, assignedTo, setAssignedTo,
-      contactReason, setContactReason, product, setProduct,
-      resolution, setResolution, tags, setTags,
-      customer, ordersCount, accountInfo,
-      send, isSending: composeEmail.isPending || isSuspended, goBack,
-    }),
-    [to, subject, cc, bcc, showCC, priority, assignedTo, contactReason, product, resolution,
-     tags, customer, ordersCount, accountInfo, send, composeEmail.isPending, isSuspended, goBack],
-  )
+  // Plain object — consumers (the three panels) re-render on form-state changes
+  // regardless, and send/goBack are already useCallback-stable, so memoizing the
+  // whole bag bought nothing but a large dep list to maintain.
+  return {
+    to, setTo, subject, setSubject, cc, setCc, bcc, setBcc, showCC, setShowCC,
+    priority, setPriority, assignedTo, setAssignedTo,
+    contactReason, setContactReason, product, setProduct,
+    resolution, setResolution, tags, setTags,
+    customer, ordersCount, accountInfo,
+    send, isSending: composeEmail.isPending || isSuspended, goBack,
+  }
 }
 
 export type CreateTicketForm = ReturnType<typeof useCreateTicketForm>

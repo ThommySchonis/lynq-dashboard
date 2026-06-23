@@ -4,6 +4,7 @@ import { Plus, X, UserPlus } from 'lucide-react'
 import { useState } from 'react'
 import { Input } from '@/components/ui/input'
 import { ComposeAvatar } from '@/components/features/inbox/compose-avatar'
+import { deriveIsVip, fmtPrice } from '@/lib/inbox-utils'
 import type { CreateTicketForm } from '@/hooks/inbox/use-create-ticket'
 
 interface CreateTicketDetailsPanelProps {
@@ -23,11 +24,9 @@ export function CreateTicketDetailsPanel({ form }: CreateTicketDetailsPanelProps
   const name = customer
     ? `${customer.firstName || ''} ${customer.lastName || ''}`.trim() || customer.email || 'Customer'
     : ''
-  const isVip = (customer?.tags ?? '').split(',').some((t) => t.trim().toLowerCase() === 'vip')
+  const isVip = deriveIsVip(customer?.tags)
   const location = [customer?.city, customer?.country].filter(Boolean).join(', ')
-  const ltv = customer?.totalSpent != null
-    ? `${customer.currency ? customer.currency + ' ' : ''}${customer.totalSpent}`
-    : ''
+  const ltv = customer?.totalSpent != null ? fmtPrice(customer.totalSpent, customer.currency) : ''
 
   function addTag() {
     if (tagInput.trim()) setTags((p) => [...new Set([...p, tagInput.trim()])])

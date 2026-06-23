@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
 import { ChevronDown, X, Plus, Send, Link as LinkIcon, List, Mail, AlertCircle, Clock, Loader2, Sparkles } from "lucide-react";
@@ -16,6 +16,10 @@ import type { CreateTicketForm } from "@/hooks/inbox/use-create-ticket";
 interface CreateTicketComposerProps {
   form: CreateTicketForm;
 }
+
+// Shared recipe for the inline field labels (TO/FROM/CC/BCC) and bare inputs.
+const FIELD_LABEL = "shrink-0 text-[12px] font-semibold uppercase tracking-[0.08em] text-muted-foreground";
+const FIELD_INPUT = "min-w-0 flex-1 border-none bg-transparent text-[14px] text-foreground shadow-none placeholder:text-muted-foreground";
 
 /** Center column — subject header, empty-state, and the outgoing-email composer
  *  (To / From / Cc / Bcc, macros, rich-text body, Send / Send & Close). */
@@ -48,12 +52,20 @@ export function CreateTicketComposer({ form }: CreateTicketComposerProps) {
   const [showMacroDD, setShowMacroDD] = useState(false);
   const bodyRef = useRef<HTMLDivElement>(null);
 
-  const macros: ComposeMacro[] = (fetchedMacros?.length ? fetchedMacros : FALLBACK_MACROS) as ComposeMacro[];
-  const liveMacros = macros.filter((m) => !m.archived);
-  const macroHits = macroSearch
-    ? liveMacros.filter((m) => `${m.name}${m.body || ""}${(m.tags || []).join(" ")}`.toLowerCase().includes(macroSearch.toLowerCase())).slice(0, 8)
-    : [];
-  const suggested = liveMacros.slice(0, 5);
+  // Composer re-renders on every body keystroke; memoize so the macro list isn't
+  // re-filtered each time unless its inputs actually change.
+  const liveMacros = useMemo(() => {
+    const all = (fetchedMacros?.length ? fetchedMacros : FALLBACK_MACROS) as ComposeMacro[];
+    return all.filter((m) => !m.archived);
+  }, [fetchedMacros]);
+  const suggested = useMemo(() => liveMacros.slice(0, 5), [liveMacros]);
+  const macroHits = useMemo(
+    () =>
+      macroSearch
+        ? liveMacros.filter((m) => `${m.name}${m.body || ""}${(m.tags || []).join(" ")}`.toLowerCase().includes(macroSearch.toLowerCase())).slice(0, 8)
+        : [],
+    [liveMacros, macroSearch],
+  );
 
   useEffect(() => {
     const timer = setTimeout(() => bodyRef.current?.focus(), 160);
@@ -142,13 +154,13 @@ export function CreateTicketComposer({ form }: CreateTicketComposerProps) {
         {/* TO */}
         <div className="flex items-center justify-between gap-3">
           <div className="flex min-w-0 flex-1 items-center gap-2">
-            <span className="shrink-0 text-[12px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">TO</span>
+            <span className={FIELD_LABEL}>TO</span>
             <Input
               value={to}
               onChange={(e) => setTo(e.target.value)}
               placeholder="customer@email.com"
               autoFocus
-              className="min-w-0 flex-1 border-none bg-transparent text-[14px] text-foreground shadow-none placeholder:text-muted-foreground"
+              className={FIELD_INPUT}
             />
           </div>
           <button onClick={() => setShowCC((v) => !v)} className="shrink-0 text-[14px] font-semibold text-(--accent-text) transition-opacity hover:opacity-80">
@@ -159,19 +171,19 @@ export function CreateTicketComposer({ form }: CreateTicketComposerProps) {
         {/* CC + BCC */}
         {showCC && (
           <div className="flex items-center gap-3">
-            <span className="shrink-0 text-[12px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">CC</span>
+            <span className={FIELD_LABEL}>CC</span>
             <Input
               value={cc}
               onChange={(e) => setCc(e.target.value)}
               placeholder="cc@email.com"
-              className="min-w-0 flex-1 border-none bg-transparent text-[14px] text-foreground shadow-none placeholder:text-muted-foreground"
+              className={FIELD_INPUT}
             />
-            <span className="shrink-0 text-[12px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">BCC</span>
+            <span className={FIELD_LABEL}>BCC</span>
             <Input
               value={bcc}
               onChange={(e) => setBcc(e.target.value)}
               placeholder="bcc@email.com"
-              className="min-w-0 flex-1 border-none bg-transparent text-[14px] text-foreground shadow-none placeholder:text-muted-foreground"
+              className={FIELD_INPUT}
             />
           </div>
         )}
@@ -179,7 +191,7 @@ export function CreateTicketComposer({ form }: CreateTicketComposerProps) {
         {/* FROM */}
         {accountInfo?.email && (
           <div className="flex items-center gap-3">
-            <span className="shrink-0 text-[12px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">FROM</span>
+            <span className={FIELD_LABEL}>FROM</span>
             <Mail className="h-[15px] w-[15px] text-muted-foreground" />
             <span className="text-[14px] text-foreground">{accountInfo.email}</span>
           </div>
@@ -214,7 +226,7 @@ export function CreateTicketComposer({ form }: CreateTicketComposerProps) {
             onFocus={() => setShowMacroDD(true)}
             onBlur={() => setTimeout(() => setShowMacroDD(false), 160)}
             placeholder="Search macros by name, tags or body…"
-            className="min-w-0 flex-1 border-none bg-transparent text-[14px] text-foreground shadow-none placeholder:text-muted-foreground"
+            className={FIELD_INPUT}
           />
           {macroSearch && (
             <button

@@ -296,12 +296,11 @@ export function CreateOrderModal({
         token
       )
       const data = await parseJson<{
-        success?: boolean
         error?: string
         draftOrder?: { name?: string }
       }>(res)
 
-      if (data.success) {
+      if (res.ok) {
         onSuccess(`Draft ${data.draftOrder?.name || ''} created!`)
       } else {
         onSuccess(data.error || 'Create order failed', 'error')

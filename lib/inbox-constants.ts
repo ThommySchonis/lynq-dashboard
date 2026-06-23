@@ -37,6 +37,7 @@ export const ORDER_STATUS: Record<string, { bg: string; color: string; label: st
   voided:      { bg: 'rgba(248,113,133,0.14)', color: '#fb7185', label: 'Voided' },
   pending:     { bg: 'rgba(251,191,36,0.14)',  color: '#fbbf24', label: 'Pending' },
   authorized:  { bg: 'rgba(99,179,237,0.14)',  color: '#63b3ed', label: 'Authorized' },
+  draft:       { bg: 'rgba(161,117,252,0.14)', color: '#a175fc', label: 'Draft' },
 }
 
 export const URGENCY_SCORE: Record<string, number> = {

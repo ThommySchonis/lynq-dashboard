@@ -63,6 +63,7 @@ interface OrdersOrder {
   currency: string
   financialStatus?: string
   fulfillmentStatus?: string
+  isDraft?: boolean
   cancelledAt?: string | null
   note?: string | null
   lineItems?: OrdersLineItem[]
@@ -204,7 +205,8 @@ export function OrdersSection({
                     </span>
                   )}
                 </div>
-                {/* Action buttons */}
+                {/* Action buttons — hidden for draft orders (refund/cancel/fulfil don't apply) */}
+                {!order.isDraft && (
                 <div className="flex gap-1 flex-wrap mb-2.5">
                   <Gate capability="manageOrders" mode="disable" reason="View-only access — you cannot duplicate orders.">
                     <button
@@ -259,6 +261,7 @@ export function OrdersSection({
                     </button>
                   </Gate>
                 </div>
+                )}
 
                 {/* Key-value rows */}
                 <div className="mb-1">
@@ -368,6 +371,7 @@ export function OrdersSection({
                     </button>
                     {shippingOpen && (
                       <div className="pb-1.5">
+                        {!order.isDraft && (
                         <div className="mb-1.5">
                           <Gate capability="manageOrders" mode="disable" reason="View-only access — you cannot edit the shipping address.">
                             <Button
@@ -383,6 +387,7 @@ export function OrdersSection({
                             </Button>
                           </Gate>
                         </div>
+                        )}
                         {[
                           sa.firstName || sa.lastName
                             ? {

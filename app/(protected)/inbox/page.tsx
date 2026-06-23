@@ -1,5 +1,6 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import type { Thread } from "@/types/inbox";
 import type { RefundOrder } from "@/components/shared/modals/refund-modal";
 import type { DuplicateOrder } from "@/components/shared/modals/duplicate-modal";
@@ -38,6 +39,7 @@ import { Mail } from "lucide-react";
 // ─── Main page ────────────────────────────────────────────────
 function InboxPage() {
   const searchParams = useSearchParams();
+  const queryClient = useQueryClient();
 
   // ── Auth ──
   const session = useAuthStore((s) => s.session);
@@ -180,8 +182,14 @@ function InboxPage() {
 
   function handleModalSuccess(msg: string, type = "success") {
     setModal(null);
-    if (type === "success") sonnerToast.success(msg);
-    else sonnerToast.error(msg);
+    if (type === "success") {
+      sonnerToast.success(msg);
+      // Order mutations (create draft, refund, cancel, fulfil, etc.) change the
+      // customer's order list — refetch the sidebar so it reflects the change.
+      void queryClient.invalidateQueries({ queryKey: ["customer"] });
+    } else {
+      sonnerToast.error(msg);
+    }
   }
 
   if (!session) return null;

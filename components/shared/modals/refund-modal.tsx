@@ -9,6 +9,7 @@ import { Loader2 } from 'lucide-react'
 import { authFetch, fmtPrice, REFUND_REASONS } from '@/lib/inbox-utils'
 import { apiUrl } from '@/lib/api-client'
 import { parseJson } from '@/lib/utils/typed-json'
+import { useStoreStore } from '@/stores/store'
 
 export interface RefundLineItem {
   id: string
@@ -44,6 +45,7 @@ export function RefundModal({ order, token, onClose, onSuccess }: RefundModalPro
   const [reason, setReason] = useState("");
   const [shipping, setShipping] = useState(false);
   const [loading, setLoading] = useState(false);
+  const activeStoreId = useStoreStore((s) => s.activeStoreId);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -56,6 +58,10 @@ export function RefundModal({ order, token, onClose, onSuccess }: RefundModalPro
   const canSubmit = reason && (mode === "custom" ? Number(customAmount) > 0 : totalRefund > 0);
 
   async function handleRefund() {
+    if (!activeStoreId) {
+      onSuccess("No store selected", "error");
+      return;
+    }
     setLoading(true);
     let body;
     if (mode === "custom") {
@@ -64,10 +70,10 @@ export function RefundModal({ order, token, onClose, onSuccess }: RefundModalPro
       const lineItems = (order.lineItems || []).filter((li) => qtys[li.id] > 0).map((li) => ({ lineItemId: li.id, quantity: qtys[li.id] }));
       body = { lineItems, restock, notify, reason, shipping };
     }
-    const res = await authFetch(`${apiUrl(`shopify/orders/${order.id}/refund`)}`, { method: "POST", body: JSON.stringify(body) }, token);
-    const data = await parseJson<{ success?: boolean; error?: string }>(res);
+    const res = await authFetch(`${apiUrl(`shopify/orders/${order.id}/refund`)}?store_id=${activeStoreId}`, { method: "POST", body: JSON.stringify(body) }, token);
+    const data = await parseJson<{ refund?: unknown; error?: string }>(res);
     setLoading(false);
-    if (data.success) onSuccess("Refund processed!");
+    if (res.ok && data.refund) onSuccess("Refund processed!");
     else onSuccess(data.error || "Refund failed", "error");
   }
 

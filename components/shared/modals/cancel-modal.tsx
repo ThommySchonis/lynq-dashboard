@@ -8,6 +8,7 @@ import { Loader2 } from 'lucide-react'
 import { authFetch, CANCEL_REASONS } from '@/lib/inbox-utils'
 import { apiUrl } from '@/lib/api-client'
 import { parseJson } from '@/lib/utils/typed-json'
+import { useStoreStore } from '@/stores/store'
 
 export interface CancelOrder {
   id: string
@@ -28,20 +29,25 @@ export function CancelModal({ order, token, onClose, onSuccess }: CancelModalPro
   const [notify, setNotify] = useState(true);
   const [refund, setRefund] = useState(true);
   const [loading, setLoading] = useState(false);
+  const activeStoreId = useStoreStore((s) => s.activeStoreId);
 
   async function handleCancel() {
+    if (!activeStoreId) {
+      onSuccess("No store selected", "error");
+      return;
+    }
     setLoading(true);
     const res = await authFetch(
-      `${apiUrl(`shopify/orders/${order.id}/cancel`)}`,
+      `${apiUrl(`shopify/orders/${order.id}/cancel`)}?store_id=${activeStoreId}`,
       {
         method: "POST",
         body: JSON.stringify({ reason, restock, notify, refund }),
       },
       token,
     );
-    const data = await parseJson<{ success?: boolean; error?: string }>(res);
+    const data = await parseJson<{ order?: unknown; error?: string }>(res);
     setLoading(false);
-    if (data.success) onSuccess("Order cancelled");
+    if (res.ok && data.order) onSuccess("Order cancelled");
     else onSuccess(data.error || "Failed to cancel order", "error");
   }
 

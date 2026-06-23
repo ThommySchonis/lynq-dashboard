@@ -32,7 +32,7 @@ export async function createRefund(credentials: ShopifyCredentials, orderId: str
     const originalTx = (txData.transactions || []).find((t) => t.kind === "capture" || t.kind === "sale" || t.kind === "authorization");
 
     const transaction = originalTx
-      ? { parent_id: originalTx.id, kind: "refund", gateway: originalTx.gateway, amount: String(Number(customAmount).toFixed(2)) }
+      ? { parent_id: originalTx.id, kind: "refund", gateway: originalTx.gateway, currency: originalTx.currency, amount: String(Number(customAmount).toFixed(2)) }
       : { kind: "refund", amount: String(Number(customAmount).toFixed(2)) };
 
     const refundData = await shopifyFetchJSON<ShopifyRefundResponse>(credentials, `/orders/${orderId}/refunds.json`, {
@@ -62,6 +62,7 @@ export async function createRefund(credentials: ShopifyCredentials, orderId: str
     amount: t.amount,
     kind: "refund",
     gateway: t.gateway,
+    currency: t.currency,
   }));
 
   const refundData = await shopifyFetchJSON<ShopifyRefundResponse>(credentials, `/orders/${orderId}/refunds.json`, {

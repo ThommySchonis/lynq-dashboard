@@ -71,6 +71,7 @@ export interface ShopifyTransaction {
   kind: string
   gateway?: string
   amount: string
+  currency?: string
   parent_id?: number
   amount_set?: { presentment_money?: { amount?: string } }
 }

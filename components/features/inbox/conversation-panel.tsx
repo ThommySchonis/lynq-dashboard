@@ -599,9 +599,12 @@ export function ConversationPanel() {
                 </div>
               )}
 
-              {/* AI generating dots */}
+              {/* AI loading — "Lynq AI is reading…" + animated dots in one row.
+                  Bound to aiLoading (settles on success and error), so it never
+                  sticks; covers both the explicit AI Reply click and auto-draft. */}
               {aiLoading && (
-                <div className="pt-1 px-4 pb-0 flex items-center gap-1">
+                <div className="pt-1 px-4 pb-0 flex items-center gap-1.5">
+                  <span className="text-[12px] font-medium text-foreground-3">Lynq AI is reading…</span>
                   {[0, 0.18, 0.36].map((d) => (
                     <span
                       key={d}

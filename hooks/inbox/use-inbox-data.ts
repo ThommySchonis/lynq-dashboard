@@ -7,6 +7,8 @@ import { useAuthStore } from '@/stores/auth'
 import { parseJson } from '@/lib/utils/typed-json'
 import { useStoreStore } from '@/stores/store'
 import { useInboxUI } from '@/stores/inbox-ui'
+import { AI_STAGED_MOCK } from '@/lib/inbox-constants'
+import { buildAIStagedMockDrafts } from '@/lib/inbox-ai-staged-mock'
 import type { Thread, Message, Note, ConversationTag } from '@/types/inbox'
 
 function useToken() {
@@ -68,6 +70,11 @@ export function useConversations(folder: string, search: string) {
   return useQuery<Thread[]>({
     queryKey: inboxKeys.conversations(folder, search, activeStoreId, selectedEmailAccountId),
     queryFn: async () => {
+      // AI Staged is backed by emma_draft_queue, not yet a list filter (BE #8).
+      // Short-circuit to mock (dev) or empty (prod) instead of hitting the
+      // endpoint. When #8 lands, drop this branch and let the request below set
+      // a `status=ai_staged` param — the rows are already Thread-shaped.
+      if (folder === 'ai_staged') return AI_STAGED_MOCK ? buildAIStagedMockDrafts() : []
       const params = new URLSearchParams()
       if (folder === 'unlinked') params.set('unlinked', 'true')
       else if (folder === 'trash') params.set('status', 'closed')

@@ -7,11 +7,8 @@ import { apiUrl } from '@/lib/api-client'
 import type {
   Plan,
   Invoice,
-  BillingInfo,
-  BillingStore,
   ManageUrlResponse,
   SubscriptionWithUsageResponse,
-  EmmaUsageResponse,
 } from '@/types/billing'
 
 interface ErrorResponse {
@@ -23,10 +20,7 @@ export const billingKeys = {
   subscription:   () => [...billingKeys.all, 'subscription'] as const,
   plans:          () => [...billingKeys.all, 'plans'] as const,
   invoices:       () => [...billingKeys.all, 'invoices'] as const,
-  billingInfo:    () => [...billingKeys.all, 'billing-info'] as const,
   manageUrl:      () => [...billingKeys.all, 'manage-url'] as const,
-  stores:         () => [...billingKeys.all, 'stores'] as const,
-  emmaUsage:      () => [...billingKeys.all, 'emma-usage'] as const,
 }
 
 async function jsonFetch<T>(url: string, token: string): Promise<T> {
@@ -48,16 +42,6 @@ export function useSubscription() {
   })
 }
 
-export function useEmmaUsage() {
-  const token = useToken()
-  return useQuery<EmmaUsageResponse>({
-    queryKey: billingKeys.emmaUsage(),
-    queryFn:  () => jsonFetch<EmmaUsageResponse>(apiUrl('billing/emma-usage'), token),
-    enabled:  !!token,
-    staleTime: 60_000,
-  })
-}
-
 export function useManageUrl() {
   const token = useToken()
   return useQuery<string | null>({
@@ -69,32 +53,6 @@ export function useManageUrl() {
       if (!res.ok) return null
       const data = await parseJson<ManageUrlResponse>(res).catch(() => null)
       return data?.url ?? null
-    },
-    enabled:  !!token,
-    staleTime: 5 * 60_000,
-  })
-}
-
-export function useBillingStores() {
-  const token = useToken()
-  return useQuery<BillingStore[]>({
-    queryKey: billingKeys.stores(),
-    queryFn: async () => {
-      const data = await jsonFetch<{ stores: BillingStore[] }>(apiUrl('billing/stores'), token)
-      return data.stores ?? []
-    },
-    enabled:  !!token,
-    staleTime: 60_000,
-  })
-}
-
-export function useBillingInfo() {
-  const token = useToken()
-  return useQuery<BillingInfo | null>({
-    queryKey: billingKeys.billingInfo(),
-    queryFn: async () => {
-      const data = await jsonFetch<{ billing_address: BillingInfo | null }>(apiUrl('billing/info'), token)
-      return data.billing_address
     },
     enabled:  !!token,
     staleTime: 5 * 60_000,

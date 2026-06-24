@@ -22,6 +22,8 @@ interface IdentityValues {
   /** Local preview data-URL set after file selection */
   logoPreview: string | null
   logoFile: File | null
+  /** True when the user explicitly removed the existing logo */
+  logoRemoved: boolean
 }
 
 interface IdentitySectionProps {
@@ -45,7 +47,7 @@ export function IdentitySection({
 }: IdentitySectionProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const displayLogo = values.logoPreview ?? values.logoUrl
+  const displayLogo = values.logoRemoved ? null : (values.logoPreview ?? values.logoUrl)
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -56,13 +58,13 @@ export function IdentitySection({
     }
     const reader = new FileReader()
     reader.onload = (ev) => {
-      onChange({ logoFile: file, logoPreview: ev.target?.result as string })
+      onChange({ logoFile: file, logoPreview: ev.target?.result as string, logoRemoved: false })
     }
     reader.readAsDataURL(file)
   }
 
   function handleRemoveLogo() {
-    onChange({ logoFile: null, logoPreview: null })
+    onChange({ logoFile: null, logoPreview: null, logoRemoved: true })
     if (fileInputRef.current) fileInputRef.current.value = ''
   }
 

@@ -2,6 +2,7 @@
 
 import { Textarea } from '@/components/ui/textarea'
 import type { MacroWizardForm } from '@/lib/settings-constants'
+import { WizardField } from './wizard-fields'
 
 interface WizardStepFinalProps {
   form: MacroWizardForm
@@ -9,23 +10,25 @@ interface WizardStepFinalProps {
   errors: Record<string, string>
 }
 
-export function WizardStepFinal({ form, onChange, errors: _errors }: WizardStepFinalProps) {
+export function WizardStepFinal({ form, onChange }: WizardStepFinalProps) {
   return (
-    <div className="mb-4.5">
-      <label htmlFor="q-extra" className="block text-[13px] font-medium text-foreground mb-1.5">
-        Other policies, store quirks, or things AI should know
-      </label>
-      <Textarea
-        id="q-extra"
-        placeholder="e.g. Size exchanges cost £15 / We process orders in 1-3 days / We offer partial refunds 10-50% as alternatives to returns"
-        value={form.extra_notes}
-        onChange={(e) => onChange('extra_notes', e.target.value)}
-        maxLength={2000}
-        rows={6}
-        autoFocus
-        className="resize-y min-h-[100px] leading-relaxed"
-      />
-      <p className="mt-1 text-[11px] text-muted-foreground">The more context, the better your macros</p>
+    <div className="flex flex-col gap-6">
+      <WizardField
+        label="Other policies, store quirks, or things AI should know"
+        htmlFor="q-extra"
+        hint="The more context you add, the better your macros."
+      >
+        <Textarea
+          id="q-extra"
+          placeholder="e.g. Size exchanges cost £15 / We process orders in 1–3 days / We offer partial refunds 10–50% as alternatives to returns"
+          value={form.extra_notes}
+          onChange={(e) => onChange('extra_notes', e.target.value)}
+          maxLength={2000}
+          rows={6}
+          autoFocus
+          className="min-h-[230px] resize-y rounded-xl bg-card px-4 py-3.5 text-sm leading-relaxed"
+        />
+      </WizardField>
     </div>
   )
 }

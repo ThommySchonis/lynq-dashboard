@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/dialog'
 import { useCreateTag, useUpdateTag } from '@/hooks/settings'
 import { useAuthStore } from '@/stores/auth'
-import { TAG_COLORS, TAG_PALETTE } from '@/lib/tags'
+import { TAG_COLORS, TAG_PALETTE, paletteFor } from '@/lib/tags'
 import type { Tag } from '@/types/settings'
 
 interface TagEditModalProps {
@@ -29,6 +29,7 @@ export function TagEditModal({ open, onOpenChange, tag }: TagEditModalProps) {
   const [name, setName] = useState(tag?.name ?? '')
   const [color, setColor] = useState(tag?.color ?? 'slate')
   const [nameError, setNameError] = useState<string | null>(null)
+  const preview = paletteFor(color)
 
   const createTag = useCreateTag()
   const updateTag = useUpdateTag()
@@ -88,9 +89,21 @@ export function TagEditModal({ open, onOpenChange, tag }: TagEditModalProps) {
 
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium" htmlFor="tag-name">
-              Name
-            </label>
+            <div className="flex items-center justify-between gap-2">
+              <label className="text-sm font-medium" htmlFor="tag-name">
+                Name
+              </label>
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs text-muted-foreground">Preview</span>
+                <span
+                  className="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium"
+                  style={{ background: preview.bg, color: preview.text }}
+                >
+                  <span className="size-1.5 rounded-full" style={{ background: preview.dot }} />
+                  {name.trim() || 'urgent'}
+                </span>
+              </div>
+            </div>
             <Input
               id="tag-name"
               type="text"

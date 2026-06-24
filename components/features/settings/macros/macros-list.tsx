@@ -39,6 +39,7 @@ import { SettingsPageHeader } from '@/components/features/settings/settings-head
 import { MacrosToolbar } from './macros-toolbar'
 import { MacroRow } from './macro-row'
 import { MacrosEmptyState } from './macros-empty-state'
+import { SettingsEmptyState } from '@/components/features/settings/settings-empty-state'
 import type { Macro } from '@/types/inbox'
 
 export function MacrosList() {
@@ -233,19 +234,16 @@ function MacrosTable({
     }
     // Archived-empty or filtered-empty → simple message.
     return (
-      <div className="flex flex-col items-center justify-center gap-2 py-16 text-center">
-        <div className="mb-2 flex size-12 items-center justify-center rounded-2xl bg-accent-soft">
-          <FileText size={24} strokeWidth={1.75} className="text-primary" />
-        </div>
-        <h3 className="text-lg font-bold text-foreground">
-          {tab === 'archived' ? 'No archived macros' : 'No macros match your filters'}
-        </h3>
-        <p className="max-w-[320px] text-sm leading-relaxed text-muted-foreground">
-          {tab === 'archived'
+      <SettingsEmptyState
+        Icon={FileText}
+        title={tab === 'archived' ? 'No archived macros' : 'No macros match your filters'}
+        description={
+          tab === 'archived'
             ? 'Macros you archive will appear here.'
-            : 'Try clearing some filters or searching for something different.'}
-        </p>
-      </div>
+            : 'Try clearing some filters or searching for something different.'
+        }
+        className="py-16"
+      />
     )
   }
 

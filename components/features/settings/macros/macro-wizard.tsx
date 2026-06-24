@@ -226,7 +226,7 @@ export function MacroWizard() {
           {step === 0 && <WizardStepBrand form={form} onChange={handleChange} errors={errors} />}
           {step === 1 && <WizardStepContact form={form} onChange={handleChange} errors={errors} />}
           {step === 2 && <WizardStepPolicies form={form} onChange={handleChange} errors={errors} />}
-          {step === 3 && <WizardStepFinal form={form} onChange={handleChange} errors={errors} />}
+          {step === 3 && <WizardStepFinal form={form} onChange={handleChange} />}
 
           <div className="border-t border-border" />
 

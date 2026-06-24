@@ -1,9 +1,11 @@
 'use client'
 
-import { use, useMemo } from 'react'
+import { use } from 'react'
 import { useRouter } from 'next/navigation'
 import { MacroForm } from '@/components/features/settings/macros/macro-form'
 import { SettingsPageHeader } from '@/components/features/settings/settings-header'
+
+const BREADCRUMB = ['Settings', 'Macros', 'Edit macro']
 
 export default function EditMacroPage({
   params,
@@ -12,14 +14,13 @@ export default function EditMacroPage({
 }) {
   const { id } = use(params)
   const router = useRouter()
-  const breadcrumb = useMemo(() => ['Settings', 'Macros', 'Edit macro'], [])
 
   return (
     <>
       <SettingsPageHeader
         title="Edit macro"
         backHref="/settings/workspace/macros"
-        breadcrumb={breadcrumb}
+        breadcrumb={BREADCRUMB}
       />
       <MacroForm
         macro={{ id }}

@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { UserPlus, Users } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { SettingsPageHeader } from '@/components/features/settings/settings-header'
+import { SettingsEmptyState } from '@/components/features/settings/settings-empty-state'
 import { useMembersPage } from '@/hooks/settings'
 import { useAuthStore } from '@/stores/auth'
 import { can } from '@/lib/permissions'
@@ -117,14 +118,12 @@ export function MembersView() {
 /** Centered empty state shown when the workspace has no members (Figma 964-29635). */
 function UsersEmptyState() {
   return (
-    <div className="flex w-[440px] max-w-full flex-col items-center gap-2 rounded-2xl border bg-card px-10 py-7 text-center">
-      <div className="mb-2 flex size-12 items-center justify-center rounded-2xl bg-accent-soft">
-        <Users size={24} strokeWidth={1.75} className="text-primary" />
-      </div>
-      <p className="text-lg font-bold text-foreground">No team members yet</p>
-      <p className="text-sm text-muted-foreground leading-relaxed">
-        Invite teammates to collaborate on your support inbox and assign roles.
-      </p>
+    <div className="w-[440px] max-w-full rounded-2xl border bg-card px-10 py-7">
+      <SettingsEmptyState
+        Icon={Users}
+        title="No team members yet"
+        description="Invite teammates to collaborate on your support inbox and assign roles."
+      />
     </div>
   )
 }

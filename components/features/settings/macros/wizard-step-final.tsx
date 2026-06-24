@@ -7,7 +7,6 @@ import { WizardField } from './wizard-fields'
 interface WizardStepFinalProps {
   form: MacroWizardForm
   onChange: (field: string, value: string) => void
-  errors: Record<string, string>
 }
 
 export function WizardStepFinal({ form, onChange }: WizardStepFinalProps) {

@@ -1,8 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Search, Users } from 'lucide-react'
-import { Input } from '@/components/ui/input'
+import { Users } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
   Table,
@@ -13,6 +12,8 @@ import {
   TableCell,
 } from '@/components/ui/table'
 import { ConfirmDialog } from '@/components/features/settings/confirm-dialog'
+import { SettingsSearchInput } from '@/components/features/settings/settings-search-input'
+import { SettingsEmptyState } from '@/components/features/settings/settings-empty-state'
 import { useUpdateMemberRole, useRemoveMember, useResendInvite, useRevokeInvite } from '@/hooks/settings'
 import { useAuthStore } from '@/stores/auth'
 import { can } from '@/lib/permissions'
@@ -88,7 +89,7 @@ export function MembersTable({
   if (isLoading) {
     return (
       <div className="space-y-4">
-        <SearchInput value={search} onChange={onSearchChange} />
+        <SettingsSearchInput value={search} onChange={onSearchChange} placeholder="Search users…" />
         <div className="rounded-2xl border bg-card overflow-hidden">
           <Table>
             <TableHeader className="bg-foreground/[0.02]">
@@ -133,19 +134,16 @@ export function MembersTable({
 
   return (
     <div className="space-y-4">
-      <SearchInput value={search} onChange={onSearchChange} />
+      <SettingsSearchInput value={search} onChange={onSearchChange} placeholder="Search users…" />
 
       <div className="rounded-2xl border bg-card overflow-hidden">
         {!hasRows ? (
-          <div className="flex flex-col items-center justify-center gap-2 py-14 text-center">
-            <div className="mb-2 flex size-12 items-center justify-center rounded-2xl bg-accent-soft">
-              <Users size={24} strokeWidth={1.75} className="text-primary" />
-            </div>
-            <p className="text-lg font-bold text-foreground">No users match your search</p>
-            <p className="max-w-[320px] text-sm text-muted-foreground leading-relaxed">
-              Try a different name or email address.
-            </p>
-          </div>
+          <SettingsEmptyState
+            Icon={Users}
+            title="No users match your search"
+            description="Try a different name or email address."
+            className="py-14"
+          />
         ) : (
           <Table>
             <TableHeader className="bg-foreground/[0.02]">
@@ -233,29 +231,6 @@ export function MembersTable({
         variant="danger"
         loading={revokeInvite.isPending}
         onConfirm={confirmRevokeInvite}
-      />
-    </div>
-  );
-}
-
-/* ── Search input ──────────────────────────── */
-
-function SearchInput({
-  value,
-  onChange,
-}: {
-  value: string
-  onChange: (v: string) => void
-}) {
-  return (
-    <div className="relative">
-      <Search size={15} strokeWidth={1.75} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-      <Input
-        type="text"
-        placeholder="Search users..."
-        value={value}
-        onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.value)}
-        className="pl-9 bg-card"
       />
     </div>
   );

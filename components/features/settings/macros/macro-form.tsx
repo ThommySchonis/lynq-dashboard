@@ -28,6 +28,7 @@ interface MacroData {
   [key: string]: unknown
 }
 
+const FIELD_INPUT_CLASS = 'h-11 rounded-[10px] bg-card px-3.5 text-sm'
 const LANGUAGES = ['English', 'Dutch', 'German', 'French', 'Spanish', 'Italian', 'Portuguese']
 
 const VARIABLES = [
@@ -88,7 +89,7 @@ export function MacroForm({ macro, onSave, onCancel, onDelete }: MacroFormProps)
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g. Delivery – Delay"
-              className="h-11 rounded-[10px] bg-card px-3.5 text-sm"
+              className={FIELD_INPUT_CLASS}
             />
           </Field>
 
@@ -170,7 +171,7 @@ export function MacroForm({ macro, onSave, onCancel, onDelete }: MacroFormProps)
             value={tagInput}
             onChange={(e) => setTagInput(e.target.value)}
             placeholder="e.g. shipping, support"
-            className="h-11 rounded-[10px] bg-card px-3.5 text-sm"
+            className={FIELD_INPUT_CLASS}
           />
         </Field>
 

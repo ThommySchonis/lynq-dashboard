@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import Link from 'next/link'
 import { Plus, FileText, AlertCircle, Loader2, Sparkles } from 'lucide-react'
 import {
@@ -35,8 +35,10 @@ import {
   useDeleteMacro,
   useGenerateMacros,
 } from '@/hooks/settings/use-macro-mutations'
+import { SettingsPageHeader } from '@/components/features/settings/settings-header'
 import { MacrosToolbar } from './macros-toolbar'
 import { MacroRow } from './macro-row'
+import { MacrosEmptyState } from './macros-empty-state'
 import type { Macro } from '@/types/inbox'
 
 export function MacrosList() {
@@ -65,23 +67,25 @@ export function MacrosList() {
 
   const hasFilters = !!(filter.search || filter.language || filter.tags.length)
 
+  // "Create macro" lives in the full-width section header bar (Figma node 831-26717).
+  const headerActions = useMemo(
+    () =>
+      canManage ? (
+        <Button render={<Link href="/settings/workspace/macros/new" />} disabled={isSuspended}>
+          <Plus size={16} strokeWidth={1.75} />
+          Create macro
+        </Button>
+      ) : null,
+    [isSuspended, canManage],
+  )
+
   return (
-    <div className="mx-auto max-w-[1100px] px-10 py-12">
-      {/* Header */}
-      <div className="mb-7 flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-xl font-semibold text-foreground">Macros</h1>
-          <p className="text-sm text-muted-foreground">
-            Pre-made responses with variables. Apply to tickets with one click.
-          </p>
-        </div>
-        {canManage && (
-          <Button render={<Link href="/settings/workspace/macros/new" />} disabled={isSuspended}>
-            <Plus size={16} strokeWidth={1.75} />
-            Create macro
-          </Button>
-        )}
-      </div>
+    <div className="mx-auto max-w-[920px] px-6 py-10">
+      <SettingsPageHeader
+        title="Macros"
+        description="Pre-made responses with variables. Apply to tickets with one click."
+        actions={headerActions}
+      />
 
       {/* Error */}
       {error && (
@@ -223,39 +227,32 @@ function MacrosTable({
   }
 
   if (macros.length === 0) {
+    // Truly empty (active tab, no filters) → the two-choice card (Figma 831-26565).
+    if (tab === 'active' && !hasFilters) {
+      return <MacrosEmptyState />
+    }
+    // Archived-empty or filtered-empty → simple message.
     return (
-      <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
-        <div className="flex size-14 items-center justify-center rounded-xl bg-muted">
-          <FileText size={28} strokeWidth={1.5} className="text-muted-foreground" />
+      <div className="flex flex-col items-center justify-center gap-2 py-16 text-center">
+        <div className="mb-2 flex size-12 items-center justify-center rounded-2xl bg-accent-soft">
+          <FileText size={24} strokeWidth={1.75} className="text-primary" />
         </div>
-        <h3 className="text-base font-semibold text-foreground">
-          {tab === 'archived'
-            ? 'No archived macros'
-            : hasFilters
-              ? 'No macros match your filters'
-              : 'No macros yet'}
+        <h3 className="text-lg font-bold text-foreground">
+          {tab === 'archived' ? 'No archived macros' : 'No macros match your filters'}
         </h3>
-        <p className="max-w-xs text-sm text-muted-foreground">
+        <p className="max-w-[320px] text-sm leading-relaxed text-muted-foreground">
           {tab === 'archived'
             ? 'Macros you archive will appear here.'
-            : hasFilters
-              ? 'Try clearing some filters or searching for something different.'
-              : 'Create your first macro to start replying faster.'}
+            : 'Try clearing some filters or searching for something different.'}
         </p>
-        {tab === 'active' && !hasFilters && canManage && (
-          <Button className="mt-2" render={<Link href="/settings/workspace/macros/new" />}>
-            <Plus size={16} strokeWidth={1.75} />
-            Create your first macro
-          </Button>
-        )}
       </div>
     )
   }
 
   return (
-    <div className="overflow-hidden rounded-xl border">
+    <div className="overflow-hidden rounded-2xl border bg-card">
       <Table>
-        <TableHeader>
+        <TableHeader className="bg-foreground/[0.02]">
           <TableRow>
             <TableHead>Macro name</TableHead>
             <TableHead>Tags</TableHead>
@@ -286,9 +283,9 @@ function MacrosTable({
 
 function MacrosTableSkeleton() {
   return (
-    <div className="overflow-hidden rounded-xl border">
+    <div className="overflow-hidden rounded-2xl border bg-card">
       <Table>
-        <TableHeader>
+        <TableHeader className="bg-foreground/[0.02]">
           <TableRow>
             <TableHead>Macro name</TableHead>
             <TableHead>Tags</TableHead>

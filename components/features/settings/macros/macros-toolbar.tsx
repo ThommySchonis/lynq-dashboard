@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { Search, Sparkles } from 'lucide-react'
+import { Search, Sparkles, Tag } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import {
@@ -43,7 +43,7 @@ export function MacrosToolbar({
           onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
             setFilter({ search: e.target.value })
           }
-          className="pl-8"
+          className="bg-card pl-8"
         />
       </div>
 
@@ -53,7 +53,7 @@ export function MacrosToolbar({
           setFilter({ language: val === 'all' || val === null ? '' : val })
         }
       >
-        <SelectTrigger>
+        <SelectTrigger className="bg-card">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
@@ -65,30 +65,45 @@ export function MacrosToolbar({
         </SelectContent>
       </Select>
 
-      <Input
-        type="text"
-        placeholder="Filter by tag..."
-        value={filter.tags.join(', ')}
-        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-          const tags = e.target.value
-            .split(',')
-            .map((t) => t.trim())
-            .filter(Boolean)
-          setFilter({ tags })
-        }}
-        className="w-[200px]"
-        title="Comma-separated tags"
-      />
+      <div className="relative w-[200px]">
+        <Tag
+          size={14}
+          strokeWidth={1.75}
+          className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground"
+        />
+        <Input
+          type="text"
+          placeholder="Filter by tag..."
+          value={filter.tags.join(', ')}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+            const tags = e.target.value
+              .split(',')
+              .map((t) => t.trim())
+              .filter(Boolean)
+            setFilter({ tags })
+          }}
+          className="bg-card pl-8"
+          title="Comma-separated tags"
+        />
+      </div>
 
       {canManage && (
         <div className="ml-auto flex shrink-0 items-center gap-2">
           {hasOnboarding ? (
-            <Button variant="outline" onClick={onRegenerate}>
+            <Button
+              variant="outline"
+              onClick={onRegenerate}
+              className="bg-card text-primary hover:text-primary"
+            >
               <Sparkles size={16} strokeWidth={1.75} />
               Regenerate
             </Button>
           ) : (
-            <Button variant="outline" render={<Link href="/settings/workspace/macros/generate" />}>
+            <Button
+              variant="outline"
+              render={<Link href="/settings/workspace/macros/generate" />}
+              className="bg-card text-primary hover:text-primary"
+            >
               <Sparkles size={16} strokeWidth={1.75} />
               Generate from your store
             </Button>

@@ -1,7 +1,7 @@
 'use client'
 
 import { CreditCard } from 'lucide-react'
-import { useManageUrl } from '@/hooks/billing/use-billing-data'
+import { useOpenManageUrl } from '@/hooks/billing/use-billing-data'
 import { useAuthStore } from '@/stores/auth'
 
 /**
@@ -10,12 +10,8 @@ import { useAuthStore } from '@/stores/auth'
  * placeholder; both actions deep-link to the Shopify billing page.
  */
 export function PaymentMethodCard() {
-  const { data: manageUrl } = useManageUrl()
+  const { openManage, ready } = useOpenManageUrl()
   const email = useAuthStore((s) => s.user?.email)
-
-  const openManage = () => {
-    if (manageUrl) window.open(manageUrl, '_blank', 'noopener,noreferrer')
-  }
 
   return (
     <>
@@ -35,7 +31,7 @@ export function PaymentMethodCard() {
           <button
             type="button"
             onClick={openManage}
-            disabled={!manageUrl}
+            disabled={!ready}
             className="rounded-[9px] border border-settings-border bg-card px-4 py-[9px] text-sm font-semibold text-foreground-2 transition-colors hover:bg-foreground/[0.03] disabled:opacity-50"
           >
             Update
@@ -52,7 +48,7 @@ export function PaymentMethodCard() {
           <button
             type="button"
             onClick={openManage}
-            disabled={!manageUrl}
+            disabled={!ready}
             className="text-xs font-semibold text-primary transition-colors hover:text-primary-hover disabled:opacity-50"
           >
             Edit

@@ -7,7 +7,7 @@ export function formatBillingDate(iso: string | null, month: 'long' | 'short' = 
   return new Date(iso).toLocaleDateString('en-US', { year: 'numeric', month, day: 'numeric' })
 }
 
-/** "$39.00" — formats an amount in its currency (defaults to USD). */
-export function formatMoney(amount: number, currency = 'USD'): string {
-  return amount.toLocaleString('en-US', { style: 'currency', currency: currency || 'USD' })
+/** "€39.00" — formats an amount in its currency (defaults to EUR, the app default). */
+export function formatMoney(amount: number, currency = 'EUR'): string {
+  return amount.toLocaleString('en-US', { style: 'currency', currency: currency || 'EUR' })
 }

@@ -1,7 +1,7 @@
 'use client'
 
 import { Button } from '@/components/ui/button'
-import { useSubscription, useManageUrl } from '@/hooks/billing/use-billing-data'
+import { useSubscription, useOpenManageUrl } from '@/hooks/billing/use-billing-data'
 import { formatBillingDate } from '@/lib/billing-format'
 import type { ShopifySubscriptionStatus } from '@/types/billing'
 import { StatusPill, type StatusTone } from './status-pill'
@@ -19,11 +19,7 @@ const SHELL = 'rounded-[18px] border border-settings-border bg-card p-6'
 
 export function CurrentPlanCard() {
   const subQ = useSubscription()
-  const { data: manageUrl } = useManageUrl()
-
-  const openManage = () => {
-    if (manageUrl) window.open(manageUrl, '_blank', 'noopener,noreferrer')
-  }
+  const { openManage, ready } = useOpenManageUrl()
 
   if (subQ.isLoading) {
     return <div className={`${SHELL} text-sm text-muted-foreground`}>Loading subscription…</div>
@@ -72,11 +68,11 @@ export function CurrentPlanCard() {
       </div>
 
       <div className="flex shrink-0 flex-col items-end gap-3">
-        <Button onClick={openManage} disabled={!manageUrl}>Change plan</Button>
+        <Button onClick={openManage} disabled={!ready}>Change plan</Button>
         <button
           type="button"
           onClick={openManage}
-          disabled={!manageUrl}
+          disabled={!ready}
           className="text-xs font-medium text-foreground-3 transition-colors hover:text-foreground disabled:opacity-50"
         >
           Cancel subscription

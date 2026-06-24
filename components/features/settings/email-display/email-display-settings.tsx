@@ -19,6 +19,7 @@ import { useEmailAccounts } from '@/hooks/settings/use-settings-data'
 import { useStoreStore } from '@/stores/store'
 import type { EmailDisplaySettings } from '@/types/settings'
 
+/** Fields persisted by the backend. */
 export interface DisplayFormValues {
   displayName: string
   closingText: string
@@ -27,8 +28,14 @@ export interface DisplayFormValues {
   logoWidth: number
   logoLinkUrl: string | null
   isActive: boolean
-  // Deferred / UI-only fields (Figma 984-38) — drive the live preview, not yet
-  // persisted by the backend. Always seeded by EMPTY_FORM.
+}
+
+/**
+ * Deferred / UI-only fields (Figma 984-38) — they drive the live preview but
+ * are NOT persisted yet. Kept OUT of DisplayFormValues so they never enter the
+ * dirty-check or imply a save that doesn't happen (and so they survive a save).
+ */
+export interface PreviewState {
   replyToEmail: string
   accentColor: string
   showLogoInHeader: boolean
@@ -44,6 +51,9 @@ const EMPTY_FORM: DisplayFormValues = {
   logoWidth: 150,
   logoLinkUrl: null,
   isActive: true,
+}
+
+const EMPTY_PREVIEW: PreviewState = {
   replyToEmail: '',
   accentColor: DEFAULT_ACCENT_COLOR,
   showLogoInHeader: true,
@@ -53,7 +63,6 @@ const EMPTY_FORM: DisplayFormValues = {
 
 function settingsToForm(s: EmailDisplaySettings): DisplayFormValues {
   return {
-    ...EMPTY_FORM,
     displayName: s.display_name ?? '',
     closingText: s.closing_text ?? '',
     signatureHtml: s.signature_html ?? '',
@@ -87,6 +96,9 @@ export function EmailDisplaySettingsPage() {
 
   const [form, setForm] = useState<DisplayFormValues>(EMPTY_FORM)
   const [initForm, setInitForm] = useState<DisplayFormValues>(EMPTY_FORM)
+  // Preview-only fields — standalone so a save (which refetches storeSettings)
+  // never resets them.
+  const [preview, setPreview] = useState<PreviewState>(EMPTY_PREVIEW)
 
   useEffect(() => {
     const values = storeSettings ? settingsToForm(storeSettings) : EMPTY_FORM
@@ -97,7 +109,22 @@ export function EmailDisplaySettingsPage() {
   const isDirty = JSON.stringify(form) !== JSON.stringify(initForm)
   const saving = saveMutation.isPending
 
-  const handleChange = (updates: Partial<DisplayFormValues>) => setForm((prev) => ({ ...prev, ...updates }))
+  function handleChange(updates: Partial<DisplayFormValues> & Partial<PreviewState>) {
+    const { replyToEmail, accentColor, showLogoInHeader, showAgentName, poweredByFooter, ...formUpdates } = updates
+    if (Object.keys(formUpdates).length > 0) {
+      setForm((prev) => ({ ...prev, ...formUpdates }))
+    }
+    const previewUpdates: Partial<PreviewState> = {}
+    if (replyToEmail !== undefined) previewUpdates.replyToEmail = replyToEmail
+    if (accentColor !== undefined) previewUpdates.accentColor = accentColor
+    if (showLogoInHeader !== undefined) previewUpdates.showLogoInHeader = showLogoInHeader
+    if (showAgentName !== undefined) previewUpdates.showAgentName = showAgentName
+    if (poweredByFooter !== undefined) previewUpdates.poweredByFooter = poweredByFooter
+    if (Object.keys(previewUpdates).length > 0) {
+      setPreview((prev) => ({ ...prev, ...previewUpdates }))
+    }
+  }
+
   const handleDiscard = () => setForm(initForm)
 
   function persist(values: DisplayFormValues) {
@@ -154,7 +181,7 @@ export function EmailDisplaySettingsPage() {
                 <div className="flex min-w-0 flex-1 flex-col gap-5">
                   <SenderIdentityCard
                     displayName={form.displayName}
-                    replyToEmail={form.replyToEmail}
+                    replyToEmail={preview.replyToEmail}
                     sendingAddress={sendingAddressFor(selectedStore?.shopify_domain)}
                     onChange={handleChange}
                     disabled={saving}
@@ -162,8 +189,8 @@ export function EmailDisplaySettingsPage() {
                   <BrandingCard
                     logoUrl={form.logoUrl}
                     storeId={selectedStoreId!}
-                    accentColor={form.accentColor}
-                    showLogoInHeader={form.showLogoInHeader}
+                    accentColor={preview.accentColor}
+                    showLogoInHeader={preview.showLogoInHeader}
                     onChange={handleChange}
                     disabled={saving}
                   />
@@ -175,8 +202,8 @@ export function EmailDisplaySettingsPage() {
                     disabled={saving}
                   />
                   <DisplayOptionsCard
-                    showAgentName={form.showAgentName}
-                    poweredByFooter={form.poweredByFooter}
+                    showAgentName={preview.showAgentName}
+                    poweredByFooter={preview.poweredByFooter}
                     onChange={handleChange}
                     disabled={saving}
                   />
@@ -185,12 +212,12 @@ export function EmailDisplaySettingsPage() {
                 <div className="sticky top-6 self-start">
                   <EmailPreview
                     displayName={form.displayName}
-                    emailAddress={form.replyToEmail || storeAccounts[0]?.email || 'support@yourstore.com'}
-                    accentColor={form.accentColor}
+                    emailAddress={preview.replyToEmail || storeAccounts[0]?.email || 'support@yourstore.com'}
+                    accentColor={preview.accentColor}
                     logoUrl={form.logoUrl}
-                    showLogoInHeader={form.showLogoInHeader}
+                    showLogoInHeader={preview.showLogoInHeader}
                     signatureHtml={form.signatureHtml}
-                    poweredByFooter={form.poweredByFooter}
+                    poweredByFooter={preview.poweredByFooter}
                     storeDomain={selectedStore?.shopify_domain ?? 'your-store.myshopify.com'}
                   />
                 </div>

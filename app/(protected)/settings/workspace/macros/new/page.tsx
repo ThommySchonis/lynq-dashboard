@@ -1,18 +1,26 @@
 'use client'
 
+import { useMemo } from 'react'
 import { useRouter } from 'next/navigation'
-import { MacroEditor } from '@/components/features/inbox/macro-editor'
+import { MacroForm } from '@/components/features/settings/macros/macro-form'
+import { SettingsPageHeader } from '@/components/features/settings/settings-header'
 
 export default function NewMacroPage() {
   const router = useRouter()
+  const breadcrumb = useMemo(() => ['Settings', 'Macros', 'Create macro'], [])
 
   return (
-    <MacroEditor
-      macro={null}
-      onSave={() => router.push('/settings/workspace/macros')}
-      onDuplicate={() => {}}
-      onDelete={() => {}}
-      onBack={() => router.push('/settings/workspace/macros')}
-    />
+    <>
+      <SettingsPageHeader
+        title="Create macro"
+        backHref="/settings/workspace/macros"
+        breadcrumb={breadcrumb}
+      />
+      <MacroForm
+        macro={null}
+        onSave={() => router.push('/settings/workspace/macros')}
+        onCancel={() => router.push('/settings/workspace/macros')}
+      />
+    </>
   )
 }

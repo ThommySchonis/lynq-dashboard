@@ -42,6 +42,7 @@
   --success: #10B981;
   --success-foreground: #FFFFFF;
   --success-soft: rgba(16,185,129,0.08);
+  --success-strong: #047857;
   --warning: #F59E0B;
   --warning-foreground: #FFFFFF;
   --warning-soft: rgba(245,158,11,0.08);
@@ -126,6 +127,7 @@
   --success: #4ade80;
   --success-foreground: #052e16;
   --success-soft: rgba(74,222,128,0.08);
+  --success-strong: #4ade80;
   --warning: #fb923c;
   --warning-foreground: #431407;
   --warning-soft: rgba(251,146,60,0.08);
@@ -303,6 +305,7 @@
   --color-foreground-4: var(--foreground-4);
   --color-success: var(--success);
   --color-success-soft: var(--success-soft);
+  --color-success-strong: var(--success-strong);
   --color-warning: var(--warning);
   --color-warning-soft: var(--warning-soft);
   --color-destructive-soft: var(--destructive-soft);

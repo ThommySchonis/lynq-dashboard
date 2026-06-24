@@ -18,12 +18,28 @@ import {
   useDeleteAvatar,
 } from '@/hooks/settings'
 import { useAuthStore } from '@/stores/auth'
+import { useThemeStore } from '@/stores/theme'
 import type { Theme } from '@/types/settings'
 
 interface FormState {
   displayName: string
   bio: string
   theme: Theme
+}
+
+/**
+ * Apply a profile theme choice to the live theme store (which drives the
+ * `.dark` class via ThemeSync). The store only holds light/dark, so 'system'
+ * is resolved against the OS preference at selection time.
+ */
+function applyResolvedTheme(theme: Theme) {
+  const resolved =
+    theme === 'system'
+      ? window.matchMedia('(prefers-color-scheme: dark)').matches
+        ? 'dark'
+        : 'light'
+      : theme
+  useThemeStore.getState().setTheme(resolved)
 }
 
 export function ProfileSettings() {
@@ -69,6 +85,7 @@ export function ProfileSettings() {
 
   function handleDiscard() {
     setForm(initForm)
+    applyResolvedTheme(initForm.theme)
     setNameError(null)
   }
 
@@ -110,38 +127,16 @@ export function ProfileSettings() {
 
   if (isLoading) {
     return (
-      <div className="max-w-3xl mx-auto px-12 py-12 space-y-10">
-        <div className="space-y-2 pb-6 border-b border-border">
-          <Skeleton className="h-3.5 w-28" />
-          <Skeleton className="h-8 w-48" />
-          <Skeleton className="h-3.5 w-80" />
-        </div>
-        <Skeleton className="h-64 w-full rounded-xl" />
-        <Skeleton className="h-48 w-full rounded-xl" />
+      <div className="mx-auto max-w-[800px] px-6 py-10 space-y-8">
+        <Skeleton className="h-64 w-full rounded-2xl" />
+        <Skeleton className="h-48 w-full rounded-2xl" />
       </div>
     )
   }
 
   return (
-    <div className="max-w-3xl mx-auto px-12 py-12">
-      {/* Page header */}
-      <div className="pb-6 mb-8 border-b border-border">
-        <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1.5 flex-wrap">
-          <span>Settings</span>
-          <span>/</span>
-          <span>Personal</span>
-          <span>/</span>
-          <span>Profile</span>
-        </div>
-        <h1 className="text-[28px] font-semibold text-foreground leading-tight mb-1">
-          Your profile
-        </h1>
-        <p className="text-sm text-muted-foreground leading-relaxed">
-          Manage how you appear across the workspace.
-        </p>
-      </div>
-
-      <div className="flex flex-col gap-10">
+    <div className="mx-auto max-w-[800px] px-6 py-10">
+      <div className="flex flex-col gap-8">
         {/* Personal information section */}
         <SettingsSection
           title="Personal information"
@@ -227,12 +222,15 @@ export function ProfileSettings() {
         {/* Appearance / theme section */}
         <SettingsSection
           title="Theme"
-          description="Saved as your preference. Visual switching ships in a future update."
+          description="Choose how Lynq looks. System follows your device setting."
         >
           <SettingsCard>
             <ThemeSelector
               value={form.theme}
-              onChange={(theme) => setForm((prev) => ({ ...prev, theme }))}
+              onChange={(theme) => {
+                setForm((prev) => ({ ...prev, theme }))
+                applyResolvedTheme(theme)
+              }}
             />
           </SettingsCard>
         </SettingsSection>

@@ -1,13 +1,15 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
-import { Plus, Loader2 } from 'lucide-react'
+import { Plus, Loader2, Store as StoreIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { SettingsSection } from '@/components/features/settings/settings-section'
-import { StoreCard } from './store-card'
+import { SettingsPageHeader } from '@/components/features/settings/settings-header'
+import { SettingsEmptyState } from '@/components/features/settings/settings-empty-state'
+import { StoresTable } from './stores-table'
 import { AddStoreModal } from './add-store-modal'
 import { useStores } from '@/hooks/stores'
+import { useStoreStore } from '@/stores/store'
 import { toast } from 'sonner'
 
 const ERROR_MESSAGES: Record<string, string> = {
@@ -22,59 +24,64 @@ const ERROR_MESSAGES: Record<string, string> = {
 export function StoresSettings() {
   const [addOpen, setAddOpen] = useState(false)
   const { data: stores, isLoading } = useStores()
+  const activeStoreId = useStoreStore((s) => s.activeStoreId)
   const searchParams = useSearchParams()
   const router = useRouter()
 
   useEffect(() => {
     const shopify = searchParams.get('shopify')
     const error = searchParams.get('error')
-
     if (shopify === 'connected') {
       toast.success('Shopify store connected successfully')
     } else if (error) {
       toast.error(ERROR_MESSAGES[error] || 'Something went wrong. Please try again.')
     }
-
     if (shopify || error) {
       router.replace('/settings/workspace/stores')
     }
   }, [searchParams, router])
 
-  return (
-    <div className="max-w-3xl mx-auto px-10 py-12 flex flex-col gap-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-semibold text-foreground tracking-tight">Stores</h1>
-          <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
-            Manage your connected Shopify stores. Each store has its own orders, customers, and inbox.
-          </p>
-        </div>
-        <Button size="sm" onClick={() => setAddOpen(true)}>
-          <Plus className="size-3.5" />
-          Add store
-        </Button>
-      </div>
+  const headerActions = useMemo(
+    () => (
+      <Button onClick={() => setAddOpen(true)}>
+        <Plus size={16} strokeWidth={1.75} />
+        Add store
+      </Button>
+    ),
+    [],
+  )
 
-      {/* Store list */}
-      <SettingsSection title="Connected stores">
-        {isLoading ? (
-          <div className="flex items-center gap-2.5 py-6 text-sm text-muted-foreground">
-            <Loader2 className="size-3.5 animate-spin" />
-            Loading stores…
+  const isTrulyEmpty = !isLoading && !stores?.length
+
+  return (
+    <div className="mx-auto flex min-h-full max-w-[920px] flex-col px-6 py-10">
+      <SettingsPageHeader
+        title="Stores"
+        description="Manage your connected Shopify stores. Each store has its own orders, customers, and inbox."
+        actions={headerActions}
+      />
+
+      {isLoading ? (
+        <div className="flex flex-1 items-center justify-center gap-2.5 text-sm text-muted-foreground">
+          <Loader2 size={18} strokeWidth={1.75} className="animate-spin" />
+          Loading stores…
+        </div>
+      ) : isTrulyEmpty ? (
+        <div className="flex flex-1 items-center justify-center">
+          <div className="w-[440px] max-w-full rounded-2xl border bg-card px-10 py-9">
+            <SettingsEmptyState
+              Icon={StoreIcon}
+              title="No stores connected yet"
+              description="Connect your Shopify store to sync its orders, customers and inbox into Lynq."
+            />
           </div>
-        ) : !stores?.length ? (
-          <div className="py-8 text-center text-sm text-muted-foreground">
-            No stores connected yet. Click &ldquo;Add store&rdquo; to get started.
-          </div>
-        ) : (
-          <div className="flex flex-col gap-3">
-            {stores.map((store) => (
-              <StoreCard key={store.id} store={store} />
-            ))}
-          </div>
-        )}
-      </SettingsSection>
+        </div>
+      ) : (
+        <div className="flex flex-col gap-3.5">
+          <h2 className="text-xl font-bold text-foreground">Connected stores</h2>
+          <StoresTable stores={stores ?? []} activeStoreId={activeStoreId} />
+        </div>
+      )}
 
       <AddStoreModal open={addOpen} onOpenChange={setAddOpen} />
     </div>

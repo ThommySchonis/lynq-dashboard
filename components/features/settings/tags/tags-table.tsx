@@ -245,7 +245,7 @@ function TagRowMenu({
         <MoreHorizontal size={16} strokeWidth={1.75} />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem onSelect={() => onEdit(tag)}>
+        <DropdownMenuItem onClick={() => onEdit(tag)}>
           <Edit2 size={14} strokeWidth={1.75} />
           Edit
         </DropdownMenuItem>
@@ -254,7 +254,7 @@ function TagRowMenu({
             <DropdownMenuSeparator />
             <DropdownMenuItem
               variant="destructive"
-              onSelect={() => onDelete(tag)}
+              onClick={() => onDelete(tag)}
             >
               <Trash2 size={14} strokeWidth={1.75} />
               Delete

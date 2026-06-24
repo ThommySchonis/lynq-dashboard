@@ -7,6 +7,7 @@ import { useSubscription } from '@/hooks/billing/use-billing-data'
 
 const ALLOW_PATHS = [
   '/pricing-required',
+  '/settings/workspace/billing',
   '/settings/billing',
   '/login',
   '/signup',

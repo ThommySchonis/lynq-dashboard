@@ -10,6 +10,11 @@ function fmtDate(iso: string | null): string {
   return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
 }
 
+function fmtPrice(amount: number | null, currency: string | null): string {
+  if (amount === null || !currency) return '—'
+  return new Intl.NumberFormat(undefined, { style: 'currency', currency }).format(amount)
+}
+
 export function BillingSummaryCard() {
   const subQ = useSubscription()
   const manageQ = useManageUrl()
@@ -34,6 +39,9 @@ export function BillingSummaryCard() {
         <dl className="grid grid-cols-1 gap-2 text-sm sm:grid-cols-[140px_1fr]">
           <dt className="text-muted-foreground">Plan</dt>
           <dd>{plan?.display_name ?? '—'}</dd>
+
+          <dt className="text-muted-foreground">Price</dt>
+          <dd>{fmtPrice(subscription.priceAmount, subscription.priceCurrency)}</dd>
 
           <dt className="text-muted-foreground">Status</dt>
           <dd className="capitalize">{subscription.status.replace(/_/g, ' ')}</dd>

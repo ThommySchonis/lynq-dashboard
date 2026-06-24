@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { SettingsSection, SettingsCard } from '@/components/features/settings/settings-section'
 import { SettingsField } from '@/components/features/settings/settings-field'
+import { SettingsPageHeader } from '@/components/features/settings/settings-header'
 import { AvatarUpload } from './avatar-upload'
 import { ThemeSelector } from './theme-selector'
 import { LegalLinksSection } from './legal-links-section'
@@ -128,6 +129,10 @@ export function ProfileSettings() {
   if (isLoading) {
     return (
       <div className="mx-auto max-w-[800px] px-6 py-10 space-y-8">
+        <SettingsPageHeader
+          title="Your profile"
+          description="Manage how you appear across the workspace."
+        />
         <Skeleton className="h-64 w-full rounded-2xl" />
         <Skeleton className="h-48 w-full rounded-2xl" />
       </div>
@@ -136,6 +141,10 @@ export function ProfileSettings() {
 
   return (
     <div className="mx-auto max-w-[800px] px-6 py-10">
+      <SettingsPageHeader
+        title="Your profile"
+        description="Manage how you appear across the workspace."
+      />
       <div className="flex flex-col gap-8">
         {/* Personal information section */}
         <SettingsSection

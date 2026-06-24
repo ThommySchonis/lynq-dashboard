@@ -26,10 +26,22 @@ export function UsagePlansTab() {
 
   return (
     <div className="space-y-4">
-      <p className="text-sm text-muted-foreground">
-        All plans include a 7-day free trial. Prices are in EUR; Shopify bills in your store&apos;s local
-        currency. Choose or change your plan in Shopify.
-      </p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <p className="max-w-md text-sm text-muted-foreground">
+          All plans include a 7-day free trial. Prices are in EUR; Shopify bills in your store&apos;s local
+          currency.
+        </p>
+        {manageQ.data && (
+          <a
+            href={manageQ.data}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center justify-center whitespace-nowrap rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90"
+          >
+            Manage plans in Shopify ↗
+          </a>
+        )}
+      </div>
       {plansQ.isLoading ? (
         <p className="text-sm text-muted-foreground">Loading plans…</p>
       ) : (

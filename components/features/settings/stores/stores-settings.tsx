@@ -9,7 +9,7 @@ import { SettingsEmptyState } from '@/components/features/settings/settings-empt
 import { StoresTable } from './stores-table'
 import { AddStoreModal } from './add-store-modal'
 import { useStores } from '@/hooks/stores'
-import { useStoreStore } from '@/stores/store'
+import { useBillingStores } from '@/hooks/billing'
 import { toast } from 'sonner'
 
 const ERROR_MESSAGES: Record<string, string> = {
@@ -24,7 +24,8 @@ const ERROR_MESSAGES: Record<string, string> = {
 export function StoresSettings() {
   const [addOpen, setAddOpen] = useState(false)
   const { data: stores, isLoading } = useStores()
-  const activeStoreId = useStoreStore((s) => s.activeStoreId)
+  const { data: billingStores } = useBillingStores()
+  const paymentsStoreDomain = billingStores?.find((s) => s.isBillingStore)?.shopifyDomain ?? null
   const searchParams = useSearchParams()
   const router = useRouter()
 
@@ -79,7 +80,7 @@ export function StoresSettings() {
       ) : (
         <div className="flex flex-col gap-3.5">
           <h2 className="text-xl font-bold text-foreground">Connected stores</h2>
-          <StoresTable stores={stores ?? []} activeStoreId={activeStoreId} />
+          <StoresTable stores={stores ?? []} paymentsStoreDomain={paymentsStoreDomain} />
         </div>
       )}
 

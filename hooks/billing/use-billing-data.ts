@@ -7,6 +7,7 @@ import { parseJson } from '@/lib/utils/typed-json'
 import { apiUrl } from '@/lib/api-client'
 import type {
   Invoice,
+  BillingStore,
   ManageUrlResponse,
   SubscriptionWithUsageResponse,
 } from '@/types/billing'
@@ -20,6 +21,7 @@ export const billingKeys = {
   subscription:   () => [...billingKeys.all, 'subscription'] as const,
   invoices:       () => [...billingKeys.all, 'invoices'] as const,
   manageUrl:      () => [...billingKeys.all, 'manage-url'] as const,
+  stores:         () => [...billingKeys.all, 'stores'] as const,
 }
 
 async function jsonFetch<T>(url: string, token: string): Promise<T> {
@@ -69,6 +71,20 @@ export function useOpenManageUrl() {
     if (manageUrl) window.open(manageUrl, '_blank', 'noopener,noreferrer')
   }, [manageUrl])
   return { openManage, ready: !!manageUrl }
+}
+
+/** Connected stores with which one hosts the managed-pricing subscription. */
+export function useBillingStores() {
+  const token = useToken()
+  return useQuery<BillingStore[]>({
+    queryKey: billingKeys.stores(),
+    queryFn: async () => {
+      const data = await jsonFetch<{ stores: BillingStore[] }>(apiUrl('billing/stores'), token)
+      return data.stores ?? []
+    },
+    enabled:  !!token,
+    staleTime: 60_000,
+  })
 }
 
 export function useInvoices() {

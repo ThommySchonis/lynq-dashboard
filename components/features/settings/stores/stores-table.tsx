@@ -28,10 +28,11 @@ function storeState(store: StorePublic): 'active' | 'reauth' | 'disconnected' {
 
 interface StoresTableProps {
   stores: StorePublic[]
-  activeStoreId: string | null
+  /** Domain of the store that hosts the managed-pricing subscription, if any. */
+  paymentsStoreDomain: string | null
 }
 
-export function StoresTable({ stores, activeStoreId }: StoresTableProps) {
+export function StoresTable({ stores, paymentsStoreDomain }: StoresTableProps) {
   const [tab, setTab] = useState<StoreTab>('all')
   const [searchOpen, setSearchOpen] = useState(false)
   const [search, setSearch] = useState('')
@@ -115,7 +116,7 @@ export function StoresTable({ stores, activeStoreId }: StoresTableProps) {
         <StoreRow
           key={store.id}
           store={store}
-          isPaymentsStore={store.id === activeStoreId}
+          isPaymentsStore={!!paymentsStoreDomain && store.shopify_domain === paymentsStoreDomain}
         />
       ))}
 

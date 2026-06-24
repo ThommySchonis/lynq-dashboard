@@ -8,6 +8,7 @@ import { useSubscription } from '@/hooks/billing'
 
 const BILLING_GATE_EXEMPT = [
   '/pricing-required',
+  '/settings/workspace/billing',
   '/account/scheduled-deletion',
   '/logout',
 ]

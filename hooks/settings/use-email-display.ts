@@ -83,29 +83,6 @@ export function useSaveEmailDisplaySettings(storeId: string | null) {
   })
 }
 
-export function useDeleteEmailDisplaySettings(storeId: string | null) {
-  const token = useToken()
-  const qc = useQueryClient()
-  return useMutation({
-    mutationFn: async (id: string) => {
-      const res = await fetch(apiUrl(`settings/email-display/${id}`), {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      if (!res.ok) throw new Error('Failed to delete override')
-    },
-    onSuccess: () => {
-      if (storeId) {
-        void qc.invalidateQueries({ queryKey: settingsKeys.emailDisplay(storeId) })
-      }
-      toast.success('Account override removed')
-    },
-    onError: (err: Error) => {
-      toast.error(err.message)
-    },
-  })
-}
-
 export function useUploadSignatureLogo() {
   const token = useToken()
   return useMutation({

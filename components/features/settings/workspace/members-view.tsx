@@ -1,11 +1,13 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { UserPlus } from 'lucide-react'
+import { useState, useEffect, useMemo } from 'react'
+import { UserPlus, Users } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { SettingsPageHeader } from '@/components/features/settings/settings-header'
 import { useMembersPage } from '@/hooks/settings'
 import { useAuthStore } from '@/stores/auth'
 import { can } from '@/lib/permissions'
+import { DEFAULT_SEAT_LIMIT } from '@/lib/settings-constants'
 import type { Role } from '@/types'
 import type { MembersPageData } from '@/types/settings'
 import { MembersTable } from './members-table'
@@ -35,57 +37,94 @@ export function MembersView() {
 
   const seatsUsed = data?.seatsUsed ?? 0
   const seatLimit = data?.seatLimit ?? null
+  // Backend has no real seat cap yet → use a constant so the bar fills
+  // proportionally (e.g. 1/10) instead of showing a misleading full bar.
+  const effectiveSeatLimit = seatLimit ?? DEFAULT_SEAT_LIMIT
+
+  // "Invite user" lives in the full-width section header bar (Figma node 964-29377).
+  const headerActions = useMemo(
+    () => (
+      <Button
+        onClick={() => setShowInvite(true)}
+        disabled={!canManage || isImpersonating}
+        title={isImpersonating ? 'Not available during impersonation' : undefined}
+      >
+        <UserPlus size={16} strokeWidth={1.75} />
+        Invite user
+      </Button>
+    ),
+    [canManage, isImpersonating],
+  )
+
+  // Truly empty workspace (no members/invites and no active search) → show just
+  // the centered empty card (Figma node 964-29635), no seat counter or search.
+  // A search that returns nothing keeps the normal search + table layout.
+  const isTrulyEmpty =
+    !isLoading &&
+    (data?.members?.length ?? 0) === 0 &&
+    (data?.invites?.length ?? 0) === 0 &&
+    search.trim() === ''
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6 px-4 py-8 sm:px-10">
-      {/* Header */}
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-xl font-semibold">Users</h1>
-          <p className="text-sm text-muted-foreground">
-            Manage who has access to this workspace and their roles
-          </p>
-        </div>
-        <Button
-          onClick={() => setShowInvite(true)}
-          disabled={!canManage || isImpersonating}
-          title={isImpersonating ? 'Not available during impersonation' : undefined}
-        >
-          <UserPlus size={16} strokeWidth={1.75} />
-          Invite user
-        </Button>
-      </div>
+    <div className="mx-auto flex min-h-full max-w-[800px] flex-col px-6 py-10">
+      <SettingsPageHeader
+        title="Users"
+        description="Manage who has access to this workspace and their roles"
+        actions={headerActions}
+      />
 
-      {/* Seat counter */}
-      <div className="flex items-center gap-2.5">
-        <span className="text-xs text-muted-foreground">
-          {seatsUsed} {seatsUsed === 1 ? 'user' : 'users'}
-          {seatLimit != null ? ` / ${seatLimit}` : ''}
-        </span>
-        <div className="h-1 w-28 overflow-hidden rounded-full bg-muted">
-          <div
-            className="h-full rounded-full bg-primary transition-all"
-            style={{
-              width: seatLimit ? `${Math.min((seatsUsed / seatLimit) * 100, 100)}%` : '100%',
-            }}
+      {isTrulyEmpty ? (
+        <div className="flex flex-1 items-center justify-center">
+          <UsersEmptyState />
+        </div>
+      ) : (
+        <div className="space-y-5">
+          {/* Seat counter */}
+          <div className="flex items-center gap-3">
+            <span className="shrink-0 text-sm font-semibold text-foreground">
+              {seatsUsed} {seatsUsed === 1 ? 'user' : 'users'}
+              {seatLimit != null ? ` / ${seatLimit}` : ''}
+            </span>
+            <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
+              <div
+                className="h-full rounded-full bg-primary transition-all"
+                style={{
+                  width: `${Math.min((seatsUsed / effectiveSeatLimit) * 100, 100)}%`,
+                }}
+              />
+            </div>
+          </div>
+
+          <MembersTable
+            members={data?.members ?? []}
+            invites={data?.invites ?? []}
+            isLoading={isLoading}
+            search={search}
+            onSearchChange={setSearch}
+            currentUserRole={currentUserRole}
+            isOwner={isOwner}
+            workspaceName={data?.workspaceName ?? ''}
           />
         </div>
-      </div>
-
-      {/* Members table */}
-      <MembersTable
-        members={data?.members ?? []}
-        invites={data?.invites ?? []}
-        isLoading={isLoading}
-        search={search}
-        onSearchChange={setSearch}
-        currentUserRole={currentUserRole}
-        isOwner={isOwner}
-        workspaceName={data?.workspaceName ?? ''}
-      />
+      )}
 
       {/* Invite modal */}
       <InviteModal open={showInvite} onOpenChange={setShowInvite} />
+    </div>
+  )
+}
+
+/** Centered empty state shown when the workspace has no members (Figma 964-29635). */
+function UsersEmptyState() {
+  return (
+    <div className="flex w-[440px] max-w-full flex-col items-center gap-2 rounded-2xl border bg-card px-10 py-7 text-center">
+      <div className="mb-2 flex size-12 items-center justify-center rounded-2xl bg-accent-soft">
+        <Users size={24} strokeWidth={1.75} className="text-primary" />
+      </div>
+      <p className="text-lg font-bold text-foreground">No team members yet</p>
+      <p className="text-sm text-muted-foreground leading-relaxed">
+        Invite teammates to collaborate on your support inbox and assign roles.
+      </p>
     </div>
   )
 }

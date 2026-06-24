@@ -43,7 +43,7 @@ function expiryLabel(expiresAt: string | null): { text: string; tone: 'expired' 
 }
 
 export const ROLE_BADGE_CLASSES: Record<MemberRole, string> = {
-  owner: 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400',
+  owner: 'bg-accent-soft text-primary',
   admin: 'bg-muted text-muted-foreground',
   agent: 'bg-muted text-muted-foreground',
   observer: 'bg-muted text-muted-foreground',
@@ -80,7 +80,7 @@ export function MemberRow({
             {member.avatar_url ? (
               <AvatarImage src={member.avatar_url} alt="" />
             ) : null}
-            <AvatarFallback>
+            <AvatarFallback className="bg-primary/15 text-primary font-semibold">
               {getInitials(member.display_name, member.email)}
             </AvatarFallback>
           </Avatar>

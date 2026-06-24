@@ -76,6 +76,11 @@ export function visibleSettingsNav(
     .filter(group => group.items.length > 0)
 }
 
+// ── Members ──
+
+/** Seat limit shown in the Users seat counter while the backend has no real cap. */
+export const DEFAULT_SEAT_LIMIT = 10
+
 // ── Roles ──
 
 /** Roles selectable when inviting a new member (non-owner cannot assign owner). */

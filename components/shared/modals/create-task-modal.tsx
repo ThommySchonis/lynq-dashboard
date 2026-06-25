@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Loader2, Package } from 'lucide-react'
+import { Loader2, Package, Plus, X } from 'lucide-react'
 import { useCreateTask, useWorkspaceMembers } from '@/hooks/tasks'
 import { useAuthStore } from '@/stores/auth'
 import type { CreateTaskInput } from '@/types/tasks'
@@ -17,10 +17,10 @@ const CATEGORIES = ['Sizing', 'Quality', 'Damaged', 'Wrong Item', 'Late Delivery
 const PRIORITIES = [
   { value: 'low', label: 'Low', dot: 'bg-emerald-500' },
   { value: 'medium', label: 'Medium', dot: 'bg-amber-500' },
-  { value: 'high', label: 'High', dot: 'bg-rose-500' },
+  { value: 'high', label: 'High', dot: 'bg-red-500' },
 ] as const
 
-const LABEL = 'mb-2 block text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground'
+const LABEL = 'mb-2 block text-[14px] font-medium text-foreground'
 const TRIGGER = 'w-full rounded-[10px] border-border bg-card py-[11px] text-[13.5px] data-[size=default]:h-auto'
 
 const createTaskSchema = z.object({
@@ -45,6 +45,10 @@ interface CreateTaskModalProps {
   linkedOrder?: LinkedOrder | null
   onClose: () => void
   onSuccess?: (msg: string, type?: 'success' | 'error') => void
+}
+
+function initial(name: string): string {
+  return name.trim().charAt(0).toUpperCase() || '?'
 }
 
 export function CreateTaskModal({ linkedOrder, onClose, onSuccess }: CreateTaskModalProps) {
@@ -81,19 +85,27 @@ export function CreateTaskModal({ linkedOrder, onClose, onSuccess }: CreateTaskM
 
   return (
     <Dialog open onOpenChange={(open) => { if (!open) onClose() }}>
-      <DialogContent className="gap-0 overflow-hidden rounded-[18px] p-0 sm:max-w-[540px]">
-        <DialogHeader className="px-6 py-[22px]">
+      <DialogContent showCloseButton={false} className="gap-0 overflow-hidden rounded-[18px] p-0 sm:max-w-[520px]">
+        <DialogHeader className="flex-row items-center justify-between space-y-0 px-[26px] pb-[18px] pt-[22px]">
           <DialogTitle className="text-lg font-bold">Create task</DialogTitle>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close"
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+          >
+            <X size={16} />
+          </button>
         </DialogHeader>
         <div className="h-px bg-border" />
 
-        <form onSubmit={(e) => void handleSubmit(onSubmit)(e)} className="flex flex-col gap-[18px] px-6 py-5">
+        <form onSubmit={(e) => void handleSubmit(onSubmit)(e)} className="flex flex-col gap-[18px] px-[26px] pb-6 pt-1">
           {/* Title */}
           <div>
             <label className={LABEL}>Title</label>
             <Input
               {...register('title')}
-              placeholder="e.g. Investigate sizing complaints on Nike Air Max"
+              placeholder="e.g. Investigate rising “Item damaged” refunds"
               className="rounded-[10px] border border-border bg-card"
             />
             {errors.title && <p className="mt-1 text-[11px] text-destructive">{errors.title.message}</p>}
@@ -104,8 +116,8 @@ export function CreateTaskModal({ linkedOrder, onClose, onSuccess }: CreateTaskM
             <label className={LABEL}>Description</label>
             <textarea
               {...register('description')}
-              placeholder="Optional details…"
-              className="min-h-[92px] w-full resize-y rounded-[10px] border border-border bg-card px-3.5 py-[11px] text-[13.5px] text-foreground outline-none"
+              placeholder="Add context for your team — what to check, which orders, expected outcome…"
+              className="min-h-[110px] w-full resize-y rounded-[10px] border border-border bg-card px-3.5 py-[11px] text-[13.5px] text-foreground outline-none placeholder:text-muted-foreground"
             />
           </div>
 
@@ -176,7 +188,21 @@ export function CreateTaskModal({ linkedOrder, onClose, onSuccess }: CreateTaskM
                 <Select value={field.value || ''} onValueChange={(v) => field.onChange(v ?? '')}>
                   <SelectTrigger className={TRIGGER}>
                     <SelectValue placeholder="Unassigned">
-                      {(value: string | null) => members?.find((m) => m.id === value)?.displayName ?? 'Unassigned'}
+                      {(value: string | null) => {
+                        const m = members?.find((x) => x.id === value)
+                        return (
+                          <span className="flex items-center gap-2">
+                            {m ? (
+                              <span className="flex size-[18px] items-center justify-center rounded-full bg-primary text-[9px] font-bold text-primary-foreground">
+                                {initial(m.displayName)}
+                              </span>
+                            ) : (
+                              <span className="size-2.5 rounded-full border border-dashed border-primary/40" />
+                            )}
+                            {m?.displayName ?? 'Unassigned'}
+                          </span>
+                        )
+                      }}
                     </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
@@ -210,10 +236,10 @@ export function CreateTaskModal({ linkedOrder, onClose, onSuccess }: CreateTaskM
           )}
 
           {/* Footer */}
-          <div className="-mx-6 -mb-5 mt-1 flex justify-end gap-3 border-t border-border bg-[#FAF9FF] px-6 py-4 dark:bg-[rgba(255,255,255,0.03)]">
+          <div className="-mx-[26px] -mb-6 mt-1 flex items-center justify-between gap-3 border-t border-border bg-[#FAF9FF] px-[26px] py-[18px] dark:bg-[rgba(255,255,255,0.03)]">
             <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
             <Button type="submit" disabled={isSuspended || isSubmitting}>
-              {isSubmitting ? <Loader2 size={13} className="animate-spin" /> : 'Create task'}
+              {isSubmitting ? <Loader2 size={13} className="animate-spin" /> : <><Plus size={13} />Create task</>}
             </Button>
           </div>
         </form>

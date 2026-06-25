@@ -2,7 +2,7 @@
 
 import { Skeleton } from '@/components/ui/skeleton'
 import { buildWeeklyReport, fmtEur } from '@/lib/analytics-constants'
-import { CatBadge } from './action-board'
+import { CatBadge } from './cat-badge'
 import type { Refund } from '@/types/analytics'
 
 interface WeeklyReportProps {

@@ -3,7 +3,7 @@
 import { LayoutGrid } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
 import { buildProductMatrix, fmtEur, CAT_COLORS } from '@/lib/analytics-constants'
-import { CatBadge } from './action-board'
+import { CatBadge } from './cat-badge'
 import { CardEmptyState } from './card-empty-state'
 import type { Refund } from '@/types/analytics'
 

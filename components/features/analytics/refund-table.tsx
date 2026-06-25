@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { ChevronDown, ChevronUp, Minus, Receipt } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
 import { CATEGORIES, categorizeReason, fmtDate, fmtEur } from '@/lib/analytics-constants'
-import { CatBadge } from './action-board'
+import { CatBadge } from './cat-badge'
 import { CardEmptyState } from './card-empty-state'
 import type { Refund, RefundCategory } from '@/types/analytics'
 

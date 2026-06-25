@@ -63,7 +63,12 @@ export function fmtDateShort(d: string): string {
 
 export function computeDelta(cur: number, prev: number): Delta | null {
   const c = parseFloat(String(cur || 0)), p = parseFloat(String(prev || 0))
-  if (p === 0 || isNaN(c) || isNaN(p)) return null
+  if (isNaN(c) || isNaN(p)) return null
+  // No prior baseline: only meaningful if there's current activity ("New").
+  if (p === 0) {
+    if (c === 0) return null
+    return { pct: 100, label: 'New', isNew: true }
+  }
   const pct = ((c - p) / Math.abs(p)) * 100
   return { pct, label: `${pct > 0 ? '+' : ''}${pct.toFixed(1)}%` }
 }

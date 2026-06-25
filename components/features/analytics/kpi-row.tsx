@@ -19,10 +19,10 @@ function DeltaBadge({ delta, lowerIsBetter = true }: DeltaBadgeProps) {
   const Arrow = delta.pct > 0 ? ArrowUp : ArrowDown
 
   return (
-    <div className={`flex items-center gap-0.5 text-xs font-medium tracking-tight ${improved ? 'text-emerald-500' : 'text-red-600'}`}>
-      <Arrow size={12} />
-      <span>{Math.abs(delta.pct).toFixed(1)}%</span>
-      <span className="text-[11px] font-normal text-gray-400 opacity-55">vs prev</span>
+    <div className={`flex items-center gap-1 text-[12px] font-bold ${improved ? 'text-emerald-500' : 'text-red-500'}`}>
+      <Arrow size={9} />
+      <span>{delta.isNew ? 'New' : `${Math.abs(delta.pct).toFixed(1)}%`}</span>
+      <span className="text-[12px] font-medium leading-4 text-foreground-4">vs prev</span>
     </div>
   )
 }
@@ -64,20 +64,20 @@ function KpiCardInner({ c, index, hasPrevKpis }: KpiCardInnerProps) {
   const Icon = CARD_ICONS[index]
 
   return (
-    <div className="animate-fade-up rounded-[10px] border border-black/[0.07] bg-white p-[18px_20px] relative overflow-hidden transition-all duration-200 hover:border-black/[0.12] hover:shadow-md hover:-translate-y-px">
+    <div className="animate-fade-up rounded-[16px] border border-border bg-card p-[20px_22px] relative overflow-hidden shadow-sm transition-all duration-200 hover:border-border-hover hover:shadow-md hover:-translate-y-px">
       <div className="mb-3.5 flex items-start justify-between">
-        <div className="text-[11px] font-semibold uppercase tracking-[.06em] text-gray-400">
+        <div className="text-[12px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
           {c.label}
         </div>
-        <div className="flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-[7px] bg-purple-500/[0.08]">
-          <Icon size={14} className="text-foreground-4" />
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[9px] bg-border">
+          <Icon size={14} className="text-muted-foreground" />
         </div>
       </div>
-      <div className="mb-2 text-2xl font-bold leading-none text-gray-900 tabular-nums">
+      <div className="mb-2 text-[28px] font-bold leading-[32px] tracking-[-0.02em] text-foreground tabular-nums">
         {displayVal}
       </div>
       <div className="flex items-center justify-between gap-2">
-        <div className="text-[11px] text-gray-400">{c.sub}</div>
+        <div className="text-[12px] font-semibold text-muted-foreground">{c.sub}</div>
         <DeltaBadge delta={hasPrevKpis ? c.delta : null} lowerIsBetter={c.lowerBetter} />
       </div>
     </div>

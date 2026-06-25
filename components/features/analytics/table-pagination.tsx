@@ -24,6 +24,8 @@ function pageList(current: number, totalPages: number): (number | 'ellipsis')[] 
   return out
 }
 
+const BOX = 'flex h-[34px] w-[34px] items-center justify-center rounded-lg text-[14px]'
+
 export function TablePagination({ page, pageSize, total, onPageChange }: TablePaginationProps) {
   const totalPages = Math.max(1, Math.ceil(total / pageSize))
   const from = total === 0 ? 0 : (page - 1) * pageSize + 1
@@ -31,32 +33,30 @@ export function TablePagination({ page, pageSize, total, onPageChange }: TablePa
 
   return (
     <div className="flex items-center justify-between pt-2">
-      <span className="text-[12px] text-muted-foreground">
+      <span className="text-[12px] font-medium text-foreground-4">
         Showing {from}&ndash;{to} of {total}
       </span>
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-1.5">
         <button
           onClick={() => onPageChange(page - 1)}
           disabled={page <= 1}
           aria-label="Previous page"
-          className="flex h-8 w-8 items-center justify-center rounded-lg text-foreground-2 transition-colors hover:bg-secondary disabled:opacity-40 disabled:hover:bg-transparent"
+          className={`${BOX} border border-border bg-card text-muted-foreground transition-colors hover:bg-secondary disabled:opacity-40 disabled:hover:bg-card`}
         >
-          <ChevronLeft size={15} />
+          <ChevronLeft size={16} />
         </button>
         {pageList(page, totalPages).map((p, i) =>
           p === 'ellipsis' ? (
-            <span key={`e${i}`} className="flex h-8 w-8 items-center justify-center text-[12px] text-muted-foreground">
-              &hellip;
-            </span>
+            <span key={`e${i}`} className={`${BOX} text-foreground-4`}>&hellip;</span>
           ) : (
             <button
               key={p}
               onClick={() => onPageChange(p)}
               aria-current={p === page}
-              className={`flex h-8 min-w-8 items-center justify-center rounded-lg px-2 text-[12px] font-semibold transition-colors ${
+              className={`${BOX} transition-colors ${
                 p === page
-                  ? 'bg-accent-soft text-primary'
-                  : 'text-foreground-2 hover:bg-secondary'
+                  ? 'bg-accent-soft font-semibold text-primary'
+                  : 'font-medium text-muted-foreground hover:bg-secondary'
               }`}
             >
               {p}
@@ -67,9 +67,9 @@ export function TablePagination({ page, pageSize, total, onPageChange }: TablePa
           onClick={() => onPageChange(page + 1)}
           disabled={page >= totalPages}
           aria-label="Next page"
-          className="flex h-8 w-8 items-center justify-center rounded-lg text-foreground-2 transition-colors hover:bg-secondary disabled:opacity-40 disabled:hover:bg-transparent"
+          className={`${BOX} border border-border bg-card text-muted-foreground transition-colors hover:bg-secondary disabled:opacity-40 disabled:hover:bg-card`}
         >
-          <ChevronRight size={15} />
+          <ChevronRight size={16} />
         </button>
       </div>
     </div>

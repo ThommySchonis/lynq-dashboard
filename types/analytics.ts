@@ -87,6 +87,7 @@ export interface RepeatRefunder {
 export interface Delta {
   pct: number
   label: string
+  isNew?: boolean
 }
 
 export type RefundCategory = 'All' | 'Sizing' | 'Damaged' | 'Quality' | 'Not as described' | 'Changed mind' | 'Other'

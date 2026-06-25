@@ -28,7 +28,7 @@ export function SignatureEditor({ value, onChange, disabled }: SignatureEditorPr
     editable: !disabled,
     editorProps: {
       attributes: {
-        class: 'prose prose-sm max-w-none min-h-[100px] px-3 py-2 outline-none text-sm leading-relaxed',
+        class: 'prose prose-sm max-w-none min-h-[100px] px-3.5 py-3 outline-none text-sm leading-relaxed text-foreground-2',
       },
     },
     onUpdate: ({ editor: e }) => {
@@ -61,8 +61,8 @@ export function SignatureEditor({ value, onChange, disabled }: SignatureEditorPr
   if (!editor) return null
 
   return (
-    <div className="rounded-lg border border-border overflow-hidden">
-      <div className="flex items-center gap-0.5 border-b border-border px-2 py-1.5 bg-muted/30">
+    <div className="rounded-[10px] border border-settings-border bg-foreground/[0.02] overflow-hidden">
+      <div className="flex items-center gap-0.5 border-b border-settings-border px-2 py-1.5">
         <Button
           type="button"
           variant="ghost"

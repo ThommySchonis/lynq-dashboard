@@ -10,9 +10,9 @@ interface SettingsSectionProps {
 export function SettingsSection({ title, description, actions, children }: SettingsSectionProps) {
   return (
     <div>
-      <div className="flex items-start justify-between gap-4 mb-4">
+      <div className="flex items-start justify-between gap-4 mb-3.5">
         <div>
-          <h3 className="text-lg font-medium text-foreground leading-snug">
+          <h3 className="text-lg font-bold text-foreground leading-snug">
             {title}
           </h3>
           {description && (
@@ -36,7 +36,7 @@ interface SettingsCardProps {
 
 export function SettingsCard({ children, footer, className }: SettingsCardProps) {
   return (
-    <div className={`bg-card border border-border rounded-xl overflow-hidden ${className ?? ''}`}>
+    <div className={`bg-card border border-border rounded-2xl overflow-hidden ${className ?? ''}`}>
       <div className="p-6">{children}</div>
       {footer && (
         <div className="border-t border-border px-6 py-4 flex justify-end gap-2.5">

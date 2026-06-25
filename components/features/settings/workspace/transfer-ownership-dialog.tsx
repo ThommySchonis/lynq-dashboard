@@ -1,13 +1,14 @@
 'use client'
 
 import { useState } from 'react'
+import { ArrowRight, X } from 'lucide-react'
 import {
   Dialog,
   DialogContent,
+  DialogClose,
   DialogHeader,
   DialogTitle,
   DialogDescription,
-  DialogFooter,
 } from '@/components/ui/dialog'
 import {
   Select,
@@ -80,23 +81,48 @@ export function TransferOwnershipDialog({
   return (
     <>
       <Dialog open={open} onOpenChange={handleOpenChange}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Transfer workspace ownership</DialogTitle>
-            <DialogDescription>
-              Choose a member to transfer ownership to, and select the role you
-              will assume after the transfer.
-            </DialogDescription>
-          </DialogHeader>
+        <DialogContent
+          showCloseButton={false}
+          className="w-full max-w-[440px] gap-0 overflow-hidden rounded-[18px] border-0 p-0 ring-0 shadow-[0_24px_60px_-14px_rgba(15,13,31,0.24)] sm:max-w-[440px]"
+        >
+          {/* Body */}
+          <div className="flex flex-col gap-[18px] px-6 py-[22px]">
+            <DialogHeader className="gap-[7px]">
+              <div className="flex min-h-8 items-center justify-between gap-2">
+                <DialogTitle className="text-[18px] font-bold leading-tight text-foreground">
+                  Transfer workspace ownership
+                </DialogTitle>
+                <DialogClose
+                  render={
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="-mr-2.5 size-11 shrink-0"
+                    />
+                  }
+                >
+                  <X className="size-5" />
+                  <span className="sr-only">Close</span>
+                </DialogClose>
+              </div>
+              <DialogDescription className="text-sm text-muted-foreground">
+                Choose a member to transfer ownership to, and select the role you
+                will assume after the transfer.
+              </DialogDescription>
+            </DialogHeader>
 
-          <div className="flex flex-col gap-4">
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="transfer-member">New owner</Label>
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="transfer-member" className="text-sm font-semibold text-foreground">
+                New owner
+              </Label>
               <Select
                 value={selectedMemberId}
                 onValueChange={(v) => v && setSelectedMemberId(v)}
               >
-                <SelectTrigger id="transfer-member" className="w-full">
+                <SelectTrigger
+                  id="transfer-member"
+                  className="w-full rounded-[10px] border-border bg-card px-3.5 py-[11px] data-[size=default]:h-auto"
+                >
                   <SelectValue placeholder="Select a member" />
                 </SelectTrigger>
                 <SelectContent>
@@ -109,13 +135,18 @@ export function TransferOwnershipDialog({
               </Select>
             </div>
 
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="transfer-role">Your new role</Label>
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="transfer-role" className="text-sm font-semibold text-foreground">
+                Your new role
+              </Label>
               <Select
                 value={selectedRole}
                 onValueChange={(v) => v && setSelectedRole(v)}
               >
-                <SelectTrigger id="transfer-role" className="w-full">
+                <SelectTrigger
+                  id="transfer-role"
+                  className="w-full rounded-[10px] border-border bg-card px-3.5 py-[11px] data-[size=default]:h-auto"
+                >
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -129,15 +160,17 @@ export function TransferOwnershipDialog({
             </div>
           </div>
 
-          <DialogFooter>
+          {/* Footer */}
+          <div className="flex justify-end border-t border-border bg-muted/40 px-6 py-4">
             <Button
-              variant="default"
               disabled={!selectedMemberId}
               onClick={handleNext}
+              className="h-11 gap-1.5 rounded-[10px] px-5 font-semibold"
             >
               Next
+              <ArrowRight className="size-4" />
             </Button>
-          </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
 

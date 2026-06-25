@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { AlertTriangle } from 'lucide-react'
 import { useAuthStore } from '@/stores/auth'
 import { useScheduleAccountDeletion } from '@/hooks/settings/use-account-deletion'
 import { useMembers } from '@/hooks/settings/use-settings-data'
@@ -50,16 +51,22 @@ export function AccountDeletionSection() {
 
   return (
     <>
-      <div className="rounded-xl border-2 border-destructive/30 p-6">
-        <h3 className="text-base font-semibold text-destructive mb-1">Danger Zone</h3>
-        <p className="text-sm text-foreground-3 mb-4">
-          Permanently delete your account and all associated data.
-        </p>
+      <div className="bg-destructive/[0.04] border-[1.5px] border-destructive/30 rounded-2xl px-[22px] py-2.5 flex items-center justify-between gap-6">
+        <div className="flex items-start gap-2.5 min-w-0">
+          <AlertTriangle size={18} strokeWidth={2} className="text-destructive mt-px shrink-0" />
+          <div className="flex flex-col gap-[3px]">
+            <h3 className="text-sm font-semibold text-destructive leading-snug">Danger zone</h3>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Permanently delete your account and all associated data.
+            </p>
+          </div>
+        </div>
         <Button
           variant="destructive"
           onClick={handleDeleteClick}
           disabled={isImpersonating}
           title={isImpersonating ? 'Not available during impersonation' : undefined}
+          className="shrink-0"
         >
           Delete my account
         </Button>

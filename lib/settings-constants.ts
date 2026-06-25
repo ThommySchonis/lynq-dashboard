@@ -3,7 +3,13 @@
  * Import from here instead of defining inline in components.
  */
 
-import { Monitor, Moon, Sun } from 'lucide-react'
+import {
+  Monitor, Moon, Sun,
+  SlidersHorizontal, Users, Zap, Tag, Store, CreditCard,
+  Flag, BookOpen, ListChecks, Mail, ArrowLeftRight,
+  User, Lock, Plug,
+  type LucideIcon,
+} from 'lucide-react'
 import type { MemberRole, Theme } from '@/types/settings'
 import type { can } from '@/lib/permissions'
 // ── Navigation ──
@@ -11,6 +17,8 @@ import type { can } from '@/lib/permissions'
 export interface SettingsNavItem {
   label: string
   href: string
+  /** Leading icon shown in the settings sidebar. */
+  Icon: LucideIcon
   /** Capability required to see this item. Omitted = always visible. */
   capability?: keyof typeof can
 }
@@ -22,25 +30,28 @@ export interface SettingsNavGroup {
 
 const RAW_SETTINGS_NAV: SettingsNavGroup[] = [
   { label: 'WORKSPACE', items: [
-    { label: 'General',  href: '/settings/workspace/general', capability: 'manageWorkspace' },
-    { label: 'Users',    href: '/settings/workspace/members', capability: 'inviteMembers'  },
-    { label: 'Macros',   href: '/settings/workspace/macros',  capability: 'viewMacros'     },
-    { label: 'Tags',     href: '/settings/workspace/tags',    capability: 'viewTags'       },
-    { label: 'Stores',   href: '/settings/workspace/stores',  capability: 'manageWorkspace' },
-    { label: 'Billing',  href: '/settings/workspace/billing', capability: 'manageBilling'  },
+    { label: 'General',  href: '/settings/workspace/general', Icon: SlidersHorizontal, capability: 'manageWorkspace' },
+    { label: 'Users',    href: '/settings/workspace/members', Icon: Users,    capability: 'inviteMembers'  },
+    { label: 'Macros',   href: '/settings/workspace/macros',  Icon: Zap,      capability: 'viewMacros'     },
+    { label: 'Tags',     href: '/settings/workspace/tags',    Icon: Tag,      capability: 'viewTags'       },
+    { label: 'Stores',   href: '/settings/workspace/stores',  Icon: Store,    capability: 'manageWorkspace' },
+    { label: 'Billing',  href: '/settings/workspace/billing', Icon: CreditCard, capability: 'manageBilling'  },
   ]},
   { label: 'AI AGENT', items: [
-    { label: 'Onboarding', href: '/settings/ai-agent/onboarding', capability: 'manageWorkspace' },
-    { label: 'Lessons',    href: '/settings/ai-agent/lessons',    capability: 'manageWorkspace' },
-    { label: 'Rules',      href: '/settings/ai-agent/rules',      capability: 'manageWorkspace' },
+    { label: 'Onboarding', href: '/settings/ai-agent/onboarding', Icon: Flag,       capability: 'manageWorkspace' },
+    { label: 'Lessons',    href: '/settings/ai-agent/lessons',    Icon: BookOpen,   capability: 'manageWorkspace' },
+    { label: 'Rules',      href: '/settings/ai-agent/rules',      Icon: ListChecks, capability: 'manageWorkspace' },
+  ]},
+  { label: 'AI ASSISTANTS', items: [
+    { label: 'MCP', href: '/settings/ai-assistants/mcp', Icon: Plug, capability: 'manageWorkspace' },
   ]},
   { label: 'INTEGRATIONS', items: [
-    { label: 'Email Display',    href: '/settings/integrations/email-display', capability: 'manageWorkspace' },
-    { label: 'Data Migration',   href: '/settings/integrations/migrations',    capability: 'manageMigrations' },
+    { label: 'Email Display',    href: '/settings/integrations/email-display', Icon: Mail,           capability: 'manageWorkspace' },
+    { label: 'Data Migration',   href: '/settings/integrations/migrations',    Icon: ArrowLeftRight, capability: 'manageMigrations' },
   ]},
   { label: 'PERSONAL', items: [
-    { label: 'Profile',        href: '/settings/personal/profile' },
-    { label: 'Password & 2FA', href: '/settings/personal/security' },
+    { label: 'Profile',        href: '/settings/personal/profile',  Icon: User },
+    { label: 'Password & 2FA', href: '/settings/personal/security', Icon: Lock },
   ]},
 ]
 
@@ -64,6 +75,11 @@ export function visibleSettingsNav(
     }))
     .filter(group => group.items.length > 0)
 }
+
+// ── Members ──
+
+/** Seat limit shown in the Users seat counter while the backend has no real cap. */
+export const DEFAULT_SEAT_LIMIT = 10
 
 // ── Roles ──
 

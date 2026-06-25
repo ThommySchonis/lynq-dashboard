@@ -1,101 +1,96 @@
 'use client'
 
-import { useState } from 'react'
-import { ChevronDown, ChevronRight } from 'lucide-react'
-
 interface EmailPreviewProps {
-  displayName: string | null
+  displayName: string
   emailAddress: string
-  closingText: string | null
+  accentColor: string
   logoUrl: string | null
-  logoWidth: number
-  logoLinkUrl: string | null
-  signatureHtml: string | null
+  showLogoInHeader: boolean
+  signatureHtml: string
+  poweredByFooter: boolean
+  storeDomain: string
 }
+
+const SUBJECT = 'Re: Where is my order? (#1024)'
+const BODY =
+  'Thanks for reaching out! Good news — your order #1024 shipped this morning and is on its way. You can follow it with the tracking link below; it should arrive in 2–3 business days.'
 
 export function EmailPreview({
   displayName,
   emailAddress,
-  closingText,
+  accentColor,
   logoUrl,
-  logoWidth,
-  logoLinkUrl,
+  showLogoInHeader,
   signatureHtml,
+  poweredByFooter,
+  storeDomain,
 }: EmailPreviewProps) {
-  const [expanded, setExpanded] = useState(true)
+  const initials = (displayName || 'Acme').slice(0, 4)
 
   return (
-    <div className="rounded-lg border border-border overflow-hidden">
-      <button
-        type="button"
-        onClick={() => setExpanded(!expanded)}
-        className="flex items-center gap-2 w-full px-4 py-3 text-sm font-medium text-foreground-2 hover:bg-muted/30 transition-colors"
-      >
-        {expanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-        Email Preview
-      </button>
+    <div className="flex w-[352px] shrink-0 flex-col gap-2.5">
+      <span className="text-xs font-semibold uppercase tracking-[0.08em] text-foreground-4">Live preview</span>
 
-      {expanded && (
-        <div className="px-4 pb-4">
-          <div className="bg-white rounded-lg p-5 text-[#1a1a1a] text-sm leading-relaxed font-sans">
-            {/* Email headers */}
-            <div className="pb-3 mb-3 border-b border-[#e5e5e5] space-y-0.5 text-xs text-[#666]">
-              <div>
-                From: <strong className="text-[#333]">{displayName || emailAddress}</strong> &lt;{emailAddress}&gt;
-              </div>
-              <div>To: customer@example.com</div>
-              <div>Subject: Re: Order #12345</div>
+      <div className="overflow-hidden rounded-[14px] border border-settings-border bg-card shadow-[0px_8px_24px_-6px_rgba(28,15,54,0.08)]">
+        {/* Accent strip */}
+        <div className="h-1 w-full" style={{ backgroundColor: accentColor }} />
+
+        {/* Sender header */}
+        <div className="flex items-center gap-[11px] px-5 pb-4 pt-[18px]">
+          {showLogoInHeader && (
+            <div className="flex size-9 items-center justify-center overflow-hidden rounded-lg bg-accent-soft">
+              {logoUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={logoUrl} alt="" className="size-full object-contain" />
+              ) : (
+                <span className="text-xs font-bold text-primary">{initials}</span>
+              )}
             </div>
-
-            {/* Body placeholder */}
-            <div className="text-[#333] mb-4">
-              <p>Hi Sarah,</p>
-              <br />
-              <p>Your order has been shipped and should arrive within 3–5 business days.</p>
-              <br />
-              <p className="text-[#999] italic text-xs">(email body)</p>
-            </div>
-
-            {/* Signature */}
-            {(closingText || logoUrl || signatureHtml) && (
-              <div className="mt-4">
-                {closingText && (
-                  <p className="text-[#333] mb-3">{closingText}</p>
-                )}
-
-                <hr className="border-t border-[#e5e5e5] my-3" />
-
-                {logoUrl && (
-                  <div className="mb-2">
-                    {logoLinkUrl ? (
-                      <a href={logoLinkUrl} target="_blank" rel="noopener noreferrer">
-                        <img
-                          src={logoUrl}
-                          alt="Logo"
-                          style={{ width: logoWidth, maxWidth: '100%', height: 'auto', display: 'block' }}
-                        />
-                      </a>
-                    ) : (
-                      <img
-                        src={logoUrl}
-                        alt="Logo"
-                        style={{ width: logoWidth, maxWidth: '100%', height: 'auto', display: 'block' }}
-                      />
-                    )}
-                  </div>
-                )}
-
-                {signatureHtml && (
-                  <div
-                    className="text-[#333] text-sm"
-                    dangerouslySetInnerHTML={{ __html: signatureHtml }}
-                  />
-                )}
-              </div>
-            )}
+          )}
+          <div className="flex min-w-0 flex-col gap-px">
+            <span className="truncate text-sm font-semibold text-foreground">
+              {displayName || 'Acme Store Support'}
+            </span>
+            <span className="truncate text-xs font-medium text-foreground-3">{emailAddress}</span>
           </div>
         </div>
-      )}
+
+        <div className="h-px w-full bg-settings-border" />
+
+        {/* Email body */}
+        <div className="flex flex-col px-5 py-[18px]">
+          <p className="text-sm font-semibold text-foreground">{SUBJECT}</p>
+          <p className="mt-3 text-sm text-foreground-2">Hi Sarah,</p>
+          <p className="mt-2 text-sm text-foreground-2">{BODY}</p>
+          <button
+            type="button"
+            className="mt-3.5 w-fit rounded-lg px-4 py-[9px] text-xs font-semibold text-white"
+            style={{ backgroundColor: accentColor }}
+          >
+            Track my order
+          </button>
+          {signatureHtml ? (
+            <div
+              className="mt-4 text-xs text-foreground-3 [&_a]:text-primary"
+              dangerouslySetInnerHTML={{ __html: signatureHtml }}
+            />
+          ) : (
+            <p className="mt-4 text-xs text-foreground-3">
+              Thanks for shopping with us, Mia · Acme Store Customer Care
+            </p>
+          )}
+        </div>
+
+        <div className="h-px w-full bg-settings-border" />
+
+        {/* Footer */}
+        <div className="flex flex-col items-center gap-[3px] bg-foreground/[0.02] px-5 pb-4 pt-3.5">
+          <span className="text-xs font-medium text-foreground-4">{storeDomain}</span>
+          {poweredByFooter && (
+            <span className="text-xs font-medium text-foreground-4">Powered by Lynq &amp; Flow</span>
+          )}
+        </div>
+      </div>
     </div>
   )
 }

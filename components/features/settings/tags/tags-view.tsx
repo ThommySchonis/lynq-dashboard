@@ -1,10 +1,11 @@
 'use client'
 
-import { useState } from 'react'
-import { Plus } from 'lucide-react'
+import { useState, useMemo } from 'react'
+import { Plus, Tag as TagIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { useTags } from '@/hooks/settings'
-import { useDeleteTag } from '@/hooks/settings'
+import { SettingsPageHeader } from '@/components/features/settings/settings-header'
+import { SettingsEmptyState } from '@/components/features/settings/settings-empty-state'
+import { useTags, useDeleteTag } from '@/hooks/settings'
 import { useAuthStore } from '@/stores/auth'
 import { ConfirmDialog } from '@/components/features/settings/confirm-dialog'
 import { TagsTable } from './tags-table'
@@ -17,7 +18,6 @@ export function TagsView() {
   const { data: tags = [], isLoading } = useTags()
   const deleteTag = useDeleteTag()
 
-  // Modal state
   const [editTag, setEditTag] = useState<Tag | null>(null)
   const [editOpen, setEditOpen] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<Tag | null>(null)
@@ -26,18 +26,9 @@ export function TagsView() {
   const canManage = true
   const canDelete = true
 
-  function handleCreate() {
-    setEditTag(null)
-    setEditOpen(true)
-  }
-
   function handleEdit(tag: Tag) {
     setEditTag(tag)
     setEditOpen(true)
-  }
-
-  function handleDelete(tag: Tag) {
-    setDeleteTarget(tag)
   }
 
   function confirmDelete() {
@@ -47,40 +38,53 @@ export function TagsView() {
     })
   }
 
+  // "Create tag" lives in the full-width section header bar (Figma node 956-28805).
+  const headerActions = useMemo(
+    () =>
+      canManage ? (
+        <Button
+          onClick={() => {
+            setEditTag(null)
+            setEditOpen(true)
+          }}
+          disabled={isSuspended}
+        >
+          <Plus size={16} strokeWidth={1.75} />
+          Create tag
+        </Button>
+      ) : null,
+    [isSuspended, canManage],
+  )
+
+  const isTrulyEmpty = !isLoading && tags.length === 0
+
   return (
-    <div className="mx-auto flex max-w-4xl flex-col gap-4 px-10 py-12">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-xl font-semibold">Manage tags</h1>
-          <p className="text-sm text-muted-foreground">
-            Tags help organize macros, tickets, and conversations.
-          </p>
+    <div className="mx-auto flex min-h-full max-w-[800px] flex-col px-6 py-10">
+      <SettingsPageHeader
+        title="Manage tags"
+        description="Tags help organize macros, tickets, and conversations."
+        actions={headerActions}
+      />
+
+      {isTrulyEmpty ? (
+        <div className="flex flex-1 items-center justify-center">
+          <TagsEmptyState />
         </div>
-        {canManage && (
-          <Button onClick={handleCreate} disabled={isSuspended}>
-            <Plus size={16} strokeWidth={1.75} />
-            Create tag
-          </Button>
-        )}
-      </div>
+      ) : (
+        <div className="flex flex-col gap-4">
+          <TagsBulkBar tags={tags} canDelete={canDelete} />
+          <TagsTable
+            tags={tags}
+            isLoading={isLoading}
+            canManage={canManage}
+            canDelete={canDelete}
+            onEdit={handleEdit}
+            onDelete={setDeleteTarget}
+          />
+        </div>
+      )}
 
-      <TagsBulkBar tags={tags} canDelete={canDelete} />
-
-      <TagsTable
-        tags={tags}
-        isLoading={isLoading}
-        canManage={canManage}
-        canDelete={canDelete}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
-        onCreate={handleCreate}
-      />
-
-      <TagEditModal
-        open={editOpen}
-        onOpenChange={setEditOpen}
-        tag={editTag}
-      />
+      <TagEditModal open={editOpen} onOpenChange={setEditOpen} tag={editTag} />
 
       <ConfirmDialog
         open={!!deleteTarget}
@@ -93,6 +97,19 @@ export function TagsView() {
         variant="danger"
         loading={deleteTag.isPending}
         onConfirm={confirmDelete}
+      />
+    </div>
+  )
+}
+
+/** Centered empty state when the workspace has no tags (Figma node 964-29596). */
+function TagsEmptyState() {
+  return (
+    <div className="w-[440px] max-w-full rounded-2xl border bg-card px-10 py-9">
+      <SettingsEmptyState
+        Icon={TagIcon}
+        title="No tags yet"
+        description="Create tags to organize macros, tickets, and conversations."
       />
     </div>
   )

@@ -42,6 +42,7 @@
   --success: #10B981;
   --success-foreground: #FFFFFF;
   --success-soft: rgba(16,185,129,0.08);
+  --success-strong: #047857;
   --warning: #F59E0B;
   --warning-foreground: #FFFFFF;
   --warning-soft: rgba(245,158,11,0.08);
@@ -88,6 +89,11 @@
   --sidebar-accent-foreground: #0F0F10;
   --sidebar-ring: #8B5CF6;
 
+  /* Settings area */
+  --settings-border: rgba(0,0,0,0.07);
+  --settings-divider: rgba(0,0,0,0.07);
+  --settings-surface: #F6F7F9;
+
 }
 
 /* ── Dark mode ──────────────────────────────────────────────────────────────── */
@@ -121,6 +127,7 @@
   --success: #4ade80;
   --success-foreground: #052e16;
   --success-soft: rgba(74,222,128,0.08);
+  --success-strong: #4ade80;
   --warning: #fb923c;
   --warning-foreground: #431407;
   --warning-soft: rgba(251,146,60,0.08);
@@ -163,6 +170,11 @@
   --sidebar-accent: #1e1042;
   --sidebar-accent-foreground: #F8FAFC;
   --sidebar-ring: #A175FC;
+
+  /* Settings area */
+  --settings-border: rgba(255,255,255,0.07);
+  --settings-divider: rgba(255,255,255,0.07);
+  --settings-surface: #160e2e;
 }
 
 /* ── Base ───────────────────────────────────────────────────────────────────── */
@@ -293,6 +305,7 @@
   --color-foreground-4: var(--foreground-4);
   --color-success: var(--success);
   --color-success-soft: var(--success-soft);
+  --color-success-strong: var(--success-strong);
   --color-warning: var(--warning);
   --color-warning-soft: var(--warning-soft);
   --color-destructive-soft: var(--destructive-soft);
@@ -302,6 +315,9 @@
   --color-accent-soft: var(--accent-soft);
   --color-accent-border: var(--accent-border);
   --color-divider: var(--divider);
+  --color-settings-border: var(--settings-border);
+  --color-settings-divider: var(--settings-divider);
+  --color-settings-surface: var(--settings-surface);
 
   /* Shadows */
   --shadow-card: var(--shadow-card);

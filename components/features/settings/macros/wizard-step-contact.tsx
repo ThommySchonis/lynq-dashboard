@@ -2,6 +2,7 @@
 
 import { Input } from '@/components/ui/input'
 import type { MacroWizardForm } from '@/lib/settings-constants'
+import { WizardField, WIZARD_INPUT_CLASS } from './wizard-fields'
 
 interface WizardStepContactProps {
   form: MacroWizardForm
@@ -11,12 +12,8 @@ interface WizardStepContactProps {
 
 export function WizardStepContact({ form, onChange, errors }: WizardStepContactProps) {
   return (
-    <>
-      {/* Support email */}
-      <div className="mb-4.5">
-        <label htmlFor="q-support-email" className="block text-[13px] font-medium text-foreground mb-1.5">
-          What&rsquo;s your support email?
-        </label>
+    <div className="flex flex-col gap-6">
+      <WizardField label="What’s your support email?" htmlFor="q-support-email" error={errors.support_email}>
         <Input
           id="q-support-email"
           type="email"
@@ -25,18 +22,11 @@ export function WizardStepContact({ form, onChange, errors }: WizardStepContactP
           onChange={(e) => onChange('support_email', e.target.value)}
           maxLength={200}
           autoFocus
-          className={errors.support_email ? 'border-destructive focus:ring-destructive/20' : ''}
+          className={WIZARD_INPUT_CLASS}
         />
-        {errors.support_email && (
-          <p className="mt-1 text-xs text-destructive">{errors.support_email}</p>
-        )}
-      </div>
+      </WizardField>
 
-      {/* Signature */}
-      <div className="mb-4.5">
-        <label htmlFor="q-signature" className="block text-[13px] font-medium text-foreground mb-1.5">
-          How do you sign your emails?
-        </label>
+      <WizardField label="How do you sign your emails?" htmlFor="q-signature" error={errors.signature}>
         <Input
           id="q-signature"
           type="text"
@@ -44,18 +34,15 @@ export function WizardStepContact({ form, onChange, errors }: WizardStepContactP
           value={form.signature}
           onChange={(e) => onChange('signature', e.target.value)}
           maxLength={300}
-          className={errors.signature ? 'border-destructive focus:ring-destructive/20' : ''}
+          className={WIZARD_INPUT_CLASS}
         />
-        {errors.signature && (
-          <p className="mt-1 text-xs text-destructive">{errors.signature}</p>
-        )}
-      </div>
+      </WizardField>
 
-      {/* Tracking link */}
-      <div className="mb-4.5">
-        <label htmlFor="q-tracking" className="block text-[13px] font-medium text-foreground mb-1.5">
-          Where can customers track orders?
-        </label>
+      <WizardField
+        label="Where can customers track orders?"
+        htmlFor="q-tracking"
+        hint="Leave blank if you don’t have one."
+      >
         <Input
           id="q-tracking"
           type="text"
@@ -63,9 +50,9 @@ export function WizardStepContact({ form, onChange, errors }: WizardStepContactP
           value={form.tracking_link}
           onChange={(e) => onChange('tracking_link', e.target.value)}
           maxLength={500}
+          className={WIZARD_INPUT_CLASS}
         />
-        <p className="mt-1 text-[11px] text-muted-foreground">Leave blank if you don&rsquo;t have one</p>
-      </div>
-    </>
+      </WizardField>
+    </div>
   )
 }

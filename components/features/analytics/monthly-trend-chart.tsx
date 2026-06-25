@@ -11,17 +11,30 @@ interface MonthlyTrendChartProps {
   loaded: boolean
 }
 
+// Card chrome (Figma 916-24037): white, 1px gray-lavender border, radius 16.
+const CARD = 'flex-1 rounded-[16px] border border-[#ECEAF3] bg-card p-6'
+
+function Header({ total }: { total?: number }) {
+  return (
+    <div className="flex items-start justify-between">
+      <div className="flex flex-col gap-1">
+        <div className="text-[14px] font-semibold leading-5 text-foreground">Monthly Refunds</div>
+        <div className="text-[14px] font-normal leading-5 text-muted-foreground">Last 6 months — count + amount</div>
+      </div>
+      {total !== undefined && (
+        <div className="text-[14px] font-semibold leading-5 text-red-500">{fmtEur(total)}</div>
+      )}
+    </div>
+  )
+}
+
 export function MonthlyTrendChart({ allRefunds, loaded }: MonthlyTrendChartProps) {
   if (!loaded) {
     return (
-      <div className="flex-1 rounded-xl border border-white/65 bg-white/80 p-[22px_24px] shadow-sm backdrop-blur-xl">
-        <Skeleton className="mb-1.5 h-[13px] w-[50%]" />
-        <Skeleton className="mb-5 h-[10px] w-[30%]" />
-        <div className="flex h-[120px] items-end gap-2">
-          {[0, 1, 2, 3, 4, 5].map(i => (
-            <Skeleton key={i} className="flex-1 rounded-t" style={{ height: `${30 + i * 10}%` }} />
-          ))}
-        </div>
+      <div className={CARD}>
+        <Skeleton className="mb-1.5 h-[14px] w-[50%]" />
+        <Skeleton className="mb-5 h-[14px] w-[30%]" />
+        <Skeleton className="h-[184px] rounded-lg" />
       </div>
     )
   }
@@ -34,11 +47,8 @@ export function MonthlyTrendChart({ allRefunds, loaded }: MonthlyTrendChartProps
 
   if (totalCount === 0) {
     return (
-      <div className="flex-1 rounded-xl border border-white/65 bg-white/80 p-[22px_24px] shadow-sm backdrop-blur-xl">
-        <div className="mb-[18px]">
-          <div className="mb-0.5 text-[13px] font-semibold text-foreground">Monthly Refunds</div>
-          <div className="text-[11px] text-muted-foreground">Last 6 months &mdash; count + amount</div>
-        </div>
+      <div className={`${CARD} flex flex-col gap-[14px]`}>
+        <Header />
         <CardEmptyState
           icon={BarChart3}
           title="No refunds in this period"
@@ -48,69 +58,59 @@ export function MonthlyTrendChart({ allRefunds, loaded }: MonthlyTrendChartProps
     )
   }
 
+  // ── Chart geometry (viewBox matches Figma proportions: 529 × 184) ───────────
+  const W = 529, H = 184, barW = 60, gap = 25.4, x0 = 21, baseline = 150, maxBarH = 116
+  const bx = (i: number) => x0 + i * (barW + gap)
+  const cx = (i: number) => bx(i) + barW / 2
+  const barH = (c: number) => (c / maxCount) * maxBarH
+  const amtY = (a: number) => 134 - (a / maxAmt) * 48 // gentle line band over the bars
+  const linePts = months.map((m, i) => `${cx(i).toFixed(1)},${amtY(m.amount).toFixed(1)}`).join(' ')
+
+  // Date-range footer label (mirrors buildMonthlyTrend's 6-month window)
+  const now = new Date()
+  const firstYear = new Date(now.getFullYear(), now.getMonth() - 5, 1).getFullYear()
+  const yearLabel = firstYear === now.getFullYear() ? `${now.getFullYear()}` : `${firstYear}–${now.getFullYear()}`
+  const dateRangeLabel = `${months[0].label} – ${months[months.length - 1].label}, ${yearLabel}`
+
   return (
-    <div className="flex-1 rounded-xl border border-white/65 bg-white/80 p-[22px_24px] shadow-sm backdrop-blur-xl transition-shadow duration-200 hover:shadow-lg">
-      <div className="mb-[18px] flex items-center justify-between">
-        <div>
-          <div className="mb-0.5 text-[13px] font-semibold text-foreground">Monthly Refunds</div>
-          <div className="text-[11px] text-muted-foreground">Last 6 months — count + amount</div>
-        </div>
-        <div className="text-[13px] font-bold text-red-600">{fmtEur(totalLost)}</div>
-      </div>
-      <div className="flex h-[110px] items-end gap-2.5">
+    <div className={`${CARD} flex flex-col gap-[14px]`}>
+      <Header total={totalLost} />
+
+      <svg viewBox={`0 0 ${W} ${H}`} className="w-full" aria-hidden>
         {months.map((m, i) => {
-          const barH = maxCount > 0 ? Math.max((m.count / maxCount) * 100, m.count > 0 ? 8 : 0) : 0
+          const h = barH(m.count)
           return (
-            <div key={i} className="flex h-full flex-1 flex-col items-center justify-end gap-[5px]">
-              <div className={`text-[10px] font-bold tabular-nums ${m.count > 0 ? 'text-gray-600' : 'text-gray-300'}`}>
-                {m.count > 0 ? m.count : ''}
-              </div>
-              <div
-                className="relative w-full overflow-hidden rounded-t"
-                style={{
-                  background: m.isCurrentMonth ? 'rgba(0,0,0,0.06)' : 'rgba(0,0,0,0.03)',
-                  height: `${Math.max(barH, 4)}%`,
-                  minHeight: 4,
-                  transition: 'height .3s ease',
-                }}
+            <g key={i}>
+              {h > 0 && <rect x={bx(i)} y={baseline - h} width={barW} height={h} rx="7" fill="#E7E8EC" />}
+              {m.count > 0 && (
+                <text x={cx(i)} y={baseline - h - 8} textAnchor="middle" fontSize="12" fontWeight="600" fill="#6B7280">
+                  {m.count}
+                </text>
+              )}
+              <text
+                x={cx(i)}
+                y={172}
+                textAnchor="middle"
+                fontSize="12"
+                fontWeight={m.isCurrentMonth ? 600 : 500}
+                fill={m.isCurrentMonth ? '#0F0F10' : '#9CA3AF'}
               >
-                {m.count > 0 && (
-                  <div
-                    className="absolute inset-0 origin-bottom animate-bar-grow"
-                    style={{
-                      background: m.isCurrentMonth ? '#111111' : '#E0E0E0',
-                      animationDelay: `${i * 0.06}s`,
-                    }}
-                  />
-                )}
-              </div>
-              <div className={`text-[10px] ${m.isCurrentMonth ? 'font-bold text-foreground' : 'text-muted-foreground'}`}>
                 {m.label}
-              </div>
-            </div>
+              </text>
+            </g>
           )
         })}
-      </div>
-      {/* Amount sparkline */}
-      <svg viewBox="0 0 300 28" className="mt-3 w-full" aria-hidden>
-        {months.map((m, i) => {
-          const x = (i / (months.length - 1)) * 280 + 10
-          const y = 28 - (m.amount / maxAmt) * 22 - 3
-          return <circle key={i} cx={x} cy={y} r="2.5" fill="#DC2626" />
-        })}
-        <polyline
-          points={months.map((m, i) => {
-            const x = (i / (months.length - 1)) * 280 + 10
-            const y = 28 - (m.amount / maxAmt) * 22 - 3
-            return `${x},${y}`
-          }).join(' ')}
-          fill="none"
-          stroke="#DC2626"
-          strokeWidth="1.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
+        <polyline points={linePts} fill="none" stroke="#8B5CF6" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        {months.map((m, i) => (
+          <circle key={`d${i}`} cx={cx(i)} cy={amtY(m.amount)} r="4" fill="#8B5CF6" stroke="#FFFFFF" strokeWidth="2" />
+        ))}
       </svg>
+
+      {/* Date range footer */}
+      <div className="flex items-center justify-center gap-2.5">
+        <span className="h-0.5 w-3.5 rounded-full bg-red-500" />
+        <span className="text-[12px] font-medium leading-4 text-foreground-4">{dateRangeLabel}</span>
+      </div>
     </div>
   )
 }

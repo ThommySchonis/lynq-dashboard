@@ -1,6 +1,6 @@
 "use client";
 
-import type { Thread, ConversationTag, BulkActionId, BulkActionPayload } from "@/types/inbox";
+import type { Thread, ConversationTag, BulkActionId, BulkActionPayload, TicketMeta } from "@/types/inbox";
 import { MacroPanel } from "@/components/features/inbox/macro-panel";
 import { TicketActionBar } from "@/components/features/inbox/ticket-action-bar";
 import { ConversationTopbar } from "@/components/features/inbox/conversation-topbar";
@@ -10,7 +10,7 @@ import { NotesSection } from "@/components/features/inbox/notes-section";
 import { AttachmentBar } from "@/components/features/inbox/attachment-bar";
 import { ComposerToolbar } from "@/components/features/inbox/composer-toolbar";
 import { Button } from "@/components/ui/button";
-import { extractEmail, extractName, plainTextToSafeHtml, sanitizeHtml } from "@/lib/inbox-utils";
+import { extractEmail, extractName, plainTextToSafeHtml, sanitizeHtml, toTicketMeta } from "@/lib/inbox-utils";
 import { ChevronDown, Globe, Mail, X } from "lucide-react";
 import { useRef, useCallback, useEffect, useMemo, useState } from "react";
 import { toast as sonnerToast } from "sonner";
@@ -18,9 +18,8 @@ import { useInboxUI } from "@/stores/inbox-ui";
 import { useAuthStore } from "@/stores/auth";
 import { useAIStore } from "@/stores/ai";
 import { useMacrosStore } from "@/stores/macros";
-import { useTicketMetaStore } from "@/stores/ticket-meta";
 import { useConversations, useConversation, useInboxMembers, inboxKeys } from "@/hooks/inbox/use-inbox-data";
-import { useSendReply, useUpdateStatus, useTranslateMessage, useBulkConversationAction, useAddNote } from "@/hooks/inbox/use-inbox-mutations";
+import { useSendReply, useUpdateStatus, useTranslateMessage, useBulkConversationAction, useAddNote, useUpdateTicketMeta } from "@/hooks/inbox/use-inbox-mutations";
 import { useTags, useCreateTag } from "@/hooks/inbox/use-tags";
 import { useComposerActions } from "@/hooks/inbox/use-composer-actions";
 import { usePermissions } from "@/hooks/use-permissions";
@@ -111,9 +110,8 @@ export function ConversationPanel() {
   const toggleMacroFav = useMacrosStore((s) => s.toggleFav);
   const deleteMacroMut = useDeleteMacro();
 
-  // Ticket meta
-  const getTicketMeta = useTicketMetaStore((s) => s.getMeta);
-  const updateMeta = useTicketMetaStore((s) => s.updateMeta);
+  // Ticket meta — persisted on the conversation, written via PATCH
+  const updateTicketMeta = useUpdateTicketMeta();
 
   // TanStack data
   const { data: threads = [] } = useConversations(activeFolder, search);
@@ -241,10 +239,11 @@ export function ConversationPanel() {
     await bulkAction.mutateAsync({ ids: [selectedThread.id], action: "remove_tag", payload: { tagId: tag.id } });
   }
 
-  function updateTicketField(id: string, key: string, label: string) {
+  function updateTicketField(id: string, key: keyof TicketMeta, label: string) {
     const value = prompt(`${label}:`);
     if (value === null) return;
-    updateMeta(id, { [key]: value.trim() });
+    void updateTicketMeta.mutateAsync({ threadId: id, meta: { [key]: value.trim() } as Partial<TicketMeta> })
+      .catch((e) => sonnerToast.error(e instanceof Error ? e.message : "Failed to update"));
   }
 
   // Sorted threads for send & resolve navigation
@@ -432,7 +431,7 @@ export function ConversationPanel() {
       {SHOW_LEGACY && (
         <div className="py-2.5 px-[18px] border-b border-border shrink-0 bg-card">
           <TicketActionBar
-            meta={getTicketMeta(selectedThread.id)}
+            meta={toTicketMeta(selectedThread)}
             tags={conversationTags}
             onAddTag={() => {
               const name = window.prompt("Tag name");
@@ -440,7 +439,11 @@ export function ConversationPanel() {
             }}
             onRemoveTag={(tag) => void handleRemoveTag(tag)}
             onFieldChange={(field, labelOrValue) =>
-              field === "tier" ? updateMeta(selectedThread.id, { tier: labelOrValue }) : updateTicketField(selectedThread.id, field, labelOrValue)
+              field === "tier"
+                ? void updateTicketMeta
+                    .mutateAsync({ threadId: selectedThread.id, meta: { tier: labelOrValue } })
+                    .catch((e) => sonnerToast.error(e instanceof Error ? e.message : "Failed to update"))
+                : updateTicketField(selectedThread.id, field as keyof TicketMeta, labelOrValue)
             }
           />
         </div>

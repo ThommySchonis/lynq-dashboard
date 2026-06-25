@@ -23,11 +23,12 @@ interface OAuthStatePayload {
   workspaceId: string
   provider: string
   storeId?: string | null
+  returnOrigin?: string | null
   exp: number
   nonce: string
 }
 
-export function createOAuthState({ userId, workspaceId, provider, storeId }: { userId: string; workspaceId: string; provider: string; storeId?: string }) {
+export function createOAuthState({ userId, workspaceId, provider, storeId, returnOrigin }: { userId: string; workspaceId: string; provider: string; storeId?: string; returnOrigin?: string }) {
   const secret = getStateSecret()
   if (!secret) throw new Error('OAuth state secret is not configured')
 
@@ -36,6 +37,7 @@ export function createOAuthState({ userId, workspaceId, provider, storeId }: { u
     workspaceId,
     provider,
     storeId: storeId || null,
+    returnOrigin: returnOrigin || null,
     exp: Date.now() + STATE_TTL_MS,
     nonce: crypto.randomBytes(16).toString('hex'),
   }))
@@ -66,6 +68,7 @@ export function verifyOAuthState(state: string | null | undefined, expectedProvi
     return {
       ...data,
       storeId: data.storeId || null,
+      returnOrigin: data.returnOrigin || null,
     }
   } catch {
     return null

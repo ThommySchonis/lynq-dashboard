@@ -27,6 +27,10 @@ export interface Thread {
   is_spam?: boolean
   snoozed_until?: string | null
   assigned_to?: string | null
+  contact_reason?: string | null
+  product?: string | null
+  resolution?: string | null
+  tier?: string | null
   tags?: ConversationTag[]
 }
 

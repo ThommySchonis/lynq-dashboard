@@ -1,5 +1,19 @@
 // lib/inbox-utils.ts
 
+import type { Thread, TicketMeta } from '@/types/inbox'
+
+/** Derive the camelCase TicketMeta view from a conversation's snake_case columns. */
+export function toTicketMeta(
+  thread: Pick<Thread, 'contact_reason' | 'product' | 'resolution' | 'tier'>,
+): TicketMeta {
+  return {
+    tier: thread.tier ?? null,
+    contactReason: thread.contact_reason ?? null,
+    product: thread.product ?? null,
+    resolution: thread.resolution ?? null,
+  }
+}
+
 /** ISO timestamp `hours` from now — used to resolve snooze presets. */
 export function isoFromNow(hours: number): string {
   return new Date(Date.now() + hours * 3600_000).toISOString()

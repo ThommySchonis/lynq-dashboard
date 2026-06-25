@@ -1,8 +1,14 @@
 import type { MiddlewareHandler } from 'hono'
 
 const ALLOWED_ORIGINS = [
-  Deno.env.get('FRONTEND_URL') || 'https://lynq-dashboard.vercel.app',
+  'https://app.lynqflow.io',
+  'https://lynq-dashboard.vercel.app',
   'http://localhost:3000',
+  // FRONTEND_URL may hold extra origins (comma-separated) for new domains.
+  ...(Deno.env.get('FRONTEND_URL')
+    ?.split(',')
+    .map((o) => o.trim())
+    .filter(Boolean) ?? []),
 ]
 
 export const cors: MiddlewareHandler = async (c, next) => {

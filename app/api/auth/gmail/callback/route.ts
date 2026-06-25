@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import { encrypt } from '@/lib/encryption'
 import { verifyOAuthState } from '@/lib/oauthState'
+import { safeReturnOrigin } from '@/lib/utils/request'
 import { logger } from '@/lib/logger'
 
 interface OAuthTokenResponse {
@@ -31,6 +32,8 @@ export async function GET(request: NextRequest) {
   }
 
   const { userId, workspaceId, storeId } = verifiedState
+  // Return the user to whichever domain they started the connect on.
+  const base = safeReturnOrigin(verifiedState.returnOrigin)
 
   const clientId = process.env.GOOGLE_CLIENT_ID?.trim()
   const clientSecret = process.env.GOOGLE_CLIENT_SECRET?.trim()
@@ -50,7 +53,7 @@ export async function GET(request: NextRequest) {
 
   const tokens = (await tokenRes.json()) as OAuthTokenResponse
   if (!tokens.access_token) {
-    return NextResponse.redirect(`${appUrl}/settings?provider=gmail&status=error&reason=token_failed`)
+    return NextResponse.redirect(`${base}/settings?provider=gmail&status=error&reason=token_failed`)
   }
 
   const profileRes = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
@@ -91,7 +94,7 @@ export async function GET(request: NextRequest) {
 
   if (emailAccountError) {
     logger.error('[gmail/callback]', 'email_accounts upsert error', { error: emailAccountError.message })
-    return NextResponse.redirect(`${appUrl}/settings?provider=gmail&status=error&reason=save_failed`)
+    return NextResponse.redirect(`${base}/settings?provider=gmail&status=error&reason=save_failed`)
   }
 
   const gmailPushTopic = process.env.GMAIL_PUSH_TOPIC
@@ -126,5 +129,5 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  return NextResponse.redirect(`${appUrl}/settings?provider=gmail&status=connected`)
+  return NextResponse.redirect(`${base}/settings?provider=gmail&status=connected`)
 }

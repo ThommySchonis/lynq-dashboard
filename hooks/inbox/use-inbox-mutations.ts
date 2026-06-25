@@ -7,7 +7,7 @@ import { parseJson } from '@/lib/utils/typed-json'
 import { inboxKeys } from './use-inbox-data'
 import { settingsKeys } from '@/hooks/settings'
 import { apiUrl } from '@/lib/api-client'
-import type { BulkActionId, BulkActionPayload } from '@/types/inbox'
+import type { BulkActionId, BulkActionPayload, TicketMeta } from '@/types/inbox'
 
 function useToken() {
   return useAuthStore((s) => s.session?.access_token ?? '')
@@ -162,6 +162,38 @@ export function useUpdateStatus() {
         token,
       )
       return parseJson<StatusResponse>(res)
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: inboxKeys.all })
+    },
+  })
+}
+
+/** Update a conversation's ticket meta fields (contact reason / product / resolution / tier). */
+export function useUpdateTicketMeta() {
+  const token = useToken()
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({
+      threadId,
+      meta,
+    }: {
+      threadId: string
+      meta: Partial<TicketMeta>
+    }) => {
+      const body: Record<string, string | null> = {}
+      if (meta.contactReason !== undefined) body.contact_reason = meta.contactReason
+      if (meta.product !== undefined) body.product = meta.product
+      if (meta.resolution !== undefined) body.resolution = meta.resolution
+      if (meta.tier !== undefined) body.tier = meta.tier
+      const res = await authFetch(
+        apiUrl(`inbox/conversations/${threadId}`),
+        { method: 'PATCH', body: JSON.stringify(body) },
+        token,
+      )
+      const data = await parseJson<StatusResponse>(res)
+      if (!data.success) throw new Error(data.error || 'Failed to update ticket')
+      return data
     },
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: inboxKeys.all })

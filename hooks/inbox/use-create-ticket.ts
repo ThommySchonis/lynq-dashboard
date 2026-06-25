@@ -6,7 +6,8 @@ import { toast } from 'sonner'
 import { sanitizeHtml, parseRecipientList } from '@/lib/inbox-utils'
 import { useAuthStore } from '@/stores/auth'
 import { useCustomerSearch, useEmailAccountInfo } from './use-inbox-data'
-import { useComposeEmail, useUpdateStatus, useBulkConversationAction } from './use-inbox-mutations'
+import { useComposeEmail, useUpdateTicketMeta, useBulkConversationAction } from './use-inbox-mutations'
+import type { TicketMeta } from '@/types/inbox'
 import { useTags, useCreateTag } from './use-tags'
 
 /** Shopify customer shape returned by useCustomerSearch (subset the ticket card reads). */
@@ -35,15 +36,15 @@ function looksLikeEmail(v: string): boolean {
  * Owns all Create Ticket form state + the send flow, so the page stays a thin
  * orchestrator. The customer card auto-resolves from the To address (no separate
  * search field). Submit is two-step: compose the email, then best-effort persist
- * ticket meta (priority + contact fields → metadata, assignee, tags) onto the
- * created conversation.
+ * ticket meta (contact fields → dedicated columns, assignee, tags) onto the
+ * created conversation. priority stays form-local (no DB column).
  */
 export function useCreateTicketForm() {
   const router = useRouter()
   const isSuspended = useAuthStore((s) => s.isSuspended)
   const { data: accountInfo } = useEmailAccountInfo()
   const composeEmail = useComposeEmail()
-  const updateStatus = useUpdateStatus()
+  const updateTicketMeta = useUpdateTicketMeta()
   const bulkAction = useBulkConversationAction()
   const createTag = useCreateTag()
   const { data: allTags = [] } = useTags()
@@ -56,8 +57,9 @@ export function useCreateTicketForm() {
   const [showCC, setShowCC] = useState(false)
 
   // Priority + assignee live in the subject header (Figma). assignedTo is
-  // persisted via bulk `assign` in the two-step follow-up; priority + the
-  // contact meta go into the conversation metadata (BE #11).
+  // persisted via bulk `assign` in the two-step follow-up; contact meta fields
+  // are persisted to dedicated columns (BE #11). priority has no DB column
+  // and stays form-local — it is never persisted.
   const [priority, setPriority] = useState('normal')
   const [assignedTo, setAssignedTo] = useState<string | null>(null)
   const [contactReason, setContactReason] = useState('')
@@ -74,19 +76,23 @@ export function useCreateTicketForm() {
   const goBack = useCallback(() => router.push('/inbox'), [router])
 
   /** Step 2 — persist ticket meta onto the freshly created conversation:
-   *  priority + contact fields into metadata (BE #11), assignee via bulk `assign`,
+   *  contact fields into dedicated columns (BE #11), assignee via bulk `assign`,
    *  and each tag name resolved to an id (existing or newly created) then attached.
+   *  priority has no DB column and is not persisted here (stays form-local).
    *  Best-effort: the email is already sent, so failures here are swallowed. */
   const persistTicketMeta = useCallback(
     async (conversationId: string) => {
       const tasks: Array<Promise<unknown>> = []
 
-      // priority + contact meta → conversation metadata
-      const metadata: Record<string, string> = { priority }
-      if (contactReason.trim()) metadata.contact_reason = contactReason.trim()
-      if (product.trim()) metadata.product = product.trim()
-      if (resolution.trim()) metadata.resolution = resolution.trim()
-      tasks.push(updateStatus.mutateAsync({ threadId: conversationId, status: 'open', metadata }))
+      // contact meta → dedicated conversation columns (BE #11). priority has no
+      // column yet, so it stays form-local (unchanged: it was never persisted).
+      const meta: Partial<TicketMeta> = {}
+      if (contactReason.trim()) meta.contactReason = contactReason.trim()
+      if (product.trim()) meta.product = product.trim()
+      if (resolution.trim()) meta.resolution = resolution.trim()
+      if (Object.keys(meta).length > 0) {
+        tasks.push(updateTicketMeta.mutateAsync({ threadId: conversationId, meta }))
+      }
 
       // assignee
       if (assignedTo) {
@@ -110,7 +116,7 @@ export function useCreateTicketForm() {
 
       await Promise.allSettled(tasks)
     },
-    [priority, contactReason, product, resolution, assignedTo, tags, updateStatus, bulkAction, createTag, allTags],
+    [contactReason, product, resolution, assignedTo, tags, updateTicketMeta, bulkAction, createTag, allTags],
   )
 
   /** Send the new outgoing email, then persist ticket meta (two-step). Body is

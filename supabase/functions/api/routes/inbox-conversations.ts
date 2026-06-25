@@ -227,12 +227,20 @@ app.patch('/:id', async (c) => {
     is_unread?: boolean
     assigned_to?: string | null
     metadata?: Record<string, unknown>
+    contact_reason?: string | null
+    product?: string | null
+    resolution?: string | null
+    tier?: string | null
   }>()
 
   const updates: Record<string, unknown> = {}
   if (body.status) updates.status = body.status
   if (typeof body.is_unread === 'boolean') updates.is_unread = body.is_unread
   if (body.assigned_to !== undefined) updates.assigned_to = body.assigned_to || null
+  if (body.contact_reason !== undefined) updates.contact_reason = body.contact_reason || null
+  if (body.product !== undefined) updates.product = body.product || null
+  if (body.resolution !== undefined) updates.resolution = body.resolution || null
+  if (body.tier !== undefined) updates.tier = body.tier || null
 
   if (Object.keys(updates).length === 0) {
     return c.json({ error: 'No valid fields to update' }, 400)

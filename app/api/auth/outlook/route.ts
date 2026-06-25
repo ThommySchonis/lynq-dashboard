@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server'
 import { getUserFromToken } from '@/lib/supabaseAdmin'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import { createOAuthState } from '@/lib/oauthState'
+import { getRequestOrigin } from '@/lib/utils/request'
 
 interface WorkspaceMemberRow {
   workspace_id?: string
@@ -56,6 +57,7 @@ export async function GET(request: NextRequest) {
       workspaceId,
       provider: 'outlook',
       storeId: storeId || undefined,
+      returnOrigin: getRequestOrigin(request) || undefined,
     }),
   )
 

@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import { encrypt } from '@/lib/encryption'
 import { verifyOAuthState } from '@/lib/oauthState'
+import { safeReturnOrigin } from '@/lib/utils/request'
 import { logger } from '@/lib/logger'
 
 interface OAuthTokenResponse {
@@ -32,6 +33,8 @@ export async function GET(request: NextRequest) {
   }
 
   const { userId, workspaceId, storeId } = oauthState
+  // Return the user to whichever domain they started the connect on.
+  const base = safeReturnOrigin(oauthState.returnOrigin)
 
   const clientId = process.env.MICROSOFT_CLIENT_ID
   const clientSecret = process.env.MICROSOFT_CLIENT_SECRET
@@ -52,7 +55,7 @@ export async function GET(request: NextRequest) {
 
   const tokens = (await tokenRes.json()) as OAuthTokenResponse
   if (!tokens.access_token) {
-    return NextResponse.redirect(`${appUrl}/settings?provider=outlook&status=error&reason=token_failed`)
+    return NextResponse.redirect(`${base}/settings?provider=outlook&status=error&reason=token_failed`)
   }
 
   const profileRes = await fetch('https://graph.microsoft.com/v1.0/me', {
@@ -93,8 +96,8 @@ export async function GET(request: NextRequest) {
 
   if (emailAccountError) {
     logger.error('[outlook/callback]', 'email_accounts upsert error', { error: emailAccountError.message })
-    return NextResponse.redirect(`${appUrl}/settings?provider=outlook&status=error&reason=save_failed`)
+    return NextResponse.redirect(`${base}/settings?provider=outlook&status=error&reason=save_failed`)
   }
 
-  return NextResponse.redirect(`${appUrl}/settings?provider=outlook&status=connected`)
+  return NextResponse.redirect(`${base}/settings?provider=outlook&status=connected`)
 }

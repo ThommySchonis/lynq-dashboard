@@ -182,14 +182,17 @@ function InboxPage() {
 
   function handleModalSuccess(msg: string, type = "success") {
     setModal(null);
-    if (type === "success") {
-      sonnerToast.success(msg);
-      // Order mutations (create draft, refund, cancel, fulfil, etc.) change the
-      // customer's order list — refetch the sidebar so it reflects the change.
-      void queryClient.invalidateQueries({ queryKey: ["customer"] });
-    } else {
+    if (type === "error") {
       sonnerToast.error(msg);
+      return;
     }
+    // success and warning both mean the draft was created → refresh the order list.
+    if (type === "warning") {
+      sonnerToast.warning(msg);
+    } else {
+      sonnerToast.success(msg);
+    }
+    void queryClient.invalidateQueries({ queryKey: ["customer"] });
   }
 
   if (!session) return null;

@@ -1,5 +1,6 @@
 import { assertEquals } from '@std/assert'
 import { verifyHmac } from '../routes/webhooks-shopify-billing.ts'
+import { resolveLocalSubscriptionState } from '../lib/services/shopify-billing.ts'
 
 async function computeHmac(body: string, secret: string): Promise<string> {
   const enc = new TextEncoder()
@@ -33,4 +34,13 @@ Deno.test('verifyHmac rejects a wrong secret', async () => {
   const body = '{"x":1}'
   const sig = await computeHmac(body, 'one-secret')
   assertEquals(await verifyHmac(body, sig, 'other-secret'), false)
+})
+
+Deno.test('webhook: active charge with unmapped plan_handle resolves to a hard block', () => {
+  // Simulates the route: handle present but no matching plan row (planFound=false).
+  const planFound = false
+  assertEquals(
+    resolveLocalSubscriptionState('ACTIVE', planFound),
+    { status: 'pending_shopify_subscription', planUnmapped: true },
+  )
 })

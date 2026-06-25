@@ -34,6 +34,9 @@ export interface ShopifyBillingSubscription {
   currentPeriodEnd: string | null
   isGrandfathered: boolean
   billingShopDomain: string | null
+  planUnmapped: boolean
+  priceAmount: number | null
+  priceCurrency: string | null
 }
 
 export class ShopifyBillingError extends Error {
@@ -81,6 +84,73 @@ export function mapShopifyStatusToLocal(status: string): WorkspaceSubscriptionSt
   return 'pending_shopify_subscription'
 }
 
+export interface LocalSubscriptionState {
+  status: WorkspaceSubscriptionStatus
+  planUnmapped: boolean
+}
+
+/**
+ * Decide the local status for a Shopify-reported subscription.
+ * An ACTIVE Shopify charge whose handle we can't resolve to a plan must NOT
+ * grant access — we can't apply entitlements we don't know. Block it and flag
+ * it so an admin maps the handle.
+ */
+export function resolveLocalSubscriptionState(
+  shopifyStatus: string,
+  planFound: boolean,
+): LocalSubscriptionState {
+  const mapped = mapShopifyStatusToLocal(shopifyStatus)
+  if (mapped === 'active' && !planFound) {
+    return { status: 'pending_shopify_subscription', planUnmapped: true }
+  }
+  return { status: mapped, planUnmapped: false }
+}
+
+const USAGE_PERIOD_DAYS = 30
+
+/** Anchor the usage period to Shopify's billing period (EVERY_30_DAYS plans). */
+export function deriveUsagePeriod(
+  currentPeriodEnd: string,
+): { period_start: string; period_end: string } {
+  const end = new Date(currentPeriodEnd)
+  const start = new Date(end.getTime() - USAGE_PERIOD_DAYS * 86_400_000)
+  return { period_start: start.toISOString(), period_end: end.toISOString() }
+}
+
+/**
+ * Log + create an admin-visible notification when Shopify reports a plan handle
+ * we can't map. De-duped: one open alert per workspace until it's cleared.
+ * Inserted with the admin client (bypasses RLS); visible in the admin panel
+ * (SELECT * over notifications) and the affected workspace's feed.
+ */
+export async function notifyAdminUnmappedPlan(
+  workspaceId: string,
+  handle: string,
+  shopDomain: string | null,
+): Promise<void> {
+  logger.error('[shopify-billing]', 'unmapped Shopify plan handle — workspace hard-blocked', {
+    workspaceId, handle, shopDomain,
+  })
+  const sb = getAdminClient()
+  const { data: existing } = await sb
+    .from('notifications')
+    .select('id')
+    .eq('workspace_id', workspaceId)
+    .eq('category', 'system_alert')
+    .is('cleared_at', null)
+    .limit(1)
+    .maybeSingle()
+  if (existing) return
+  await sb.from('notifications').insert({
+    workspace_id: workspaceId,
+    category: 'system_alert',
+    title: 'Subscription plan not recognized',
+    body: `Shopify reported plan handle "${handle}" which is not mapped to a Lynq plan. `
+      + `This workspace is blocked until an admin adds the handle to the plans table.`,
+    source_type: 'billing',
+  })
+}
+
 interface SubscriptionRow {
   plan_id: string | null
   status: WorkspaceSubscriptionStatus
@@ -91,6 +161,9 @@ interface SubscriptionRow {
   current_period_end: string | null
   shopify_billing_shop_domain: string | null
   is_grandfathered: boolean
+  plan_unmapped: boolean
+  shopify_price_amount: number | null
+  shopify_price_currency: string | null
 }
 
 export async function getSubscription(workspaceId: string): Promise<ShopifyBillingSubscription> {
@@ -99,7 +172,8 @@ export async function getSubscription(workspaceId: string): Promise<ShopifyBilli
     .from('workspace_subscriptions')
     .select(
       'plan_id, status, shopify_charge_status, shopify_trial_ends_at, trial_ends_at, ' +
-      'shopify_current_period_end, current_period_end, shopify_billing_shop_domain, is_grandfathered',
+      'shopify_current_period_end, current_period_end, shopify_billing_shop_domain, is_grandfathered, ' +
+      'plan_unmapped, shopify_price_amount, shopify_price_currency',
     )
     .eq('workspace_id', workspaceId)
     .maybeSingle()
@@ -113,6 +187,9 @@ export async function getSubscription(workspaceId: string): Promise<ShopifyBilli
       currentPeriodEnd: null,
       isGrandfathered: false,
       billingShopDomain: null,
+      planUnmapped: false,
+      priceAmount: null,
+      priceCurrency: null,
     }
   }
   return {
@@ -123,6 +200,9 @@ export async function getSubscription(workspaceId: string): Promise<ShopifyBilli
     currentPeriodEnd: row.shopify_current_period_end ?? row.current_period_end,
     isGrandfathered: row.is_grandfathered,
     billingShopDomain: row.shopify_billing_shop_domain,
+    planUnmapped: row.plan_unmapped,
+    priceAmount: row.shopify_price_amount,
+    priceCurrency: row.shopify_price_currency,
   }
 }
 
@@ -130,7 +210,7 @@ export interface SubscriptionWithUsage {
   subscription: ShopifyBillingSubscription
   plan: { id: string; display_name: string; ticket_limit: number | null; ai_suggest_limit: number | null } | null
   usage: { tickets_used: number; ai_suggest_used: number; period_start: string; period_end: string } | null
-  blocked: { tickets: boolean; aiSuggest: boolean }
+  blocked: { tickets: boolean; aiSuggest: boolean; planUnmapped: boolean }
 }
 
 export async function getSubscriptionWithUsage(workspaceId: string): Promise<SubscriptionWithUsage> {
@@ -165,6 +245,7 @@ export async function getSubscriptionWithUsage(workspaceId: string): Promise<Sub
       && plan?.ai_suggest_limit !== null
       && usage !== null
       && (usage.ai_suggest_used >= (plan?.ai_suggest_limit ?? Infinity)),
+    planUnmapped: subscription.planUnmapped && !subscription.isGrandfathered,
   }
 
   return { subscription, plan, usage, blocked }
@@ -325,30 +406,47 @@ export async function syncFromShopify(workspaceId: string): Promise<ShopifyBilli
         shopify_charge_id: null,
         shopify_charge_status: null,
         shopify_current_period_end: null,
+        plan_unmapped: false,
+        shopify_price_amount: null,
+        shopify_price_currency: null,
       })
       .eq('workspace_id', workspaceId)
     return getSubscription(workspaceId)
   }
 
-  const { data: plan } = await sb
-    .from('plans')
-    .select('id')
-    .eq('shopify_handle', remote.name)
-    .maybeSingle()
-  const planId = (plan as { id: string } | null)?.id ?? null
+  const handle = remote.handle
+  let planId: string | null = null
+  if (handle) {
+    const { data: plan } = await sb
+      .from('plans')
+      .select('id')
+      .eq('shopify_handle', handle)
+      .maybeSingle()
+    planId = (plan as { id: string } | null)?.id ?? null
+  }
+  const planFound = planId !== null
 
-  const localStatus = mapShopifyStatusToLocal(remote.status)
+  const { status: localStatus, planUnmapped } = resolveLocalSubscriptionState(remote.status, planFound)
   const chargeStatus = normalizeStatus(remote.status)
+  if (planUnmapped) {
+    await notifyAdminUnmappedPlan(workspaceId, handle ?? '(none)', billingStore.shopify_domain)
+  }
+
+  const period = remote.currentPeriodEnd ? deriveUsagePeriod(remote.currentPeriodEnd) : null
 
   await sb.from('workspace_subscriptions').upsert(
     {
       workspace_id: workspaceId,
       plan_id: planId,
+      plan_unmapped: planUnmapped,
       status: localStatus,
       shopify_charge_id: remote.id,
       shopify_charge_status: chargeStatus,
       shopify_billing_shop_domain: billingStore.shopify_domain,
       shopify_current_period_end: remote.currentPeriodEnd,
+      shopify_price_amount: remote.priceAmount,
+      shopify_price_currency: remote.priceCurrency,
+      ...(period ? { current_period_start: period.period_start, current_period_end: period.period_end } : {}),
     },
     { onConflict: 'workspace_id' },
   )

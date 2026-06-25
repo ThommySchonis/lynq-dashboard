@@ -102,6 +102,9 @@ export interface ShopifyBillingSubscription {
   currentPeriodEnd:     string | null
   isGrandfathered:      boolean
   billingShopDomain:    string | null
+  planUnmapped:         boolean
+  priceAmount:          number | null
+  priceCurrency:        string | null
 }
 
 /** Response shape of GET /billing/subscription (Shopify-based) */
@@ -122,6 +125,7 @@ export interface SubscriptionWithUsageResponse {
   blocked: {
     tickets: boolean
     aiSuggest: boolean
+    planUnmapped: boolean
   }
 }
 

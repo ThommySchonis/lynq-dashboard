@@ -6,6 +6,7 @@ import { useToken } from './utils'
 import { parseJson } from '@/lib/utils/typed-json'
 import { apiUrl } from '@/lib/api-client'
 import type {
+  Plan,
   Invoice,
   BillingStore,
   ManageUrlResponse,
@@ -22,6 +23,7 @@ export const billingKeys = {
   invoices:       () => [...billingKeys.all, 'invoices'] as const,
   manageUrl:      () => [...billingKeys.all, 'manage-url'] as const,
   stores:         () => [...billingKeys.all, 'stores'] as const,
+  plans:          () => [...billingKeys.all, 'plans'] as const,
 }
 
 async function jsonFetch<T>(url: string, token: string): Promise<T> {
@@ -71,6 +73,19 @@ export function useOpenManageUrl() {
     if (manageUrl) window.open(manageUrl, '_blank', 'noopener,noreferrer')
   }, [manageUrl])
   return { openManage, ready: !!manageUrl }
+}
+
+export function usePlans() {
+  const token = useToken()
+  return useQuery<Plan[]>({
+    queryKey: billingKeys.plans(),
+    queryFn: async () => {
+      const data = await jsonFetch<{ plans: Plan[] }>(apiUrl('billing/plans'), token)
+      return data.plans ?? []
+    },
+    enabled:  !!token,
+    staleTime: 5 * 60_000,
+  })
 }
 
 /** Connected stores with which one hosts the managed-pricing subscription. */

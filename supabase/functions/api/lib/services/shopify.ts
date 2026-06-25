@@ -14,4 +14,6 @@ export type {
   ProductSearchVariant,
   ProductSearchResult,
   CreateDraftOrderParams,
+  DraftOrderWithInvoiceResult,
+  ShopifyDraftOrderInvoiceResponse,
 } from './shopify-types.ts'

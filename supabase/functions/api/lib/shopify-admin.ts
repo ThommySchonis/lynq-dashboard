@@ -7,7 +7,10 @@ const API_VERSION = '2026-04'
 
 export interface AppSubscriptionState {
   id: string                  // gid://shopify/AppSubscription/12345
-  name: string                // matches plans.shopify_handle
+  name: string                // human display name (may be translated — do NOT use as a key)
+  handle: string | null       // stable Managed Pricing plan handle — the entitlements key
+  priceAmount: number | null  // merchant's localized charged amount (multi-currency)
+  priceCurrency: string | null // ISO currency of priceAmount
   status: ShopifyChargeStatus
   trialDays: number
   currentPeriodEnd: string | null
@@ -90,10 +93,21 @@ export async function getCurrentAppSubscription(
         activeSubscriptions {
           id
           name
+          handle
           status
           trialDays
           createdAt
           currentPeriodEnd
+          lineItems {
+            plan {
+              pricingDetails {
+                __typename
+                ... on AppRecurringPricing {
+                  price { amount currencyCode }
+                }
+              }
+            }
+          }
         }
       }
     }
@@ -103,16 +117,30 @@ export async function getCurrentAppSubscription(
       activeSubscriptions: Array<{
         id: string
         name: string
+        handle: string | null
         status: ShopifyChargeStatus
         trialDays: number
         createdAt: string
         currentPeriodEnd: string | null
+        lineItems: Array<{ plan: { pricingDetails: { price?: { amount: string; currencyCode: string } } } }>
       }>
     }
   }
   const data = await graphql<Resp>(shopDomain, accessToken, query)
-  const subs = data.currentAppInstallation.activeSubscriptions
-  return subs.length > 0 ? subs[0] : null
+  const sub = data.currentAppInstallation.activeSubscriptions[0]
+  if (!sub) return null
+  const price = sub.lineItems[0]?.plan.pricingDetails.price
+  return {
+    id: sub.id,
+    name: sub.name,
+    handle: sub.handle,
+    priceAmount: price ? Number(price.amount) : null,
+    priceCurrency: price?.currencyCode ?? null,
+    status: sub.status,
+    trialDays: sub.trialDays,
+    currentPeriodEnd: sub.currentPeriodEnd,
+    createdAt: sub.createdAt,
+  }
 }
 
 export async function getShopBillingAddress(

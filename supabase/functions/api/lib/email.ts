@@ -1,6 +1,5 @@
 import { logger } from './logger.ts'
 
-const FROM_DEFAULT = 'Lynq & Flow <onboarding@resend.dev>'
 const RESEND_API = 'https://api.resend.com/emails'
 
 const ROLE_LABELS: Record<string, string> = {
@@ -18,11 +17,22 @@ function escapeHtml(s: string) {
     .replace(/'/g, '&#39;')
 }
 
-async function resendSend(from: string, to: string, subject: string, html: string) {
+type SendResult =
+  | { status: 'not_configured' }
+  | { status: 'sent'; id: string | null }
+  | { status: 'failed'; error: string }
+
+async function resendSend(to: string, subject: string, html: string): Promise<SendResult> {
   const apiKey = Deno.env.get('RESEND_API_KEY')
-  if (!apiKey) {
-    logger.warn('[email]', 'RESEND_API_KEY not set — skipping send')
-    return { status: 'not_configured' as const }
+  const from = Deno.env.get('INVITE_EMAIL_FROM') || null
+  if (!apiKey || !from) {
+    logger.warn(
+      '[email]',
+      !apiKey
+        ? 'RESEND_API_KEY not set — skipping send'
+        : 'INVITE_EMAIL_FROM not set — skipping send',
+    )
+    return { status: 'not_configured' }
   }
   try {
     const res = await fetch(RESEND_API, {
@@ -30,26 +40,31 @@ async function resendSend(from: string, to: string, subject: string, html: strin
       headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ from, to, subject, html }),
     })
+    const text = await res.text()
     if (!res.ok) {
-      const text = await res.text()
       logger.error('[email]', 'Resend error', { status: res.status, body: text.slice(0, 200) })
-      return { status: 'failed' as const, error: `Resend ${res.status}` }
+      return { status: 'failed', error: `Resend ${res.status}: ${text.slice(0, 200)}` }
     }
-    return { status: 'sent' as const }
+    let id: string | null = null
+    try {
+      id = (JSON.parse(text) as { id?: string }).id ?? null
+    } catch {
+      id = null
+    }
+    return { status: 'sent', id }
   } catch (err: unknown) {
     const error = err instanceof Error ? err.message : 'Email send failed'
     logger.error('[email]', 'Resend error', { error })
-    return { status: 'failed' as const, error }
+    return { status: 'failed', error }
   }
 }
 
 export async function sendInviteEmail({ to, workspaceName, inviterEmail, role, link }: { to: string; workspaceName: string; inviterEmail: string; role: string; link: string | null }) {
   if (!link) return { status: 'no_link' as const }
-  const from = Deno.env.get('INVITE_EMAIL_FROM') || FROM_DEFAULT
   const roleLabel = ROLE_LABELS[role] || 'a member'
   const safeWs = escapeHtml(workspaceName)
   const safeFrom = escapeHtml(inviterEmail || '')
-  return resendSend(from, to, `You've been invited to ${workspaceName}`, `
+  return resendSend(to, `You've been invited to ${workspaceName}`, `
     <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#1C0F36;max-width:480px;margin:0 auto;padding:24px;">
       <h2 style="font-size:18px;font-weight:600;margin:0 0 12px;">You're invited to ${safeWs}</h2>
       <p style="font-size:14px;line-height:1.6;color:#6B5E7B;margin:0 0 20px;">
@@ -69,12 +84,11 @@ export async function sendInviteEmail({ to, workspaceName, inviterEmail, role, l
 }
 
 export async function sendSuspensionEmail({ to, workspaceName, reason }: { to: string; workspaceName: string; reason: string | null }) {
-  const from = Deno.env.get('INVITE_EMAIL_FROM') || FROM_DEFAULT
   const safeWs = escapeHtml(workspaceName)
   const reasonLine = reason
     ? `<p style="font-size:14px;line-height:1.6;color:#6B5E7B;margin:0 0 16px;"><strong style="color:#1C0F36;">Reason:</strong> ${escapeHtml(reason)}</p>`
     : ''
-  return resendSend(from, to, 'Your Lynq workspace has been suspended', `
+  return resendSend(to, 'Your Lynq workspace has been suspended', `
     <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#1C0F36;max-width:480px;margin:0 auto;padding:24px;">
       <h2 style="font-size:18px;font-weight:600;margin:0 0 12px;">Workspace Suspended</h2>
       <p style="font-size:14px;line-height:1.6;color:#6B5E7B;margin:0 0 16px;">
@@ -98,9 +112,8 @@ export async function sendSuspensionEmail({ to, workspaceName, reason }: { to: s
 }
 
 export async function sendDeletionScheduledEmail({ to, scheduledFor, dashboardUrl }: { to: string; scheduledFor: string; dashboardUrl: string }) {
-  const from = Deno.env.get('INVITE_EMAIL_FROM') || FROM_DEFAULT
   const date = new Date(scheduledFor).toLocaleDateString('en-US', { dateStyle: 'long' })
-  return resendSend(from, to, 'Your Lynq account is scheduled for deletion', `
+  return resendSend(to, 'Your Lynq account is scheduled for deletion', `
     <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#1C0F36;max-width:480px;margin:0 auto;padding:24px;">
       <h2 style="font-size:18px;font-weight:600;margin:0 0 12px;">Account Deletion Scheduled</h2>
       <p style="font-size:14px;line-height:1.6;color:#6B5E7B;margin:0 0 20px;">
@@ -115,8 +128,7 @@ export async function sendDeletionScheduledEmail({ to, scheduledFor, dashboardUr
 }
 
 export async function sendDeletionCompletedEmail({ to }: { to: string }) {
-  const from = Deno.env.get('INVITE_EMAIL_FROM') || FROM_DEFAULT
-  return resendSend(from, to, 'Your Lynq account has been deleted', `
+  return resendSend(to, 'Your Lynq account has been deleted', `
     <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#1C0F36;max-width:480px;margin:0 auto;padding:24px;">
       <h2 style="font-size:18px;font-weight:600;margin:0 0 12px;">Account Deleted</h2>
       <p style="font-size:14px;line-height:1.6;color:#6B5E7B;margin:0 0 20px;">

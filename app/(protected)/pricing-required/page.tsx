@@ -1,9 +1,10 @@
 'use client'
 
 import { useEffect } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useAuthStore } from '@/stores/auth'
-import { useSubscription, useManageUrl } from '@/hooks/billing'
+import { useSubscription, useManageUrl, usePlans, useBillingStores } from '@/hooks/billing'
 import { useSignOut } from '@/hooks/auth'
 
 export default function PricingRequiredPage() {
@@ -12,6 +13,8 @@ export default function PricingRequiredPage() {
   const signOut = useSignOut()
   const { data: subData } = useSubscription()
   const { data: manageUrl } = useManageUrl()
+  const { data: plans } = usePlans()
+  const { data: stores } = useBillingStores()
 
   // If the user already has an active/trial/grandfathered subscription,
   // send them to /home (e.g. arrived here via stale bookmark).
@@ -33,19 +36,20 @@ export default function PricingRequiredPage() {
       <header className="space-y-2">
         <h1 className="text-2xl font-semibold">Choose your plan to continue</h1>
         <p className="text-sm text-muted-foreground">
-          Lynq is billed through Shopify. Pick a plan from your Shopify admin to start your 14-day free trial.
+          Lynq is billed through Shopify. Pick a plan from your Shopify admin to start your 7-day free trial.
         </p>
       </header>
 
       <div className="rounded-lg border border-border bg-card p-6 space-y-4">
         <h2 className="text-base font-medium">Plans</h2>
         <ul className="space-y-2 text-sm">
-          <li><strong>Starter</strong> — €30 / month</li>
-          <li><strong>Growth</strong> — €89 / month</li>
-          <li><strong>Scale</strong> — €249 / month</li>
-          <li><strong>Enterprise</strong> — €599 / month</li>
+          {(plans ?? []).map((p) => (
+            <li key={p.id}>
+              <strong>{p.display_name}</strong> — {p.price_eur === null ? '—' : `€${p.price_eur.toLocaleString()}`} / month
+            </li>
+          ))}
         </ul>
-        <p className="text-xs text-muted-foreground">14-day free trial on every plan.</p>
+        <p className="text-xs text-muted-foreground">7-day free trial on every plan · billed in your local currency.</p>
       </div>
 
       {manageUrl ? (
@@ -57,6 +61,19 @@ export default function PricingRequiredPage() {
         >
           Choose your plan in Shopify ↗
         </a>
+      ) : stores && stores.length > 0 ? (
+        <div className="space-y-2">
+          <p className="text-sm text-muted-foreground">
+            A Shopify store is connected, but your plan link isn&apos;t available yet. Open billing settings to
+            pick your billing store, or contact support if it persists.
+          </p>
+          <Link
+            href="/settings/workspace/billing"
+            className="inline-flex items-center justify-center rounded-md border border-border px-4 py-2 text-sm font-medium hover:bg-muted"
+          >
+            Open billing settings
+          </Link>
+        </div>
       ) : (
         <p className="text-sm text-destructive">
           No connected Shopify store found. Connect a store first in Settings → Stores.

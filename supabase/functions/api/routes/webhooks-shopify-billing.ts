@@ -1,7 +1,12 @@
 import { Hono } from 'hono'
 import { getAdminClient } from '../lib/supabase.ts'
 import { logger } from '../lib/logger.ts'
-import { mapShopifyStatusToLocal, normalizeStatus } from '../lib/services/shopify-billing.ts'
+import {
+  normalizeStatus,
+  resolveLocalSubscriptionState,
+  deriveUsagePeriod,
+  notifyAdminUnmappedPlan,
+} from '../lib/services/shopify-billing.ts'
 
 // verify_jwt is disabled for this route — Shopify hits it server-to-server
 // and authenticates via HMAC, not Supabase Auth.
@@ -10,6 +15,7 @@ interface AppSubscriptionUpdatePayload {
   app_subscription?: {
     admin_graphql_api_id?: string
     name?: string
+    plan_handle?: string
     status?: string
     trial_days?: number
     current_period_end?: string | null
@@ -81,31 +87,44 @@ webhooksShopifyBillingRoutes.post('/app-subscriptions-update', async (c) => {
     return c.json({ received: true, skipped: 'no_billing_store' })
   }
 
+  const handle = sub.plan_handle ?? null
   let planId: string | null = null
-  if (sub.name) {
-    const { data: plan } = await sb.from('plans').select('id').eq('shopify_handle', sub.name).maybeSingle()
+  if (handle) {
+    const { data: plan } = await sb.from('plans').select('id').eq('shopify_handle', handle).maybeSingle()
     planId = (plan as { id: string } | null)?.id ?? null
   }
+  const planFound = planId !== null
 
+  const { status: localStatus, planUnmapped } = resolveLocalSubscriptionState(sub.status ?? 'PENDING', planFound)
   const chargeStatus = normalizeStatus(sub.status ?? null)
-  const localStatus = mapShopifyStatusToLocal(sub.status ?? 'PENDING')
+  if (planUnmapped) {
+    await notifyAdminUnmappedPlan(workspaceId, handle ?? '(none)', shopDomain)
+  }
+
   const trialEndsAt = sub.trial_days && sub.created_at
     ? new Date(new Date(sub.created_at).getTime() + sub.trial_days * 86_400_000).toISOString()
     : null
+  const period = sub.current_period_end ? deriveUsagePeriod(sub.current_period_end) : null
 
-  await sb.from('workspace_subscriptions').upsert(
+  const { error: upsertError } = await sb.from('workspace_subscriptions').upsert(
     {
       workspace_id: workspaceId,
       plan_id: planId,
+      plan_unmapped: planUnmapped,
       status: localStatus,
       shopify_charge_id: sub.admin_graphql_api_id,
       shopify_charge_status: chargeStatus,
       shopify_billing_shop_domain: shopDomain,
       shopify_trial_ends_at: trialEndsAt,
       shopify_current_period_end: sub.current_period_end ?? null,
+      ...(period ? { current_period_start: period.period_start, current_period_end: period.period_end } : {}),
     },
     { onConflict: 'workspace_id' },
   )
+  if (upsertError) {
+    logger.error('[shopify-billing]', 'subscription upsert failed', { workspaceId, error: upsertError.message })
+    return c.json({ error: 'persist_failed' }, 500)
+  }
 
   return c.json({ received: true, event: 'app_subscriptions/update' })
 })

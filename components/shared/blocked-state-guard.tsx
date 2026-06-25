@@ -7,6 +7,7 @@ import { useSubscription } from '@/hooks/billing/use-billing-data'
 
 const ALLOW_PATHS = [
   '/pricing-required',
+  '/settings/workspace/billing',
   '/settings/billing',
   '/login',
   '/signup',
@@ -39,6 +40,12 @@ function BlockedStateGuardInner({ children }: { children: ReactNode }) {
 
     // Grandfathered workspaces always pass
     if (sub.isGrandfathered) return
+
+    // Shopify reported a plan we can't map — block until an admin fixes the mapping.
+    if (blocked?.planUnmapped) {
+      router.replace('/pricing-required')
+      return
+    }
 
     // Active or trialing — allow
     if (sub.status === 'active' || sub.status === 'trial') return

@@ -22,6 +22,7 @@ interface IdentityState {
   logoUrl: string | null
   logoPreview: string | null
   logoFile: File | null
+  logoRemoved: boolean
 }
 
 interface GeneralSettingsWorkspace {
@@ -57,6 +58,7 @@ export function GeneralSettings() {
     logoUrl: null,
     logoPreview: null,
     logoFile: null,
+    logoRemoved: false,
   })
   const [slugError, setSlugError] = useState('')
   const [isSaving, setIsSaving] = useState(false)
@@ -105,7 +107,7 @@ export function GeneralSettings() {
       logoUrl: w.logo_url ?? null,
     }
     setInitIdentity(id)
-    setIdentity({ ...id, logoPreview: null, logoFile: null })
+    setIdentity({ ...id, logoPreview: null, logoFile: null, logoRemoved: false })
 
     const reg: RegionalValues = {
       timezone: w.timezone ?? WORKSPACE_DEFAULTS.timezone,
@@ -131,7 +133,7 @@ export function GeneralSettings() {
     identity.name !== initIdentity.name ||
     identity.slug !== initIdentity.slug ||
     identity.logoFile !== null ||
-    (identity.logoPreview === null && initIdentity.logoUrl !== null)
+    identity.logoRemoved
 
   const regionalDirty =
     regional.timezone !== initRegional.timezone ||
@@ -160,14 +162,22 @@ export function GeneralSettings() {
         if (identity.logoFile) {
           const result = await uploadLogo.mutateAsync(identity.logoFile)
           newLogoUrl = result.logo_url
-          setIdentity((prev) => ({ ...prev, logoFile: null, logoUrl: newLogoUrl }))
-        } else if (identity.logoPreview === null && initIdentity.logoUrl !== null) {
+          setIdentity((prev) => ({ ...prev, logoFile: null, logoPreview: null, logoUrl: newLogoUrl }))
+        } else if (identity.logoRemoved) {
           await deleteLogo.mutateAsync()
           newLogoUrl = null
-          setIdentity((prev) => ({ ...prev, logoUrl: null }))
+          setIdentity((prev) => ({ ...prev, logoRemoved: false, logoUrl: null }))
         }
 
-        await updateWorkspace.mutateAsync({ name: identity.name, slug: identity.slug })
+        // Send only the fields that actually changed. Omitted fields stay unchanged
+        // server-side (the RPC COALESCEs NULL params to the existing value).
+        const patch: Record<string, unknown> = {}
+        if (identity.name !== initIdentity.name) patch.name = identity.name
+        if (identity.slug !== initIdentity.slug) patch.slug = identity.slug
+        if (Object.keys(patch).length > 0) {
+          await updateWorkspace.mutateAsync(patch)
+        }
+
         setInitIdentity({ name: identity.name, slug: identity.slug, logoUrl: newLogoUrl })
       }
 
@@ -199,7 +209,7 @@ export function GeneralSettings() {
 
   function handleDiscard() {
     if (!anyDirty) return
-    setIdentity({ ...initIdentity, logoPreview: null, logoFile: null })
+    setIdentity({ ...initIdentity, logoPreview: null, logoFile: null, logoRemoved: false })
     setRegional({ ...initRegional })
     setPreferences({ ...initPreferences })
     setSlugError('')

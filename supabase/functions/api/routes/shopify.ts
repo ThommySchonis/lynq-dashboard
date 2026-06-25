@@ -24,7 +24,7 @@ import {
   fulfillOrder,
   syncOrders,
   searchProducts,
-  createDraftOrder,
+  createDraftOrderWithInvoice,
   ShopifyApiError,
   isNonExpiringTokenError,
 } from '../lib/services/shopify.ts'
@@ -827,8 +827,8 @@ shopify.post('/orders/create', async (c) => {
 
   try {
     const body = await c.req.json()
-    const draftOrder = await createDraftOrder(credentials, body)
-    return c.json({ draftOrder })
+    const result = await createDraftOrderWithInvoice(credentials, body)
+    return c.json(result)
   } catch (err) {
     return await shopifyErrorResponse(c, err, ctx.workspaceId, storeId)
   }

@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect } from 'react'
 import Link from 'next/link'
 import { BarChart3, Info, Loader2, Sparkles } from 'lucide-react'
 import { EmptyState } from '@/components/shared/empty-state'
-import { DEMO_REFUNDS, DEMO_KPIS, DEMO_TREND, DEMO_INSIGHTS } from '@/lib/demoData'
+import { DEMO_REFUNDS, DEMO_KPIS, DEMO_TREND } from '@/lib/demoData'
 import {
   RANGES,
   getDateRange,
@@ -16,7 +16,6 @@ import {
   useRefunds,
   useAllRefunds,
   useRevenueTrend,
-  useAiInsights,
   useShopifyConnected,
 } from '@/hooks/analytics/use-analytics-data'
 import { useGeneratePatternTasks } from '@/hooks/tasks'
@@ -30,7 +29,6 @@ import type {
   PrevKpiData,
   Refund,
   RevenueTrendPoint,
-  AiInsight,
 } from '@/types/analytics'
 
 import { ExportButton } from '@/components/shared/export-button'
@@ -56,7 +54,6 @@ const DEMO_PREV_KPIS: PrevKpiData = { totalOrders: 24, totalRefunds: 6, refundRa
 const DEMO_REFUND_DATA = DEMO_REFUNDS as unknown as Refund[]
 const DEMO_CURRENT_REFUNDS = DEMO_REFUND_DATA.filter(r => new Date(r.refundedAt) >= new Date('2026-04-01'))
 const DEMO_TREND_DATA = DEMO_TREND as unknown as RevenueTrendPoint[]
-const DEMO_INSIGHT_DATA = DEMO_INSIGHTS as unknown as AiInsight[]
 
 // ── AnalyticsContent ────────────────────────────────────────────────────────
 
@@ -91,7 +88,6 @@ function AnalyticsContent() {
   const trendQuery = useRevenueTrend(range)
   const refundData = demoMode ? DEMO_CURRENT_REFUNDS : (refundsQuery.data ?? [])
   const allRefundData = demoMode ? DEMO_REFUND_DATA : (allRefundsQuery.data ?? [])
-  const aiInsightsQuery = useAiInsights(refundData)
   const emmaStatsQuery = useEmmaStats(range)
   const generateTasks = useGeneratePatternTasks()
 
@@ -105,7 +101,6 @@ function AnalyticsContent() {
   const refunds = refundData
   const allRefunds = allRefundData
   const trend: RevenueTrendPoint[] = demoMode ? DEMO_TREND_DATA : (trendQuery.data ?? [])
-  const _insights: AiInsight[] = demoMode ? DEMO_INSIGHT_DATA : (aiInsightsQuery.data ?? [])
   // Loading states: in demo mode everything is "loaded"
   const loaded = {
     kpis: demoMode || !kpisQuery.isPending,
@@ -113,7 +108,6 @@ function AnalyticsContent() {
     refunds: demoMode || !refundsQuery.isPending,
     allRefunds: demoMode || !allRefundsQuery.isPending,
     trend: demoMode || !trendQuery.isPending,
-    insights: demoMode || !aiInsightsQuery.isPending,
   }
 
   // Derived state

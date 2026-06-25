@@ -171,22 +171,26 @@ export function useRevenueTrend(range: DateRange) {
 
 export function useAiInsights(refunds: Refund[]) {
   const token = useToken();
+  const activeStoreId = useStoreStore((s) => s.activeStoreId);
   return useQuery<AiInsight[]>({
-    queryKey: analyticsKeys.aiInsights(),
+    queryKey: [...analyticsKeys.aiInsights(), activeStoreId],
     queryFn: async () => {
-      const res = await fetch("/api/analytics/refund-insights", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
+      const res = await fetch(
+        `/api/analytics/refund-insights?store_id=${activeStoreId}`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ refunds }),
         },
-        body: JSON.stringify({ refunds }),
-      });
+      );
       if (!res.ok) throw new Error("Failed to fetch AI insights");
       const d = await parseJson<AiInsightsResponse>(res);
       return d.insights ?? [];
     },
-    enabled: !!token && !!refunds.length,
+    enabled: !!token && !!activeStoreId && !!refunds.length,
     staleTime: 10 * 60_000,
   });
 }

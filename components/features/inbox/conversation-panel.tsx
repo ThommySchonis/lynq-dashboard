@@ -28,6 +28,7 @@ import { useStoreAiSettings } from "@/hooks/stores/use-stores-data";
 import { useQueryClient } from "@tanstack/react-query";
 import { AiDraftReview } from "./ai-draft-review";
 import { usePendingDraft, useUpdateDraftStatus } from "@/hooks/ai";
+import { useMacros, useDeleteMacro } from '@/hooks/macros';
 
 const REFUND_REASONS = [
   { value: "customer", label: "Customer changed mind" },
@@ -103,12 +104,12 @@ export function ConversationPanel() {
   const loadedDraftRef = useRef<string | null>(null);
   const draftPending = pendingDraft?.status === "pending";
 
-  // Macros
-  const macros = useMacrosStore((s) => s.macros);
+  // Macros — stored macros come from the server; favs/aiMacros stay local UI state.
+  const { data: macros = [] } = useMacros({ search: '', language: '', tags: [], archived: false });
   const aiMacros = useMacrosStore((s) => s.aiMacros);
   const macroFavs = useMacrosStore((s) => s.favs);
   const toggleMacroFav = useMacrosStore((s) => s.toggleFav);
-  const deleteMacro = useMacrosStore((s) => s.deleteMacro);
+  const deleteMacroMut = useDeleteMacro();
 
   // Ticket meta
   const getTicketMeta = useTicketMetaStore((s) => s.getMeta);
@@ -456,7 +457,7 @@ export function ConversationPanel() {
         {/* Macro panel */}
         {showMacros && (
           <MacroPanel
-            macros={macros.filter((m) => !m.archived)}
+            macros={macros}
             aiMacros={aiMacros}
             customerName={extractName(selectedThread?.from || "")}
             favs={macroFavs}
@@ -479,7 +480,7 @@ export function ConversationPanel() {
               setShowMacros(false);
               setShowMacroManager(true);
             }}
-            onDeleteMacro={deleteMacro}
+            onDeleteMacro={(id) => deleteMacroMut.mutate(id)}
           />
         )}
 
@@ -617,7 +618,7 @@ export function ConversationPanel() {
 
               {/* Macros row + suggested pills */}
               <ComposerMacros
-                macros={macros.filter((m) => !m.archived)}
+                macros={macros}
                 aiMacros={aiMacros}
                 customerName={extractName(selectedThread?.from || "")}
                 onInsert={(body) => {

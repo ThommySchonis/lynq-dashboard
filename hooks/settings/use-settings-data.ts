@@ -142,6 +142,19 @@ export function useMacros(filter: MacroFilter) {
   })
 }
 
+export function useMacro(id: string | null) {
+  const token = useToken()
+  return useQuery<Macro>({
+    queryKey: [...settingsKeys.all, 'macro', id],
+    queryFn: async () => {
+      const data = await rpc<{ macro: Macro }>('api_get_macro', { p_id: id })
+      return data.macro
+    },
+    enabled: !!token && !!id,
+    staleTime: 5 * 60_000,
+  })
+}
+
 export function useMacroOnboarding() {
   const token = useToken()
   return useQuery<MacroOnboarding>({

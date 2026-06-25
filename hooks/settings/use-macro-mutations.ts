@@ -12,6 +12,13 @@ interface ErrorResponse {
   error?: string
 }
 
+export interface MacroInput {
+  name: string
+  body: string
+  language: string
+  tags: string[]
+}
+
 interface GenerateMacrosResponse {
   ok: boolean
   count: number
@@ -24,7 +31,7 @@ export function useDuplicateMacro() {
       return rpc('api_duplicate_macro', { p_id: id })
     },
     onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: settingsKeys.macros({ search: '', language: '', tags: [], archived: false }) })
+      void qc.invalidateQueries({ queryKey: [...settingsKeys.all, 'macros'] })
       toast.success('Macro duplicated')
     },
     onError: (err: Error) => {
@@ -74,6 +81,50 @@ export function useDeleteMacro() {
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: [...settingsKeys.all, 'macros'] })
       toast.success('Macro deleted')
+    },
+    onError: (err: Error) => {
+      toast.error(err.message)
+    },
+  })
+}
+
+export function useCreateMacro() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (input: MacroInput) => {
+      return rpc('api_create_macro', {
+        p_name: input.name,
+        p_body: input.body,
+        p_language: input.language,
+        p_tags: input.tags,
+      })
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: [...settingsKeys.all, 'macros'] })
+      toast.success('Macro created')
+    },
+    onError: (err: Error) => {
+      toast.error(err.message)
+    },
+  })
+}
+
+export function useUpdateMacro() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ id, ...input }: MacroInput & { id: string }) => {
+      return rpc('api_update_macro', {
+        p_id: id,
+        p_name: input.name,
+        p_body: input.body,
+        p_language: input.language,
+        p_tags: input.tags,
+      })
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: [...settingsKeys.all, 'macros'] })
+      void qc.invalidateQueries({ queryKey: [...settingsKeys.all, 'macro'] })
+      toast.success('Macro updated')
     },
     onError: (err: Error) => {
       toast.error(err.message)

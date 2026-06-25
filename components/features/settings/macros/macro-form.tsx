@@ -11,6 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { MACRO_LANGUAGES } from '@/lib/settings-constants'
 
 /**
  * Settings macro create/edit form (Figma node 809-16). A single card:
@@ -29,7 +30,6 @@ interface MacroData {
 }
 
 const FIELD_INPUT_CLASS = 'h-11 rounded-[10px] bg-card px-3.5 text-sm'
-const LANGUAGES = ['English', 'Dutch', 'German', 'French', 'Spanish', 'Italian', 'Portuguese']
 
 const VARIABLES = [
   { label: 'Customer first name', value: '{{name}}' },
@@ -48,7 +48,7 @@ interface MacroFormProps {
 export function MacroForm({ macro, onSave, onCancel, onDelete }: MacroFormProps) {
   const isNew = !macro?.id
   const [name, setName] = useState(macro?.name ?? '')
-  const [language, setLanguage] = useState(macro?.language ?? 'English')
+  const [language, setLanguage] = useState(macro?.language ?? 'en')
   const [body, setBody] = useState(macro?.body ?? '')
   const [tagInput, setTagInput] = useState((macro?.tags ?? []).join(', '))
   const bodyRef = useRef<HTMLTextAreaElement>(null)
@@ -99,9 +99,9 @@ export function MacroForm({ macro, onSave, onCancel, onDelete }: MacroFormProps)
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {LANGUAGES.map((l) => (
-                  <SelectItem key={l} value={l}>
-                    {l}
+                {MACRO_LANGUAGES.filter((l) => l.value).map((l) => (
+                  <SelectItem key={l.value} value={l.value}>
+                    {l.label}
                   </SelectItem>
                 ))}
               </SelectContent>

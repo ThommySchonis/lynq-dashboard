@@ -1,7 +1,9 @@
 'use client'
 
+import { PieChart } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
 import { categorizeReason, CAT_COLORS } from '@/lib/analytics-constants'
+import { CardEmptyState } from './card-empty-state'
 import type { Refund } from '@/types/analytics'
 
 interface DonutReasonChartProps {
@@ -29,8 +31,16 @@ export function DonutReasonChart({ refunds, loaded }: DonutReasonChartProps) {
 
   if (total === 0) {
     return (
-      <div className="flex min-h-[200px] flex-1 flex-col items-center justify-center rounded-xl border border-white/65 bg-white/80 p-[22px_24px] shadow-sm backdrop-blur-xl">
-        <div className="text-[13px] text-muted-foreground">No refund reasons this period</div>
+      <div className="flex-1 rounded-xl border border-white/65 bg-white/80 p-[22px_24px] shadow-sm backdrop-blur-xl">
+        <div className="mb-[18px]">
+          <div className="mb-0.5 text-[13px] font-semibold text-foreground">Refund Reasons</div>
+          <div className="text-[11px] text-muted-foreground">Distribution this period</div>
+        </div>
+        <CardEmptyState
+          icon={PieChart}
+          title="No refunds this period"
+          description="Reason breakdown will appear here once you have refunds."
+        />
       </div>
     )
   }

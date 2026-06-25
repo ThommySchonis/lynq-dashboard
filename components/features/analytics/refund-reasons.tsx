@@ -1,7 +1,9 @@
 'use client'
 
+import { HelpCircle } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
 import { categorizeReason, CAT_COLORS, fmtEur } from '@/lib/analytics-constants'
+import { CardEmptyState } from './card-empty-state'
 import type { Refund } from '@/types/analytics'
 
 interface RefundReasonsProps {
@@ -37,7 +39,7 @@ export function RefundReasons({ refunds, loaded }: RefundReasonsProps) {
           ))}
         </div>
       ) : reasons.length === 0 ? (
-        <div className="py-8 text-center text-xs text-muted-foreground">No data this period</div>
+        <CardEmptyState icon={HelpCircle} title="No refund reasons yet" size="lg" />
       ) : (
         <div className="flex flex-col gap-3.5">
           {reasons.map((r, i) => {

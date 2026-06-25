@@ -121,7 +121,6 @@ function AnalyticsContent() {
   const rangeLabel = dateRange === 'custom' && customFrom && customTo
     ? `${customFrom} \u2192 ${customTo}`
     : RANGES.find(r => r.id === dateRange)?.label || 'This month'
-  const noRefunds = loaded.refunds && refunds.length === 0
 
   // Range selection handlers
   function selectRange(id: DateRangeId) {
@@ -335,11 +334,9 @@ function AnalyticsContent() {
           <RefundTable refunds={refunds} loaded={loaded.refunds} />
           <ProductMatrix allRefunds={allRefunds} loaded={loaded.allRefunds} />
 
-          {!noRefunds ? (
-            <div className="mb-6 animate-fade-up">
-              <RefundReasons refunds={refunds} loaded={loaded.refunds} />
-            </div>
-          ) : null}
+          <div className="mb-6 animate-fade-up">
+            <RefundReasons refunds={refunds} loaded={loaded.refunds} />
+          </div>
 
           <WeeklyReport allRefunds={allRefunds} loaded={loaded.allRefunds} />
 

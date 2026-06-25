@@ -1,10 +1,11 @@
 'use client'
 
 import { useState } from 'react'
-import { ChevronDown, ChevronUp, Minus, CheckCircle } from 'lucide-react'
+import { ChevronDown, ChevronUp, Minus, Receipt } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
 import { CATEGORIES, categorizeReason, fmtDate, fmtEur } from '@/lib/analytics-constants'
 import { CatBadge } from './action-board'
+import { CardEmptyState } from './card-empty-state'
 import type { Refund, RefundCategory } from '@/types/analytics'
 
 interface RefundTableProps {
@@ -118,15 +119,12 @@ export function RefundTable({ refunds, loaded }: RefundTableProps) {
 
       {/* Empty states */}
       {loaded && enriched.length === 0 && (
-        <div className="flex flex-col items-center gap-3 py-12">
-          <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-gray-100">
-            <CheckCircle size={22} className="text-gray-300" />
-          </div>
-          <div className="text-center">
-            <div className="mb-1 text-sm font-semibold text-gray-900">No refunds this period</div>
-            <div className="text-[13px] text-gray-400">Keep it up — no refunded orders found</div>
-          </div>
-        </div>
+        <CardEmptyState
+          icon={Receipt}
+          title="No refunds yet"
+          description="When customers get refunded, the details will appear here."
+          size="lg"
+        />
       )}
 
       {loaded && filtered.length === 0 && enriched.length > 0 && (

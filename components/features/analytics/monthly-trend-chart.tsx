@@ -1,7 +1,9 @@
 'use client'
 
+import { BarChart3 } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
 import { buildMonthlyTrend, fmtEur } from '@/lib/analytics-constants'
+import { CardEmptyState } from './card-empty-state'
 import type { Refund } from '@/types/analytics'
 
 interface MonthlyTrendChartProps {
@@ -28,6 +30,23 @@ export function MonthlyTrendChart({ allRefunds, loaded }: MonthlyTrendChartProps
   const maxCount = Math.max(...months.map(m => m.count), 1)
   const maxAmt = Math.max(...months.map(m => m.amount), 1)
   const totalLost = months.reduce((s, m) => s + m.amount, 0)
+  const totalCount = months.reduce((s, m) => s + m.count, 0)
+
+  if (totalCount === 0) {
+    return (
+      <div className="flex-1 rounded-xl border border-white/65 bg-white/80 p-[22px_24px] shadow-sm backdrop-blur-xl">
+        <div className="mb-[18px]">
+          <div className="mb-0.5 text-[13px] font-semibold text-foreground">Monthly Refunds</div>
+          <div className="text-[11px] text-muted-foreground">Last 6 months &mdash; count + amount</div>
+        </div>
+        <CardEmptyState
+          icon={BarChart3}
+          title="No refunds in this period"
+          description="Monthly refund counts will appear here."
+        />
+      </div>
+    )
+  }
 
   return (
     <div className="flex-1 rounded-xl border border-white/65 bg-white/80 p-[22px_24px] shadow-sm backdrop-blur-xl transition-shadow duration-200 hover:shadow-lg">

@@ -1,7 +1,9 @@
 'use client'
 
+import { TrendingUp } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
 import { fmtEur } from '@/lib/analytics-constants'
+import { CardEmptyState } from './card-empty-state'
 import type { RevenueTrendPoint } from '@/types/analytics'
 
 interface RevenueTrendChartProps {
@@ -21,7 +23,24 @@ export function RevenueTrendChart({ trend, loaded, rangeLabel }: RevenueTrendCha
     )
   }
 
-  if (!trend.length || trend.every(d => d.revenue === 0)) return null
+  if (!trend.length || trend.every(d => d.revenue === 0)) {
+    return (
+      <div className="mb-6 animate-fade-up rounded-xl border border-white/65 bg-white/80 p-[22px_24px] shadow-sm backdrop-blur-xl">
+        <div className="mb-4 flex items-center justify-between">
+          <div>
+            <div className="mb-0.5 text-[13px] font-semibold text-foreground">Revenue Trend</div>
+            <div className="text-[11px] text-muted-foreground">{rangeLabel} &middot; daily net revenue</div>
+          </div>
+          <div className="text-base font-bold tracking-tight text-muted-foreground">{fmtEur(0)}</div>
+        </div>
+        <CardEmptyState
+          icon={TrendingUp}
+          title="No revenue data yet"
+          description="Daily net revenue will appear here once orders start coming in."
+        />
+      </div>
+    )
+  }
 
   const W = 800, H = 130, pL = 48, pR = 12, pT = 10, pB = 24
   const mx = Math.max(...trend.map(d => d.revenue), 1)

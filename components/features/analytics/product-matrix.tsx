@@ -1,8 +1,10 @@
 'use client'
 
+import { LayoutGrid } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
 import { buildProductMatrix, fmtEur, CAT_COLORS } from '@/lib/analytics-constants'
 import { CatBadge } from './action-board'
+import { CardEmptyState } from './card-empty-state'
 import type { Refund } from '@/types/analytics'
 
 interface ProductMatrixProps {
@@ -30,7 +32,22 @@ export function ProductMatrix({ allRefunds, loaded }: ProductMatrixProps) {
   }
 
   const products = buildProductMatrix(allRefunds)
-  if (products.length === 0) return null
+  if (products.length === 0) {
+    return (
+      <div className="mb-6 rounded-xl border border-white/65 bg-white/80 p-[22px_24px] shadow-sm backdrop-blur-xl">
+        <div className="mb-5">
+          <div className="mb-0.5 text-[13px] font-semibold text-foreground">Product Refund Matrix</div>
+          <div className="text-[11px] text-muted-foreground">All-time &middot; products with 1+ refund &middot; sorted by count</div>
+        </div>
+        <CardEmptyState
+          icon={LayoutGrid}
+          title="No product refunds yet"
+          description="Products with refunds will appear here once you have refunds."
+          size="lg"
+        />
+      </div>
+    )
+  }
   const maxAmt = Math.max(...products.map(p => p.amount), 1)
 
   return (

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { ChevronLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { MACRO_LANGUAGES } from '@/lib/settings-constants'
 
 interface MacroData {
   id?: string
@@ -28,7 +29,7 @@ export function MacroEditor({ macro, onSave, onDuplicate, onDelete, onBack }: {
   const [name, setName] = useState(macro?.name || "");
   const [body, setBody] = useState(macro?.body || "");
   const [_tags, _setTags] = useState((macro?.tags || []).join(", "));
-  const [language, setLang] = useState(macro?.language || "English");
+  const [language, setLang] = useState(macro?.language || "en");
   const [tagInput, setTagInput] = useState((macro?.tags || []).join(", "));
   const bodyRef = useRef<HTMLTextAreaElement>(null);
 
@@ -204,9 +205,9 @@ export function MacroEditor({ macro, onSave, onDuplicate, onDelete, onBack }: {
               onChange={(e) => setLang(e.target.value)}
               className="w-full py-[9px] px-3 border border-border rounded-lg text-[13px] text-foreground bg-card font-[inherit] outline-none cursor-pointer"
             >
-              {["English", "Dutch", "German", "French", "Spanish", "Italian", "Portuguese"].map((l) => (
-                <option key={l} value={l}>
-                  {l}
+              {MACRO_LANGUAGES.filter((l) => l.value).map((l) => (
+                <option key={l.value} value={l.value}>
+                  {l.label}
                 </option>
               ))}
             </select>

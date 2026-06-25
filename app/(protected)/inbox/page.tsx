@@ -66,14 +66,10 @@ function InboxPage() {
   const _resetAIForThread = useAIStore((s) => s.resetForThread);
   const _detectLanguage = useAIStore((s) => s.detectLanguage);
 
-  // ── Macros store ──
-  const macros = useMacrosStore((s) => s.macros);
+  // ── Macros store (local UI state only) ──
   const macroFavs = useMacrosStore((s) => s.favs);
-  const _saveMacro = useMacrosStore((s) => s.saveMacro);
-  const _deleteMacro = useMacrosStore((s) => s.deleteMacro);
   const _toggleMacroFav = useMacrosStore((s) => s.toggleFav);
   const _setAiMacros = useMacrosStore((s) => s.setAiMacros);
-  const _fetchMacros = useMacrosStore((s) => s.fetchMacros);
 
   // Initialize activeFolder from search params
   useEffect(() => {
@@ -96,8 +92,7 @@ function InboxPage() {
       window.location.href = "/login";
       return;
     }
-    void _fetchMacros(token);
-  }, [session, _fetchMacros, token]);
+  }, [session]);
 
   // ── Trigger AI analysis when threads change ──
   useEffect(() => {
@@ -256,17 +251,8 @@ function InboxPage() {
       {/* Macro Manager overlay */}
       {showMacroManager && (
         <MacroManager
-          macros={macros}
           favs={macroFavs}
           onClose={() => setShowMacroManager(false)}
-          onSaveMacro={(m) => {
-            _saveMacro(m);
-            sonnerToast.success("Macro saved");
-          }}
-          onDeleteMacro={(id) => {
-            _deleteMacro(id);
-            sonnerToast("Macro deleted");
-          }}
           onToggleFav={_toggleMacroFav}
         />
       )}

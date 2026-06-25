@@ -12,71 +12,77 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { MacroEditor } from './macro-editor'
+import {
+  useMacros,
+  useCreateMacro,
+  useUpdateMacro,
+  useDuplicateMacro,
+  useArchiveMacro,
+  useRestoreMacro,
+  useDeleteMacro,
+} from '@/hooks/macros'
+import { MACRO_LANG_LABEL } from '@/lib/settings-constants'
+import type { Macro } from '@/types/inbox'
 
-interface MacroItem {
-  id: string
-  name: string
-  body?: string
-  tags?: string[]
-  language?: string
-  usageCount?: number
-  updatedAt?: string
-  archived?: boolean
-  [key: string]: unknown
-}
-
-export function MacroManager({ macros, favs, onClose, onSaveMacro, onDeleteMacro, onToggleFav }: {
-  macros: MacroItem[];
+export function MacroManager({ favs, onClose, onToggleFav }: {
   favs: string[];
   onClose: () => void;
-  onSaveMacro: (m: MacroItem) => void;
-  onDeleteMacro: (id: string) => void;
   onToggleFav: (id: string) => void;
 }) {
-  const [tab, setTab] = useState("active");
+  const [tab, setTab] = useState<'active' | 'archived'>('active');
   const [search, setSearch] = useState("");
   const [langFilter, setLangF] = useState("all");
   const [tagFilter, setTagF] = useState("all");
-  const [editing, setEditing] = useState<MacroItem | "new" | null>(null);
+  const [editing, setEditing] = useState<Macro | "new" | null>(null);
+
+  const { data: macros = [] } = useMacros({
+    search: '',
+    language: '',
+    tags: [],
+    archived: tab === 'archived',
+  });
+
+  const createMacro = useCreateMacro();
+  const updateMacro = useUpdateMacro();
+  const duplicateMacro = useDuplicateMacro();
+  const archiveMacro = useArchiveMacro();
+  const restoreMacro = useRestoreMacro();
+  const deleteMacro = useDeleteMacro();
 
   const allTags = [...new Set(macros.flatMap((m) => m.tags || []))].sort();
-  const allLangs = [...new Set(macros.map((m) => m.language || "English"))].sort();
+  const allLangs = [...new Set(macros.map((m) => m.language || "en"))].sort();
 
   const visible = macros.filter((m) => {
-    if (tab === "active" && m.archived) return false;
-    if (tab === "archived" && !m.archived) return false;
-    if (search && !(m.name + m.body + (m.tags || []).join("")).toLowerCase().includes(search.toLowerCase())) return false;
+    if (search && !(m.name + (m.body ?? "") + (m.tags || []).join("")).toLowerCase().includes(search.toLowerCase())) return false;
     if (langFilter !== "all" && m.language !== langFilter) return false;
     if (tagFilter !== "all" && !(m.tags || []).includes(tagFilter)) return false;
     return true;
   });
 
-  function handleSave(m: MacroItem | Record<string, unknown>) {
-    onSaveMacro(m as MacroItem);
-    setEditing(null);
+  function handleSave(m: { id?: string; name?: string; body?: string; language?: string; tags?: string[] }) {
+    const payload = {
+      name: m.name ?? '',
+      body: m.body ?? '',
+      language: m.language ?? 'en',
+      tags: m.tags ?? [],
+    };
+    if (editing === "new") {
+      createMacro.mutate(payload, { onSuccess: () => setEditing(null) });
+    } else if (m.id) {
+      updateMacro.mutate({ id: m.id, ...payload }, { onSuccess: () => setEditing(null) });
+    }
   }
-  function handleDuplicate(m: MacroItem | Record<string, unknown>) {
-    const macro = m as MacroItem;
-    onSaveMacro({
-      ...macro,
-      id: `m_${Date.now()}`,
-      name: `${macro.name} (copy)`,
-      usageCount: 0,
-      updatedAt: new Date().toISOString(),
-    });
+  function handleDuplicate(m: { id?: string }) {
+    if (m.id) duplicateMacro.mutate(m.id);
     setEditing(null);
   }
   function handleDelete(id: string) {
     if (!confirm("Delete this macro? This cannot be undone.")) return;
-    onDeleteMacro(id);
-    setEditing(null);
+    deleteMacro.mutate(id, { onSuccess: () => setEditing(null) });
   }
-  function handleArchive(m: MacroItem) {
-    onSaveMacro({
-      ...m,
-      archived: !m.archived,
-      updatedAt: new Date().toISOString(),
-    });
+  function handleArchive(m: Macro) {
+    if (m.archived_at) restoreMacro.mutate(m.id);
+    else archiveMacro.mutate(m.id);
   }
 
   function fmtDate(iso: string | undefined) {
@@ -141,7 +147,7 @@ export function MacroManager({ macros, favs, onClose, onSaveMacro, onDeleteMacro
           <option value="all">Language</option>
           {allLangs.map((l) => (
             <option key={l} value={l}>
-              {l}
+              {MACRO_LANG_LABEL[l] ?? l}
             </option>
           ))}
         </select>
@@ -167,7 +173,7 @@ export function MacroManager({ macros, favs, onClose, onSaveMacro, onDeleteMacro
 
       {/* Tabs */}
       <div className="flex gap-0 px-7 border-b border-border bg-card shrink-0">
-        {["active", "archived"].map((t) => (
+        {(["active", "archived"] as const).map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
@@ -255,11 +261,11 @@ export function MacroManager({ macros, favs, onClose, onSaveMacro, onDeleteMacro
                   </div>
                 </td>
                 {/* Language */}
-                <td className="py-3 pr-3 pl-0 text-[12.5px] text-foreground-2">{m.language || "English"}</td>
+                <td className="py-3 pr-3 pl-0 text-[12.5px] text-foreground-2">{MACRO_LANG_LABEL[m.language] ?? m.language}</td>
                 {/* Usage */}
-                <td className="py-3 pr-3 pl-0 text-[12.5px] text-foreground-2">{m.usageCount || 0}</td>
+                <td className="py-3 pr-3 pl-0 text-[12.5px] text-foreground-2">{m.usage_count ?? 0}</td>
                 {/* Updated */}
-                <td className="py-3 pr-3 pl-0 text-xs text-muted-foreground">{fmtDate(m.updatedAt)}</td>
+                <td className="py-3 pr-3 pl-0 text-xs text-muted-foreground">{fmtDate(m.updated_at)}</td>
                 {/* Actions */}
                 <td className="py-3 pl-0 text-right">
                   <div className="flex items-center gap-1 justify-end">
@@ -274,7 +280,7 @@ export function MacroManager({ macros, favs, onClose, onSaveMacro, onDeleteMacro
                     </button>
                     <button
                       onClick={() => handleArchive(m)}
-                      title={m.archived ? "Unarchive" : "Archive"}
+                      title={m.archived_at ? "Unarchive" : "Archive"}
                       className="bg-none border-none text-muted-foreground flex p-1 rounded-[5px] transition-colors duration-150 hover:text-foreground"
                       onMouseEnter={(e) => (e.currentTarget.style.color = "var(--foreground)")}
                       onMouseLeave={(e) => (e.currentTarget.style.color = "var(--foreground-3)")}

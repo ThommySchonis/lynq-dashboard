@@ -128,7 +128,7 @@ export function ProductMatrix({ allRefunds, loaded }: ProductMatrixProps) {
         {/* Rows */}
         {pageItems.map((p, i) => {
           const risk = p.count >= 3 ? 'High' : p.count === 2 ? 'Medium' : 'Low'
-          const cc = CAT_COLORS[p.topCat] || CAT_COLORS.Other
+          const barColor = (CAT_COLORS[p.topCat] || CAT_COLORS.Other).chartColor
           const catPalette = CAT_CHIP[p.topCat] || CAT_CHIP.Other
           return (
             <div key={p.name} className="flex items-center gap-4 border-b border-[#F1F1F5] px-2 py-[13px] last:border-0">
@@ -138,7 +138,7 @@ export function ProductMatrix({ allRefunds, loaded }: ProductMatrixProps) {
                 <div className="h-1 w-full max-w-[280px] overflow-hidden rounded-[2px] bg-[#EEF0F3]">
                   <div
                     className="h-full origin-left animate-grow-x rounded-[2px]"
-                    style={{ width: `${(p.amount / maxAmt) * 100}%`, background: cc.chartColor }}
+                    style={{ width: `${(p.amount / maxAmt) * 100}%`, background: barColor }}
                   />
                 </div>
               </div>

@@ -10,7 +10,7 @@ interface WeeklyReportProps {
 }
 
 // Card chrome (Figma 916-26419): white, 1px border, radius 16, soft elevation.
-const CARD = 'mb-6 flex flex-col gap-[18px] rounded-[16px] border border-border bg-card p-[22px_24px_24px] shadow-[0px_1px_3px_0px_rgba(0,0,0,0.04),0px_1px_2px_0px_rgba(0,0,0,0.02)]'
+const CARD = 'mb-6 flex flex-col gap-[18px] rounded-[16px] border border-border bg-card p-[22px_24px_24px] shadow-card'
 
 export function WeeklyReport({ allRefunds, loaded }: WeeklyReportProps) {
   if (!loaded) {

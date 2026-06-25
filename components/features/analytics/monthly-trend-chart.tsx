@@ -4,6 +4,7 @@ import { BarChart3 } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
 import { buildMonthlyTrend, fmtEur } from '@/lib/analytics-constants'
 import { CardEmptyState } from './card-empty-state'
+import { ChartDateFooter } from './chart-date-footer'
 import type { Refund } from '@/types/analytics'
 
 interface MonthlyTrendChartProps {
@@ -40,12 +41,8 @@ export function MonthlyTrendChart({ allRefunds, loaded }: MonthlyTrendChartProps
   }
 
   const months = buildMonthlyTrend(allRefunds)
-  const maxCount = Math.max(...months.map(m => m.count), 1)
-  const maxAmt = Math.max(...months.map(m => m.amount), 1)
-  const totalLost = months.reduce((s, m) => s + m.amount, 0)
-  const totalCount = months.reduce((s, m) => s + m.count, 0)
 
-  if (totalCount === 0) {
+  if (months.every(m => m.count === 0)) {
     return (
       <div className={`${CARD} flex flex-col gap-[14px]`}>
         <Header />
@@ -57,6 +54,10 @@ export function MonthlyTrendChart({ allRefunds, loaded }: MonthlyTrendChartProps
       </div>
     )
   }
+
+  const maxCount = Math.max(...months.map(m => m.count), 1)
+  const maxAmt = Math.max(...months.map(m => m.amount), 1)
+  const totalLost = months.reduce((s, m) => s + m.amount, 0)
 
   // ── Chart geometry (viewBox matches Figma proportions: 529 × 184) ───────────
   const W = 529, H = 184, barW = 60, gap = 25.4, x0 = 21, baseline = 150, maxBarH = 116
@@ -106,11 +107,7 @@ export function MonthlyTrendChart({ allRefunds, loaded }: MonthlyTrendChartProps
         ))}
       </svg>
 
-      {/* Date range footer */}
-      <div className="flex items-center justify-center gap-2.5">
-        <span className="h-0.5 w-3.5 rounded-full bg-red-500" />
-        <span className="text-[12px] font-medium leading-4 text-foreground-4">{dateRangeLabel}</span>
-      </div>
+      <ChartDateFooter dotClassName="bg-red-500" label={dateRangeLabel} />
     </div>
   )
 }

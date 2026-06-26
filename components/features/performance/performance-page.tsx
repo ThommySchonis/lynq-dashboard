@@ -18,6 +18,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { cn } from '@/lib/utils'
+import { formatDateRangeLabel } from '@/lib/performance-utils'
 import { KpiRow } from './kpi-row'
 import { TicketVolumeChart } from './ticket-volume-chart'
 import { RefundReasonsChart } from './refund-reasons-chart'
@@ -80,28 +82,39 @@ export function PerformancePage() {
   }
 
   return (
-    <main className="min-h-screen overflow-y-auto bg-background p-6" style={{ scrollbarWidth: 'thin' }}>
-      <div className="mx-auto max-w-[1200px]">
+    <main className="thin-scrollbar min-h-screen overflow-y-auto bg-background">
+      <div className="mx-auto flex max-w-[1250px] flex-col gap-6 px-10 pt-9 pb-12">
 
         {/* Header */}
-        <div className="mb-6">
-          <h1 className="mb-1 text-xl font-bold tracking-tight text-foreground">Performance</h1>
-          <p className="text-sm text-muted-foreground">Support team analytics &middot; {dateRange.from} &rarr; {dateRange.to}</p>
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex flex-col gap-1">
+            <h1 className="text-[22px] font-bold leading-[30px] tracking-[-0.01em] text-foreground">Performance</h1>
+            <p className="text-sm leading-5 text-foreground-3">
+              Support team analytics &middot; {formatDateRangeLabel(dateRange.from, dateRange.to)}
+            </p>
+          </div>
+          <button
+            type="button"
+            className="h-11 shrink-0 rounded-[10px] border border-border bg-card px-6 py-[13px] text-sm font-semibold leading-5 text-foreground transition-colors hover:border-border-hover"
+          >
+            Export
+          </button>
         </div>
 
-        {/* Top bar */}
-        <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-          {/* Date range buttons */}
-          <div className="flex items-center gap-1.5">
+        {/* Filters */}
+        <div className="flex items-center justify-between gap-4">
+          {/* Date range switcher */}
+          <div className="flex items-center gap-2">
             {(['7d', '30d', 'custom'] as RangePreset[]).map((preset) => (
               <button
                 key={preset}
                 onClick={() => setRangePreset(preset)}
-                className={`rounded-full border px-3 py-1 text-xs font-semibold transition-all duration-150 ${
+                className={cn(
+                  'rounded-full px-3.5 py-2 text-sm leading-5 transition-colors',
                   rangePreset === preset
-                    ? 'border-primary bg-primary text-primary-foreground'
-                    : 'border-border bg-transparent text-muted-foreground hover:bg-muted'
-                }`}
+                    ? 'bg-accent-soft font-semibold text-primary'
+                    : 'border border-border bg-card font-medium text-foreground-3 hover:bg-muted',
+                )}
               >
                 {preset === '7d' ? 'Last 7 days' : preset === '30d' ? 'Last 30 days' : 'Custom'}
               </button>
@@ -109,20 +122,17 @@ export function PerformancePage() {
           </div>
 
           {/* Agent filter */}
-          <Select
-            value={selectedAgentId ?? 'all'}
-            onValueChange={handleAgentChange}
-          >
-            <SelectTrigger className="w-44" size="sm">
-              <SelectValue placeholder="All agents">
+          <Select value={selectedAgentId ?? 'all'} onValueChange={handleAgentChange}>
+            <SelectTrigger className="h-auto gap-2 rounded-[9px] border-border bg-card py-[9px] pr-3 pl-3.5 text-foreground">
+              <SelectValue placeholder="All">
                 {(value: string | null) => {
-                  if (!value || value === 'all') return 'All agents'
+                  if (!value || value === 'all') return 'All'
                   return members.find((m) => m.id === value)?.name ?? value
                 }}
               </SelectValue>
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All agents</SelectItem>
+              <SelectItem value="all">All</SelectItem>
               {members.map((m) => (
                 <SelectItem key={m.id} value={m.id}>
                   {m.name}
@@ -134,7 +144,7 @@ export function PerformancePage() {
 
         {/* Custom date inputs */}
         {rangePreset === 'custom' && (
-          <div className="mb-6 flex items-center gap-2">
+          <div className="flex items-center gap-2">
             <input
               type="date"
               className="rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm text-foreground focus:border-ring focus:outline-none"
@@ -142,7 +152,7 @@ export function PerformancePage() {
               max={customTo || undefined}
               onChange={(e) => setCustomFrom(e.target.value)}
             />
-            <span className="text-sm text-muted-foreground">&rarr;</span>
+            <span className="text-sm text-foreground-3">&rarr;</span>
             <input
               type="date"
               className="rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm text-foreground focus:border-ring focus:outline-none"
@@ -154,7 +164,9 @@ export function PerformancePage() {
           </div>
         )}
 
-        {/* KPI row */}
+        {/* WORKLOAD */}
+        <span className="text-xs font-medium leading-4 text-foreground-3">WORKLOAD</span>
+
         <KpiRow
           responseTime={responseTime.data}
           resolutionTime={resolutionTime.data}
@@ -163,7 +175,7 @@ export function PerformancePage() {
         />
 
         {/* Charts */}
-        <div className="mb-6 grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-4">
           <TicketVolumeChart
             data={ticketVolume.data}
             isLoading={ticketVolume.isPending}
@@ -174,7 +186,9 @@ export function PerformancePage() {
           />
         </div>
 
-        {/* Agent table */}
+        {/* AI AGENT */}
+        <span className="text-xs font-semibold uppercase leading-[14px] tracking-[0.08em] text-foreground-3">AI AGENT</span>
+
         <AgentTable
           data={agentProductivity.data}
           members={members}

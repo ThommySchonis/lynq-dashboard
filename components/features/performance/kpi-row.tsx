@@ -81,7 +81,7 @@ export function KpiRow({ responseTime, resolutionTime, agentProductivity, isLoad
     : '—'
 
   return (
-    <div className="mb-6 grid grid-cols-4 gap-4">
+    <div className="grid grid-cols-4 gap-4">
       <KpiCard label="Avg Response Time" value={avgResponseTime} isLoading={isLoading} />
       <KpiCard label="Avg Resolution Time" value={avgResolutionTime} isLoading={isLoading} />
       <KpiCard label="Tickets Resolved" value={ticketsResolved} isLoading={isLoading} />

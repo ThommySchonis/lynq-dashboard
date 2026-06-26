@@ -13,6 +13,13 @@ const AUTH_BYPASS_PREFIXES = [
   // Vercel Cron jobs — geen user session, eigen CRON_SECRET check
   // gebeurt in elke handler.
   '/api/cron/',
+  // MCP endpoint — authenticates with its own bearer access token (lynq_at_…)
+  // via withMcpAuth in the route handler, not a Supabase session JWT. Skip the
+  // session-bearer gate and trial-blocked check here; the route enforces auth.
+  '/api/v1/mcp',
+  // SSE transport shares the same MCP route handler (basePath '/api/v1') and
+  // uses the same self-auth; must be bypassed alongside /api/v1/mcp.
+  '/api/v1/sse',
 ]
 
 // ─── Blocked-state bypass (Bearer wel vereist, maar mag door bij

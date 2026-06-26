@@ -9,6 +9,13 @@ const CSRF_EXEMPT_PREFIXES = [
   "/api/webhooks/shopify",
   "/api/webhooks/email",
   "/api/webhooks/whop",
+  // MCP endpoint authenticates via an Authorization bearer token (not cookies),
+  // so it is not a CSRF vector. MCP clients send a cross-origin/absent Origin,
+  // which the origin check would otherwise reject.
+  "/api/v1/mcp",
+  // SSE transport shares the same MCP route handler and self-auth; same exemption
+  // applies — not a CSRF vector.
+  "/api/v1/sse",
 ];
 
 function isVercelPreview(origin: string): boolean {

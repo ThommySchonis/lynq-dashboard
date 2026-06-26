@@ -4,6 +4,7 @@ import { ExternalLink } from "lucide-react";
 import { SettingsPageHeader } from "@/components/features/settings/settings-header";
 import { MCPEndpointCard } from "./mcp-endpoint-card";
 import { MCPPromptCard } from "./mcp-prompt-card";
+import { ConnectedAppsCard } from "./connected-apps-card";
 import { STARTER_PROMPTS, MCP_PROMPT_GUIDE_URL } from "@/lib/mcp-constants";
 
 export function MCPSettings() {
@@ -15,6 +16,8 @@ export function MCPSettings() {
       />
 
       <MCPEndpointCard />
+
+      <ConnectedAppsCard />
 
       <section className="flex flex-col gap-3.5">
         <h2 className="text-lg font-semibold text-foreground">Starter prompts</h2>

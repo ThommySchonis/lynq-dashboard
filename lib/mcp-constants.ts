@@ -3,8 +3,7 @@
 
 export const MCP_ENDPOINT = 'https://app.lynq.app/api/v1/mcp'
 
-// TODO: replace with the real prompt-guide URL once it exists.
-export const MCP_PROMPT_GUIDE_URL = '#'
+export const MCP_PROMPT_GUIDE_URL = '/settings/ai-assistants/mcp/guide'
 
 // Brand mark SVGs (public/icons). Used by both the tabs and the prompt pills.
 export const CLAUDE_ICON = '/icons/claude.svg'

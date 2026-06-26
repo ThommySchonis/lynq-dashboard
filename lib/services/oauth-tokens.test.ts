@@ -134,3 +134,32 @@ describe('rotateRefreshToken', () => {
     expect(await rotateRefreshToken(db, 'lynq_rt_revoked')).toBeNull()
   })
 })
+
+describe('revokeByRawToken', () => {
+  function revokeDb(found: { id: string } | null) {
+    const updates: { payload: Record<string, unknown>; eqs: [string, unknown][] }[] = []
+    const db = {
+      from() {
+        const eqs: [string, unknown][] = []
+        return {
+          select: () => ({ or: () => ({ maybeSingle: async () => ({ data: found, error: null }) }) }),
+          update: (payload: Record<string, unknown>) => ({ eq: (c: string, v: unknown) => { eqs.push([c, v]); updates.push({ payload, eqs }); return Promise.resolve({ error: null }) } }),
+        }
+      },
+    }
+    return { db: db as never, updates }
+  }
+  it('revokes the matched row', async () => {
+    const { revokeByRawToken } = await import('@/lib/services/oauth-tokens')
+    const { db, updates } = revokeDb({ id: 'tok1' })
+    await revokeByRawToken(db, 'lynq_at_x')
+    expect(updates[0].payload).toHaveProperty('revoked_at')
+    expect(updates[0].eqs).toEqual([['id', 'tok1']])
+  })
+  it('is a no-op when the token is not found', async () => {
+    const { revokeByRawToken } = await import('@/lib/services/oauth-tokens')
+    const { db, updates } = revokeDb(null)
+    await revokeByRawToken(db, 'lynq_rt_missing')
+    expect(updates).toHaveLength(0)
+  })
+})

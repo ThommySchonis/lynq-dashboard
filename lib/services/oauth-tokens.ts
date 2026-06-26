@@ -38,6 +38,7 @@ export interface TokenStoreDb {
         is(col: string, val: null): { maybeSingle(): Promise<{ data: TokenRow | null; error: { message: string } | null }> }
         maybeSingle(): Promise<{ data: TokenRow | null; error: { message: string } | null }>
       }
+      or(condition: string): { maybeSingle(): Promise<{ data: { id: string } | null; error: { message: string } | null }> }
     }
     update(row: Record<string, unknown>): { eq(col: string, val: string): Promise<{ error: { message: string } | null }> }
   }
@@ -149,4 +150,16 @@ export async function rotateRefreshToken(
     workspaceId: row.workspace_id,
     scope: row.scope,
   })
+}
+
+export async function revokeByRawToken(db: TokenStoreDb, rawToken: string): Promise<void> {
+  const h = hashToken(rawToken)
+  const { data } = await db
+    .from('oauth_tokens')
+    .select('id')
+    .or(`access_token_hash.eq.${h},refresh_token_hash.eq.${h}`)
+    .maybeSingle()
+  const row = data as { id: string } | null
+  if (!row) return // RFC 7009: unknown token → success, no-op
+  await db.from('oauth_tokens').update({ revoked_at: new Date().toISOString() }).eq('id', row.id)
 }

@@ -35,6 +35,8 @@ export function TicketVolumeChart({ data, isLoading }: TicketVolumeChartProps) {
   // Top → bottom gridlines (4 lines, e.g. 75 / 50 / 25 / 0)
   const ticks = [3, 2, 1, 0].map((i) => Math.round((axisMax / 3) * i))
   const isScroll = !!data && data.length > SCROLL_THRESHOLD
+  // Each day fills the width (≤10 days) or takes a fixed slot and scrolls (>10 days)
+  const dayWidth = isScroll ? 'w-[56px] shrink-0' : 'flex-1'
 
   return (
     <div className="flex flex-col gap-2.5 rounded-xl border border-border bg-card py-[22px] px-6">
@@ -88,7 +90,7 @@ export function TicketVolumeChart({ data, isLoading }: TicketVolumeChartProps) {
                   {data.map((point) => (
                     <div
                       key={point.date}
-                      className={cn('flex h-full items-end justify-center gap-1', isScroll ? 'w-[56px] shrink-0' : 'flex-1')}
+                      className={cn('flex h-full items-end justify-center gap-1', dayWidth)}
                     >
                       <div
                         className="w-full max-w-[15px] rounded-t-[4px] bg-primary"
@@ -109,7 +111,7 @@ export function TicketVolumeChart({ data, isLoading }: TicketVolumeChartProps) {
                 {data.map((point) => (
                   <span
                     key={point.date}
-                    className={cn('truncate text-center text-xs leading-4 text-foreground-3', isScroll ? 'w-[56px] shrink-0' : 'flex-1')}
+                    className={cn('truncate text-center text-xs leading-4 text-foreground-3', dayWidth)}
                   >
                     {formatDate(point.date)}
                   </span>

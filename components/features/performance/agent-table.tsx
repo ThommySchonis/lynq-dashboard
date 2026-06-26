@@ -1,5 +1,6 @@
 'use client'
 
+import { useMemo } from 'react'
 import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
 import { getAvatarInitials } from '@/lib/performance-utils'
@@ -21,14 +22,17 @@ interface AgentTableProps {
 
 // Figma column track (sums to 1122 = 1170 card − 48 padding)
 const GRID_COLS = 'grid-cols-[280px_180px_180px_150px_170px_162px]'
+const DATA_CELL = 'text-sm font-medium leading-5 text-foreground-3 tabular-nums'
 
 /** Agent rows whose id isn't a workspace member are the AI agent (Emma). */
-function resolveAgent(agentId: string, members: WorkspaceMember[]): { name: string; isAI: boolean } {
-  const member = members.find((m) => m.id === agentId)
+function resolveAgent(agentId: string, memberById: Map<string, WorkspaceMember>): { name: string; isAI: boolean } {
+  const member = memberById.get(agentId)
   return member ? { name: member.name, isAI: false } : { name: 'Emma', isAI: true }
 }
 
 export function AgentTable({ data, members, isLoading }: AgentTableProps) {
+  const memberById = useMemo(() => new Map(members.map((m) => [m.id, m])), [members])
+
   return (
     <div className="flex flex-col gap-[18px] rounded-xl border border-border bg-card py-[22px] px-6">
       <h3 className="text-base font-semibold leading-[22px] text-foreground">Agent Productivity</h3>
@@ -61,7 +65,7 @@ export function AgentTable({ data, members, isLoading }: AgentTableProps) {
             </div>
           ) : (
             data.map((row) => {
-              const agent = resolveAgent(row.agent_id, members)
+              const agent = resolveAgent(row.agent_id, memberById)
               return (
                 <div key={row.agent_id} className={cn('grid items-center border-t border-border py-3.5', GRID_COLS)}>
                   <div className="flex items-center gap-2.5">
@@ -75,11 +79,11 @@ export function AgentTable({ data, members, isLoading }: AgentTableProps) {
                     </span>
                     <span className="truncate text-sm font-semibold leading-5 text-foreground">{agent.name}</span>
                   </div>
-                  <span className="text-sm font-medium leading-5 text-foreground-3 tabular-nums">{row.messages_sent.toLocaleString()}</span>
-                  <span className="text-sm font-medium leading-5 text-foreground-3 tabular-nums">{row.tickets_resolved.toLocaleString()}</span>
-                  <span className="text-sm font-medium leading-5 text-foreground-3 tabular-nums">{row.one_touch_count.toLocaleString()}</span>
-                  <span className="text-sm font-medium leading-5 text-foreground-3 tabular-nums">{row.one_touch_rate.toFixed(0)}%</span>
-                  <span className="text-sm font-medium leading-5 text-foreground-3 tabular-nums">{row.avg_messages_per_ticket.toFixed(1)}</span>
+                  <span className={DATA_CELL}>{row.messages_sent.toLocaleString()}</span>
+                  <span className={DATA_CELL}>{row.tickets_resolved.toLocaleString()}</span>
+                  <span className={DATA_CELL}>{row.one_touch_count.toLocaleString()}</span>
+                  <span className={DATA_CELL}>{row.one_touch_rate.toFixed(0)}%</span>
+                  <span className={DATA_CELL}>{row.avg_messages_per_ticket.toFixed(1)}</span>
                 </div>
               )
             })

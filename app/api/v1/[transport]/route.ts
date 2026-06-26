@@ -3,11 +3,12 @@ import type { AuthInfo } from '@modelcontextprotocol/sdk/server/auth/types.js'
 import { registerLynqTools } from '@/mcp/server'
 import { LYNQ_MCP_INSTRUCTIONS } from '@/mcp/instructions'
 import { verifyMcpAccessToken } from '@/lib/services/mcp-auth'
+import type { Role } from '@/types/database'
 
 interface LynqMcpExtra {
   userId: string
   workspaceId: string
-  role: string
+  role: Role
 }
 
 /**
@@ -63,16 +64,16 @@ const authedHandler = withMcpAuth(
     if (!bearer) return undefined
     const authContext = await verifyMcpAccessToken(bearer)
     if (!authContext) return undefined
-    const extra: Record<string, unknown> = {
+    const extra: LynqMcpExtra = {
       userId: authContext.user.id,
       workspaceId: authContext.workspaceId,
-      role: authContext.role,
+      role: authContext.role as Role,
     }
     return {
       token: bearer,
       clientId: 'lynq-mcp',
       scopes: [],
-      extra,
+      extra: extra as unknown as Record<string, unknown>,
     }
   },
   { required: true },

@@ -19,7 +19,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { cn } from '@/lib/utils'
-import { formatDateRangeLabel } from '@/lib/performance-utils'
+import { formatDateRangeLabel, computePrevRange } from '@/lib/performance-utils'
 import { KpiRow } from './kpi-row'
 import { TicketVolumeChart } from './ticket-volume-chart'
 import { RefundReasonsChart } from './refund-reasons-chart'
@@ -63,11 +63,18 @@ export function PerformancePage() {
     [rangePreset, customFrom, customTo],
   )
 
+  const prevRange = useMemo(() => computePrevRange(dateRange), [dateRange])
+
   const responseTime = useResponseTime(dateRange, selectedAgentId)
   const resolutionTime = useResolutionTime(dateRange, selectedAgentId)
   const ticketVolume = useTicketVolume(dateRange, selectedAgentId)
   const agentProductivity = useAgentProductivity(dateRange, selectedAgentId)
   const refundReasons = useRefundReasons(dateRange, selectedAgentId)
+
+  const prevResponseTime = useResponseTime(prevRange, selectedAgentId)
+  const prevResolutionTime = useResolutionTime(prevRange, selectedAgentId)
+  const prevAgentProductivity = useAgentProductivity(prevRange, selectedAgentId)
+
   const membersQuery = useMembers()
 
   const members = useMemo(
@@ -76,6 +83,7 @@ export function PerformancePage() {
   )
 
   const kpiLoading = responseTime.isPending || resolutionTime.isPending || agentProductivity.isPending
+  const hasPrev = !prevResponseTime.isPending && !prevResolutionTime.isPending && !prevAgentProductivity.isPending
 
   function handleAgentChange(value: string | null) {
     setSelectedAgentId(!value || value === 'all' ? undefined : value)
@@ -171,7 +179,11 @@ export function PerformancePage() {
           responseTime={responseTime.data}
           resolutionTime={resolutionTime.data}
           agentProductivity={agentProductivity.data}
+          prevResponseTime={prevResponseTime.data}
+          prevResolutionTime={prevResolutionTime.data}
+          prevAgentProductivity={prevAgentProductivity.data}
           isLoading={kpiLoading}
+          hasPrev={hasPrev}
         />
 
         {/* Charts */}

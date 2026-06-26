@@ -53,14 +53,15 @@ export function TicketVolumeChart({ data, isLoading }: TicketVolumeChartProps) {
         </div>
       </div>
 
+      <div className="flex flex-1 flex-col justify-center">
       {isLoading ? (
-        <div className="flex h-[180px] items-end gap-2">
+        <div className="flex h-[140px] items-end gap-2">
           {[0, 1, 2, 3, 4, 5, 6].map((i) => (
             <Skeleton key={i} className="flex-1" style={{ height: `${40 + i * 12}px` }} />
           ))}
         </div>
       ) : !data || data.length === 0 ? (
-        <div className="flex h-[180px] items-center justify-center text-sm font-medium leading-5 text-foreground-3">
+        <div className="flex h-[140px] items-center justify-center text-sm font-medium leading-5 text-foreground-3">
           No data available
         </div>
       ) : (
@@ -118,6 +119,7 @@ export function TicketVolumeChart({ data, isLoading }: TicketVolumeChartProps) {
           </div>
         </div>
       )}
+      </div>
     </div>
   )
 }

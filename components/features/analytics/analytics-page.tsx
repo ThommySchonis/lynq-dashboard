@@ -284,22 +284,6 @@ function AnalyticsContent() {
               </div>
             ) : null}
 
-            {/* Sync needed banner */}
-            {/* {!demoMode && loaded.kpis && (kpis as unknown as Record<string, unknown>).needsSync ? (
-            <div className="mb-4 flex animate-fade-up items-center gap-2.5 rounded-md border border-black/[0.07] bg-gray-50 px-3.5 py-2">
-              <RefreshCw size={13} className="shrink-0 text-gray-400" />
-              <div className="flex-1">
-                <span className="text-xs text-gray-400">No order data found. Go to Settings &rarr; Shopify to sync your orders.</span>
-              </div>
-              <button
-                onClick={() => setDemoMode(true)}
-                className="whitespace-nowrap rounded-md border border-black/[0.08] bg-gray-100 px-2.5 py-1 text-xs font-semibold text-gray-600 hover:bg-gray-200"
-              >
-                Preview demo
-              </button>
-            </div>
-          ) : null} */}
-
             <AlertBanner rate={kpis.refundRate} loaded={loaded.kpis} />
             <KpiRow kpis={kpis} prevKpis={prevKpis} refunds={refunds} loaded={loaded} />
             <RevenueTrendChart trend={trend} loaded={loaded.trend} rangeLabel={rangeLabel} />

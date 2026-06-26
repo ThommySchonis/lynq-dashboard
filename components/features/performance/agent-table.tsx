@@ -1,6 +1,9 @@
 'use client'
 
+import { useMemo } from 'react'
 import { Skeleton } from '@/components/ui/skeleton'
+import { cn } from '@/lib/utils'
+import { getAvatarInitials } from '@/lib/performance-utils'
 import type { AgentProductivityRow } from '@/types/support-analytics'
 
 // ── AgentTable ───────────────────────────────────────────────────────────────
@@ -17,75 +20,75 @@ interface AgentTableProps {
   isLoading: boolean
 }
 
-function resolveAgentName(agentId: string, members: WorkspaceMember[]): string {
-  const member = members.find((m) => m.id === agentId)
-  return member?.name || 'Unknown'
+// Figma column track (sums to 1122 = 1170 card − 48 padding)
+const GRID_COLS = 'grid-cols-[280px_180px_180px_150px_170px_162px]'
+const DATA_CELL = 'text-sm font-medium leading-5 text-foreground-3 tabular-nums'
+
+/** Agent rows whose id isn't a workspace member are the AI agent (Emma). */
+function resolveAgent(agentId: string, memberById: Map<string, WorkspaceMember>): { name: string; isAI: boolean } {
+  const member = memberById.get(agentId)
+  return member ? { name: member.name, isAI: false } : { name: 'Emma', isAI: true }
 }
 
 export function AgentTable({ data, members, isLoading }: AgentTableProps) {
+  const memberById = useMemo(() => new Map(members.map((m) => [m.id, m])), [members])
+
   return (
-    <div className="bg-card rounded-xl border border-border p-5">
-      <h3 className="mb-4 text-sm font-semibold text-foreground">Agent Productivity</h3>
+    <div className="flex flex-col gap-[18px] rounded-xl border border-border bg-card py-[22px] px-6">
+      <h3 className="text-base font-semibold leading-[22px] text-foreground">Agent Productivity</h3>
 
       <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-border">
-              <th className="pb-2 text-left font-medium text-muted-foreground">Agent</th>
-              <th className="pb-2 text-right font-medium text-muted-foreground">Messages Sent</th>
-              <th className="pb-2 text-right font-medium text-muted-foreground">Tickets Resolved</th>
-              <th className="pb-2 text-right font-medium text-muted-foreground">One-Touch</th>
-              <th className="pb-2 text-right font-medium text-muted-foreground">One-Touch Rate</th>
-              <th className="pb-2 text-right font-medium text-muted-foreground">Avg Msgs/Ticket</th>
-            </tr>
-          </thead>
-          <tbody>
-            {isLoading ? (
-              Array.from({ length: 4 }).map((_, i) => (
-                <tr key={i} className="border-b border-border last:border-0">
-                  <td className="py-3"><Skeleton className="h-4 w-28" /></td>
-                  <td className="py-3 text-right"><Skeleton className="ml-auto h-4 w-12" /></td>
-                  <td className="py-3 text-right"><Skeleton className="ml-auto h-4 w-12" /></td>
-                  <td className="py-3 text-right"><Skeleton className="ml-auto h-4 w-12" /></td>
-                  <td className="py-3 text-right"><Skeleton className="ml-auto h-4 w-14" /></td>
-                  <td className="py-3 text-right"><Skeleton className="ml-auto h-4 w-12" /></td>
-                </tr>
-              ))
-            ) : !data || data.length === 0 ? (
-              <tr>
-                <td colSpan={6} className="py-10 text-center text-sm text-muted-foreground">
-                  No agent data available
-                </td>
-              </tr>
-            ) : (
-              data.map((row, i) => (
-                <tr
-                  key={row.agent_id}
-                  className={`border-b border-border last:border-0 ${i % 2 === 1 ? 'bg-muted/30' : ''}`}
-                >
-                  <td className="py-3 font-medium text-foreground">
-                    {resolveAgentName(row.agent_id, members)}
-                  </td>
-                  <td className="py-3 text-right tabular-nums text-foreground">
-                    {row.messages_sent.toLocaleString()}
-                  </td>
-                  <td className="py-3 text-right tabular-nums text-foreground">
-                    {row.tickets_resolved.toLocaleString()}
-                  </td>
-                  <td className="py-3 text-right tabular-nums text-foreground">
-                    {row.one_touch_count.toLocaleString()}
-                  </td>
-                  <td className="py-3 text-right tabular-nums text-foreground">
-                    {row.one_touch_rate.toFixed(1)}%
-                  </td>
-                  <td className="py-3 text-right tabular-nums text-foreground">
-                    {row.avg_messages_per_ticket.toFixed(1)}
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+        <div className="min-w-[1122px]">
+          {/* Header */}
+          <div className={cn('grid border-b border-border pb-3.5', GRID_COLS)}>
+            {['Agent', 'Messages Sent', 'Tickets Resolved', 'One-Touch', 'One-Touch Rate', 'Avg Msgs/Ticket'].map((h) => (
+              <span key={h} className="text-sm font-medium leading-5 text-foreground-3">{h}</span>
+            ))}
+          </div>
+
+          {/* Body */}
+          {isLoading ? (
+            Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className={cn('grid items-center border-t border-border py-3.5', GRID_COLS)}>
+                <div className="flex items-center gap-2.5">
+                  <Skeleton className="h-7 w-7 rounded-full" />
+                  <Skeleton className="h-4 w-24" />
+                </div>
+                {[0, 1, 2, 3, 4].map((c) => (
+                  <Skeleton key={c} className="h-4 w-12" />
+                ))}
+              </div>
+            ))
+          ) : !data || data.length === 0 ? (
+            <div className="flex justify-center pt-[26px] pb-5 text-sm font-medium leading-5 text-foreground-3">
+              No agent data available
+            </div>
+          ) : (
+            data.map((row) => {
+              const agent = resolveAgent(row.agent_id, memberById)
+              return (
+                <div key={row.agent_id} className={cn('grid items-center border-t border-border py-3.5', GRID_COLS)}>
+                  <div className="flex items-center gap-2.5">
+                    <span
+                      className={cn(
+                        'flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold text-white',
+                        agent.isAI ? 'bg-primary' : 'bg-foreground-4',
+                      )}
+                    >
+                      {getAvatarInitials(agent.name)}
+                    </span>
+                    <span className="truncate text-sm font-semibold leading-5 text-foreground">{agent.name}</span>
+                  </div>
+                  <span className={DATA_CELL}>{row.messages_sent.toLocaleString()}</span>
+                  <span className={DATA_CELL}>{row.tickets_resolved.toLocaleString()}</span>
+                  <span className={DATA_CELL}>{row.one_touch_count.toLocaleString()}</span>
+                  <span className={DATA_CELL}>{row.one_touch_rate.toFixed(0)}%</span>
+                  <span className={DATA_CELL}>{row.avg_messages_per_ticket.toFixed(1)}</span>
+                </div>
+              )
+            })
+          )}
+        </div>
       </div>
     </div>
   )

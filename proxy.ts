@@ -20,6 +20,10 @@ const AUTH_BYPASS_PREFIXES = [
   // SSE transport shares the same MCP route handler (basePath '/api/v1') and
   // uses the same self-auth; must be bypassed alongside /api/v1/mcp.
   '/api/v1/sse',
+  // OAuth authorization-server endpoints. register/token are called by MCP
+  // clients with no Supabase session; authorize-approve validates the user's
+  // JWT itself via getAuthContext. Skip the global session/blocked gate here.
+  '/api/oauth/',
 ]
 
 // ─── Blocked-state bypass (Bearer wel vereist, maar mag door bij

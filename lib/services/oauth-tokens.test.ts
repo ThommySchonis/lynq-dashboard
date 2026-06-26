@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import type { TokenStoreDb } from '@/lib/services/oauth-tokens'
 import {
-  hashToken, generateOpaqueToken, createTokenPair, verifyAccessToken,
+  hashToken, generateOpaqueToken, createTokenPair, verifyAccessToken, rotateRefreshToken,
 } from '@/lib/services/oauth-tokens'
 
 
@@ -90,5 +90,47 @@ describe('verifyAccessToken', () => {
   it('returns null for a revoked token', async () => {
     const { db } = fakeDb({ ...base, revoked_at: new Date().toISOString(), access_expires_at: new Date(Date.now() + 1000).toISOString() })
     expect(await verifyAccessToken(db, 'lynq_at_revoked')).toBeNull()
+  })
+})
+
+describe('rotateRefreshToken', () => {
+  const valid = {
+    id: 'tok_old', client_id: 'c1', user_id: 'u1', workspace_id: 'w1',
+    scope: null, revoked_at: null,
+    refresh_expires_at: new Date(Date.now() + 1000).toISOString(),
+  }
+  function rotateDb(row: Record<string, unknown> | null) {
+    const updates: Record<string, unknown>[] = []
+    const inserted: Record<string, unknown>[] = []
+    const db = {
+      from() {
+        return {
+          insert(r: Record<string, unknown>) { inserted.push(r); return { select() { return { single: async () => ({ data: { id: 'tok_new' }, error: null }) } } } },
+          select() { return { eq() { return { maybeSingle: async () => ({ data: row, error: null }) } } } },
+          update(u: Record<string, unknown>) { updates.push(u); return { eq: async () => ({ error: null }) } },
+        }
+      },
+    }
+    return { db: db as unknown as TokenStoreDb, updates, inserted }
+  }
+
+  it('rejects a non-refresh prefix without a db call', async () => {
+    const { db } = rotateDb(null)
+    expect(await rotateRefreshToken(db, 'lynq_at_x')).toBeNull()
+  })
+  it('returns a new pair and revokes the old token on valid refresh', async () => {
+    const { db, updates } = rotateDb(valid)
+    const pair = await rotateRefreshToken(db, 'lynq_rt_valid')
+    expect(pair?.accessToken.startsWith('lynq_at_')).toBe(true)
+    expect(pair?.refreshToken.startsWith('lynq_rt_')).toBe(true)
+    expect(updates.some((u) => 'revoked_at' in u)).toBe(true) // old token revoked (rotation)
+  })
+  it('returns null for an expired refresh token', async () => {
+    const { db } = rotateDb({ ...valid, refresh_expires_at: new Date(Date.now() - 1000).toISOString() })
+    expect(await rotateRefreshToken(db, 'lynq_rt_old')).toBeNull()
+  })
+  it('returns null for a revoked refresh token', async () => {
+    const { db } = rotateDb({ ...valid, revoked_at: new Date().toISOString() })
+    expect(await rotateRefreshToken(db, 'lynq_rt_revoked')).toBeNull()
   })
 })

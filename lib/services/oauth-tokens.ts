@@ -111,3 +111,42 @@ export async function revokeToken(db: TokenStoreDb, tokenId: string): Promise<vo
     .eq('id', tokenId)
   if (error) throw new Error(`revokeToken failed: ${error.message}`)
 }
+
+interface RefreshRow {
+  id: string
+  client_id: string
+  user_id: string
+  workspace_id: string
+  scope: string | null
+  revoked_at: string | null
+  refresh_expires_at: string | null
+}
+
+export async function rotateRefreshToken(
+  db: TokenStoreDb,
+  rawRefresh: string,
+): Promise<IssuedTokenPair | null> {
+  if (!rawRefresh.startsWith('lynq_rt_')) return null
+
+  const { data, error } = await db
+    .from('oauth_tokens')
+    .select('id, client_id, user_id, workspace_id, scope, revoked_at, refresh_expires_at')
+    .eq('refresh_token_hash', hashToken(rawRefresh))
+    .maybeSingle()
+
+  const row = data as RefreshRow | null
+  if (error || !row) return null
+  if (row.revoked_at) return null
+  if (!row.refresh_expires_at || new Date(row.refresh_expires_at).getTime() <= Date.now()) return null
+
+  // Rotation: revoke the old token row, then issue a fresh pair.
+  const revoke = await db.from('oauth_tokens').update({ revoked_at: new Date().toISOString() }).eq('id', row.id)
+  if (revoke.error) return null
+
+  return createTokenPair(db, {
+    clientId: row.client_id,
+    userId: row.user_id,
+    workspaceId: row.workspace_id,
+    scope: row.scope,
+  })
+}

@@ -16,6 +16,9 @@ const CSRF_EXEMPT_PREFIXES = [
   // SSE transport shares the same MCP route handler and self-auth; same exemption
   // applies — not a CSRF vector.
   "/api/v1/sse",
+  // OAuth endpoints: register/token are cross-origin (no Origin); authorize is
+  // same-origin. None are cookie-authenticated, so not a CSRF vector.
+  "/api/oauth/",
 ];
 
 function isVercelPreview(origin: string): boolean {

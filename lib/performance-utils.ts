@@ -24,6 +24,14 @@ export function computePrevRange(range: SupportAnalyticsDateRange): SupportAnaly
   }
 }
 
+/** Up to two uppercase initials for an avatar badge ("Maria K." → "MK", "Emma" → "E"). */
+export function getAvatarInitials(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean)
+  if (parts.length === 0) return '?'
+  if (parts.length === 1) return parts[0][0].toUpperCase()
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+}
+
 /**
  * Formats a support-analytics date range into the Figma subtitle label,
  * e.g. "May 25 – Jun 1, 2026". The year is shown once, on the end date.

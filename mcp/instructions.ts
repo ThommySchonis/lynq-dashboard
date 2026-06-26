@@ -7,7 +7,7 @@ Inbox workflow:
 Working a ticket:
 - Draft vs send: use create_draft to leave a reply for a human to review and send; use send_reply ONLY when you should send to the customer immediately — it dispatches the email right away.
 - set_state to resolve, close, reopen (status 'open'), snooze (status 'snoozed' plus snoozedUntil as an ISO timestamp), or assign (assignedTo a member id, or null to unassign).
-- list_tags, then add_tag / remove_tag (by tag id) to label tickets.
+- list_tags to see existing tags; create_tag to make a new one (then add_tag with its id); add_tag / remove_tag (by tag id) to label tickets; delete_tag removes a tag everywhere (owner/admin).
 - link_customer to attach a Shopify customer id once you have identified the customer.
 
 Context for answering tickets:
@@ -15,6 +15,9 @@ Context for answering tickets:
 - list_macros / get_macro for approved canned replies — adapt a macro body rather than writing from scratch when one fits.
 - list_stores, then list_orders / get_order / lookup_order (by email or order number) to pull Shopify order context; link_customer first if the conversation isn't linked.
 - get_kpis / get_revenue_trend for store performance (the date range defaults to the last 30 days; dates are YYYY-MM-DD).
+
+Order actions (owner/admin/agent) act on REAL Shopify orders — refund_order and cancel_order move money:
+- refund_order, cancel_order, fulfill_order, update_order_note, update_order_address. Confirm the order id and the intent with the user before refunding, cancelling, or fulfilling.
 
 Emma AI configuration (you replace the cloud AI assist):
 - Call get_ai_settings to read the workspace's brand identity, tone, policies, scenarios, and the assembled system prompt. Ground every reply in those settings — the on-brand voice must come from there, not a generic one. Never invent policies, order details, or tracking numbers not present in the settings or the ticket.

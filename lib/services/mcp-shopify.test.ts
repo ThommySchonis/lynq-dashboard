@@ -4,6 +4,11 @@ const listStores = vi.fn()
 const getOrders = vi.fn()
 const getOrderDetail = vi.fn()
 const getCustomer = vi.fn()
+const createRefund = vi.fn()
+const cancelOrder = vi.fn()
+const fulfillOrder = vi.fn()
+const updateOrderNote = vi.fn()
+const updateOrderAddress = vi.fn()
 vi.mock('@/lib/store-credentials', () => ({
   getStoreCredentials: (...a: unknown[]): unknown => getStoreCredentials(...a),
 }))
@@ -15,9 +20,26 @@ vi.mock('@/lib/services/shopify-orders', () => ({
   getOrderDetail: (...a: unknown[]): unknown => getOrderDetail(...a),
   getCustomer: (...a: unknown[]): unknown => getCustomer(...a),
 }))
-import { listOrdersForWorkspace, lookupCustomerForWorkspace } from '@/lib/services/mcp-shopify'
+vi.mock('@/lib/services/shopify-order-actions', () => ({
+  createRefund: (...a: unknown[]): unknown => createRefund(...a),
+  cancelOrder: (...a: unknown[]): unknown => cancelOrder(...a),
+  fulfillOrder: (...a: unknown[]): unknown => fulfillOrder(...a),
+  updateOrderNote: (...a: unknown[]): unknown => updateOrderNote(...a),
+  updateOrderAddress: (...a: unknown[]): unknown => updateOrderAddress(...a),
+}))
+import { listOrdersForWorkspace, lookupCustomerForWorkspace, refundOrderForWorkspace, cancelOrderForWorkspace, updateOrderNoteForWorkspace } from '@/lib/services/mcp-shopify'
 
-beforeEach(() => { getStoreCredentials.mockReset(); listStores.mockReset(); getOrders.mockReset(); getCustomer.mockReset() })
+beforeEach(() => {
+  getStoreCredentials.mockReset()
+  listStores.mockReset()
+  getOrders.mockReset()
+  getCustomer.mockReset()
+  createRefund.mockReset()
+  cancelOrder.mockReset()
+  fulfillOrder.mockReset()
+  updateOrderNote.mockReset()
+  updateOrderAddress.mockReset()
+})
 
 describe('listOrdersForWorkspace', () => {
   it('resolves the first store when storeId omitted, then fetches orders with credentials', async () => {
@@ -45,5 +67,26 @@ describe('lookupCustomerForWorkspace', () => {
     getCustomer.mockResolvedValue({ email: 'a@b.c' })
     await lookupCustomerForWorkspace('w1', { email: 'a@b.c' }, { storeId: 'store1' })
     expect(getCustomer).toHaveBeenCalledWith({ domain: 'd', accessToken: 't' }, { email: 'a@b.c' })
+  })
+})
+
+describe('order actions for workspace', () => {
+  it('refund resolves credentials then calls createRefund with stripped params', async () => {
+    listStores.mockResolvedValue([{ id: 's1', shopify_connected_at: '2026-01-01' }])
+    getStoreCredentials.mockResolvedValue({ domain: 'd', accessToken: 't' })
+    createRefund.mockResolvedValue({ refund: { id: 1 } })
+    await refundOrderForWorkspace('w1', '123', { customAmount: '10.00', reason: 'damaged', restock: true })
+    expect(createRefund).toHaveBeenCalledWith({ domain: 'd', accessToken: 't' }, '123', { customAmount: '10.00', reason: 'damaged', restock: true })
+  })
+  it('cancel strips storeId and passes the rest', async () => {
+    listStores.mockResolvedValue([{ id: 's1', shopify_connected_at: '2026-01-01' }])
+    getStoreCredentials.mockResolvedValue({ domain: 'd', accessToken: 't' })
+    cancelOrder.mockResolvedValue({ ok: true })
+    await cancelOrderForWorkspace('w1', '123', { storeId: 's1', reason: 'fraud', refund: true })
+    expect(cancelOrder).toHaveBeenCalledWith({ domain: 'd', accessToken: 't' }, '123', { reason: 'fraud', refund: true })
+  })
+  it('propagates the no-connected-store error', async () => {
+    listStores.mockResolvedValue([])
+    await expect(updateOrderNoteForWorkspace('w1', '123', { note: 'x' })).rejects.toThrow(/no .*store/i)
   })
 })

@@ -5,6 +5,8 @@ const getConversation = vi.fn()
 const listTags = vi.fn()
 const addTag = vi.fn()
 const removeTag = vi.fn()
+const createTag = vi.fn()
+const deleteTag = vi.fn()
 const setConversationState = vi.fn()
 const createInboxDraft = vi.fn()
 const sendReply = vi.fn()
@@ -15,6 +17,8 @@ vi.mock('@/lib/services/conversations', () => ({
   listTags: (...a: unknown[]): unknown => listTags(...a),
   addTag: (...a: unknown[]): unknown => addTag(...a),
   removeTag: (...a: unknown[]): unknown => removeTag(...a),
+  createTag: (...a: unknown[]): unknown => createTag(...a),
+  deleteTag: (...a: unknown[]): unknown => deleteTag(...a),
   setConversationState: (...a: unknown[]): unknown => setConversationState(...a),
 }))
 vi.mock('@/lib/services/inbox-drafts', () => ({
@@ -28,6 +32,7 @@ vi.mock('@/lib/supabaseAdmin', () => ({ supabaseAdmin: {} }))
 vi.mock('@/lib/permissions', () => ({
   can: {
     manageTags: (role: string) => ['owner', 'admin', 'agent'].includes(role),
+    deleteTags: (role: string) => ['owner', 'admin'].includes(role),
     manageConversations: (role: string) => ['owner', 'admin', 'agent'].includes(role),
     replyToTickets: (role: string) => ['owner', 'admin', 'agent'].includes(role),
   },
@@ -52,6 +57,8 @@ beforeEach(() => {
   listTags.mockReset()
   addTag.mockReset()
   removeTag.mockReset()
+  createTag.mockReset()
+  deleteTag.mockReset()
   setConversationState.mockReset()
   createInboxDraft.mockReset()
   sendReply.mockReset()
@@ -160,6 +167,54 @@ describe('registerInboxTools / tags', () => {
       const res = await tools.remove_tag.handler({ conversationId: 'c1', tagId: 't1' })
       expect(res.isError).toBe(true)
       expect(removeTag).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('create_tag', () => {
+    it('registers create_tag', () => {
+      const { server, tools } = fakeServer()
+      registerInboxTools(server as never, ctx)
+      expect(tools.create_tag).toBeDefined()
+    })
+    it('observer cannot create a tag', async () => {
+      const { server, tools } = fakeServer()
+      registerInboxTools(server as never, { userId: 'u1', workspaceId: 'w1', role: 'observer' })
+      const res = await tools.create_tag.handler({ name: 'VIP' })
+      expect(res.isError).toBe(true)
+      expect(createTag).not.toHaveBeenCalled()
+    })
+    it('agent can create a tag', async () => {
+      const { server, tools } = fakeServer()
+      createTag.mockResolvedValue({ id: 't1', name: 'VIP', color: 'red' })
+      registerInboxTools(server as never, { userId: 'u1', workspaceId: 'w1', role: 'agent' })
+      const res = await tools.create_tag.handler({ name: 'VIP' })
+      expect(createTag).toHaveBeenCalledWith(expect.anything(), 'w1', 'u1', { name: 'VIP' })
+      expect(res.isError).toBeUndefined()
+      expect(res.content[0].text).toContain('t1')
+    })
+  })
+
+  describe('delete_tag', () => {
+    it('registers delete_tag', () => {
+      const { server, tools } = fakeServer()
+      registerInboxTools(server as never, ctx)
+      expect(tools.delete_tag).toBeDefined()
+    })
+    it('agent cannot delete a tag', async () => {
+      const { server, tools } = fakeServer()
+      registerInboxTools(server as never, { userId: 'u1', workspaceId: 'w1', role: 'agent' })
+      const res = await tools.delete_tag.handler({ tagId: 't1' })
+      expect(res.isError).toBe(true)
+      expect(deleteTag).not.toHaveBeenCalled()
+    })
+    it('admin can delete a tag', async () => {
+      const { server, tools } = fakeServer()
+      deleteTag.mockResolvedValue(undefined)
+      registerInboxTools(server as never, { userId: 'u1', workspaceId: 'w1', role: 'admin' })
+      const res = await tools.delete_tag.handler({ tagId: 't1' })
+      expect(deleteTag).toHaveBeenCalledWith(expect.anything(), 'w1', 't1')
+      expect(res.isError).toBeUndefined()
+      expect(res.content[0].text).toContain('deleted')
     })
   })
 })

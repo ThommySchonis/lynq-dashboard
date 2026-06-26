@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { listConversations, getConversation, listTags, addTag, removeTag, setConversationState } from '@/lib/services/conversations'
+import { listConversations, getConversation, listTags, addTag, removeTag, setConversationState, createTag, deleteTag } from '@/lib/services/conversations'
 
 /** Records the query chain calls and returns the seeded rows. */
 function fakeDb(rows: Record<string, unknown>[]) {
@@ -137,6 +137,32 @@ describe('tag mutations', () => {
     const db = { from: () => ({ delete: () => chain }) } as never
     await removeTag(db, 'w1', 'c1', 't1')
     expect(eqs).toEqual(expect.arrayContaining([['workspace_id', 'w1'], ['conversation_id', 'c1'], ['tag_id', 't1']]))
+  })
+})
+
+describe('createTag', () => {
+  it('inserts a workspace-scoped tag with created_by and returns it', async () => {
+    const inserted: Record<string, unknown>[] = []
+    const db = { from: () => ({ insert: (r: Record<string, unknown>) => { inserted.push(r); return { select: () => ({ single: async () => ({ data: { id: 't1', name: r.name, color: r.color }, error: null }) }) } } }) } as never
+    const tag = await createTag(db, 'w1', 'u1', { name: 'VIP', color: 'red' })
+    expect(inserted[0]).toMatchObject({ workspace_id: 'w1', name: 'VIP', color: 'red', created_by: 'u1' })
+    expect(tag).toEqual({ id: 't1', name: 'VIP', color: 'red' })
+  })
+  it('defaults color to slate when omitted', async () => {
+    const inserted: Record<string, unknown>[] = []
+    const db = { from: () => ({ insert: (r: Record<string, unknown>) => { inserted.push(r); return { select: () => ({ single: async () => ({ data: { id: 't1', name: r.name, color: r.color }, error: null }) }) } } }) } as never
+    await createTag(db, 'w1', 'u1', { name: 'X' })
+    expect(inserted[0].color).toBe('slate')
+  })
+})
+
+describe('deleteTag', () => {
+  it('deletes the tag scoped to the workspace', async () => {
+    const eqs: [string, unknown][] = []
+    const chain = { eq: (c: string, v: unknown) => { eqs.push([c, v]); return chain }, then: (r: (x: { error: null }) => void) => r({ error: null }) }
+    const db = { from: () => ({ delete: () => chain }) } as never
+    await deleteTag(db, 'w1', 't1')
+    expect(eqs).toEqual(expect.arrayContaining([['workspace_id', 'w1'], ['id', 't1']]))
   })
 })
 

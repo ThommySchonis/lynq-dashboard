@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
-import { listConversations, getConversation, listTags, addTag, removeTag, setConversationState, type ConversationFilters, type ConversationState } from '@/lib/services/conversations'
+import { listConversations, getConversation, listTags, addTag, removeTag, createTag, deleteTag, setConversationState, type ConversationFilters, type ConversationState } from '@/lib/services/conversations'
 import { createInboxDraft } from '@/lib/services/inbox-drafts'
 import { sendReply, linkCustomer } from '@/lib/conversationEngine'
 import { can } from '@/lib/permissions'
@@ -92,6 +92,33 @@ export function registerInboxTools(server: McpServer, ctx: McpToolContext): void
         return ok({ removed: true })
       } catch (e) {
         return fail(`remove_tag failed: ${e instanceof Error ? e.message : 'unknown error'}`)
+      }
+    },
+  )
+
+  server.registerTool(
+    'create_tag',
+    { description: 'Create a new tag in the workspace. Returns the tag (use its id with add_tag).', inputSchema: { name: z.string().min(1), color: z.string().optional() } },
+    async (args: { name: string; color?: string }) => {
+      if (!can.manageTags(ctx.role)) return fail('Your role cannot create tags.')
+      try {
+        return ok(await createTag(supabaseAdmin as never, ctx.workspaceId, ctx.userId, args))
+      } catch (e) {
+        return fail(`create_tag failed: ${e instanceof Error ? e.message : 'unknown error'}`)
+      }
+    },
+  )
+
+  server.registerTool(
+    'delete_tag',
+    { description: 'Delete a tag from the workspace (removes it from all conversations and macros). Owner/admin only.', inputSchema: { tagId: z.string() } },
+    async (args: { tagId: string }) => {
+      if (!can.deleteTags(ctx.role)) return fail('Your role cannot delete tags (owner/admin only).')
+      try {
+        await deleteTag(supabaseAdmin as never, ctx.workspaceId, args.tagId)
+        return ok({ deleted: true })
+      } catch (e) {
+        return fail(`delete_tag failed: ${e instanceof Error ? e.message : 'unknown error'}`)
       }
     },
   )

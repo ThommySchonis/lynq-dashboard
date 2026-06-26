@@ -112,6 +112,16 @@ export interface ConversationsDb {
         order(col: string, opts: { ascending: boolean }): Promise<{ data: ConversationTag[] | null; error: { message: string } | null }>
       }
     }
+    insert(row: Record<string, unknown>): {
+      select(cols: string): {
+        single(): Promise<{ data: Record<string, unknown> | null; error: { message: string } | null }>
+      }
+    }
+    delete(): {
+      eq(col: string, val: unknown): {
+        eq(col: string, val: unknown): Promise<{ error: { message: string } | null }>
+      }
+    }
   }
 }
 
@@ -287,4 +297,26 @@ export async function setConversationState(
 
   const { error } = await db.from('email_conversations').update(patch).eq('workspace_id', workspaceId).eq('id', conversationId)
   if (error) throw new Error(`setConversationState failed: ${error.message}`)
+}
+
+export async function createTag(
+  db: ConversationsDb,
+  workspaceId: string,
+  userId: string,
+  input: { name: string; color?: string },
+): Promise<ConversationTag> {
+  const result = await db
+    .from('tags')
+    .insert({ workspace_id: workspaceId, name: input.name, color: input.color ?? 'slate', created_by: userId })
+    .select('id, name, color')
+    .single()
+  const { data, error } = result as { data: ConversationTag | null; error: { message: string } | null }
+  if (error || !data) throw new Error(`createTag failed: ${error?.message ?? 'no row'}`)
+  return data
+}
+
+export async function deleteTag(db: ConversationsDb, workspaceId: string, tagId: string): Promise<void> {
+  // FK cascade removes email_conversation_tags / macro_tags references.
+  const { error } = await db.from('tags').delete().eq('workspace_id', workspaceId).eq('id', tagId)
+  if (error) throw new Error(`deleteTag failed: ${error.message}`)
 }

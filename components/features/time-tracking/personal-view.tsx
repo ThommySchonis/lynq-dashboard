@@ -1,18 +1,10 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback } from 'react'
 import { AlertCircle, X } from 'lucide-react'
 import { FILTERS, EMP_KPI, fmtDur } from '@/lib/time-tracking-constants'
-import type { TimeFilter, Session, EodReport } from '@/types/time-tracking'
+import type { TimeFilter, Session } from '@/types/time-tracking'
 import { useAuthStore } from '@/stores/auth'
-import {
-  useClockIn,
-  useClockOut,
-  usePauseSession,
-  useResumeSession,
-  sendHeartbeat,
-} from '@/hooks/time-tracking/use-time-tracking-mutations'
-import { restoreElapsed } from '@/hooks/time-tracking/use-time-tracking-data'
+import { useTimeClock } from '@/hooks/time-tracking/use-time-clock'
 import { FilterTabs } from './filter-tabs'
 import { ClockCard } from './clock-card'
 import { KpiCards } from './kpi-cards'
@@ -36,145 +28,26 @@ export function PersonalView({
   filter,
   onFilterChange,
 }: PersonalViewProps) {
-  const token = useAuthStore((s) => s.session?.access_token ?? '')
   const isSuspended = useAuthStore((s) => s.isSuspended)
 
-  // Local UI state for the timer
-  const [elapsed, setElapsed] = useState(0)
-  const [isPaused, setIsPaused] = useState(false)
-  const [showModal, setShowModal] = useState(false)
-  const [error, setError] = useState('')
+  const {
+    elapsed,
+    isPaused,
+    pausedSec,
+    isActive,
+    error,
+    clearError,
+    showModal,
+    openModal,
+    closeModal,
+    clockingIn,
+    submitting,
+    clockIn,
+    pause,
+    resume,
+    clockOut,
+  } = useTimeClock(activeSession)
 
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
-  const heartbeatRef = useRef<ReturnType<typeof setInterval> | null>(null)
-  const breakTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
-  const [, setBreakTick] = useState(0)
-
-  // TanStack mutations
-  const clockIn = useClockIn()
-  const clockOut = useClockOut()
-  const pauseSession = usePauseSession()
-  const resumeSession = useResumeSession()
-
-  // Restore elapsed from active session when it changes
-  useEffect(() => {
-    if (activeSession) {
-      setIsPaused(activeSession.status === 'paused')
-      setElapsed(restoreElapsed(activeSession))
-    } else {
-      setElapsed(0)
-      setIsPaused(false)
-    }
-  }, [activeSession?.id, activeSession])
-
-  // Tick timer when active (not paused)
-  useEffect(() => {
-    if (timerRef.current) clearInterval(timerRef.current)
-    if (activeSession && !isPaused) {
-      timerRef.current = setInterval(() => setElapsed((s) => s + 1), 1000)
-    }
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current)
-    }
-  }, [activeSession?.id, isPaused]) // eslint-disable-line react-hooks/exhaustive-deps -- intentional: only re-run on session id change
-
-  // Break timer tick for paused display
-  useEffect(() => {
-    if (breakTimerRef.current) clearInterval(breakTimerRef.current)
-    if (activeSession && isPaused) {
-      breakTimerRef.current = setInterval(() => setBreakTick((t) => t + 1), 1000)
-    }
-    return () => {
-      if (breakTimerRef.current) clearInterval(breakTimerRef.current)
-    }
-  }, [activeSession?.id, isPaused]) // eslint-disable-line react-hooks/exhaustive-deps -- intentional: only re-run on session id change
-
-  // Heartbeat every 30s when active
-  useEffect(() => {
-    if (heartbeatRef.current) clearInterval(heartbeatRef.current)
-    if (!activeSession || isPaused) return
-    heartbeatRef.current = setInterval(() => {
-      if (activeSession) {
-        void sendHeartbeat(token, activeSession.id)
-      }
-    }, 30000)
-    return () => {
-      if (heartbeatRef.current) clearInterval(heartbeatRef.current)
-    }
-  }, [activeSession?.id, isPaused, token]) // eslint-disable-line react-hooks/exhaustive-deps -- intentional: only re-run on session id change
-
-  // Warn on page unload when session active
-  useEffect(() => {
-    const handler = (e: BeforeUnloadEvent) => {
-      if (!activeSession) return
-      e.preventDefault()
-      e.returnValue = ''
-    }
-    window.addEventListener('beforeunload', handler)
-    return () => window.removeEventListener('beforeunload', handler)
-  }, [activeSession])
-
-  const handleClockIn = useCallback(() => {
-    setError('')
-    clockIn.mutate(undefined, {
-      onError: (err) => {
-        setError(
-          err.message === 'Not a team member account'
-            ? 'Your account is not set up for time tracking. Ask your admin to add you as a team member.'
-            : err.message || 'Could not clock in. Please try again.'
-        )
-      },
-    })
-  }, [clockIn])
-
-  const handlePause = useCallback(() => {
-    if (!activeSession) return
-    pauseSession.mutate(activeSession.id, {
-      onSuccess: () => {
-        if (timerRef.current) clearInterval(timerRef.current)
-        if (heartbeatRef.current) clearInterval(heartbeatRef.current)
-        setIsPaused(true)
-      },
-    })
-  }, [activeSession, pauseSession])
-
-  const handleResume = useCallback(() => {
-    if (!activeSession) return
-    resumeSession.mutate(activeSession.id, {
-      onSuccess: () => {
-        setIsPaused(false)
-      },
-    })
-  }, [activeSession, resumeSession])
-
-  const handleClockOut = useCallback(
-    (report: EodReport) => {
-      if (!activeSession) return
-      clockOut.mutate(
-        { sessionId: activeSession.id, report },
-        {
-          onSuccess: () => {
-            setElapsed(0)
-            setIsPaused(false)
-            setShowModal(false)
-          },
-        }
-      )
-    },
-    [activeSession, clockOut]
-  )
-
-  const pausedSec = (() => {
-    if (!activeSession) return 0
-    const base = activeSession.paused_seconds || 0
-    if (isPaused && activeSession.paused_at) {
-      // eslint-disable-next-line react-hooks/purity
-      return base + Math.round((Date.now() - new Date(activeSession.paused_at).getTime()) / 1000)
-    }
-    return base
-  })()
-
-  const isActive = !!activeSession
   const filterLabel = FILTERS.find((f) => f.id === filter)?.label || 'This week'
 
   const totalPeriodSec = sessions.reduce((sum, s) => {
@@ -225,7 +98,7 @@ export function PersonalView({
           <AlertCircle className="h-4 w-4 shrink-0" />
           {error}
           <button
-            onClick={() => setError('')}
+            onClick={clearError}
             className="ml-auto bg-transparent text-inherit opacity-60 text-base leading-none"
           >
             <X className="h-4 w-4" />
@@ -239,13 +112,13 @@ export function PersonalView({
         elapsed={elapsed}
         isPaused={isPaused}
         pausedSec={pausedSec}
-        clockingIn={clockIn.isPending}
+        clockingIn={clockingIn}
         isAdmin={isAdmin}
         sessions={sessions}
-        onClockIn={handleClockIn}
-        onPause={handlePause}
-        onResume={handleResume}
-        onClockOut={() => setShowModal(true)}
+        onClockIn={clockIn}
+        onPause={pause}
+        onResume={resume}
+        onClockOut={openModal}
         disabled={isSuspended}
       />
 
@@ -261,9 +134,9 @@ export function PersonalView({
           session={activeSession}
           elapsedSec={elapsed}
           pausedSeconds={pausedSec}
-          onConfirm={handleClockOut}
-          onCancel={() => setShowModal(false)}
-          submitting={clockOut.isPending}
+          onConfirm={clockOut}
+          onCancel={closeModal}
+          submitting={submitting}
         />
       )}
     </div>

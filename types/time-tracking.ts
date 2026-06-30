@@ -33,9 +33,12 @@ export interface Session {
 }
 
 export interface EodReport {
-  emailsAnswered: number
+  // Single free-text report (the only field the redesigned EOD modal
+  // collects). emailsAnswered / needsAttention stay in the type for the
+  // admin edit path and legacy callers, but the modal sends them null.
+  emailsAnswered: number | null
   whatWentWell:   string
-  needsAttention: string
+  needsAttention: string | null
 }
 
 export interface TeamMember {

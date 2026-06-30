@@ -13,6 +13,10 @@ export const FILTERS: { id: TimeFilter; label: string }[] = [
   { id: 'month', label: 'This month' },
 ]
 
+// Nominal shift length used only to scale the header timer's progress bar.
+// Not a backend value — see B10 in the backend backlog.
+export const SHIFT_TARGET_SEC = 8 * 3600
+
 // ── KPI definitions ──────────────────────────────────────────────────────────
 
 export const TEAM_KPI: TeamKpiDef[] = [

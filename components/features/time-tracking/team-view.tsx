@@ -85,16 +85,7 @@ export function TeamView({ data, filter, onFilterChange }: TeamViewProps) {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="animate-fade-up">
-        <h1 className="mb-1 text-xl font-semibold tracking-tight text-foreground">
-          Team Time Tracking
-        </h1>
-        <div className="mb-5 text-sm text-gray-500">
-          {client ? client.company_name : 'All clients'} &middot; {active_count + paused_count} active now
-        </div>
-        <FilterTabs filter={filter} onChange={onFilterChange} />
-      </div>
+      <FilterTabs filter={filter} onChange={onFilterChange} />
 
       {/* KPIs */}
       <KpiCards cards={kpiCards} columns={4} />

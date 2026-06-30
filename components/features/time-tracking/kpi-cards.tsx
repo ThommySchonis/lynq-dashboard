@@ -1,16 +1,20 @@
 'use client'
 
-import { Clock, Calendar, BarChart3, Users, Timer, Coffee } from 'lucide-react'
+import { Clock, Calendar, BarChart3, Users, Coffee, Hourglass, type LucideIcon } from 'lucide-react'
 
-function KpiIcon({ id, className }: { id: string; className?: string }) {
-  const cls = className || 'h-3.5 w-3.5 text-violet-600'
-  if (id === 'active' || id === 'total' || id === 'week') return <Clock className={cls} />
-  if (id === 'break') return <Coffee className={cls} />
-  if (id === 'today') return <Calendar className={cls} />
-  if (id === 'avg') return <BarChart3 className={cls} />
-  if (id === 'team') return <Users className={cls} />
-  return <Timer className={cls} />
+// Per-KPI icon + tinted icon-box, keyed by card id. Tints map to design
+// tokens (success/warning/accent/info soft fills) per the Figma spec.
+const KPI_META: Record<string, { Icon: LucideIcon; box: string; icon: string }> = {
+  active: { Icon: Clock,     box: 'bg-success-soft', icon: 'text-success' },
+  break:  { Icon: Coffee,    box: 'bg-warning-soft', icon: 'text-warning' },
+  total:  { Icon: Hourglass, box: 'bg-accent-soft',  icon: 'text-primary' },
+  team:   { Icon: Users,     box: 'bg-info-soft',    icon: 'text-info' },
+  week:   { Icon: Clock,     box: 'bg-accent-soft',  icon: 'text-primary' },
+  today:  { Icon: Calendar,  box: 'bg-info-soft',    icon: 'text-info' },
+  avg:    { Icon: BarChart3, box: 'bg-success-soft', icon: 'text-success' },
 }
+
+const KPI_FALLBACK = { Icon: Clock, box: 'bg-accent-soft', icon: 'text-primary' }
 
 interface KpiCardData {
   id: string
@@ -25,42 +29,32 @@ interface KpiCardsProps {
 }
 
 export function KpiCards({ cards, columns = 3 }: KpiCardsProps) {
-  const gridCls = columns === 4
-    ? 'grid grid-cols-4 gap-3'
-    : 'grid grid-cols-3 gap-3'
+  const gridCls = columns === 4 ? 'grid grid-cols-4 gap-4' : 'grid grid-cols-3 gap-4'
 
   return (
-    <div className={`${gridCls} opacity-0 animate-fade-up delay-100`}>
+    <div className={`${gridCls} animate-fade-up`}>
       {cards.map(({ id, label, value, sub }) => {
-        // 'Active now' tile gets a subtle green left-accent when the count
-        // is > 0 — visual hint that something's happening right now.
-        const activeAccent =
-          id === 'active' && Number(value) > 0
-            ? 'border-l-2 border-l-emerald-500'
-            : ''
-
+        const { Icon, box, icon } = KPI_META[id] ?? KPI_FALLBACK
         return (
           <div
             key={id}
-            className={`cursor-default overflow-hidden rounded-[10px] border border-gray-200/60 bg-white p-5 transition-colors hover:border-gray-300 ${activeAccent}`}
+            className="flex cursor-default flex-col gap-2.5 rounded-2xl border border-border bg-card px-[22px] py-5 shadow-card"
           >
-            <div className="mb-3.5 flex items-start justify-between">
-              <div className="text-[10px] font-semibold uppercase tracking-wider text-gray-500">
+            <div className="flex items-center justify-between">
+              <div className="text-[12px] font-semibold uppercase leading-[14px] tracking-[0.08em] text-foreground-3">
                 {label}
               </div>
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-violet-500/8">
-                <KpiIcon id={id} />
+              <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${box}`}>
+                <Icon className={`h-5 w-5 ${icon}`} strokeWidth={2} />
               </div>
             </div>
-            <div className="mb-1 text-3xl font-bold leading-none tracking-tight text-foreground tabular-nums">
+            <div className="text-[28px] font-bold leading-8 tracking-[-0.02em] text-foreground tabular-nums">
               {value}
             </div>
-            <div className="text-xs text-gray-500">{sub}</div>
+            <div className="text-sm text-foreground-3">{sub}</div>
           </div>
         )
       })}
     </div>
   )
 }
-
-export { KpiIcon }

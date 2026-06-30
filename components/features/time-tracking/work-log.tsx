@@ -4,6 +4,13 @@ import { useState } from 'react'
 import { Clock, ChevronDown } from 'lucide-react'
 import { fmtDate, fmtTime, fmtDur, durSec } from '@/lib/time-tracking-constants'
 import type { Session } from '@/types/time-tracking'
+import { StatusPill } from './status-pill'
+
+// Shared grid template for the personal work log (no Member / actions columns).
+// Date · Clock in/out · Duration · Status · Report (fill) · chevron.
+const LOG_GRID = 'grid grid-cols-[100px_150px_90px_110px_minmax(0,1fr)_auto] items-center'
+
+const COLUMNS = ['Date', 'Clock in / out', 'Duration', 'Status', 'End-of-day report', '']
 
 interface WorkLogProps {
   sessions: Session[]
@@ -22,25 +29,25 @@ export function WorkLog({ sessions }: WorkLogProps) {
   }
 
   return (
-    <div className="overflow-hidden rounded-[10px] border border-gray-200/60 bg-white opacity-0 animate-fade-up delay-150">
-      <div className="border-b border-gray-200/60 px-4.5 py-3.5">
-        <div className="text-[13px] font-semibold text-foreground">Work Log</div>
-        <div className="mt-0.5 text-xs text-gray-500">Your sessions with end-of-day reports</div>
+    <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-card animate-fade-up">
+      <div className="px-[22px] pt-5 pb-[18px]">
+        <div className="text-base font-semibold text-foreground">Work Log</div>
+        <div className="mt-[3px] text-sm text-foreground-3">Your sessions with end-of-day reports</div>
       </div>
 
       {sessions.length === 0 ? (
-        <div className="flex flex-col items-center gap-2 py-14 px-4.5">
-          <Clock className="h-10 w-10 text-gray-300" strokeWidth={1.5} />
-          <div className="mt-2 text-sm font-medium text-foreground">No sessions yet</div>
-          <div className="text-[13px] text-gray-500">Clock in to start tracking your time.</div>
+        <div className="flex flex-col items-center gap-2.5 border-t border-border px-[22px] py-14 text-center">
+          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-secondary">
+            <Clock className="h-[26px] w-[26px] text-foreground-4" strokeWidth={1.5} />
+          </div>
+          <div className="text-base font-semibold text-foreground">No sessions yet</div>
+          <div className="max-w-xs text-sm text-foreground-3">Clock in to start tracking your time.</div>
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-[130px_140px_70px_60px_1fr_24px] gap-3 border-b border-gray-200/40 px-4.5 py-2.5">
-            {['Date', 'Time', 'Hours', 'Emails', 'Summary', ''].map((h) => (
-              <div key={h} className="text-xs uppercase tracking-wider text-gray-500 font-medium">
-                {h}
-              </div>
+          <div className={`${LOG_GRID} border-t border-border px-[22px] py-3`}>
+            {COLUMNS.map((h, i) => (
+              <div key={h || i} className="text-sm text-foreground-3">{h}</div>
             ))}
           </div>
           {sessions.map((s) => (
@@ -76,24 +83,21 @@ function WorkLogRow({ session: s, isExpanded, onToggle }: WorkLogRowProps) {
   return (
     <>
       <div
-        className={`grid grid-cols-[130px_140px_70px_60px_1fr_24px] items-center gap-3 border-b border-gray-200/40 px-4.5 py-3.5 transition-colors last:border-b-0 hover:bg-gray-50/60 ${
+        className={`${LOG_GRID} border-b border-border px-[22px] py-3.5 transition-colors last:border-b-0 hover:bg-muted/40 ${
           canExpand ? 'cursor-pointer' : 'cursor-default'
         }`}
         onClick={canExpand ? onToggle : undefined}
       >
-        <div className="text-xs font-medium text-foreground">{fmtDate(s.clocked_in_at)}</div>
-        <div className="text-xs text-gray-500 tabular-nums">
-          {fmtTime(s.clocked_in_at)} &ndash;{' '}
-          {s.clocked_out_at ? fmtTime(s.clocked_out_at) : <span className="text-emerald-600">Active</span>}
+        <div className="whitespace-nowrap text-sm text-foreground-3">{fmtDate(s.clocked_in_at)}</div>
+        <div className="text-sm tabular-nums text-foreground-3">
+          {fmtTime(s.clocked_in_at)} → {s.clocked_out_at ? fmtTime(s.clocked_out_at) : '—'}
         </div>
-        <div className="text-[13px] font-semibold text-foreground tabular-nums">{fmtDur(durSec(s))}</div>
-        <div className="text-[13px] text-foreground tabular-nums">
-          {s.emails_answered != null ? s.emails_answered : <span className="text-gray-300">—</span>}
+        <div className="text-sm font-semibold tabular-nums text-foreground">{fmtDur(durSec(s))}</div>
+        <div><StatusPill session={s} /></div>
+        <div className="line-clamp-1 pr-3 text-sm text-foreground-3">
+          {summaryText || <span className="italic text-foreground-4">No report</span>}
         </div>
-        <div className="line-clamp-1 text-xs leading-relaxed text-gray-500">
-          {summaryText || <span className="italic text-gray-300">No report</span>}
-        </div>
-        <div className="flex items-center justify-end text-gray-400">
+        <div className="flex items-center justify-end text-foreground-4">
           {canExpand && (
             <ChevronDown
               className={`h-3.5 w-3.5 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
@@ -104,7 +108,7 @@ function WorkLogRow({ session: s, isExpanded, onToggle }: WorkLogRowProps) {
       </div>
 
       {isExpanded && canExpand && (
-        <div className="border-b border-gray-200/40 bg-gray-50/40 px-4.5 py-3.5">
+        <div className="border-b border-border bg-muted/40 px-[22px] py-3.5">
           {hasStructured ? (
             <div className="space-y-3">
               <DetailBlock label="What went well" text={s.what_went_well} />
@@ -127,9 +131,9 @@ interface DetailBlockProps {
 function DetailBlock({ label, text }: DetailBlockProps) {
   return (
     <div>
-      <div className="text-[10px] font-bold uppercase tracking-wider text-gray-400">{label}</div>
+      <div className="text-[10px] font-bold uppercase tracking-wider text-foreground-4">{label}</div>
       <div className="mt-1 whitespace-pre-wrap text-[12.5px] leading-relaxed text-foreground">
-        {text || <span className="italic text-gray-300">—</span>}
+        {text || <span className="italic text-foreground-4">—</span>}
       </div>
     </div>
   )

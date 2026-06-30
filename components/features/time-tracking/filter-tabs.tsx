@@ -10,20 +10,23 @@ interface FilterTabsProps {
 
 export function FilterTabs({ filter, onChange }: FilterTabsProps) {
   return (
-    <div className="inline-flex gap-0.5 rounded-lg border border-black/8 bg-white p-[3px]">
-      {FILTERS.map(f => (
-        <button
-          key={f.id}
-          className={`rounded-md px-3.5 py-1 text-xs font-semibold transition-all ${
-            filter === f.id
-              ? 'bg-[#0F0F10] text-white'
-              : 'bg-transparent text-gray-500 hover:bg-black/4 hover:text-foreground'
-          }`}
-          onClick={() => onChange(f.id)}
-        >
-          {f.label}
-        </button>
-      ))}
+    <div className="flex items-center gap-2">
+      {FILTERS.map((f) => {
+        const active = filter === f.id
+        return (
+          <button
+            key={f.id}
+            onClick={() => onChange(f.id)}
+            className={`rounded-full border px-3.5 py-2 text-sm transition-colors ${
+              active
+                ? 'border-transparent bg-accent-soft font-semibold text-primary'
+                : 'border-border bg-card font-medium text-foreground-3 hover:text-foreground'
+            }`}
+          >
+            {f.label}
+          </button>
+        )
+      })}
     </div>
   )
 }

@@ -17,7 +17,7 @@ import {
 } from '@/components/ui/select'
 import { FilterTabs } from './filter-tabs'
 import { KpiCards } from './kpi-cards'
-import { MemberRow } from './member-row'
+import { TeamMembersCard } from './team-members-card'
 import { AdminLogRow } from './admin-log-row'
 
 interface TeamViewProps {
@@ -91,21 +91,7 @@ export function TeamView({ data, filter, onFilterChange }: TeamViewProps) {
       <KpiCards cards={kpiCards} columns={4} />
 
       {/* Team Members */}
-      <div className="overflow-hidden rounded-[10px] border border-gray-200/60 bg-white opacity-0 animate-fade-up delay-100">
-        <div className="border-b border-gray-200/60 px-4.5 py-3.5">
-          <div className="text-[13px] font-semibold text-foreground">Team Members</div>
-          <div className="mt-0.5 text-xs text-gray-500">Status and hours per member this period</div>
-        </div>
-        {members.length === 0 ? (
-          <div className="flex flex-col items-center gap-2 py-14 px-4.5">
-            <Clock className="h-10 w-10 text-gray-300" strokeWidth={1.5} />
-            <div className="mt-2 text-sm font-medium text-foreground">No team members</div>
-            <div className="text-[13px] text-gray-500">Add team members via the admin panel.</div>
-          </div>
-        ) : (
-          members.map(m => <MemberRow key={m.id} member={m} />)
-        )}
-      </div>
+      <TeamMembersCard members={members} />
 
       {/* Sessions table */}
       <div className="overflow-hidden rounded-[10px] border border-gray-200/60 bg-white opacity-0 animate-fade-up delay-150">

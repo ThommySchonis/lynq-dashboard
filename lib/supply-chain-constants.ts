@@ -113,6 +113,52 @@ export const FILTER_STATUS: Record<string, string[]> = {
   'Pending':          ['PENDING', 'INFO_RECEIVED', 'EXPIRED'],
 }
 
+// ── Setup wizard steps ───────────────────────────────────────────────────────
+
+export interface SetupStep {
+  /** Stable key for the step. */
+  key: string
+  /** Short label shown in the left steps rail. */
+  label: string
+  /** Heading shown above the step content. */
+  title: string
+  /** Supporting copy shown under the heading. */
+  subtitle: string
+}
+
+export const SETUP_STEPS: SetupStep[] = [
+  {
+    key: 'api-key',
+    label: 'Connect API key',
+    title: 'Connect your API key',
+    subtitle: 'Link your Parcel Panel account so Lynq tracks every shipment automatically.',
+  },
+  {
+    key: 'webhook',
+    label: 'Webhook URL',
+    title: 'Add your webhook URL',
+    subtitle: 'Paste this endpoint into Parcel Panel so Lynq receives every shipment update the moment it happens.',
+  },
+  {
+    key: 'status-events',
+    label: 'Status events',
+    title: 'Choose status events',
+    subtitle: 'Pick which shipment updates Lynq should track. We log each one to the order and can keep your customers in the loop automatically.',
+  },
+  {
+    key: 'tracking-prefs',
+    label: 'Tracking preferences',
+    title: 'Tracking preferences',
+    subtitle: 'Choose how Lynq keeps customers informed and how it uses tracking data behind the scenes.',
+  },
+  {
+    key: 'review',
+    label: 'Review & connect',
+    title: 'Review & connect',
+    subtitle: 'Give your setup a final look, then connect Parcel Panel to start tracking shipments automatically.',
+  },
+]
+
 // ── Attention item builder ───────────────────────────────────────────────────
 
 export function getAttentionItems(orders: Order[], dismissed: Set<string>): AttentionItem[] {

@@ -243,7 +243,7 @@ function StoreRow({ store, isPaymentsStore }: { store: StorePublic; isPaymentsSt
             <DropdownMenuContent align="end">
               {isConnected && (
                 <DropdownMenuItem
-                  onSelect={() => setDisconnectOpen(true)}
+                  onClick={() => setDisconnectOpen(true)}
                   disabled={isSuspended || !canManage}
                 >
                   <Unplug size={14} strokeWidth={1.75} />
@@ -252,7 +252,7 @@ function StoreRow({ store, isPaymentsStore }: { store: StorePublic; isPaymentsSt
               )}
               <DropdownMenuItem
                 variant="destructive"
-                onSelect={() => setDeleteOpen(true)}
+                onClick={() => setDeleteOpen(true)}
                 disabled={isSuspended || !canManage}
               >
                 <Trash2 size={14} strokeWidth={1.75} />

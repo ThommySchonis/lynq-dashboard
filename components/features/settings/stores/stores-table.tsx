@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { Search, SlidersHorizontal, ArrowUpDown, MoreHorizontal, Store as StoreIcon, Unplug, Trash2 } from 'lucide-react'
+import { Search, SlidersHorizontal, ArrowUpDown, MoreHorizontal, Store as StoreIcon, Plug, Unplug, Trash2 } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import {
@@ -14,6 +14,7 @@ import { StatusBadge } from '@/components/features/settings/status-badge'
 import { ConfirmDialog } from '@/components/features/settings/confirm-dialog'
 import { StoreManageModal } from './store-manage-modal'
 import { useDisconnectStore, useDeleteStore } from '@/hooks/stores'
+import { startShopifyOAuth } from '@/hooks/settings/use-integration-mutations'
 import { useAuthStore } from '@/stores/auth'
 import { usePermissions } from '@/hooks/use-permissions'
 import type { StorePublic } from '@/types/stores'
@@ -193,15 +194,28 @@ function StoreRow({ store, isPaymentsStore }: { store: StorePublic; isPaymentsSt
   const [manageOpen, setManageOpen] = useState(false)
   const [disconnectOpen, setDisconnectOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
+  const [reconnecting, setReconnecting] = useState(false)
 
   const disconnectMutation = useDisconnectStore()
   const deleteMutation = useDeleteStore()
+  const token = useAuthStore((s) => s.session?.access_token ?? '')
   const isSuspended = useAuthStore((s) => s.isSuspended)
   const { can } = usePermissions()
   const canManage = can.manageWorkspace
 
   const state = storeState(store)
   const isConnected = state === 'active'
+
+  async function handleReconnect() {
+    if (!store.shopify_domain) return
+    setReconnecting(true)
+    try {
+      const url = await startShopifyOAuth(token, store.shopify_domain, store.name)
+      window.location.href = url
+    } catch {
+      setReconnecting(false)
+    }
+  }
 
   return (
     <>
@@ -241,18 +255,26 @@ function StoreRow({ store, isPaymentsStore }: { store: StorePublic; isPaymentsSt
               <MoreHorizontal size={16} strokeWidth={1.75} />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              {isConnected && (
+              {isConnected ? (
                 <DropdownMenuItem
-                  onSelect={() => setDisconnectOpen(true)}
+                  onClick={() => setDisconnectOpen(true)}
                   disabled={isSuspended || !canManage}
                 >
                   <Unplug size={14} strokeWidth={1.75} />
                   Disconnect
                 </DropdownMenuItem>
+              ) : (
+                <DropdownMenuItem
+                  onClick={() => void handleReconnect()}
+                  disabled={isSuspended || reconnecting || !canManage || !store.shopify_domain}
+                >
+                  <Plug size={14} strokeWidth={1.75} />
+                  Connect
+                </DropdownMenuItem>
               )}
               <DropdownMenuItem
                 variant="destructive"
-                onSelect={() => setDeleteOpen(true)}
+                onClick={() => setDeleteOpen(true)}
                 disabled={isSuspended || !canManage}
               >
                 <Trash2 size={14} strokeWidth={1.75} />

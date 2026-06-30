@@ -1,4 +1,5 @@
 import type { NextRequest } from 'next/server'
+import { ALLOWED_APP_ORIGINS } from '@/lib/allowed-origins'
 
 /**
  * Derive the site URL from env first, fall back to the incoming request.
@@ -20,14 +21,7 @@ function allowedReturnOrigins(): string[] {
   const fromEnv = [process.env.NEXT_PUBLIC_APP_URL, process.env.NEXT_PUBLIC_SITE_URL]
     .filter((u): u is string => Boolean(u))
     .map((u) => u.replace(/\/$/, ''))
-  return Array.from(
-    new Set([
-      'https://app.lynqflow.io',
-      'https://lynq-dashboard.vercel.app',
-      'http://localhost:3000',
-      ...fromEnv,
-    ]),
-  )
+  return Array.from(new Set([...ALLOWED_APP_ORIGINS, ...fromEnv]))
 }
 
 /**

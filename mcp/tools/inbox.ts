@@ -6,6 +6,10 @@ import { createInboxDraft } from '@/lib/services/inbox-drafts'
 import { sendReply, linkCustomer } from '@/lib/conversationEngine'
 import { can } from '@/lib/permissions'
 import type { McpToolContext } from '@/mcp/types'
+import { evaluateMcpSend } from '@/lib/services/mcp-autonomy-gate'
+import { recordMcpDraft } from '@/lib/services/mcp-reply-record'
+import { REPLY_INTENTS, type ReplyIntent } from '@/lib/schemas/ai'
+import { getEnrichedMembers } from '@/lib/services/workspace-members'
 
 export function ok(data: unknown) {
   return { content: [{ type: 'text' as const, text: JSON.stringify(data, null, 2) }] }
@@ -173,7 +177,8 @@ export function registerInboxTools(server: McpServer, ctx: McpToolContext): void
   server.registerTool(
     'send_reply',
     {
-      description: 'Send a reply email on a conversation NOW (it goes to the customer immediately). Provide bodyText and/or bodyHtml. Prefer create_draft if a human should review first.',
+      description:
+        'Send a reply email on a conversation. Provide bodyText and/or bodyHtml, plus the intent you are handling and your confidence (0-1). The server enforces the workspace autonomy rules: if this reply may not auto-send, it is saved as a draft for human review instead and the response tells you why. Prefer create_draft when a human should always review.',
       inputSchema: {
         conversationId: z.string(),
         bodyText: z.string().optional(),
@@ -182,11 +187,66 @@ export function registerInboxTools(server: McpServer, ctx: McpToolContext): void
         to: z.string().optional(),
         cc: z.string().optional(),
         bcc: z.string().optional(),
+        intent: z.enum(REPLY_INTENTS).optional(),
+        confidence: z.number().min(0).max(1).optional(),
+        should_escalate: z.boolean().optional(),
       },
     },
-    async (args: { conversationId: string; bodyText?: string; bodyHtml?: string; subject?: string; to?: string; cc?: string; bcc?: string }) => {
+    async (args: {
+      conversationId: string
+      bodyText?: string
+      bodyHtml?: string
+      subject?: string
+      to?: string
+      cc?: string
+      bcc?: string
+      intent?: ReplyIntent
+      confidence?: number
+      should_escalate?: boolean
+    }) => {
       if (!can.replyToTickets(ctx.role)) return fail('Your role cannot send replies.')
       if (!args.bodyText && !args.bodyHtml) return fail('Provide bodyText and/or bodyHtml.')
+
+      const intent: ReplyIntent = args.intent ?? 'unknown'
+      const confidence = args.confidence ?? 0
+      const shouldEscalate = args.should_escalate ?? false
+      const draftText = args.bodyText ?? args.bodyHtml ?? ''
+
+      let decision: Awaited<ReturnType<typeof evaluateMcpSend>>
+      try {
+        decision = await evaluateMcpSend({
+          workspaceId: ctx.workspaceId,
+          conversationId: args.conversationId,
+          intent,
+          confidence,
+          shouldEscalate,
+        })
+      } catch (e) {
+        return fail(`send_reply failed during autonomy check: ${e instanceof Error ? e.message : 'unknown error'}`)
+      }
+
+      if (!decision.allowed) {
+        const draftId = await recordMcpDraft({
+          workspaceId: ctx.workspaceId,
+          storeId: decision.storeId,
+          conversationId: args.conversationId,
+          userId: ctx.userId,
+          text: draftText,
+          intent,
+          confidence,
+          shouldEscalate,
+          autoSent: false,
+          blockedReason: decision.reason,
+        })
+        return ok({
+          sent: false,
+          drafted: true,
+          draftId,
+          blockedReason: decision.reason,
+          message: `Workspace autonomy rules do not allow auto-sending this reply (${decision.reason}). Saved as a draft for human review.`,
+        })
+      }
+
       try {
         const result = await sendReply(ctx.workspaceId, args.conversationId, '', {
           to: args.to ? [{ email: args.to }] : [],
@@ -196,7 +256,19 @@ export function registerInboxTools(server: McpServer, ctx: McpToolContext): void
           bodyHtml: args.bodyHtml ?? '',
           bodyText: args.bodyText ?? '',
         }, undefined)
-        return ok({ sent: true, result })
+        const draftId = await recordMcpDraft({
+          workspaceId: ctx.workspaceId,
+          storeId: decision.storeId,
+          conversationId: args.conversationId,
+          userId: ctx.userId,
+          text: draftText,
+          intent,
+          confidence,
+          shouldEscalate,
+          autoSent: true,
+          blockedReason: null,
+        })
+        return ok({ sent: true, draftId, result })
       } catch (e) {
         return fail(`send_reply failed: ${e instanceof Error ? e.message : 'unknown error'}`)
       }
@@ -215,6 +287,21 @@ export function registerInboxTools(server: McpServer, ctx: McpToolContext): void
         return ok(await linkCustomer(ctx.workspaceId, args.conversationId, args.shopifyCustomerId))
       } catch (e) {
         return fail(`link_customer failed: ${e instanceof Error ? e.message : 'unknown error'}`)
+      }
+    },
+  )
+
+  server.registerTool(
+    'list_members',
+    {
+      description: 'List workspace members (id, name, email, role) so you can assign or escalate a conversation. Use a member id with set_state (assignedTo).',
+      inputSchema: {},
+    },
+    async () => {
+      try {
+        return ok(await getEnrichedMembers({ workspaceId: ctx.workspaceId }))
+      } catch (e) {
+        return fail(`list_members failed: ${e instanceof Error ? e.message : 'unknown error'}`)
       }
     },
   )

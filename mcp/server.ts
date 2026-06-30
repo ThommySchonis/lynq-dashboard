@@ -5,6 +5,7 @@ import { registerMacroTools } from '@/mcp/tools/macros'
 import { registerSearchTools } from '@/mcp/tools/search'
 import { registerShopifyTools } from '@/mcp/tools/shopify'
 import { registerEmmaTools } from '@/mcp/tools/emma'
+import { registerContextTools } from '@/mcp/tools/context'
 
 export function registerLynqTools(server: McpServer, ctx: McpToolContext): void {
   registerInboxTools(server, ctx)
@@ -12,4 +13,5 @@ export function registerLynqTools(server: McpServer, ctx: McpToolContext): void 
   registerSearchTools(server, ctx)
   registerShopifyTools(server, ctx)
   registerEmmaTools(server, ctx)
+  registerContextTools(server, ctx)
 }

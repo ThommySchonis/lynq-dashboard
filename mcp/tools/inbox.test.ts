@@ -11,6 +11,15 @@ const setConversationState = vi.fn()
 const createInboxDraft = vi.fn()
 const sendReply = vi.fn()
 const linkCustomer = vi.fn()
+const evaluateMcpSend = vi.fn()
+const recordMcpDraft = vi.fn()
+const getEnrichedMembers = vi.fn()
+vi.mock('@/lib/services/mcp-autonomy-gate', () => ({
+  evaluateMcpSend: (...a: unknown[]): unknown => evaluateMcpSend(...a),
+}))
+vi.mock('@/lib/services/mcp-reply-record', () => ({
+  recordMcpDraft: (...a: unknown[]): unknown => recordMcpDraft(...a),
+}))
 vi.mock('@/lib/services/conversations', () => ({
   listConversations: (...a: unknown[]): unknown => listConversations(...a),
   getConversation: (...a: unknown[]): unknown => getConversation(...a),
@@ -27,6 +36,9 @@ vi.mock('@/lib/services/inbox-drafts', () => ({
 vi.mock('@/lib/conversationEngine', () => ({
   sendReply: (...a: unknown[]): unknown => sendReply(...a),
   linkCustomer: (...a: unknown[]): unknown => linkCustomer(...a),
+}))
+vi.mock('@/lib/services/workspace-members', () => ({
+  getEnrichedMembers: (...a: unknown[]): unknown => getEnrichedMembers(...a),
 }))
 vi.mock('@/lib/supabaseAdmin', () => ({ supabaseAdmin: {} }))
 vi.mock('@/lib/permissions', () => ({
@@ -63,6 +75,9 @@ beforeEach(() => {
   createInboxDraft.mockReset()
   sendReply.mockReset()
   linkCustomer.mockReset()
+  evaluateMcpSend.mockReset()
+  recordMcpDraft.mockReset()
+  getEnrichedMembers.mockReset()
 })
 
 describe('registerInboxTools / list_conversations', () => {
@@ -267,7 +282,11 @@ describe('registerInboxTools / create_draft', () => {
 })
 
 describe('send_reply', () => {
-  beforeEach(() => sendReply.mockReset())
+  beforeEach(() => {
+    sendReply.mockReset()
+    evaluateMcpSend.mockResolvedValue({ allowed: true, reason: null, storeId: 's1' })
+    recordMcpDraft.mockResolvedValue('d-legacy')
+  })
   it('observer cannot send', async () => {
     const { server, tools } = fakeServer()
     registerInboxTools(server as never, { userId: 'u1', workspaceId: 'w1', role: 'observer' })
@@ -299,5 +318,64 @@ describe('link_customer', () => {
     registerInboxTools(server as never, { userId: 'u1', workspaceId: 'w1', role: 'agent' })
     await tools.link_customer.handler({ conversationId: 'c1', shopifyCustomerId: 'cust1' })
     expect(linkCustomer).toHaveBeenCalledWith('w1', 'c1', 'cust1')
+  })
+})
+
+describe('send_reply autonomy enforcement', () => {
+  function getSendReply() {
+    const { server, tools } = fakeServer()
+    registerInboxTools(server as never, ctx)
+    return tools.send_reply.handler
+  }
+
+  it('sends when the gate allows and records an auto_sent draft', async () => {
+    evaluateMcpSend.mockResolvedValue({ allowed: true, reason: null, storeId: 's1' })
+    recordMcpDraft.mockResolvedValue('d1')
+    sendReply.mockResolvedValue({ ok: true })
+    const handler = getSendReply()
+    const res = await handler({ conversationId: 'c1', bodyText: 'hello', intent: 'wismo', confidence: 0.95 })
+    expect(sendReply).toHaveBeenCalled()
+    expect(res.isError).toBeUndefined()
+    expect(res.content[0].text).toContain('"sent": true')
+    expect(recordMcpDraft).toHaveBeenCalledWith(expect.objectContaining({ autoSent: true }))
+  })
+
+  it('does NOT send when blocked and drafts instead with the reason', async () => {
+    evaluateMcpSend.mockResolvedValue({ allowed: false, reason: 'blocked_intent', storeId: 's1' })
+    recordMcpDraft.mockResolvedValue('d2')
+    const handler = getSendReply()
+    const res = await handler({ conversationId: 'c1', bodyText: 'a refund for you', intent: 'refund_or_cancel', confidence: 1 })
+    expect(sendReply).not.toHaveBeenCalled()
+    expect(res.content[0].text).toContain('"drafted": true')
+    expect(res.content[0].text).toContain('blocked_intent')
+    expect(recordMcpDraft).toHaveBeenCalledWith(expect.objectContaining({ autoSent: false, blockedReason: 'blocked_intent' }))
+  })
+
+  it('defaults missing intent/confidence to a safe draft (gate blocks)', async () => {
+    evaluateMcpSend.mockResolvedValue({ allowed: false, reason: 'confidence_low', storeId: 's1' })
+    recordMcpDraft.mockResolvedValue('d3')
+    const handler = getSendReply()
+    await handler({ conversationId: 'c1', bodyText: 'hello' })
+    expect(evaluateMcpSend).toHaveBeenCalledWith(expect.objectContaining({ intent: 'unknown', confidence: 0, shouldEscalate: false }))
+    expect(sendReply).not.toHaveBeenCalled()
+  })
+
+  it('rejects a role that cannot reply', async () => {
+    const { server, tools } = fakeServer()
+    registerInboxTools(server as never, { userId: 'u1', workspaceId: 'w1', role: 'observer' })
+    const res = await tools.send_reply.handler({ conversationId: 'c1', bodyText: 'hi' })
+    expect(res.isError).toBe(true)
+    expect(evaluateMcpSend).not.toHaveBeenCalled()
+  })
+})
+
+describe('list_members', () => {
+  it('lists workspace members scoped to the workspace', async () => {
+    getEnrichedMembers.mockResolvedValue([{ id: 'u1', workspace_id: 'w1', email: 'a@b.com', name: 'Aya', role: 'agent', joined_at: 't' }])
+    const { server, tools } = fakeServer()
+    registerInboxTools(server as never, ctx)
+    const res = await tools.list_members.handler({})
+    expect(getEnrichedMembers).toHaveBeenCalledWith({ workspaceId: 'w1' })
+    expect(res.content[0].text).toContain('Aya')
   })
 })

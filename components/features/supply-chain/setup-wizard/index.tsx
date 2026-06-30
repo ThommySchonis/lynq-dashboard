@@ -82,37 +82,39 @@ export function SetupWizard({ onConnected }: { onConnected: () => void }) {
       <div className="flex min-h-0 flex-1">
         <StepsRail current={state.step} onSelect={(i) => dispatch({ type: 'goTo', step: i })} />
         <div className="w-px shrink-0 bg-border" />
-        <div className="flex-1">
-          <div className="mx-auto w-full max-w-[720px] px-6 pb-10 pt-11">
-            {state.step === 0 && (
-              <StepApiKey
-                apiKey={state.apiKey}
-                onApiKeyChange={(value) => dispatch({ type: 'setApiKey', value })}
-                onSubmit={handleNext}
-                error={error?.message ?? null}
-                autoSync={state.autoSync}
-                onToggleAutoSync={() => dispatch({ type: 'toggleAutoSync' })}
-              />
-            )}
-            {state.step === 1 && <StepWebhook webhookToken={state.webhookToken} />}
-            {state.step >= 2 && (
-              <StepPlaceholder
-                step={state.step + 1}
-                title={SETUP_STEPS[state.step].title}
-                subtitle={SETUP_STEPS[state.step].subtitle}
-              />
-            )}
+        <div className="flex min-h-0 flex-1 flex-col">
+          <div className="flex-1 overflow-y-auto">
+            <div className="mx-auto w-full max-w-[720px] px-6 pb-10 pt-11">
+              {state.step === 0 && (
+                <StepApiKey
+                  apiKey={state.apiKey}
+                  onApiKeyChange={(value) => dispatch({ type: 'setApiKey', value })}
+                  onSubmit={handleNext}
+                  error={error?.message ?? null}
+                  autoSync={state.autoSync}
+                  onToggleAutoSync={() => dispatch({ type: 'toggleAutoSync' })}
+                />
+              )}
+              {state.step === 1 && <StepWebhook webhookToken={state.webhookToken} />}
+              {state.step >= 2 && (
+                <StepPlaceholder
+                  step={state.step + 1}
+                  title={SETUP_STEPS[state.step].title}
+                  subtitle={SETUP_STEPS[state.step].subtitle}
+                />
+              )}
+            </div>
           </div>
+
+          <WizardFooter
+            canPrev={state.step > 0}
+            onPrev={() => dispatch({ type: 'prev' })}
+            onNext={handleNext}
+            nextLabel={nextLabel}
+            nextDisabled={nextDisabled}
+          />
         </div>
       </div>
-
-      <WizardFooter
-        canPrev={state.step > 0}
-        onPrev={() => dispatch({ type: 'prev' })}
-        onNext={handleNext}
-        nextLabel={nextLabel}
-        nextDisabled={nextDisabled}
-      />
     </main>
   )
 }

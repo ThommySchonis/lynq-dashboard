@@ -21,7 +21,7 @@ function RailItem({
       <button
         type="button"
         onClick={onClick}
-        className="flex w-full items-center gap-3 rounded-xl border border-border bg-card px-3 py-[11px] text-left shadow-[0_4px_12px_-4px_rgba(15,13,31,0.08)]"
+        className="flex w-full items-center gap-3 rounded-[12px] border border-border bg-card px-3 py-[11px] text-left shadow-[0_4px_12px_-4px_rgba(15,13,31,0.08)]"
       >
         <span className="flex h-7 w-7 items-center justify-center rounded-full bg-accent-soft text-xs font-bold text-primary">
           {index + 1}
@@ -38,11 +38,11 @@ function RailItem({
       type="button"
       onClick={onClick}
       disabled={!done}
-      className="flex w-full items-center gap-3 rounded-xl px-3 py-[11px] text-left disabled:cursor-default"
+      className="flex w-full items-center gap-3 rounded-[12px] px-3 py-[11px] text-left disabled:cursor-default"
     >
       <span
         className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-semibold ${
-          done ? 'bg-success-soft text-success' : 'border border-border bg-card text-foreground-4'
+          done ? 'bg-success-soft text-success' : 'bg-card text-foreground-4'
         }`}
       >
         {done ? <Check className="h-3 w-3" /> : index + 1}

@@ -13,6 +13,7 @@ use_legacy_install_flow = false
 
 [auth]
 redirect_urls = [
+  "https://app.lynqflow.io/api/auth/shopify/callback",
   "https://lynq-dashboard.vercel.app/api/auth/shopify/callback",
   "http://localhost:3000/api/auth/shopify/callback"
 ]

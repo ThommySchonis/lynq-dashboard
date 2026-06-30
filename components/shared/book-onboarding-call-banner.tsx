@@ -1,8 +1,5 @@
 import { Button } from '@/components/ui/button'
-
-const CALENDLY_ONBOARDING_URL =
-  process.env.NEXT_PUBLIC_CALENDLY_ONBOARDING_URL ??
-  'https://calendly.com/lynq-agency/onboarding-call'
+import { CALENDLY_ONBOARDING_URL } from '@/lib/home-constants'
 
 export function BookOnboardingCallBanner() {
   return (

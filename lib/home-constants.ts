@@ -74,7 +74,7 @@ export const CHAT_ROUTE = '/chat'
 /** Calendly link for the onboarding-call promo card. */
 export const CALENDLY_ONBOARDING_URL =
   process.env.NEXT_PUBLIC_CALENDLY_ONBOARDING_URL ??
-  'https://calendly.com/lynq-agency/onboarding-call'
+  'https://calendly.com/info-lynqagency/discovery-call-clone'
 
 /**
  * "Get started" checklist steps (Figma node 776-17280).

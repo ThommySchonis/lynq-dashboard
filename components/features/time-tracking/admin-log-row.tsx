@@ -5,6 +5,7 @@ import { ChevronDown, AlertTriangle, Coffee, Pencil } from 'lucide-react'
 import { fmtDate, fmtTime, fmtDur, durSec } from '@/lib/time-tracking-constants'
 import type { Session, TeamMember } from '@/types/time-tracking'
 import { SessionEditModal, type EditPatch } from './session-edit-modal'
+import { StatusPill } from './status-pill'
 import { useEditSession } from '@/hooks/time-tracking/use-time-tracking-mutations'
 import { useAuthStore } from '@/stores/auth'
 
@@ -41,15 +42,6 @@ function computeLongFlags(s: Session): LongFlags {
   return { longSession, longBreak }
 }
 
-// Status chip derived from clock-out + pause state.
-function statusPill(s: Session) {
-  if (!s.clocked_out_at && s.status === 'paused')
-    return { box: 'bg-warning-soft', text: 'text-warning', dot: 'bg-warning', label: 'On break' }
-  if (!s.clocked_out_at)
-    return { box: 'bg-accent-soft', text: 'text-primary', dot: 'bg-primary', label: 'Active' }
-  return { box: 'bg-success-soft', text: 'text-success', dot: 'bg-success', label: 'Completed' }
-}
-
 interface AdminLogRowProps {
   session: Session
   /** When true, render an Edit pencil button and enable the edit modal. */
@@ -70,7 +62,6 @@ export function AdminLogRow({ session: s, canEdit = false, membersById }: AdminL
   const wasEdited = !!s.last_edit_at
   const canExpand = hasStructured || hasLegacy || wasEdited
   const { longSession, longBreak } = computeLongFlags(s)
-  const pill = statusPill(s)
 
   // Resolve editor name from the members map (if provided). Falls back to
   // a truncated UUID when we don't have it (e.g. Lynq cross-workspace
@@ -140,10 +131,7 @@ export function AdminLogRow({ session: s, canEdit = false, membersById }: AdminL
 
         {/* Status */}
         <div>
-          <span className={`inline-flex items-center gap-[5px] rounded-full px-[9px] py-1 ${pill.box}`}>
-            <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${pill.dot}`} />
-            <span className={`text-xs font-semibold ${pill.text}`}>{pill.label}</span>
-          </span>
+          <StatusPill session={s} />
         </div>
 
         {/* End-of-day report */}

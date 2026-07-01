@@ -29,8 +29,15 @@ export function useShipments() {
       const res = await fetch(apiUrl(`parcel-panel/tracking?store_id=${activeStoreId ?? ''}`), {
         headers: { Authorization: `Bearer ${token}` },
       })
+      // A not-connected workspace is "not configured", not an error — surface the
+      // setup wizard. The API returns 404 (no row) or 400 "not connected"; treat
+      // both as an empty shipment list.
       if (res.status === 404) return []
-      if (!res.ok) throw new Error('Could not load shipments')
+      if (!res.ok) {
+        const body = await parseJson<{ error?: string }>(res).catch((): { error?: string } => ({}))
+        if (res.status === 400 && body.error === 'ParcelPanel is not connected') return []
+        throw new Error(body.error || 'Could not load shipments')
+      }
       const data = await parseJson<ShipmentsResponse>(res)
       return data.orders ?? []
     },

@@ -56,3 +56,16 @@ export function initialsOf(name: string): string {
 export function classifyBroadcast(broadcast: Record<string, unknown>): FeedItemKind {
   return broadcast['type'] === 'update' ? 'update' : 'tip'
 }
+
+/** Words-per-minute used to estimate reading time from body text. */
+const READ_WPM = 200
+
+/**
+ * Estimates reading time from body text at ~200 wpm.
+ * Returns a label like "4 min read" (minimum 1 minute).
+ */
+export function readTimeOf(body: string | null | undefined): string {
+  const words = body ? body.trim().split(/\s+/).filter(Boolean).length : 0
+  const minutes = Math.max(1, Math.round(words / READ_WPM))
+  return `${minutes} min read`
+}

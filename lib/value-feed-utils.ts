@@ -1,23 +1,20 @@
 export type FeedItemKind = 'tip' | 'masterclass' | 'update'
 
-export const FILTERS: { id: 'all' | FeedItemKind; label: string }[] = [
+export type FilterId = 'all' | FeedItemKind | 'saved'
+
+export const FILTERS: { id: FilterId; label: string }[] = [
   { id: 'all',         label: 'All'           },
   { id: 'tip',         label: 'Tips'          },
   { id: 'masterclass', label: 'Masterclasses' },
   { id: 'update',      label: 'Updates'       },
+  { id: 'saved',       label: 'Saved'         },
 ]
 
-export interface FeedItem {
-  id: string
-  kind: FeedItemKind
-  title: string
-  body?: string | null
-  created_at: string
-  pinned?: boolean
-  speaker_name?: string | null
-  scheduled_at?: string | null
-  zoom_url?: string | null
-  youtube_url?: string | null
+/** Uppercase display label for a feed item kind (meta rows, badges). */
+export const KIND_LABEL: Record<FeedItemKind, string> = {
+  tip:         'TIP',
+  masterclass: 'MASTERCLASS',
+  update:      'UPDATE',
 }
 
 /**
@@ -55,4 +52,17 @@ export function initialsOf(name: string): string {
  */
 export function classifyBroadcast(broadcast: Record<string, unknown>): FeedItemKind {
   return broadcast['type'] === 'update' ? 'update' : 'tip'
+}
+
+/** Words-per-minute used to estimate reading time from body text. */
+const READ_WPM = 200
+
+/**
+ * Estimates reading time from body text at ~200 wpm.
+ * Returns a label like "4 min read" (minimum 1 minute).
+ */
+export function readTimeOf(body: string | null | undefined): string {
+  const words = body ? body.trim().split(/\s+/).filter(Boolean).length : 0
+  const minutes = Math.max(1, Math.round(words / READ_WPM))
+  return `${minutes} min read`
 }

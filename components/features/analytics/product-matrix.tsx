@@ -5,7 +5,7 @@ import { LayoutGrid } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
 import { buildProductMatrix, fmtEur, CAT_COLORS } from '@/lib/analytics-constants'
 import { CardEmptyState } from './card-empty-state'
-import { TablePagination } from './table-pagination'
+import { TablePagination } from '@/components/shared/table-pagination'
 import type { Refund } from '@/types/analytics'
 
 interface ProductMatrixProps {

@@ -4,11 +4,12 @@ import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { fmtDate, timeUntil } from '@/lib/date-utils'
 import { googleCalUrl, initialsOf, classifyBroadcast } from '@/lib/value-feed-utils'
+import type { FeedItemKind } from '@/lib/value-feed-utils'
 import type { Broadcast, Masterclass } from '@/types/admin'
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
-export type FeedItemKind = 'tip' | 'masterclass' | 'update'
+export type { FeedItemKind }
 
 export interface NormalizedFeedItem {
   id: string
@@ -25,6 +26,14 @@ export interface NormalizedFeedItem {
   zoomUrl: string | null | undefined
   calUrl: string | null
   youtubeUrl: string | null
+  /** Event details for the modal event card — masterclasses only. */
+  event: {
+    month: string
+    day: string
+    datetimeText: string
+  } | null
+  /** Topic tags shown in the modal footer (from broadcast topic). */
+  tags: string[]
   sortKey: number
   isPinned: boolean
 }
@@ -70,12 +79,25 @@ function useUpcomingMasterclasses() {
 
 // ─── Format helpers (local — not exported from date-utils) ───────────────────
 
+const fmtMonth = (iso: string) => new Date(iso).toLocaleDateString('en-US', { month: 'short' }).toUpperCase()
+const fmtDay = (iso: string) => String(new Date(iso).getDate()).padStart(2, '0')
+
 function fmtEventDate(iso: string): string {
   const d = new Date(iso)
   return (
     d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }) +
     ' · ' +
     d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+  )
+}
+
+/** Full event datetime for the modal event card, e.g. "Thursday, May 21, 2026 · 3:00 PM". */
+function fmtEventFull(iso: string): string {
+  const d = new Date(iso)
+  return (
+    d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }) +
+    ' · ' +
+    d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
   )
 }
 
@@ -109,6 +131,12 @@ export function useValueFeedData(): UseValueFeedResult {
     zoomUrl:    mc.zoom_url ?? null,
     calUrl:     googleCalUrl(mc.title, mc.scheduled_at, 60),
     youtubeUrl: null,
+    event: {
+      month:        fmtMonth(mc.scheduled_at),
+      day:          fmtDay(mc.scheduled_at),
+      datetimeText: fmtEventFull(mc.scheduled_at) + (mc.zoom_url ? ' · Online (Zoom)' : ''),
+    },
+    tags:       [],
     sortKey:    new Date(mc.scheduled_at).getTime(),
     isPinned:   false,
   }))
@@ -124,6 +152,8 @@ export function useValueFeedData(): UseValueFeedResult {
     zoomUrl:    undefined,
     calUrl:     null,
     youtubeUrl: p.youtube_url ?? null,
+    event:      null,
+    tags:       p.topic ? p.topic.split(',').map(t => t.trim()).filter(Boolean) : [],
     sortKey:    new Date(p.created_at).getTime(),
     isPinned:   !!p.is_pinned,
   }))
@@ -139,4 +169,81 @@ export function useValueFeedData(): UseValueFeedResult {
   })
 
   return { items, isLoading, isError }
+}
+
+// ─── Sidebar ─────────────────────────────────────────────────────────────────
+
+export interface SidebarEvent {
+  id: string
+  month: string
+  day: string
+  title: string
+  timeText: string
+  calUrl: string
+  zoomUrl: string | null
+}
+
+export interface SidebarVideo {
+  id: string
+  title: string
+  youtubeUrl: string
+}
+
+export interface SidebarPopularItem {
+  id: string
+  title: string
+  kindLabel: string
+}
+
+export interface ValueFeedSidebarData {
+  events: SidebarEvent[]
+  videos: SidebarVideo[]
+  popular: SidebarPopularItem[]
+}
+
+const cap = (s: string) => (s ? s[0].toUpperCase() + s.slice(1) : s)
+const fmtTime = (iso: string) => new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+
+/**
+ * Sidebar data derived from the same broadcasts/masterclasses queries (shared
+ * cache). Popular is top-N by recency — no real read counts exist (see plan).
+ */
+export function useValueFeedSidebar(): ValueFeedSidebarData {
+  const { data: broadcasts = [] } = useBroadcasts()
+  const { data: masterclasses = [] } = useUpcomingMasterclasses()
+
+  const events: SidebarEvent[] = masterclasses.slice(0, 3).map(mc => ({
+    id:       'm-' + mc.id,
+    month:    fmtMonth(mc.scheduled_at),
+    day:      fmtDay(mc.scheduled_at),
+    title:    mc.title,
+    timeText: fmtTime(mc.scheduled_at) + (mc.zoom_url ? ' · Online' : ''),
+    calUrl:   googleCalUrl(mc.title, mc.scheduled_at, 60),
+    zoomUrl:  mc.zoom_url ?? null,
+  }))
+
+  const videos: SidebarVideo[] = broadcasts
+    .filter(b => !!b.youtube_url)
+    .slice(0, 3)
+    .map(b => ({ id: 'b-' + b.id, title: b.title, youtubeUrl: b.youtube_url as string }))
+
+  const popular: SidebarPopularItem[] = [
+    ...masterclasses.map(mc => ({
+      id:        'm-' + mc.id,
+      title:     mc.title,
+      kindLabel: 'Masterclass',
+      sortKey:   new Date(mc.scheduled_at).getTime(),
+    })),
+    ...broadcasts.map(b => ({
+      id:        'b-' + b.id,
+      title:     b.title,
+      kindLabel: cap(classifyBroadcast(b as unknown as Record<string, unknown>)),
+      sortKey:   new Date(b.created_at).getTime(),
+    })),
+  ]
+    .sort((a, b) => b.sortKey - a.sortKey)
+    .slice(0, 4)
+    .map(({ id, title, kindLabel }) => ({ id, title, kindLabel }))
+
+  return { events, videos, popular }
 }

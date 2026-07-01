@@ -166,6 +166,8 @@ export const SETUP_STEPS: SetupStep[] = [
 export interface StatusEventOption {
   key: string
   title: string
+  /** Short name used in the review summary. */
+  short: string
   caption: string
   /** Renders the "Opens a ticket" badge and hints at inbox automation. */
   opensTicket?: boolean
@@ -173,12 +175,12 @@ export interface StatusEventOption {
 }
 
 export const STATUS_EVENTS: StatusEventOption[] = [
-  { key: 'info_received', title: 'Info received', caption: 'Label created, not yet scanned by the carrier.', defaultOn: false },
-  { key: 'in_transit', title: 'In transit', caption: 'Package is moving through the carrier network.', defaultOn: true },
-  { key: 'out_for_delivery', title: 'Out for delivery', caption: 'On the vehicle for final delivery today.', defaultOn: true },
-  { key: 'delivered', title: 'Delivered', caption: 'Marked delivered by the carrier.', defaultOn: true },
-  { key: 'exception', title: 'Delivery exception', caption: 'Failed attempt, delay or address problem.', opensTicket: true, defaultOn: true },
-  { key: 'returned', title: 'Returned to sender', caption: 'Package is on its way back to you.', defaultOn: true },
+  { key: 'info_received', title: 'Info received', short: 'Info received', caption: 'Label created, not yet scanned by the carrier.', defaultOn: false },
+  { key: 'in_transit', title: 'In transit', short: 'In transit', caption: 'Package is moving through the carrier network.', defaultOn: true },
+  { key: 'out_for_delivery', title: 'Out for delivery', short: 'Out for delivery', caption: 'On the vehicle for final delivery today.', defaultOn: true },
+  { key: 'delivered', title: 'Delivered', short: 'Delivered', caption: 'Marked delivered by the carrier.', defaultOn: true },
+  { key: 'exception', title: 'Delivery exception', short: 'Exception', caption: 'Failed attempt, delay or address problem.', opensTicket: true, defaultOn: true },
+  { key: 'returned', title: 'Returned to sender', short: 'Returned', caption: 'Package is on its way back to you.', defaultOn: true },
 ]
 
 /**
@@ -188,6 +190,10 @@ export const STATUS_EVENTS: StatusEventOption[] = [
 export interface TrackingPrefOption {
   key: string
   title: string
+  /** Short label used in the review summary. */
+  short: string
+  /** Which review line the pref belongs to. */
+  group: 'customer' | 'ai'
   caption: string
   defaultOn: boolean
 }
@@ -196,24 +202,32 @@ export const TRACKING_PREFS: TrackingPrefOption[] = [
   {
     key: 'proactive_updates',
     title: 'Proactive shipment updates',
+    short: 'Proactive emails',
+    group: 'customer',
     caption: 'Email customers automatically as their order ships, goes out for delivery and arrives.',
     defaultOn: true,
   },
   {
     key: 'branded_page',
     title: 'Branded tracking page',
+    short: 'Branded page',
+    group: 'customer',
     caption: 'Customers follow their order on your Lynq-branded page instead of the carrier’s site.',
     defaultOn: true,
   },
   {
     key: 'emma_wismo',
     title: 'Let Emma answer “Where is my order?”',
+    short: 'Emma answers “Where is my order?”',
+    group: 'ai',
     caption: 'Emma replies instantly using live tracking and shares the tracking link — no agent needed.',
     defaultOn: true,
   },
   {
     key: 'auto_resolve',
     title: 'Auto-resolve on delivery',
+    short: 'Auto-resolve on delivery',
+    group: 'ai',
     caption: 'Close the related ticket automatically once the order is marked delivered.',
     defaultOn: true,
   },
@@ -221,6 +235,15 @@ export const TRACKING_PREFS: TrackingPrefOption[] = [
 
 /** Static sender shown in the "Send updates from" control (BE-5 will make it real). */
 export const SEND_FROM_LABEL = 'Support · support@lynq.app'
+
+/** "What's live now" bullets shown on the connected screen. */
+export const CONNECTED_HIGHLIGHTS: string[] = [
+  'Real-time status tracking on every new order',
+  'Proactive shipment emails sent from Support',
+  'Branded tracking page is live for customers',
+  'Emma answers “Where is my order?” automatically',
+  'Delivery exceptions auto-open a ticket in your inbox',
+]
 
 // ── Attention item builder ───────────────────────────────────────────────────
 

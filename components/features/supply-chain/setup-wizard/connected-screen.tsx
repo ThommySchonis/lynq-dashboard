@@ -10,7 +10,7 @@ export function ConnectedScreen() {
         <span className="flex h-7 w-7 items-center justify-center rounded-full border border-success bg-success-soft">
           <Check className="h-4 w-4 text-success" />
         </span>
-        <h2 className="text-center text-xl font-bold tracking-[-0.01em] text-foreground">Shipment Tracker connected</h2>
+        <h2 className="text-center text-xl font-bold text-foreground">Shipment Tracker connected</h2>
         <p className="max-w-[440px] text-center text-sm text-foreground-3">
           Parcel Panel is linked. Lynq now tracks every new shipment automatically — no more manual status updates.
         </p>

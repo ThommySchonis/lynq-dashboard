@@ -1,9 +1,8 @@
+import { ALLOWED_APP_ORIGINS } from "@/lib/allowed-origins";
+
 const MUTATING_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 
-const ALLOWED_ORIGINS = [
-  "https://lynq-dashboard.vercel.app",
-  "http://localhost:3000",
-];
+const ALLOWED_ORIGINS = ALLOWED_APP_ORIGINS;
 
 const CSRF_EXEMPT_PREFIXES = [
   "/api/webhooks/shopify",

@@ -1,45 +1,46 @@
-import type { Metadata } from 'next'
-import { Instrument_Serif, DM_Sans } from 'next/font/google'
-import './globals.css'
+import type { Metadata } from "next";
+import { Instrument_Serif, DM_Sans } from "next/font/google";
+import "./globals.css";
 
 // Secondary fonts — not used on every route (Switzer is the body font), so we
 // opt out of automatic preload to avoid "preloaded but not used" warnings.
 // `display: swap` still loads them on demand where they're actually rendered.
 const instrumentSerif = Instrument_Serif({
-  subsets:  ['latin'],
-  weight:   '400',
-  display:  'swap',
-  preload:  false,
-  variable: '--font-display',
-  fallback: ['Cormorant Garamond', 'Georgia', 'Cambria', 'serif'],
-})
+  subsets: ["latin"],
+  weight: "400",
+  display: "swap",
+  preload: false,
+  variable: "--font-display",
+  fallback: ["Cormorant Garamond", "Georgia", "Cambria", "serif"],
+});
 
 const dmSans = DM_Sans({
-  subsets:  ['latin'],
-  weight:   ['400', '500', '600'],
-  display:  'swap',
-  preload:  false,
-  variable: '--font-dm-sans',
-  fallback: ['-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'sans-serif'],
-})
-import { AuthHydrator } from '@/components/providers/auth-hydrator'
-import { ThemeSync } from '@/components/providers/theme-sync'
-import { QueryProvider } from '@/components/providers/query-provider'
-import { StoreProvider } from '@/components/providers/store-provider'
-import { Toaster } from '@/components/ui/sonner'
-import { PageTransition } from '@/components/shared/page-transition'
-import { BlockedStateGuard } from '@/components/shared/blocked-state-guard'
-import { SentryUserSync } from '@/components/providers/sentry-user-sync'
-import { CookieConsentBanner } from '@/components/features/cookie-consent/cookie-consent-banner'
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  display: "swap",
+  preload: false,
+  variable: "--font-dm-sans",
+  fallback: ["-apple-system", "BlinkMacSystemFont", "Segoe UI", "sans-serif"],
+});
+import { AuthHydrator } from "@/components/providers/auth-hydrator";
+import { ThemeSync } from "@/components/providers/theme-sync";
+import { QueryProvider } from "@/components/providers/query-provider";
+import { StoreProvider } from "@/components/providers/store-provider";
+import { Toaster } from "@/components/ui/sonner";
+import { PageTransition } from "@/components/shared/page-transition";
+import { BlockedStateGuard } from "@/components/shared/blocked-state-guard";
+import { SentryUserSync } from "@/components/providers/sentry-user-sync";
+import { CookieConsentBanner } from "@/components/features/cookie-consent/cookie-consent-banner";
 
 export const metadata: Metadata = {
-  title: 'Lynq — Customer Support Dashboard',
-  description: 'Premium customer support dashboard for e-commerce brands',
-}
+  title: "Lynq — Customer Support Dashboard",
+  description: "Premium customer support dashboard for e-commerce brands",
+  verification: {
+    google: "H7NU9A5A09tj40hTK8GQC-68d5CywxTM9wwLChWnyG8",
+  },
+};
 
-export default function RootLayout({
-  children,
-}: Readonly<{ children: React.ReactNode }>) {
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" suppressHydrationWarning className={`${instrumentSerif.variable} ${dmSans.variable}`}>
       <head>
@@ -49,10 +50,7 @@ export default function RootLayout({
           }}
         />
         <link rel="preconnect" href="https://api.fontshare.com" />
-        <link
-          rel="stylesheet"
-          href="https://api.fontshare.com/v2/css?f[]=switzer@400,500,600,700,800&display=swap"
-        />
+        <link rel="stylesheet" href="https://api.fontshare.com/v2/css?f[]=switzer@400,500,600,700,800&display=swap" />
       </head>
       <body>
         <SentryUserSync />
@@ -68,5 +66,5 @@ export default function RootLayout({
         <CookieConsentBanner />
       </body>
     </html>
-  )
+  );
 }

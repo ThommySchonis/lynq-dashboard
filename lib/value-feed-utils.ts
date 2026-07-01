@@ -1,10 +1,13 @@
 export type FeedItemKind = 'tip' | 'masterclass' | 'update'
 
-export const FILTERS: { id: 'all' | FeedItemKind; label: string }[] = [
+export type FilterId = 'all' | FeedItemKind | 'saved'
+
+export const FILTERS: { id: FilterId; label: string }[] = [
   { id: 'all',         label: 'All'           },
   { id: 'tip',         label: 'Tips'          },
   { id: 'masterclass', label: 'Masterclasses' },
   { id: 'update',      label: 'Updates'       },
+  { id: 'saved',       label: 'Saved'         },
 ]
 
 /** Uppercase display label for a feed item kind (meta rows, badges). */

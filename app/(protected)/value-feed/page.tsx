@@ -1,30 +1,52 @@
 'use client'
 
 import { useState } from 'react'
-import PostCard from '@/components/features/value-feed/post-card'
 import { FeedSkeleton } from '@/components/features/value-feed/feed-skeleton'
 import { FeedEmptyState } from '@/components/features/value-feed/feed-empty-state'
 import { ValueFeedBackground } from '@/components/features/value-feed/value-feed-background'
 import { ValueFeedHero } from '@/components/features/value-feed/value-feed-hero'
 import { FeaturedCard } from '@/components/features/value-feed/featured-card'
-import { useValueFeedData } from '@/hooks/value-feed'
-import type { FeedItemKind } from '@/hooks/value-feed'
-import { FILTERS } from '@/lib/value-feed-utils'
+import { FilterTabs } from '@/components/features/value-feed/filter-tabs'
+import { ArticleRow } from '@/components/features/value-feed/article-row'
+import { FeedPagination } from '@/components/features/value-feed/feed-pagination'
+import { useValueFeedData, useSavedIds } from '@/hooks/value-feed'
+import type { FilterId } from '@/lib/value-feed-utils'
+
+const PAGE_SIZE = 4
 
 export default function ValueFeedPage() {
-  const [filter, setFilter] = useState<'all' | FeedItemKind>('all')
+  const [filter, setFilter] = useState<FilterId>('all')
+  const [page, setPage] = useState(1)
   const [, setActiveId] = useState<string | null>(null)
   const { items, isLoading } = useValueFeedData()
+  const savedIds = useSavedIds()
 
   const featured = items[0]
   const rest = featured ? items.slice(1) : items
-  const filtered = filter === 'all' ? rest : rest.filter(it => it.kind === filter)
+  const savedSet = new Set(savedIds)
 
-  const counts: Record<string, number> = {
+  const filtered =
+    filter === 'all'
+      ? rest
+      : filter === 'saved'
+        ? rest.filter((it) => savedSet.has(it.id))
+        : rest.filter((it) => it.kind === filter)
+
+  const counts: Record<FilterId, number> = {
     all:         rest.length,
-    tip:         rest.filter(it => it.kind === 'tip').length,
-    masterclass: rest.filter(it => it.kind === 'masterclass').length,
-    update:      rest.filter(it => it.kind === 'update').length,
+    tip:         rest.filter((it) => it.kind === 'tip').length,
+    masterclass: rest.filter((it) => it.kind === 'masterclass').length,
+    update:      rest.filter((it) => it.kind === 'update').length,
+    saved:       rest.filter((it) => savedSet.has(it.id)).length,
+  }
+
+  const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
+  const current = Math.min(page, pageCount)
+  const paged = filtered.slice((current - 1) * PAGE_SIZE, current * PAGE_SIZE)
+
+  const changeFilter = (id: FilterId) => {
+    setFilter(id)
+    setPage(1)
   }
 
   return (
@@ -40,50 +62,30 @@ export default function ValueFeedPage() {
             <div className="flex min-w-0 flex-1 flex-col gap-[22px]">
               {featured && <FeaturedCard item={featured} onOpen={() => setActiveId(featured.id)} />}
 
-              {/* ─── Filter tabs (transitional — replaced in PR2) ─── */}
-              <div className="flex flex-wrap items-center gap-2">
-                {FILTERS.map(f => (
-                  <button
-                    key={f.id}
-                    type="button"
-                    onClick={() => setFilter(f.id)}
-                    className={`inline-flex cursor-pointer items-center gap-1.5 rounded-full px-3.5 py-2 text-sm font-medium transition-colors ${
-                      filter === f.id
-                        ? 'bg-accent-soft text-primary'
-                        : 'border border-border bg-card text-foreground-3 hover:text-foreground'
-                    }`}
-                  >
-                    {f.label}
-                    <span className="text-xs tabular-nums text-foreground-4">{counts[f.id] ?? 0}</span>
-                  </button>
-                ))}
-              </div>
+              <FilterTabs active={filter} counts={counts} onChange={changeFilter} />
 
-              {/* ─── Feed list (transitional — replaced in PR2) ─── */}
               {isLoading ? (
-                <div className="flex flex-col gap-4">
-                  {[0, 1, 2].map(i => (
+                <div className="flex flex-col gap-[22px]">
+                  {[0, 1, 2].map((i) => (
                     <FeedSkeleton key={i} delay={i * 60} />
                   ))}
                 </div>
               ) : filtered.length === 0 ? (
-                <FeedEmptyState hasFilter={filter !== 'all'} onClear={() => setFilter('all')} />
+                <FeedEmptyState hasFilter={filter !== 'all'} onClear={() => changeFilter('all')} />
               ) : (
-                <div className="flex flex-col gap-4">
-                  {filtered.map(item => (
-                    <PostCard
-                      key={item.id}
-                      kind={item.kind}
-                      title={item.title}
-                      dateText={item.dateText}
-                      body={item.body ?? undefined}
-                      author={item.author ?? undefined}
-                      zoomUrl={item.zoomUrl}
-                      calUrl={item.calUrl}
-                      youtubeUrl={item.youtubeUrl}
-                    />
-                  ))}
-                </div>
+                <>
+                  <div className="flex flex-col gap-[22px]">
+                    {paged.map((item) => (
+                      <ArticleRow key={item.id} item={item} onOpen={() => setActiveId(item.id)} />
+                    ))}
+                  </div>
+                  <FeedPagination
+                    page={current}
+                    pageSize={PAGE_SIZE}
+                    total={filtered.length}
+                    onPageChange={setPage}
+                  />
+                </>
               )}
             </div>
 

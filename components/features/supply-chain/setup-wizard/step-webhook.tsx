@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Check, Copy, ShieldCheck } from 'lucide-react'
+import { Check, Copy, Info, ShieldCheck } from 'lucide-react'
 import { apiUrl } from '@/lib/api-client'
 import { StepHeader, SectionLabel } from './wizard-ui'
 
@@ -54,8 +54,29 @@ export function StepWebhook({ webhookToken }: { webhookToken: string | null }) {
           </button>
         </div>
         <div className="flex items-center gap-2 text-foreground-3">
-          <ShieldCheck className="h-3.5 w-3.5 shrink-0" />
+          <Info className="h-3.5 w-3.5 shrink-0" />
           <p className="text-xs font-medium">Paste this into Parcel Panel → Settings → Webhooks → Add endpoint.</p>
+        </div>
+
+        <div className="h-px w-full bg-border" />
+
+        <div className="flex items-center gap-2.5">
+          <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-warning-soft">
+            <span className="h-2 w-2 rounded-full bg-warning" />
+          </span>
+          <div className="flex min-w-0 flex-1 flex-col gap-px">
+            <p className="text-sm font-semibold text-foreground">Waiting for the first event…</p>
+            <p className="text-xs font-medium text-foreground-3">
+              Lynq automatically verifies the connection once Parcel Panel sends an update.
+            </p>
+          </div>
+          {/* TODO(backend): real test-event send + connection-health polling (BE-11). */}
+          <button
+            type="button"
+            className="shrink-0 rounded-[9px] bg-accent-soft px-3.5 py-2 text-sm font-semibold text-primary"
+          >
+            Send test event
+          </button>
         </div>
       </div>
     </div>

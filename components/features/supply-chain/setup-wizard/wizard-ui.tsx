@@ -1,5 +1,7 @@
 'use client'
 
+import type { LucideIcon } from 'lucide-react'
+
 /** Shared primitives for the Parcel Panel setup wizard. */
 
 /** Centered step heading: numbered badge + title + subtitle. */
@@ -49,5 +51,40 @@ export function Toggle({
     >
       <span className="h-4 w-4 rounded-full bg-card" />
     </button>
+  )
+}
+
+/** Row with a chip icon, title (+ optional badge), caption and a right-side control. */
+export function PrefRow({
+  icon: Icon,
+  iconClass,
+  chipClass = 'bg-surface-chip',
+  title,
+  caption,
+  badge,
+  control,
+}: {
+  icon: LucideIcon
+  iconClass?: string
+  chipClass?: string
+  title: string
+  caption: string
+  badge?: React.ReactNode
+  control: React.ReactNode
+}) {
+  return (
+    <div className="flex items-center gap-[13px] rounded-[11px] px-3 py-3">
+      <span className={`flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-[8px] ${chipClass}`}>
+        <Icon className={`h-[18px] w-[18px] ${iconClass ?? 'text-foreground-3'}`} />
+      </span>
+      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+        <div className="flex items-center gap-2">
+          <p className="text-sm font-semibold text-foreground">{title}</p>
+          {badge}
+        </div>
+        <p className="text-xs font-medium text-foreground-3">{caption}</p>
+      </div>
+      {control}
+    </div>
   )
 }

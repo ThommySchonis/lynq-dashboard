@@ -3,12 +3,13 @@
 import { useReducer } from 'react'
 import { useConnectParcelPanel } from '@/hooks/supply-chain/use-supply-chain-mutations'
 import { useStoreStore } from '@/stores/store'
-import { SETUP_STEPS, STATUS_EVENTS } from "@/lib/supply-chain-constants";
+import { SETUP_STEPS, STATUS_EVENTS, TRACKING_PREFS } from "@/lib/supply-chain-constants";
 import { StepsRail } from './steps-rail'
 import { WizardFooter } from './wizard-footer'
 import { StepApiKey } from './step-api-key'
 import { StepWebhook } from './step-webhook'
 import { StepStatusEvents } from "./step-status-events";
+import { StepTrackingPrefs } from "./step-tracking-prefs";
 import { StepPlaceholder } from './step-placeholder'
 
 interface WizardState {
@@ -17,6 +18,7 @@ interface WizardState {
   webhookToken: string | null;
   autoSync: boolean;
   statusEvents: Record<string, boolean>;
+  trackingPrefs: Record<string, boolean>;
 }
 
 type WizardAction =
@@ -26,7 +28,8 @@ type WizardAction =
   | { type: "setApiKey"; value: string }
   | { type: "connected"; token: string }
   | { type: "toggleAutoSync" }
-  | { type: "toggleStatusEvent"; key: string };
+  | { type: "toggleStatusEvent"; key: string }
+  | { type: "toggleTrackingPref"; key: string };
 
 const LAST_STEP = SETUP_STEPS.length - 1
 
@@ -36,6 +39,7 @@ const initialState: WizardState = {
   webhookToken: null,
   autoSync: true,
   statusEvents: Object.fromEntries(STATUS_EVENTS.map((e) => [e.key, e.defaultOn])),
+  trackingPrefs: Object.fromEntries(TRACKING_PREFS.map((p) => [p.key, p.defaultOn])),
 };
 
 function reducer(state: WizardState, action: WizardAction): WizardState {
@@ -54,6 +58,8 @@ function reducer(state: WizardState, action: WizardAction): WizardState {
       return { ...state, autoSync: !state.autoSync };
     case "toggleStatusEvent":
       return { ...state, statusEvents: { ...state.statusEvents, [action.key]: !state.statusEvents[action.key] } };
+    case "toggleTrackingPref":
+      return { ...state, trackingPrefs: { ...state.trackingPrefs, [action.key]: !state.trackingPrefs[action.key] } };
   }
 }
 
@@ -96,7 +102,7 @@ export function SetupWizard({ onConnected }: { onConnected: () => void }) {
         <div className="flex min-h-0 flex-1 flex-col">
           <div className="flex-1 overflow-y-auto">
             <div className="mx-auto w-full max-w-[720px] px-6 pb-10 pt-11">
-              {state.step === 2 && (
+              {state.step === 0 && (
                 <StepApiKey
                   apiKey={state.apiKey}
                   onApiKeyChange={(value) => dispatch({ type: "setApiKey", value })}
@@ -107,8 +113,9 @@ export function SetupWizard({ onConnected }: { onConnected: () => void }) {
                 />
               )}
               {state.step === 1 && <StepWebhook webhookToken={state.webhookToken} />}
-              {state.step === 0 && <StepStatusEvents values={state.statusEvents} onToggle={(key) => dispatch({ type: "toggleStatusEvent", key })} />}
-              {state.step >= 3 && <StepPlaceholder step={state.step + 1} title={SETUP_STEPS[state.step].title} subtitle={SETUP_STEPS[state.step].subtitle} />}
+              {state.step === 2 && <StepStatusEvents values={state.statusEvents} onToggle={(key) => dispatch({ type: "toggleStatusEvent", key })} />}
+              {state.step === 3 && <StepTrackingPrefs values={state.trackingPrefs} onToggle={(key) => dispatch({ type: "toggleTrackingPref", key })} />}
+              {state.step >= 4 && <StepPlaceholder step={state.step + 1} title={SETUP_STEPS[state.step].title} subtitle={SETUP_STEPS[state.step].subtitle} />}
             </div>
           </div>
 

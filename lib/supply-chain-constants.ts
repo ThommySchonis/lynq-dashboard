@@ -181,6 +181,47 @@ export const STATUS_EVENTS: StatusEventOption[] = [
   { key: 'returned', title: 'Returned to sender', caption: 'Package is on its way back to you.', defaultOn: true },
 ]
 
+/**
+ * Tracking preference toggles shown on the "Tracking preferences" wizard step.
+ * UI-only for now (see BE-4/BE-5/BE-6/BE-7/BE-8).
+ */
+export interface TrackingPrefOption {
+  key: string
+  title: string
+  caption: string
+  defaultOn: boolean
+}
+
+export const TRACKING_PREFS: TrackingPrefOption[] = [
+  {
+    key: 'proactive_updates',
+    title: 'Proactive shipment updates',
+    caption: 'Email customers automatically as their order ships, goes out for delivery and arrives.',
+    defaultOn: true,
+  },
+  {
+    key: 'branded_page',
+    title: 'Branded tracking page',
+    caption: 'Customers follow their order on your Lynq-branded page instead of the carrier’s site.',
+    defaultOn: true,
+  },
+  {
+    key: 'emma_wismo',
+    title: 'Let Emma answer “Where is my order?”',
+    caption: 'Emma replies instantly using live tracking and shares the tracking link — no agent needed.',
+    defaultOn: true,
+  },
+  {
+    key: 'auto_resolve',
+    title: 'Auto-resolve on delivery',
+    caption: 'Close the related ticket automatically once the order is marked delivered.',
+    defaultOn: true,
+  },
+]
+
+/** Static sender shown in the "Send updates from" control (BE-5 will make it real). */
+export const SEND_FROM_LABEL = 'Support · support@lynq.app'
+
 // ── Attention item builder ───────────────────────────────────────────────────
 
 export function getAttentionItems(orders: Order[], dismissed: Set<string>): AttentionItem[] {

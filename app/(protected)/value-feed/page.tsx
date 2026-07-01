@@ -8,7 +8,7 @@ import { ValueFeedHero } from '@/components/features/value-feed/value-feed-hero'
 import { FeaturedCard } from '@/components/features/value-feed/featured-card'
 import { FilterTabs } from '@/components/features/value-feed/filter-tabs'
 import { ArticleRow } from '@/components/features/value-feed/article-row'
-import { FeedPagination } from '@/components/features/value-feed/feed-pagination'
+import { TablePagination } from '@/components/shared/table-pagination'
 import { ValueFeedSidebar } from '@/components/features/value-feed/sidebar/value-feed-sidebar'
 import { ArticleModal } from '@/components/features/value-feed/article-modal'
 import { useValueFeedData, useSavedIds } from '@/hooks/value-feed'
@@ -41,13 +41,15 @@ export default function ValueFeedPage() {
         ? rest.filter((it) => savedSet.has(it.id))
         : rest.filter((it) => it.kind === filter)
 
-  const counts: Record<FilterId, number> = {
-    all:         rest.length,
-    tip:         rest.filter((it) => it.kind === 'tip').length,
-    masterclass: rest.filter((it) => it.kind === 'masterclass').length,
-    update:      rest.filter((it) => it.kind === 'update').length,
-    saved:       rest.filter((it) => savedSet.has(it.id)).length,
-  }
+  const counts = rest.reduce<Record<FilterId, number>>(
+    (acc, it) => {
+      acc.all += 1
+      acc[it.kind] += 1
+      if (savedSet.has(it.id)) acc.saved += 1
+      return acc
+    },
+    { all: 0, tip: 0, masterclass: 0, update: 0, saved: 0 },
+  )
 
   const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
   const current = Math.min(page, pageCount)
@@ -88,11 +90,12 @@ export default function ValueFeedPage() {
                       <ArticleRow key={item.id} item={item} onOpen={() => setActiveId(item.id)} />
                     ))}
                   </div>
-                  <FeedPagination
+                  <TablePagination
                     page={current}
                     pageSize={PAGE_SIZE}
                     total={filtered.length}
                     onPageChange={setPage}
+                    noun="article"
                   />
                 </>
               )}

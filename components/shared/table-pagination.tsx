@@ -7,6 +7,8 @@ interface TablePaginationProps {
   pageSize: number
   total: number
   onPageChange: (page: number) => void
+  /** Optional noun for the summary, e.g. "article" → "Showing 1–4 of 24 articles". */
+  noun?: string
 }
 
 /** Build a compact page list with ellipses, e.g. [1, 2, 3, '…', 6]. */
@@ -26,15 +28,16 @@ function pageList(current: number, totalPages: number): (number | 'ellipsis')[] 
 
 const BOX = 'flex h-[34px] w-[34px] items-center justify-center rounded-lg text-[14px]'
 
-export function TablePagination({ page, pageSize, total, onPageChange }: TablePaginationProps) {
+export function TablePagination({ page, pageSize, total, onPageChange, noun }: TablePaginationProps) {
   const totalPages = Math.max(1, Math.ceil(total / pageSize))
   const from = total === 0 ? 0 : (page - 1) * pageSize + 1
   const to = Math.min(page * pageSize, total)
+  const unit = noun ? ` ${total === 1 ? noun : `${noun}s`}` : ''
 
   return (
     <div className="flex items-center justify-between pt-2">
       <span className="text-[12px] font-medium text-foreground-4">
-        Showing {from}&ndash;{to} of {total}
+        Showing {from}&ndash;{to} of {total}{unit}
       </span>
       <div className="flex items-center gap-1.5">
         <button

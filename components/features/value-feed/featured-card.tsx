@@ -1,6 +1,7 @@
 'use client'
 
 import { CoverDecor } from './cover-decor'
+import { AuthorByline } from './author-byline'
 import { KIND_LABEL, readTimeOf } from '@/lib/value-feed-utils'
 import type { NormalizedFeedItem } from '@/hooks/value-feed'
 
@@ -50,17 +51,7 @@ export function FeaturedCard({ item, onOpen }: FeaturedCardProps) {
 
         {/* Footer */}
         <div className="flex items-center justify-between">
-          {item.author ? (
-            <div className="flex items-center gap-2.5 pt-1">
-              <span aria-hidden="true" className="size-8 shrink-0 rounded-full bg-black/[0.14]" />
-              <div className="flex flex-col gap-px">
-                <span className="text-sm font-semibold leading-5 text-foreground">{item.author.name}</span>
-                <span className="text-xs leading-4 text-foreground-4">Lynq &amp; Flow</span>
-              </div>
-            </div>
-          ) : (
-            <span />
-          )}
+          {item.author ? <AuthorByline name={item.author.name} /> : <span />}
           <button
             type="button"
             onClick={onOpen}

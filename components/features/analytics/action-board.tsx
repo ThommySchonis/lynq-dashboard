@@ -10,7 +10,7 @@ import { useAuthStore } from '@/stores/auth'
 import type { Task } from '@/types/tasks'
 import { ActionBoardRow } from './action-board-row'
 import { CardEmptyState } from './card-empty-state'
-import { TablePagination } from './table-pagination'
+import { TablePagination } from '@/components/shared/table-pagination'
 
 const PAGE_SIZE = 10
 const TABS = ['open', 'picked_up', 'done'] as const

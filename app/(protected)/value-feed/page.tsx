@@ -10,6 +10,7 @@ import { FilterTabs } from '@/components/features/value-feed/filter-tabs'
 import { ArticleRow } from '@/components/features/value-feed/article-row'
 import { FeedPagination } from '@/components/features/value-feed/feed-pagination'
 import { ValueFeedSidebar } from '@/components/features/value-feed/sidebar/value-feed-sidebar'
+import { ArticleModal } from '@/components/features/value-feed/article-modal'
 import { useValueFeedData, useSavedIds } from '@/hooks/value-feed'
 import type { FilterId } from '@/lib/value-feed-utils'
 
@@ -18,8 +19,15 @@ const PAGE_SIZE = 4
 export default function ValueFeedPage() {
   const [filter, setFilter] = useState<FilterId>('all')
   const [page, setPage] = useState(1)
-  const [, setActiveId] = useState<string | null>(null)
+  const [activeId, setActiveId] = useState<string | null>(null)
   const { items, isLoading } = useValueFeedData()
+
+  const activeItem = items.find((it) => it.id === activeId) ?? null
+  const openNext = () => {
+    if (!activeItem) return
+    const idx = items.findIndex((it) => it.id === activeItem.id)
+    setActiveId(items[(idx + 1) % items.length].id)
+  }
   const savedIds = useSavedIds()
 
   const featured = items[0]
@@ -94,6 +102,10 @@ export default function ValueFeedPage() {
           </div>
         </div>
       </main>
+
+      {activeItem && (
+        <ArticleModal item={activeItem} onClose={() => setActiveId(null)} onNext={openNext} />
+      )}
     </div>
   )
 }

@@ -25,6 +25,14 @@ export interface NormalizedFeedItem {
   zoomUrl: string | null | undefined
   calUrl: string | null
   youtubeUrl: string | null
+  /** Event details for the modal event card — masterclasses only. */
+  event: {
+    month: string
+    day: string
+    datetimeText: string
+  } | null
+  /** Topic tags shown in the modal footer (from broadcast topic). */
+  tags: string[]
   sortKey: number
   isPinned: boolean
 }
@@ -70,12 +78,25 @@ function useUpcomingMasterclasses() {
 
 // ─── Format helpers (local — not exported from date-utils) ───────────────────
 
+const fmtMonth = (iso: string) => new Date(iso).toLocaleDateString('en-US', { month: 'short' }).toUpperCase()
+const fmtDay = (iso: string) => String(new Date(iso).getDate()).padStart(2, '0')
+
 function fmtEventDate(iso: string): string {
   const d = new Date(iso)
   return (
     d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }) +
     ' · ' +
     d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+  )
+}
+
+/** Full event datetime for the modal event card, e.g. "Thursday, May 21, 2026 · 3:00 PM". */
+function fmtEventFull(iso: string): string {
+  const d = new Date(iso)
+  return (
+    d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }) +
+    ' · ' +
+    d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
   )
 }
 
@@ -109,6 +130,12 @@ export function useValueFeedData(): UseValueFeedResult {
     zoomUrl:    mc.zoom_url ?? null,
     calUrl:     googleCalUrl(mc.title, mc.scheduled_at, 60),
     youtubeUrl: null,
+    event: {
+      month:        fmtMonth(mc.scheduled_at),
+      day:          fmtDay(mc.scheduled_at),
+      datetimeText: fmtEventFull(mc.scheduled_at) + (mc.zoom_url ? ' · Online (Zoom)' : ''),
+    },
+    tags:       [],
     sortKey:    new Date(mc.scheduled_at).getTime(),
     isPinned:   false,
   }))
@@ -124,6 +151,8 @@ export function useValueFeedData(): UseValueFeedResult {
     zoomUrl:    undefined,
     calUrl:     null,
     youtubeUrl: p.youtube_url ?? null,
+    event:      null,
+    tags:       p.topic ? p.topic.split(',').map(t => t.trim()).filter(Boolean) : [],
     sortKey:    new Date(p.created_at).getTime(),
     isPinned:   !!p.is_pinned,
   }))
@@ -172,8 +201,6 @@ export interface ValueFeedSidebarData {
 }
 
 const cap = (s: string) => (s ? s[0].toUpperCase() + s.slice(1) : s)
-const fmtMonth = (iso: string) => new Date(iso).toLocaleDateString('en-US', { month: 'short' }).toUpperCase()
-const fmtDay = (iso: string) => String(new Date(iso).getDate()).padStart(2, '0')
 const fmtTime = (iso: string) => new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
 
 /**

@@ -3,46 +3,57 @@
 import { useReducer } from 'react'
 import { useConnectParcelPanel } from '@/hooks/supply-chain/use-supply-chain-mutations'
 import { useStoreStore } from '@/stores/store'
-import { SETUP_STEPS } from '@/lib/supply-chain-constants'
+import { SETUP_STEPS, STATUS_EVENTS } from "@/lib/supply-chain-constants";
 import { StepsRail } from './steps-rail'
 import { WizardFooter } from './wizard-footer'
 import { StepApiKey } from './step-api-key'
 import { StepWebhook } from './step-webhook'
+import { StepStatusEvents } from "./step-status-events";
 import { StepPlaceholder } from './step-placeholder'
 
 interface WizardState {
-  step: number
-  apiKey: string
-  webhookToken: string | null
-  autoSync: boolean
+  step: number;
+  apiKey: string;
+  webhookToken: string | null;
+  autoSync: boolean;
+  statusEvents: Record<string, boolean>;
 }
 
 type WizardAction =
-  | { type: 'goTo'; step: number }
-  | { type: 'next' }
-  | { type: 'prev' }
-  | { type: 'setApiKey'; value: string }
-  | { type: 'connected'; token: string }
-  | { type: 'toggleAutoSync' }
+  | { type: "goTo"; step: number }
+  | { type: "next" }
+  | { type: "prev" }
+  | { type: "setApiKey"; value: string }
+  | { type: "connected"; token: string }
+  | { type: "toggleAutoSync" }
+  | { type: "toggleStatusEvent"; key: string };
 
 const LAST_STEP = SETUP_STEPS.length - 1
 
-const initialState: WizardState = { step: 0, apiKey: '', webhookToken: null, autoSync: true }
+const initialState: WizardState = {
+  step: 0,
+  apiKey: "",
+  webhookToken: null,
+  autoSync: true,
+  statusEvents: Object.fromEntries(STATUS_EVENTS.map((e) => [e.key, e.defaultOn])),
+};
 
 function reducer(state: WizardState, action: WizardAction): WizardState {
   switch (action.type) {
-    case 'goTo':
-      return { ...state, step: action.step }
-    case 'next':
-      return { ...state, step: Math.min(state.step + 1, LAST_STEP) }
-    case 'prev':
-      return { ...state, step: Math.max(state.step - 1, 0) }
-    case 'setApiKey':
-      return { ...state, apiKey: action.value }
-    case 'connected':
-      return { ...state, webhookToken: action.token, step: 1 }
-    case 'toggleAutoSync':
-      return { ...state, autoSync: !state.autoSync }
+    case "goTo":
+      return { ...state, step: action.step };
+    case "next":
+      return { ...state, step: Math.min(state.step + 1, LAST_STEP) };
+    case "prev":
+      return { ...state, step: Math.max(state.step - 1, 0) };
+    case "setApiKey":
+      return { ...state, apiKey: action.value };
+    case "connected":
+      return { ...state, webhookToken: action.token, step: 1 };
+    case "toggleAutoSync":
+      return { ...state, autoSync: !state.autoSync };
+    case "toggleStatusEvent":
+      return { ...state, statusEvents: { ...state.statusEvents, [action.key]: !state.statusEvents[action.key] } };
   }
 }
 
@@ -80,35 +91,30 @@ export function SetupWizard({ onConnected }: { onConnected: () => void }) {
       <div className="h-px shrink-0 bg-border" />
 
       <div className="flex min-h-0 flex-1">
-        <StepsRail current={state.step} onSelect={(i) => dispatch({ type: 'goTo', step: i })} />
+        <StepsRail current={state.step} onSelect={(i) => dispatch({ type: "goTo", step: i })} />
         <div className="w-px shrink-0 bg-border" />
         <div className="flex min-h-0 flex-1 flex-col">
           <div className="flex-1 overflow-y-auto">
             <div className="mx-auto w-full max-w-[720px] px-6 pb-10 pt-11">
-              {state.step === 0 && (
+              {state.step === 2 && (
                 <StepApiKey
                   apiKey={state.apiKey}
-                  onApiKeyChange={(value) => dispatch({ type: 'setApiKey', value })}
+                  onApiKeyChange={(value) => dispatch({ type: "setApiKey", value })}
                   onSubmit={handleNext}
                   error={error?.message ?? null}
                   autoSync={state.autoSync}
-                  onToggleAutoSync={() => dispatch({ type: 'toggleAutoSync' })}
+                  onToggleAutoSync={() => dispatch({ type: "toggleAutoSync" })}
                 />
               )}
               {state.step === 1 && <StepWebhook webhookToken={state.webhookToken} />}
-              {state.step >= 2 && (
-                <StepPlaceholder
-                  step={state.step + 1}
-                  title={SETUP_STEPS[state.step].title}
-                  subtitle={SETUP_STEPS[state.step].subtitle}
-                />
-              )}
+              {state.step === 0 && <StepStatusEvents values={state.statusEvents} onToggle={(key) => dispatch({ type: "toggleStatusEvent", key })} />}
+              {state.step >= 3 && <StepPlaceholder step={state.step + 1} title={SETUP_STEPS[state.step].title} subtitle={SETUP_STEPS[state.step].subtitle} />}
             </div>
           </div>
 
           <WizardFooter
             canPrev={state.step > 0}
-            onPrev={() => dispatch({ type: 'prev' })}
+            onPrev={() => dispatch({ type: "prev" })}
             onNext={handleNext}
             nextLabel={nextLabel}
             nextDisabled={nextDisabled}
@@ -116,5 +122,5 @@ export function SetupWizard({ onConnected }: { onConnected: () => void }) {
         </div>
       </div>
     </main>
-  )
+  );
 }

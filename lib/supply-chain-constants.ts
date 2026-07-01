@@ -159,6 +159,28 @@ export const SETUP_STEPS: SetupStep[] = [
   },
 ]
 
+/**
+ * Shipment status events shown on the "Status events" wizard step.
+ * Selection is UI-only for now (no backend persistence yet — see BE-1/BE-2).
+ */
+export interface StatusEventOption {
+  key: string
+  title: string
+  caption: string
+  /** Renders the "Opens a ticket" badge and hints at inbox automation. */
+  opensTicket?: boolean
+  defaultOn: boolean
+}
+
+export const STATUS_EVENTS: StatusEventOption[] = [
+  { key: 'info_received', title: 'Info received', caption: 'Label created, not yet scanned by the carrier.', defaultOn: false },
+  { key: 'in_transit', title: 'In transit', caption: 'Package is moving through the carrier network.', defaultOn: true },
+  { key: 'out_for_delivery', title: 'Out for delivery', caption: 'On the vehicle for final delivery today.', defaultOn: true },
+  { key: 'delivered', title: 'Delivered', caption: 'Marked delivered by the carrier.', defaultOn: true },
+  { key: 'exception', title: 'Delivery exception', caption: 'Failed attempt, delay or address problem.', opensTicket: true, defaultOn: true },
+  { key: 'returned', title: 'Returned to sender', caption: 'Package is on its way back to you.', defaultOn: true },
+]
+
 // ── Attention item builder ───────────────────────────────────────────────────
 
 export function getAttentionItems(orders: Order[], dismissed: Set<string>): AttentionItem[] {

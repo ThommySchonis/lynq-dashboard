@@ -46,7 +46,7 @@ export function FeaturedCard({ item, onOpen }: FeaturedCardProps) {
         <h3 className="text-base font-semibold leading-[22px] text-foreground">{item.title}</h3>
 
         {/* Excerpt */}
-        {item.body && <p className="text-sm leading-5 text-foreground-2">{item.body}</p>}
+        {item.body && <p className="line-clamp-2 text-sm leading-5 text-foreground-2">{item.body}</p>}
 
         {/* Footer */}
         <div className="flex items-center justify-between">

@@ -17,19 +17,6 @@ export const KIND_LABEL: Record<FeedItemKind, string> = {
   update:      'UPDATE',
 }
 
-export interface FeedItem {
-  id: string
-  kind: FeedItemKind
-  title: string
-  body?: string | null
-  created_at: string
-  pinned?: boolean
-  speaker_name?: string | null
-  scheduled_at?: string | null
-  zoom_url?: string | null
-  youtube_url?: string | null
-}
-
 /**
  * Builds a Google Calendar "add event" URL for a masterclass.
  * @param title        Event title

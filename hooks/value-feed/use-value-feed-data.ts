@@ -4,11 +4,12 @@ import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { fmtDate, timeUntil } from '@/lib/date-utils'
 import { googleCalUrl, initialsOf, classifyBroadcast } from '@/lib/value-feed-utils'
+import type { FeedItemKind } from '@/lib/value-feed-utils'
 import type { Broadcast, Masterclass } from '@/types/admin'
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
-export type FeedItemKind = 'tip' | 'masterclass' | 'update'
+export type { FeedItemKind }
 
 export interface NormalizedFeedItem {
   id: string

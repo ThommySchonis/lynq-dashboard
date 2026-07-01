@@ -9,6 +9,7 @@ import { FeaturedCard } from '@/components/features/value-feed/featured-card'
 import { FilterTabs } from '@/components/features/value-feed/filter-tabs'
 import { ArticleRow } from '@/components/features/value-feed/article-row'
 import { FeedPagination } from '@/components/features/value-feed/feed-pagination'
+import { ValueFeedSidebar } from '@/components/features/value-feed/sidebar/value-feed-sidebar'
 import { useValueFeedData, useSavedIds } from '@/hooks/value-feed'
 import type { FilterId } from '@/lib/value-feed-utils'
 
@@ -89,8 +90,7 @@ export default function ValueFeedPage() {
               )}
             </div>
 
-            {/* Sidebar — populated in PR3 */}
-            <aside className="hidden w-[340px] shrink-0 lg:block" />
+            <ValueFeedSidebar />
           </div>
         </div>
       </main>

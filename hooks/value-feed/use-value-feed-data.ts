@@ -140,3 +140,82 @@ export function useValueFeedData(): UseValueFeedResult {
 
   return { items, isLoading, isError }
 }
+
+// ─── Sidebar ─────────────────────────────────────────────────────────────────
+
+export interface SidebarEvent {
+  id: string
+  month: string
+  day: string
+  title: string
+  timeText: string
+  calUrl: string
+  zoomUrl: string | null
+}
+
+export interface SidebarVideo {
+  id: string
+  title: string
+  youtubeUrl: string
+}
+
+export interface SidebarPopularItem {
+  id: string
+  title: string
+  kindLabel: string
+}
+
+export interface ValueFeedSidebarData {
+  events: SidebarEvent[]
+  videos: SidebarVideo[]
+  popular: SidebarPopularItem[]
+}
+
+const cap = (s: string) => (s ? s[0].toUpperCase() + s.slice(1) : s)
+const fmtMonth = (iso: string) => new Date(iso).toLocaleDateString('en-US', { month: 'short' }).toUpperCase()
+const fmtDay = (iso: string) => String(new Date(iso).getDate()).padStart(2, '0')
+const fmtTime = (iso: string) => new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+
+/**
+ * Sidebar data derived from the same broadcasts/masterclasses queries (shared
+ * cache). Popular is top-N by recency — no real read counts exist (see plan).
+ */
+export function useValueFeedSidebar(): ValueFeedSidebarData {
+  const { data: broadcasts = [] } = useBroadcasts()
+  const { data: masterclasses = [] } = useUpcomingMasterclasses()
+
+  const events: SidebarEvent[] = masterclasses.slice(0, 3).map(mc => ({
+    id:       'm-' + mc.id,
+    month:    fmtMonth(mc.scheduled_at),
+    day:      fmtDay(mc.scheduled_at),
+    title:    mc.title,
+    timeText: fmtTime(mc.scheduled_at) + (mc.zoom_url ? ' · Online' : ''),
+    calUrl:   googleCalUrl(mc.title, mc.scheduled_at, 60),
+    zoomUrl:  mc.zoom_url ?? null,
+  }))
+
+  const videos: SidebarVideo[] = broadcasts
+    .filter(b => !!b.youtube_url)
+    .slice(0, 3)
+    .map(b => ({ id: 'b-' + b.id, title: b.title, youtubeUrl: b.youtube_url as string }))
+
+  const popular: SidebarPopularItem[] = [
+    ...masterclasses.map(mc => ({
+      id:        'm-' + mc.id,
+      title:     mc.title,
+      kindLabel: 'Masterclass',
+      sortKey:   new Date(mc.scheduled_at).getTime(),
+    })),
+    ...broadcasts.map(b => ({
+      id:        'b-' + b.id,
+      title:     b.title,
+      kindLabel: cap(classifyBroadcast(b as unknown as Record<string, unknown>)),
+      sortKey:   new Date(b.created_at).getTime(),
+    })),
+  ]
+    .sort((a, b) => b.sortKey - a.sortKey)
+    .slice(0, 4)
+    .map(({ id, title, kindLabel }) => ({ id, title, kindLabel }))
+
+  return { events, videos, popular }
+}

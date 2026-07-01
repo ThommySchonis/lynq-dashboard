@@ -7,6 +7,13 @@ export const FILTERS: { id: 'all' | FeedItemKind; label: string }[] = [
   { id: 'update',      label: 'Updates'       },
 ]
 
+/** Uppercase display label for a feed item kind (meta rows, badges). */
+export const KIND_LABEL: Record<FeedItemKind, string> = {
+  tip:         'TIP',
+  masterclass: 'MASTERCLASS',
+  update:      'UPDATE',
+}
+
 export interface FeedItem {
   id: string
   kind: FeedItemKind

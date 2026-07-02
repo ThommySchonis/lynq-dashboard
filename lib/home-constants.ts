@@ -112,7 +112,7 @@ export const CHECKLIST_STEPS: ChecklistStep[] = [
     key: 'macros',
     label: "Build the Macro's",
     description: 'Pre-made responses with variables. Apply to tickets with one click.',
-    href: '/settings/workspace/macros/generate',
+    href: '/settings/workspace/macros',
     cta: 'Build',
     type: 'auto',
   },
@@ -147,7 +147,7 @@ export const CHECKLIST_STEPS: ChecklistStep[] = [
     label: 'Connect Claude and ChatGPT via MCP',
     description:
       'Run your Lynq & Flow workspace straight from Claude or ChatGPT — look up tickets, refine Emma’s instructions and draft help articles right inside the chat.',
-    href: '/settings',
+    href: '/settings/ai-assistants/mcp',
     cta: 'Connect',
     type: 'manual',
   },

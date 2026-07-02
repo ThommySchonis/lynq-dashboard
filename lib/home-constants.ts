@@ -104,7 +104,7 @@ export const CHECKLIST_STEPS: ChecklistStep[] = [
     label: 'Connect the Store',
     description:
       'Sync your Shopify store to import live customer profiles, order history, and tracking details.',
-    href: '/settings/integrations/shopify',
+    href: '/settings/workspace/stores',
     cta: 'Connect',
     type: 'auto',
   },

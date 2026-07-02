@@ -78,7 +78,18 @@ function AnalyticsContent() {
     return getDateRange(dateRange)
   }, [dateRange, customFrom, customTo])
 
-  const prevRange: DateRange = useMemo(() => getPrevDateRange(dateRange), [dateRange])
+  const prevRange: DateRange = useMemo(() => {
+    // For a custom window, compare against the equal-length period immediately before it.
+    if (dateRange === 'custom' && customFrom && customTo) {
+      const fromMs = new Date(customFrom).getTime()
+      const toMs = new Date(customTo).getTime()
+      const days = Math.max(1, Math.round((toMs - fromMs) / 86400000) + 1)
+      const prevTo = new Date(fromMs - 86400000)
+      const prevFrom = new Date(prevTo.getTime() - (days - 1) * 86400000)
+      return { from: prevFrom.toISOString().slice(0, 10), to: prevTo.toISOString().slice(0, 10) }
+    }
+    return getPrevDateRange(dateRange)
+  }, [dateRange, customFrom, customTo])
 
   // TanStack queries — disabled when in demo mode
   const kpisQuery = useKpis(range)
@@ -121,11 +132,11 @@ function AnalyticsContent() {
     setDateRange(id)
   }
 
+  // Set each bound independently; the `range` memo only applies a custom window
+  // once BOTH dates are present, and the inputs' min/max enforce from <= to.
   function applyCustomRange(from: string, to: string) {
-    if (from && to && from <= to) {
-      setCustomFrom(from)
-      setCustomTo(to)
-    }
+    setCustomFrom(from)
+    setCustomTo(to)
   }
 
   return (

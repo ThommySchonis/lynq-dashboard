@@ -17,10 +17,6 @@ import { useStoreStore } from '@/stores/store'
 import { useProductSearch } from '@/hooks/inbox/use-shopify-products'
 import { OrderDiscountCard } from './order-discount-card'
 
-// VAT shown as a client-side estimate; Shopify computes the real tax on the
-// draft order (BE task #5).
-const VAT_RATE = 0.2
-
 // The Figma frame (693:32590) assumes a matched customer and has no top
 // customer block. Kept behind this flag for the no-customer fallback (the
 // backend needs an email when there's no customerId); typed boolean to keep
@@ -184,9 +180,8 @@ export function CreateOrderModal({
       : discountType === 'fixed'
         ? Math.min(Number(discountValue) || 0, subtotal)
         : 0
-  const taxBase = Math.max(0, subtotal - discountAmount)
-  const vat = taxBase * VAT_RATE
-  const grandTotal = taxBase + vat
+  // Order total excludes VAT — Shopify computes the real tax on the draft order.
+  const grandTotal = Math.max(0, subtotal - discountAmount)
 
   function addVariant(
     product: ProductSearchResult,
@@ -523,7 +518,6 @@ export function CreateOrderModal({
               }}
               setDiscountValue={setDiscountValue}
               discountAmount={discountAmount}
-              tax={vat}
               total={grandTotal}
               shippingAdded={showShipping}
               onAddShipping={() => setShowShipping(true)}

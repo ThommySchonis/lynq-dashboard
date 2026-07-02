@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/table'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
   Dialog,
@@ -38,6 +39,7 @@ import {
 import { SettingsPageHeader } from '@/components/features/settings/settings-header'
 import { MacrosToolbar } from './macros-toolbar'
 import { MacroRow } from './macro-row'
+import { MacrosBulkBar } from './macros-bulk-bar'
 import { MacrosEmptyState } from './macros-empty-state'
 import { SettingsEmptyState } from '@/components/features/settings/settings-empty-state'
 import type { Macro } from '@/types/inbox'
@@ -46,6 +48,7 @@ export function MacrosList() {
   const isSuspended = useAuthStore((s) => s.isSuspended)
   const filter = useSettingsUI((s) => s.macroFilter)
   const setFilter = useSettingsUI((s) => s.setMacroFilter)
+  const clearMacroSelection = useSettingsUI((s) => s.clearMacroSelection)
 
   const { data: macros, isLoading, error } = useMacros(filter)
   const { data: onboarding } = useMacroOnboarding()
@@ -99,9 +102,10 @@ export function MacrosList() {
       {/* Tabs */}
       <Tabs
         value={tabValue}
-        onValueChange={(val) =>
+        onValueChange={(val) => {
           setFilter({ archived: val === 'archived' })
-        }
+          clearMacroSelection()
+        }}
       >
         <TabsList variant="line" className="mb-4">
           <TabsTrigger value="active">Active</TabsTrigger>
@@ -109,12 +113,13 @@ export function MacrosList() {
         </TabsList>
 
         {/* Toolbar */}
-        <div className="mb-4">
+        <div className="mb-4 flex flex-col gap-3">
           <MacrosToolbar
             canManage={canManage}
             hasOnboarding={hasOnboarding}
             onRegenerate={() => setRegenOpen(true)}
           />
+          <MacrosBulkBar canDelete={canDelete && !isSuspended} />
         </div>
 
         <TabsContent value="active">
@@ -223,6 +228,11 @@ function MacrosTable({
   onRestore,
   onDelete,
 }: MacrosTableProps) {
+  const selectedIds = useSettingsUI((s) => s.selectedMacroIds)
+  const onToggleSelect = useSettingsUI((s) => s.toggleMacroSelection)
+  const onSelectAll = useSettingsUI((s) => s.selectAllMacros)
+  const onClearSelection = useSettingsUI((s) => s.clearMacroSelection)
+
   if (isLoading) {
     return <MacrosTableSkeleton />
   }
@@ -247,11 +257,29 @@ function MacrosTable({
     )
   }
 
+  const allSelected = macros.length > 0 && macros.every((m) => selectedIds.has(m.id))
+  const someSelected = macros.some((m) => selectedIds.has(m.id)) && !allSelected
+
+  function handleToggleAll() {
+    if (allSelected || someSelected) onClearSelection()
+    else onSelectAll(macros.map((m) => m.id))
+  }
+
   return (
     <div className="overflow-hidden rounded-2xl border bg-card">
       <Table>
         <TableHeader className="bg-foreground/[0.02]">
           <TableRow>
+            <TableHead className="w-10">
+              {canDelete && (
+                <Checkbox
+                  checked={allSelected}
+                  indeterminate={someSelected}
+                  onCheckedChange={handleToggleAll}
+                  aria-label="Select all macros"
+                />
+              )}
+            </TableHead>
             <TableHead>Macro name</TableHead>
             <TableHead>Tags</TableHead>
             <TableHead>Language</TableHead>
@@ -267,6 +295,8 @@ function MacrosTable({
               macro={m}
               canManage={canManage}
               canDelete={canDelete}
+              selected={selectedIds.has(m.id)}
+              onToggleSelect={onToggleSelect}
               onDuplicate={onDuplicate}
               onArchive={onArchive}
               onRestore={onRestore}
@@ -285,6 +315,7 @@ function MacrosTableSkeleton() {
       <Table>
         <TableHeader className="bg-foreground/[0.02]">
           <TableRow>
+            <TableHead className="w-10" />
             <TableHead>Macro name</TableHead>
             <TableHead>Tags</TableHead>
             <TableHead>Language</TableHead>
@@ -296,6 +327,9 @@ function MacrosTableSkeleton() {
         <TableBody>
           {[0, 1, 2].map((i) => (
             <TableRow key={i}>
+              <TableCell>
+                <Skeleton className="h-4 w-4 rounded" />
+              </TableCell>
               <TableCell>
                 <div className="flex items-center gap-2.5">
                   <Skeleton className="size-8 rounded-lg" />

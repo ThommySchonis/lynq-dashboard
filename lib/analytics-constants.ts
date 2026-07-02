@@ -44,6 +44,16 @@ export function getPrevDateRange(id: DateRangeId): DateRange {
   return { from: f.toISOString().slice(0, 10), to: l.toISOString().slice(0, 10) }
 }
 
+// Equal-length window immediately before a custom [from, to] range (inclusive).
+export function getPrevCustomRange(from: string, to: string): DateRange {
+  const fromMs = new Date(from).getTime()
+  const toMs = new Date(to).getTime()
+  const days = Math.max(1, Math.round((toMs - fromMs) / 86400000) + 1)
+  const prevTo = new Date(fromMs - 86400000)
+  const prevFrom = new Date(prevTo.getTime() - (days - 1) * 86400000)
+  return { from: prevFrom.toISOString().slice(0, 10), to: prevTo.toISOString().slice(0, 10) }
+}
+
 // ── Formatters ───────────────────────────────────────────────────────────────
 
 export function fmtEur(n: number): string {

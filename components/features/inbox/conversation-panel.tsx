@@ -419,7 +419,6 @@ export function ConversationPanel() {
         onAssign={(memberId) => void singleAction("assign", { memberId })}
         onSnooze={(until) => void singleAction("snooze", { until })}
         onSpam={() => void singleAction("spam")}
-        onDelete={() => void singleAction("delete")}
         onPrev={() => navigateThread(-1)}
         onNext={() => navigateThread(1)}
         canPrev={currentIndex > 0}

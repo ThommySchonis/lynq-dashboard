@@ -9,6 +9,7 @@ import {
   RANGES,
   getDateRange,
   getPrevDateRange,
+  getPrevCustomRange,
 } from '@/lib/analytics-constants'
 import {
   useKpis,
@@ -78,7 +79,13 @@ function AnalyticsContent() {
     return getDateRange(dateRange)
   }, [dateRange, customFrom, customTo])
 
-  const prevRange: DateRange = useMemo(() => getPrevDateRange(dateRange), [dateRange])
+  const prevRange: DateRange = useMemo(() => {
+    // For a custom window, compare against the equal-length period immediately before it.
+    if (dateRange === 'custom' && customFrom && customTo) {
+      return getPrevCustomRange(customFrom, customTo)
+    }
+    return getPrevDateRange(dateRange)
+  }, [dateRange, customFrom, customTo])
 
   // TanStack queries — disabled when in demo mode
   const kpisQuery = useKpis(range)
@@ -121,11 +128,11 @@ function AnalyticsContent() {
     setDateRange(id)
   }
 
+  // Set each bound independently; the `range` memo only applies a custom window
+  // once BOTH dates are present, and the inputs' min/max enforce from <= to.
   function applyCustomRange(from: string, to: string) {
-    if (from && to && from <= to) {
-      setCustomFrom(from)
-      setCustomTo(to)
-    }
+    setCustomFrom(from)
+    setCustomTo(to)
   }
 
   return (

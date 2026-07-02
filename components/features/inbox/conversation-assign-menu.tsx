@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { BulkMenuSearch } from "./bulk-menu-search";
-import { Check, ChevronDown, Sparkles, User } from "lucide-react";
+import { Check, ChevronDown, User } from "lucide-react";
 import { getInitials } from "@/lib/inbox-utils";
 import { useAuthStore } from "@/stores/auth";
 import type { InboxMember } from "@/hooks/inbox/use-inbox-data";
@@ -57,17 +57,6 @@ export function ConversationAssignMenu({
           </span>
           <span className="flex-1 font-medium text-foreground">Unassigned</span>
           {!assignedTo && <Check size={14} className="text-foreground-3" />}
-        </DropdownMenuItem>
-
-        {/* Emma — display-only (hand-off is a separate action) */}
-        <DropdownMenuItem className={ROW} onClick={() => {}} disabled={disabled}>
-          <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
-            <Sparkles size={14} />
-          </span>
-          <span className="flex min-w-0 flex-col">
-            <span className="truncate font-medium text-foreground">Emma</span>
-            <span className="truncate text-[11px] text-foreground-3">AI Agent · auto-reply</span>
-          </span>
         </DropdownMenuItem>
 
         <div className="my-1 h-px bg-border" />

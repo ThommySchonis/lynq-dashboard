@@ -14,6 +14,7 @@ import {
 import { TableRow, TableCell } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -31,6 +32,8 @@ interface MacroRowProps {
   macro: Macro
   canManage: boolean
   canDelete: boolean
+  selected: boolean
+  onToggleSelect: (id: string) => void
   onDuplicate: (id: string) => void
   onArchive: (id: string) => void
   onRestore: (id: string) => void
@@ -41,6 +44,8 @@ export function MacroRow({
   macro,
   canManage,
   canDelete,
+  selected,
+  onToggleSelect,
   onDuplicate,
   onArchive,
   onRestore,
@@ -64,7 +69,16 @@ export function MacroRow({
 
   return (
     <>
-      <TableRow className="group">
+      <TableRow className="group" data-state={selected ? 'selected' : undefined}>
+        {/* Select */}
+        <TableCell>
+          <Checkbox
+            checked={selected}
+            onCheckedChange={() => onToggleSelect(macro.id)}
+            aria-label={`Select ${macro.name}`}
+          />
+        </TableCell>
+
         {/* Name */}
         <TableCell>
           <div className="flex items-center gap-2.5">

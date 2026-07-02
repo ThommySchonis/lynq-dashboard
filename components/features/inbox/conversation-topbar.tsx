@@ -5,7 +5,6 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { ConversationStatusMenu } from "./conversation-status-menu";
 import { ConversationAssignMenu } from "./conversation-assign-menu";
 import { ConversationSnoozeMenu } from "./conversation-snooze-menu";
-import { ConversationMoreMenu } from "./conversation-more-menu";
 import type { InboxMember } from "@/hooks/inbox/use-inbox-data";
 
 /**
@@ -23,7 +22,6 @@ export function ConversationTopbar({
   onAssign,
   onSnooze,
   onSpam,
-  onDelete,
   onPrev,
   onNext,
   canPrev,
@@ -38,7 +36,6 @@ export function ConversationTopbar({
   onAssign: (memberId: string) => void;
   onSnooze: (untilIso: string) => void;
   onSpam: () => void;
-  onDelete: () => void;
   onPrev: () => void;
   onNext: () => void;
   canPrev: boolean;
@@ -68,8 +65,6 @@ export function ConversationTopbar({
           >
             Close
           </Button>
-
-          <ConversationMoreMenu onSpam={onSpam} onDelete={onDelete} disabled={disabled} />
 
           {/* Prev / next */}
           <div className="flex items-center gap-1">

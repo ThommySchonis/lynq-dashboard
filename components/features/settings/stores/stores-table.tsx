@@ -9,6 +9,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuCheckboxItem,
 } from '@/components/ui/dropdown-menu'
 import { StatusBadge } from '@/components/features/settings/status-badge'
 import { ConfirmDialog } from '@/components/features/settings/confirm-dialog'
@@ -37,6 +38,8 @@ export function StoresTable({ stores, paymentsStoreDomain }: StoresTableProps) {
   const [tab, setTab] = useState<StoreTab>('all')
   const [searchOpen, setSearchOpen] = useState(false)
   const [search, setSearch] = useState('')
+  const [sortDir, setSortDir] = useState<'asc' | 'desc' | null>(null)
+  const [filterPayments, setFilterPayments] = useState(false)
 
   const counts = useMemo(() => {
     let active = 0
@@ -50,13 +53,20 @@ export function StoresTable({ stores, paymentsStoreDomain }: StoresTableProps) {
   }, [stores])
 
   const filtered = useMemo(() => {
-    return stores.filter((s) => {
+    const label = (s: StorePublic) => (s.shopify_domain ?? s.name)
+    const result = stores.filter((s) => {
       if (tab === 'active' && storeState(s) !== 'active') return false
       if (tab === 'reauth' && storeState(s) !== 'reauth') return false
-      if (search && !(s.shopify_domain ?? s.name).toLowerCase().includes(search.toLowerCase())) return false
+      if (filterPayments && !(paymentsStoreDomain && s.shopify_domain === paymentsStoreDomain)) return false
+      if (search && !label(s).toLowerCase().includes(search.toLowerCase())) return false
       return true
     })
-  }, [stores, tab, search])
+    if (sortDir) {
+      const dir = sortDir === 'asc' ? 1 : -1
+      result.sort((a, b) => dir * label(a).localeCompare(label(b)))
+    }
+    return result
+  }, [stores, tab, search, sortDir, filterPayments, paymentsStoreDomain])
 
   return (
     <div className="overflow-hidden rounded-2xl border border-border bg-card">
@@ -90,10 +100,26 @@ export function StoresTable({ stores, paymentsStoreDomain }: StoresTableProps) {
           >
             <Search size={16} strokeWidth={1.75} />
           </IconButton>
-          <IconButton label="Filter">
-            <SlidersHorizontal size={16} strokeWidth={1.75} />
-          </IconButton>
-          <IconButton label="Sort">
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              render={<button type="button" aria-label="Filter" className={iconButtonClass(filterPayments)} />}
+            >
+              <SlidersHorizontal size={16} strokeWidth={1.75} />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="min-w-[200px]">
+              <DropdownMenuCheckboxItem
+                checked={filterPayments}
+                onCheckedChange={(v) => setFilterPayments(v)}
+              >
+                Used for payments
+              </DropdownMenuCheckboxItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <IconButton
+            label="Sort by domain"
+            active={sortDir !== null}
+            onClick={() => setSortDir((d) => (d === null ? 'asc' : d === 'asc' ? 'desc' : null))}
+          >
             <ArrowUpDown size={16} strokeWidth={1.75} />
           </IconButton>
         </div>
@@ -164,6 +190,13 @@ function TabChip({
   )
 }
 
+function iconButtonClass(active?: boolean) {
+  return [
+    'flex size-[34px] items-center justify-center rounded-[9px] border border-border transition-colors',
+    active ? 'bg-accent-soft text-primary' : 'bg-card text-foreground-2 hover:bg-black/[0.03]',
+  ].join(' ')
+}
+
 function IconButton({
   label,
   active,
@@ -176,15 +209,7 @@ function IconButton({
   children: React.ReactNode
 }) {
   return (
-    <button
-      type="button"
-      aria-label={label}
-      onClick={onClick}
-      className={[
-        'flex size-[34px] items-center justify-center rounded-[9px] border border-border transition-colors',
-        active ? 'bg-accent-soft text-primary' : 'bg-card text-foreground-2 hover:bg-black/[0.03]',
-      ].join(' ')}
-    >
+    <button type="button" aria-label={label} onClick={onClick} className={iconButtonClass(active)}>
       {children}
     </button>
   )

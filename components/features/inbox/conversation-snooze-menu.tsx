@@ -1,7 +1,7 @@
 "use client";
 
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { BellOff, CalendarClock, CalendarDays, ChevronDown, Clock, MessageCircle, Sunrise } from "lucide-react";
+import { BellOff, CalendarDays, ChevronDown, Clock, Sunrise } from "lucide-react";
 import { BULK_MENU_HEADER_CLASS } from "@/lib/inbox-constants";
 
 const PANEL = "rounded-[14px] p-[7px] w-64";
@@ -63,9 +63,6 @@ export function ConversationSnoozeMenu({ onSnooze, disabled = false }: { onSnooz
         <SnoozeItem icon={<Sunrise size={16} />} label="Tomorrow" trailing={tomorrow.label} onClick={() => onSnooze(tomorrow.iso)} disabled={disabled} />
         <SnoozeItem icon={<CalendarDays size={16} />} label="This weekend" trailing={weekend.label} onClick={() => onSnooze(weekend.iso)} disabled={disabled} />
         <SnoozeItem icon={<CalendarDays size={16} />} label="Next week" trailing={nextWeek.label} onClick={() => onSnooze(nextWeek.iso)} disabled={disabled} />
-        <div className="my-1 h-px bg-border" />
-        <SnoozeItem icon={<MessageCircle size={16} />} label="Until customer replies" onClick={() => {}} disabled={disabled} />
-        <SnoozeItem icon={<CalendarClock size={16} />} label="Pick date & time" onClick={() => {}} disabled={disabled} />
       </DropdownMenuContent>
     </DropdownMenu>
   );

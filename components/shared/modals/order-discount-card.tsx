@@ -8,8 +8,8 @@ type DiscountType = 'none' | 'percentage' | 'fixed'
 
 /**
  * Discount card + order totals — right column of Create Order (Figma 693:32590).
- * "Add shipping" reveals the shipping address form; "VAT (20%)" is a client-side
- * estimate (Shopify computes the real tax on the draft order). Promo codes are
+ * "Add shipping" reveals the shipping address form. VAT is excluded from the
+ * order total — Shopify computes the real tax on the draft order. Promo codes are
  * omitted — the backend only accepts percentage/fixed discounts (BE task #5).
  */
 export function OrderDiscountCard({
@@ -21,7 +21,6 @@ export function OrderDiscountCard({
   setDiscountType,
   setDiscountValue,
   discountAmount,
-  tax,
   total,
   shippingAdded,
   onAddShipping,
@@ -34,7 +33,6 @@ export function OrderDiscountCard({
   setDiscountType: (t: DiscountType) => void
   setDiscountValue: (v: string) => void
   discountAmount: number
-  tax: number
   total: number
   shippingAdded: boolean
   onAddShipping: () => void
@@ -106,7 +104,6 @@ export function OrderDiscountCard({
           )}
           <span className="text-[14px] text-foreground-2">—</span>
         </div>
-        <TotalRow label="VAT (20%)" value={fmtPrice(tax, currency)} />
         <div className="my-1 h-px bg-border" />
         <div className="flex items-center justify-between">
           <span className="text-[16px] font-semibold text-foreground">Total</span>

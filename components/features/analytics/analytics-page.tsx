@@ -9,6 +9,7 @@ import {
   RANGES,
   getDateRange,
   getPrevDateRange,
+  getPrevCustomRange,
 } from '@/lib/analytics-constants'
 import {
   useKpis,
@@ -81,12 +82,7 @@ function AnalyticsContent() {
   const prevRange: DateRange = useMemo(() => {
     // For a custom window, compare against the equal-length period immediately before it.
     if (dateRange === 'custom' && customFrom && customTo) {
-      const fromMs = new Date(customFrom).getTime()
-      const toMs = new Date(customTo).getTime()
-      const days = Math.max(1, Math.round((toMs - fromMs) / 86400000) + 1)
-      const prevTo = new Date(fromMs - 86400000)
-      const prevFrom = new Date(prevTo.getTime() - (days - 1) * 86400000)
-      return { from: prevFrom.toISOString().slice(0, 10), to: prevTo.toISOString().slice(0, 10) }
+      return getPrevCustomRange(customFrom, customTo)
     }
     return getPrevDateRange(dateRange)
   }, [dateRange, customFrom, customTo])

@@ -48,9 +48,6 @@ export function MacrosList() {
   const isSuspended = useAuthStore((s) => s.isSuspended)
   const filter = useSettingsUI((s) => s.macroFilter)
   const setFilter = useSettingsUI((s) => s.setMacroFilter)
-  const selectedMacroIds = useSettingsUI((s) => s.selectedMacroIds)
-  const toggleMacroSelection = useSettingsUI((s) => s.toggleMacroSelection)
-  const selectAllMacros = useSettingsUI((s) => s.selectAllMacros)
   const clearMacroSelection = useSettingsUI((s) => s.clearMacroSelection)
 
   const { data: macros, isLoading, error } = useMacros(filter)
@@ -133,10 +130,6 @@ export function MacrosList() {
             canDelete={canDelete && !isSuspended}
             hasFilters={hasFilters}
             tab="active"
-            selectedIds={selectedMacroIds}
-            onToggleSelect={toggleMacroSelection}
-            onSelectAll={selectAllMacros}
-            onClearSelection={clearMacroSelection}
             onDuplicate={(id) => duplicateMut.mutate(id)}
             onArchive={(id) => archiveMut.mutate(id)}
             onRestore={(id) => restoreMut.mutate(id)}
@@ -152,10 +145,6 @@ export function MacrosList() {
             canDelete={canDelete && !isSuspended}
             hasFilters={hasFilters}
             tab="archived"
-            selectedIds={selectedMacroIds}
-            onToggleSelect={toggleMacroSelection}
-            onSelectAll={selectAllMacros}
-            onClearSelection={clearMacroSelection}
             onDuplicate={(id) => duplicateMut.mutate(id)}
             onArchive={(id) => archiveMut.mutate(id)}
             onRestore={(id) => restoreMut.mutate(id)}
@@ -221,10 +210,6 @@ interface MacrosTableProps {
   canDelete: boolean
   hasFilters: boolean
   tab: 'active' | 'archived'
-  selectedIds: Set<string>
-  onToggleSelect: (id: string) => void
-  onSelectAll: (ids: string[]) => void
-  onClearSelection: () => void
   onDuplicate: (id: string) => void
   onArchive: (id: string) => void
   onRestore: (id: string) => void
@@ -238,15 +223,16 @@ function MacrosTable({
   canDelete,
   hasFilters,
   tab,
-  selectedIds,
-  onToggleSelect,
-  onSelectAll,
-  onClearSelection,
   onDuplicate,
   onArchive,
   onRestore,
   onDelete,
 }: MacrosTableProps) {
+  const selectedIds = useSettingsUI((s) => s.selectedMacroIds)
+  const onToggleSelect = useSettingsUI((s) => s.toggleMacroSelection)
+  const onSelectAll = useSettingsUI((s) => s.selectAllMacros)
+  const onClearSelection = useSettingsUI((s) => s.clearMacroSelection)
+
   if (isLoading) {
     return <MacrosTableSkeleton />
   }

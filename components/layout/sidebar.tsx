@@ -7,7 +7,6 @@ import { PenSquare, Shield, HelpCircle } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/stores/auth'
 import { useInboxCounts } from '@/hooks/inbox'
-import { useSearchStore } from '@/stores/search'
 import { Separator } from '@/components/ui/separator'
 import { SidebarItem } from './sidebar-item'
 import { SidebarGroup } from './sidebar-group'
@@ -31,7 +30,6 @@ import {
 // prop contract that SidebarItem / SidebarUser / StoreSwitcher rely on.
 export function Sidebar() {
   const role = useAuthStore((s) => s.role)
-  const openSearch = useSearchStore((s) => s.open)
   const [hovered, setHovered] = useState(false)
   const [composeOpen, setComposeOpen] = useState(false)
   const collapsed = !hovered
@@ -142,7 +140,14 @@ export function Sidebar() {
             collapsed={collapsed}
           />
         ))}
-        <SidebarItem icon={HelpCircle} label="Help" onClick={openSearch} collapsed={collapsed} />
+        <SidebarItem
+          icon={HelpCircle}
+          label="Help"
+          onClick={() => {
+            window.location.href = 'mailto:info@lynqagency.com'
+          }}
+          collapsed={collapsed}
+        />
         {(role === 'owner' || role === 'admin') && (
           <SidebarItem href="/admin" icon={Shield} label="Admin" collapsed={collapsed} />
         )}

@@ -7,6 +7,7 @@ import { Loader2 } from 'lucide-react'
 import { authFetch } from '@/lib/inbox-utils'
 import { apiUrl } from '@/lib/api-client'
 import { parseJson } from '@/lib/utils/typed-json'
+import { useStoreStore } from '@/stores/store'
 
 export interface NoteOrder {
   id: string
@@ -25,10 +26,15 @@ interface NoteModalProps {
 export function NoteModal({ order, token, onClose, onSuccess }: NoteModalProps) {
   const [note, setNote] = useState(order.note || "");
   const [loading, setLoading] = useState(false);
+  const activeStoreId = useStoreStore((s) => s.activeStoreId);
 
   async function handleSave() {
+    if (!activeStoreId) {
+      onSuccess("No store selected", "error");
+      return;
+    }
     setLoading(true);
-    const res = await authFetch(`${apiUrl(`shopify/orders/${order.id}/note`)}`, { method: "PUT", body: JSON.stringify({ note }) }, token);
+    const res = await authFetch(`${apiUrl(`shopify/orders/${order.id}/note`)}?store_id=${activeStoreId}`, { method: "PUT", body: JSON.stringify({ note }) }, token);
     const data = await parseJson<{ success?: boolean; error?: string }>(res);
     setLoading(false);
     if (data.success) onSuccess("Note saved");

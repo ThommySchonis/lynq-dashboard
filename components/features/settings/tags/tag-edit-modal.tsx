@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Check, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -35,15 +35,17 @@ export function TagEditModal({ open, onOpenChange, tag }: TagEditModalProps) {
   const updateTag = useUpdateTag()
   const saving = createTag.isPending || updateTag.isPending
 
-  // Reset form state when dialog opens with new data
-  function handleOpenChange(next: boolean) {
-    if (next) {
+  // Sync the form to the target tag whenever the dialog opens. The dialog is
+  // opened by the parent via the `open` prop (not the Dialog's own
+  // onOpenChange), so resetting inside onOpenChange alone would miss it and
+  // leave the previously edited tag's values in the fields.
+  useEffect(() => {
+    if (open) {
       setName(tag?.name ?? '')
       setColor(tag?.color ?? 'slate')
       setNameError(null)
     }
-    onOpenChange(next)
-  }
+  }, [open, tag])
 
   async function handleSave() {
     setNameError(null)
@@ -76,7 +78,7 @@ export function TagEditModal({ open, onOpenChange, tag }: TagEditModalProps) {
   }
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent showCloseButton={!saving}>
         <DialogHeader>
           <DialogTitle>{isNew ? 'Create tag' : 'Edit tag'}</DialogTitle>

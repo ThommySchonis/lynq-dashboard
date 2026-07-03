@@ -17,8 +17,7 @@ export function NotificationRow({
   n: AppNotification
   onClick: () => void
 }) {
-  const visual = NOTIFICATION_VISUALS[n.category]
-  const Icon = visual.icon
+  const { icon: Icon, badgeClass } = NOTIFICATION_VISUALS[n.category]
 
   return (
     <button
@@ -31,7 +30,7 @@ export function NotificationRow({
       <span
         className={cn(
           'flex size-[38px] shrink-0 items-center justify-center rounded-full',
-          visual.badgeClass,
+          badgeClass,
         )}
       >
         <Icon className="size-4" />

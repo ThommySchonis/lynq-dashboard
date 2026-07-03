@@ -18,7 +18,7 @@ export function NotificationList({
   const groups = groupNotificationsByDate(items)
 
   return (
-    <div>
+    <>
       {groups.map((group) => (
         <section key={group.key}>
           <div className="bg-surface-notif-section px-[18px] pt-3.5 pb-2 text-xs leading-[14px] font-semibold tracking-[0.08em] text-foreground-4 uppercase">
@@ -29,6 +29,6 @@ export function NotificationList({
           ))}
         </section>
       ))}
-    </div>
+    </>
   )
 }

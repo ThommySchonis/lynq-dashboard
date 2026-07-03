@@ -13,7 +13,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
 } from '@/components/ui/dropdown-menu'
-import { NOTIFICATION_TABS } from '@/lib/notification-constants'
+import { NOTIFICATION_TABS, filterNotificationsByTab } from '@/lib/notification-constants'
 import {
   useNotifications,
   useMarkNotificationRead,
@@ -45,12 +45,7 @@ export function NotificationsModal({
   const markAll = useMarkAllNotificationsRead()
 
   const activeTab = NOTIFICATION_TABS.find((t) => t.key === activeKey)
-  const byTab = notifications.filter((n) => {
-    if (!activeTab) return false
-    if (activeTab.isAll) return true
-    if (activeTab.category) return n.category === activeTab.category
-    return false // placeholder tab with no backing data → empty state
-  })
+  const byTab = activeTab ? filterNotificationsByTab(notifications, activeTab) : []
   const visible = unreadOnly ? byTab.filter((n) => !n.read) : byTab
 
   function handleClick(n: AppNotification) {
@@ -69,7 +64,7 @@ export function NotificationsModal({
           className={cn(
             'fixed top-1/2 left-1/2 z-50 flex h-[648px] max-h-[calc(100vh-2rem)] w-[700px] max-w-[calc(100vw-2rem)]',
             '-translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-2xl border border-border bg-card text-card-foreground',
-            'shadow-[0px_24px_56px_0px_rgba(28,15,54,0.3)] outline-none duration-150',
+            'shadow-modal outline-none duration-150',
             'data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95 motion-reduce:animate-none',
           )}
         >

@@ -9,7 +9,7 @@ import {
   Sparkles,
   type LucideIcon,
 } from 'lucide-react'
-import type { NotificationCategory } from '@/types/notifications'
+import type { AppNotification, NotificationCategory } from '@/types/notifications'
 
 /**
  * Single source of truth for the notifications modal filter tabs.
@@ -29,6 +29,20 @@ export interface NotificationTab {
   icon: LucideIcon
   isAll?: boolean
   category?: NotificationCategory
+}
+
+/**
+ * Applies a tab's filter policy: `All` → everything, a category tab → its
+ * category, a placeholder tab (no backing data) → empty. Single source for the
+ * "neither → empty" rule.
+ */
+export function filterNotificationsByTab(
+  items: AppNotification[],
+  tab: NotificationTab,
+): AppNotification[] {
+  if (tab.isAll) return items
+  if (tab.category) return items.filter((n) => n.category === tab.category)
+  return []
 }
 
 export const NOTIFICATION_TABS: NotificationTab[] = [

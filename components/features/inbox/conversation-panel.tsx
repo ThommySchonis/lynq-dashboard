@@ -415,6 +415,12 @@ export function ConversationPanel() {
     );
   }
 
+  const meta = toTicketMeta(selectedThread);
+  const promptAddTag = () => {
+    const name = window.prompt("Tag name");
+    if (name) void handleAddTag(name);
+  };
+
   return (
     <div className="flex-1 flex flex-col overflow-hidden min-w-0 relative z-[1]">
       {/* Ticket header — conv-topbar (Figma 1283-52902) */}
@@ -436,28 +442,22 @@ export function ConversationPanel() {
 
       {/* Meta strip — Add tags / Contact reason / Product / Resolution (Figma 301:3447) */}
       <TicketMetaStrip
-        contactReason={toTicketMeta(selectedThread).contactReason ?? ""}
-        product={toTicketMeta(selectedThread).product ?? ""}
-        resolution={toTicketMeta(selectedThread).resolution ?? ""}
+        contactReason={meta.contactReason ?? ""}
+        product={meta.product ?? ""}
+        resolution={meta.resolution ?? ""}
         onSetContactReason={(v) => persistMeta({ contactReason: v })}
         onSetProduct={(v) => persistMeta({ product: v })}
         onSetResolution={(v) => persistMeta({ resolution: v })}
-        onAddTag={() => {
-          const name = window.prompt("Tag name");
-          if (name) void handleAddTag(name);
-        }}
+        onAddTag={promptAddTag}
       />
 
       {/* Tags + ticket meta — hidden per Figma (restore via SHOW_LEGACY) */}
       {SHOW_LEGACY && (
         <div className="py-2.5 px-[18px] border-b border-border shrink-0 bg-card">
           <TicketActionBar
-            meta={toTicketMeta(selectedThread)}
+            meta={meta}
             tags={conversationTags}
-            onAddTag={() => {
-              const name = window.prompt("Tag name");
-              if (name) void handleAddTag(name);
-            }}
+            onAddTag={promptAddTag}
             onRemoveTag={(tag) => void handleRemoveTag(tag)}
             onFieldChange={(field, labelOrValue) =>
               field === "tier"

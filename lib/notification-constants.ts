@@ -1,10 +1,10 @@
 import {
-  LayoutGrid,
+  Bell,
   AtSign,
   UserRound,
-  MessageCircle,
+  Mail,
   Reply,
-  MessagesSquare,
+  MessageSquare,
   Megaphone,
   Sparkles,
   type LucideIcon,
@@ -32,12 +32,12 @@ export interface NotificationTab {
 }
 
 export const NOTIFICATION_TABS: NotificationTab[] = [
-  { key: 'all', label: 'All', icon: LayoutGrid, isAll: true },
+  { key: 'all', label: 'All', icon: Bell, isAll: true },
   { key: 'mentions', label: 'Mentions', icon: AtSign },
   { key: 'assignments', label: 'Assignments', icon: UserRound },
-  { key: 'new_conversations', label: 'New conversations', icon: MessageCircle },
+  { key: 'new_conversations', label: 'New conversations', icon: Mail },
   { key: 'assigned_replies', label: 'Assigned replies', icon: Reply },
-  { key: 'participating_replies', label: 'Participating replies', icon: MessagesSquare },
+  { key: 'participating_replies', label: 'Participating replies', icon: MessageSquare },
   { key: 'broadcasts', label: 'Broadcasts', icon: Megaphone, category: 'broadcast' },
   { key: 'emma', label: 'Emma', icon: Sparkles, category: 'emma_pending_draft' },
 ]

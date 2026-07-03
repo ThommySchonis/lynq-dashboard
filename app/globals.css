@@ -278,6 +278,110 @@
   display: block;
 }
 
+/* ── Toast (Sonner) — Figma 653-32165 "Warnings" ────────────────────────────── */
+/* Prefixed with `.toaster` (the class on Sonner's <ol> container) so every rule
+ * out-specifies Sonner's runtime-injected defaults, which are [data-sonner-toast]
+ * based (0,3,0) and injected into <head> AFTER this stylesheet. Values are 1:1
+ * with the Figma card spec. */
+.toaster .cn-toast[data-sonner-toast] {
+  width: var(--width);
+  /* extra left padding leaves room for the 4px strip (at 16px) + 13px gap */
+  padding: 16px 16px 16px 33px;
+  gap: 13px;
+  align-items: flex-start;
+  border-radius: 14px;
+  background: var(--popover);
+  border: 1px solid var(--border);
+  box-shadow: 0 10px 28px -6px rgba(15, 13, 31, 0.14);
+}
+/* Left accent strip — 4px rounded pill, inset 16px top/bottom/left, colored per type */
+.toaster .cn-toast[data-sonner-toast]::before {
+  content: "";
+  position: absolute;
+  top: 16px;
+  bottom: 16px;
+  left: 16px;
+  width: 4px;
+  border-radius: 2px;
+  background: var(--muted-foreground);
+}
+.toaster .cn-toast[data-sonner-toast][data-type="success"]::before { background: var(--success); }
+.toaster .cn-toast[data-sonner-toast][data-type="warning"]::before { background: var(--warning); }
+.toaster .cn-toast[data-sonner-toast][data-type="error"]::before { background: var(--destructive); }
+.toaster .cn-toast[data-sonner-toast][data-type="info"]::before { background: var(--info); }
+/* Icon circle (36×36, soft bg + tinted glyph per type) */
+.toaster .cn-toast[data-sonner-toast] [data-icon] {
+  display: flex;
+  width: 36px;
+  height: 36px;
+  margin: 0;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: var(--muted);
+  color: var(--muted-foreground);
+}
+.toaster .cn-toast[data-sonner-toast] [data-icon] > svg,
+.toaster .cn-toast[data-sonner-toast] [data-icon] > .cn-toast-warning-glyph {
+  width: 20px;
+  height: 20px;
+}
+.toaster .cn-toast[data-sonner-toast][data-type="success"] [data-icon] { background: var(--success-soft); color: var(--success); }
+.toaster .cn-toast[data-sonner-toast][data-type="warning"] [data-icon] { background: var(--warning-soft); color: var(--warning); }
+.toaster .cn-toast[data-sonner-toast][data-type="error"] [data-icon] { background: var(--destructive-soft); color: var(--destructive); }
+.toaster .cn-toast[data-sonner-toast][data-type="info"] [data-icon] { background: var(--info-soft); color: var(--info); }
+/* Warning glyph — exact Figma "!" tinted via mask so it follows the token */
+.cn-toast-warning-glyph {
+  display: block;
+  background: currentColor;
+  -webkit-mask: url("/icons/toast-warning.svg") center / contain no-repeat;
+  mask: url("/icons/toast-warning.svg") center / contain no-repeat;
+}
+/* Content — title + optional description */
+.toaster .cn-toast[data-sonner-toast] [data-content] {
+  gap: 3px;
+}
+.toaster .cn-toast[data-sonner-toast] [data-title] {
+  font-weight: 600;
+  font-size: 16px;
+  line-height: 22px;
+  color: var(--foreground);
+  /* reserve room so a long title never runs under the top-right close (X) */
+  padding-right: 24px;
+}
+.toaster .cn-toast[data-sonner-toast] [data-description] {
+  font-weight: 500;
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--muted-foreground);
+}
+/* Close (X) — top-right, always visible */
+.toaster .cn-toast[data-sonner-toast] [data-close-button] {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  left: auto;
+  width: 15px;
+  height: 15px;
+  padding: 0;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--foreground-4);
+  opacity: 1;
+  transform: none;
+  transition: color 0.15s ease;
+}
+.toaster .cn-toast[data-sonner-toast] [data-close-button]:hover {
+  background: transparent;
+  color: var(--foreground-2);
+}
+.toaster .cn-toast[data-sonner-toast] [data-close-button] > svg {
+  width: 15px;
+  height: 15px;
+}
+
 /* ── @theme inline ──────────────────────────────────────────────────────────── */
 @theme inline {
   --font-heading: 'Switzer', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;

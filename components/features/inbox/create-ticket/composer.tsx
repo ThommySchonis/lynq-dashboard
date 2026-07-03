@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { ConversationAssignMenu } from "@/components/features/inbox/conversation-assign-menu";
+import { TicketMetaStrip } from "@/components/features/inbox/ticket-meta-strip";
 import { useComposeMacros, useInboxMembers } from "@/hooks/inbox/use-inbox-data";
 import { plainTextToSafeHtml, normalizeSafeUrl } from "@/lib/inbox-utils";
 import { FALLBACK_MACROS, PRIORITY_OPTS, type ComposeMacro } from "@/lib/inbox-create-constants";
@@ -40,10 +41,22 @@ export function CreateTicketComposer({ form }: CreateTicketComposerProps) {
     assignedTo,
     setAssignedTo,
     accountInfo,
+    contactReason,
+    setContactReason,
+    product,
+    setProduct,
+    resolution,
+    setResolution,
+    setTags,
     send,
     isSending,
     goBack,
   } = form;
+
+  function addMetaTag() {
+    const t = prompt("Tag name")?.trim();
+    if (t) setTags((p) => [...new Set([...p, t])]);
+  }
 
   const { data: fetchedMacros } = useComposeMacros();
   const { data: members = [] } = useInboxMembers();
@@ -135,6 +148,17 @@ export function CreateTicketComposer({ form }: CreateTicketComposerProps) {
           <X className="h-[15px] w-[15px]" />
         </Button>
       </div>
+
+      {/* Meta strip — Add tags / Contact reason / Product / Resolution (Figma 301:3447) */}
+      <TicketMetaStrip
+        contactReason={contactReason}
+        product={product}
+        resolution={resolution}
+        onSetContactReason={setContactReason}
+        onSetProduct={setProduct}
+        onSetResolution={setResolution}
+        onAddTag={addMetaTag}
+      />
 
       {/* Thread area (empty state) — Figma 1372:68435: 440px card, 28×40 padding,
           8px gap, 16px radius, on the white compose column */}

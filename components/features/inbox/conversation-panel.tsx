@@ -4,6 +4,7 @@ import type { Thread, ConversationTag, BulkActionId, BulkActionPayload, TicketMe
 import { MacroPanel } from "@/components/features/inbox/macro-panel";
 import { TicketActionBar } from "@/components/features/inbox/ticket-action-bar";
 import { ConversationTopbar } from "@/components/features/inbox/conversation-topbar";
+import { TicketMetaStrip } from "@/components/features/inbox/ticket-meta-strip";
 import { ComposerMacros } from "@/components/features/inbox/composer-macros";
 import { MessageList } from "@/components/features/inbox/message-list";
 import { NotesSection } from "@/components/features/inbox/notes-section";
@@ -246,6 +247,13 @@ export function ConversationPanel() {
       .catch((e) => sonnerToast.error(e instanceof Error ? e.message : "Failed to update"));
   }
 
+  // Persist a ticket-meta field directly (the meta strip already prompts for the value).
+  function persistMeta(meta: Partial<TicketMeta>) {
+    if (!selectedThreadId) return;
+    void updateTicketMeta.mutateAsync({ threadId: selectedThreadId, meta })
+      .catch((e) => sonnerToast.error(e instanceof Error ? e.message : "Failed to update"));
+  }
+
   // Sorted threads for send & resolve navigation
   const sortedFiltered = useMemo(() => threads, [threads]);
 
@@ -424,6 +432,20 @@ export function ConversationPanel() {
         canPrev={currentIndex > 0}
         canNext={currentIndex >= 0 && currentIndex < sortedFiltered.length - 1}
         disabled={isSuspended}
+      />
+
+      {/* Meta strip — Add tags / Contact reason / Product / Resolution (Figma 301:3447) */}
+      <TicketMetaStrip
+        contactReason={toTicketMeta(selectedThread).contactReason ?? ""}
+        product={toTicketMeta(selectedThread).product ?? ""}
+        resolution={toTicketMeta(selectedThread).resolution ?? ""}
+        onSetContactReason={(v) => persistMeta({ contactReason: v })}
+        onSetProduct={(v) => persistMeta({ product: v })}
+        onSetResolution={(v) => persistMeta({ resolution: v })}
+        onAddTag={() => {
+          const name = window.prompt("Tag name");
+          if (name) void handleAddTag(name);
+        }}
       />
 
       {/* Tags + ticket meta — hidden per Figma (restore via SHOW_LEGACY) */}

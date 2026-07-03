@@ -4,6 +4,7 @@ import type { Thread, ConversationTag, BulkActionId, BulkActionPayload, TicketMe
 import { MacroPanel } from "@/components/features/inbox/macro-panel";
 import { TicketActionBar } from "@/components/features/inbox/ticket-action-bar";
 import { ConversationTopbar } from "@/components/features/inbox/conversation-topbar";
+import { TicketMetaStrip } from "@/components/features/inbox/ticket-meta-strip";
 import { ComposerMacros } from "@/components/features/inbox/composer-macros";
 import { MessageList } from "@/components/features/inbox/message-list";
 import { NotesSection } from "@/components/features/inbox/notes-section";
@@ -246,6 +247,13 @@ export function ConversationPanel() {
       .catch((e) => sonnerToast.error(e instanceof Error ? e.message : "Failed to update"));
   }
 
+  // Persist a ticket-meta field directly (the meta strip already prompts for the value).
+  function persistMeta(meta: Partial<TicketMeta>) {
+    if (!selectedThreadId) return;
+    void updateTicketMeta.mutateAsync({ threadId: selectedThreadId, meta })
+      .catch((e) => sonnerToast.error(e instanceof Error ? e.message : "Failed to update"));
+  }
+
   // Sorted threads for send & resolve navigation
   const sortedFiltered = useMemo(() => threads, [threads]);
 
@@ -407,6 +415,12 @@ export function ConversationPanel() {
     );
   }
 
+  const meta = toTicketMeta(selectedThread);
+  const promptAddTag = () => {
+    const name = window.prompt("Tag name");
+    if (name) void handleAddTag(name);
+  };
+
   return (
     <div className="flex-1 flex flex-col overflow-hidden min-w-0 relative z-[1]">
       {/* Ticket header — conv-topbar (Figma 1283-52902) */}
@@ -426,16 +440,24 @@ export function ConversationPanel() {
         disabled={isSuspended}
       />
 
+      {/* Meta strip — Add tags / Contact reason / Product / Resolution (Figma 301:3447) */}
+      <TicketMetaStrip
+        contactReason={meta.contactReason ?? ""}
+        product={meta.product ?? ""}
+        resolution={meta.resolution ?? ""}
+        onSetContactReason={(v) => persistMeta({ contactReason: v })}
+        onSetProduct={(v) => persistMeta({ product: v })}
+        onSetResolution={(v) => persistMeta({ resolution: v })}
+        onAddTag={promptAddTag}
+      />
+
       {/* Tags + ticket meta — hidden per Figma (restore via SHOW_LEGACY) */}
       {SHOW_LEGACY && (
         <div className="py-2.5 px-[18px] border-b border-border shrink-0 bg-card">
           <TicketActionBar
-            meta={toTicketMeta(selectedThread)}
+            meta={meta}
             tags={conversationTags}
-            onAddTag={() => {
-              const name = window.prompt("Tag name");
-              if (name) void handleAddTag(name);
-            }}
+            onAddTag={promptAddTag}
             onRemoveTag={(tag) => void handleRemoveTag(tag)}
             onFieldChange={(field, labelOrValue) =>
               field === "tier"

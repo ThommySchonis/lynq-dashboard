@@ -23,7 +23,7 @@ export default function CreateTicketPage() {
   }, [goBack])
 
   return (
-    <div className="relative flex h-full overflow-hidden bg-background">
+    <div className="relative flex h-screen overflow-hidden bg-background">
       {/* Aurora background (dark mode only, decorative) */}
       <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
         <div className="hidden dark:block absolute rounded-full animate-aurora-a" style={{ top: '-25%', left: '12%', width: 1000, height: 900, background: 'radial-gradient(ellipse,rgba(161,117,252,0.62) 0%,rgba(124,58,237,0.32) 38%,rgba(109,40,217,0.1) 60%,transparent 74%)', filter: 'blur(55px)' }} />

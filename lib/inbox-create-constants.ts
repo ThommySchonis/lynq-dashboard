@@ -6,14 +6,6 @@ export interface ComposeMacro {
   archived?: boolean
 }
 
-export const DEMO_RECENT = [
-  { id: 'r1', from: 'Sophie de Vries', subject: 'Where is my package?', time: '2h ago', status: 'open' as const },
-  { id: 'r2', from: 'Mark Jansen', subject: 'Received wrong product', time: '5h ago', status: 'open' as const },
-  { id: 'r3', from: 'Lisa Bakker', subject: 'Refund request #1042', time: '1d ago', status: 'pending' as const },
-  { id: 'r4', from: 'Tom Hendricks', subject: 'Re: Delivery time question', time: '2d ago', status: 'resolved' as const },
-  { id: 'r5', from: 'Anna Smit', subject: 'Exchange size — order #1045', time: '3d ago', status: 'resolved' as const },
-]
-
 export const STATUS_COLOR: Record<string, string> = {
   open: 'bg-[#7C5CFC]',
   pending: 'bg-amber-500',

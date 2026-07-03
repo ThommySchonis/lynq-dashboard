@@ -13,7 +13,6 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
 } from '@/components/ui/dropdown-menu'
-import { formatRelativeTime } from '@/lib/notification-utils'
 import { NOTIFICATION_TABS } from '@/lib/notification-constants'
 import {
   useNotifications,
@@ -22,12 +21,13 @@ import {
 } from '@/hooks/notifications'
 import type { AppNotification } from '@/types/notifications'
 import { NotificationTabs } from './notification-tabs'
+import { NotificationList } from './notification-list'
+import { NotificationEmpty } from './notification-empty'
 
 /**
- * Centered notifications modal (Figma 350-5433 / 348-31872). PR1 delivers the
- * panel shell + header (Unread-only toggle, overflow menu, close). The filter
- * tabs (PR2) and the pixel-perfect grouped rows (PR3) land next — the content
- * region below is a temporary functional list until then.
+ * Centered notifications modal (Figma 350-5433 / 348-31872): panel shell +
+ * header (Unread-only toggle, overflow menu, close), filter tabs, and the
+ * date-grouped notification list / empty state.
  */
 export function NotificationsModal({
   open,
@@ -114,7 +114,7 @@ export function NotificationsModal({
           {/* Filter tabs */}
           <NotificationTabs activeKey={activeKey} onSelect={setActiveKey} />
 
-          {/* Content — temporary functional list; replaced by pixel-perfect grouped rows (PR3) */}
+          {/* Content */}
           <div className="min-h-0 flex-1 overflow-y-auto">
             {isLoading ? (
               <div className="space-y-2 p-4">
@@ -133,39 +133,9 @@ export function NotificationsModal({
                 </Button>
               </div>
             ) : visible.length === 0 ? (
-              <div className="px-4 py-10 text-center text-sm text-foreground-3">
-                You&rsquo;re all caught up.
-              </div>
+              <NotificationEmpty />
             ) : (
-              <ul>
-                {visible.map((n) => (
-                  <li key={n.id}>
-                    <button
-                      onClick={() => handleClick(n)}
-                      className="flex w-full gap-3 border-b border-border px-5 py-3.5 text-left transition-colors hover:bg-muted"
-                    >
-                      <span
-                        className={cn(
-                          'mt-1.5 size-2 shrink-0 rounded-full',
-                          n.read ? 'bg-transparent' : 'bg-primary',
-                        )}
-                      />
-                      <span className="min-w-0 flex-1">
-                        <span className="block truncate text-sm font-medium text-foreground">
-                          {n.title}
-                        </span>
-                        <span className="block truncate text-sm text-foreground-3">{n.body}</span>
-                        <time
-                          dateTime={n.created_at}
-                          className="mt-0.5 block text-xs text-foreground-4"
-                        >
-                          {formatRelativeTime(n.created_at)}
-                        </time>
-                      </span>
-                    </button>
-                  </li>
-                ))}
-              </ul>
+              <NotificationList items={visible} onItemClick={handleClick} />
             )}
           </div>
         </DialogPrimitive.Popup>

@@ -23,6 +23,7 @@ import type { AppNotification } from '@/types/notifications'
 import { NotificationTabs } from './notification-tabs'
 import { NotificationList } from './notification-list'
 import { NotificationEmpty } from './notification-empty'
+import { NotificationSkeleton } from './notification-skeleton'
 
 /**
  * Centered notifications modal (Figma 350-5433 / 348-31872): panel shell +
@@ -117,18 +118,11 @@ export function NotificationsModal({
           {/* Content */}
           <div className="min-h-0 flex-1 overflow-y-auto">
             {isLoading ? (
-              <div className="space-y-2 p-4">
-                {[0, 1, 2].map((i) => (
-                  <div
-                    key={i}
-                    className="h-14 animate-pulse rounded-md bg-muted motion-reduce:animate-none"
-                  />
-                ))}
-              </div>
+              <NotificationSkeleton />
             ) : error ? (
-              <div className="px-4 py-8 text-center text-sm text-foreground-3">
-                Couldn&rsquo;t load notifications.
-                <Button variant="ghost" size="sm" className="ml-2" onClick={() => void refetch()}>
+              <div className="flex h-full flex-col items-center justify-center gap-3 px-4 text-center">
+                <p className="text-sm text-foreground-3">Couldn&rsquo;t load notifications.</p>
+                <Button variant="outline" size="sm" onClick={() => void refetch()}>
                   Try again
                 </Button>
               </div>

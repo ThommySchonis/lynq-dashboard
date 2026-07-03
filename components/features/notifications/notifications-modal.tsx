@@ -14,12 +14,14 @@ import {
   DropdownMenuItem,
 } from '@/components/ui/dropdown-menu'
 import { formatRelativeTime } from '@/lib/notification-utils'
+import { NOTIFICATION_TABS } from '@/lib/notification-constants'
 import {
   useNotifications,
   useMarkNotificationRead,
   useMarkAllNotificationsRead,
 } from '@/hooks/notifications'
 import type { AppNotification } from '@/types/notifications'
+import { NotificationTabs } from './notification-tabs'
 
 /**
  * Centered notifications modal (Figma 350-5433 / 348-31872). PR1 delivers the
@@ -36,11 +38,19 @@ export function NotificationsModal({
 }) {
   const router = useRouter()
   const [unreadOnly, setUnreadOnly] = useState(false)
+  const [activeKey, setActiveKey] = useState('all')
   const { notifications, unreadCount, isLoading, error, refetch } = useNotifications()
   const markRead = useMarkNotificationRead()
   const markAll = useMarkAllNotificationsRead()
 
-  const visible = unreadOnly ? notifications.filter((n) => !n.read) : notifications
+  const activeTab = NOTIFICATION_TABS.find((t) => t.key === activeKey)
+  const byTab = notifications.filter((n) => {
+    if (!activeTab) return false
+    if (activeTab.isAll) return true
+    if (activeTab.category) return n.category === activeTab.category
+    return false // placeholder tab with no backing data → empty state
+  })
+  const visible = unreadOnly ? byTab.filter((n) => !n.read) : byTab
 
   function handleClick(n: AppNotification) {
     if (!n.read) markRead.mutate(n.id)
@@ -101,7 +111,10 @@ export function NotificationsModal({
             </div>
           </div>
 
-          {/* Content — temporary functional list; replaced by tabs (PR2) + grouped rows (PR3) */}
+          {/* Filter tabs */}
+          <NotificationTabs activeKey={activeKey} onSelect={setActiveKey} />
+
+          {/* Content — temporary functional list; replaced by pixel-perfect grouped rows (PR3) */}
           <div className="min-h-0 flex-1 overflow-y-auto">
             {isLoading ? (
               <div className="space-y-2 p-4">

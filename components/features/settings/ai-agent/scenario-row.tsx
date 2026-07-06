@@ -124,15 +124,15 @@ export function ScenarioRow({ meta, storeId, canEdit, row, first, last }: Scenar
       {expanded && (
         <div className="mt-4 flex flex-col gap-5">
           <SettingsField
-            label="Approach"
+            label="How should the agent respond?"
             htmlFor={`sc-${meta.key}-approach`}
-            hint="How the agent should handle this situation."
+            hint="Saved per scenario — this won't affect the others."
           >
             <Textarea
               id={`sc-${meta.key}-approach`}
               value={form.approach}
               onChange={(e) => update({ approach: e.target.value })}
-              placeholder="Describe the approach…"
+              placeholder="Outline the steps, what to check first, the tone to use, and any conditions or limits…"
               disabled={!canEdit}
               rows={3}
             />
@@ -235,7 +235,7 @@ export function ScenarioRow({ meta, storeId, canEdit, row, first, last }: Scenar
           {canEdit && (
             <div className="flex justify-end">
               <Button onClick={() => void handleSave()} disabled={!isDirty || saving}>
-                {saving ? 'Saving…' : 'Save changes'}
+                {saving ? 'Saving…' : 'Save scenario'}
               </Button>
             </div>
           )}

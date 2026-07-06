@@ -70,7 +70,7 @@ export function ExamplesSection({ storeId, canEdit }: ExamplesSectionProps) {
       title="Example replies"
       description="Sample replies that show Emma the desired voice and structure for this store. Add as many as you like; the 10 newest are used."
       actions={
-        <span className="text-xs text-muted-foreground tabular-nums">
+        <span className="inline-flex items-center rounded-full border border-border bg-muted px-2.5 py-0.5 text-[11px] font-semibold text-muted-foreground tabular-nums">
           {count} example{count === 1 ? '' : 's'}
         </span>
       }

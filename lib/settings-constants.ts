@@ -7,7 +7,7 @@ import {
   Monitor, Moon, Sun,
   SlidersHorizontal, Users, Zap, Tag, Store, CreditCard,
   Flag, BookOpen, ListChecks, Mail, ArrowLeftRight,
-  User, Lock, Plug,
+  User, Lock, Plug, AtSign,
   type LucideIcon,
 } from 'lucide-react'
 import type { MemberRole, Theme } from '@/types/settings'
@@ -35,6 +35,7 @@ const RAW_SETTINGS_NAV: SettingsNavGroup[] = [
     { label: 'Macros',   href: '/settings/workspace/macros',  Icon: Zap,      capability: 'viewMacros'     },
     { label: 'Tags',     href: '/settings/workspace/tags',    Icon: Tag,      capability: 'viewTags'       },
     { label: 'Stores',   href: '/settings/workspace/stores',  Icon: Store,    capability: 'manageWorkspace' },
+    { label: 'Email accounts', href: '/settings/integrations/email', Icon: AtSign, capability: 'manageWorkspace' },
     { label: 'Billing',  href: '/settings/workspace/billing', Icon: CreditCard, capability: 'manageBilling'  },
   ]},
   { label: 'AI AGENT', items: [

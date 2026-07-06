@@ -133,7 +133,7 @@ export function PoliciesSection({ storeId, canEdit }: PoliciesSectionProps) {
       >
         <div className="flex flex-col gap-5">
           {/* Figma-defined fields first, in Figma order (node 1057-2). */}
-          <SettingsField label="Shipping policy" htmlFor="ai-shipping">
+          <SettingsField emphasizeLabel label="Shipping policy" htmlFor="ai-shipping">
             <Textarea
               id="ai-shipping"
               value={form.shipping_policy}
@@ -144,7 +144,7 @@ export function PoliciesSection({ storeId, canEdit }: PoliciesSectionProps) {
             />
           </SettingsField>
 
-          <SettingsField label="Refund policy" htmlFor="ai-refund">
+          <SettingsField emphasizeLabel label="Refund policy" htmlFor="ai-refund">
             <Textarea
               id="ai-refund"
               value={form.refund_policy}
@@ -155,7 +155,7 @@ export function PoliciesSection({ storeId, canEdit }: PoliciesSectionProps) {
             />
           </SettingsField>
 
-          <SettingsField label="Customs policy" htmlFor="ai-customs">
+          <SettingsField emphasizeLabel label="Customs policy" htmlFor="ai-customs">
             <Textarea
               id="ai-customs"
               value={form.customs_policy}
@@ -166,7 +166,7 @@ export function PoliciesSection({ storeId, canEdit }: PoliciesSectionProps) {
             />
           </SettingsField>
 
-          <SettingsField
+          <SettingsField emphasizeLabel
             label="Agent can decide"
             hint="Things the agent may resolve on its own. Type and press Enter."
           >
@@ -178,7 +178,7 @@ export function PoliciesSection({ storeId, canEdit }: PoliciesSectionProps) {
             />
           </SettingsField>
 
-          <SettingsField
+          <SettingsField emphasizeLabel
             label="Agent cannot decide"
             hint="Things the agent must never decide on its own."
           >
@@ -191,7 +191,7 @@ export function PoliciesSection({ storeId, canEdit }: PoliciesSectionProps) {
             />
           </SettingsField>
 
-          <SettingsField
+          <SettingsField emphasizeLabel
             label="Escalate triggers"
             hint="Situations that should always be handed to a human."
           >
@@ -204,7 +204,7 @@ export function PoliciesSection({ storeId, canEdit }: PoliciesSectionProps) {
             />
           </SettingsField>
 
-          <SettingsField label="Tracking URL" htmlFor="ai-tracking">
+          <SettingsField emphasizeLabel label="Tracking URL" htmlFor="ai-tracking">
             <Input
               id="ai-tracking"
               type="text"
@@ -216,7 +216,7 @@ export function PoliciesSection({ storeId, canEdit }: PoliciesSectionProps) {
           </SettingsField>
 
           {/* Extra field retained beyond Figma (kept per product decision). */}
-          <SettingsField label="Cancellation policy" htmlFor="ai-cancellation">
+          <SettingsField emphasizeLabel label="Cancellation policy" htmlFor="ai-cancellation">
             <Textarea
               id="ai-cancellation"
               value={form.cancellation_policy}

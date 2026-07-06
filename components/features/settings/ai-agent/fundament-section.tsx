@@ -152,7 +152,7 @@ export function FundamentSection({ storeId, canEdit }: FundamentSectionProps) {
       >
         <div className="flex flex-col gap-5">
           {/* Figma-defined fields first, in Figma order (node 1056-13). */}
-          <SettingsField label="Brand name" htmlFor="ai-brand-name">
+          <SettingsField emphasizeLabel label="Brand name" htmlFor="ai-brand-name">
             <Input
               id="ai-brand-name"
               type="text"
@@ -163,7 +163,7 @@ export function FundamentSection({ storeId, canEdit }: FundamentSectionProps) {
             />
           </SettingsField>
 
-          <SettingsField
+          <SettingsField emphasizeLabel
             label="Brand description"
             htmlFor="ai-brand-description"
             hint="What you sell and what makes the brand distinctive."
@@ -178,7 +178,7 @@ export function FundamentSection({ storeId, canEdit }: FundamentSectionProps) {
             />
           </SettingsField>
 
-          <SettingsField
+          <SettingsField emphasizeLabel
             label="Tone of voice"
             htmlFor="ai-tone"
             hint="e.g. Warm & personal, Professional & efficient."
@@ -193,7 +193,7 @@ export function FundamentSection({ storeId, canEdit }: FundamentSectionProps) {
             />
           </SettingsField>
 
-          <SettingsField
+          <SettingsField emphasizeLabel
             label="Sign-off"
             htmlFor="ai-sign-off"
             hint="The closing line of every reply — e.g. “Kind regards, the Acme team.”"
@@ -208,7 +208,7 @@ export function FundamentSection({ storeId, canEdit }: FundamentSectionProps) {
             />
           </SettingsField>
 
-          <SettingsField
+          <SettingsField emphasizeLabel
             label="Languages"
             hint="Languages the agent may reply in. Type and press Enter."
           >
@@ -220,7 +220,7 @@ export function FundamentSection({ storeId, canEdit }: FundamentSectionProps) {
             />
           </SettingsField>
 
-          <SettingsField label="Website URL" htmlFor="ai-website">
+          <SettingsField emphasizeLabel label="Website URL" htmlFor="ai-website">
             <Input
               id="ai-website"
               type="text"
@@ -232,7 +232,7 @@ export function FundamentSection({ storeId, canEdit }: FundamentSectionProps) {
           </SettingsField>
 
           {/* Extra fields retained beyond Figma (kept per product decision). */}
-          <SettingsField label="Industry" htmlFor="ai-industry">
+          <SettingsField emphasizeLabel label="Industry" htmlFor="ai-industry">
             <Input
               id="ai-industry"
               type="text"
@@ -243,7 +243,7 @@ export function FundamentSection({ storeId, canEdit }: FundamentSectionProps) {
             />
           </SettingsField>
 
-          <SettingsField
+          <SettingsField emphasizeLabel
             label="Product categories"
             hint="Main categories you sell. Type and press Enter."
           >
@@ -255,7 +255,7 @@ export function FundamentSection({ storeId, canEdit }: FundamentSectionProps) {
             />
           </SettingsField>
 
-          <SettingsField
+          <SettingsField emphasizeLabel
             label="Formality"
             htmlFor="ai-formality"
             hint="How formal should replies sound?"
@@ -277,7 +277,7 @@ export function FundamentSection({ storeId, canEdit }: FundamentSectionProps) {
             </Select>
           </SettingsField>
 
-          <SettingsField
+          <SettingsField emphasizeLabel
             label="Communication style"
             hint="Style traits to combine. Type and press Enter (e.g. concise, empathetic, playful)."
           >
@@ -289,7 +289,7 @@ export function FundamentSection({ storeId, canEdit }: FundamentSectionProps) {
             />
           </SettingsField>
 
-          <SettingsField
+          <SettingsField emphasizeLabel
             label="Personality preferences"
             htmlFor="ai-personality"
             hint="Free-text notes on how Emma should come across (e.g. confident, dry humour, no exclamation marks)."

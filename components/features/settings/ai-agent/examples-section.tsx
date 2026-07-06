@@ -104,7 +104,7 @@ export function ExamplesSection({ storeId, canEdit }: ExamplesSectionProps) {
           ) : undefined
         }
       >
-        <SettingsField label="Example reply" htmlFor="ai-example-text">
+        <SettingsField emphasizeLabel label="Example reply" htmlFor="ai-example-text">
           <Textarea
             id="ai-example-text"
             value={draft}

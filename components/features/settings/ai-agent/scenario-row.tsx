@@ -123,7 +123,7 @@ export function ScenarioRow({ meta, storeId, canEdit, row, first, last }: Scenar
       {/* Expanded body */}
       {expanded && (
         <div className="mt-4 flex flex-col gap-5">
-          <SettingsField
+          <SettingsField emphasizeLabel
             label="How should the agent respond?"
             htmlFor={`sc-${meta.key}-approach`}
             hint="Saved per scenario — this won't affect the others."
@@ -138,7 +138,7 @@ export function ScenarioRow({ meta, storeId, canEdit, row, first, last }: Scenar
             />
           </SettingsField>
 
-          <SettingsField
+          <SettingsField emphasizeLabel
             label="Questions to ask"
             hint="Information the agent should gather first. Type and press Enter."
           >
@@ -150,7 +150,7 @@ export function ScenarioRow({ meta, storeId, canEdit, row, first, last }: Scenar
             />
           </SettingsField>
 
-          <SettingsField
+          <SettingsField emphasizeLabel
             label="Response template"
             htmlFor={`sc-${meta.key}-template`}
             hint="An optional starting point for the reply."
@@ -165,7 +165,7 @@ export function ScenarioRow({ meta, storeId, canEdit, row, first, last }: Scenar
             />
           </SettingsField>
 
-          <SettingsField
+          <SettingsField emphasizeLabel
             label="Escalate when"
             htmlFor={`sc-${meta.key}-escalate`}
             hint="When this scenario should be handed to a human."
@@ -181,7 +181,7 @@ export function ScenarioRow({ meta, storeId, canEdit, row, first, last }: Scenar
           </SettingsField>
 
           {/* Autonomy */}
-          <SettingsField
+          <SettingsField emphasizeLabel
             label="Autonomy"
             hint="How much of this scenario the agent may resolve without a human."
           >

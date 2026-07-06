@@ -1,8 +1,15 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { X } from 'lucide-react'
 import { Input } from '@/components/ui/input'
+
+interface ChipInputDropdownArgs {
+  draft: string
+  open: boolean
+  commit: (text: string) => void
+  close: () => void
+}
 
 interface ChipInputProps {
   value: string[]
@@ -11,6 +18,12 @@ interface ChipInputProps {
   disabled?: boolean
   /** Show a "↵ Enter" affix while the field is empty (Figma onboarding inputs). */
   enterHint?: boolean
+  /**
+   * Optional panel (e.g. a suggestions list) rendered under the field. Receives
+   * the live draft plus commit/close handles, and enables open-on-focus so the
+   * caller can layer a dropdown without re-implementing the chip shell.
+   */
+  renderDropdown?: (args: ChipInputDropdownArgs) => ReactNode
 }
 
 /**
@@ -23,8 +36,10 @@ export function ChipInput({
   placeholder = 'Type and press Enter…',
   disabled,
   enterHint,
+  renderDropdown,
 }: ChipInputProps) {
   const [draft, setDraft] = useState('')
+  const [open, setOpen] = useState(false)
 
   function commit(text: string) {
     const trimmed = text.trim().replace(/,+$/, '')
@@ -41,13 +56,14 @@ export function ChipInput({
     if (e.key === 'Backspace' && draft === '' && value.length > 0) {
       onChange(value.slice(0, -1))
     }
+    if (e.key === 'Escape') setOpen(false)
   }
 
   function remove(chip: string) {
     onChange(value.filter((v) => v !== chip))
   }
 
-  return (
+  const field = (
     <div className="flex min-h-[42px] flex-wrap items-center gap-2 rounded-[10px] border border-input bg-background px-3 py-2.5 transition-[color,box-shadow] focus-within:border-primary focus-within:ring-3 focus-within:ring-primary/20">
       {value.map((chip) => (
         <span
@@ -69,9 +85,18 @@ export function ChipInput({
       ))}
       <Input
         value={draft}
-        onChange={(e) => setDraft(e.target.value)}
+        onChange={(e) => {
+          setDraft(e.target.value)
+          if (renderDropdown) setOpen(true)
+        }}
         onKeyDown={handleKeyDown}
-        onBlur={() => commit(draft)}
+        onFocus={() => {
+          if (renderDropdown) setOpen(true)
+        }}
+        onBlur={() => {
+          commit(draft)
+          setOpen(false)
+        }}
         placeholder={value.length === 0 ? placeholder : 'Add another…'}
         disabled={disabled}
         className="h-auto min-w-[120px] flex-1 border-0 bg-transparent p-0 text-sm shadow-none focus-visible:ring-0"
@@ -81,6 +106,15 @@ export function ChipInput({
           ↵ Enter
         </span>
       )}
+    </div>
+  )
+
+  if (!renderDropdown) return field
+
+  return (
+    <div className="relative">
+      {field}
+      {renderDropdown({ draft, open, commit, close: () => setOpen(false) })}
     </div>
   )
 }

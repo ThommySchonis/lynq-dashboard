@@ -8,6 +8,7 @@ import { SettingsSection, SettingsCard } from '@/components/features/settings/se
 import { SettingsField } from '@/components/features/settings/settings-field'
 import { StatusBadge } from '@/components/features/settings/status-badge'
 import { ChipInput } from '@/components/shared/chip-input'
+import { SuggestedActionsInput } from './suggested-actions-input'
 import { useAiPolicies, useUpsertAiPolicies } from '@/hooks/ai'
 import type { AiPoliciesRow } from '@/hooks/ai'
 
@@ -112,7 +113,7 @@ export function PoliciesSection({ storeId, canEdit }: PoliciesSectionProps) {
 
   return (
     <SettingsSection
-      title="Policies & regels"
+      title="Policies & rules"
       description="The rules and boundaries the AI agent follows when resolving tickets."
       actions={
         <StatusBadge
@@ -131,7 +132,8 @@ export function PoliciesSection({ storeId, canEdit }: PoliciesSectionProps) {
         }
       >
         <div className="flex flex-col gap-5">
-          <SettingsField label="Shipping policy" htmlFor="ai-shipping">
+          {/* Figma-defined fields first, in Figma order (node 1057-2). */}
+          <SettingsField emphasizeLabel label="Shipping policy" htmlFor="ai-shipping">
             <Textarea
               id="ai-shipping"
               value={form.shipping_policy}
@@ -142,29 +144,18 @@ export function PoliciesSection({ storeId, canEdit }: PoliciesSectionProps) {
             />
           </SettingsField>
 
-          <SettingsField label="Returns & refunds policy" htmlFor="ai-refund">
+          <SettingsField emphasizeLabel label="Refund policy" htmlFor="ai-refund">
             <Textarea
               id="ai-refund"
               value={form.refund_policy}
               onChange={(e) => patch({ refund_policy: e.target.value })}
-              placeholder="When returns / refunds are granted, partial vs full, timeframe…"
+              placeholder="When refunds are granted, partial vs full, timeframe…"
               disabled={!canEdit}
               rows={3}
             />
           </SettingsField>
 
-          <SettingsField label="Cancellation policy" htmlFor="ai-cancellation">
-            <Textarea
-              id="ai-cancellation"
-              value={form.cancellation_policy}
-              onChange={(e) => patch({ cancellation_policy: e.target.value })}
-              placeholder="When customers can cancel, how to request, who pays for what…"
-              disabled={!canEdit}
-              rows={3}
-            />
-          </SettingsField>
-
-          <SettingsField label="Customs policy" htmlFor="ai-customs">
+          <SettingsField emphasizeLabel label="Customs policy" htmlFor="ai-customs">
             <Textarea
               id="ai-customs"
               value={form.customs_policy}
@@ -175,11 +166,11 @@ export function PoliciesSection({ storeId, canEdit }: PoliciesSectionProps) {
             />
           </SettingsField>
 
-          <SettingsField
+          <SettingsField emphasizeLabel
             label="Agent can decide"
             hint="Things the agent may resolve on its own. Type and press Enter."
           >
-            <ChipInput
+            <SuggestedActionsInput
               value={form.can_decide}
               onChange={(can_decide) => patch({ can_decide })}
               placeholder="e.g. Resend tracking link…"
@@ -187,7 +178,7 @@ export function PoliciesSection({ storeId, canEdit }: PoliciesSectionProps) {
             />
           </SettingsField>
 
-          <SettingsField
+          <SettingsField emphasizeLabel
             label="Agent cannot decide"
             hint="Things the agent must never decide on its own."
           >
@@ -196,10 +187,11 @@ export function PoliciesSection({ storeId, canEdit }: PoliciesSectionProps) {
               onChange={(cannot_decide) => patch({ cannot_decide })}
               placeholder="e.g. Approve refunds over €100…"
               disabled={!canEdit}
+              enterHint
             />
           </SettingsField>
 
-          <SettingsField
+          <SettingsField emphasizeLabel
             label="Escalate triggers"
             hint="Situations that should always be handed to a human."
           >
@@ -208,10 +200,11 @@ export function PoliciesSection({ storeId, canEdit }: PoliciesSectionProps) {
               onChange={(escalate_triggers) => patch({ escalate_triggers })}
               placeholder="e.g. Legal threat, chargeback…"
               disabled={!canEdit}
+              enterHint
             />
           </SettingsField>
 
-          <SettingsField label="Tracking URL" htmlFor="ai-tracking">
+          <SettingsField emphasizeLabel label="Tracking URL" htmlFor="ai-tracking">
             <Input
               id="ai-tracking"
               type="text"
@@ -219,6 +212,18 @@ export function PoliciesSection({ storeId, canEdit }: PoliciesSectionProps) {
               onChange={(e) => patch({ tracking_url: e.target.value })}
               placeholder="https://track.example.com/{tracking_number}"
               disabled={!canEdit}
+            />
+          </SettingsField>
+
+          {/* Extra field retained beyond Figma (kept per product decision). */}
+          <SettingsField emphasizeLabel label="Cancellation policy" htmlFor="ai-cancellation">
+            <Textarea
+              id="ai-cancellation"
+              value={form.cancellation_policy}
+              onChange={(e) => patch({ cancellation_policy: e.target.value })}
+              placeholder="When customers can cancel, how to request, who pays for what…"
+              disabled={!canEdit}
+              rows={3}
             />
           </SettingsField>
         </div>

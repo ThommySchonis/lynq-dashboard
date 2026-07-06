@@ -132,7 +132,7 @@ export function FundamentSection({ storeId, canEdit }: FundamentSectionProps) {
 
   return (
     <SettingsSection
-      title="Fundament"
+      title="Fundamentals"
       description="The brand identity the AI agent uses in every reply for this store."
       actions={
         <StatusBadge
@@ -151,18 +151,19 @@ export function FundamentSection({ storeId, canEdit }: FundamentSectionProps) {
         }
       >
         <div className="flex flex-col gap-5">
-          <SettingsField label="Brand name" htmlFor="ai-brand-name">
+          {/* Figma-defined fields first, in Figma order (node 1056-13). */}
+          <SettingsField emphasizeLabel label="Brand name" htmlFor="ai-brand-name">
             <Input
               id="ai-brand-name"
               type="text"
               value={form.brand_name}
               onChange={(e) => patch({ brand_name: e.target.value })}
-              placeholder="e.g. Acme Co."
+              placeholder="e.g. Acme Co"
               disabled={!canEdit}
             />
           </SettingsField>
 
-          <SettingsField
+          <SettingsField emphasizeLabel
             label="Brand description"
             htmlFor="ai-brand-description"
             hint="What you sell and what makes the brand distinctive."
@@ -177,7 +178,61 @@ export function FundamentSection({ storeId, canEdit }: FundamentSectionProps) {
             />
           </SettingsField>
 
-          <SettingsField label="Industry" htmlFor="ai-industry">
+          <SettingsField emphasizeLabel
+            label="Tone of voice"
+            htmlFor="ai-tone"
+            hint="e.g. Warm & personal, Professional & efficient."
+          >
+            <Input
+              id="ai-tone"
+              type="text"
+              value={form.tone_of_voice}
+              onChange={(e) => patch({ tone_of_voice: e.target.value })}
+              placeholder="How replies should sound"
+              disabled={!canEdit}
+            />
+          </SettingsField>
+
+          <SettingsField emphasizeLabel
+            label="Sign-off"
+            htmlFor="ai-sign-off"
+            hint="The closing line of every reply — e.g. “Kind regards, the Acme team.”"
+          >
+            <Input
+              id="ai-sign-off"
+              type="text"
+              value={form.sign_off}
+              onChange={(e) => patch({ sign_off: e.target.value })}
+              placeholder="Kind regards, the team"
+              disabled={!canEdit}
+            />
+          </SettingsField>
+
+          <SettingsField emphasizeLabel
+            label="Languages"
+            hint="Languages the agent may reply in. Type and press Enter."
+          >
+            <ChipInput
+              value={form.languages}
+              onChange={(languages) => patch({ languages })}
+              placeholder="e.g. English, Nederlands…"
+              disabled={!canEdit}
+            />
+          </SettingsField>
+
+          <SettingsField emphasizeLabel label="Website URL" htmlFor="ai-website">
+            <Input
+              id="ai-website"
+              type="text"
+              value={form.website_url}
+              onChange={(e) => patch({ website_url: e.target.value })}
+              placeholder="https://example.com"
+              disabled={!canEdit}
+            />
+          </SettingsField>
+
+          {/* Extra fields retained beyond Figma (kept per product decision). */}
+          <SettingsField emphasizeLabel label="Industry" htmlFor="ai-industry">
             <Input
               id="ai-industry"
               type="text"
@@ -188,7 +243,7 @@ export function FundamentSection({ storeId, canEdit }: FundamentSectionProps) {
             />
           </SettingsField>
 
-          <SettingsField
+          <SettingsField emphasizeLabel
             label="Product categories"
             hint="Main categories you sell. Type and press Enter."
           >
@@ -200,7 +255,7 @@ export function FundamentSection({ storeId, canEdit }: FundamentSectionProps) {
             />
           </SettingsField>
 
-          <SettingsField
+          <SettingsField emphasizeLabel
             label="Formality"
             htmlFor="ai-formality"
             hint="How formal should replies sound?"
@@ -222,7 +277,7 @@ export function FundamentSection({ storeId, canEdit }: FundamentSectionProps) {
             </Select>
           </SettingsField>
 
-          <SettingsField
+          <SettingsField emphasizeLabel
             label="Communication style"
             hint="Style traits to combine. Type and press Enter (e.g. concise, empathetic, playful)."
           >
@@ -234,7 +289,7 @@ export function FundamentSection({ storeId, canEdit }: FundamentSectionProps) {
             />
           </SettingsField>
 
-          <SettingsField
+          <SettingsField emphasizeLabel
             label="Personality preferences"
             htmlFor="ai-personality"
             hint="Free-text notes on how Emma should come across (e.g. confident, dry humour, no exclamation marks)."
@@ -246,59 +301,6 @@ export function FundamentSection({ storeId, canEdit }: FundamentSectionProps) {
               placeholder="Describe the personality you want Emma to project…"
               disabled={!canEdit}
               rows={3}
-            />
-          </SettingsField>
-
-          <SettingsField
-            label="Tone of voice (extra notes)"
-            htmlFor="ai-tone"
-            hint="Optional. Free-text refinement that complements the structured fields above."
-          >
-            <Input
-              id="ai-tone"
-              type="text"
-              value={form.tone_of_voice}
-              onChange={(e) => patch({ tone_of_voice: e.target.value })}
-              placeholder="e.g. Warm & personal"
-              disabled={!canEdit}
-            />
-          </SettingsField>
-
-          <SettingsField
-            label="Sign-off"
-            htmlFor="ai-sign-off"
-            hint="The closing line of every reply, e.g. “Kind regards, the Acme team”."
-          >
-            <Input
-              id="ai-sign-off"
-              type="text"
-              value={form.sign_off}
-              onChange={(e) => patch({ sign_off: e.target.value })}
-              placeholder="Kind regards, the team"
-              disabled={!canEdit}
-            />
-          </SettingsField>
-
-          <SettingsField
-            label="Languages"
-            hint="Languages the agent may reply in. Type and press Enter."
-          >
-            <ChipInput
-              value={form.languages}
-              onChange={(languages) => patch({ languages })}
-              placeholder="e.g. English, Nederlands…"
-              disabled={!canEdit}
-            />
-          </SettingsField>
-
-          <SettingsField label="Website URL" htmlFor="ai-website">
-            <Input
-              id="ai-website"
-              type="text"
-              value={form.website_url}
-              onChange={(e) => patch({ website_url: e.target.value })}
-              placeholder="https://example.com"
-              disabled={!canEdit}
             />
           </SettingsField>
         </div>

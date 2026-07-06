@@ -1,22 +1,22 @@
 'use client'
 
-import { Bot } from 'lucide-react'
+import Link from 'next/link'
+import { Sparkles } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Label } from '@/components/ui/label'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import { EmptyState } from '@/components/shared/empty-state'
+import { Button } from '@/components/ui/button'
+import { SettingsPageHeader } from '@/components/features/settings/settings-header'
+import { SettingsEmptyState } from '@/components/features/settings/settings-empty-state'
 import { useAuthStore } from '@/stores/auth'
 import { useAiStoreSelection } from '@/hooks/ai'
+import { AiStoreSelect } from './ai-store-select'
 import { FundamentSection } from './fundament-section'
 import { PoliciesSection } from './policies-section'
 import { ExamplesSection } from './examples-section'
 import { ScenariosSection } from './scenarios-section'
+
+const HEADER_TITLE = 'Onboarding'
+const HEADER_DESC =
+  "Teach the AI agent about a store's brand, policies, example replies, and how to handle common support scenarios."
 
 export function OnboardingSettings() {
   const role = useAuthStore((s) => s.role)
@@ -27,61 +27,37 @@ export function OnboardingSettings() {
 
   if (storesLoading) {
     return (
-      <div className="max-w-3xl mx-auto px-12 py-12 space-y-10">
-        <div className="space-y-2 pb-6 border-b border-border">
-          <Skeleton className="h-3.5 w-28" />
-          <Skeleton className="h-8 w-48" />
-          <Skeleton className="h-3.5 w-80" />
+      <div className="mx-auto max-w-[920px] px-6 py-10">
+        <SettingsPageHeader title={HEADER_TITLE} description={HEADER_DESC} />
+        <div className="flex flex-col gap-10">
+          <Skeleton className="h-52 w-full rounded-2xl" />
+          <Skeleton className="h-64 w-full rounded-2xl" />
         </div>
-        <Skeleton className="h-52 w-full rounded-xl" />
-        <Skeleton className="h-64 w-full rounded-xl" />
       </div>
     )
   }
 
   return (
-    <div className="max-w-3xl mx-auto px-12 py-12">
-      <div className="pb-6 mb-8 border-b border-border">
-        <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1.5 flex-wrap">
-          <span>Settings</span>
-          <span>/</span>
-          <span>AI agent</span>
-          <span>/</span>
-          <span>Onboarding</span>
-        </div>
-        <h1 className="text-[28px] font-semibold text-foreground leading-tight mb-1">Onboarding</h1>
-        <p className="text-sm text-muted-foreground leading-relaxed">
-          Teach the AI agent about a store&rsquo;s brand, policies, example replies, and how to
-          handle common support scenarios.
-        </p>
-      </div>
+    <div className="mx-auto max-w-[920px] px-6 py-10">
+      <SettingsPageHeader title={HEADER_TITLE} description={HEADER_DESC} />
 
       {!stores || stores.length === 0 ? (
-        <EmptyState
-          icon={Bot}
-          title="No stores yet"
-          description="Connect a store first to configure its AI agent. Stores can be added under Settings → Stores."
-        />
+        <div className="flex items-center justify-center pt-6">
+          <div className="w-[440px] max-w-full rounded-2xl border border-settings-border bg-card px-10 py-7">
+            <SettingsEmptyState
+              Icon={Sparkles}
+              title="No stores yet"
+              description="Connect a store first to configure its AI agent. Stores can be added under Settings → Stores."
+              action={
+                <Button render={<Link href="/settings/workspace/stores" />}>Connect store</Button>
+              }
+            />
+          </div>
+        </div>
       ) : (
         <>
-          <div className="mb-8 flex flex-col gap-1.5 max-w-xs">
-            <Label htmlFor="ai-store-select" className="text-sm font-medium text-foreground">
-              Store
-            </Label>
-            <Select value={storeId} onValueChange={(v) => v && setStore(v)}>
-              <SelectTrigger id="ai-store-select" className="w-full">
-                <SelectValue placeholder="Select a store">
-                  {stores?.find((s) => s.id === storeId)?.name}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                {stores.map((s) => (
-                  <SelectItem key={s.id} value={s.id}>
-                    {s.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <div className="mb-8">
+            <AiStoreSelect stores={stores} storeId={storeId} onChange={setStore} />
           </div>
 
           {storeId ? (
@@ -93,10 +69,8 @@ export function OnboardingSettings() {
             </div>
           ) : (
             <div className="flex flex-col gap-10">
-              <Skeleton className="h-52 w-full rounded-xl" />
-              <Skeleton className="h-64 w-full rounded-xl" />
-              <Skeleton className="h-52 w-full rounded-xl" />
-              <Skeleton className="h-72 w-full rounded-xl" />
+              <Skeleton className="h-52 w-full rounded-2xl" />
+              <Skeleton className="h-64 w-full rounded-2xl" />
             </div>
           )}
         </>

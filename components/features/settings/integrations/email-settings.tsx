@@ -6,6 +6,7 @@ import { useSearchParams } from 'next/navigation'
 import { Mail, Plus, ArrowUpRight, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { SettingsSection } from '@/components/features/settings/settings-section'
+import { SettingsPageHeader } from '@/components/features/settings/settings-header'
 import { EmailAccountRow } from '@/components/features/settings/integrations/email-account-row'
 import { CustomEmailModal } from '@/components/features/settings/integrations/custom-email-modal'
 import { ForwardingSetupWizard } from '@/components/features/settings/integrations/forwarding/forwarding-setup-wizard'
@@ -48,15 +49,10 @@ export function EmailSettings() {
 
   return (
     <div className="max-w-3xl mx-auto px-10 py-12 flex flex-col gap-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-xl font-semibold text-foreground tracking-tight">
-          Email accounts
-        </h1>
-        <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
-          Connect email accounts to receive customer emails as support tickets.
-        </p>
-      </div>
+      <SettingsPageHeader
+        title="Email accounts"
+        description="Connect email accounts to receive customer emails as support tickets."
+      />
 
       {/* Add account */}
       <SettingsSection title="Add an account">

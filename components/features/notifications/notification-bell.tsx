@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { Bell } from 'lucide-react'
-import { cn } from '@/lib/utils'
 import { CountBadge } from '@/components/shared/count-badge'
 import { useNotifications } from '@/hooks/notifications'
 import { NotificationsModal } from './notifications-modal'
@@ -38,17 +37,17 @@ export function NotificationBell({
           onClick={() => setOpen(true)}
           aria-haspopup="dialog"
           aria-label="Notifications"
-          className={cn(
-            'relative flex items-center justify-center rounded-md text-foreground-3 transition-colors hover:bg-muted hover:text-foreground',
-            collapsed ? 'size-8' : 'size-9',
-          )}
+          title="Notifications"
+          className="group relative flex h-10 w-full items-center justify-center rounded-[9px] px-3 text-sm text-foreground-2 transition-colors hover:bg-muted hover:text-foreground"
         >
-          <Bell className="h-5 w-5" />
-          {unreadCount > 0 && (
-            <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-medium text-white">
-              {unreadCount > 9 ? '9+' : unreadCount}
-            </span>
-          )}
+          <span className="relative flex shrink-0">
+            <Bell className="size-5 text-foreground-3 group-hover:text-foreground" />
+            {unreadCount > 0 && (
+              <span className="absolute -top-1.5 -right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-medium text-white">
+                {unreadCount > 9 ? '9+' : unreadCount}
+              </span>
+            )}
+          </span>
         </button>
       )}
       <NotificationsModal open={open} onOpenChange={setOpen} />

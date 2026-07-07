@@ -17,6 +17,7 @@ import type {
   ShopifyShopResponse,
   PaginatedResult,
 } from './shopify-types'
+import type { OrderWithLineItems } from '@/lib/services/data-export.types'
 
 /**
  * Fetch recent orders from Shopify REST API.
@@ -162,6 +163,67 @@ export async function getRefunds(credentials: ShopifyCredentials, dateRange: { f
       }]
     })
     .sort((a, b) => new Date(b.refundedAt ?? '').getTime() - new Date(a.refundedAt ?? '').getTime())
+}
+
+/**
+ * Fetch all orders in a date range with line items and derived refund fields,
+ * flattened for export. Paginates fully (not capped like getOrders).
+ */
+export async function getOrdersWithLineItems(
+  credentials: ShopifyCredentials,
+  dateRange: { from: string; to: string },
+): Promise<OrderWithLineItems[]> {
+  const { from, to } = dateRange
+
+  let nextUrl: string | null = `https://${credentials.domain}/admin/api/${SHOPIFY_API_VERSION}/orders.json?status=any&limit=250`
+  if (from) nextUrl += `&created_at_min=${from}T00:00:00`
+  if (to) nextUrl += `&created_at_max=${to}T23:59:59`
+
+  const allOrders: ShopifyOrder[] = []
+  while (nextUrl) {
+    const page: PaginatedResult<ShopifyOrdersResponse> = await shopifyPaginatedFetch<ShopifyOrdersResponse>(credentials, nextUrl)
+    allOrders.push(...(page.data.orders || []))
+    nextUrl = page.nextUrl
+  }
+
+  return allOrders.map((o: ShopifyOrder) => {
+    const refunds = o.refunds || []
+    const refundAmount = refunds.reduce(
+      (sum: number, r: ShopifyRefund) =>
+        sum + (r.transactions || []).reduce(
+          (ts: number, t: ShopifyTransaction) =>
+            ts + parseFloat(t.amount_set?.presentment_money?.amount || t.amount || '0'),
+          0,
+        ),
+      0,
+    )
+    const refundNote = refunds.map((r: ShopifyRefund) => r.note).filter(Boolean).join('; ')
+    const refundReason = refundNote || o.cancel_reason || null
+    const refundedAt = refunds.map((r: ShopifyRefund) => r.created_at).sort().at(-1) ?? null
+
+    return {
+      orderNumber: o.name,
+      createdAt: o.created_at,
+      customer: o.customer
+        ? `${o.customer.first_name || ''} ${o.customer.last_name || ''}`.trim() || 'Unknown'
+        : o.email || 'Unknown',
+      customerEmail: o.customer?.email || o.email || null,
+      financialStatus: o.financial_status,
+      fulfillmentStatus: o.fulfillment_status || 'unfulfilled',
+      totalPrice: o.total_price ?? '0',
+      cancelReason: o.cancel_reason ?? null,
+      refundAmount,
+      refundReason,
+      refundedAt,
+      lineItems: (o.line_items || []).map((item: ShopifyLineItem) => ({
+        title: item.title,
+        quantity: item.quantity,
+        price: item.price,
+        sku: item.sku,
+        variantTitle: item.variant_title,
+      })),
+    }
+  })
 }
 
 /**

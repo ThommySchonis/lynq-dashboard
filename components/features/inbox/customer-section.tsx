@@ -6,6 +6,7 @@ import { ChevronDown, MoreVertical, Star } from 'lucide-react'
 import { getInitials } from '@/lib/inbox-utils'
 import { CustomerStats } from './customer-stats'
 import type { SidebarCustomerResult } from './customer-sidebar'
+import type { ConversationTag } from '@/types/inbox'
 
 /**
  * Customer tab of the conversation rail (Figma 189-11179): customer card with
@@ -20,6 +21,7 @@ export function CustomerSection({
   loadingCust,
   custFieldsOpen,
   setCustFieldsOpen,
+  conversationTags,
 }: {
   customer: SidebarCustomerResult | undefined
   customerName: string
@@ -28,6 +30,7 @@ export function CustomerSection({
   loadingCust: boolean
   custFieldsOpen: boolean
   setCustFieldsOpen: (fn: (v: boolean) => boolean) => void
+  conversationTags: ConversationTag[]
 }) {
   const cust = customer?.customer
 
@@ -136,17 +139,22 @@ export function CustomerSection({
           )
         })()}
 
-      {/* Tags */}
-      {cust?.tags && (
+      {/* Tags — Shopify customer tags followed by workspace conversation tags */}
+      {(cust?.tags || conversationTags.length > 0) && (
         <div className="px-3.5 py-2 border-b border-border flex flex-wrap gap-1 shrink-0">
-          {cust.tags
-            .split(',')
+          {cust?.tags
+            ?.split(',')
             .filter(Boolean)
             .map((tag) => (
               <span key={tag} className="text-[10px] font-medium py-0.5 px-[7px] rounded bg-secondary text-foreground border border-border">
                 {tag.trim()}
               </span>
             ))}
+          {conversationTags.map((tag) => (
+            <span key={tag.id} className="text-[10px] font-medium py-0.5 px-[7px] rounded bg-secondary text-foreground border border-border">
+              {tag.name}
+            </span>
+          ))}
         </div>
       )}
 

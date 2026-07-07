@@ -50,3 +50,7 @@ supabase/.temp/
 
 # Sentry Config File
 .env.sentry-build-plugin
+
+# Superpowers working artifacts (specs) — never committed
+docs/superpowers/specs/
+docs/superpowers/plans/

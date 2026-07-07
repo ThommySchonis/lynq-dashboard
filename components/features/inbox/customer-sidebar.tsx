@@ -5,7 +5,7 @@ import { extractEmail, extractName, deriveIsVip } from '@/lib/inbox-utils'
 import { Search } from 'lucide-react'
 import { useMemo, useCallback } from 'react'
 import { useInboxUI } from '@/stores/inbox-ui'
-import { useConversations, useCustomerSearch } from '@/hooks/inbox/use-inbox-data'
+import { useConversations, useConversation, useCustomerSearch } from '@/hooks/inbox/use-inbox-data'
 import { CustomerSection } from './customer-section'
 import { OrdersSection } from './orders-section'
 
@@ -139,6 +139,11 @@ export function CustomerSidebar() {
   const needsReauth = (rawCustomer as { code?: string } | undefined)?.code === 'reauth_required'
   const customer = rawCustomer as SidebarCustomerResult | undefined
 
+  // Workspace conversation tags for the selected thread — shown in the sidebar
+  // after the Shopify customer tags. Shares the cache with the conversation panel.
+  const { data: conversationDetail } = useConversation(selectedThreadId)
+  const conversationTags = conversationDetail?.tags ?? []
+
   // Manual customer search handler
   const handleCustSearch = useCallback(
     (query: string) => {
@@ -219,6 +224,7 @@ export function CustomerSidebar() {
             loadingCust={loadingCust}
             custFieldsOpen={custFieldsOpen}
             setCustFieldsOpen={setCustFieldsOpen}
+            conversationTags={conversationTags}
           />
         )
       )}

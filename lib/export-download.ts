@@ -16,7 +16,14 @@ export async function downloadExport(
   })
 
   if (!res.ok) {
-    toast.error('Failed to download export. Please try again.')
+    let message = 'Failed to download export. Please try again.'
+    try {
+      const data = (await res.json()) as { error?: string }
+      if (data?.error) message = data.error
+    } catch {
+      // response was not JSON — keep the generic message
+    }
+    toast.error(message)
     return
   }
 

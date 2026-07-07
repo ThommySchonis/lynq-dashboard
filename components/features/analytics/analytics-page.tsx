@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect } from 'react'
 import Link from 'next/link'
+import { toast } from 'sonner'
 import { BarChart3, Info, Loader2, Sparkles } from 'lucide-react'
 import { EmptyState } from '@/components/shared/empty-state'
 import { DEMO_REFUNDS, DEMO_KPIS, DEMO_TREND } from '@/lib/demoData'
@@ -160,11 +161,15 @@ function AnalyticsContent() {
                       { label: "Analytics PDF Report", value: "analytics:pdf" },
                     ]}
                     onExport={async (value) => {
+                      if (!activeStoreId) {
+                        toast.error('Select a store before exporting.')
+                        return
+                      }
                       const [source, format] = value.split(":");
                       const endpoint = source === "orders" ? "/api/orders/export" : "/api/analytics/export";
                       await downloadExport(
                         endpoint,
-                        { format, storeId: activeStoreId ?? undefined },
+                        { format, storeId: activeStoreId },
                         token,
                         `${source}-export-${new Date().toISOString().slice(0, 10)}.${format === "csv" ? "csv" : "pdf"}`,
                       );

@@ -13,39 +13,15 @@ import {
   renderToBuffer,
 } from '@react-pdf/renderer'
 import React from 'react'
-import { supabaseAdmin } from '../supabaseAdmin'
+import { resolveAnalyticsInputs, resolveOrders } from '@/lib/services/data-export-sources'
+import type { ShopifyCredentials } from '@/lib/services/shopify-types'
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
-interface KPIRow {
-  totalOrders: number
-  netRevenue: number
-  totalRefunds: number
-  returns: number
-  cancelledOrders: number
-  discounts: number
-}
-
-interface RevenueTrendRow {
-  date: string
-  revenue: number | string
-}
-
-interface LineItemJson {
-  title: string
-  quantity: number
-  price: string | number
-  sku?: string
-  variant_title?: string
-}
-
-interface ShopifyOrderRow {
-  created_at: string
-  total_price: number | string
-  line_items: LineItemJson[] | null
-  refund_status: string | null
-  refund_reason: string | null
-  refund_amount: number | string | null
+interface ReportParams {
+  workspaceId: string
+  storeId: string
+  credentials: ShopifyCredentials
 }
 
 interface TopProduct {
@@ -453,7 +429,7 @@ const AnalyticsReportDocument: React.FC<AnalyticsReportDocProps> = ({ data, gene
   </Document>
 )
 
-// ─── Data fetching helpers ───────────────────────────────────────────────────
+// ─── Date range helpers ──────────────────────────────────────────────────────
 
 function dateRange12Months(): { from: string; to: string } {
   const to = new Date()
@@ -465,94 +441,30 @@ function dateRange12Months(): { from: string; to: string } {
   }
 }
 
-function dateRange30Days(): { from: string; to: string } {
-  const to = new Date()
-  const from = new Date()
-  from.setDate(from.getDate() - 30)
-  return {
-    from: from.toISOString().slice(0, 10),
-    to:   to.toISOString().slice(0, 10),
-  }
-}
-
-async function fetchKPIs(
-  workspaceId: string,
-  dateRange: { from: string; to: string },
-  storeId?: string,
-): Promise<KPIRow> {
-  const rpcResult = await supabaseAdmin.rpc('get_kpis', {
-    p_workspace_id: workspaceId,
-    p_from:         dateRange.from,
-    p_to:           dateRange.to,
-    p_store_id:     storeId ?? null,
-  })
-  if (rpcResult.error) throw new Error(`get_kpis RPC failed: ${rpcResult.error.message}`)
-  const row = rpcResult.data as KPIRow
-  return {
-    totalOrders:      row.totalOrders      ?? 0,
-    netRevenue:       row.netRevenue       ?? 0,
-    totalRefunds:     row.totalRefunds     ?? 0,
-    returns:          row.returns          ?? 0,
-    cancelledOrders:  row.cancelledOrders  ?? 0,
-    discounts:        row.discounts        ?? 0,
-  }
-}
-
-async function fetchRevenueTrend(
-  workspaceId: string,
-  dateRange: { from: string; to: string },
-  storeId?: string,
-): Promise<Array<{ date: string; revenue: number }>> {
-  const trendResult = await supabaseAdmin.rpc('get_revenue_trend', {
-    p_workspace_id: workspaceId,
-    p_from:         dateRange.from,
-    p_to:           dateRange.to,
-    p_store_id:     storeId ?? null,
-  })
-  if (trendResult.error) throw new Error(`get_revenue_trend RPC failed: ${trendResult.error.message}`)
-  return ((trendResult.data as RevenueTrendRow[]) ?? []).map((row) => ({
-    date:    row.date,
-    revenue: Math.max(0, Number(row.revenue) || 0),
-  }))
-}
-
-async function fetchOrders(workspaceId: string, storeId?: string): Promise<ShopifyOrderRow[]> {
-  let query = supabaseAdmin
-    .from('shopify_orders')
-    .select('created_at, total_price, line_items, refund_status, refund_reason, refund_amount')
-    .eq('workspace_id', workspaceId)
-    .eq('is_demo', false)
-
-  if (storeId) {
-    query = query.eq('store_id', storeId)
-  }
-
-  const { data, error } = await query
-  if (error) throw new Error(`shopify_orders query failed: ${error.message}`)
-  return (data as ShopifyOrderRow[]) ?? []
-}
 
 // ─── Orders report data assembly ─────────────────────────────────────────────
 
-async function buildOrdersReportData(workspaceId: string, storeId?: string): Promise<OrdersReportData> {
+export async function buildOrdersReportData(params: ReportParams): Promise<OrdersReportData> {
   const range = dateRange12Months()
-  const [kpis, orders] = await Promise.all([
-    fetchKPIs(workspaceId, range, storeId),
-    fetchOrders(workspaceId, storeId),
-  ])
+  const { kpi } = await resolveAnalyticsInputs({
+    workspaceId: params.workspaceId,
+    storeId:     params.storeId,
+    credentials: params.credentials,
+    range,
+  })
+  const orders = await resolveOrders({ credentials: params.credentials, range })
 
-  const totalOrders = kpis.totalOrders
-  const totalRevenue = kpis.netRevenue
+  const totalOrders = Number(kpi.totalOrders) || 0
+  const totalRevenue = Number(kpi.netRevenue) || 0
   const refundRate = totalOrders > 0
-    ? ((kpis.totalRefunds / totalOrders) * 100).toFixed(1)
+    ? ((Number(kpi.totalRefunds) / totalOrders) * 100).toFixed(1)
     : '0.0'
   const avgOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0
 
   // Top products (top 10 by order count)
   const productMap = new Map<string, { orders: number; revenue: number }>()
   for (const order of orders) {
-    const items: LineItemJson[] = Array.isArray(order.line_items) ? order.line_items : []
-    for (const item of items) {
+    for (const item of order.lineItems) {
       const title = item.title ?? 'Unknown'
       const existing = productMap.get(title) ?? { orders: 0, revenue: 0 }
       const lineRevenue = (Number(item.price) || 0) * (Number(item.quantity) || 0)
@@ -570,13 +482,13 @@ async function buildOrdersReportData(workspaceId: string, storeId?: string): Pro
   // Monthly breakdown (last 12 months)
   const monthMap = new Map<string, { orders: number; revenue: number; refunds: number }>()
   for (const order of orders) {
-    if (!order.created_at) continue
-    const key = order.created_at.slice(0, 7) // YYYY-MM
+    if (!order.createdAt) continue
+    const key = order.createdAt.slice(0, 7) // YYYY-MM
     const existing = monthMap.get(key) ?? { orders: 0, revenue: 0, refunds: 0 }
     monthMap.set(key, {
       orders:  existing.orders + 1,
-      revenue: existing.revenue + (Number(order.total_price) || 0),
-      refunds: existing.refunds + (Number(order.refund_amount) || 0),
+      revenue: existing.revenue + (Number(order.totalPrice) || 0),
+      refunds: existing.refunds + (Number(order.refundAmount) || 0),
     })
   }
   const monthlyBreakdown: MonthlyBreakdown[] = Array.from(monthMap.entries())
@@ -594,29 +506,36 @@ async function buildOrdersReportData(workspaceId: string, storeId?: string): Pro
 
 // ─── Analytics report data assembly ──────────────────────────────────────────
 
-async function buildAnalyticsReportData(workspaceId: string, storeId?: string): Promise<AnalyticsReportData> {
-  const range30 = dateRange30Days()
+export async function buildAnalyticsReportData(params: ReportParams): Promise<AnalyticsReportData> {
   const range12 = dateRange12Months()
 
-  const [kpis, trend, orders] = await Promise.all([
-    fetchKPIs(workspaceId, range12, storeId),
-    fetchRevenueTrend(workspaceId, range30, storeId),
-    fetchOrders(workspaceId, storeId),
-  ])
+  // KPIs, trend, and refund tables all span the same 12-month window so the
+  // report's headline numbers reconcile with its tables. The trend is sliced
+  // to its most recent 30 points below for the chart.
+  const { kpi, trend } = await resolveAnalyticsInputs({
+    workspaceId: params.workspaceId,
+    storeId:     params.storeId,
+    credentials: params.credentials,
+    range:       range12,
+  })
+  const orders = await resolveOrders({ credentials: params.credentials, range: range12 })
 
-  const refundRate = kpis.totalOrders > 0
-    ? ((kpis.totalRefunds / kpis.totalOrders) * 100).toFixed(1)
+  const totalOrders = Number(kpi.totalOrders) || 0
+  const refundRate = totalOrders > 0
+    ? ((Number(kpi.totalRefunds) / totalOrders) * 100).toFixed(1)
     : '0.0'
 
   // Revenue trend: last 30 entries
-  const revenueTrend = trend.slice(-30)
+  const revenueTrend = trend
+    .map((row) => ({ date: row.date, revenue: Math.max(0, Number(row.revenue) || 0) }))
+    .slice(-30)
 
   // Top refund reasons (top 10)
   const reasonMap = new Map<string, { count: number; amount: number }>()
   for (const order of orders) {
-    const refundAmt = Number(order.refund_amount) || 0
+    const refundAmt = Number(order.refundAmount) || 0
     if (refundAmt <= 0) continue
-    const reason = order.refund_reason?.trim() || 'Not specified'
+    const reason = order.refundReason?.trim() || 'Not specified'
     const existing = reasonMap.get(reason) ?? { count: 0, amount: 0 }
     reasonMap.set(reason, { count: existing.count + 1, amount: existing.amount + refundAmt })
   }
@@ -628,10 +547,9 @@ async function buildAnalyticsReportData(workspaceId: string, storeId?: string): 
   // Top refund products (top 10)
   const refundProductMap = new Map<string, { count: number; amount: number }>()
   for (const order of orders) {
-    const refundAmt = Number(order.refund_amount) || 0
+    const refundAmt = Number(order.refundAmount) || 0
     if (refundAmt <= 0) continue
-    const items: LineItemJson[] = Array.isArray(order.line_items) ? order.line_items : []
-    for (const item of items) {
+    for (const item of order.lineItems) {
       const title = item.title ?? 'Unknown'
       const existing = refundProductMap.get(title) ?? { count: 0, amount: 0 }
       refundProductMap.set(title, {
@@ -646,9 +564,9 @@ async function buildAnalyticsReportData(workspaceId: string, storeId?: string): 
     .slice(0, 10)
 
   return {
-    totalOrders:      kpis.totalOrders,
-    revenue:          kpis.netRevenue,
-    refunds:          kpis.returns,
+    totalOrders,
+    revenue:  Number(kpi.netRevenue) || 0,
+    refunds:  Number(kpi.returns) || 0,
     refundRate,
     revenueTrend,
     topRefundReasons,
@@ -662,11 +580,8 @@ async function buildAnalyticsReportData(workspaceId: string, storeId?: string): 
  * Render an Orders & Refunds PDF report to a Buffer.
  * Includes 4 KPI boxes, top 10 products table, and last-12-month breakdown.
  */
-export async function renderOrdersReportPDF(
-  workspaceId: string,
-  storeId?: string,
-): Promise<Buffer> {
-  const data = await buildOrdersReportData(workspaceId, storeId)
+export async function renderOrdersReportPDF(params: ReportParams): Promise<Buffer> {
+  const data = await buildOrdersReportData(params)
   const generatedAt = formatDate(new Date().toISOString())
   return Buffer.from(
     await renderToBuffer(<OrdersReportDocument data={data} generatedAt={generatedAt} />)
@@ -677,11 +592,8 @@ export async function renderOrdersReportPDF(
  * Render an Analytics PDF report to a Buffer.
  * Includes 4 KPI boxes, revenue trend table, top refund reasons, top refund products.
  */
-export async function renderAnalyticsReportPDF(
-  workspaceId: string,
-  storeId?: string,
-): Promise<Buffer> {
-  const data = await buildAnalyticsReportData(workspaceId, storeId)
+export async function renderAnalyticsReportPDF(params: ReportParams): Promise<Buffer> {
+  const data = await buildAnalyticsReportData(params)
   const generatedAt = formatDate(new Date().toISOString())
   return Buffer.from(
     await renderToBuffer(<AnalyticsReportDocument data={data} generatedAt={generatedAt} />)

@@ -1,30 +1,16 @@
 'use client'
 
-import { useState, useMemo } from 'react'
-import { Bot } from 'lucide-react'
+import { useMemo, useState } from 'react'
+import { Bot, Plus, Flag, Globe, Search } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
-import { Textarea } from '@/components/ui/textarea'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
+import { Input } from '@/components/ui/input'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
-import { SettingsSection, SettingsCard } from '@/components/features/settings/settings-section'
-import { SettingsField } from '@/components/features/settings/settings-field'
-import { EmptyState } from '@/components/shared/empty-state'
 import { FeedbackHistory } from './feedback-history'
+import { AiAgentSettingsShell } from './ai-agent-settings-shell'
+import { AddLessonDialog } from './add-lesson-dialog'
 import { useAuthStore } from '@/stores/auth'
-import {
-  useAiLessons,
-  useAddAiLesson,
-  useDisableAiLesson,
-  useAiStoreSelection,
-} from '@/hooks/ai'
+import { useAiLessons, useDisableAiLesson, useAiStoreSelection } from '@/hooks/ai'
 import type { AiLessonRow } from '@/hooks/ai'
 import { relativeTime } from '@/lib/macros'
 import { SCENARIOS } from './scenarios-section'
@@ -34,13 +20,24 @@ import { SCENARIOS } from './scenarios-section'
 // the "N of 50 active" counter is honest about what the model actually sees.
 const LESSON_PROMPT_CAP = 50
 
-// "All scenarios" sentinel for the scenario dropdown. Cannot use empty
-// string because base-ui's Select treats '' as null/unset.
-const ALL_SCENARIOS_VALUE = '__all__'
+const HEADER_TITLE = 'Lessons'
+const HEADER_DESC =
+  "Teach Emma specific corrections that the onboarding doesn't cover. Lessons apply to one scenario or all."
 
 function scenarioLabel(key: string | null): string {
   if (!key) return 'All scenarios'
   return SCENARIOS.find((s) => s.key === key)?.title ?? key
+}
+
+/** Scenario pill — flag for a specific scenario, globe for "All scenarios". */
+function ScenarioBadge({ scenario }: { scenario: string | null }) {
+  const Icon = scenario ? Flag : Globe
+  return (
+    <span className="inline-flex items-center gap-[7px] rounded-full bg-input py-1 pr-[11px] pl-[9px] text-xs font-semibold text-foreground-3">
+      <Icon className="size-[13px]" strokeWidth={2} />
+      {scenarioLabel(scenario)}
+    </span>
+  )
 }
 
 function LessonCard({
@@ -56,29 +53,32 @@ function LessonCard({
 }) {
   const when = relativeTime(lesson.created_at)
   return (
-    <div className="flex items-start justify-between gap-4 border border-border rounded-lg bg-card p-4">
-      <div className="min-w-0 flex-1 flex flex-col gap-2">
-        <p className="text-sm text-foreground whitespace-pre-wrap break-words">
-          {lesson.lesson_text}
-        </p>
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <span className="inline-flex items-center rounded-md border border-border bg-secondary px-1.5 py-0.5 text-foreground-2">
-            {scenarioLabel(lesson.applies_to_scenario)}
+    <div className="flex flex-col gap-3 rounded-[14px] border border-settings-border bg-card p-[18px]">
+      <div className="flex items-center justify-between gap-3">
+        <ScenarioBadge scenario={lesson.applies_to_scenario} />
+        <div className="flex flex-shrink-0 items-center gap-2">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-success-soft py-1 pr-2.5 pl-[9px] text-xs font-semibold text-success-strong">
+            <span className="size-1.5 rounded-full bg-success" />
+            Active
           </span>
-          {when && <span>Added {when}</span>}
+          {canEdit && (
+            <Button
+              variant="outline"
+              onClick={onDisable}
+              disabled={isDisabling}
+              className="h-auto rounded-lg border-settings-border px-3 py-[7px] text-xs font-semibold text-foreground-2"
+            >
+              {isDisabling ? 'Disabling…' : 'Disable'}
+            </Button>
+          )}
         </div>
       </div>
-      {canEdit && (
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={onDisable}
-          disabled={isDisabling}
-          className="flex-shrink-0"
-        >
-          {isDisabling ? 'Disabling…' : 'Disable'}
-        </Button>
-      )}
+
+      <p className="whitespace-pre-wrap break-words text-sm text-foreground-2">
+        {lesson.lesson_text}
+      </p>
+
+      {when && <p className="text-xs text-foreground-4">Added {when}</p>}
     </div>
   )
 }
@@ -93,199 +93,116 @@ export function LessonsSettings() {
 
   // ── Server data for the selected store ──
   const { data: lessons, isLoading: lessonsLoading } = useAiLessons(storeId)
-  const addLesson = useAddAiLesson(storeId)
   const disableLesson = useDisableAiLesson(storeId)
 
-  // ── Add-lesson form state (local; explicit save) ──
-  const [draftText, setDraftText] = useState('')
-  const [draftScenario, setDraftScenario] = useState<string>(ALL_SCENARIOS_VALUE)
-  const trimmedDraft = draftText.trim()
-  const canSubmit = canEdit && trimmedDraft.length > 0 && !addLesson.isPending
+  const [addOpen, setAddOpen] = useState(false)
+  const [query, setQuery] = useState('')
 
-  async function handleAdd() {
-    if (!canSubmit) return
-    await addLesson.mutateAsync({
-      lesson_text:         trimmedDraft,
-      applies_to_scenario: draftScenario === ALL_SCENARIOS_VALUE ? null : draftScenario,
-    })
-    setDraftText('')
-    setDraftScenario(ALL_SCENARIOS_VALUE)
-  }
+  const activeCount = (lessons ?? []).length
 
-  const activeCount = useMemo(() => (lessons ?? []).length, [lessons])
-
-  // ── Loading skeleton (stores still loading) ──
-  if (storesLoading) {
-    return (
-      <div className="max-w-3xl mx-auto px-12 py-12 space-y-10">
-        <div className="space-y-2 pb-6 border-b border-border">
-          <Skeleton className="h-3.5 w-28" />
-          <Skeleton className="h-8 w-48" />
-          <Skeleton className="h-3.5 w-80" />
-        </div>
-        <Skeleton className="h-40 w-full rounded-xl" />
-        <Skeleton className="h-52 w-full rounded-xl" />
-      </div>
+  // Client-side search over lesson text + scenario label.
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase()
+    const list = lessons ?? []
+    if (!q) return list
+    return list.filter(
+      (l) =>
+        l.lesson_text.toLowerCase().includes(q) ||
+        scenarioLabel(l.applies_to_scenario).toLowerCase().includes(q),
     )
-  }
+  }, [lessons, query])
 
-  const showSections = !!storeId && !lessonsLoading
+  // Add-lesson button lives in the page header (Figma head bar). Memoized so
+  // SettingsPageHeader doesn't re-set the header context every render.
+  const headerActions = useMemo(
+    () =>
+      canEdit && storeId ? (
+        <Button onClick={() => setAddOpen(true)}>
+          <Plus className="size-4" />
+          Add lesson
+        </Button>
+      ) : undefined,
+    [canEdit, storeId],
+  )
+
+  const showList = !!storeId && !lessonsLoading
 
   return (
-    <div className="max-w-3xl mx-auto px-12 py-12">
-      {/* Header */}
-      <div className="pb-6 mb-8 border-b border-border">
-        <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1.5 flex-wrap">
-          <span>Settings</span>
-          <span>/</span>
-          <span>AI agent</span>
-          <span>/</span>
-          <span>Lessons</span>
-        </div>
-        <h1 className="text-[28px] font-semibold text-foreground leading-tight mb-1">Lessons</h1>
-        <p className="text-sm text-muted-foreground leading-relaxed">
-          Teach Emma specific corrections that the onboarding doesn&rsquo;t
-          cover. Lessons apply to one scenario or all.
-        </p>
-      </div>
+    <AiAgentSettingsShell
+      title={HEADER_TITLE}
+      description={HEADER_DESC}
+      emptyIcon={Bot}
+      headerActions={headerActions}
+      storesLoading={storesLoading}
+      stores={stores}
+      storeId={storeId}
+      onStoreChange={setStore}
+    >
+      <Tabs defaultValue="lessons">
+        <TabsList variant="line" className="mb-6">
+          <TabsTrigger value="lessons">Lessons</TabsTrigger>
+          <TabsTrigger value="feedback">Feedback history</TabsTrigger>
+        </TabsList>
 
-      {!stores || stores.length === 0 ? (
-        <EmptyState
-          icon={Bot}
-          title="No stores yet"
-          description="Connect a store first to teach its AI agent. Stores can be added under Settings → Stores."
-        />
-      ) : (
-        <>
-          {/* Store selector */}
-          <div className="mb-8 flex flex-col gap-1.5 max-w-xs">
-            <Label htmlFor="ai-lessons-store-select" className="text-sm font-medium text-foreground">
-              Store
-            </Label>
-            <Select value={storeId} onValueChange={(v) => v && setStore(v)}>
-              <SelectTrigger id="ai-lessons-store-select" className="w-full">
-                <SelectValue placeholder="Select a store">
-                  {stores?.find((s) => s.id === storeId)?.name}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                {stores.map((s) => (
-                  <SelectItem key={s.id} value={s.id}>
-                    {s.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+        <TabsContent value="lessons">
+          {!showList ? (
+            <div className="flex flex-col gap-3">
+              <Skeleton className="h-24 w-full rounded-lg" />
+              <Skeleton className="h-24 w-full rounded-lg" />
+            </div>
+          ) : (
+            <div className="flex flex-col gap-4">
+              <div className="flex items-center justify-between gap-4">
+                <div className="relative w-[260px]">
+                  <Search className="pointer-events-none absolute top-1/2 left-3 size-[15px] -translate-y-1/2 text-foreground-4" />
+                  <Input
+                    type="text"
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    placeholder="Search lessons…"
+                    className="h-[38px] rounded-[10px] border-settings-border bg-card pr-3 pl-9 text-sm placeholder:text-foreground-4"
+                  />
+                </div>
+                <span className="text-xs tabular-nums text-muted-foreground">
+                  {activeCount} of {LESSON_PROMPT_CAP} active
+                </span>
+              </div>
 
-          <Tabs defaultValue="lessons">
-            <TabsList variant="line" className="mb-6">
-              <TabsTrigger value="lessons">Lessons</TabsTrigger>
-              <TabsTrigger value="feedback">Feedback history</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="lessons">
-              {!showSections ? (
-                <div className="flex flex-col gap-10">
-                  <Skeleton className="h-40 w-full rounded-xl" />
-                  <Skeleton className="h-52 w-full rounded-xl" />
+              {filtered.length === 0 ? (
+                <div className="rounded-[14px] border border-settings-border bg-card p-6">
+                  <p className="py-6 text-center text-sm text-muted-foreground">
+                    {activeCount === 0 ? (
+                      <>No lessons yet. Add Emma&rsquo;s first lesson.</>
+                    ) : (
+                      <>No lessons match &ldquo;{query.trim()}&rdquo;.</>
+                    )}
+                  </p>
                 </div>
               ) : (
-                <div className="flex flex-col gap-10">
-                  {/* Recent learnings */}
-                  <SettingsSection
-                    title="Recent learnings"
-                    description="Active lessons Emma uses when drafting replies for this store."
-                    actions={
-                      <span className="text-xs text-muted-foreground tabular-nums">
-                        {activeCount} of {LESSON_PROMPT_CAP} active
-                      </span>
-                    }
-                  >
-                    {(!lessons || lessons.length === 0) ? (
-                      <SettingsCard>
-                        <p className="text-sm text-muted-foreground text-center py-6">
-                          No lessons yet. Add Emma&rsquo;s first lesson below.
-                        </p>
-                      </SettingsCard>
-                    ) : (
-                      <div className="flex flex-col gap-2.5">
-                        {lessons.map((lesson) => (
-                          <LessonCard
-                            key={lesson.id}
-                            lesson={lesson}
-                            canEdit={canEdit}
-                            isDisabling={
-                              disableLesson.isPending && disableLesson.variables === lesson.id
-                            }
-                            onDisable={() => disableLesson.mutate(lesson.id)}
-                          />
-                        ))}
-                      </div>
-                    )}
-                  </SettingsSection>
-
-                  {/* Add a new lesson */}
-                  <SettingsSection
-                    title="Add a lesson"
-                    description="Saved lessons are injected into Emma's prompt right after the scenarios section."
-                  >
-                    <SettingsCard
-                      footer={
-                        canEdit ? (
-                          <Button onClick={() => void handleAdd()} disabled={!canSubmit}>
-                            {addLesson.isPending ? 'Adding…' : 'Add lesson'}
-                          </Button>
-                        ) : undefined
+                <div className="flex flex-col gap-3">
+                  {filtered.map((lesson) => (
+                    <LessonCard
+                      key={lesson.id}
+                      lesson={lesson}
+                      canEdit={canEdit}
+                      isDisabling={
+                        disableLesson.isPending && disableLesson.variables === lesson.id
                       }
-                    >
-                      <div className="flex flex-col gap-5">
-                        <SettingsField label="Lesson" htmlFor="ai-lesson-text">
-                          <Textarea
-                            id="ai-lesson-text"
-                            value={draftText}
-                            onChange={(e) => setDraftText(e.target.value)}
-                            placeholder="What should Emma learn for this store?"
-                            disabled={!canEdit}
-                            rows={4}
-                          />
-                        </SettingsField>
-
-                        <SettingsField
-                          label="Applies to"
-                          htmlFor="ai-lesson-scenario"
-                          hint={'Pick a scenario, or leave on "All scenarios" so the lesson applies everywhere.'}
-                        >
-                          <Select
-                            value={draftScenario}
-                            onValueChange={(v) => v && setDraftScenario(v)}
-                          >
-                            <SelectTrigger id="ai-lesson-scenario" className="w-full max-w-xs">
-                              <SelectValue placeholder="All scenarios" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value={ALL_SCENARIOS_VALUE}>All scenarios</SelectItem>
-                              {SCENARIOS.map((s) => (
-                                <SelectItem key={s.key} value={s.key}>
-                                  {s.title}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </SettingsField>
-                      </div>
-                    </SettingsCard>
-                  </SettingsSection>
+                      onDisable={() => disableLesson.mutate(lesson.id)}
+                    />
+                  ))}
                 </div>
               )}
-            </TabsContent>
+            </div>
+          )}
+        </TabsContent>
 
-            <TabsContent value="feedback">
-              {storeId && <FeedbackHistory storeId={storeId} />}
-            </TabsContent>
-          </Tabs>
-        </>
-      )}
-    </div>
+        <TabsContent value="feedback">
+          {storeId && <FeedbackHistory storeId={storeId} />}
+        </TabsContent>
+      </Tabs>
+
+      {storeId && <AddLessonDialog storeId={storeId} open={addOpen} onOpenChange={setAddOpen} />}
+    </AiAgentSettingsShell>
   )
 }

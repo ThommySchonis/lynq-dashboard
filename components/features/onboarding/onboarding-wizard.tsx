@@ -127,7 +127,7 @@ export function OnboardingWizard() {
   // Final step: mark onboarding complete, then continue to the dashboard.
   function handleFinish() {
     if (user) {
-      completeOnboarding.mutate(user.id, { onSuccess: () => router.push('/home') })
+      completeOnboarding.mutate(undefined, { onSuccess: () => router.push('/home') })
     } else {
       router.push('/login')
     }

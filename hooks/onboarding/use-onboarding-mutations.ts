@@ -1,7 +1,6 @@
 'use client'
 
 import { useMutation } from '@tanstack/react-query'
-import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/stores/auth'
 import { rpc } from '@/lib/rpc'
 import { toast } from 'sonner'
@@ -93,11 +92,9 @@ export function useConnectShopify() {
 
 export function useCompleteOnboarding() {
   return useMutation({
-    mutationFn: async (userId: string) => {
-      const { error } = await supabase
-        .from('profiles')
-        .upsert({ id: userId, onboarding_completed: true })
-      if (error) throw new Error(error.message)
+    // Marks the caller's workspace onboarded (owner-only, enforced in the RPC).
+    mutationFn: async () => {
+      return rpc('api_complete_onboarding', {})
     },
     onError: (err: Error) => {
       toast.error(err.message)

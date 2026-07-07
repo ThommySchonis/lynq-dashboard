@@ -612,7 +612,20 @@ app.post('/seed-demo', async (c) => {
 
   if (!userId) return c.json({ error: 'Missing user_id or email in body' }, 400)
 
-  await sb.from('profiles').upsert({ id: userId, onboarding_completed: true })
+  // Onboarding completion lives on the workspace (owner-gated); mark the
+  // demo owner's workspace so the seeded account skips the wizard.
+  const { data: ownerMembership } = await sb
+    .from('workspace_members')
+    .select('workspace_id')
+    .eq('user_id', userId)
+    .eq('role', 'owner')
+    .maybeSingle()
+  if (ownerMembership) {
+    await sb
+      .from('workspaces')
+      .update({ onboarding_completed: true })
+      .eq('id', ownerMembership.workspace_id)
+  }
   await sb.from('integrations').upsert({
     client_id: userId,
     shopify_domain: DEMO_SHOP,

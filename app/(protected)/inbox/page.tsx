@@ -273,7 +273,7 @@ export default function InboxPageWrapper() {
         title="Connect your email to get started"
         description="Connect your email account to start receiving and managing customer support tickets."
         actionLabel="Connect Email"
-        onAction={() => window.location.href = "/settings/integrations/email"}
+        onAction={() => window.location.href = "/settings/workspace/stores"}
       />
     );
   }

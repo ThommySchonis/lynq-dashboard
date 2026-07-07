@@ -1,11 +1,13 @@
 import type { MiddlewareHandler } from 'hono'
 import { getAdminClient, getUserFromToken } from '../lib/supabase.ts'
 import type { AuthContext, AuthWorkspace } from '../lib/types.ts'
+import { pickPrimaryMembership } from '../lib/pick-membership.ts'
 
 interface MembershipRow {
   id: string
   workspace_id: string
   role: string
+  joined_at: string
   workspaces: AuthWorkspace
 }
 
@@ -29,18 +31,22 @@ export const authMiddleware: MiddlewareHandler = async (c, next) => {
   const sb = getAdminClient()
 
   // ── Path A: membership exists ──
-  const { data: membership, error: memberErr } = await sb
+  // Fetch ALL memberships and pick deterministically — a user may belong to
+  // more than one workspace (e.g. agency staff). `.maybeSingle()` would ERROR
+  // on 2+ rows and silently fall through to provisioning a junk workspace.
+  const { data: memberships, error: memberErr } = await sb
     .from('workspace_members')
-    .select('id, workspace_id, role, workspaces(id, name, suspended_at)')
+    .select('id, workspace_id, role, joined_at, workspaces(id, name, suspended_at)')
     .eq('user_id', user.id)
-    .maybeSingle()
 
   if (memberErr) {
     console.error('[auth] workspace_members query failed:', memberErr.message)
   }
 
+  const membership = pickPrimaryMembership((memberships ?? []) as unknown as MembershipRow[])
+
   if (membership) {
-    const row = membership as unknown as MembershipRow
+    const row = membership
 
     const { data: profile } = await sb
       .from('user_profiles')

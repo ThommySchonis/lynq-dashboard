@@ -45,10 +45,10 @@ export function WelcomeBanner({ firstName, onDismissed }: WelcomeBannerProps) {
         </div>
       </div>
       <div className="flex flex-wrap items-center gap-2">
-        <Button size="sm" className="bg-primary text-white hover:bg-[#8B5CF6]" render={<Link href="/settings/integrations/email" />}>
+        <Button size="sm" className="bg-primary text-white hover:bg-[#8B5CF6]" render={<Link href="/settings/workspace/stores" />}>
           Connect Gmail
         </Button>
-        <Button size="sm" className="bg-primary text-white hover:bg-[#8B5CF6]" render={<Link href="/settings/integrations/email" />}>
+        <Button size="sm" className="bg-primary text-white hover:bg-[#8B5CF6]" render={<Link href="/settings/workspace/stores" />}>
           Connect Outlook
         </Button>
         <Button size="sm" className="bg-primary text-white hover:bg-[#8B5CF6]" render={<Link href="/settings/integrations/shopify" />}>

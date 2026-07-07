@@ -111,6 +111,24 @@ app.post('/members', async (c) => {
     return c.json({ error: 'User is already a member of this workspace' }, 409)
   }
 
+  // Reject inviting someone who already belongs to ANY workspace (their own or
+  // another). The app has no workspace switcher, so a second membership would be
+  // unreachable — invites are only for people without an existing workspace.
+  // `.limit(1)` keeps `.maybeSingle()` safe even for a multi-workspace email.
+  const { data: priorMembership } = await sb
+    .from('workspace_member_details')
+    .select('id')
+    .eq('email', email)
+    .limit(1)
+    .maybeSingle()
+
+  if (priorMembership) {
+    return c.json({
+      error: 'This person already has a workspace. Invites can only be sent to people without an existing account.',
+      code: 'already_has_workspace',
+    }, 409)
+  }
+
   // Check for existing pending invite
   const { data: existingInvite } = await sb
     .from('workspace_invites')

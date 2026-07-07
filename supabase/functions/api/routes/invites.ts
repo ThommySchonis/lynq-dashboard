@@ -50,6 +50,11 @@ app.post('/:token/accept', authMiddleware, async (c) => {
       }, 409)
     case 'already_accepted':
       return c.json({ error: 'Invite already accepted', code }, 410)
+    case 'already_member':
+      return c.json({
+        error: 'You already belong to a workspace. Invites can only be accepted by accounts without an existing workspace.',
+        code,
+      }, 409)
     default:
       return c.json({ error: 'Invite could not be accepted' }, 500)
   }

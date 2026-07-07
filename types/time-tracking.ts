@@ -11,7 +11,10 @@ export interface Session {
   active_seconds: number
   idle_seconds: number
   is_paused: boolean
-  status: 'active' | 'paused' | 'ended'
+  // DB writes 'completed' on clock-out (api_time_clock_out); 'active'/'paused'
+  // are the open-session states. The type mirrors the stored values exactly —
+  // there is no 'ended'.
+  status: 'active' | 'paused' | 'completed'
   paused_at: string | null
   paused_seconds: number
   // Legacy free-text report — populated for sessions clocked out before

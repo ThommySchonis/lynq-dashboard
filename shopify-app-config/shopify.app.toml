@@ -1,7 +1,7 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
 client_id = "a3739971455754dc098e864ff3aca60c"
-application_url = "https://lynq-dashboard.vercel.app"
+application_url = "https://app.lynqflow.io"
 embedded = false
 name = "Lynq"
 

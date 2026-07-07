@@ -2,9 +2,10 @@
 
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
-import { Bot, Plus } from 'lucide-react'
+import { Bot, Plus, Flag, Globe, Search } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { SettingsPageHeader } from '@/components/features/settings/settings-header'
 import { SettingsEmptyState } from '@/components/features/settings/settings-empty-state'
@@ -31,6 +32,17 @@ function scenarioLabel(key: string | null): string {
   return SCENARIOS.find((s) => s.key === key)?.title ?? key
 }
 
+/** Scenario pill — flag for a specific scenario, globe for "All scenarios". */
+function ScenarioBadge({ scenario }: { scenario: string | null }) {
+  const Icon = scenario ? Flag : Globe
+  return (
+    <span className="inline-flex items-center gap-[7px] rounded-full bg-input py-1 pr-[11px] pl-[9px] text-xs font-semibold text-foreground-3">
+      <Icon className="size-[13px]" strokeWidth={2} />
+      {scenarioLabel(scenario)}
+    </span>
+  )
+}
+
 function LessonCard({
   lesson,
   canEdit,
@@ -44,29 +56,32 @@ function LessonCard({
 }) {
   const when = relativeTime(lesson.created_at)
   return (
-    <div className="flex items-start justify-between gap-4 rounded-lg border border-settings-border bg-card p-4">
-      <div className="flex min-w-0 flex-1 flex-col gap-2">
-        <p className="whitespace-pre-wrap break-words text-sm text-foreground-2">
-          {lesson.lesson_text}
-        </p>
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <span className="inline-flex items-center rounded-md border border-settings-border bg-secondary px-1.5 py-0.5 text-foreground-2">
-            {scenarioLabel(lesson.applies_to_scenario)}
+    <div className="flex flex-col gap-3 rounded-[14px] border border-settings-border bg-card p-[18px]">
+      <div className="flex items-center justify-between gap-3">
+        <ScenarioBadge scenario={lesson.applies_to_scenario} />
+        <div className="flex flex-shrink-0 items-center gap-2">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-success-soft py-1 pr-2.5 pl-[9px] text-xs font-semibold text-success-strong">
+            <span className="size-1.5 rounded-full bg-success" />
+            Active
           </span>
-          {when && <span>Added {when}</span>}
+          {canEdit && (
+            <Button
+              variant="outline"
+              onClick={onDisable}
+              disabled={isDisabling}
+              className="h-auto rounded-lg border-settings-border px-3 py-[7px] text-xs font-semibold text-foreground-2"
+            >
+              {isDisabling ? 'Disabling…' : 'Disable'}
+            </Button>
+          )}
         </div>
       </div>
-      {canEdit && (
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={onDisable}
-          disabled={isDisabling}
-          className="flex-shrink-0"
-        >
-          {isDisabling ? 'Disabling…' : 'Disable'}
-        </Button>
-      )}
+
+      <p className="whitespace-pre-wrap break-words text-sm text-foreground-2">
+        {lesson.lesson_text}
+      </p>
+
+      {when && <p className="text-xs text-foreground-4">Added {when}</p>}
     </div>
   )
 }
@@ -84,8 +99,21 @@ export function LessonsSettings() {
   const disableLesson = useDisableAiLesson(storeId)
 
   const [addOpen, setAddOpen] = useState(false)
+  const [query, setQuery] = useState('')
 
   const activeCount = useMemo(() => (lessons ?? []).length, [lessons])
+
+  // Client-side search over lesson text + scenario label.
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase()
+    const list = lessons ?? []
+    if (!q) return list
+    return list.filter(
+      (l) =>
+        l.lesson_text.toLowerCase().includes(q) ||
+        scenarioLabel(l.applies_to_scenario).toLowerCase().includes(q),
+    )
+  }, [lessons, query])
 
   // Add-lesson button lives in the page header (Figma head bar). Memoized so
   // SettingsPageHeader doesn't re-set the header context every render.
@@ -152,21 +180,37 @@ export function LessonsSettings() {
                 </div>
               ) : (
                 <div className="flex flex-col gap-4">
-                  <div className="flex justify-end">
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="relative w-[260px]">
+                      <Search className="pointer-events-none absolute top-1/2 left-3 size-[15px] -translate-y-1/2 text-foreground-4" />
+                      <Input
+                        type="text"
+                        value={query}
+                        onChange={(e) => setQuery(e.target.value)}
+                        placeholder="Search lessons…"
+                        className="h-[38px] rounded-[10px] border-settings-border bg-card pr-3 pl-9 text-sm placeholder:text-foreground-4"
+                      />
+                    </div>
                     <span className="text-xs tabular-nums text-muted-foreground">
                       {activeCount} of {LESSON_PROMPT_CAP} active
                     </span>
                   </div>
 
                   {!lessons || lessons.length === 0 ? (
-                    <div className="rounded-lg border border-settings-border bg-card p-6">
+                    <div className="rounded-[14px] border border-settings-border bg-card p-6">
                       <p className="py-6 text-center text-sm text-muted-foreground">
                         No lessons yet. Add Emma&rsquo;s first lesson.
                       </p>
                     </div>
+                  ) : filtered.length === 0 ? (
+                    <div className="rounded-[14px] border border-settings-border bg-card p-6">
+                      <p className="py-6 text-center text-sm text-muted-foreground">
+                        No lessons match &ldquo;{query.trim()}&rdquo;.
+                      </p>
+                    </div>
                   ) : (
                     <div className="flex flex-col gap-3">
-                      {lessons.map((lesson) => (
+                      {filtered.map((lesson) => (
                         <LessonCard
                           key={lesson.id}
                           lesson={lesson}

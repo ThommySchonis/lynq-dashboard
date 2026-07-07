@@ -1,16 +1,13 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import Link from 'next/link'
 import { Bot, Plus, Flag, Globe, Search } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
-import { SettingsPageHeader } from '@/components/features/settings/settings-header'
-import { SettingsEmptyState } from '@/components/features/settings/settings-empty-state'
 import { FeedbackHistory } from './feedback-history'
-import { AiStoreSelect } from './ai-store-select'
+import { AiAgentSettingsShell } from './ai-agent-settings-shell'
 import { AddLessonDialog } from './add-lesson-dialog'
 import { useAuthStore } from '@/stores/auth'
 import { useAiLessons, useDisableAiLesson, useAiStoreSelection } from '@/hooks/ai'
@@ -128,109 +125,84 @@ export function LessonsSettings() {
     [canEdit, storeId],
   )
 
-  // ── Loading skeleton (stores still loading) ──
-  if (storesLoading) {
-    return (
-      <div className="mx-auto max-w-[920px] px-6 py-10">
-        <SettingsPageHeader title={HEADER_TITLE} description={HEADER_DESC} />
-        <div className="flex flex-col gap-10">
-          <Skeleton className="h-32 w-full rounded-2xl" />
-          <Skeleton className="h-52 w-full rounded-2xl" />
-        </div>
-      </div>
-    )
-  }
-
   const showList = !!storeId && !lessonsLoading
 
   return (
-    <div className="mx-auto max-w-[920px] px-6 py-10">
-      <SettingsPageHeader title={HEADER_TITLE} description={HEADER_DESC} actions={headerActions} />
+    <AiAgentSettingsShell
+      title={HEADER_TITLE}
+      description={HEADER_DESC}
+      emptyIcon={Bot}
+      headerActions={headerActions}
+      storesLoading={storesLoading}
+      stores={stores}
+      storeId={storeId}
+      onStoreChange={setStore}
+    >
+      <Tabs defaultValue="lessons">
+        <TabsList variant="line" className="mb-6">
+          <TabsTrigger value="lessons">Lessons</TabsTrigger>
+          <TabsTrigger value="feedback">Feedback history</TabsTrigger>
+        </TabsList>
 
-      {!stores || stores.length === 0 ? (
-        <div className="flex items-center justify-center pt-6">
-          <div className="w-[440px] max-w-full rounded-2xl border border-settings-border bg-card px-10 py-7">
-            <SettingsEmptyState
-              Icon={Bot}
-              title="No stores yet"
-              description="Connect a store first to configure its AI agent. Stores can be added under Settings → Stores."
-              action={
-                <Button render={<Link href="/settings/workspace/stores" />}>Connect store</Button>
-              }
-            />
-          </div>
-        </div>
-      ) : (
-        <>
-          <div className="mb-8">
-            <AiStoreSelect stores={stores} storeId={storeId} onChange={setStore} />
-          </div>
+        <TabsContent value="lessons">
+          {!showList ? (
+            <div className="flex flex-col gap-3">
+              <Skeleton className="h-24 w-full rounded-lg" />
+              <Skeleton className="h-24 w-full rounded-lg" />
+            </div>
+          ) : (
+            <div className="flex flex-col gap-4">
+              <div className="flex items-center justify-between gap-4">
+                <div className="relative w-[260px]">
+                  <Search className="pointer-events-none absolute top-1/2 left-3 size-[15px] -translate-y-1/2 text-foreground-4" />
+                  <Input
+                    type="text"
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    placeholder="Search lessons…"
+                    className="h-[38px] rounded-[10px] border-settings-border bg-card pr-3 pl-9 text-sm placeholder:text-foreground-4"
+                  />
+                </div>
+                <span className="text-xs tabular-nums text-muted-foreground">
+                  {activeCount} of {LESSON_PROMPT_CAP} active
+                </span>
+              </div>
 
-          <Tabs defaultValue="lessons">
-            <TabsList variant="line" className="mb-6">
-              <TabsTrigger value="lessons">Lessons</TabsTrigger>
-              <TabsTrigger value="feedback">Feedback history</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="lessons">
-              {!showList ? (
-                <div className="flex flex-col gap-3">
-                  <Skeleton className="h-24 w-full rounded-lg" />
-                  <Skeleton className="h-24 w-full rounded-lg" />
+              {filtered.length === 0 ? (
+                <div className="rounded-[14px] border border-settings-border bg-card p-6">
+                  <p className="py-6 text-center text-sm text-muted-foreground">
+                    {activeCount === 0 ? (
+                      <>No lessons yet. Add Emma&rsquo;s first lesson.</>
+                    ) : (
+                      <>No lessons match &ldquo;{query.trim()}&rdquo;.</>
+                    )}
+                  </p>
                 </div>
               ) : (
-                <div className="flex flex-col gap-4">
-                  <div className="flex items-center justify-between gap-4">
-                    <div className="relative w-[260px]">
-                      <Search className="pointer-events-none absolute top-1/2 left-3 size-[15px] -translate-y-1/2 text-foreground-4" />
-                      <Input
-                        type="text"
-                        value={query}
-                        onChange={(e) => setQuery(e.target.value)}
-                        placeholder="Search lessons…"
-                        className="h-[38px] rounded-[10px] border-settings-border bg-card pr-3 pl-9 text-sm placeholder:text-foreground-4"
-                      />
-                    </div>
-                    <span className="text-xs tabular-nums text-muted-foreground">
-                      {activeCount} of {LESSON_PROMPT_CAP} active
-                    </span>
-                  </div>
-
-                  {filtered.length === 0 ? (
-                    <div className="rounded-[14px] border border-settings-border bg-card p-6">
-                      <p className="py-6 text-center text-sm text-muted-foreground">
-                        {activeCount === 0 ? (
-                          <>No lessons yet. Add Emma&rsquo;s first lesson.</>
-                        ) : (
-                          <>No lessons match &ldquo;{query.trim()}&rdquo;.</>
-                        )}
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="flex flex-col gap-3">
-                      {filtered.map((lesson) => (
-                        <LessonCard
-                          key={lesson.id}
-                          lesson={lesson}
-                          canEdit={canEdit}
-                          isDisabling={
-                            disableLesson.isPending && disableLesson.variables === lesson.id
-                          }
-                          onDisable={() => disableLesson.mutate(lesson.id)}
-                        />
-                      ))}
-                    </div>
-                  )}
+                <div className="flex flex-col gap-3">
+                  {filtered.map((lesson) => (
+                    <LessonCard
+                      key={lesson.id}
+                      lesson={lesson}
+                      canEdit={canEdit}
+                      isDisabling={
+                        disableLesson.isPending && disableLesson.variables === lesson.id
+                      }
+                      onDisable={() => disableLesson.mutate(lesson.id)}
+                    />
+                  ))}
                 </div>
               )}
-            </TabsContent>
+            </div>
+          )}
+        </TabsContent>
 
-            <TabsContent value="feedback">{storeId && <FeedbackHistory storeId={storeId} />}</TabsContent>
-          </Tabs>
+        <TabsContent value="feedback">
+          {storeId && <FeedbackHistory storeId={storeId} />}
+        </TabsContent>
+      </Tabs>
 
-          {storeId && <AddLessonDialog storeId={storeId} open={addOpen} onOpenChange={setAddOpen} />}
-        </>
-      )}
-    </div>
+      {storeId && <AddLessonDialog storeId={storeId} open={addOpen} onOpenChange={setAddOpen} />}
+    </AiAgentSettingsShell>
   )
 }

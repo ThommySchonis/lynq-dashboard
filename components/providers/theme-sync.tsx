@@ -8,11 +8,15 @@ export function ThemeSync() {
 
   useEffect(() => {
     const root = document.documentElement
-    if (theme === 'dark') {
-      root.classList.add('dark')
-    } else {
-      root.classList.remove('dark')
-    }
+    // Theme switching temporarily disabled — force light mode regardless of the
+    // stored preference (overrides any persisted 'dark'). Restore the block
+    // below to re-enable dark mode.
+    root.classList.remove('dark')
+    // if (theme === 'dark') {
+    //   root.classList.add('dark')
+    // } else {
+    //   root.classList.remove('dark')
+    // }
   }, [theme])
 
   return null

@@ -10,7 +10,8 @@ import { SettingsSection, SettingsCard } from '@/components/features/settings/se
 import { SettingsField } from '@/components/features/settings/settings-field'
 import { SettingsPageHeader } from '@/components/features/settings/settings-header'
 import { AvatarUpload } from './avatar-upload'
-import { ThemeSelector } from './theme-selector'
+// Theme switching temporarily disabled — light mode only. Restore to re-enable.
+// import { ThemeSelector } from './theme-selector'
 import { LegalLinksSection } from './legal-links-section'
 import {
   useProfile,
@@ -228,7 +229,7 @@ export function ProfileSettings() {
           </SettingsCard>
         </SettingsSection>
 
-        {/* Appearance / theme section */}
+        {/* Appearance / theme section — temporarily disabled, light mode only. Restore to re-enable.
         <SettingsSection
           title="Theme"
           description="Choose how Lynq looks. System follows your device setting."
@@ -243,6 +244,7 @@ export function ProfileSettings() {
             />
           </SettingsCard>
         </SettingsSection>
+        */}
 
         {/* Legal links */}
         <LegalLinksSection />

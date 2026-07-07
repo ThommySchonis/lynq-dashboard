@@ -9,10 +9,10 @@ import { Slider } from '@/components/ui/slider'
 import { Checkbox } from '@/components/ui/checkbox'
 import { SettingsSection, SettingsCard } from '@/components/features/settings/settings-section'
 import { SettingsField } from '@/components/features/settings/settings-field'
-import { SettingsToggle } from '@/components/features/settings/settings-toggle'
 import { SettingsPageHeader } from '@/components/features/settings/settings-header'
 import { SettingsEmptyState } from '@/components/features/settings/settings-empty-state'
 import { AiStoreSelect } from './ai-store-select'
+import { AutomationMode, type AutomationModeValue } from './automation-mode'
 import { useAuthStore } from '@/stores/auth'
 import {
   useAiAutonomyRules,
@@ -109,6 +109,26 @@ export function RulesSettings() {
     }))
   }
 
+  // ── Automation mode ──
+  // Auto-send is on only when BOTH the store flag and the config master switch
+  // are enabled; the two are flipped together so the binary stays unambiguous.
+  const autoSendOn = (aiSettings?.ai_auto_send_enabled ?? false) && form.master_enabled
+  const mode: AutomationModeValue = autoSendOn ? 'auto' : 'suggest'
+
+  async function selectMode(next: AutomationModeValue) {
+    if (!canEdit || next === mode) return
+    const auto = next === 'auto'
+    // Emma always drafts (auto-generate stays on in both modes); the store flag
+    // and the master switch mirror the chosen mode. Instant save.
+    const nextConfig: AiAutonomyRulesConfig = { ...form, master_enabled: auto }
+    setForm(nextConfig)
+    setInit(nextConfig)
+    await Promise.all([
+      updateAiSettings.mutateAsync({ ai_auto_generate: true, ai_auto_send_enabled: auto }),
+      upsertRules.mutateAsync(nextConfig),
+    ])
+  }
+
   // ── Loading skeleton (stores still loading) ──
   if (storesLoading) {
     return (
@@ -157,55 +177,7 @@ export function RulesSettings() {
             </div>
           ) : (
             <div className="flex flex-col gap-10">
-              {/* AI generation & auto-send store-level toggles */}
-              <SettingsSection
-                title="AI suggestions"
-                description="Control whether Emma automatically generates draft replies when new customer messages arrive."
-              >
-                <SettingsCard>
-                  <div className="flex flex-col gap-4">
-                    <SettingsToggle
-                      id="ai-auto-generate"
-                      label="Auto-generate suggestions"
-                      description="Emma drafts a reply when a new inbound message arrives. Agents review before sending."
-                      checked={aiSettings?.ai_auto_generate ?? false}
-                      onCheckedChange={(checked) =>
-                        void updateAiSettings.mutateAsync({ ai_auto_generate: checked })
-                      }
-                      disabled={!canEdit}
-                    />
-                    <SettingsToggle
-                      id="ai-auto-send-enabled"
-                      label="Enable auto-send"
-                      description="Allow high-confidence replies to be sent automatically, subject to the rules below. When off, every reply goes through suggest mode."
-                      checked={aiSettings?.ai_auto_send_enabled ?? false}
-                      onCheckedChange={(checked) =>
-                        void updateAiSettings.mutateAsync({ ai_auto_send_enabled: checked })
-                      }
-                      disabled={!canEdit}
-                    />
-                  </div>
-                </SettingsCard>
-              </SettingsSection>
-
-              {/* Master toggle */}
-              <SettingsSection
-                title="Master switch"
-                description="The kill-switch for auto-send. When off, every reply goes through suggest mode regardless of the rules below."
-              >
-                <SettingsCard>
-                  <SettingsToggle
-                    id="ai-master-enabled"
-                    label="Allow Emma to send replies autonomously"
-                    description="When enabled, Emma automatically sends replies that match all the rules below. When disabled, all replies go through suggest mode."
-                    checked={form.master_enabled}
-                    onCheckedChange={(checked) =>
-                      setForm((prev) => ({ ...prev, master_enabled: checked }))
-                    }
-                    disabled={!canEdit}
-                  />
-                </SettingsCard>
-              </SettingsSection>
+              <AutomationMode value={mode} onSelect={(v) => void selectMode(v)} disabled={!canEdit} />
 
               {/* Confidence threshold */}
               <SettingsSection

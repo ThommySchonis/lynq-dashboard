@@ -53,30 +53,6 @@ export function useConnectCustomEmail() {
   })
 }
 
-export function useDisconnectEmail() {
-  const token = useToken()
-  const qc = useQueryClient()
-  return useMutation({
-    mutationFn: async (id: string) => {
-      const res = await fetch(apiUrl(`inbox/accounts/${id}`), {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      if (!res.ok) {
-        const d = await parseJson<ErrorResponse>(res).catch((): ErrorResponse => ({}))
-        throw new Error(d.error || 'Failed to disconnect email')
-      }
-    },
-    onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: settingsKeys.emailAccounts() })
-      toast.success('Email account disconnected')
-    },
-    onError: (err: Error) => {
-      toast.error(err.message)
-    },
-  })
-}
-
 /* ─────────────────────────────────────────────
    Shopify mutations
 ───────────────────────────────────────────── */

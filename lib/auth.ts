@@ -4,6 +4,7 @@ import type { User } from '@supabase/supabase-js'
 import * as Sentry from '@sentry/nextjs'
 import { logger } from '@/lib/logger'
 import { isPlatformAdmin } from '@/lib/platformAdmin'
+import { pickPrimaryMembership } from '@/lib/pick-membership'
 
 export interface AuthWorkspace {
   id: string
@@ -15,6 +16,7 @@ interface MembershipRow {
   id: string
   workspace_id: string
   role: string
+  joined_at: string
   workspaces: AuthWorkspace
 }
 
@@ -117,17 +119,20 @@ export async function getAuthContext(request: NextRequest): Promise<AuthContext 
   }
 
   // ── Path A: membership exists ────────────────────────────────────────────
+  // Fetch ALL memberships and pick deterministically — a user may belong to
+  // more than one workspace (e.g. agency staff). `.maybeSingle()` would ERROR
+  // on 2+ rows and silently fall through to provisioning a junk workspace.
   const memberRow = await supabaseAdmin
     .from('workspace_members')
-    .select('id, workspace_id, role, workspaces(id, name, suspended_at)')
+    .select('id, workspace_id, role, joined_at, workspaces(id, name, suspended_at)')
     .eq('user_id', user.id)
-    .maybeSingle()
 
   if (memberRow.error) {
     logger.error('[auth]', 'workspace_members query failed', { error: memberRow.error.message })
   }
 
-  const membership = pluck<MembershipRow>(memberRow)
+  const memberships = pluck<MembershipRow[]>(memberRow) ?? []
+  const membership = pickPrimaryMembership(memberships)
 
   if (membership) {
     logger.debug('[auth]', 'path A — membership found', { workspaceId: membership.workspace_id, role: membership.role })

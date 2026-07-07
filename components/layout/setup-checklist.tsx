@@ -38,7 +38,7 @@ function buildItems(status: OnboardingStatus): ChecklistItem[] {
       key: "email",
       label: "Connect email",
       done: !!status.email_connected,
-      href: "/settings/integrations/email",
+      href: "/settings/workspace/stores",
     },
     {
       key: "shopify",

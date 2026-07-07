@@ -4,6 +4,7 @@ import crypto from 'crypto'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import { logger } from '@/lib/logger'
 import { syncOrders } from '@/lib/services/shopify'
+import { pickPrimaryMembership } from '@/lib/pick-membership'
 
 interface ShopifyTokenResponse {
   access_token?: string
@@ -18,7 +19,10 @@ interface ShopifyShopDataResponse {
 }
 
 interface WorkspaceMemberRow {
-  workspace_id?: string
+  id: string
+  workspace_id: string
+  role: string
+  joined_at: string
 }
 
 interface OAuthStateRow {
@@ -98,12 +102,15 @@ export async function GET(request: NextRequest) {
 
   let workspaceId = oauthState.workspace_id as string | null
   if (!workspaceId) {
-    const { data: membership } = await supabaseAdmin
+    // Fallback when the stored state has no workspace: pick the user's primary
+    // membership deterministically (same rule as getAuthContext). A user may
+    // belong to more than one workspace, so `.maybeSingle()` is unsafe here.
+    const { data: memberships } = await supabaseAdmin
       .from('workspace_members')
-      .select('workspace_id')
+      .select('id, workspace_id, role, joined_at')
       .eq('user_id', oauthState.user_id)
-      .maybeSingle()
-    workspaceId = (membership as WorkspaceMemberRow | null)?.workspace_id ?? null
+    const primary = pickPrimaryMembership((memberships ?? []) as WorkspaceMemberRow[])
+    workspaceId = primary?.workspace_id ?? null
   }
   if (!workspaceId) {
     logger.error('[shopify/callback]', 'no workspace found for user', { userId: oauthState.user_id })

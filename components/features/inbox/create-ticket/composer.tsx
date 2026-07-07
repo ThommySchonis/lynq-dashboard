@@ -227,7 +227,7 @@ export function CreateTicketComposer({ form }: CreateTicketComposerProps) {
             <AlertCircle className="h-[11px] w-[11px] shrink-0 text-amber-600" />
             <span className="text-[11.5px] text-amber-600">
               Demo mode &mdash;{" "}
-              <Link href="/settings/integrations/email" className="font-semibold text-foreground no-underline">
+              <Link href="/settings/workspace/stores" className="font-semibold text-foreground no-underline">
                 connect Gmail or Outlook
               </Link>{" "}
               in Settings to send real emails

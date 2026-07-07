@@ -95,7 +95,7 @@ export const CHECKLIST_STEPS: ChecklistStep[] = [
     key: 'email',
     label: 'Connect email',
     description: 'Link your support inbox so conversations sync into Lynq automatically.',
-    href: '/settings/integrations/email',
+    href: '/settings/workspace/stores',
     cta: 'Connect',
     type: 'auto',
   },

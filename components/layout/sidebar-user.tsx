@@ -1,10 +1,10 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { LogOut, Moon, Sun } from 'lucide-react'
+import { LogOut /*, Moon, Sun */ } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/stores/auth'
-import { useThemeStore } from '@/stores/theme'
+// import { useThemeStore } from '@/stores/theme' // Theme switching temporarily disabled — restore to re-enable
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 
@@ -16,8 +16,9 @@ export function SidebarUser({ collapsed }: SidebarUserProps) {
   const router = useRouter()
   const user = useAuthStore((s) => s.user)
   const workspace = useAuthStore((s) => s.workspace)
-  const theme = useThemeStore((s) => s.theme)
-  const toggle = useThemeStore((s) => s.toggle)
+  // Theme switching temporarily disabled — light mode only. Restore to re-enable.
+  // const theme = useThemeStore((s) => s.theme)
+  // const toggle = useThemeStore((s) => s.toggle)
 
   const displayName = workspace?.name || user?.email?.split('@')[0] || 'User'
   const initials = displayName.slice(0, 2).toUpperCase()
@@ -28,8 +29,8 @@ export function SidebarUser({ collapsed }: SidebarUserProps) {
     router.push('/login')
   }
 
-  const themeLabel = theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'
-  const ThemeIcon = theme === 'light' ? Moon : Sun
+  // const themeLabel = theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'
+  // const ThemeIcon = theme === 'light' ? Moon : Sun
 
   if (collapsed) {
     return (
@@ -39,6 +40,7 @@ export function SidebarUser({ collapsed }: SidebarUserProps) {
             {initials}
           </AvatarFallback>
         </Avatar>
+        {/* Theme switching temporarily disabled — light mode only. Restore to re-enable.
         <Button
           variant="ghost"
           size="icon"
@@ -48,6 +50,7 @@ export function SidebarUser({ collapsed }: SidebarUserProps) {
         >
           <ThemeIcon size={14} />
         </Button>
+        */}
         <Button
           variant="ghost"
           size="icon"
@@ -72,6 +75,7 @@ export function SidebarUser({ collapsed }: SidebarUserProps) {
         <p className="truncate text-sm font-medium text-foreground">{displayName}</p>
         <p className="truncate text-xs text-foreground-3">{email}</p>
       </div>
+      {/* Theme switching temporarily disabled — light mode only. Restore to re-enable.
       <Button
         variant="ghost"
         size="icon"
@@ -81,6 +85,7 @@ export function SidebarUser({ collapsed }: SidebarUserProps) {
       >
         <ThemeIcon size={14} />
       </Button>
+      */}
       <Button
         variant="ghost"
         size="icon"

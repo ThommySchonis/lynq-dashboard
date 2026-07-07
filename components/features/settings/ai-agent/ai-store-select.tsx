@@ -31,44 +31,43 @@ function storeLabel(store: StorePublic | undefined): string {
 }
 
 /**
- * Store picker for the AI-agent onboarding page (Figma node 1056-16). A single
- * store renders as a static row; multiple stores render a dropdown with a
- * trailing chevron so it can be switched.
+ * Store picker for the AI-agent settings pages (Figma node 1056-16 / 1068-16).
+ * Always renders a dropdown with a trailing chevron so the row reads as
+ * interactive and matches the Figma store row, even when a single store is
+ * connected (the menu then lists just that store).
  */
 export function AiStoreSelect({ stores, storeId, onChange }: AiStoreSelectProps) {
-  const selected = stores.find((s) => s.id === storeId) ?? stores[0]
-
   return (
-    <div className="flex w-full flex-col gap-1.5">
+    <div className="flex w-full flex-col gap-2">
       <Label htmlFor="ai-store-select" className="text-sm font-semibold text-foreground">
         Store
       </Label>
 
-      {stores.length <= 1 ? (
-        <div className="flex items-center gap-2.5 rounded-[10px] border border-settings-border bg-card py-2.5 pr-3.5 pl-3 text-sm text-foreground">
+      {/*
+        modal={false} + alignItemWithTrigger={false} disable base-ui's scroll
+        lock (the positioner locks scroll when either is active), which would
+        otherwise reserve a scrollbar gutter on <html> and shift the centered
+        content on open. The menu simply anchors below the trigger instead.
+      */}
+      <Select value={storeId} onValueChange={(v) => v && onChange(v)} modal={false}>
+        <SelectTrigger
+          id="ai-store-select"
+          size="lg"
+          className="w-full gap-2.5 rounded-[10px] border-settings-border bg-card py-[11px] pr-3.5 pl-3"
+        >
           <StoreIconBox />
-          <span className="flex-1 truncate">{storeLabel(selected)}</span>
-        </div>
-      ) : (
-        <Select value={storeId} onValueChange={(v) => v && onChange(v)}>
-          <SelectTrigger
-            id="ai-store-select"
-            className="h-auto w-full gap-2.5 rounded-[10px] border-settings-border bg-card py-2.5 pr-3.5 pl-3"
-          >
-            <StoreIconBox />
-            <SelectValue placeholder="Select a store">
-              {(value: string | null) => storeLabel(stores.find((s) => s.id === value))}
-            </SelectValue>
-          </SelectTrigger>
-          <SelectContent>
-            {stores.map((s) => (
-              <SelectItem key={s.id} value={s.id}>
-                {storeLabel(s)}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      )}
+          <SelectValue placeholder="Select a store">
+            {(value: string | null) => storeLabel(stores.find((s) => s.id === value))}
+          </SelectValue>
+        </SelectTrigger>
+        <SelectContent alignItemWithTrigger={false}>
+          {stores.map((s) => (
+            <SelectItem key={s.id} value={s.id}>
+              {storeLabel(s)}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
     </div>
   )
 }

@@ -101,7 +101,7 @@ export function LessonsSettings() {
   const [addOpen, setAddOpen] = useState(false)
   const [query, setQuery] = useState('')
 
-  const activeCount = useMemo(() => (lessons ?? []).length, [lessons])
+  const activeCount = (lessons ?? []).length
 
   // Client-side search over lesson text + scenario label.
   const filtered = useMemo(() => {
@@ -196,16 +196,14 @@ export function LessonsSettings() {
                     </span>
                   </div>
 
-                  {!lessons || lessons.length === 0 ? (
+                  {filtered.length === 0 ? (
                     <div className="rounded-[14px] border border-settings-border bg-card p-6">
                       <p className="py-6 text-center text-sm text-muted-foreground">
-                        No lessons yet. Add Emma&rsquo;s first lesson.
-                      </p>
-                    </div>
-                  ) : filtered.length === 0 ? (
-                    <div className="rounded-[14px] border border-settings-border bg-card p-6">
-                      <p className="py-6 text-center text-sm text-muted-foreground">
-                        No lessons match &ldquo;{query.trim()}&rdquo;.
+                        {activeCount === 0 ? (
+                          <>No lessons yet. Add Emma&rsquo;s first lesson.</>
+                        ) : (
+                          <>No lessons match &ldquo;{query.trim()}&rdquo;.</>
+                        )}
                       </p>
                     </div>
                   ) : (

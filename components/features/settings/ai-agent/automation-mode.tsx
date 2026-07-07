@@ -2,6 +2,7 @@
 
 import type { LucideIcon } from 'lucide-react'
 import { Eye, Send, Info, Check } from 'lucide-react'
+import { SectionHeading } from './section-heading'
 
 export type AutomationModeValue = 'suggest' | 'auto'
 
@@ -63,12 +64,10 @@ interface AutomationModeProps {
 export function AutomationMode({ value, onSelect, disabled }: AutomationModeProps) {
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-col gap-1">
-        <h2 className="text-lg font-bold text-foreground">Automation mode</h2>
-        <p className="text-sm font-medium text-muted-foreground">
-          Choose how Emma handles replies for this store.
-        </p>
-      </div>
+      <SectionHeading
+        title="Automation mode"
+        description="Choose how Emma handles replies for this store."
+      />
 
       <div role="radiogroup" className="flex gap-4">
         <ModeCard

@@ -10,8 +10,9 @@ import { SettingsPageHeader } from '@/components/features/settings/settings-head
 import { SettingsEmptyState } from '@/components/features/settings/settings-empty-state'
 import { AiStoreSelect } from './ai-store-select'
 import { AutomationMode, type AutomationModeValue } from './automation-mode'
-import { SuggestOnlyInfo } from "./suggest-only-info";
+import { SuggestOnlyInfo } from './suggest-only-info'
 import { PerScenarioControl } from './per-scenario-control'
+import { SectionHeading } from './section-heading'
 import { useAuthStore } from '@/stores/auth'
 import { useAiAutonomyRules, useUpsertAiAutonomyRules, useAiStoreSelection } from '@/hooks/ai'
 import { useStoreAiSettings, useUpdateStoreAiSettings } from '@/hooks/stores'
@@ -134,61 +135,59 @@ export function RulesSettings() {
 
           {!showSections ? (
             <div className="flex flex-col gap-10">
-              <Skeleton className="h-32 w-full rounded-xl" />
-              <Skeleton className="h-40 w-full rounded-xl" />
-              <Skeleton className="h-72 w-full rounded-xl" />
+              <Skeleton className="h-32 w-full rounded-2xl" />
+              <Skeleton className="h-40 w-full rounded-2xl" />
+              <Skeleton className="h-72 w-full rounded-2xl" />
             </div>
           ) : (
             <div className="flex flex-col gap-10">
               <AutomationMode value={mode} onSelect={(v) => void selectMode(v)} disabled={!canEdit} />
 
-              {mode === "suggest" && <SuggestOnlyInfo />}
-
-              {/* Auto-send conditions — confidence threshold (Figma 1068-54…67) */}
-              {mode === "auto" && (
-                <div className="flex flex-col gap-4">
-                  <div className="flex flex-col gap-1">
-                    <h2 className="text-lg font-bold text-foreground">Auto-send conditions</h2>
-                    <p className="text-sm font-medium text-muted-foreground">
-                      Emma auto-sends only when the confidence score is high enough and none of the guardrails apply.
-                    </p>
-                  </div>
-                  <div className="rounded-2xl border border-settings-border bg-card p-[22px]">
-                    <div className="flex flex-col gap-2.5">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-semibold text-foreground">Minimum confidence to auto-send</span>
-                        <span className="rounded-full bg-accent-soft px-2.5 py-[3px] text-xs font-semibold text-primary-hover">{thresholdPct}%</span>
+              {mode === 'suggest' ? (
+                <SuggestOnlyInfo />
+              ) : (
+                <>
+                  {/* Auto-send conditions — confidence threshold (Figma 1068-54…67) */}
+                  <div className="flex flex-col gap-4">
+                    <SectionHeading
+                      title="Auto-send conditions"
+                      description="Emma auto-sends only when the confidence score is high enough and none of the guardrails apply."
+                    />
+                    <div className="rounded-2xl border border-settings-border bg-card p-[22px]">
+                      <div className="flex flex-col gap-2.5">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-semibold text-foreground">Minimum confidence to auto-send</span>
+                          <span className="rounded-full bg-accent-soft px-2.5 py-[3px] text-xs font-semibold text-primary-hover">{thresholdPct}%</span>
+                        </div>
+                        <Slider
+                          min={0}
+                          max={100}
+                          step={5}
+                          value={thresholdPct}
+                          onValueChange={(v) =>
+                            setForm((prev) => ({
+                              ...prev,
+                              confidence_threshold: (typeof v === 'number' ? v : 0) / 100,
+                            }))
+                          }
+                          onValueCommitted={(v) => void commitConfidence(typeof v === 'number' ? v : 0)}
+                          disabled={!canEdit}
+                        />
+                        <p className="text-xs font-medium text-muted-foreground">
+                          Replies scoring below {thresholdPct}% are sent to the inbox for review instead.
+                        </p>
                       </div>
-                      <Slider
-                        min={0}
-                        max={100}
-                        step={5}
-                        value={thresholdPct}
-                        onValueChange={(v) =>
-                          setForm((prev) => ({
-                            ...prev,
-                            confidence_threshold: (typeof v === "number" ? v : 0) / 100,
-                          }))
-                        }
-                        onValueCommitted={(v) => void commitConfidence(typeof v === "number" ? v : 0)}
-                        disabled={!canEdit}
-                      />
-                      <p className="text-xs font-medium text-muted-foreground">
-                        Replies scoring below {thresholdPct}% are sent to the inbox for review instead.
-                      </p>
                     </div>
                   </div>
-                </div>
-              )}
 
-              {/* Per-scenario control (Figma 1068-108…168) */}
-              {mode === "auto" && (
-                <PerScenarioControl
-                  storeId={storeId}
-                  blockedIntents={form.global_block_intents}
-                  onToggle={(intent, autoSend) => void toggleScenario(intent, autoSend)}
-                  disabled={!canEdit}
-                />
+                  {/* Per-scenario control (Figma 1068-108…168) */}
+                  <PerScenarioControl
+                    storeId={storeId}
+                    blockedIntents={form.global_block_intents}
+                    onToggle={(intent, autoSend) => void toggleScenario(intent, autoSend)}
+                    disabled={!canEdit}
+                  />
+                </>
               )}
             </div>
           )}

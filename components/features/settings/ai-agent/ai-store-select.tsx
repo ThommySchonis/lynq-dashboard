@@ -52,11 +52,8 @@ export function AiStoreSelect({ stores, storeId, onChange }: AiStoreSelectProps)
       <Select value={storeId} onValueChange={(v) => v && onChange(v)} modal={false}>
         <SelectTrigger
           id="ai-store-select"
-          // h-11 (44px) matches the Figma store row. Uses the same
-          // data-[size=default] variant as the trigger's default h-8 so
-          // tailwind-merge drops h-8 instead of leaving both to fight on
-          // specificity.
-          className="w-full gap-2.5 rounded-[10px] border-settings-border bg-card data-[size=default]:h-11 py-[11px] pr-3.5 pl-3"
+          size="lg"
+          className="w-full gap-2.5 rounded-[10px] border-settings-border bg-card py-[11px] pr-3.5 pl-3"
         >
           <StoreIconBox />
           <SelectValue placeholder="Select a store">

@@ -5,6 +5,7 @@ import { useAiScenarios } from '@/hooks/ai'
 import type { AiScenarioRow } from '@/hooks/ai/use-ai-policies-data'
 import type { ReplyIntent } from '@/lib/schemas/ai'
 import { SCENARIOS } from './scenarios-section'
+import { SectionHeading } from './section-heading'
 
 interface ScenarioRowProps {
   title: string
@@ -45,7 +46,7 @@ function ScenarioRow({ title, autoSend, needsTraining, first, onToggle, disabled
           checked={on}
           onCheckedChange={onToggle}
           disabled={disabled || needsTraining}
-          className="data-unchecked:bg-[#D8DADE]"
+          className="data-unchecked:bg-toggle-off"
           aria-label={`Auto-send for ${title}`}
         />
       </div>
@@ -76,12 +77,10 @@ export function PerScenarioControl({ storeId, blockedIntents, onToggle, disabled
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-col gap-1">
-        <h2 className="text-lg font-bold text-foreground">Per-scenario control</h2>
-        <p className="text-sm font-medium text-muted-foreground">
-          Override auto-send for individual scenarios. The conditions above still apply.
-        </p>
-      </div>
+      <SectionHeading
+        title="Per-scenario control"
+        description="Override auto-send for individual scenarios. The conditions above still apply."
+      />
 
       <div className="flex flex-col rounded-2xl border border-settings-border bg-card">
         {SCENARIOS.map((meta, i) => {

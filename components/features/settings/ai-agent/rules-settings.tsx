@@ -8,7 +8,6 @@ import { Button } from '@/components/ui/button'
 import { Slider } from '@/components/ui/slider'
 import { Checkbox } from '@/components/ui/checkbox'
 import { SettingsSection, SettingsCard } from '@/components/features/settings/settings-section'
-import { SettingsField } from '@/components/features/settings/settings-field'
 import { SettingsPageHeader } from '@/components/features/settings/settings-header'
 import { SettingsEmptyState } from '@/components/features/settings/settings-empty-state'
 import { AiStoreSelect } from './ai-store-select'
@@ -129,6 +128,14 @@ export function RulesSettings() {
     ])
   }
 
+  // Persist the confidence threshold on slider release (instant save).
+  async function commitConfidence(pct: number) {
+    if (!canEdit) return
+    const nextConfig: AiAutonomyRulesConfig = { ...form, confidence_threshold: pct / 100 }
+    setInit(nextConfig)
+    await upsertRules.mutateAsync(nextConfig)
+  }
+
   // ── Loading skeleton (stores still loading) ──
   if (storesLoading) {
     return (
@@ -179,14 +186,26 @@ export function RulesSettings() {
             <div className="flex flex-col gap-10">
               <AutomationMode value={mode} onSelect={(v) => void selectMode(v)} disabled={!canEdit} />
 
-              {/* Confidence threshold */}
-              <SettingsSection
-                title="Confidence threshold"
-                description="Emma only auto-sends when her own confidence is above this threshold. Lower = more autonomous, higher = more conservative."
-              >
-                <SettingsCard>
-                  <SettingsField label="Minimum confidence to auto-send">
-                    <div className="flex items-center gap-3">
+              {/* Auto-send conditions — confidence threshold (Figma 1068-54…67) */}
+              {mode === 'auto' && (
+                <div className="flex flex-col gap-4">
+                  <div className="flex flex-col gap-1">
+                    <h2 className="text-lg font-bold text-foreground">Auto-send conditions</h2>
+                    <p className="text-sm font-medium text-muted-foreground">
+                      Emma auto-sends only when the confidence score is high enough and none of the
+                      guardrails apply.
+                    </p>
+                  </div>
+                  <div className="rounded-2xl border border-settings-border bg-card p-[22px]">
+                    <div className="flex flex-col gap-2.5">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-semibold text-foreground">
+                          Minimum confidence to auto-send
+                        </span>
+                        <span className="rounded-full bg-accent-soft px-2.5 py-[3px] text-xs font-semibold text-primary-hover">
+                          {thresholdPct}%
+                        </span>
+                      </div>
                       <Slider
                         min={0}
                         max={100}
@@ -195,20 +214,22 @@ export function RulesSettings() {
                         onValueChange={(v) =>
                           setForm((prev) => ({
                             ...prev,
-                            confidence_threshold:
-                              (typeof v === 'number' ? v : 0) / 100,
+                            confidence_threshold: (typeof v === 'number' ? v : 0) / 100,
                           }))
                         }
+                        onValueCommitted={(v) =>
+                          void commitConfidence(typeof v === 'number' ? v : 0)
+                        }
                         disabled={!canEdit}
-                        className="flex-1"
                       />
-                      <span className="text-sm tabular-nums w-12 text-right text-foreground">
-                        {thresholdPct}%
-                      </span>
+                      <p className="text-xs font-medium text-muted-foreground">
+                        Replies scoring below {thresholdPct}% are sent to the inbox for review
+                        instead.
+                      </p>
                     </div>
-                  </SettingsField>
-                </SettingsCard>
-              </SettingsSection>
+                  </div>
+                </div>
+              )}
 
               {/* Block list */}
               <SettingsSection

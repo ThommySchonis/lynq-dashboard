@@ -10,6 +10,7 @@ import { SettingsPageHeader } from '@/components/features/settings/settings-head
 import { SettingsEmptyState } from '@/components/features/settings/settings-empty-state'
 import { AiStoreSelect } from './ai-store-select'
 import { AutomationMode, type AutomationModeValue } from './automation-mode'
+import { SuggestOnlyInfo } from "./suggest-only-info";
 import { PerScenarioControl } from './per-scenario-control'
 import { useAuthStore } from '@/stores/auth'
 import { useAiAutonomyRules, useUpsertAiAutonomyRules, useAiStoreSelection } from '@/hooks/ai'
@@ -121,9 +122,7 @@ export function RulesSettings() {
               Icon={Bot}
               title="No stores yet"
               description="Connect a store first to configure its AI agent. Stores can be added under Settings → Stores."
-              action={
-                <Button render={<Link href="/settings/workspace/stores" />}>Connect store</Button>
-              }
+              action={<Button render={<Link href="/settings/workspace/stores" />}>Connect store</Button>}
             />
           </div>
         </div>
@@ -143,25 +142,22 @@ export function RulesSettings() {
             <div className="flex flex-col gap-10">
               <AutomationMode value={mode} onSelect={(v) => void selectMode(v)} disabled={!canEdit} />
 
+              {mode === "suggest" && <SuggestOnlyInfo />}
+
               {/* Auto-send conditions — confidence threshold (Figma 1068-54…67) */}
-              {mode === 'auto' && (
+              {mode === "auto" && (
                 <div className="flex flex-col gap-4">
                   <div className="flex flex-col gap-1">
                     <h2 className="text-lg font-bold text-foreground">Auto-send conditions</h2>
                     <p className="text-sm font-medium text-muted-foreground">
-                      Emma auto-sends only when the confidence score is high enough and none of the
-                      guardrails apply.
+                      Emma auto-sends only when the confidence score is high enough and none of the guardrails apply.
                     </p>
                   </div>
                   <div className="rounded-2xl border border-settings-border bg-card p-[22px]">
                     <div className="flex flex-col gap-2.5">
                       <div className="flex items-center justify-between">
-                        <span className="text-sm font-semibold text-foreground">
-                          Minimum confidence to auto-send
-                        </span>
-                        <span className="rounded-full bg-accent-soft px-2.5 py-[3px] text-xs font-semibold text-primary-hover">
-                          {thresholdPct}%
-                        </span>
+                        <span className="text-sm font-semibold text-foreground">Minimum confidence to auto-send</span>
+                        <span className="rounded-full bg-accent-soft px-2.5 py-[3px] text-xs font-semibold text-primary-hover">{thresholdPct}%</span>
                       </div>
                       <Slider
                         min={0}
@@ -171,17 +167,14 @@ export function RulesSettings() {
                         onValueChange={(v) =>
                           setForm((prev) => ({
                             ...prev,
-                            confidence_threshold: (typeof v === 'number' ? v : 0) / 100,
+                            confidence_threshold: (typeof v === "number" ? v : 0) / 100,
                           }))
                         }
-                        onValueCommitted={(v) =>
-                          void commitConfidence(typeof v === 'number' ? v : 0)
-                        }
+                        onValueCommitted={(v) => void commitConfidence(typeof v === "number" ? v : 0)}
                         disabled={!canEdit}
                       />
                       <p className="text-xs font-medium text-muted-foreground">
-                        Replies scoring below {thresholdPct}% are sent to the inbox for review
-                        instead.
+                        Replies scoring below {thresholdPct}% are sent to the inbox for review instead.
                       </p>
                     </div>
                   </div>
@@ -189,7 +182,7 @@ export function RulesSettings() {
               )}
 
               {/* Per-scenario control (Figma 1068-108…168) */}
-              {mode === 'auto' && (
+              {mode === "auto" && (
                 <PerScenarioControl
                   storeId={storeId}
                   blockedIntents={form.global_block_intents}
@@ -202,5 +195,5 @@ export function RulesSettings() {
         </>
       )}
     </div>
-  )
+  );
 }

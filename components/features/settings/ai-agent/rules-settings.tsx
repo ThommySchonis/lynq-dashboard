@@ -1,23 +1,18 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Link from 'next/link'
 import { Bot, Lock } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { Slider } from '@/components/ui/slider'
 import { Checkbox } from '@/components/ui/checkbox'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
 import { SettingsSection, SettingsCard } from '@/components/features/settings/settings-section'
 import { SettingsField } from '@/components/features/settings/settings-field'
 import { SettingsToggle } from '@/components/features/settings/settings-toggle'
-import { EmptyState } from '@/components/shared/empty-state'
+import { SettingsPageHeader } from '@/components/features/settings/settings-header'
+import { SettingsEmptyState } from '@/components/features/settings/settings-empty-state'
+import { AiStoreSelect } from './ai-store-select'
 import { useAuthStore } from '@/stores/auth'
 import {
   useAiAutonomyRules,
@@ -29,6 +24,10 @@ import { useStoreAiSettings, useUpdateStoreAiSettings } from '@/hooks/stores'
 import type { AiAutonomyRulesConfig } from '@/lib/schemas/ai'
 import { REPLY_INTENTS, DEFAULT_AUTONOMY_CONFIG } from '@/lib/schemas/ai'
 import { SCENARIOS } from './scenarios-section'
+
+const HEADER_TITLE = 'Auto-send rules'
+const HEADER_DESC =
+  'Control when Emma is allowed to send replies autonomously, without human review.'
 
 // Human-readable label for each of the 9 REPLY_INTENTS. Mirrors the titles
 // from SCENARIOS for the 7 canonical scenario keys; adds the two intent-only
@@ -113,15 +112,13 @@ export function RulesSettings() {
   // ── Loading skeleton (stores still loading) ──
   if (storesLoading) {
     return (
-      <div className="max-w-3xl mx-auto px-12 py-12 space-y-10">
-        <div className="space-y-2 pb-6 border-b border-border">
-          <Skeleton className="h-3.5 w-28" />
-          <Skeleton className="h-8 w-48" />
-          <Skeleton className="h-3.5 w-80" />
+      <div className="mx-auto max-w-[920px] px-6 py-10">
+        <SettingsPageHeader title={HEADER_TITLE} description={HEADER_DESC} />
+        <div className="flex flex-col gap-10">
+          <Skeleton className="h-32 w-full rounded-2xl" />
+          <Skeleton className="h-40 w-full rounded-2xl" />
+          <Skeleton className="h-72 w-full rounded-2xl" />
         </div>
-        <Skeleton className="h-32 w-full rounded-xl" />
-        <Skeleton className="h-40 w-full rounded-xl" />
-        <Skeleton className="h-72 w-full rounded-xl" />
       </div>
     )
   }
@@ -130,52 +127,26 @@ export function RulesSettings() {
   const thresholdPct = Math.round(form.confidence_threshold * 100)
 
   return (
-    <div className="max-w-3xl mx-auto px-12 py-12">
-      {/* Header */}
-      <div className="pb-6 mb-8 border-b border-border">
-        <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1.5 flex-wrap">
-          <span>Settings</span>
-          <span>/</span>
-          <span>AI agent</span>
-          <span>/</span>
-          <span>Rules</span>
-        </div>
-        <h1 className="text-[28px] font-semibold text-foreground leading-tight mb-1">
-          Auto-send rules
-        </h1>
-        <p className="text-sm text-muted-foreground leading-relaxed">
-          Control when Emma is allowed to send replies autonomously, without
-          human review.
-        </p>
-      </div>
+    <div className="mx-auto max-w-[920px] px-6 py-10">
+      <SettingsPageHeader title={HEADER_TITLE} description={HEADER_DESC} />
 
       {!stores || stores.length === 0 ? (
-        <EmptyState
-          icon={Bot}
-          title="No stores yet"
-          description="Connect a store first to configure its AI agent. Stores can be added under Settings → Stores."
-        />
+        <div className="flex items-center justify-center pt-6">
+          <div className="w-[440px] max-w-full rounded-2xl border border-settings-border bg-card px-10 py-7">
+            <SettingsEmptyState
+              Icon={Bot}
+              title="No stores yet"
+              description="Connect a store first to configure its AI agent. Stores can be added under Settings → Stores."
+              action={
+                <Button render={<Link href="/settings/workspace/stores" />}>Connect store</Button>
+              }
+            />
+          </div>
+        </div>
       ) : (
         <>
-          {/* Store selector */}
-          <div className="mb-8 flex flex-col gap-1.5 max-w-xs">
-            <Label htmlFor="ai-rules-store-select" className="text-sm font-medium text-foreground">
-              Store
-            </Label>
-            <Select value={storeId} onValueChange={(v) => v && setStore(v)}>
-              <SelectTrigger id="ai-rules-store-select" className="w-full">
-                <SelectValue placeholder="Select a store">
-                  {stores?.find((s) => s.id === storeId)?.name}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                {stores.map((s) => (
-                  <SelectItem key={s.id} value={s.id}>
-                    {s.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <div className="mb-8">
+            <AiStoreSelect stores={stores} storeId={storeId} onChange={setStore} />
           </div>
 
           {!showSections ? (

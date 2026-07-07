@@ -2,49 +2,24 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { Bot, Lock } from 'lucide-react'
+import { Bot } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'
 import { Slider } from '@/components/ui/slider'
-import { Checkbox } from '@/components/ui/checkbox'
-import { SettingsSection, SettingsCard } from '@/components/features/settings/settings-section'
 import { SettingsPageHeader } from '@/components/features/settings/settings-header'
 import { SettingsEmptyState } from '@/components/features/settings/settings-empty-state'
 import { AiStoreSelect } from './ai-store-select'
 import { AutomationMode, type AutomationModeValue } from './automation-mode'
+import { PerScenarioControl } from './per-scenario-control'
 import { useAuthStore } from '@/stores/auth'
-import {
-  useAiAutonomyRules,
-  useUpsertAiAutonomyRules,
-  useAiScenarios,
-  useAiStoreSelection,
-} from '@/hooks/ai'
+import { useAiAutonomyRules, useUpsertAiAutonomyRules, useAiStoreSelection } from '@/hooks/ai'
 import { useStoreAiSettings, useUpdateStoreAiSettings } from '@/hooks/stores'
-import type { AiAutonomyRulesConfig } from '@/lib/schemas/ai'
-import { REPLY_INTENTS, DEFAULT_AUTONOMY_CONFIG } from '@/lib/schemas/ai'
-import { SCENARIOS } from './scenarios-section'
+import type { AiAutonomyRulesConfig, ReplyIntent } from '@/lib/schemas/ai'
+import { DEFAULT_AUTONOMY_CONFIG } from '@/lib/schemas/ai'
 
 const HEADER_TITLE = 'Auto-send rules'
 const HEADER_DESC =
   'Control when Emma is allowed to send replies autonomously, without human review.'
-
-// Human-readable label for each of the 9 REPLY_INTENTS. Mirrors the titles
-// from SCENARIOS for the 7 canonical scenario keys; adds the two intent-only
-// values (other / unknown) which don't have a scenario row.
-const INTENT_LABELS: Record<(typeof REPLY_INTENTS)[number], string> = {
-  wismo:                'Where is my order?',
-  long_delivery:        'Long delivery time',
-  lost_package:         'Lost package',
-  wrong_or_damaged:     'Wrong or damaged item',
-  refund_or_cancel:     'Refund or cancellation',
-  customs_fees:         'Customs fees',
-  angry_or_chargeback:  'Angry customer or chargeback',
-  other:                'Other (on-topic but unmapped)',
-  unknown:              'Unknown / off-topic',
-}
-
-const sameList = (a: string[], b: string[]) =>
-  a.length === b.length && [...a].sort().join('|') === [...b].sort().join('|')
 
 // Clone DEFAULT_AUTONOMY_CONFIG into a fresh mutable AiAutonomyRulesConfig.
 // The schema export is `as const` (readonly tuple) so we can't pass it
@@ -65,48 +40,19 @@ export function RulesSettings() {
 
   // ── Server data ──
   const { data: rulesResp, isLoading: rulesLoading } = useAiAutonomyRules(storeId)
-  const { data: scenarios } = useAiScenarios(storeId)
   const upsertRules = useUpsertAiAutonomyRules(storeId)
   const { data: aiSettings } = useStoreAiSettings(storeId)
   const updateAiSettings = useUpdateStoreAiSettings(storeId)
 
-  // ── Local form state, seeded from the server (or default) config ──
+  // ── Local form state, seeded from the server (or default) config. Every
+  // control saves instantly, so there is no separate dirty/baseline copy. ──
   const [form, setForm] = useState<AiAutonomyRulesConfig>(freshDefaultConfig)
-  const [init, setInit] = useState<AiAutonomyRulesConfig>(freshDefaultConfig)
-  const [saving, setSaving] = useState(false)
 
   useEffect(() => {
     if (rulesResp) {
-      const next = rulesResp.config ?? freshDefaultConfig()
-      setForm(next)
-      setInit(next)
+      setForm(rulesResp.config ?? freshDefaultConfig())
     }
   }, [rulesResp])
-
-  const isDirty =
-    form.master_enabled !== init.master_enabled ||
-    form.confidence_threshold !== init.confidence_threshold ||
-    !sameList(form.global_block_intents, init.global_block_intents)
-
-  async function handleSave() {
-    if (!canEdit) return
-    setSaving(true)
-    try {
-      await upsertRules.mutateAsync(form)
-      setInit(form)
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  function toggleBlockedIntent(intent: (typeof REPLY_INTENTS)[number], checked: boolean) {
-    setForm((prev) => ({
-      ...prev,
-      global_block_intents: checked
-        ? Array.from(new Set([...prev.global_block_intents, intent]))
-        : prev.global_block_intents.filter((i) => i !== intent),
-    }))
-  }
 
   // ── Automation mode ──
   // Auto-send is on only when BOTH the store flag and the config master switch
@@ -121,7 +67,6 @@ export function RulesSettings() {
     // and the master switch mirror the chosen mode. Instant save.
     const nextConfig: AiAutonomyRulesConfig = { ...form, master_enabled: auto }
     setForm(nextConfig)
-    setInit(nextConfig)
     await Promise.all([
       updateAiSettings.mutateAsync({ ai_auto_generate: true, ai_auto_send_enabled: auto }),
       upsertRules.mutateAsync(nextConfig),
@@ -131,8 +76,20 @@ export function RulesSettings() {
   // Persist the confidence threshold on slider release (instant save).
   async function commitConfidence(pct: number) {
     if (!canEdit) return
-    const nextConfig: AiAutonomyRulesConfig = { ...form, confidence_threshold: pct / 100 }
-    setInit(nextConfig)
+    await upsertRules.mutateAsync({ ...form, confidence_threshold: pct / 100 })
+  }
+
+  // Toggle a scenario's auto-send by adding/removing its intent from the global
+  // block list (Review only ⇔ intent blocked). Instant save.
+  async function toggleScenario(intent: ReplyIntent, autoSend: boolean) {
+    if (!canEdit) return
+    const nextConfig: AiAutonomyRulesConfig = {
+      ...form,
+      global_block_intents: autoSend
+        ? form.global_block_intents.filter((i) => i !== intent)
+        : Array.from(new Set([...form.global_block_intents, intent])),
+    }
+    setForm(nextConfig)
     await upsertRules.mutateAsync(nextConfig)
   }
 
@@ -231,77 +188,14 @@ export function RulesSettings() {
                 </div>
               )}
 
-              {/* Block list */}
-              <SettingsSection
-                title="Blocked intents"
-                description="Intents in this list NEVER auto-send. Emma still drafts a reply but routes it through suggest mode."
-              >
-                <SettingsCard>
-                  <div className="flex flex-col gap-2.5">
-                    {REPLY_INTENTS.map((intent) => {
-                      const checked = form.global_block_intents.includes(intent)
-                      return (
-                        <label
-                          key={intent}
-                          className="flex items-start gap-3 cursor-pointer group/intent"
-                        >
-                          <Checkbox
-                            checked={checked}
-                            onCheckedChange={(c) => toggleBlockedIntent(intent, c === true)}
-                            disabled={!canEdit}
-                            className="mt-0.5"
-                          />
-                          <span className="text-sm text-foreground group-has-disabled/intent:opacity-50">
-                            {INTENT_LABELS[intent]}
-                          </span>
-                        </label>
-                      )
-                    })}
-                  </div>
-                </SettingsCard>
-              </SettingsSection>
-
-              {/* Per-scenario autonomy thresholds (read-only) */}
-              <SettingsSection
-                title="Per-scenario thresholds"
-                description="Per-scenario thresholds are set on the Onboarding page. Emma uses the higher of this value and the store-wide threshold above."
-              >
-                <SettingsCard>
-                  <div className="flex flex-col divide-y divide-border">
-                    {SCENARIOS.map((meta) => {
-                      const row = scenarios?.find((s) => s.scenario_key === meta.key)
-                      const pct = row?.autonomy_pct ?? 0
-                      const locked = !!meta.lockAutonomy
-                      return (
-                        <div
-                          key={meta.key}
-                          className="flex items-center justify-between gap-4 py-2.5 first:pt-0 last:pb-0"
-                        >
-                          <span className="text-sm text-foreground">{meta.title}</span>
-                          {locked ? (
-                            <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
-                              <Lock className="size-3" />
-                              Locked at 0%
-                            </span>
-                          ) : (
-                            <span className="text-sm tabular-nums text-muted-foreground">
-                              {pct}%
-                            </span>
-                          )}
-                        </div>
-                      )
-                    })}
-                  </div>
-                </SettingsCard>
-              </SettingsSection>
-
-              {/* Save bar */}
-              {canEdit && (
-                <div className="flex justify-end">
-                  <Button onClick={() => void handleSave()} disabled={!isDirty || saving}>
-                    {saving ? 'Saving…' : 'Save changes'}
-                  </Button>
-                </div>
+              {/* Per-scenario control (Figma 1068-108…168) */}
+              {mode === 'auto' && (
+                <PerScenarioControl
+                  storeId={storeId}
+                  blockedIntents={form.global_block_intents}
+                  onToggle={(intent, autoSend) => void toggleScenario(intent, autoSend)}
+                  disabled={!canEdit}
+                />
               )}
             </div>
           )}

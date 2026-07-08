@@ -12,6 +12,8 @@ import { RegionalSection } from './regional-section'
 import type { RegionalValues } from './regional-section'
 import { PreferencesSection } from './preferences-section'
 import type { PreferencesValues } from './preferences-section'
+import { TimeTrackingSection } from './time-tracking-section'
+import type { TimeTrackingValues } from './time-tracking-section'
 import { DangerZoneSection } from './danger-zone-section'
 import { PendingTransferBanner } from './pending-transfer-banner'
 import { usePendingTransfer } from '@/hooks/settings/use-ownership-transfer'
@@ -37,6 +39,7 @@ interface GeneralSettingsWorkspace {
   show_order_data?: boolean
   auto_translate?: boolean
   allow_deletion?: boolean
+  shift_target_seconds?: number
 }
 
 export function GeneralSettings() {
@@ -96,6 +99,14 @@ export function GeneralSettings() {
     allow_deletion: WORKSPACE_DEFAULTS.allow_deletion,
   })
 
+  // ── Time tracking state ───────────────────────────────────────────────────────
+  const [timeTracking, setTimeTracking] = useState<TimeTrackingValues>({
+    shift_target_seconds: WORKSPACE_DEFAULTS.shift_target_seconds,
+  })
+  const [initTimeTracking, setInitTimeTracking] = useState<TimeTrackingValues>({
+    shift_target_seconds: WORKSPACE_DEFAULTS.shift_target_seconds,
+  })
+
   // ── Seed form state from server data ────────────────────────────────────────
   useEffect(() => {
     if (!ws) return
@@ -126,6 +137,12 @@ export function GeneralSettings() {
     }
     setInitPreferences(prefs)
     setPreferences(prefs)
+
+    const tt: TimeTrackingValues = {
+      shift_target_seconds: w.shift_target_seconds ?? WORKSPACE_DEFAULTS.shift_target_seconds,
+    }
+    setInitTimeTracking(tt)
+    setTimeTracking(tt)
   }, [ws])
 
   // ── Dirty checks ─────────────────────────────────────────────────────────────
@@ -147,8 +164,11 @@ export function GeneralSettings() {
     preferences.auto_translate !== initPreferences.auto_translate ||
     preferences.allow_deletion !== initPreferences.allow_deletion
 
+  const timeTrackingDirty =
+    timeTracking.shift_target_seconds !== initTimeTracking.shift_target_seconds
+
   const canEdit = !isSuspended && (role === 'owner' || role === 'admin')
-  const anyDirty = identityDirty || regionalDirty || preferencesDirty
+  const anyDirty = identityDirty || regionalDirty || preferencesDirty || timeTrackingDirty
 
   // ── Save / discard — one global save-bar for the whole page ───────────────────
   async function handleSaveAll() {
@@ -196,6 +216,11 @@ export function GeneralSettings() {
         await updateWorkspace.mutateAsync({ ...preferences })
         setInitPreferences({ ...preferences })
       }
+
+      if (timeTrackingDirty) {
+        await updateWorkspace.mutateAsync({ ...timeTracking })
+        setInitTimeTracking({ ...timeTracking })
+      }
     } catch (err) {
       if (err instanceof Error && err.message.includes('taken')) {
         setSlugError('This URL is already taken')
@@ -212,6 +237,7 @@ export function GeneralSettings() {
     setIdentity({ ...initIdentity, logoPreview: null, logoFile: null, logoRemoved: false })
     setRegional({ ...initRegional })
     setPreferences({ ...initPreferences })
+    setTimeTracking({ ...initTimeTracking })
     setSlugError('')
   }
 
@@ -287,6 +313,12 @@ export function GeneralSettings() {
           values={preferences}
           canEdit={canEdit}
           onChange={(patch) => setPreferences((prev) => ({ ...prev, ...patch }))}
+        />
+
+        <TimeTrackingSection
+          values={timeTracking}
+          canEdit={canEdit}
+          onChange={(patch) => setTimeTracking((prev) => ({ ...prev, ...patch }))}
         />
 
         <DangerZoneSection

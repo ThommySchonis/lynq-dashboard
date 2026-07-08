@@ -55,7 +55,7 @@ export function TimeTrackingPage() {
   return (
     <main className="min-h-screen overflow-y-auto px-10 pt-9 pb-12">
       <div className="mx-auto max-w-[1170px] space-y-6">
-        <TrackingHeader title={title} subtitle={subtitle} clock={clock} disabled={isSuspended} />
+        <TrackingHeader title={title} subtitle={subtitle} clock={clock} shiftTargetSec={data.shift_target_seconds} disabled={isSuspended} />
 
         {clock.error && (
           <div className="flex items-center gap-2.5 rounded-lg border border-destructive/15 bg-destructive-soft px-3.5 py-2.5 text-[13px] font-medium text-destructive animate-fade-up">

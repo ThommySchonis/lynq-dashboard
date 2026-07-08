@@ -13,8 +13,9 @@ export const FILTERS: { id: TimeFilter; label: string }[] = [
   { id: 'month', label: 'This month' },
 ]
 
-// Nominal shift length used only to scale the header timer's progress bar.
-// Not a backend value — see B10 in the backend backlog.
+// Default nominal shift length (8h) used to scale the header timer's progress
+// bar. This is only a client fallback — the real value comes from the
+// workspace's shift_target_seconds, surfaced via api_list_time_sessions.
 export const SHIFT_TARGET_SEC = 8 * 3600
 
 // ── Shift mood ───────────────────────────────────────────────────────────────

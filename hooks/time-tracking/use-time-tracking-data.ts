@@ -36,6 +36,8 @@ export interface TimeDataResponse {
   active_count?: number
   paused_count?: number
   client?: { company_name: string }
+  /** Workspace's nominal shift length; scales the header progress bar. */
+  shift_target_seconds?: number
 }
 
 export function useTimeData(filter: TimeFilter) {

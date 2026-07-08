@@ -23,6 +23,9 @@ export const updateWorkspaceBody = z.object({
   show_order_data: z.boolean().optional(),
   auto_translate: z.boolean().optional(),
   allow_deletion: z.boolean().optional(),
+  // Nominal shift length in seconds (min 1h, max 24h) — scales the
+  // time-tracking header progress bar.
+  shift_target_seconds: z.number().int().min(3600).max(86400).optional(),
 })
 
 export const inviteMemberBody = z.object({

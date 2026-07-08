@@ -32,6 +32,7 @@ export function useUpdateWorkspace() {
         p_show_order_data: body.show_order_data ?? null,
         p_auto_translate: body.auto_translate ?? null,
         p_allow_deletion: body.allow_deletion ?? null,
+        p_shift_target_seconds: body.shift_target_seconds ?? null,
       })
     },
     onSuccess: () => {

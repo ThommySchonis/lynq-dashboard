@@ -7,6 +7,8 @@ import { TrackingPill } from './tracking-pill'
 
 interface TimerControlsProps {
   clock: TimeClock
+  /** Workspace's nominal shift length in seconds; falls back to the 8h default. */
+  shiftTargetSec?: number
   /** Workspace suspended → all actions disabled. */
   disabled?: boolean
 }
@@ -14,8 +16,9 @@ interface TimerControlsProps {
 // Header timer affordances. Idle → a single green Start. Running → the
 // TRACKING pill plus Pause/Resume and a solid-red Finish (opens the EOD
 // modal). Mirrors the old ClockCard button logic, restyled to Figma.
-export function TimerControls({ clock, disabled = false }: TimerControlsProps) {
+export function TimerControls({ clock, shiftTargetSec, disabled = false }: TimerControlsProps) {
   const { isActive, isPaused, elapsed, clockingIn, clockIn, pause, resume, openModal } = clock
+  const shiftTarget = shiftTargetSec && shiftTargetSec > 0 ? shiftTargetSec : SHIFT_TARGET_SEC
 
   if (!isActive) {
     return (
@@ -33,7 +36,7 @@ export function TimerControls({ clock, disabled = false }: TimerControlsProps) {
 
   return (
     <div className="flex items-center gap-3">
-      <TrackingPill elapsed={elapsed} progress={elapsed / SHIFT_TARGET_SEC} />
+      <TrackingPill elapsed={elapsed} progress={elapsed / shiftTarget} />
       <div className="flex items-center gap-2.5">
         <button
           onClick={openModal}

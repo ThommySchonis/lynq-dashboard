@@ -149,6 +149,7 @@ export interface WorkspaceDefaults {
   show_order_data: boolean
   auto_translate: boolean
   allow_deletion: boolean
+  shift_target_seconds: number
 }
 
 export const WORKSPACE_DEFAULTS: WorkspaceDefaults = {
@@ -156,6 +157,7 @@ export const WORKSPACE_DEFAULTS: WorkspaceDefaults = {
   timezone: 'Europe/Amsterdam', locale: 'en',
   date_format: 'DD/MM/YYYY', time_format: '24h', first_day_of_week: 'Monday',
   show_order_data: true, auto_translate: false, allow_deletion: false,
+  shift_target_seconds: 28800,
 }
 
 // ── Profile / Theme ──

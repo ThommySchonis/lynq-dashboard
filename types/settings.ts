@@ -9,6 +9,7 @@ export interface WorkspaceSettings {
   locale: string
   date_format: string
   time_format: string
+  shift_target_seconds: number
   preferences: WorkspacePreferences
 }
 

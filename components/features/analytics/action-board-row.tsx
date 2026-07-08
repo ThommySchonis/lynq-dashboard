@@ -44,7 +44,7 @@ export function ActionBoardRow({
   return (
     <tr className="border-b border-black/[0.05] align-top last:border-0 hover:bg-gray-50/60">
       {/* Name */}
-      <td className="w-[180px] py-3 pr-3">
+      <td className="w-[180px] py-3 pr-3 pl-4">
         <div className={`text-[13px] font-semibold leading-snug ${isDone ? 'text-gray-400 line-through' : 'text-gray-900'}`}>
           {task.title}
         </div>
@@ -134,8 +134,8 @@ export function ActionBoardRow({
       </td>
 
       {/* Actions */}
-      <td className="py-3 pl-3">
-        <div className="flex items-center justify-end gap-1.5">
+      <td className="py-3 pl-3 pr-4">
+        <div className="flex items-center justify-start gap-1.5">
           {task.status === 'open' && (
             <button
               onClick={() => onPickUp(task)}

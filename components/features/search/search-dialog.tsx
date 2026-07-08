@@ -158,7 +158,7 @@ export function SearchDialog() {
                   className={cn(
                     'px-2.5 py-1 text-xs rounded-md whitespace-nowrap',
                     activeTab === tab.value
-                      ? 'bg-accent text-foreground'
+                      ? 'bg-accent-soft text-primary'
                       : 'text-foreground-3 hover:text-foreground-2 hover:bg-accent/50',
                   )}
                 >

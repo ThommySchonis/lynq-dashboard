@@ -161,9 +161,7 @@ export function ActionBoard({ demoMode }: ActionBoardProps) {
                     {COLUMNS.map((c, i) => (
                       <th
                         key={c}
-                        className={`whitespace-nowrap px-3 py-2.5 text-[11px] font-semibold uppercase tracking-[.06em] text-gray-400 ${
-                          c === 'Actions' ? 'text-right' : 'text-left'
-                        } ${i === 0 ? 'pl-4' : ''}`}
+                        className={`whitespace-nowrap px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-[.06em] text-gray-400 ${i === 0 ? 'pl-4' : ''}`}
                       >
                         {c}
                       </th>

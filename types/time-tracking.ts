@@ -25,6 +25,9 @@ export interface Session {
   emails_answered: number | null
   what_went_well:  string | null
   needs_attention: string | null
+  // Self-reported shift mood ('tough' | 'steady' | 'great'); null for
+  // sessions clocked out before the mood column shipped.
+  mood: string | null
   // Manual-edit audit summary — populated from time_session_edits for
   // admin/owner views. Null when the session has never been edited.
   last_edit_at?: string | null
@@ -42,6 +45,8 @@ export interface EodReport {
   emailsAnswered: number | null
   whatWentWell:   string
   needsAttention: string | null
+  // Self-reported shift mood ('tough' | 'steady' | 'great').
+  mood: string | null
 }
 
 export interface TeamMember {

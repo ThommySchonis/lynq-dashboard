@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { X, Sparkles, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
-import { fmtTime, fmtDur } from '@/lib/time-tracking-constants'
+import { fmtTime, fmtDur, MOODS } from '@/lib/time-tracking-constants'
 import { Button } from '@/components/ui/button'
 import { useEodImpact } from '@/hooks/time-tracking/use-eod-impact'
 import { useEodReport } from '@/hooks/time-tracking/use-eod-report'
@@ -25,13 +25,6 @@ const IMPACT_TILES: { key: keyof EodImpact; label: string }[] = [
   { key: 'tickets_resolved',    label: 'Tickets resolved' },
   { key: 'messages_sent',       label: 'Messages sent' },
   { key: 'emma_drafts_handled', label: 'Emma drafts' },
-]
-
-// Mood selector — local only, not persisted (backend backlog B7).
-const MOODS = [
-  { id: 'tough', label: 'Tough', dot: 'bg-destructive' },
-  { id: 'steady', label: 'Steady', dot: 'bg-warning' },
-  { id: 'great', label: 'Great', dot: 'bg-success' },
 ]
 
 export function ClockOutModal({
@@ -76,7 +69,7 @@ export function ClockOutModal({
 
   function handleConfirm() {
     if (!canSubmit) return
-    onConfirm({ emailsAnswered: null, whatWentWell: report.trim(), needsAttention: null })
+    onConfirm({ emailsAnswered: null, whatWentWell: report.trim(), needsAttention: null, mood })
   }
 
   // Empty form → cancel immediately. Dirty → confirm before discarding.

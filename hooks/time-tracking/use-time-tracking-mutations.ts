@@ -11,6 +11,7 @@ interface EditSessionPatch {
   emails_answered?: number | null
   what_went_well?:  string | null
   needs_attention?: string | null
+  mood?:           string | null
   reason:          string
 }
 
@@ -35,6 +36,7 @@ export function useClockOut() {
         p_emails_answered: report.emailsAnswered ?? null,
         p_what_went_well: report.whatWentWell ?? null,
         p_needs_attention: report.needsAttention ?? null,
+        p_mood: report.mood ?? null,
       })
     },
     onSuccess: () => {
@@ -78,6 +80,7 @@ export function useEditSession() {
         p_emails_answered: patch.emails_answered ?? null,
         p_what_went_well: patch.what_went_well ?? null,
         p_needs_attention: patch.needs_attention ?? null,
+        p_mood: patch.mood ?? null,
         p_reason: patch.reason ?? null,
       })
     },

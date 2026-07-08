@@ -17,6 +17,27 @@ export const FILTERS: { id: TimeFilter; label: string }[] = [
 // Not a backend value — see B10 in the backend backlog.
 export const SHIFT_TARGET_SEC = 8 * 3600
 
+// ── Shift mood ───────────────────────────────────────────────────────────────
+// The three self-reported shift moods collected at clock-out and stored on
+// time_sessions.mood. `id` values MUST match the DB CHECK constraint
+// ('tough','steady','great'); `dot` is a Tailwind token bg class.
+
+export interface MoodOption {
+  id:    'tough' | 'steady' | 'great'
+  label: string
+  dot:   string
+}
+
+export const MOODS: MoodOption[] = [
+  { id: 'tough',  label: 'Tough',  dot: 'bg-destructive' },
+  { id: 'steady', label: 'Steady', dot: 'bg-warning' },
+  { id: 'great',  label: 'Great',  dot: 'bg-success' },
+]
+
+export function moodById(id: string | null | undefined): MoodOption | undefined {
+  return id ? MOODS.find((m) => m.id === id) : undefined
+}
+
 // ── KPI definitions ──────────────────────────────────────────────────────────
 
 export const TEAM_KPI: TeamKpiDef[] = [

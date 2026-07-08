@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { ChevronDown, AlertTriangle, Coffee, Pencil } from 'lucide-react'
-import { fmtDate, fmtTime, fmtDur, durSec } from '@/lib/time-tracking-constants'
+import { fmtDate, fmtTime, fmtDur, durSec, moodById } from '@/lib/time-tracking-constants'
 import type { Session, TeamMember } from '@/types/time-tracking'
 import { SessionEditModal, type EditPatch } from './session-edit-modal'
 import { StatusPill } from './status-pill'
@@ -62,6 +62,7 @@ export function AdminLogRow({ session: s, canEdit = false, membersById }: AdminL
   const wasEdited = !!s.last_edit_at
   const canExpand = hasStructured || hasLegacy || wasEdited
   const { longSession, longBreak } = computeLongFlags(s)
+  const mood = moodById(s.mood)
 
   // Resolve editor name from the members map (if provided). Falls back to
   // a truncated UUID when we don't have it (e.g. Lynq cross-workspace
@@ -98,6 +99,12 @@ export function AdminLogRow({ session: s, canEdit = false, membersById }: AdminL
             {s.member_name?.charAt(0).toUpperCase() || '?'}
           </div>
           <span className="truncate text-sm font-semibold text-foreground">{s.member_name}</span>
+          {mood && (
+            <span
+              className={`h-2 w-2 shrink-0 rounded-full ${mood.dot}`}
+              title={`Shift felt: ${mood.label}`}
+            />
+          )}
         </div>
 
         {/* Date */}
@@ -162,6 +169,15 @@ export function AdminLogRow({ session: s, canEdit = false, membersById }: AdminL
 
       {isExpanded && canExpand && (
         <div className="border-b border-border bg-muted/40 px-[22px] py-3.5">
+          {mood && (
+            <div className={(hasStructured || hasLegacy) ? 'mb-3' : ''}>
+              <div className="text-[10px] font-bold uppercase tracking-wider text-foreground-4">Mood</div>
+              <div className="mt-1 flex items-center gap-2 text-[12.5px] leading-relaxed text-foreground">
+                <span className={`h-2 w-2 shrink-0 rounded-full ${mood.dot}`} />
+                {mood.label}
+              </div>
+            </div>
+          )}
           {hasStructured ? (
             <div className="space-y-3">
               <DetailBlock label="What went well"  text={s.what_went_well} />

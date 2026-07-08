@@ -3,9 +3,12 @@
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { X, Sparkles, Loader2 } from 'lucide-react'
+import { toast } from 'sonner'
 import { fmtTime, fmtDur } from '@/lib/time-tracking-constants'
 import { Button } from '@/components/ui/button'
-import type { Session, EodReport } from '@/types/time-tracking'
+import { useEodImpact } from '@/hooks/time-tracking/use-eod-impact'
+import { useEodReport } from '@/hooks/time-tracking/use-eod-report'
+import type { Session, EodReport, EodImpact } from '@/types/time-tracking'
 
 interface ClockOutModalProps {
   session: Session
@@ -16,12 +19,12 @@ interface ClockOutModalProps {
   submitting: boolean
 }
 
-// Static "today's impact" tiles — no backing columns yet (see backend
-// backlog B6). Shown for visual completeness; not persisted.
-const IMPACT = [
-  { value: '42', label: 'Tickets resolved' },
-  { value: '118', label: 'Messages sent' },
-  { value: '4.7', label: 'CSAT' },
+// Impact tiles — labels are the display config; values come from
+// useEodImpact() (real per-agent, per-day counts).
+const IMPACT_TILES: { key: keyof EodImpact; label: string }[] = [
+  { key: 'tickets_resolved',    label: 'Tickets resolved' },
+  { key: 'messages_sent',       label: 'Messages sent' },
+  { key: 'emma_drafts_handled', label: 'Emma drafts' },
 ]
 
 // Mood selector — local only, not persisted (backend backlog B7).
@@ -47,6 +50,9 @@ export function ClockOutModal({
   const [mood, setMood] = useState('great')
   const [discardOpen, setDiscardOpen] = useState(false)
 
+  const { data: impact, isLoading: impactLoading, isError: impactError } = useEodImpact(session.id)
+  const { generate, generating } = useEodReport()
+
   const canSubmit = report.trim().length > 0 && !submitting
   const isDirty = report.trim().length > 0
 
@@ -55,6 +61,18 @@ export function ClockOutModal({
   const outAt = new Date(
     new Date(session.clocked_in_at).getTime() + (elapsedSec + pausedSeconds) * 1000
   ).toISOString()
+
+  async function handleAiReply() {
+    if (!impact) return
+    const text = await generate({
+      metrics:       impact,
+      hoursTracked:  fmtDur(elapsedSec),
+      breakDuration: fmtDur(pausedSeconds),
+      shiftWindow:   `${fmtTime(session.clocked_in_at)} – ${fmtTime(outAt)}`,
+    })
+    if (text) setReport(text)
+    else toast.error('Emma could not generate a report. Please try again.')
+  }
 
   function handleConfirm() {
     if (!canSubmit) return
@@ -106,16 +124,24 @@ export function ClockOutModal({
           </div>
         </div>
 
-        {/* Today's impact (static) */}
+        {/* Today's impact (real) */}
         <div className="flex flex-col gap-2.5">
           <div className="text-[12px] font-semibold uppercase leading-[14px] tracking-[0.08em] text-foreground-3">
             Today&apos;s impact
           </div>
           <div className="grid grid-cols-3 gap-3">
-            {IMPACT.map((m) => (
-              <div key={m.label} className="flex flex-col gap-1 rounded-xl border border-border bg-card px-4 py-3.5">
-                <div className="text-lg font-semibold leading-[26px] text-foreground">{m.value}</div>
-                <div className="text-sm font-semibold text-foreground-3">{m.label}</div>
+            {IMPACT_TILES.map((tile) => (
+              <div key={tile.key} className="flex flex-col gap-1 rounded-xl border border-border bg-card px-4 py-3.5">
+                <div className="text-lg font-semibold leading-[26px] text-foreground tabular-nums">
+                  {impactLoading ? (
+                    <span className="inline-block h-[26px] w-8 animate-pulse rounded bg-muted align-middle" />
+                  ) : impactError || !impact ? (
+                    '—'
+                  ) : (
+                    impact[tile.key]
+                  )}
+                </div>
+                <div className="text-sm font-semibold text-foreground-3">{tile.label}</div>
               </div>
             ))}
           </div>
@@ -152,11 +178,21 @@ export function ClockOutModal({
             <div className="text-sm font-semibold text-foreground">End-of-day report</div>
             <button
               type="button"
-              title="Coming soon"
-              className="flex h-[34px] items-center gap-2 rounded-lg border border-accent-border bg-accent-soft pl-3.5 pr-4 text-sm font-semibold text-primary"
+              onClick={() => void handleAiReply()}
+              disabled={generating || impactLoading || !impact}
+              className="flex h-[34px] items-center gap-2 rounded-lg border border-accent-border bg-accent-soft pl-3.5 pr-4 text-sm font-semibold text-primary transition-opacity disabled:opacity-50"
             >
-              <Sparkles className="h-4 w-4" strokeWidth={2} />
-              AI Reply
+              {generating ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" strokeWidth={2} />
+                  Generating…
+                </>
+              ) : (
+                <>
+                  <Sparkles className="h-4 w-4" strokeWidth={2} />
+                  AI Reply
+                </>
+              )}
             </button>
           </div>
           <textarea
@@ -173,9 +209,6 @@ export function ClockOutModal({
             Cancel
           </Button>
           <div className="flex items-center gap-2.5">
-            <Button variant="outline" disabled={submitting} title="Coming soon" className="h-11 rounded-lg px-4 text-sm font-semibold">
-              Save draft
-            </Button>
             <Button onClick={handleConfirm} disabled={!canSubmit} className="h-11 gap-2 rounded-lg px-5 text-sm font-semibold">
               {submitting ? (
                 <>

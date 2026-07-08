@@ -253,3 +253,16 @@ export const aiExampleBody = z.object({
 export const aiExampleParams = z.object({
   id: z.string().uuid(),
 })
+
+// --- Emma End-of-Day report ---
+export const eodReportBody = z.object({
+  metrics: z.object({
+    tickets_resolved:    z.number().int().nonnegative(),
+    messages_sent:       z.number().int().nonnegative(),
+    emma_drafts_handled: z.number().int().nonnegative(),
+  }),
+  hoursTracked:  z.string().max(40),
+  breakDuration: z.string().max(40),
+  shiftWindow:   z.string().max(80),
+})
+export type EodReportBody = z.infer<typeof eodReportBody>

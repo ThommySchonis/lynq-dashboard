@@ -68,3 +68,11 @@ export interface TeamKpiDef {
   key: string
   label: string | null
 }
+
+// Real per-agent, per-day activity shown in the End-of-Day modal's impact
+// tiles. Returned by the api_get_eod_impact RPC (today, current member).
+export interface EodImpact {
+  tickets_resolved:    number
+  messages_sent:       number
+  emma_drafts_handled: number
+}

@@ -1,7 +1,8 @@
 'use client'
 
 import { useCallback } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { toast } from 'sonner'
 import { useToken } from './utils'
 import { parseJson } from '@/lib/utils/typed-json'
 import { apiUrl } from '@/lib/api-client'
@@ -64,8 +65,8 @@ export function useManageUrl() {
 
 /**
  * Opens the Shopify managed-pricing page in a new tab. Billing is managed by
- * Shopify, so every mutating billing action (change plan, update payment,
- * cancel) routes here. `ready` is false until the URL has loaded.
+ * Shopify, so mutating billing actions (change plan, update payment) route
+ * here. `ready` is false until the URL has loaded.
  */
 export function useOpenManageUrl() {
   const { data: manageUrl } = useManageUrl()
@@ -99,6 +100,33 @@ export function useBillingStores() {
     },
     enabled:  !!token,
     staleTime: 60_000,
+  })
+}
+
+export function useCancelSubscription() {
+  const token = useToken()
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async () => {
+      const res = await fetch(apiUrl('billing/cancel'), {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (!res.ok) {
+        const d = await parseJson<ErrorResponse>(res).catch((): ErrorResponse => ({}))
+        throw new Error(d.error || 'Failed to cancel subscription')
+      }
+      return parseJson<{ subscription: unknown }>(res)
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: billingKeys.subscription() })
+      void qc.invalidateQueries({ queryKey: billingKeys.manageUrl() })
+      void qc.invalidateQueries({ queryKey: billingKeys.invoices() })
+      toast.success('Subscription cancelled successfully.')
+    },
+    onError: (err: Error) => {
+      toast.error(err.message)
+    },
   })
 }
 

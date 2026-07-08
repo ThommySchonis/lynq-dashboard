@@ -1,10 +1,12 @@
 'use client'
 
+import { useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { useSubscription, useOpenManageUrl } from '@/hooks/billing/use-billing-data'
+import { useSubscription, useOpenManageUrl, useCancelSubscription } from '@/hooks/billing/use-billing-data'
 import { formatBillingDate } from '@/lib/billing-format'
 import type { ShopifySubscriptionStatus } from '@/types/billing'
 import { StatusPill, type StatusTone } from './status-pill'
+import { CancelSubscriptionDialog } from './cancel-subscription-dialog'
 
 const STATUS_META: Record<ShopifySubscriptionStatus, { label: string; tone: StatusTone }> = {
   active:                        { label: 'Active',   tone: 'success' },
@@ -20,6 +22,8 @@ const SHELL = 'rounded-[18px] border border-settings-border bg-card p-6'
 export function CurrentPlanCard() {
   const subQ = useSubscription()
   const { openManage, ready } = useOpenManageUrl()
+  const [cancelOpen, setCancelOpen] = useState(false)
+  const cancelMut = useCancelSubscription()
 
   if (subQ.isLoading) {
     return <div className={`${SHELL} text-sm text-muted-foreground`}>Loading subscription…</div>
@@ -42,42 +46,57 @@ export function CurrentPlanCard() {
   const limit = plan?.ai_suggest_limit ?? null
   const pct = limit && limit > 0 ? Math.min(100, Math.round((used / limit) * 100)) : 0
 
+  const canCancel =
+    subscription.status !== 'canceled' &&
+    subscription.status !== 'pending_shopify_subscription'
+
   return (
-    <div className={`${SHELL} flex items-start justify-between gap-6`}>
-      <div className="flex min-w-0 flex-col">
-        <span className="text-xs font-semibold uppercase tracking-[0.08em] text-foreground-4">Current plan</span>
+    <>
+      <div className={`${SHELL} flex items-start justify-between gap-6`}>
+        <div className="flex min-w-0 flex-col">
+          <span className="text-xs font-semibold uppercase tracking-[0.08em] text-foreground-4">Current plan</span>
 
-        <div className="mt-[9px] flex items-center gap-2.5">
-          <span className="text-xl font-bold leading-tight text-foreground">{plan?.display_name ?? '—'}</span>
-          <StatusPill label={status.label} tone={status.tone} />
+          <div className="mt-[9px] flex items-center gap-2.5">
+            <span className="text-xl font-bold leading-tight text-foreground">{plan?.display_name ?? '—'}</span>
+            <StatusPill label={status.label} tone={status.tone} />
+          </div>
+
+          <p className="mt-1.5 text-sm font-medium text-foreground-3">{renewLine}</p>
+
+          <div className="mt-5 flex w-[400px] max-w-full flex-col gap-2">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-semibold text-foreground-2">AI agent messages this cycle</span>
+              <span className="text-xs font-medium text-foreground-3">
+                {used}{limit !== null && ` / ${limit}`}
+              </span>
+            </div>
+            <div className="h-2 w-full overflow-hidden rounded-full bg-foreground/[0.08]">
+              <div className="h-full rounded-full bg-primary" style={{ width: `${pct}%` }} />
+            </div>
+          </div>
         </div>
 
-        <p className="mt-1.5 text-sm font-medium text-foreground-3">{renewLine}</p>
-
-        <div className="mt-5 flex w-[400px] max-w-full flex-col gap-2">
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-semibold text-foreground-2">AI agent messages this cycle</span>
-            <span className="text-xs font-medium text-foreground-3">
-              {used}{limit !== null && ` / ${limit}`}
-            </span>
-          </div>
-          <div className="h-2 w-full overflow-hidden rounded-full bg-foreground/[0.08]">
-            <div className="h-full rounded-full bg-primary" style={{ width: `${pct}%` }} />
-          </div>
+        <div className="flex shrink-0 flex-col items-end gap-3">
+          <Button onClick={openManage} disabled={!ready}>Change plan</Button>
+          {canCancel && (
+            <button
+              type="button"
+              onClick={() => setCancelOpen(true)}
+              className="text-xs font-medium text-foreground-3 transition-colors hover:text-foreground"
+            >
+              Cancel subscription
+            </button>
+          )}
         </div>
       </div>
-
-      <div className="flex shrink-0 flex-col items-end gap-3">
-        <Button onClick={openManage} disabled={!ready}>Change plan</Button>
-        <button
-          type="button"
-          onClick={openManage}
-          disabled={!ready}
-          className="text-xs font-medium text-foreground-3 transition-colors hover:text-foreground disabled:opacity-50"
-        >
-          Cancel subscription
-        </button>
-      </div>
-    </div>
+      <CancelSubscriptionDialog
+        open={cancelOpen}
+        onOpenChange={setCancelOpen}
+        loading={cancelMut.isPending}
+        onConfirm={() =>
+          cancelMut.mutate(undefined, { onSuccess: () => setCancelOpen(false) })
+        }
+      />
+    </>
   )
 }

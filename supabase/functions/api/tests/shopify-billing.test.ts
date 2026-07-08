@@ -4,6 +4,7 @@ import {
   normalizeStatus,
   resolveLocalSubscriptionState,
   deriveUsagePeriod,
+  resolveCancellationAction,
 } from '../lib/services/shopify-billing.ts'
 
 Deno.test('mapShopifyStatusToLocal: Shopify ACTIVE → local active', () => {
@@ -59,4 +60,32 @@ Deno.test('deriveUsagePeriod: period_end is currentPeriodEnd, start is 30 days e
   const r = deriveUsagePeriod('2026-07-31T00:00:00.000Z')
   assertEquals(r.period_end, '2026-07-31T00:00:00.000Z')
   assertEquals(r.period_start, '2026-07-01T00:00:00.000Z')
+})
+
+Deno.test('resolveCancellationAction: already canceled → noop', () => {
+  assertEquals(
+    resolveCancellationAction({ status: 'canceled', shopifyChargeId: 'gid://x', isGrandfathered: false }),
+    { kind: 'noop' },
+  )
+})
+
+Deno.test('resolveCancellationAction: active with charge id → cancel', () => {
+  assertEquals(
+    resolveCancellationAction({ status: 'active', shopifyChargeId: 'gid://shopify/AppSubscription/1', isGrandfathered: false }),
+    { kind: 'cancel', chargeId: 'gid://shopify/AppSubscription/1' },
+  )
+})
+
+Deno.test('resolveCancellationAction: no charge id → error', () => {
+  assertEquals(
+    resolveCancellationAction({ status: 'active', shopifyChargeId: null, isGrandfathered: false }),
+    { kind: 'error', code: 'no_active_subscription', message: 'No active subscription to cancel' },
+  )
+})
+
+Deno.test('resolveCancellationAction: grandfathered → error (nothing on Shopify to cancel)', () => {
+  assertEquals(
+    resolveCancellationAction({ status: 'active', shopifyChargeId: 'gid://x', isGrandfathered: true }),
+    { kind: 'error', code: 'no_active_subscription', message: 'No active subscription to cancel' },
+  )
 })

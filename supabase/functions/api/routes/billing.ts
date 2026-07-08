@@ -10,6 +10,7 @@ import {
   getBillingAddress,
   listInvoices,
   syncFromShopify,
+  cancelSubscription,
 } from '../lib/services/shopify-billing.ts'
 import { BillingServiceError, listAddons, subscribeAddon, listPlans } from '../lib/services/billing.ts'
 import { getEmmaUsage } from '../lib/services/emma-usage.ts'
@@ -165,6 +166,22 @@ billing.post('/billing-store', async (c) => {
   try {
     const result = await setBillingStore(ctx.workspaceId, body.integration_id)
     return c.json(result)
+  } catch (err) {
+    return billingError(c, err)
+  }
+})
+
+// POST /billing/cancel
+billing.post('/cancel', async (c) => {
+  const ctx = getCtx(c)
+  const blocked = requireNotImpersonating(ctx)
+  if (blocked) return c.json({ error: blocked }, 403)
+  if (!can.manageBilling(ctx.role as Role)) {
+    return c.json({ error: 'Only owners can cancel the subscription', code: 'permission_denied' }, 403)
+  }
+  try {
+    const subscription = await cancelSubscription(ctx.workspaceId)
+    return c.json({ subscription })
   } catch (err) {
     return billingError(c, err)
   }

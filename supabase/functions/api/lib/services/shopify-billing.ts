@@ -106,6 +106,30 @@ export function resolveLocalSubscriptionState(
   return { status: mapped, planUnmapped: false }
 }
 
+export interface CancellationInput {
+  status: WorkspaceSubscriptionStatus
+  shopifyChargeId: string | null
+  isGrandfathered: boolean
+}
+
+export type CancellationAction =
+  | { kind: 'noop' }
+  | { kind: 'error'; code: string; message: string }
+  | { kind: 'cancel'; chargeId: string }
+
+/**
+ * Pure decision for a cancel request. `noop` when already canceled (idempotent);
+ * `error` when there is no live Shopify charge to cancel (no charge id, or a
+ * grandfathered workspace that was never billed by Shopify); otherwise `cancel`.
+ */
+export function resolveCancellationAction(input: CancellationInput): CancellationAction {
+  if (input.status === 'canceled') return { kind: 'noop' }
+  if (input.isGrandfathered || !input.shopifyChargeId) {
+    return { kind: 'error', code: 'no_active_subscription', message: 'No active subscription to cancel' }
+  }
+  return { kind: 'cancel', chargeId: input.shopifyChargeId }
+}
+
 const USAGE_PERIOD_DAYS = 30
 
 /** Anchor the usage period to Shopify's billing period (EVERY_30_DAYS plans). */
@@ -204,6 +228,55 @@ export async function getSubscription(workspaceId: string): Promise<ShopifyBilli
     priceAmount: row.shopify_price_amount,
     priceCurrency: row.shopify_price_currency,
   }
+}
+
+export async function cancelSubscription(workspaceId: string): Promise<ShopifyBillingSubscription> {
+  const sb = getAdminClient()
+
+  const { data } = await sb
+    .from('workspace_subscriptions')
+    .select('status, shopify_charge_id, is_grandfathered')
+    .eq('workspace_id', workspaceId)
+    .maybeSingle()
+  const row = data as
+    | { status: WorkspaceSubscriptionStatus; shopify_charge_id: string | null; is_grandfathered: boolean }
+    | null
+
+  const action = resolveCancellationAction({
+    status: row?.status ?? 'pending_shopify_subscription',
+    shopifyChargeId: row?.shopify_charge_id ?? null,
+    isGrandfathered: row?.is_grandfathered ?? false,
+  })
+
+  if (action.kind === 'noop') return getSubscription(workspaceId)
+  if (action.kind === 'error') throw new ShopifyBillingError(action.message, action.code, 400)
+
+  const billingStore = await getBillingStore(workspaceId)
+  if (!billingStore) throw new ShopifyBillingError('No billing store connected', 'no_billing_store', 400)
+
+  try {
+    await cancelAppSubscription(billingStore.shopify_domain, billingStore.shopify_access_token, action.chargeId)
+  } catch (err) {
+    // Surface Shopify userErrors / API failures as a clean 4xx with the message.
+    const message = err instanceof Error ? err.message : 'Shopify cancellation failed'
+    throw new ShopifyBillingError(message, 'shopify_cancel_failed', 400)
+  }
+
+  // Mirror the billing webhook so the UI reflects cancellation immediately;
+  // the webhook still reconciles asynchronously.
+  const { error: updateError } = await sb
+    .from('workspace_subscriptions')
+    .update({
+      status: 'canceled',
+      shopify_charge_status: 'cancelled',
+      canceled_at: new Date().toISOString(),
+    })
+    .eq('workspace_id', workspaceId)
+  if (updateError) {
+    throw new ShopifyBillingError(updateError.message, 'update_failed', 500)
+  }
+
+  return getSubscription(workspaceId)
 }
 
 export interface SubscriptionWithUsage {

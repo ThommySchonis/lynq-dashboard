@@ -125,12 +125,12 @@ function MailboxRow({ label, sublabel, active, onClick, statusDot }: MailboxRowP
     <button
       type="button"
       onClick={onClick}
-      className={cn("flex items-center gap-2.5 rounded-md px-2.5 py-2 text-left text-sm transition-colors", "hover:bg-accent", active && "bg-accent")}
+      className={cn("group flex items-center gap-2.5 rounded-md px-2.5 py-2 text-left text-sm transition-colors", "hover:bg-accent-soft", active && "bg-accent-soft")}
     >
       {statusDot && <span className={cn("size-2 shrink-0 rounded-full", statusDot === "ok" ? "bg-green-500" : "bg-red-500")} aria-hidden />}
       {!statusDot && <span className="size-2 shrink-0 rounded-full bg-transparent" aria-hidden />}
       <div className="min-w-0 flex-1">
-        <p className="truncate text-[12.5px] font-medium text-foreground">{label}</p>
+        <p className={cn("truncate text-[12.5px] font-medium transition-colors", active ? "text-primary" : "text-foreground group-hover:text-primary")}>{label}</p>
         {sublabel && <p className="truncate text-[11px] text-muted-foreground">{sublabel}</p>}
       </div>
       {active && <Check className="size-3.5 shrink-0 text-primary" aria-hidden />}

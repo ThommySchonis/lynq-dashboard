@@ -8,7 +8,6 @@ import type { EodReport } from '@/types/time-tracking'
 interface EditSessionPatch {
   clocked_in_at?:  string
   clocked_out_at?: string | null
-  emails_answered?: number | null
   what_went_well?:  string | null
   needs_attention?: string | null
   mood?:           string | null
@@ -33,7 +32,6 @@ export function useClockOut() {
     mutationFn: async ({ sessionId, report }: { sessionId: string; report: EodReport }) => {
       return rpc('api_time_clock_out', {
         p_session_id: sessionId,
-        p_emails_answered: report.emailsAnswered ?? null,
         p_what_went_well: report.whatWentWell ?? null,
         p_needs_attention: report.needsAttention ?? null,
         p_mood: report.mood ?? null,
@@ -77,7 +75,6 @@ export function useEditSession() {
         p_session_id: sessionId,
         p_clocked_in_at: patch.clocked_in_at ?? null,
         p_clocked_out_at: patch.clocked_out_at ?? null,
-        p_emails_answered: patch.emails_answered ?? null,
         p_what_went_well: patch.what_went_well ?? null,
         p_needs_attention: patch.needs_attention ?? null,
         p_mood: patch.mood ?? null,

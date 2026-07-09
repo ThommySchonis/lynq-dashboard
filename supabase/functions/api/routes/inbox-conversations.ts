@@ -4,6 +4,7 @@ import { requireWriteAccess, requireCapability } from '../middleware/workspace.t
 import { getAdminClient } from '../lib/supabase.ts'
 import type { AuthContext } from '../lib/types.ts'
 import { resolveBulkAction, type BulkAction, type BulkPayload } from '../lib/services/bulk-conversation-actions.ts'
+import { resolveSearchConversationIds } from '../lib/services/conversation-search.ts'
 
 const app = new Hono()
 
@@ -70,7 +71,7 @@ app.get('/', async (c) => {
   const limited = rateLimitGuard(c, ctx.workspace.id)
   if (limited) return limited
 
-  const search = c.req.query('search')
+  const search = c.req.query('search')?.trim()
   const status = c.req.query('status')
   const unlinked = c.req.query('unlinked')
   const storeId = c.req.query('store_id')
@@ -79,70 +80,13 @@ app.get('/', async (c) => {
   const page = parseInt(c.req.query('page') || '0', 10)
   const limit = 50
 
+  // A search restricts the list to a folder-independent match set (shared with
+  // the /counts route so badge numbers equal the list). Folder predicates below
+  // are applied on top, identically for the search and non-search paths.
+  let searchIds: string[] | null = null
   if (search) {
-    const sanitized = search.replace(/[%_\\]/g, (ch) => `\\${ch}`)
-    const pattern = `%${sanitized}%`
-
-    const convIdQuery = () => {
-      let q = sb.from('email_conversations').select('id').eq('workspace_id', ctx.workspace.id)
-      if (status) q = q.eq('status', status)
-      if (spam === 'true') q = q.eq('is_spam', true)
-      else q = q.neq('is_spam', true)
-      if (unlinked === 'true') q = q.is('shopify_customer_id', null).neq('status', 'closed')
-      if (storeId) q = q.eq('store_id', storeId)
-      if (emailAccountId) q = q.eq('email_account_id', emailAccountId)
-      return q
-    }
-
-    const [subjectRes, emailRes, nameRes, bodyRes] = await Promise.all([
-      convIdQuery().ilike('subject', pattern).limit(200),
-      convIdQuery().ilike('customer_email', pattern).limit(200),
-      convIdQuery().ilike('customer_name', pattern).limit(200),
-      sb.from('email_messages').select('conversation_id').eq('workspace_id', ctx.workspace.id).ilike('body_text', pattern).limit(200),
-    ])
-
-    const subQueryError = subjectRes.error || emailRes.error || nameRes.error || bodyRes.error
-    if (subQueryError) return c.json({ error: subQueryError.message }, 500)
-
-    const idSet = new Set<string>()
-    for (const row of subjectRes.data || []) idSet.add((row as { id: string }).id)
-    for (const row of emailRes.data || []) idSet.add((row as { id: string }).id)
-    for (const row of nameRes.data || []) idSet.add((row as { id: string }).id)
-    for (const row of bodyRes.data || []) idSet.add((row as { conversation_id: string }).conversation_id)
-
-    if (idSet.size === 0) return c.json({ conversations: [] })
-
-    let finalQ = sb
-      .from('email_conversations')
-      .select('*, stores(name)')
-      .eq('workspace_id', ctx.workspace.id)
-      .in('id', [...idSet])
-      .order('last_message_at', { ascending: false })
-      .range(page * limit, (page + 1) * limit - 1)
-
-    if (status) finalQ = finalQ.eq('status', status)
-    if (spam === 'true') finalQ = finalQ.eq('is_spam', true)
-    else finalQ = finalQ.neq('is_spam', true)
-    if (unlinked === 'true') finalQ = finalQ.is('shopify_customer_id', null).neq('status', 'closed')
-    if (storeId) finalQ = finalQ.eq('store_id', storeId)
-    if (emailAccountId) finalQ = finalQ.eq('email_account_id', emailAccountId)
-
-    const { data: conversations, error } = await finalQ
-    if (error) return c.json({ error: error.message }, 500)
-
-    const convIds = (conversations || []).map((cv: Record<string, unknown>) => cv.id as string)
-    const tagsByConv = await loadTagsByConversation(sb, ctx.workspace.id, convIds)
-
-    const mapped = (conversations || []).map((cv: Record<string, unknown>) => {
-      const stores = cv.stores as { name: string } | null
-      return {
-        ...cv,
-        store_name: stores?.name ?? null,
-        stores: undefined,
-        tags: tagsByConv[cv.id as string] ?? [],
-      }
-    })
-    return c.json({ conversations: mapped })
+    searchIds = await resolveSearchConversationIds(sb, ctx.workspace.id, search, { storeId, emailAccountId })
+    if (searchIds.length === 0) return c.json({ conversations: [] })
   }
 
   let dbQuery = sb
@@ -152,6 +96,7 @@ app.get('/', async (c) => {
     .order('last_message_at', { ascending: false })
     .range(page * limit, (page + 1) * limit - 1)
 
+  if (searchIds) dbQuery = dbQuery.in('id', searchIds)
   if (status) dbQuery = dbQuery.eq('status', status)
   if (spam === 'true') dbQuery = dbQuery.eq('is_spam', true)
   else dbQuery = dbQuery.neq('is_spam', true)

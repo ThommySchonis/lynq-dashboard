@@ -1,6 +1,6 @@
 'use client'
 
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useInfiniteQuery } from '@tanstack/react-query'
 import { authFetch } from '@/lib/inbox-utils'
 import { apiUrl } from '@/lib/api-client'
 import { useAuthStore } from '@/stores/auth'
@@ -22,8 +22,8 @@ export const inboxKeys = {
     emailAccountId?: string | null,
   ) => [...inboxKeys.all, 'conversations', folder, search, storeId, emailAccountId] as const,
   conversation: (id: string) => [...inboxKeys.all, 'conversation', id] as const,
-  counts: (storeId?: string | null, emailAccountId?: string | null) =>
-    [...inboxKeys.all, 'counts', storeId, emailAccountId] as const,
+  counts: (storeId?: string | null, emailAccountId?: string | null, search?: string) =>
+    [...inboxKeys.all, 'counts', storeId, emailAccountId, search] as const,
   accounts: () => [...inboxKeys.all, 'accounts'] as const,
   accountsByStore: (storeId: string | null) =>
     [...inboxKeys.all, 'accounts', 'by-store', storeId] as const,
@@ -60,14 +60,20 @@ interface AccountsResponse {
   accounts?: AccountRecord[]
 }
 
-/** Fetch conversation list by folder + optional search */
+// Must match the backend page size (`limit`) in
+// supabase/functions/api/routes/inbox-conversations.ts. A full page implies
+// another page may exist; a short page means we've reached the end.
+const CONVERSATIONS_PAGE_SIZE = 50
+
+/** Fetch conversation list by folder + optional search, paginated (infinite). */
 export function useConversations(folder: string, search: string) {
   const token = useToken()
   const activeStoreId = useStoreStore((s) => s.activeStoreId)
   const selectedEmailAccountId = useInboxUI((s) => s.selectedEmailAccountId)
-  return useQuery<Thread[]>({
+  return useInfiniteQuery({
     queryKey: inboxKeys.conversations(folder, search, activeStoreId, selectedEmailAccountId),
-    queryFn: async () => {
+    initialPageParam: 0,
+    queryFn: async ({ pageParam }): Promise<Thread[]> => {
       const params = new URLSearchParams()
       if (folder === 'unlinked') params.set('unlinked', 'true')
       else if (folder === 'trash') params.set('status', 'closed')
@@ -76,6 +82,7 @@ export function useConversations(folder: string, search: string) {
       if (search) params.set('search', search)
       if (activeStoreId) params.set('store_id', activeStoreId)
       if (selectedEmailAccountId) params.set('email_account_id', selectedEmailAccountId)
+      params.set('page', String(pageParam))
       const res = await authFetch(`${apiUrl('inbox/conversations')}?${params}`, {}, token)
       const data = await parseJson<ConversationsResponse>(res)
       return ((data.conversations || []) as Array<Record<string, unknown>>).map((c) => ({
@@ -90,6 +97,11 @@ export function useConversations(folder: string, search: string) {
         tags: (c.tags as unknown as ConversationTag[]) || [],
       })) as Thread[]
     },
+    getNextPageParam: (lastPage: Thread[], allPages: Thread[][]) =>
+      lastPage.length === CONVERSATIONS_PAGE_SIZE ? allPages.length : undefined,
+    // Flatten pages so every consumer keeps seeing a plain Thread[] in `data`;
+    // the list panel still uses fetchNextPage/hasNextPage for infinite scroll.
+    select: (data) => data.pages.flat(),
     enabled: !!token,
   })
 }
@@ -128,17 +140,19 @@ export function useConversation(threadId: string | null) {
   })
 }
 
-/** Fetch folder counts */
+/** Fetch folder counts — scoped to the active search so badges match the list. */
 export function useInboxCounts() {
   const token = useToken()
   const activeStoreId = useStoreStore((s) => s.activeStoreId)
   const selectedEmailAccountId = useInboxUI((s) => s.selectedEmailAccountId)
+  const search = useInboxUI((s) => s.search)
   return useQuery({
-    queryKey: inboxKeys.counts(activeStoreId, selectedEmailAccountId),
+    queryKey: inboxKeys.counts(activeStoreId, selectedEmailAccountId, search),
     queryFn: async () => {
       const params = new URLSearchParams()
       if (activeStoreId) params.set('store_id', activeStoreId)
       if (selectedEmailAccountId) params.set('email_account_id', selectedEmailAccountId)
+      if (search) params.set('search', search)
       const qs = params.toString()
       const url = qs ? `${apiUrl('inbox/counts')}?${qs}` : apiUrl('inbox/counts')
       const res = await authFetch(url, {}, token)

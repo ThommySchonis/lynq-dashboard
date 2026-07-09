@@ -57,7 +57,7 @@ export function AdminLogRow({ session: s, canEdit = false, membersById }: AdminL
   const [editError, setEditError] = useState<string | null>(null)
   const editMutation = useEditSession()
 
-  const hasStructured = !!(s.what_went_well || s.needs_attention || s.emails_answered != null)
+  const hasStructured = !!(s.what_went_well || s.needs_attention)
   const hasLegacy = !hasStructured && !!s.eod_report
   const wasEdited = !!s.last_edit_at
   const canExpand = hasStructured || hasLegacy || wasEdited

@@ -46,3 +46,24 @@ export function formatDateRangeLabel(from: string, to: string): string {
   const endLabel = end.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
   return `${startLabel} – ${endLabel}`
 }
+
+/**
+ * Format a duration in seconds as a compact human string:
+ * `45s`, `2m 30s`, `1h 2m`, `1d 1h`.
+ */
+export function formatSeconds(seconds: number): string {
+  if (seconds < 60) return `${Math.round(seconds)}s`
+  if (seconds < 3600) {
+    const m = Math.floor(seconds / 60)
+    const s = Math.round(seconds % 60)
+    return s > 0 ? `${m}m ${s}s` : `${m}m`
+  }
+  if (seconds < 86400) {
+    const h = Math.floor(seconds / 3600)
+    const m = Math.round((seconds % 3600) / 60)
+    return m > 0 ? `${h}h ${m}m` : `${h}h`
+  }
+  const d = Math.floor(seconds / 86400)
+  const h = Math.round((seconds % 86400) / 3600)
+  return h > 0 ? `${d}d ${h}h` : `${d}d`
+}

@@ -69,7 +69,7 @@ export function ClockOutModal({
 
   function handleConfirm() {
     if (!canSubmit) return
-    onConfirm({ emailsAnswered: null, whatWentWell: report.trim(), needsAttention: null, mood })
+    onConfirm({ whatWentWell: report.trim(), needsAttention: null, mood })
   }
 
   // Empty form → cancel immediately. Dirty → confirm before discarding.

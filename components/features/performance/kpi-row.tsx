@@ -3,28 +3,12 @@
 import { ArrowDown, ArrowUp } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
+import { formatSeconds } from '@/lib/performance-utils'
 import { computeDelta } from '@/lib/analytics-constants'
 import type { Delta } from '@/types/analytics'
 import type { ResponseTimeData, ResolutionTimeData, AgentProductivityRow } from '@/types/support-analytics'
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
-
-function formatSeconds(seconds: number): string {
-  if (seconds < 60) return `${Math.round(seconds)}s`
-  if (seconds < 3600) {
-    const m = Math.floor(seconds / 60)
-    const s = Math.round(seconds % 60)
-    return s > 0 ? `${m}m ${s}s` : `${m}m`
-  }
-  if (seconds < 86400) {
-    const h = Math.floor(seconds / 3600)
-    const m = Math.round((seconds % 3600) / 60)
-    return m > 0 ? `${h}h ${m}m` : `${h}h`
-  }
-  const d = Math.floor(seconds / 86400)
-  const h = Math.round((seconds % 86400) / 3600)
-  return h > 0 ? `${d}d ${h}h` : `${d}d`
-}
 
 function sumTicketsResolved(rows: AgentProductivityRow[]): number {
   return rows.reduce((sum, row) => sum + row.tickets_resolved, 0)

@@ -24,6 +24,9 @@ import { KpiRow } from './kpi-row'
 import { TicketVolumeChart } from './ticket-volume-chart'
 import { RefundReasonsChart } from './refund-reasons-chart'
 import { AgentTable } from './agent-table'
+import { ExportButton } from '@/components/shared/export-button'
+import { downloadExport } from '@/lib/export-download'
+import { useAuthStore } from '@/stores/auth'
 
 // ── Date range helpers ────────────────────────────────────────────────────────
 
@@ -57,6 +60,7 @@ export function PerformancePage() {
   const [customFrom, setCustomFrom] = useState('')
   const [customTo, setCustomTo] = useState('')
   const [selectedAgentId, setSelectedAgentId] = useState<string | undefined>(undefined)
+  const token = useAuthStore((s) => s.session?.access_token ?? '')
 
   const dateRange = useMemo(
     () => computeDateRange(rangePreset, customFrom, customTo),
@@ -101,12 +105,20 @@ export function PerformancePage() {
               Support team analytics &middot; {formatDateRangeLabel(dateRange.from, dateRange.to)}
             </p>
           </div>
-          <button
-            type="button"
-            className="h-11 shrink-0 rounded-[10px] border border-border bg-card px-6 py-[13px] text-sm font-semibold leading-5 text-foreground transition-colors hover:border-border-hover"
-          >
-            Export
-          </button>
+          <ExportButton
+            formats={[
+              { label: 'Performance CSV', value: 'csv' },
+              { label: 'Performance PDF Report', value: 'pdf' },
+            ]}
+            onExport={async (format) => {
+              await downloadExport(
+                '/api/performance/export',
+                { format, from: dateRange.from, to: dateRange.to, agentId: selectedAgentId ?? null },
+                token,
+                `performance-export-${new Date().toISOString().slice(0, 10)}.${format === 'csv' ? 'csv' : 'pdf'}`,
+              )
+            }}
+          />
         </div>
 
         {/* Filters */}

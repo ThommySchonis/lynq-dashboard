@@ -2,6 +2,7 @@ import { Hono } from 'hono'
 import { authMiddleware } from '../middleware/auth.ts'
 import { requireWriteAccess, requireCapability } from '../middleware/workspace.ts'
 import { getAdminClient } from '../lib/supabase.ts'
+import { resolveSearchConversationIds } from '../lib/services/conversation-search.ts'
 import type { AuthContext } from '../lib/types.ts'
 
 const app = new Hono()
@@ -15,11 +16,27 @@ app.get('/counts', async (c) => {
   const sb = getAdminClient()
   const storeId = c.req.query('store_id')
   const emailAccountId = c.req.query('email_account_id')
+  const search = c.req.query('search')?.trim()
+
+  // When a search is active, restrict every bucket to the same match set the
+  // list route uses, so each badge equals what that folder's list would show.
+  let searchIds: string[] | null = null
+  if (search) {
+    searchIds = await resolveSearchConversationIds(sb, ctx.workspaceId, search, { storeId, emailAccountId })
+    if (searchIds.length === 0) {
+      return c.json(
+        { open: 0, pending: 0, resolved: 0, snoozed: 0, spam: 0, unlinked: 0, trash: 0 },
+        200,
+        { 'Cache-Control': 'private, max-age=60' },
+      )
+    }
+  }
 
   const baseQuery = () => {
     let q = sb.from('email_conversations').select('id', { count: 'exact', head: true }).eq('workspace_id', ctx.workspaceId)
     if (storeId) q = q.eq('store_id', storeId)
     if (emailAccountId) q = q.eq('email_account_id', emailAccountId)
+    if (searchIds) q = q.in('id', searchIds)
     return q
   }
 
@@ -29,8 +46,8 @@ app.get('/counts', async (c) => {
     baseQuery().eq('status', 'resolved').neq('is_spam', true),
     baseQuery().eq('status', 'snoozed').neq('is_spam', true),
     baseQuery().eq('is_spam', true),
-    baseQuery().is('shopify_customer_id', null).neq('status', 'closed'),
-    baseQuery().eq('status', 'closed'),
+    baseQuery().is('shopify_customer_id', null).neq('status', 'closed').neq('is_spam', true),
+    baseQuery().eq('status', 'closed').neq('is_spam', true),
   ])
 
   return c.json({

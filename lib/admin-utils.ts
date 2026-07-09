@@ -66,13 +66,12 @@ export function exportTimeCSV(sessions: TimeSession[]): void {
     csvSafe(s.clocked_out_at ? fmtT(s.clocked_out_at) : 'Active'),
     (workedSec(s) / 3600).toFixed(2),
     ((s.paused_seconds || 0) / 3600).toFixed(2),
-    csvSafe(s.emails_answered),
     csvSafe(s.what_went_well),
     csvSafe(s.needs_attention),
     csvSafe(s.eod_report),
   ])
   const header =
-    'Name,Date,Clock In,Clock Out,Worked (h),Break (h),Emails Answered,What Went Well,Needs Attention,Legacy Report'
+    'Name,Date,Clock In,Clock Out,Worked (h),Break (h),What Went Well,Needs Attention,Legacy Report'
   const csv = [header, ...rows.map((r) => r.map((c) => `"${c}"`).join(','))].join('\n')
   const blob = new Blob([csv], { type: 'text/csv' })
   const url = URL.createObjectURL(blob)

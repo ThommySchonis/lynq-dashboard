@@ -35,3 +35,19 @@ export interface SupportAnalyticsDateRange {
   from: string
   to: string
 }
+
+/**
+ * All support-analytics metrics for one date range + agent filter, plus an
+ * agent-id → display-name map. Produced server-side by fetchSupportAnalytics
+ * and consumed by the CSV and PDF serializers.
+ */
+export interface SupportAnalyticsBundle {
+  responseTime: ResponseTimeData | null
+  resolutionTime: ResolutionTimeData | null
+  ticketVolume: TicketVolumePoint[]
+  agentProductivity: AgentProductivityRow[]
+  refundReasons: RefundReasonRow[]
+  agentNames: Record<string, string>
+  range: SupportAnalyticsDateRange
+  agentId: string | null
+}

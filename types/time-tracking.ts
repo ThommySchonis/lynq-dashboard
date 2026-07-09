@@ -20,9 +20,7 @@ export interface Session {
   // Legacy free-text report — populated for sessions clocked out before
   // the structured EOD fields shipped. Kept for backwards compatibility.
   eod_report: string | null
-  // Structured EOD fields — required at clock-out time for new sessions,
-  // null for sessions that pre-date this column set.
-  emails_answered: number | null
+  // Structured EOD fields — null for sessions that pre-date this column set.
   what_went_well:  string | null
   needs_attention: string | null
   // Self-reported shift mood ('tough' | 'steady' | 'great'); null for
@@ -40,9 +38,8 @@ export interface Session {
 
 export interface EodReport {
   // Single free-text report (the only field the redesigned EOD modal
-  // collects). emailsAnswered / needsAttention stay in the type for the
-  // admin edit path and legacy callers, but the modal sends them null.
-  emailsAnswered: number | null
+  // collects). needsAttention stays in the type for the admin edit path
+  // and legacy callers, but the modal sends it null.
   whatWentWell:   string
   needsAttention: string | null
   // Self-reported shift mood ('tough' | 'steady' | 'great').

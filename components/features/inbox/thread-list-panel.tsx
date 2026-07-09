@@ -47,8 +47,16 @@ export function ThreadListPanel() {
   const setSyncing = useInboxUI((s) => s.setSyncing);
   const resetForNewThread = useInboxUI((s) => s.resetForNewThread);
 
-  // TanStack data
-  const { data: threads = [], isLoading: loadingThreads, refetch: refetchThreads } = useConversations(activeFolder, search);
+  // TanStack data — conversations are paginated (infinite scroll); the hook's
+  // `select` flattens pages, so `threads` is a plain Thread[] across all loaded pages.
+  const {
+    data: threads = [],
+    isLoading: loadingThreads,
+    refetch: refetchThreads,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useConversations(activeFolder, search);
   const { data: counts = { open: 0, pending: 0, resolved: 0, snoozed: 0, spam: 0, unlinked: 0, trash: 0 } } = useInboxCounts();
 
   // A freshly connected account is still importing its mailbox until its first
@@ -64,21 +72,15 @@ export function ThreadListPanel() {
   // Sync mutation
   const syncInboxMutation = useSyncInbox();
 
-  // Sorted + filtered threads
+  // Sorted threads (search is applied server-side across all loaded pages).
   const sortedFiltered = useMemo(() => {
-    const filtered = threads.filter(
-      (t: Thread) =>
-        !search ||
-        t.subject?.toLowerCase().includes(search.toLowerCase()) ||
-        (t.customer_name || t.customer_email || t.from || "").toLowerCase().includes(search.toLowerCase()),
-    );
-    return [...filtered].sort((a: Thread, b: Thread) => {
+    return [...threads].sort((a: Thread, b: Thread) => {
       const sa = URGENCY_SCORE[analyses[a.id]?.urgency] || 0;
       const sb = URGENCY_SCORE[analyses[b.id]?.urgency] || 0;
       if (sb !== sa) return sb - sa;
       return new Date(b.last_message_at || b.date).getTime() - new Date(a.last_message_at || a.date).getTime();
     });
-  }, [threads, search, analyses]);
+  }, [threads, analyses]);
 
   // Handlers
   const onSelectThread = useCallback(
@@ -121,6 +123,25 @@ export function ThreadListPanel() {
   const onCreateTicket = useCallback(() => {
     router.push("/inbox/create");
   }, [router]);
+
+  // Infinite scroll: load the next page when the bottom sentinel scrolls into
+  // view. rootMargin pre-fetches slightly before it's fully visible.
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+  const loadMoreRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    const sentinel = loadMoreRef.current;
+    if (!sentinel || !hasNextPage) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting && hasNextPage && !isFetchingNextPage) {
+          void fetchNextPage();
+        }
+      },
+      { root: scrollRef.current, rootMargin: "200px" },
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   const getStatus = useCallback(
     (id: string) => {
@@ -255,7 +276,7 @@ export function ThreadListPanel() {
       </div>
 
       {/* Thread list */}
-      <div className="thin-scrollbar flex-1 overflow-y-auto">
+      <div ref={scrollRef} className="thin-scrollbar flex-1 overflow-y-auto">
         {/* Select all bar */}
         <div className="flex items-center gap-2.5 py-[9px] pl-[15px] pr-3.5 border-b border-border bg-card sticky top-0 z-[2]">
           <input
@@ -357,6 +378,11 @@ export function ThreadListPanel() {
             </div>
           );
         })}
+        {hasNextPage && (
+          <div ref={loadMoreRef} className="py-4 flex items-center justify-center">
+            {isFetchingNextPage && <span className="text-[11.5px] text-muted-foreground">Loading more…</span>}
+          </div>
+        )}
       </div>
     </div>
   );

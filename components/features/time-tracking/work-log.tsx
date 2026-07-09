@@ -71,7 +71,7 @@ interface WorkLogRowProps {
 }
 
 function WorkLogRow({ session: s, isExpanded, onToggle }: WorkLogRowProps) {
-  const hasStructured = s.what_went_well || s.needs_attention || s.emails_answered != null
+  const hasStructured = s.what_went_well || s.needs_attention
   const hasLegacy = !hasStructured && !!s.eod_report
   const canExpand = hasStructured || hasLegacy
   const summaryText = hasStructured

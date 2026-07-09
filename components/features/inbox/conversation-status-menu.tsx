@@ -1,7 +1,7 @@
 "use client";
 
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Ban, BellOff, Check, ChevronDown, CircleDot, CircleCheck, Clock, Sparkles } from "lucide-react";
+import { Ban, BellOff, Check, ChevronDown, CircleDot, CircleCheck, Clock } from "lucide-react";
 import { STATUS } from "@/lib/inbox-constants";
 import { isoFromNow } from "@/lib/inbox-utils";
 import { BULK_MENU_HEADER_CLASS } from "@/lib/inbox-constants";
@@ -11,8 +11,7 @@ const ROW = "gap-3 rounded-[9px] px-2.5 py-2 text-[14px]";
 
 /**
  * Status pill + dropdown for the conversation top bar (Figma 1145-40855):
- * STATUS header, then Open / Pending / Snoozed / Resolved / AI handled / spam.
- * "AI handled" has no backend status yet → no-op (BE task #8).
+ * STATUS header, then Open / Pending / Snoozed / Resolved / spam.
  */
 export function ConversationStatusMenu({
   status,
@@ -46,7 +45,6 @@ export function ConversationStatusMenu({
         <StatusItem active={status === "pending"} icon={<Clock size={16} />} label="Pending" onClick={() => onStatus("pending")} disabled={disabled} />
         <StatusItem active={status === "snoozed"} icon={<BellOff size={16} />} label="Snoozed" onClick={() => onSnooze(isoFromNow(4))} disabled={disabled} />
         <StatusItem active={status === "resolved"} icon={<CircleCheck size={16} />} label="Resolved" onClick={() => onStatus("resolved")} disabled={disabled} />
-        <StatusItem active={false} icon={<Sparkles size={16} />} label="AI handled" onClick={() => {}} disabled={disabled} />
         <StatusItem active={false} icon={<Ban size={16} />} label="Mark as spam" onClick={onSpam} disabled={disabled} />
       </DropdownMenuContent>
     </DropdownMenu>

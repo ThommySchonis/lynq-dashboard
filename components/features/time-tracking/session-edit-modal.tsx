@@ -17,7 +17,6 @@ interface SessionEditModalProps {
 export interface EditPatch {
   clocked_in_at?:  string
   clocked_out_at?: string | null
-  emails_answered?: number | null
   what_went_well?:  string | null
   needs_attention?: string | null
   reason:          string
@@ -47,7 +46,6 @@ export function SessionEditModal({
 }: SessionEditModalProps) {
   const [clockIn, setClockIn]       = useState<string>(toDtLocal(session.clocked_in_at))
   const [clockOut, setClockOut]     = useState<string>(toDtLocal(session.clocked_out_at))
-  const [emails, setEmails]         = useState<string>(session.emails_answered != null ? String(session.emails_answered) : '')
   const [wentWell, setWentWell]     = useState<string>(session.what_went_well ?? '')
   const [needsAttn, setNeedsAttn]   = useState<string>(session.needs_attention ?? '')
   const [reason, setReason]         = useState<string>('')
@@ -59,11 +57,8 @@ export function SessionEditModal({
   useEffect(() => { setMounted(true) }, []) // eslint-disable-line react-hooks/set-state-in-effect
 
   const reasonValid = reason.trim().length >= 3
-  const emailsParsed = emails === '' ? null : Number(emails)
-  const emailsValid =
-    emailsParsed === null || (Number.isInteger(emailsParsed) && emailsParsed >= 0)
 
-  const canSubmit = reasonValid && emailsValid && !submitting
+  const canSubmit = reasonValid && !submitting
 
   function handleSave() {
     if (!canSubmit) return
@@ -74,7 +69,6 @@ export function SessionEditModal({
     const patch: EditPatch = { reason: reason.trim() }
     if (newClockIn && newClockIn !== session.clocked_in_at) patch.clocked_in_at = newClockIn
     if (newClockOut !== session.clocked_out_at) patch.clocked_out_at = newClockOut
-    if (emailsParsed !== session.emails_answered) patch.emails_answered = emailsParsed
     if (wentWell !== (session.what_went_well ?? '')) patch.what_went_well = wentWell.trim() || null
     if (needsAttn !== (session.needs_attention ?? '')) patch.needs_attention = needsAttn.trim() || null
 
@@ -129,19 +123,6 @@ export function SessionEditModal({
                 />
               </FieldBlock>
             </div>
-
-            <FieldBlock label="Emails answered">
-              <input
-                type="number"
-                inputMode="numeric"
-                min={0}
-                step={1}
-                value={emails}
-                onChange={(e) => setEmails(e.target.value)}
-                placeholder="0"
-                className="w-32 rounded-lg border border-black/8 bg-gray-100 px-3 py-2 text-[13px] text-foreground placeholder:text-gray-400 outline-none transition-colors focus:border-black/20 tabular-nums"
-              />
-            </FieldBlock>
 
             <FieldBlock label="What went well">
               <textarea

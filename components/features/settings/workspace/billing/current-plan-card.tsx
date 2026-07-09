@@ -46,9 +46,13 @@ export function CurrentPlanCard() {
   const limit = plan?.ai_suggest_limit ?? null
   const pct = limit && limit > 0 ? Math.min(100, Math.round((used / limit) * 100)) : 0
 
+  // Cancel goes through Shopify, so it only applies to subscriptions with a live
+  // Shopify charge. Grandfathered plans were provisioned without one — there's
+  // nothing to cancel, and the backend correctly rejects it (no_active_subscription).
   const canCancel =
     subscription.status !== 'canceled' &&
-    subscription.status !== 'pending_shopify_subscription'
+    subscription.status !== 'pending_shopify_subscription' &&
+    !subscription.isGrandfathered
 
   return (
     <>
@@ -86,6 +90,11 @@ export function CurrentPlanCard() {
             >
               Cancel subscription
             </button>
+          )}
+          {subscription.isGrandfathered && (
+            <p className="max-w-[200px] text-right text-xs font-medium text-foreground-4">
+              This plan isn&apos;t billed through Shopify. Contact support to change it.
+            </p>
           )}
         </div>
       </div>

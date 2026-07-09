@@ -116,14 +116,14 @@ export function CreateTicketComposer({ form }: CreateTicketComposerProps) {
 
   return (
     <div className="relative z-[1] flex flex-1 flex-col overflow-hidden bg-card dark:bg-[#160c35]">
-      {/* Subject header — subject + priority + assignee chips (Figma) */}
+      {/* Subject header — read-only mirror of the Subject field below (Figma) */}
       <div className="flex shrink-0 items-center gap-2 border-b border-border px-4 py-2.5">
-        <Input
-          value={subject}
-          onChange={(e) => setSubject(e.target.value)}
-          placeholder="Subject"
-          className="min-w-0 flex-1 border-none bg-transparent text-sm font-semibold text-foreground shadow-none placeholder:text-muted-foreground"
-        />
+        <span
+          title={subject || undefined}
+          className={`min-w-0 flex-1 truncate text-sm font-semibold ${subject ? "text-foreground" : "text-muted-foreground"}`}
+        >
+          {subject || "Subject"}
+        </span>
         {/* Priority — persisted into conversation metadata in the two-step follow-up */}
         <Select
           value={priority}
@@ -211,6 +211,17 @@ export function CreateTicketComposer({ form }: CreateTicketComposerProps) {
             />
           </div>
         )}
+
+        {/* SUBJECT — editable here; mirrored read-only in the header above */}
+        <div className="flex items-center gap-3">
+          <span className={FIELD_LABEL}>SUBJECT</span>
+          <Input
+            value={subject}
+            onChange={(e) => setSubject(e.target.value)}
+            placeholder="What is this ticket about?"
+            className={FIELD_INPUT}
+          />
+        </div>
 
         {/* FROM */}
         {accountInfo?.email && (

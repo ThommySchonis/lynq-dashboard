@@ -76,6 +76,32 @@ export function useOpenManageUrl() {
   return { openManage, ready: !!manageUrl }
 }
 
+/**
+ * Opens the Shopify organization billing settings (payment method, billing
+ * email) in a new tab. `ready` is false until the billing shop domain is known.
+ */
+export function useOpenShopifyBillingSettings() {
+  const { data: subscription } = useSubscription()
+  const { data: stores } = useBillingStores()
+
+  const shopDomain =
+    subscription?.subscription.billingShopDomain ??
+    stores?.find((s) => s.isBillingStore)?.shopifyDomain ??
+    null
+  const storeHandle = shopDomain ? shopDomain.replace(/\.myshopify\.com$/, '') : null
+
+  const openBillingSettings = useCallback(() => {
+    if (!storeHandle) return
+    window.open(
+      `https://admin.shopify.com/store/${storeHandle}/settings/organization-billing`,
+      '_blank',
+      'noopener,noreferrer',
+    )
+  }, [storeHandle])
+
+  return { openBillingSettings, ready: !!storeHandle }
+}
+
 export function usePlans() {
   const token = useToken()
   return useQuery<Plan[]>({

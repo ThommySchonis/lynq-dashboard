@@ -69,13 +69,29 @@ export async function refreshExpiringTokens(bufferMinutes = 10): Promise<number>
       if (!res.ok) {
         console.error(`[shopify-token] refresh failed for store ${int.store_id}: HTTP ${res.status}`)
 
-        // If refresh token is rejected (401/403), mark integration as error
+        // If the refresh token is rejected (401/403), the store may need to
+        // reconnect — OR a concurrent refresher (the on-demand getStoreCredentials
+        // path) already rotated this single-use token and won the race. Re-read
+        // before flagging: only mark error when the token is genuinely still expired.
         if (res.status === 401 || res.status === 403) {
-          await supabase
+          const { data: current } = await supabase
             .from('integrations')
-            .update({ status: 'error' })
+            .select('shopify_token_expires_at')
             .eq('store_id', int.store_id)
             .eq('workspace_id', int.workspace_id)
+            .single()
+          const exp = current?.shopify_token_expires_at
+            ? new Date(current.shopify_token_expires_at).getTime()
+            : 0
+          if (exp <= Date.now()) {
+            // 'reauth_required' is the status the stores UI renders as
+            // "Reconnect required" — align with it so cron failures are visible.
+            await supabase
+              .from('integrations')
+              .update({ status: 'reauth_required' })
+              .eq('store_id', int.store_id)
+              .eq('workspace_id', int.workspace_id)
+          }
         }
         continue
       }

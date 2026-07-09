@@ -1,3 +1,5 @@
+import type { MemberRole } from '@/types/settings'
+
 // ─── Inbox status configs ─────────────────────────────────────
 export const STATUS = {
   open: {
@@ -67,6 +69,11 @@ export const INBOX_FOLDERS: InboxFolder[] = [
   { key: 'spam',      label: 'Spam'      },
   { key: 'trash',     label: 'Trash'     },
 ]
+
+// ─── Assignable roles ─────────────────────────────────────────
+// Conversations can be owned by owners, admins and agents. Observers are
+// read-only, so they're never offered in the assign dropdown.
+export const ASSIGNABLE_ROLES: MemberRole[] = ['owner', 'admin', 'agent']
 
 // ─── Bulk-actions menu styling ────────────────────────────────
 // Shared row/header recipes for the bulk-actions dropdown and its sub-panels

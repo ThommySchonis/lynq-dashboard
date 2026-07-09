@@ -1,7 +1,7 @@
 'use client'
 
 import { CreditCard } from 'lucide-react'
-import { useOpenManageUrl } from '@/hooks/billing/use-billing-data'
+import { useOpenManageUrl, useOpenShopifyBillingSettings } from '@/hooks/billing/use-billing-data'
 import { useAuthStore } from '@/stores/auth'
 
 /**
@@ -11,6 +11,7 @@ import { useAuthStore } from '@/stores/auth'
  */
 export function PaymentMethodCard() {
   const { openManage, ready } = useOpenManageUrl()
+  const { openBillingSettings, ready: billingSettingsReady } = useOpenShopifyBillingSettings()
   const email = useAuthStore((s) => s.user?.email)
 
   return (
@@ -30,8 +31,8 @@ export function PaymentMethodCard() {
           </div>
           <button
             type="button"
-            onClick={openManage}
-            disabled={!ready}
+            onClick={openBillingSettings}
+            disabled={!billingSettingsReady}
             className="rounded-[9px] border border-settings-border bg-card px-4 py-[9px] text-sm font-semibold text-foreground-2 transition-colors hover:bg-foreground/[0.03] disabled:opacity-50"
           >
             Update

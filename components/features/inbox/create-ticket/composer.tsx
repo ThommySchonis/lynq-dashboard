@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { ConversationAssignMenu } from "@/components/features/inbox/conversation-assign-menu";
 import { TicketMetaStrip } from "@/components/features/inbox/ticket-meta-strip";
-import { useComposeMacros, useInboxMembers } from "@/hooks/inbox/use-inbox-data";
+import { useComposeMacros } from "@/hooks/inbox/use-inbox-data";
 import { plainTextToSafeHtml, normalizeSafeUrl } from "@/lib/inbox-utils";
 import { FALLBACK_MACROS, PRIORITY_OPTS, type ComposeMacro } from "@/lib/inbox-create-constants";
 import type { CreateTicketForm } from "@/hooks/inbox/use-create-ticket";
@@ -59,7 +59,6 @@ export function CreateTicketComposer({ form }: CreateTicketComposerProps) {
   }
 
   const { data: fetchedMacros } = useComposeMacros();
-  const { data: members = [] } = useInboxMembers();
   const [body, setBody] = useState("");
   const [macroSearch, setMacroSearch] = useState("");
   const [showMacroDD, setShowMacroDD] = useState(false);
@@ -143,7 +142,7 @@ export function CreateTicketComposer({ form }: CreateTicketComposerProps) {
           </SelectContent>
         </Select>
         {/* Assignee — persisted via bulk assign in the two-step follow-up */}
-        <ConversationAssignMenu assignedTo={assignedTo} members={members} onAssign={(id) => setAssignedTo(id || null)} />
+        <ConversationAssignMenu assignedTo={assignedTo} onAssign={(id) => setAssignedTo(id || null)} />
         <Button variant="ghost" size="icon-xs" onClick={goBack} title="Close (Esc)" className="shrink-0 text-muted-foreground hover:text-foreground">
           <X className="h-[15px] w-[15px]" />
         </Button>

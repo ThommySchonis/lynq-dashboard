@@ -22,6 +22,9 @@ export interface WorkspacePreferences {
 // ── Members ──
 export type MemberRole = 'owner' | 'admin' | 'agent' | 'observer'
 
+/** An accepted workspace member, as returned by api_list_workspace_members.
+ *  Pending invitees are not members — they come back in a separate `invites`
+ *  array, so there is no status field here. */
 export interface Member {
   id: string
   user_id: string
@@ -30,7 +33,6 @@ export interface Member {
   role: MemberRole
   avatar_url: string | null
   joined_at: string
-  status: 'active' | 'pending'
 }
 
 export interface Invite {

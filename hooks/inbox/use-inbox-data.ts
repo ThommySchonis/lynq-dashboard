@@ -128,30 +128,6 @@ export function useConversation(threadId: string | null) {
   })
 }
 
-export interface InboxMember {
-  id: string
-  name: string
-}
-
-interface InboxMembersResponse {
-  members?: InboxMember[]
-}
-
-/** Workspace members assignable to conversations (id = workspace_members.id) */
-export function useInboxMembers() {
-  const token = useToken()
-  return useQuery<InboxMember[]>({
-    queryKey: [...inboxKeys.all, 'members'],
-    queryFn: async () => {
-      const res = await authFetch(apiUrl('inbox/members'), {}, token)
-      const data = await parseJson<InboxMembersResponse>(res)
-      return data.members ?? []
-    },
-    enabled: !!token,
-    staleTime: 5 * 60_000,
-  })
-}
-
 /** Fetch folder counts */
 export function useInboxCounts() {
   const token = useToken()

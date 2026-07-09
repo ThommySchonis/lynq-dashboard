@@ -49,6 +49,12 @@ export function deriveIsVip(tags: string | null | undefined): boolean {
   return (tags ?? '').split(',').some((t) => t.trim().toLowerCase() === 'vip')
 }
 
+/** A workspace member's headline in assign menus: their display name, falling
+ *  back to the email when no name is set. */
+export function memberLabel(m: { display_name: string | null; email: string }): string {
+  return m.display_name || m.email
+}
+
 export function relTime(s: string | null | undefined): string {
   if (!s) return ''
   const diff = Date.now() - new Date(s).getTime()

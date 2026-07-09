@@ -19,7 +19,7 @@ import { useInboxUI } from "@/stores/inbox-ui";
 import { useAuthStore } from "@/stores/auth";
 import { useAIStore } from "@/stores/ai";
 import { useMacrosStore } from "@/stores/macros";
-import { useConversations, useConversation, useInboxMembers, inboxKeys } from "@/hooks/inbox/use-inbox-data";
+import { useConversations, useConversation, inboxKeys } from "@/hooks/inbox/use-inbox-data";
 import { useSendReply, useUpdateStatus, useTranslateMessage, useBulkConversationAction, useAddNote, useUpdateTicketMeta } from "@/hooks/inbox/use-inbox-mutations";
 import { useTags, useCreateTag } from "@/hooks/inbox/use-tags";
 import { useComposerActions } from "@/hooks/inbox/use-composer-actions";
@@ -127,7 +127,6 @@ export function ConversationPanel() {
   // Tag DB hooks
   const bulkAction = useBulkConversationAction();
   const { data: allTags = [] } = useTags();
-  const { data: members = [] } = useInboxMembers();
   const createTag = useCreateTag();
 
   // Mutations
@@ -428,7 +427,6 @@ export function ConversationPanel() {
         title={selectedThread.subject}
         status={getStatus(selectedThread.id)}
         assignedTo={selectedThread.assigned_to ?? null}
-        members={members}
         onStatus={(s) => void saveStatus(selectedThread.id, s)}
         onAssign={(memberId) => void singleAction("assign", { memberId })}
         onSnooze={(until) => void singleAction("snooze", { until })}

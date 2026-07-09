@@ -5,7 +5,6 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { ConversationStatusMenu } from "./conversation-status-menu";
 import { ConversationAssignMenu } from "./conversation-assign-menu";
 import { ConversationSnoozeMenu } from "./conversation-snooze-menu";
-import type { InboxMember } from "@/hooks/inbox/use-inbox-data";
 
 /**
  * Conversation detail top bar (Figma 1283-52902 "conv-topbar"): title + status
@@ -17,7 +16,6 @@ export function ConversationTopbar({
   title,
   status,
   assignedTo,
-  members,
   onStatus,
   onAssign,
   onSnooze,
@@ -31,7 +29,6 @@ export function ConversationTopbar({
   title: string;
   status: string;
   assignedTo: string | null;
-  members: InboxMember[];
   onStatus: (status: string) => void;
   onAssign: (memberId: string) => void;
   onSnooze: (untilIso: string) => void;
@@ -53,7 +50,7 @@ export function ConversationTopbar({
       {/* Row 2: assign + snooze | close + more + nav */}
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <ConversationAssignMenu assignedTo={assignedTo} members={members} onAssign={onAssign} disabled={disabled} />
+          <ConversationAssignMenu assignedTo={assignedTo} onAssign={onAssign} disabled={disabled} />
           <ConversationSnoozeMenu onSnooze={onSnooze} disabled={disabled} />
         </div>
 

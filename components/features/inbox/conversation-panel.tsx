@@ -87,6 +87,8 @@ export function ConversationPanel() {
   const setSending = useInboxUI((s) => s.setSending);
   const setSelectedThreadId = useInboxUI((s) => s.setSelectedThreadId);
   const resetForNewThread = useInboxUI((s) => s.resetForNewThread);
+  const setComposerDraft = useInboxUI((s) => s.setComposerDraft);
+  const clearComposerDraft = useInboxUI((s) => s.clearComposerDraft);
 
   // AI state
   const queryClient = useQueryClient();
@@ -151,6 +153,43 @@ export function ConversationPanel() {
     msgEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  // The composer is an uncontrolled contentEditable div, so switching threads
+  // never wipes/restores its DOM on its own. Snapshot the outgoing thread's draft
+  // and restore the incoming thread's, keyed by thread id — so a draft typed or
+  // edited in one conversation survives a switch and comes back on return.
+  // Reads composerDrafts via getState() so this only fires on thread change,
+  // not on every keystroke.
+  const prevThreadIdRef = useRef<string | null>(null);
+  useEffect(() => {
+    const el = composerRef.current;
+    const prevId = prevThreadIdRef.current;
+
+    // Save the draft of the thread we're leaving (or drop it if empty). Read
+    // editingDraftId fresh from the store, not from a dep, so this effect fires
+    // only on thread change and never mid-thread when a draft loads.
+    if (prevId && el) {
+      if (el.textContent?.trim()) {
+        const draftId = useInboxUI.getState().editingDraftId;
+        setComposerDraft(prevId, { html: el.innerHTML, editingDraftId: draftId });
+      } else {
+        clearComposerDraft(prevId);
+      }
+    }
+
+    // Restore the incoming thread's saved draft (or leave the box empty).
+    const saved = selectedThreadId
+      ? useInboxUI.getState().composerDrafts[selectedThreadId]
+      : undefined;
+    if (el) el.innerHTML = saved?.html ?? "";
+    setReply(el?.textContent ?? "");
+    setEditingDraftId(saved?.editingDraftId ?? null);
+    // A restored draft already reflects any AI draft the agent had; mark it so the
+    // pending-draft loader below doesn't reload the raw suggestion over their edits.
+    loadedDraftRef.current = saved?.editingDraftId ?? null;
+
+    prevThreadIdRef.current = selectedThreadId;
+  }, [selectedThreadId, setReply, setEditingDraftId, setComposerDraft, clearComposerDraft]);
+
   // Auto-generate AI reply when opening a conversation with a new inbound
   // message — only when the store has auto-generate enabled.
   useEffect(() => {
@@ -174,14 +213,16 @@ export function ConversationPanel() {
   }, [selectedThreadId, selectedThread, storeAiSettings, messages, draftFetched, pendingDraft, aiLoading, generateReply, token]);
 
   // Load a pending AI draft into the composer once (inline review, Figma 517).
+  // Only populate an empty composer — never clobber a draft the agent typed or a
+  // restored per-conversation draft (which already reflects their AI-draft edits).
   useEffect(() => {
     if (draftPending && pendingDraft && loadedDraftRef.current !== pendingDraft.id) {
       loadedDraftRef.current = pendingDraft.id;
-      if (composerRef.current) {
+      if (composerRef.current && !composerRef.current.textContent?.trim()) {
         composerRef.current.innerHTML = plainTextToSafeHtml(pendingDraft.suggested_text);
         setReply(composerRef.current.textContent ?? "");
+        setEditingDraftId(pendingDraft.id);
       }
-      setEditingDraftId(pendingDraft.id);
     }
   }, [draftPending, pendingDraft, setReply, setEditingDraftId]);
 
@@ -298,6 +339,7 @@ export function ConversationPanel() {
         sonnerToast.success("Note added");
         if (composerRef.current) composerRef.current.innerHTML = "";
         setReply("");
+        clearComposerDraft(selectedThreadId);
         return true;
       } catch {
         sonnerToast.error("Failed to add note");
@@ -339,6 +381,7 @@ export function ConversationPanel() {
       if (composerRef.current) composerRef.current.innerHTML = "";
       setReply("");
       setAttachments([]);
+      clearComposerDraft(selectedThreadId);
       setSending(false);
       return true;
     }

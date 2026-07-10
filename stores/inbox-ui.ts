@@ -24,6 +24,11 @@ function writePersistedEmailAccount(v: string | null) {
 interface InboxUIState {
   selectedThreadId: string | null
   reply: string
+  // Per-conversation composer snapshots (in-memory only). Keyed by thread id so
+  // a draft typed/edited in one conversation is restored when the agent switches
+  // back. Stores composer HTML to preserve formatting, plus the AI-draft id so a
+  // restored draft still attributes correctly on send.
+  composerDrafts: Record<string, { html: string; editingDraftId: string | null }>
   composerTab: 'reply' | 'note'
   showEmoji: boolean
   attachments: { name: string; size: number }[]
@@ -58,6 +63,8 @@ interface InboxUIState {
   // Actions
   setSelectedThreadId: (id: string | null) => void
   setReply: (v: string) => void
+  setComposerDraft: (threadId: string, draft: { html: string; editingDraftId: string | null }) => void
+  clearComposerDraft: (threadId: string) => void
   setComposerTab: (v: 'reply' | 'note') => void
   setShowEmoji: (v: boolean) => void
   setAttachments: (v: { name: string; size: number }[] | ((prev: { name: string; size: number }[]) => { name: string; size: number }[])) => void
@@ -94,6 +101,7 @@ interface InboxUIState {
 export const useInboxUI = create<InboxUIState>()((set) => ({
   selectedThreadId: null,
   reply: '',
+  composerDrafts: {},
   composerTab: 'reply',
   showEmoji: false,
   attachments: [],
@@ -119,6 +127,15 @@ export const useInboxUI = create<InboxUIState>()((set) => ({
 
   setSelectedThreadId: (id) => set({ selectedThreadId: id }),
   setReply: (v) => set({ reply: v }),
+  setComposerDraft: (threadId, draft) =>
+    set((s) => ({ composerDrafts: { ...s.composerDrafts, [threadId]: draft } })),
+  clearComposerDraft: (threadId) =>
+    set((s) => {
+      if (!(threadId in s.composerDrafts)) return s
+      const next = { ...s.composerDrafts }
+      delete next[threadId]
+      return { composerDrafts: next }
+    }),
   setComposerTab: (v) => set({ composerTab: v }),
   setShowEmoji: (v) => set({ showEmoji: v }),
   setAttachments: (v) => set((s) => ({ attachments: typeof v === 'function' ? v(s.attachments) : v })),

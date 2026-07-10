@@ -8,9 +8,11 @@ interface StoreState {
   stores: StorePublic[]
   activeStore: StorePublic | null
   activeStoreId: string | null
+  /** Persisted store selection, keyed by workspace id. */
+  selectionByWorkspace: Record<string, string>
   isLoading: boolean
-  setStores: (stores: StorePublic[]) => void
-  setActiveStore: (store: StorePublic) => void
+  setStores: (stores: StorePublic[], workspaceId: string | null) => void
+  setActiveStore: (store: StorePublic, workspaceId: string | null) => void
   clearStores: () => void
   setLoading: (loading: boolean) => void
 }
@@ -21,12 +23,13 @@ export const useStoreStore = create<StoreState>()(
       stores: [],
       activeStore: null,
       activeStoreId: null,
+      selectionByWorkspace: {},
       isLoading: true,
 
-      setStores: (stores) => {
+      setStores: (stores, workspaceId) => {
         const current = get()
-        // Restore persisted selection if still valid
-        const persisted = current.activeStoreId
+        // Restore this workspace's persisted selection if still valid.
+        const persisted = workspaceId ? current.selectionByWorkspace[workspaceId] : undefined
         const match = stores.find((s) => s.id === persisted)
         const active = match ?? stores[0] ?? null
 
@@ -38,8 +41,14 @@ export const useStoreStore = create<StoreState>()(
         })
       },
 
-      setActiveStore: (store) => {
-        set({ activeStore: store, activeStoreId: store.id })
+      setActiveStore: (store, workspaceId) => {
+        set((state) => ({
+          activeStore: store,
+          activeStoreId: store.id,
+          selectionByWorkspace: workspaceId
+            ? { ...state.selectionByWorkspace, [workspaceId]: store.id }
+            : state.selectionByWorkspace,
+        }))
       },
 
       clearStores: () => {
@@ -50,7 +59,7 @@ export const useStoreStore = create<StoreState>()(
     }),
     {
       name: 'lynq-active-store',
-      partialize: (state) => ({ activeStoreId: state.activeStoreId }),
+      partialize: (state) => ({ selectionByWorkspace: state.selectionByWorkspace }),
     }
   )
 )

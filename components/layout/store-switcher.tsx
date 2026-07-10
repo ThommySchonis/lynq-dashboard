@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { ChevronDown, Plus, Store } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useStoreStore } from '@/stores/store'
+import { useAuthStore } from '@/stores/auth'
 import type { StorePublic } from '@/types/stores'
 
 interface StoreSwitcherProps {
@@ -22,6 +23,7 @@ export function StoreSwitcher({ collapsed }: StoreSwitcherProps) {
   const activeStore = useStoreStore((s) => s.activeStore)
   const setActiveStore = useStoreStore((s) => s.setActiveStore)
   const isLoading = useStoreStore((s) => s.isLoading)
+  const workspaceId = useAuthStore((s) => s.workspaceId)
 
   if (isLoading) return null
 
@@ -54,7 +56,7 @@ export function StoreSwitcher({ collapsed }: StoreSwitcherProps) {
   }
 
   function handleSelect(store: StorePublic) {
-    setActiveStore(store)
+    setActiveStore(store, workspaceId)
     setOpen(false)
   }
 

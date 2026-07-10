@@ -27,7 +27,7 @@ import { usePermissions } from "@/hooks/use-permissions";
 import { useStoreAiSettings } from "@/hooks/stores/use-stores-data";
 import { useQueryClient } from "@tanstack/react-query";
 import { AiDraftReview } from "./ai-draft-review";
-import { usePendingDraft, useUpdateDraftStatus } from "@/hooks/ai";
+import { usePendingDraft, useUpdateDraftStatus, aiDraftKeys } from "@/hooks/ai";
 import { useMacros, useDeleteMacro } from '@/hooks/macros';
 
 const REFUND_REASONS = [
@@ -423,6 +423,12 @@ export function ConversationPanel() {
       composerRef.current.innerHTML = plainTextToSafeHtml(result.reply);
       setReply(composerRef.current.textContent);
     } else setReply(result.reply);
+    // The server just created a `pending` ai_drafts row (result.draftId). Sync it
+    // into the client cache now so the "Helpful?" review banner appears immediately
+    // instead of on an incidental refetch (window-refocus / thread revisit) — or never.
+    if (selectedThreadId) {
+      void queryClient.invalidateQueries({ queryKey: aiDraftKeys.pending(selectedThreadId) });
+    }
   }
 
   // AI draft (inline): the pending draft loads into the composer so Send

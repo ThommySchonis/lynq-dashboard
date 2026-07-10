@@ -11,6 +11,7 @@ import { useAuthStore } from '@/stores/auth'
  */
 export function StoreProvider() {
   const session = useAuthStore((s) => s.session)
+  const workspaceId = useAuthStore((s) => s.workspaceId)
   const { data: stores, isLoading } = useStores()
   const setStores = useStoreStore((s) => s.setStores)
   const setLoading = useStoreStore((s) => s.setLoading)
@@ -26,9 +27,9 @@ export function StoreProvider() {
       return
     }
     if (stores) {
-      setStores(stores)
+      setStores(stores, workspaceId)
     }
-  }, [session, stores, isLoading, setStores, setLoading, clearStores])
+  }, [session, workspaceId, stores, isLoading, setStores, setLoading, clearStores])
 
   return null
 }

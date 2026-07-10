@@ -1,6 +1,7 @@
 import type { NextRequest } from 'next/server'
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
+import { syncConversationsToAccountStore } from '@/lib/services/email-accounts'
 import { encrypt } from '@/lib/encryption'
 import { verifyOAuthState } from '@/lib/oauthState'
 import { safeReturnOrigin } from '@/lib/utils/request'
@@ -90,13 +91,20 @@ export async function GET(request: NextRequest) {
     is_default: isDefault,
   }
 
-  const { error: emailAccountError } = await supabaseAdmin
+  const { data: upsertedAccount, error: emailAccountError } = await supabaseAdmin
     .from('email_accounts')
     .upsert(emailAccountRecord, { onConflict: 'workspace_id,provider,email_address' })
+    .select('id')
+    .single<{ id: string }>()
 
   if (emailAccountError) {
     logger.error('[outlook/callback]', 'email_accounts upsert error', { error: emailAccountError.message })
     return NextResponse.redirect(`${base}/settings?provider=outlook&status=error&reason=save_failed`)
+  }
+
+  // Re-link this mailbox's existing conversations to the same store (cascade on link).
+  if (workspaceId && upsertedAccount) {
+    await syncConversationsToAccountStore(workspaceId, upsertedAccount.id, storeId || null)
   }
 
   return NextResponse.redirect(`${base}/settings?provider=outlook&status=connected`)

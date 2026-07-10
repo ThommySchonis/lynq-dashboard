@@ -235,13 +235,17 @@ export interface EmailAccountForStore {
   is_default: boolean
 }
 
-/** Check if email account is connected */
+/** Check if the active store has a connected email account. Store-scoped so a
+ *  store with no mailbox shows the connect-email empty state instead of another
+ *  store's inbox (matches the store-scoped mailbox switcher). */
 export function useEmailConnected() {
   const token = useToken()
+  const activeStoreId = useStoreStore((s) => s.activeStoreId)
   return useQuery({
-    queryKey: inboxKeys.accounts(),
+    queryKey: [...inboxKeys.accountsByStore(activeStoreId), 'connected'] as const,
     queryFn: async () => {
-      const res = await authFetch(apiUrl('inbox/accounts'), {}, token)
+      const qs = activeStoreId ? `?store_id=${encodeURIComponent(activeStoreId)}` : ''
+      const res = await authFetch(apiUrl(`inbox/accounts${qs}`), {}, token)
       const data = await parseJson<AccountsResponse>(res).catch((): AccountsResponse => ({}))
       return Boolean(data?.accounts && data.accounts.length > 0)
     },

@@ -1,4 +1,5 @@
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
+import { syncConversationsToAccountStore } from '@/lib/services/email-accounts'
 import { encrypt } from '@/lib/encryption'
 import { getAuthContext } from '@/lib/auth'
 import { NextResponse } from 'next/server'
@@ -87,13 +88,20 @@ export async function POST(request: NextRequest) {
     is_default: isDefault,
   }
 
-  const { error: emailAccountError } = await supabaseAdmin
+  const { data: upsertedAccount, error: emailAccountError } = await supabaseAdmin
     .from('email_accounts')
     .upsert(emailAccountRecord, { onConflict: 'workspace_id,provider,email_address' })
+    .select('id')
+    .single<{ id: string }>()
 
   if (emailAccountError) {
     logger.error('[custom-email/connect]', 'email_accounts upsert error', { error: emailAccountError.message })
     return NextResponse.json({ error: emailAccountError.message }, { status: 500 })
+  }
+
+  // Re-link this mailbox's existing conversations to the same store (cascade on link).
+  if (workspaceId && upsertedAccount) {
+    await syncConversationsToAccountStore(workspaceId, upsertedAccount.id, storeId || null)
   }
 
   return NextResponse.json({ success: true, email })

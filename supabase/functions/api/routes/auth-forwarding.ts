@@ -109,6 +109,15 @@ app.post('/connect', async (c) => {
       return c.json({ error: upsertError?.message || 'Failed to save account' }, 500)
     }
 
+    // Keep this mailbox's conversations on the same store as the mailbox
+    // (cascade on link). email_conversations.store_id is snapshotted at
+    // ingestion, so re-stamp existing rows whenever the store link changes.
+    await sb
+      .from('email_conversations')
+      .update({ store_id: storeId || null })
+      .eq('workspace_id', workspaceId)
+      .eq('email_account_id', account.id)
+
     // Fetch DNS records from Resend
     const domainInfo = await getDomain(resendDomainId)
 

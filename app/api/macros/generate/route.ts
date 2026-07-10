@@ -21,7 +21,7 @@ interface AnthropicStatusError {
   message?: string
 }
 
-const CLAUDE_MODEL = 'claude-sonnet-4-20250514'
+const CLAUDE_MODEL = 'claude-sonnet-5'
 const MAX_TOKENS   = 16000
 
 // POST /api/macros/generate — call Claude, parse, bulk insert
@@ -188,24 +188,24 @@ export async function POST(request: NextRequest) {
 // ── helpers ──────────────────────────────────────────────────
 
 async function callClaudeWithRetry(client: Anthropic, userMessage: string): Promise<Message> {
+  // Thinking is disabled explicitly: Sonnet 5 enables adaptive thinking by
+  // default when omitted, and thinking tokens share the max_tokens budget —
+  // that would truncate the large JSON payload this endpoint expects.
+  const params = {
+    model:      CLAUDE_MODEL,
+    max_tokens: MAX_TOKENS,
+    thinking:   { type: 'disabled' as const },
+    system:     SYSTEM_PROMPT,
+    messages:   [{ role: 'user' as const, content: userMessage }],
+  }
   try {
-    return await client.messages.create({
-      model:      CLAUDE_MODEL,
-      max_tokens: MAX_TOKENS,
-      system:     SYSTEM_PROMPT,
-      messages:   [{ role: 'user', content: userMessage }],
-    })
+    return await client.messages.create(params)
   } catch (err: unknown) {
     if (isRetryable(err)) {
       const e = err as AnthropicStatusError
       logger.warn('[macros/generate]', 'retrying after 2s', { status: e?.status })
       await sleep(2000)
-      return await client.messages.create({
-        model:      CLAUDE_MODEL,
-        max_tokens: MAX_TOKENS,
-        system:     SYSTEM_PROMPT,
-        messages:   [{ role: 'user', content: userMessage }],
-      })
+      return await client.messages.create(params)
     }
     throw err
   }

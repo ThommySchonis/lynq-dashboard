@@ -12,7 +12,7 @@ const SUPPORT_EMAIL = (
 
 export const privacyDoc: LegalDoc = {
   title: 'Privacy Policy',
-  lastUpdated: 'June 1, 2026',
+  lastUpdated: 'July 10, 2026',
   intro: (
     <>
       <p>
@@ -116,7 +116,7 @@ export const privacyDoc: LegalDoc = {
             <li>Service security and fraud prevention (Art. 6(1)(f) GDPR)</li>
             <li>Product improvement and analytics (Art. 6(1)(f) GDPR)</li>
             <li>Customer support (Art. 6(1)(b), 6(1)(f) GDPR)</li>
-            <li>Marketing communications (Art. 6(1)(a), 6(1)(f) GDPR)</li>
+            <li>Marketing communications (Art. 6(1)(a), 6(1)(f) GDPR) &mdash; does not apply to data obtained via Google APIs</li>
             <li>Legal obligations and dispute handling (Art. 6(1)(c), 6(1)(f) GDPR)</li>
             <li>Processing on behalf of merchants (Shopify data) (Art. 6(1)(b) GDPR)</li>
           </ul>
@@ -247,6 +247,29 @@ export const privacyDoc: LegalDoc = {
             Where data is processed by third-party AI providers, it is used
             solely for generating outputs and is not used for training models.
           </p>
+        </>
+      ),
+    },
+    {
+      id: 'google-user-data',
+      number: '9a',
+      title: 'Google User Data',
+      body: (
+        <>
+          <p>
+            Where the Service accesses data through Google APIs (including
+            Gmail), our use and transfer of that information adheres to the
+            Google API Services User Data Policy, including the Limited Use
+            requirements.
+          </p>
+          <p>Specifically:</p>
+          <ul className="list-disc pl-5 space-y-1.5">
+            <li>Data obtained via Google APIs is used solely to provide and improve the specific Service features you have enabled (e.g. email-based workflow automation).</li>
+            <li>Such data is never used for advertising or marketing purposes.</li>
+            <li>Such data is never sold, rented, or transferred to third parties for advertising purposes.</li>
+            <li>Such data is never used to train generalised AI or machine learning models.</li>
+            <li>Human access to this data is limited to cases necessary for security purposes, to comply with applicable law, or with your explicit consent, and is subject to internal access controls.</li>
+          </ul>
         </>
       ),
     },

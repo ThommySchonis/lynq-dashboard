@@ -27,7 +27,7 @@ app.get('/counts', async (c) => {
       return c.json(
         { open: 0, pending: 0, resolved: 0, snoozed: 0, spam: 0, unlinked: 0, trash: 0 },
         200,
-        { 'Cache-Control': 'private, max-age=60' },
+        { 'Cache-Control': 'no-store' },
       )
     }
   }
@@ -58,7 +58,7 @@ app.get('/counts', async (c) => {
     spam: spam.count || 0,
     unlinked: unlinked.count || 0,
     trash: trash.count || 0,
-  }, 200, { 'Cache-Control': 'private, max-age=60' })
+  }, 200, { 'Cache-Control': 'no-store' })
 })
 
 // ── Assignable members ─────────────────────────────────────────────

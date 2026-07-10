@@ -1,21 +1,48 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import Image from 'next/image'
 import { toast } from 'sonner'
-import { useCreateBroadcast } from '@/hooks/admin'
+import { useCreateBroadcast, useUploadBroadcastImage } from '@/hooks/admin'
 import { INITIAL_BROADCAST_FORM, BROADCAST_TYPES, BROADCAST_TOPICS } from '@/lib/admin-constants'
 import { getYoutubeId } from '@/lib/admin-utils'
+import { validateImageFile } from '@/lib/broadcast-image'
 import type { BroadcastForm as BroadcastFormType, BroadcastType } from '@/types/admin'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
+import { ImageIcon } from 'lucide-react'
 
 export function BroadcastForm() {
   const [form, setForm] = useState<BroadcastFormType>(INITIAL_BROADCAST_FORM)
   const mutation = useCreateBroadcast()
+  const uploadImage = useUploadBroadcastImage()
+  const imageInputRef = useRef<HTMLInputElement>(null)
+
+  async function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const err = validateImageFile({ type: file.type, size: file.size })
+    if (err) {
+      toast.error(err)
+      if (imageInputRef.current) imageInputRef.current.value = ''
+      return
+    }
+    try {
+      const { url } = await uploadImage.mutateAsync(file)
+      setForm((prev) => ({ ...prev, image_url: url }))
+    } catch (uploadErr) {
+      toast.error(uploadErr instanceof Error ? uploadErr.message : 'Image upload failed')
+    } finally {
+      if (imageInputRef.current) imageInputRef.current.value = ''
+    }
+  }
+
+  function handleRemoveImage() {
+    setForm((prev) => ({ ...prev, image_url: '' }))
+  }
 
   const cfg = BROADCAST_TYPES[form.type]
   const ytId = form.type === 'video' ? getYoutubeId(form.youtube_url) : null
@@ -53,7 +80,13 @@ export function BroadcastForm() {
                   <button
                     key={id}
                     type="button"
-                    onClick={() => setForm((prev) => ({ ...prev, type: id }))}
+                    onClick={() =>
+                      setForm((prev) => ({
+                        ...prev,
+                        type: id,
+                        image_url: id === 'video' ? '' : prev.image_url,
+                      }))
+                    }
                     className={`flex items-center gap-2.5 rounded-lg border px-3 py-2.5 text-left transition-colors ${
                       isSelected
                         ? `${type.bgClass} ${type.borderClass}`
@@ -110,6 +143,62 @@ export function BroadcastForm() {
               </button>
             ))}
           </div>
+
+          {form.type !== 'video' && (
+            <div className="mb-4">
+              <div className="mb-1.5">
+                <Label>
+                  Cover image{' '}
+                  <span className="font-normal normal-case tracking-normal text-muted-foreground">
+                    (optional)
+                  </span>
+                </Label>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="h-14 w-24 rounded-lg border border-dashed border-border overflow-hidden shrink-0 flex items-center justify-center bg-muted/40">
+                  {form.image_url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={form.image_url}
+                      alt="Cover preview"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <ImageIcon size={20} strokeWidth={1.5} className="text-muted-foreground/50" />
+                  )}
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    ref={imageInputRef}
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    className="hidden"
+                    onChange={(e) => void handleImageChange(e)}
+                  />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    type="button"
+                    disabled={uploadImage.isPending}
+                    onClick={() => imageInputRef.current?.click()}
+                  >
+                    {uploadImage.isPending ? 'Uploading...' : form.image_url ? 'Replace' : 'Upload image'}
+                  </Button>
+                  {form.image_url && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      type="button"
+                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                      onClick={handleRemoveImage}
+                    >
+                      Remove
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
 
           {form.type === 'video' && (
             <div className="mb-3.5">

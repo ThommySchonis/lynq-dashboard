@@ -777,4 +777,38 @@ app.post('/migrate-users', async (c) => {
   return c.json({ results })
 })
 
+// ── Broadcast cover image upload ────────────────────────────────────
+
+const BROADCAST_IMG_MAX_BYTES = 2 * 1024 * 1024
+const BROADCAST_IMG_TYPES = ['image/png', 'image/jpeg', 'image/webp']
+const BROADCAST_BUCKET = 'broadcast-assets'
+
+app.post('/broadcasts/image', async (c) => {
+  const sb = getAdminClient()
+  const formData = await c.req.formData()
+  const file = formData.get('file') as File | null
+
+  if (!file) return c.json({ error: 'No file provided' }, 400)
+  if (!BROADCAST_IMG_TYPES.includes(file.type)) {
+    return c.json({ error: 'File must be PNG, JPG, or WebP' }, 400)
+  }
+
+  const bytes = await file.arrayBuffer()
+  if (bytes.byteLength > BROADCAST_IMG_MAX_BYTES) {
+    return c.json({ error: 'Image must be under 2 MB' }, 400)
+  }
+
+  const ext = file.type === 'image/png' ? 'png' : file.type === 'image/webp' ? 'webp' : 'jpg'
+  const path = `covers/${crypto.randomUUID()}.${ext}`
+
+  const { error: uploadError } = await sb.storage
+    .from(BROADCAST_BUCKET)
+    .upload(path, bytes, { contentType: file.type, upsert: false })
+
+  if (uploadError) return c.json({ error: uploadError.message }, 500)
+
+  const { data: { publicUrl } } = sb.storage.from(BROADCAST_BUCKET).getPublicUrl(path)
+  return c.json({ url: publicUrl })
+})
+
 export { app as adminRoutes }

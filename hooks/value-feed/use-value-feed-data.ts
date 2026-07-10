@@ -26,6 +26,8 @@ export interface NormalizedFeedItem {
   zoomUrl: string | null | undefined
   calUrl: string | null
   youtubeUrl: string | null
+  /** Cover image for the featured card — broadcasts only; null otherwise. */
+  imageUrl: string | null
   /** Event details for the modal event card — masterclasses only. */
   event: {
     month: string
@@ -131,6 +133,7 @@ export function useValueFeedData(): UseValueFeedResult {
     zoomUrl:    mc.zoom_url ?? null,
     calUrl:     googleCalUrl(mc.title, mc.scheduled_at, 60),
     youtubeUrl: null,
+    imageUrl:   null,
     event: {
       month:        fmtMonth(mc.scheduled_at),
       day:          fmtDay(mc.scheduled_at),
@@ -152,6 +155,7 @@ export function useValueFeedData(): UseValueFeedResult {
     zoomUrl:    undefined,
     calUrl:     null,
     youtubeUrl: p.youtube_url ?? null,
+    imageUrl:   p.image_url ?? null,
     event:      null,
     tags:       p.topic ? p.topic.split(',').map(t => t.trim()).filter(Boolean) : [],
     sortKey:    new Date(p.created_at).getTime(),

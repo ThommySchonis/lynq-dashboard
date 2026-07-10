@@ -136,7 +136,7 @@ export const INITIAL_CLIENT_FORM: CreateClientForm = {
 }
 
 export const INITIAL_BROADCAST_FORM: BroadcastForm = {
-  title: '', body: '', type: 'update', youtube_url: '', topic: '',
+  title: '', body: '', type: 'update', youtube_url: '', topic: '', image_url: '',
 }
 
 export const INITIAL_NOTIFICATION_FORM: NotificationForm = {

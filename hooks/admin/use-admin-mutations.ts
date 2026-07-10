@@ -52,12 +52,37 @@ export function useCreateBroadcast() {
         type: form.type,
         youtube_url: form.youtube_url?.trim() || null,
         topic: form.topic?.trim() || null,
+        image_url: form.type !== 'video' ? (form.image_url || null) : null,
       })
       if (error) throw error
     },
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: adminKeys.broadcasts() })
       void qc.invalidateQueries({ queryKey: adminKeys.broadcastReactions() })
+    },
+  })
+}
+
+interface ImageUploadResponse {
+  url: string
+}
+
+export function useUploadBroadcastImage() {
+  const token = useToken()
+  return useMutation({
+    mutationFn: async (file: File): Promise<ImageUploadResponse> => {
+      const fd = new FormData()
+      fd.append('file', file)
+      const res = await fetch(apiUrl('admin/broadcasts/image'), {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: fd,
+      })
+      if (!res.ok) {
+        const d = await parseJson<ErrorResponse>(res).catch((): ErrorResponse => ({}))
+        throw new Error(d.error || 'Image upload failed')
+      }
+      return parseJson<ImageUploadResponse>(res)
     },
   })
 }

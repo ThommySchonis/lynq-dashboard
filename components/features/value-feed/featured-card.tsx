@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import { CoverDecor } from './cover-decor'
 import { AuthorByline } from './author-byline'
 import { KIND_LABEL, readTimeOf } from '@/lib/value-feed-utils'
@@ -22,7 +23,14 @@ export function FeaturedCard({ item, onOpen }: FeaturedCardProps) {
     <article className="overflow-hidden rounded-[20px] border border-border bg-card shadow-[0_12px_32px_rgba(28,15,54,0.07)]">
       {/* Cover */}
       <div className="relative h-[200px] overflow-hidden bg-[linear-gradient(111deg,#F1ECFF_0%,#FFFFFF_74%)] p-[18px]">
-        <CoverDecor />
+        {item.imageUrl ? (
+          <>
+            <Image src={item.imageUrl} alt="" fill sizes="(max-width: 768px) 100vw, 680px" priority className="object-cover" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/25 to-transparent" />
+          </>
+        ) : (
+          <CoverDecor />
+        )}
         <span className="relative inline-flex items-center rounded-full bg-white/[0.92] px-3 py-1.5 text-xs font-semibold uppercase leading-[14px] tracking-[0.08em] text-primary">
           ★&nbsp;&nbsp;FEATURED {kindLabel}
         </span>

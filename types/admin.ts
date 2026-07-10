@@ -18,6 +18,7 @@ export interface Broadcast {
   type: BroadcastType
   youtube_url: string | null
   topic: string | null
+  image_url: string | null
   is_pinned: boolean
   created_at: string
 }
@@ -135,6 +136,7 @@ export interface BroadcastForm {
   type: BroadcastType
   youtube_url: string
   topic: string
+  image_url: string
 }
 
 export interface NotificationForm {

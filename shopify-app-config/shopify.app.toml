@@ -9,11 +9,14 @@ name = "Lynq"
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
 scopes = "read_orders,write_orders,read_order_edits,write_order_edits,read_draft_orders,write_draft_orders,read_fulfillments,write_fulfillments,read_assigned_fulfillment_orders,write_assigned_fulfillment_orders,read_merchant_managed_fulfillment_orders,write_merchant_managed_fulfillment_orders,read_customers,read_products,read_reports"
 optional_scopes = [ ]
-# This is a non-embedded app, so it acquires tokens via the authorization code
-# grant (token exchange is embedded-only, requiring App Bridge session
-# tokens). use_legacy_install_flow = true makes the App Store install redirect
-# the merchant to application_url to begin OAuth.
-use_legacy_install_flow = true
+# This is a non-embedded (standalone) app. Per Shopify, standalone apps use the
+# authorization code grant flow (token exchange is embedded-only). Managed
+# installation (use_legacy_install_flow = false) is REQUIRED here because the
+# app declares app-specific webhook subscriptions below — those are not
+# supported with the legacy install flow. Shopify grants scopes on install; the
+# app initiates the authorization code grant from application_url (see
+# app/page.tsx → app/api/auth/shopify/install).
+use_legacy_install_flow = false
 
 [auth]
 redirect_urls = [

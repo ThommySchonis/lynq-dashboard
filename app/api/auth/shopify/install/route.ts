@@ -42,13 +42,20 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'invalid shop domain' }, { status: 400 })
   }
 
-  // Verify Shopify signed this install redirect — accept either configured secret.
-  const hmacOk =
-    (!!mainSecret && verifyShopifyHmac(url.searchParams, mainSecret)) ||
-    (!!pubSecret && verifyShopifyHmac(url.searchParams, pubSecret))
-  if (!hmacOk) {
-    logger.warn('[shopify/install]', 'hmac verification failed', { shop })
-    return NextResponse.json({ error: 'invalid hmac' }, { status: 401 })
+  // If Shopify signed this request, verify it (accept either configured secret).
+  // Under managed installation the app-load entry may arrive without an `hmac`
+  // (Shopify grants scopes without calling the app), so a MISSING hmac is not an
+  // error — we still start OAuth. The callback fully enforces hmac + state +
+  // code exchange, which is where install security actually lives. We only
+  // reject an hmac that is PRESENT but invalid (a tampered/forged signature).
+  if (url.searchParams.has('hmac')) {
+    const hmacOk =
+      (!!mainSecret && verifyShopifyHmac(url.searchParams, mainSecret)) ||
+      (!!pubSecret && verifyShopifyHmac(url.searchParams, pubSecret))
+    if (!hmacOk) {
+      logger.warn('[shopify/install]', 'hmac verification failed', { shop })
+      return NextResponse.json({ error: 'invalid hmac' }, { status: 401 })
+    }
   }
 
   const state = crypto.randomUUID()

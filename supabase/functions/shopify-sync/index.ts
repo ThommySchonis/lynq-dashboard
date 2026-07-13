@@ -8,6 +8,89 @@ const supabase = createClient(supabaseUrl, supabaseKey)
 
 const SHOPIFY_API_VERSION = '2025-04'
 
+// ── GraphQL Admin API: order sync (multi-currency) ───────────────────────────
+// Mirrors lib/services/shopify-orders.ts syncOrders: cursor-paginated orders via
+// the GraphQL Admin API (REST orders are deprecated), mapping money amounts
+// presentment-first (checkout currency) with a shopMoney fallback — the same
+// `_set.presentment_money || <bare field>` precedence the REST version used.
+const SYNC_ORDERS_PAGE_SIZE = 100
+
+interface GqlMoney {
+  amount: string
+}
+interface GqlMoneyBag {
+  shopMoney: GqlMoney
+  presentmentMoney?: GqlMoney
+}
+interface SyncOrderNode {
+  id: string
+  name: string
+  displayFinancialStatus: string | null
+  cancelReason: string | null
+  sourceName: string | null
+  presentmentCurrencyCode: string
+  currencyCode: string
+  processedAt: string
+  createdAt: string
+  updatedAt: string
+  email: string | null
+  customer: { firstName: string | null; lastName: string | null; email: string | null } | null
+  subtotalPriceSet: GqlMoneyBag | null
+  totalPriceSet: GqlMoneyBag
+  totalDiscountsSet: GqlMoneyBag | null
+  refunds: Array<{ transactions: { edges: Array<{ node: { amountSet: GqlMoneyBag } }> } }>
+}
+interface SyncOrdersData {
+  orders: {
+    edges: Array<{ node: SyncOrderNode }>
+    pageInfo: { hasNextPage: boolean; endCursor: string | null }
+  }
+}
+
+// No status clause -> all statuses (open/closed/cancelled), reproducing REST `status=any`.
+const SYNC_ORDERS_QUERY = `
+  query SyncOrders($first: Int!, $after: String, $query: String) {
+    orders(first: $first, after: $after, query: $query, sortKey: PROCESSED_AT) {
+      edges {
+        node {
+          id
+          name
+          displayFinancialStatus
+          cancelReason
+          sourceName
+          presentmentCurrencyCode
+          currencyCode
+          processedAt
+          createdAt
+          updatedAt
+          email
+          customer { firstName lastName email }
+          subtotalPriceSet { shopMoney { amount } presentmentMoney { amount } }
+          totalPriceSet { shopMoney { amount } presentmentMoney { amount } }
+          totalDiscountsSet { shopMoney { amount } presentmentMoney { amount } }
+          refunds {
+            transactions(first: 50) {
+              edges { node { amountSet { shopMoney { amount } presentmentMoney { amount } } } }
+            }
+          }
+        }
+      }
+      pageInfo { hasNextPage endCursor }
+    }
+  }
+`
+
+// gid://shopify/Order/1234 -> 1234 (REST exposed numeric ids, not global ids).
+function legacyIdNum(gid: string): number {
+  const tail = gid.split('/').pop() ?? ''
+  return Number(tail.split('?')[0])
+}
+
+// Presentment (checkout) amount with shop-currency fallback.
+function presentmentAmount(bag: GqlMoneyBag | null | undefined): string {
+  return bag?.presentmentMoney?.amount || bag?.shopMoney?.amount || '0'
+}
+
 Deno.serve(async () => {
   const runId = await startCronRun('shopify-sync', 'edge-function')
 
@@ -54,57 +137,62 @@ Deno.serve(async () => {
 
       try {
         const since = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString()
-        let orders: any[] = []
-        let url: string | null =
-          `https://${int.shopify_domain}/admin/api/${SHOPIFY_API_VERSION}/orders.json?status=any&limit=250&processed_at_min=${since}`
+        // Single-quote the timestamp so its colons aren't parsed as field:value
+        // separators (Shopify search syntax).
+        const query = `processed_at:>='${since}'`
+        const gqlUrl = `https://${int.shopify_domain}/admin/api/${SHOPIFY_API_VERSION}/graphql.json`
 
-        while (url) {
-          const res = await fetch(url, {
-            headers: { 'X-Shopify-Access-Token': int.shopify_access_token },
+        let orders: SyncOrderNode[] = []
+        let after: string | null = null
+        let hasNextPage = true
+
+        while (hasNextPage) {
+          const res = await fetch(gqlUrl, {
+            method: 'POST',
+            headers: {
+              'X-Shopify-Access-Token': int.shopify_access_token,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ query: SYNC_ORDERS_QUERY, variables: { first: SYNC_ORDERS_PAGE_SIZE, after, query } }),
           })
           if (!res.ok) break
-          const data = await res.json()
-          orders = orders.concat(data.orders || [])
-          const link = res.headers.get('link')
-          const next = link?.match(/<([^>]+)>;\s*rel="next"/)
-          url = next ? next[1] : null
+          const json: { data?: SyncOrdersData; errors?: Array<{ message: string }> } = await res.json()
+          if (json.errors?.length || !json.data) break
+          const conn = json.data.orders
+          orders = orders.concat(conn.edges.map((e) => e.node))
+          hasNextPage = conn.pageInfo.hasNextPage
+          after = conn.pageInfo.endCursor
         }
 
-        const rows = orders.map((order: any) => {
-          const subtotal = parseFloat(
-            order.subtotal_price_set?.presentment_money?.amount || order.subtotal_price || 0
-          )
-          const totalPrice = parseFloat(
-            order.total_price_set?.presentment_money?.amount || order.total_price || 0
-          )
-          const totalDiscounts = parseFloat(
-            order.total_discounts_set?.presentment_money?.amount || order.total_discounts || 0
-          )
-          const refundAmount = (order.refunds || []).reduce((sum: number, r: any) =>
-            sum + (r.transactions || []).reduce((ts: number, t: any) =>
-              ts + parseFloat(t.amount_set?.presentment_money?.amount || t.amount || 0), 0), 0)
+        const rows = orders.map((order) => {
+          const subtotal = parseFloat(presentmentAmount(order.subtotalPriceSet))
+          const totalPrice = parseFloat(presentmentAmount(order.totalPriceSet))
+          const totalDiscounts = parseFloat(presentmentAmount(order.totalDiscountsSet))
+          const refundAmount = order.refunds.reduce((sum, r) =>
+            sum + r.transactions.edges.reduce((ts, { node: t }) =>
+              ts + parseFloat(presentmentAmount(t.amountSet)), 0), 0)
 
           return {
-            id: order.id,
+            id: legacyIdNum(order.id),
             client_id: int.client_id,
             workspace_id: int.workspace_id,
             store_id: int.store_id,
             order_number: order.name,
-            financial_status: order.financial_status,
-            cancel_reason: order.cancel_reason || null,
+            financial_status: order.displayFinancialStatus ? order.displayFinancialStatus.toLowerCase() : null,
+            cancel_reason: order.cancelReason ? order.cancelReason.toLowerCase() : null,
             subtotal_price: subtotal,
             total_price: totalPrice,
             total_discounts: totalDiscounts,
             refund_amount: refundAmount,
-            presentment_currency: order.presentment_currency || order.currency || null,
-            source_name: order.source_name || null,
+            presentment_currency: order.presentmentCurrencyCode || order.currencyCode || null,
+            source_name: order.sourceName || null,
             customer_email: order.customer?.email || order.email || null,
             customer_name: order.customer
-              ? `${order.customer.first_name || ''} ${order.customer.last_name || ''}`.trim()
+              ? `${order.customer.firstName || ''} ${order.customer.lastName || ''}`.trim()
               : null,
-            processed_at: order.processed_at,
-            created_at_shopify: order.created_at,
-            updated_at_shopify: order.updated_at,
+            processed_at: order.processedAt,
+            created_at_shopify: order.createdAt,
+            updated_at_shopify: order.updatedAt,
             synced_at: new Date().toISOString(),
           }
         })

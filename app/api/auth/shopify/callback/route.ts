@@ -4,6 +4,7 @@ import crypto from 'crypto'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import { logger } from '@/lib/logger'
 import { syncOrders } from '@/lib/services/shopify'
+import { shopifyGraphQL } from '@/lib/services/shopify-graphql'
 import { pickPrimaryMembership } from '@/lib/pick-membership'
 import {
   findUserIdByEmail,
@@ -19,8 +20,8 @@ interface ShopifyTokenResponse {
   scope?: string
 }
 
-interface ShopifyShopDataResponse {
-  shop?: { currency?: string; email?: string; name?: string }
+interface ShopifyShopQueryResponse {
+  shop: { currencyCode: string | null; email: string | null; name: string | null }
 }
 
 interface WorkspaceMemberRow {
@@ -44,6 +45,28 @@ interface OAuthStateRow {
 interface StoreRow {
   id: string
 }
+
+interface WebhookSubscriptionCreateResponse {
+  webhookSubscriptionCreate: {
+    webhookSubscription: { id: string } | null
+    userErrors: Array<{ field: string[] | null; message: string }>
+  }
+}
+
+// GraphQL topic enum values verified against
+// https://shopify.dev/docs/api/admin-graphql/latest/enums/WebhookSubscriptionTopic
+const WEBHOOK_TOPICS = ['ORDERS_CREATE', 'ORDERS_UPDATED', 'ORDERS_CANCELLED', 'REFUNDS_CREATE'] as const
+
+// `uri` is the current (non-deprecated) callback field on WebhookSubscriptionInput —
+// https://shopify.dev/docs/api/admin-graphql/latest/input-objects/WebhookSubscriptionInput
+const WEBHOOK_SUBSCRIPTION_CREATE_MUTATION = `
+  mutation webhookSubscriptionCreate($topic: WebhookSubscriptionTopic!, $webhookSubscription: WebhookSubscriptionInput!) {
+    webhookSubscriptionCreate(topic: $topic, webhookSubscription: $webhookSubscription) {
+      webhookSubscription { id }
+      userErrors { field message }
+    }
+  }
+`
 
 function hmacSha256(secret: string, message: string): string {
   return crypto.createHmac('sha256', secret).update(message).digest('hex')
@@ -115,15 +138,28 @@ export async function GET(request: NextRequest) {
   let sessionEmail: string | null = null
 
   // Fetch shop metadata once (currency + owner email/name for install provisioning).
-  const shopRes = await fetch(`https://${shop}/admin/api/2025-04/shop.json`, {
-    headers: { 'X-Shopify-Access-Token': accessToken },
-  })
-  const shopData = (await shopRes.json()) as ShopifyShopDataResponse
-  const storeCurrency = shopData.shop?.currency || null
+  let shopData: ShopifyShopQueryResponse
+  try {
+    shopData = await shopifyGraphQL<ShopifyShopQueryResponse>(
+      { domain: shop, accessToken },
+      'query { shop { currencyCode email name } }',
+    )
+  } catch (e: unknown) {
+    logger.error('[shopify/callback]', 'shop query failed', {
+      shop,
+      error: e instanceof Error ? e.message : String(e),
+    })
+    return NextResponse.redirect(
+      isInstall
+        ? `${appUrl}/login?error=install_failed`
+        : `${appUrl}/settings/workspace/stores?error=shop_query_failed`,
+    )
+  }
+  const storeCurrency = shopData.shop.currencyCode || null
 
   if (isInstall) {
-    const email = shopData.shop?.email
-    const shopName = shopData.shop?.name || shop.replace('.myshopify.com', '')
+    const email = shopData.shop.email
+    const shopName = shopData.shop.name || shop.replace('.myshopify.com', '')
     if (!email) {
       logger.error('[shopify/callback]', 'install: no shop email', { shop })
       return NextResponse.redirect(`${appUrl}/login?error=install_no_email`)
@@ -245,23 +281,30 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  // Register webhooks — point to Supabase Edge Function (server-to-server)
+  // Register webhooks — point to Supabase Edge Function (server-to-server).
+  // Fire-and-forget per topic: a registration failure is logged but must
+  // never abort the install/connect flow (matches prior REST behavior).
   const webhookBase = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1`
-  const webhookTopics = ['orders/create', 'orders/updated', 'orders/cancelled', 'refunds/create']
+  const webhookCallbackUrl = `${webhookBase}/api/webhooks/shopify?store_id=${storeId}&cid=${workspaceId}`
   await Promise.all(
-    webhookTopics.map((topic) =>
-      fetch(`https://${shop}/admin/api/2025-04/webhooks.json`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-Shopify-Access-Token': accessToken },
-        body: JSON.stringify({
-          webhook: {
-            topic,
-            address: `${webhookBase}/api/webhooks/shopify?store_id=${storeId}&cid=${workspaceId}`,
-            format: 'json',
-          },
-        }),
-      }),
-    ),
+    WEBHOOK_TOPICS.map(async (topic) => {
+      try {
+        const result = await shopifyGraphQL<WebhookSubscriptionCreateResponse>(
+          { domain: shop, accessToken },
+          WEBHOOK_SUBSCRIPTION_CREATE_MUTATION,
+          { topic, webhookSubscription: { uri: webhookCallbackUrl, format: 'JSON' } },
+        )
+        const userErrors = result.webhookSubscriptionCreate.userErrors
+        if (userErrors.length) {
+          logger.error('[shopify/callback]', 'webhook subscription userErrors', { topic, userErrors })
+        }
+      } catch (e: unknown) {
+        logger.error('[shopify/callback]', 'webhook subscription failed', {
+          topic,
+          error: e instanceof Error ? e.message : String(e),
+        })
+      }
+    }),
   )
 
   await supabaseAdmin.from('oauth_states').delete().eq('state', state)

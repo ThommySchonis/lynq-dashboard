@@ -1,5 +1,4 @@
-import { resilientFetch } from '@/lib/resilient-fetch'
-import { SHOPIFY_API_VERSION, ShopifyApiError } from './shopify-core'
+import { shopifyGraphQL } from './shopify-graphql'
 import type {
   ShopifyCredentials,
   GqlProductsResponse,
@@ -7,6 +6,11 @@ import type {
 } from './shopify-types'
 
 // GraphQL node shapes for the products browse/search connection.
+
+// Unwrapped `data` shape for the products query. `products` stays optional
+// here (even though it's required within GqlProductsResponse['data']) to
+// preserve the original defensive `?.`/`??` fallbacks below.
+type ProductsQueryData = { products?: NonNullable<GqlProductsResponse['data']>['products'] }
 
 const PRODUCTS_QUERY = `
   query browseProducts($first: Int!, $after: String, $query: String) {
@@ -53,32 +57,9 @@ export async function searchProducts(
     query: trimmed ? `title:*${trimmed}*` : null,
   }
 
-  const res = await resilientFetch<GqlProductsResponse>(
-    'shopify',
-    `https://${credentials.domain}/admin/api/${SHOPIFY_API_VERSION}/graphql.json`,
-    {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Shopify-Access-Token': credentials.accessToken,
-      },
-      body: JSON.stringify({ query: PRODUCTS_QUERY, variables }),
-    },
-  )
+  const data = await shopifyGraphQL<ProductsQueryData>(credentials, PRODUCTS_QUERY, variables)
 
-  if (!res.ok) {
-    throw new ShopifyApiError(res.error, res.status, 'graphql.json:products')
-  }
-
-  if (res.data.errors?.length) {
-    throw new ShopifyApiError(
-      res.data.errors.map((e) => e.message).join('; '),
-      res.status,
-      'graphql.json:products',
-    )
-  }
-
-  const conn = res.data.data?.products
+  const conn = data.products
   const products: ProductSearchResult[] = (conn?.edges ?? []).map(({ node }) => ({
     productId: legacyId(node.id),
     productTitle: node.title,

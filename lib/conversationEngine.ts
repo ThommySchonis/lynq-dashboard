@@ -4,7 +4,7 @@ import { getAdapter } from './providers'
 import { getStoreCredentials } from './store-credentials'
 import { checkTicketLimit, lockWorkspace } from './services/limit-check'
 import { recordOutboundMessage } from './services/billing'
-import { parseJson } from './utils/typed-json'
+import { shopifyGraphQL } from '@/lib/services/shopify-graphql'
 import { trackEvent } from '@/lib/analytics/track'
 import { EVENT_TYPES } from '@/lib/analytics/events'
 import { resolveDisplaySettings, buildSignatureHtml } from '@/lib/services/email-display'
@@ -45,10 +45,6 @@ interface MessageConversationRef {
 
 interface MessageIdRow {
   message_id?: string
-}
-
-interface ShopifyCustomerSearchResponse {
-  customers?: Array<{ id: number | string }>
 }
 
 interface EmailAccountRow {
@@ -646,6 +642,24 @@ export async function linkCustomer(workspaceId: string, conversationId: string, 
 // Internal: Shopify customer lookup by email
 // ---------------------------------------------------------------------------
 
+interface MatchCustomerByEmailResponse {
+  customers: { edges: Array<{ node: { id: string } }> }
+}
+
+const MATCH_CUSTOMER_BY_EMAIL_QUERY = `
+  query MatchCustomerByEmail($query: String!) {
+    customers(first: 1, query: $query) {
+      edges { node { id } }
+    }
+  }
+`
+
+// gid://shopify/Customer/1234 -> "1234" (REST/legacy numeric id, as a string —
+// matches the original REST implementation's String(customers[0].id)).
+function legacyCustomerIdString(gid: string): string {
+  return gid.split('/').pop()?.split('?')[0] ?? gid
+}
+
 async function matchShopifyCustomer(storeId: string | null, workspaceId: string, email: string | undefined | null) {
   if (!storeId || !email) return null
 
@@ -653,21 +667,16 @@ async function matchShopifyCustomer(storeId: string | null, workspaceId: string,
     const credentials = await getStoreCredentials(storeId, workspaceId)
     if (!credentials) return null
 
-    const res = await fetch(
-      `https://${credentials.domain}/admin/api/2025-04/customers/search.json?query=email:${encodeURIComponent(email)}`,
-      {
-        headers: {
-          'X-Shopify-Access-Token': credentials.accessToken,
-          'Content-Type': 'application/json',
-        },
-      }
-    )
+    // Exact-match phrase query — an unquoted email:value tokenizes and can
+    // match on domain fragments, not just the exact address. See:
+    // https://shopify.dev/docs/api/admin-graphql/latest/queries/customers
+    const data = await shopifyGraphQL<MatchCustomerByEmailResponse>(credentials, MATCH_CUSTOMER_BY_EMAIL_QUERY, {
+      query: `email:"${email.replace(/"/g, '\\"')}"`,
+    })
 
-    if (!res.ok) return null
-    const data = await parseJson<ShopifyCustomerSearchResponse>(res)
-
-    if (data.customers && data.customers.length > 0) {
-      return String(data.customers[0].id)
+    const gid = data.customers.edges[0]?.node.id
+    if (gid) {
+      return legacyCustomerIdString(gid)
     }
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err)

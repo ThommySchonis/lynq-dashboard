@@ -3,6 +3,7 @@ import { authMiddleware } from '../middleware/auth.ts'
 import { requireCapability } from '../middleware/workspace.ts'
 import { getAdminClient } from '../lib/supabase.ts'
 import { getStoreCredentials } from '../lib/store-credentials.ts'
+import { shopifyGraphQL } from '../lib/services/shopify-graphql.ts'
 import { getTrackingsByOrderNumbers } from '../../_shared/parcel-panel.ts'
 import { logger } from '../lib/logger.ts'
 import { DEMO_SHOP, DEMO_ORDERS, DEMO_REFUNDS, DEMO_KPIS, DEMO_TREND } from '../lib/demo-data.ts'
@@ -486,9 +487,31 @@ shopify.post('/sync', async (c) => {
 
 // ── POST /manual-connect ─────────────────────────────────────────────────────
 
-interface ShopifyShopResponse {
-  shop?: { name?: string; currency?: string }
+interface ShopifyShopQueryResponse {
+  shop: { name: string | null; currencyCode: string | null }
 }
+
+interface WebhookSubscriptionCreateResponse {
+  webhookSubscriptionCreate: {
+    webhookSubscription: { id: string } | null
+    userErrors: Array<{ field: string[] | null; message: string }>
+  }
+}
+
+// GraphQL topic enum values verified against
+// https://shopify.dev/docs/api/admin-graphql/latest/enums/WebhookSubscriptionTopic
+const WEBHOOK_TOPICS = ['ORDERS_CREATE', 'ORDERS_UPDATED', 'ORDERS_CANCELLED', 'REFUNDS_CREATE'] as const
+
+// `uri` is the current (non-deprecated) callback field on WebhookSubscriptionInput —
+// https://shopify.dev/docs/api/admin-graphql/latest/input-objects/WebhookSubscriptionInput
+const WEBHOOK_SUBSCRIPTION_CREATE_MUTATION = `
+  mutation webhookSubscriptionCreate($topic: WebhookSubscriptionTopic!, $webhookSubscription: WebhookSubscriptionInput!) {
+    webhookSubscriptionCreate(topic: $topic, webhookSubscription: $webhookSubscription) {
+      webhookSubscription { id }
+      userErrors { field message }
+    }
+  }
+`
 
 shopify.post('/manual-connect', async (c) => {
   const ctx = c.get('authContext') as AuthContext
@@ -505,18 +528,21 @@ shopify.post('/manual-connect', async (c) => {
     ? body.shop.toLowerCase().trim()
     : `${body.shop.toLowerCase().trim()}.myshopify.com`
 
-  const shopRes = await fetch(
-    `https://${shopDomain}/admin/api/2025-04/shop.json`,
-    { headers: { 'X-Shopify-Access-Token': body.accessToken } },
-  )
-
-  if (!shopRes.ok) {
+  let shopData: ShopifyShopQueryResponse
+  try {
+    shopData = await shopifyGraphQL<ShopifyShopQueryResponse>(
+      { domain: shopDomain, accessToken: body.accessToken },
+      'query { shop { name currencyCode } }',
+    )
+  } catch (e) {
+    logger.warn('[shopify/manual-connect]', 'shop query failed', {
+      error: e instanceof Error ? e.message : String(e),
+    })
     return c.json({ error: 'Invalid token or store domain. Please check your credentials.' }, 400)
   }
 
-  const shopData = (await shopRes.json()) as ShopifyShopResponse
-  const storeName = shopData.shop?.name || shopDomain.replace('.myshopify.com', '')
-  const storeCurrency = shopData.shop?.currency || null
+  const storeName = shopData.shop.name || shopDomain.replace('.myshopify.com', '')
+  const storeCurrency = shopData.shop.currencyCode || null
 
   const sb = getAdminClient()
 
@@ -557,26 +583,30 @@ shopify.post('/manual-connect', async (c) => {
     return c.json({ error: 'Failed to save credentials' }, 500)
   }
 
-  // Register webhooks (non-blocking)
+  // Register webhooks (non-blocking): a registration failure is logged but
+  // must never abort manual-connect (matches prior REST fire-and-forget behavior).
   const webhookBase = Deno.env.get('NEXT_PUBLIC_APP_URL') || ''
-  const webhookTopics = ['orders/create', 'orders/updated', 'orders/cancelled', 'refunds/create']
-  try {
-    await Promise.all(webhookTopics.map(topic =>
-      fetch(`https://${shopDomain}/admin/api/2025-04/webhooks.json`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-Shopify-Access-Token': body.accessToken! },
-        body: JSON.stringify({
-          webhook: {
-            topic,
-            address: `${webhookBase}/api/webhooks/shopify?store_id=${storeId}&cid=${ctx.workspaceId}`,
-            format: 'json',
-          },
-        }),
-      }),
-    ))
-  } catch (e) {
-    logger.warn('[shopify/manual-connect]', 'Webhook registration failed', { error: e instanceof Error ? e.message : String(e) })
-  }
+  const webhookCallbackUrl = `${webhookBase}/api/webhooks/shopify?store_id=${storeId}&cid=${ctx.workspaceId}`
+  await Promise.all(
+    WEBHOOK_TOPICS.map(async (topic) => {
+      try {
+        const result = await shopifyGraphQL<WebhookSubscriptionCreateResponse>(
+          { domain: shopDomain, accessToken: body.accessToken! },
+          WEBHOOK_SUBSCRIPTION_CREATE_MUTATION,
+          { topic, webhookSubscription: { uri: webhookCallbackUrl, format: 'JSON' } },
+        )
+        const userErrors = result.webhookSubscriptionCreate.userErrors
+        if (userErrors.length) {
+          logger.warn('[shopify/manual-connect]', 'webhook subscription userErrors', { topic, userErrors })
+        }
+      } catch (e) {
+        logger.warn('[shopify/manual-connect]', 'Webhook registration failed', {
+          topic,
+          error: e instanceof Error ? e.message : String(e),
+        })
+      }
+    }),
+  )
 
   // Initial order sync (non-blocking)
   try {

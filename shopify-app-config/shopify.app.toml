@@ -7,15 +7,18 @@ name = "Lynq"
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
-scopes = "read_analytics,read_customers,write_customers,read_price_rules,write_price_rules,read_discounts,write_discounts,write_draft_orders,read_draft_orders,read_fulfillments,write_fulfillments,read_inventory,read_locations,read_orders,write_orders,read_products,read_reports,read_returns,write_returns,read_shipping"
+scopes = "read_orders,write_orders,read_order_edits,write_order_edits,read_draft_orders,write_draft_orders,read_fulfillments,write_fulfillments,read_assigned_fulfillment_orders,write_assigned_fulfillment_orders,read_merchant_managed_fulfillment_orders,write_merchant_managed_fulfillment_orders,read_customers,read_products,read_reports"
 optional_scopes = [ ]
-use_legacy_install_flow = false
+# This is a non-embedded app, so it acquires tokens via the authorization code
+# grant (token exchange is embedded-only, requiring App Bridge session
+# tokens). use_legacy_install_flow = true makes the App Store install redirect
+# the merchant to application_url to begin OAuth.
+use_legacy_install_flow = true
 
 [auth]
 redirect_urls = [
   "https://app.lynqflow.io/api/auth/shopify/callback",
-  "https://lynq-dashboard.vercel.app/api/auth/shopify/callback",
-  "http://localhost:3000/api/auth/shopify/callback"
+  "https://lynq-dashboard.vercel.app/api/auth/shopify/callback"
 ]
 
 [webhooks]
@@ -27,11 +30,9 @@ customer_deletion_url = "https://cvrzvhnsltjubmfkcxql.supabase.co/functions/v1/a
 shop_deletion_url = "https://cvrzvhnsltjubmfkcxql.supabase.co/functions/v1/api/webhooks/shopify/compliance/shop-redact"
 
 # Managed Pricing plans are NOT declared here — Shopify CLI does not support
-# the [app.subscription_plans] section in shopify.app.toml. Plans must be
-# created in the Partners dashboard: Apps → Lynq → App pricing → Create plan.
-# See docs/superpowers/specs/2026-06-08-shopify-billing-integration-design.md
-# for the canonical plan list (Starter €30, Growth €89, Scale €249, Enterprise €599,
-# all monthly with 14-day trial).
+# the [app.subscription_plans] section in shopify.app.toml. Plans are created
+# in the Partner dashboard: Apps → Lynq → App pricing → Create plan.
+# Trial = 7 days. Do NOT reintroduce a 14-day trial or a €599 "Enterprise" plan.
 
 [[webhooks.subscriptions]]
 topics = ["app_subscriptions/update"]

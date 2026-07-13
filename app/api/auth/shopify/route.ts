@@ -4,9 +4,7 @@ import { getAuthContext } from '@/lib/auth'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import crypto from 'crypto'
 import { logger } from '@/lib/logger'
-
-const SCOPES =
-  'read_orders,write_orders,read_draft_orders,write_draft_orders,read_order_edits,write_order_edits,read_fulfillments,write_fulfillments,read_assigned_fulfillment_orders,write_assigned_fulfillment_orders,read_merchant_managed_fulfillment_orders,write_merchant_managed_fulfillment_orders,read_customers,write_customers,read_products'
+import { CANONICAL_SHOPIFY_SCOPES } from '@/lib/shopify-scopes'
 
 export async function POST(request: NextRequest) {
   const ctx = await getAuthContext(request)
@@ -53,7 +51,7 @@ export async function POST(request: NextRequest) {
     `https://${shopDomain}/admin/oauth/authorize?` +
     new URLSearchParams({
       client_id: clientId,
-      scope: SCOPES,
+      scope: CANONICAL_SHOPIFY_SCOPES,
       redirect_uri: redirectUri,
       state,
     }).toString()

@@ -5,6 +5,11 @@ import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import { logger } from '@/lib/logger'
 import { syncOrders } from '@/lib/services/shopify'
 import { pickPrimaryMembership } from '@/lib/pick-membership'
+import {
+  findUserIdByEmail,
+  provisionInstallIdentity,
+  createInstallSessionLink,
+} from '@/lib/services/shopify-install'
 
 interface ShopifyTokenResponse {
   access_token?: string
@@ -15,7 +20,7 @@ interface ShopifyTokenResponse {
 }
 
 interface ShopifyShopDataResponse {
-  shop?: { currency?: string }
+  shop?: { currency?: string; email?: string; name?: string }
 }
 
 interface WorkspaceMemberRow {
@@ -28,7 +33,7 @@ interface WorkspaceMemberRow {
 interface OAuthStateRow {
   state: string
   shop: string
-  user_id: string
+  user_id: string | null
   workspace_id: string | null
   client_id: string | null
   client_secret: string | null
@@ -100,24 +105,63 @@ export async function GET(request: NextRequest) {
   const accessToken = tokenData.access_token
   const scope = tokenData.scope
 
-  let workspaceId = oauthState.workspace_id as string | null
-  if (!workspaceId) {
-    // Fallback when the stored state has no workspace: pick the user's primary
-    // membership deterministically (same rule as getAuthContext). A user may
-    // belong to more than one workspace, so `.maybeSingle()` is unsafe here.
-    const { data: memberships } = await supabaseAdmin
-      .from('workspace_members')
-      .select('id, workspace_id, role, joined_at')
-      .eq('user_id', oauthState.user_id)
-    const primary = pickPrimaryMembership((memberships ?? []) as WorkspaceMemberRow[])
-    workspaceId = primary?.workspace_id ?? null
-  }
-  if (!workspaceId) {
-    logger.error('[shopify/callback]', 'no workspace found for user', { userId: oauthState.user_id })
-    return NextResponse.redirect(`${appUrl}/settings/workspace/stores?error=no_workspace`)
+  // An install (App Store) has no pre-existing user; the state row carries a
+  // null user_id. A manual-add is initiated by an already-authenticated user.
+  const stateUserId = oauthState.user_id
+  const isInstall = stateUserId == null
+
+  let workspaceId: string | null = null
+  let userId: string | null = stateUserId
+  let sessionEmail: string | null = null
+
+  // Fetch shop metadata once (currency + owner email/name for install provisioning).
+  const shopRes = await fetch(`https://${shop}/admin/api/2025-04/shop.json`, {
+    headers: { 'X-Shopify-Access-Token': accessToken },
+  })
+  const shopData = (await shopRes.json()) as ShopifyShopDataResponse
+  const storeCurrency = shopData.shop?.currency || null
+
+  if (isInstall) {
+    const email = shopData.shop?.email
+    const shopName = shopData.shop?.name || shop.replace('.myshopify.com', '')
+    if (!email) {
+      logger.error('[shopify/callback]', 'install: no shop email', { shop })
+      return NextResponse.redirect(`${appUrl}/login?error=install_no_email`)
+    }
+    // Resolve a pre-existing user for this email (idempotent installs / reinstalls).
+    try {
+      const existingUserId = await findUserIdByEmail(email)
+      const identity = await provisionInstallIdentity({ email, shopName, existingUserId })
+      userId = identity.userId
+      workspaceId = identity.workspaceId
+      sessionEmail = email
+    } catch (e: unknown) {
+      logger.error('[shopify/callback]', 'install: identity provisioning failed', {
+        shop,
+        error: e instanceof Error ? e.message : String(e),
+      })
+      return NextResponse.redirect(`${appUrl}/login?error=install_failed`)
+    }
+  } else {
+    // Manual-add: isInstall is false, so stateUserId is the authenticated user.
+    userId = stateUserId
+    workspaceId = oauthState.workspace_id as string | null
+    if (!workspaceId) {
+      // Fallback when the stored state has no workspace: pick the user's primary
+      // membership deterministically (same rule as getAuthContext). A user may
+      // belong to more than one workspace, so `.maybeSingle()` is unsafe here.
+      const { data: memberships } = await supabaseAdmin
+        .from('workspace_members')
+        .select('id, workspace_id, role, joined_at')
+        .eq('user_id', userId)
+      workspaceId = pickPrimaryMembership((memberships ?? []) as WorkspaceMemberRow[])?.workspace_id ?? null
+    }
+    if (!workspaceId) {
+      logger.error('[shopify/callback]', 'no workspace found for user', { userId })
+      return NextResponse.redirect(`${appUrl}/settings/workspace/stores?error=no_workspace`)
+    }
   }
 
-  const userId = oauthState.user_id
   const storeName = oauthState.store_name || shop.replace('.myshopify.com', '')
 
   // 1. Create store
@@ -129,13 +173,6 @@ export async function GET(request: NextRequest) {
 
   const storeId = (store as StoreRow).id
 
-  // 2. Fetch shop metadata for store_currency
-  const shopRes = await fetch(`https://${shop}/admin/api/2025-04/shop.json`, {
-    headers: { 'X-Shopify-Access-Token': accessToken },
-  })
-  const shopData = (await shopRes.json()) as ShopifyShopDataResponse
-  const storeCurrency = shopData.shop?.currency || null
-
   const now = new Date()
   const tokenExpiresAt = tokenData.expires_in
     ? new Date(now.getTime() + tokenData.expires_in * 1000).toISOString()
@@ -144,7 +181,7 @@ export async function GET(request: NextRequest) {
     ? new Date(now.getTime() + tokenData.refresh_token_expires_in * 1000).toISOString()
     : null
 
-  // 3. Write credentials to integrations
+  // 2. Write credentials to integrations
   const { error: upsertError } = await supabaseAdmin.from('integrations').upsert(
     {
       workspace_id: workspaceId,
@@ -239,11 +276,32 @@ export async function GET(request: NextRequest) {
     })
   }
 
-  if (isFirstStore) {
-    const handle = process.env.SHOPIFY_APP_HANDLE
-    if (handle) {
-      return NextResponse.redirect(`https://${shop}/admin/charges/${handle}/pricing_plans`)
+  const handle = process.env.SHOPIFY_APP_HANDLE
+  const nextPath = isFirstStore && handle
+    ? `/auth/shopify-complete?next=${encodeURIComponent(`https://${shop}/admin/charges/${handle}/pricing_plans`)}`
+    : `/auth/shopify-complete?next=${encodeURIComponent(`${appUrl}/home`)}`
+
+  if (isInstall && sessionEmail) {
+    // Install: hand the browser a session via the magic-link, then continue
+    // to the pricing page (first store) or the dashboard.
+    try {
+      const link = await createInstallSessionLink({
+        email: sessionEmail,
+        redirectTo: `${appUrl}${nextPath}`,
+      })
+      return NextResponse.redirect(link)
+    } catch (e: unknown) {
+      logger.error('[shopify/callback]', 'install: session link generation failed', {
+        shop,
+        error: e instanceof Error ? e.message : String(e),
+      })
+      return NextResponse.redirect(`${appUrl}/login?error=install_failed`)
     }
+  }
+
+  // Manual-add (already authenticated): behave exactly as before.
+  if (isFirstStore && handle) {
+    return NextResponse.redirect(`https://${shop}/admin/charges/${handle}/pricing_plans`)
   }
   return NextResponse.redirect(`${appUrl}/settings/workspace/stores?shopify=connected`)
 }

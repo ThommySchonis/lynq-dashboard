@@ -131,7 +131,7 @@ export async function disconnectStore(storeId: string, workspaceId: string) {
   const sb = getAdminClient()
   const { data: rawIntegration, error } = await sb
     .from('integrations')
-    .select('shopify_domain, shopify_access_token')
+    .select('id')
     .eq('store_id', storeId)
     .eq('workspace_id', workspaceId)
     .single()

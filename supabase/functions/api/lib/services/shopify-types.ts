@@ -131,19 +131,13 @@ export interface ShopifySingleCustomerResponse { customer?: ShopifyCustomerRef }
 export interface ShopifyTransactionsResponse { transactions?: ShopifyTransaction[] }
 export interface ShopifyRefundResponse { refund?: unknown }
 export interface ShopifyRefundCalcResponse { refund?: { transactions?: ShopifyTransaction[] } }
-export interface ShopifyCancelResponse { order?: { id?: number; cancel_reason?: string } }
 export interface ShopifyEditResponse { order_edit?: { id?: number } }
 export interface ShopifyEditCommitResponse { order_edit?: unknown }
-export interface ShopifyDraftOrderResponse { draft_order?: { id?: number; name?: string; invoice_url?: string } }
-export interface ShopifyDraftOrderInvoiceResponse {
-  draft_order_invoice?: { to?: string; subject?: string; custom_message?: string }
-}
 export interface DraftOrderWithInvoiceResult {
   draftOrder: { id?: number; name?: string; invoiceUrl?: string }
   invoiceSent: boolean
   invoiceError?: string
 }
-export interface ShopifyUpdateAddressResponse { order?: { shipping_address?: unknown } }
 export interface ShopifyFulfillmentOrdersResponse { fulfillment_orders?: ShopifyFulfillmentOrder[] }
 export interface ShopifyFulfillmentResponse { fulfillment?: { id?: number; status?: string } }
 export interface ShopifyShopResponse { shop?: { currency?: string } }

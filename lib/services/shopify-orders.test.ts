@@ -1,10 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
-// Mock the paginated fetch so no real network call happens (getOrdersWithLineItems).
-const paginated = vi.fn()
+// getOrderDetail throws a ShopifyApiError on a not-found order — mock the class
+// so that branch stays testable without a real network call.
 vi.mock('@/lib/services/shopify-core', () => ({
-  shopifyPaginatedFetch: (...args: unknown[]): unknown => paginated(...args),
-  SHOPIFY_API_VERSION: '2025-04',
   ShopifyApiError: class ShopifyApiError extends Error {
     status?: number
     source?: string
@@ -70,7 +68,6 @@ import { getOrders, getOrderDetail, getRefunds, getOrdersWithLineItems, getCusto
 const creds = { domain: 'shop.myshopify.com', accessToken: 't' }
 
 beforeEach(() => {
-  paginated.mockReset()
   graphql.mockReset()
   upsertMock.mockClear()
   updateMock.mockClear()
@@ -644,35 +641,66 @@ describe('getRefunds', () => {
 })
 
 describe('getOrdersWithLineItems', () => {
-  it('flattens an order with a refund and line items', async () => {
-    paginated.mockResolvedValueOnce({
-      data: {
-        orders: [
+  // Minimal refund node shared across fixtures below (same shape as getRefunds'
+  // refundNode() helper — id/createdAt/note/transactions/refundLineItems).
+  function refundNode(overrides: Record<string, unknown> = {}) {
+    return {
+      id: 'gid://shopify/Refund/5',
+      createdAt: '2026-04-24T10:20:00Z',
+      note: 'Quality issue',
+      transactions: {
+        edges: [
           {
-            id: 1,
-            name: '#1001',
-            created_at: '2026-04-01T09:15:00Z',
-            financial_status: 'refunded',
-            fulfillment_status: 'fulfilled',
-            cancel_reason: null,
-            customer: { first_name: 'Marco', last_name: 'Rossi', email: 'marco@example.com' },
-            total_price: '89.95',
-            line_items: [
-              { id: 10, title: 'Denim Jacket', quantity: 1, price: '89.95', sku: 'DJ1', variant_title: 'M' },
-            ],
-            refunds: [
-              {
-                created_at: '2026-04-24T10:20:00Z',
-                note: 'Quality issue',
-                transactions: [{ amount: '89.95' }],
-                refund_line_items: [{ quantity: 1, line_item: { title: 'Denim Jacket' } }],
-              },
-            ],
+            node: {
+              id: 'gid://shopify/OrderTransaction/70',
+              kind: 'REFUND',
+              gateway: 'stripe',
+              amountSet: { shopMoney: { amount: '89.95' } },
+            },
           },
         ],
       },
-      nextUrl: null,
-    })
+      refundLineItems: {
+        edges: [{ node: { quantity: 1, lineItem: { title: 'Denim Jacket' } } }],
+      },
+      ...overrides,
+    }
+  }
+
+  function ordersPage(nodes: unknown[], pageInfo: { hasNextPage: boolean; endCursor: string | null } = { hasNextPage: false, endCursor: null }) {
+    return { orders: { edges: nodes.map((node) => ({ node })), pageInfo } }
+  }
+
+  it('flattens an order with a refund and line items', async () => {
+    graphql.mockResolvedValueOnce(
+      ordersPage([
+        {
+          id: 'gid://shopify/Order/1',
+          name: '#1001',
+          createdAt: '2026-04-01T09:15:00Z',
+          displayFinancialStatus: 'REFUNDED',
+          displayFulfillmentStatus: 'FULFILLED',
+          cancelReason: null,
+          email: null,
+          customer: { firstName: 'Marco', lastName: 'Rossi', email: 'marco@example.com' },
+          totalPriceSet: { shopMoney: { amount: '89.95' } },
+          lineItems: {
+            edges: [
+              {
+                node: {
+                  title: 'Denim Jacket',
+                  quantity: 1,
+                  sku: 'DJ1',
+                  variantTitle: 'M',
+                  originalUnitPriceSet: { shopMoney: { amount: '89.95' } },
+                },
+              },
+            ],
+          },
+          refunds: [refundNode()],
+        },
+      ]),
+    )
 
     const rows = await getOrdersWithLineItems(creds, { from: '2026-04-01', to: '2026-04-30' })
 
@@ -694,25 +722,23 @@ describe('getOrdersWithLineItems', () => {
   })
 
   it('defaults fulfillmentStatus and leaves refund fields empty when no refund', async () => {
-    paginated.mockResolvedValueOnce({
-      data: {
-        orders: [
-          {
-            id: 2,
-            name: '#1002',
-            created_at: '2026-04-02T00:00:00Z',
-            financial_status: 'paid',
-            fulfillment_status: null,
-            customer: null,
-            email: 'guest@example.com',
-            total_price: '59.95',
-            line_items: [],
-            refunds: [],
-          },
-        ],
-      },
-      nextUrl: null,
-    })
+    graphql.mockResolvedValueOnce(
+      ordersPage([
+        {
+          id: 'gid://shopify/Order/2',
+          name: '#1002',
+          createdAt: '2026-04-02T00:00:00Z',
+          displayFinancialStatus: 'PAID',
+          displayFulfillmentStatus: 'UNFULFILLED',
+          cancelReason: null,
+          email: 'guest@example.com',
+          customer: null,
+          totalPriceSet: { shopMoney: { amount: '59.95' } },
+          lineItems: { edges: [] },
+          refunds: [],
+        },
+      ]),
+    )
 
     const rows = await getOrdersWithLineItems(creds, { from: '2026-04-01', to: '2026-04-30' })
 
@@ -728,15 +754,129 @@ describe('getOrdersWithLineItems', () => {
     expect(rows[0].lineItems).toEqual([])
   })
 
-  it('follows pagination via nextUrl', async () => {
-    paginated
-      .mockResolvedValueOnce({ data: { orders: [{ id: 1, name: '#1', created_at: '2026-04-01T00:00:00Z', financial_status: 'paid', customer: null, total_price: '1', line_items: [], refunds: [] }] }, nextUrl: 'https://next' })
-      .mockResolvedValueOnce({ data: { orders: [{ id: 2, name: '#2', created_at: '2026-04-02T00:00:00Z', financial_status: 'paid', customer: null, total_price: '2', line_items: [], refunds: [] }] }, nextUrl: null })
+  it('paginates via GraphQL cursors, carrying endCursor into the next page', async () => {
+    graphql
+      .mockResolvedValueOnce(
+        ordersPage(
+          [
+            {
+              id: 'gid://shopify/Order/1',
+              name: '#1',
+              createdAt: '2026-04-01T00:00:00Z',
+              displayFinancialStatus: 'PAID',
+              displayFulfillmentStatus: 'UNFULFILLED',
+              cancelReason: null,
+              email: null,
+              customer: null,
+              totalPriceSet: { shopMoney: { amount: '1' } },
+              lineItems: { edges: [] },
+              refunds: [],
+            },
+          ],
+          { hasNextPage: true, endCursor: 'cursor1' },
+        ),
+      )
+      .mockResolvedValueOnce(
+        ordersPage([
+          {
+            id: 'gid://shopify/Order/2',
+            name: '#2',
+            createdAt: '2026-04-02T00:00:00Z',
+            displayFinancialStatus: 'PAID',
+            displayFulfillmentStatus: 'UNFULFILLED',
+            cancelReason: null,
+            email: null,
+            customer: null,
+            totalPriceSet: { shopMoney: { amount: '2' } },
+            lineItems: { edges: [] },
+            refunds: [],
+          },
+        ]),
+      )
 
     const rows = await getOrdersWithLineItems(creds, { from: '2026-04-01', to: '2026-04-30' })
 
     expect(rows.map((r) => r.orderNumber)).toEqual(['#1', '#2'])
-    expect(paginated).toHaveBeenCalledTimes(2)
+    expect(graphql).toHaveBeenCalledTimes(2)
+    const [, , firstVars] = graphql.mock.calls[0] as [unknown, unknown, Record<string, unknown>]
+    const [, , secondVars] = graphql.mock.calls[1] as [unknown, unknown, Record<string, unknown>]
+    expect(firstVars).toMatchObject({ after: null })
+    expect(secondVars).toMatchObject({ after: 'cursor1' })
+  })
+
+  it('builds the query date-filter using created_at search syntax with quoted timestamps', async () => {
+    graphql.mockResolvedValueOnce(ordersPage([]))
+
+    await getOrdersWithLineItems(creds, { from: '2026-04-01', to: '2026-04-30' })
+
+    const call = graphql.mock.calls[0] as unknown[]
+    expect(call[2]).toMatchObject({
+      query: "created_at:>='2026-04-01T00:00:00' created_at:<='2026-04-30T23:59:59'",
+    })
+  })
+
+  it('prefers presentment currency over shop currency for refundAmount only (totalPrice/price stay shop currency)', async () => {
+    // shopMoney and presentmentMoney diverge (multi-currency store). The original
+    // REST getOrdersWithLineItems preferred presentment_money ONLY for refund
+    // transaction amounts (amount_set.presentment_money || amount) — totalPrice
+    // and line-item price were always bare (shop-currency) REST fields. This
+    // asserts the GraphQL migration reproduces exactly that split, not a
+    // blanket presentment preference.
+    graphql.mockResolvedValueOnce(
+      ordersPage([
+        {
+          id: 'gid://shopify/Order/1',
+          name: '#1001',
+          createdAt: '2026-04-01T09:15:00Z',
+          displayFinancialStatus: 'PARTIALLY_REFUNDED',
+          displayFulfillmentStatus: 'FULFILLED',
+          cancelReason: null,
+          email: null,
+          customer: { firstName: 'Marco', lastName: 'Rossi', email: 'marco@example.com' },
+          // shop 100.00 vs presentment 120.00 — totalPrice must read shop (100.00).
+          totalPriceSet: { shopMoney: { amount: '100.00' } },
+          lineItems: {
+            edges: [
+              {
+                node: {
+                  title: 'Denim Jacket',
+                  quantity: 1,
+                  sku: 'DJ1',
+                  variantTitle: 'M',
+                  // shop 40.00 vs (hypothetical) presentment — price must read shop (40.00).
+                  originalUnitPriceSet: { shopMoney: { amount: '40.00' } },
+                },
+              },
+            ],
+          },
+          refunds: [
+            refundNode({
+              transactions: {
+                edges: [
+                  {
+                    node: {
+                      id: 'gid://shopify/OrderTransaction/70',
+                      kind: 'REFUND',
+                      gateway: 'stripe',
+                      // shop 40.00 vs presentment 60.00 — refundAmount must read presentment (60.00).
+                      amountSet: { shopMoney: { amount: '40.00' }, presentmentMoney: { amount: '60.00' } },
+                    },
+                  },
+                ],
+              },
+            }),
+          ],
+        },
+      ]),
+    )
+
+    const rows = await getOrdersWithLineItems(creds, { from: '2026-04-01', to: '2026-04-30' })
+
+    expect(rows[0]).toMatchObject({
+      totalPrice: '100.00',
+      refundAmount: 60,
+    })
+    expect(rows[0].lineItems[0]).toMatchObject({ price: '40.00' })
   })
 })
 

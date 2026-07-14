@@ -28,11 +28,6 @@ interface IntegrationDetailRow {
   store_currency: string | null
 }
 
-interface ShopifyCredentialsRow {
-  shopify_domain: string | null
-  shopify_access_token: string | null
-}
-
 export async function listStores(workspaceId: string): Promise<StorePublic[]> {
   const sb = getAdminClient()
   const { data: rawData, error } = await sb
@@ -142,23 +137,15 @@ export async function disconnectStore(storeId: string, workspaceId: string) {
     .single()
 
   if (error || !rawIntegration) throw new Error('Integration not found')
-  const integration = rawIntegration as unknown as ShopifyCredentialsRow
 
-  if (integration.shopify_access_token) {
-    try {
-      await fetch(
-        `https://${integration.shopify_domain}/admin/api/2024-01/api_tokens/current.json`,
-        {
-          method: 'DELETE',
-          headers: {
-            'X-Shopify-Access-Token': integration.shopify_access_token,
-          },
-        }
-      )
-    } catch {
-      // Token revocation is best-effort
-    }
-  }
+  // No explicit token-revocation call here (was `DELETE /admin/api/2024-01/api_tokens/current.json`,
+  // a legacy REST endpoint). Investigated during the GraphQL migration (2026-07):
+  // it no longer appears in Shopify's REST Admin API docs (404 on both `latest` and the
+  // pinned `2024-01`), has been removed from Shopify's own official client libraries, and
+  // has no GraphQL Admin API equivalent (self-revocation of an app's current token is not
+  // a supported API operation — Shopify invalidates tokens automatically on client-secret
+  // rotation or app uninstall). The call was already best-effort with all errors swallowed,
+  // so removing it changes no observed behavior; we still null out the stored credentials below.
 
   const { error: updateError } = await sb
     .from('integrations')

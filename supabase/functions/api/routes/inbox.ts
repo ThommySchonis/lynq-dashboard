@@ -3,6 +3,7 @@ import { authMiddleware } from '../middleware/auth.ts'
 import { requireWriteAccess, requireCapability } from '../middleware/workspace.ts'
 import { getAdminClient } from '../lib/supabase.ts'
 import { resolveSearchConversationIds } from '../lib/services/conversation-search.ts'
+import { shopifyGraphQL } from '../lib/services/shopify-graphql.ts'
 import type { AuthContext } from '../lib/types.ts'
 
 const app = new Hono()
@@ -157,6 +158,22 @@ app.delete('/accounts/:id', async (c) => {
 
 // ── Shopify customer lookup ─────────────────────────────────────────
 
+// GraphQL Customer node -> only the fields the mapping below needs. Mirrors
+// the field set already established by shopify-orders.ts's getCustomer.
+interface GqlShopifyCustomerNode {
+  id: string
+  email: string | null
+  firstName: string | null
+  lastName: string | null
+  numberOfOrders: string
+  amountSpent: { amount: string } | null
+}
+
+// gid://shopify/Customer/1234 -> "1234" (REST exposed numeric ids, not global ids).
+function legacyCustomerId(gid: string): string {
+  return gid.split('/').pop() ?? gid
+}
+
 app.get('/shopify-customer', async (c) => {
   const ctx = c.get('authContext') as AuthContext
   const sb = getAdminClient()
@@ -176,30 +193,34 @@ app.get('/shopify-customer', async (c) => {
     return c.json({ customers: [] })
   }
 
-  const apiVersion = '2025-04'
-  let url: string
-  if (id) {
-    url = `https://${client.shopify_domain}/admin/api/${apiVersion}/customers/${id}.json`
-  } else {
-    url = `https://${client.shopify_domain}/admin/api/${apiVersion}/customers/search.json?query=${encodeURIComponent(q!)}`
-  }
+  const credentials = { domain: client.shopify_domain, accessToken: client.shopify_api_key }
 
   try {
-    const res = await fetch(url, {
-      headers: { 'X-Shopify-Access-Token': client.shopify_api_key },
-    })
-    if (!res.ok) return c.json({ customers: [] })
-    const data = await res.json() as { customer?: Record<string, unknown>; customers?: Record<string, unknown>[] }
+    let nodes: GqlShopifyCustomerNode[]
+    if (id) {
+      const data = await shopifyGraphQL<{ customer: GqlShopifyCustomerNode | null }>(
+        credentials,
+        'query($id: ID!){ customer(id: $id){ id email firstName lastName numberOfOrders amountSpent { amount } } }',
+        { id: `gid://shopify/Customer/${id}` },
+      )
+      nodes = data.customer ? [data.customer] : []
+    } else {
+      const data = await shopifyGraphQL<{ customers: { edges: Array<{ node: GqlShopifyCustomerNode }> } }>(
+        credentials,
+        'query($q: String!){ customers(first: 10, query: $q){ edges { node { id email firstName lastName numberOfOrders amountSpent { amount } } } } }',
+        { q: q! },
+      )
+      nodes = data.customers.edges.map((e) => e.node)
+    }
 
-    const customers = id ? [data.customer] : (data.customers || [])
     return c.json({
-      customers: customers.filter(Boolean).map((cust) => ({
-        id: String((cust as Record<string, unknown>).id),
-        email: (cust as Record<string, unknown>).email,
-        name: `${(cust as Record<string, unknown>).first_name || ''} ${(cust as Record<string, unknown>).last_name || ''}`.trim(),
-        ordersCount: (cust as Record<string, unknown>).orders_count,
-        totalSpent: (cust as Record<string, unknown>).total_spent,
-      }))
+      customers: nodes.map((cust) => ({
+        id: legacyCustomerId(cust.id),
+        email: cust.email,
+        name: `${cust.firstName || ''} ${cust.lastName || ''}`.trim(),
+        ordersCount: Number(cust.numberOfOrders),
+        totalSpent: cust.amountSpent?.amount,
+      })),
     })
   } catch {
     return c.json({ customers: [] })

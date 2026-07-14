@@ -9,25 +9,45 @@ const CREDS = { domain: 'test-shop.myshopify.com', accessToken: 'token' } as unk
 >[0]
 
 interface Call {
-  url: string
-  body?: unknown
+  body?: { query: string; variables: Record<string, unknown> }
 }
 
-function withMockFetch(opts: { invoiceStatus?: number; calls: Call[] }): () => void {
+// sendDraftOrderInvoice / createDraftOrderWithInvoice now use the
+// draftOrderCreate / draftOrderInvoiceSend GraphQL mutations via the shared
+// shopifyGraphQL helper. Queue GraphQL payloads by call order (create, then
+// invoice send) and record each request body.
+function withQueuedGraphql(opts: { invoiceUserErrors?: Array<{ field: string[] | null; message: string }>; calls: Call[] }): () => void {
   const orig = globalThis.fetch
-  globalThis.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
-    const url = String(input)
+  globalThis.fetch = (_input: RequestInfo | URL, init?: RequestInit) => {
     const body = init?.body ? JSON.parse(init.body as string) : undefined
-    opts.calls.push({ url, body })
-    if (url.includes('/send_invoice.json')) {
-      return new Response(
-        JSON.stringify({ draft_order_invoice: { to: 'buyer@example.com' } }),
-        { status: opts.invoiceStatus ?? 200, headers: { 'Content-Type': 'application/json' } },
+    opts.calls.push({ body })
+    if (body?.query?.includes('DraftOrderInvoiceSend')) {
+      return Promise.resolve(
+        new Response(
+          JSON.stringify({
+            data: {
+              draftOrderInvoiceSend: {
+                draftOrder: opts.invoiceUserErrors?.length ? null : { id: 'gid://shopify/DraftOrder/1' },
+                userErrors: opts.invoiceUserErrors ?? [],
+              },
+            },
+          }),
+          { status: 200, headers: { 'Content-Type': 'application/json' } },
+        ),
       )
     }
-    return new Response(
-      JSON.stringify({ draft_order: { id: 1, name: '#D1', invoice_url: 'x' } }),
-      { status: 200, headers: { 'Content-Type': 'application/json' } },
+    return Promise.resolve(
+      new Response(
+        JSON.stringify({
+          data: {
+            draftOrderCreate: {
+              draftOrder: { id: 'gid://shopify/DraftOrder/1', name: '#D1', invoiceUrl: 'x' },
+              userErrors: [],
+            },
+          },
+        }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } },
+      ),
     )
   }
   return () => {
@@ -35,26 +55,27 @@ function withMockFetch(opts: { invoiceStatus?: number; calls: Call[] }): () => v
   }
 }
 
-Deno.test('sendDraftOrderInvoice: omits blank subject and message', async () => {
+Deno.test('sendDraftOrderInvoice: omits blank subject and message, sending an empty EmailInput', async () => {
   const calls: Call[] = []
-  const restore = withMockFetch({ calls })
+  const restore = withQueuedGraphql({ calls })
   try {
     await sendDraftOrderInvoice(CREDS, 1, { subject: '  ', customMessage: '' })
     assertEquals(calls.length, 1)
-    const inv = (calls[0].body as { draft_order_invoice: Record<string, unknown> }).draft_order_invoice
-    assertEquals(inv, {})
+    const variables = calls[0].body?.variables as { id: string; email: Record<string, unknown> }
+    assertEquals(variables.id, 'gid://shopify/DraftOrder/1')
+    assertEquals(variables.email, {})
   } finally {
     restore()
   }
 })
 
-Deno.test('sendDraftOrderInvoice: includes provided subject and message', async () => {
+Deno.test('sendDraftOrderInvoice: includes provided subject and message under EmailInput.customMessage', async () => {
   const calls: Call[] = []
-  const restore = withMockFetch({ calls })
+  const restore = withQueuedGraphql({ calls })
   try {
     await sendDraftOrderInvoice(CREDS, 1, { subject: 'Your invoice', customMessage: 'Thanks!' })
-    const inv = (calls[0].body as { draft_order_invoice: Record<string, unknown> }).draft_order_invoice
-    assertEquals(inv, { subject: 'Your invoice', custom_message: 'Thanks!' })
+    const variables = calls[0].body?.variables as { email: Record<string, unknown> }
+    assertEquals(variables.email, { subject: 'Your invoice', customMessage: 'Thanks!' })
   } finally {
     restore()
   }
@@ -62,7 +83,7 @@ Deno.test('sendDraftOrderInvoice: includes provided subject and message', async 
 
 Deno.test('createDraftOrderWithInvoice: invoiceSent true when both succeed', async () => {
   const calls: Call[] = []
-  const restore = withMockFetch({ calls })
+  const restore = withQueuedGraphql({ calls })
   try {
     const result = await createDraftOrderWithInvoice(CREDS, {
       customerId: '42',
@@ -77,9 +98,12 @@ Deno.test('createDraftOrderWithInvoice: invoiceSent true when both succeed', asy
   }
 })
 
-Deno.test('createDraftOrderWithInvoice: keeps draft and flags failure when invoice send fails', async () => {
+Deno.test('createDraftOrderWithInvoice: keeps draft and flags failure when invoice send returns userErrors (BEST-EFFORT)', async () => {
   const calls: Call[] = []
-  const restore = withMockFetch({ calls, invoiceStatus: 422 })
+  const restore = withQueuedGraphql({
+    calls,
+    invoiceUserErrors: [{ field: null, message: 'Draft order has already been invoiced' }],
+  })
   try {
     const result = await createDraftOrderWithInvoice(CREDS, {
       customerId: '42',

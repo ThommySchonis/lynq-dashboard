@@ -500,6 +500,168 @@ export async function getRefunds(credentials: ShopifyCredentials, dateRange: { f
   return aggregateRefunds(orders, dateRange);
 }
 
+// ── GraphQL Admin API: data export (orders + line items) ─────────────────────
+// getOrdersWithLineItems replaces the REST orders.json?status=any&created_at_min/
+// max pagination the CSV/PDF export used (Next.js only consumer today — mirrored
+// here for parity with lib/services/shopify-orders.ts). Money fields follow the
+// SAME shop-vs-presentment precedent as the sibling functions above: totalPrice
+// and line-item price are bare REST fields (shop currency, i.e. shopMoney only),
+// while refund amounts are presentment-preferred via the shared mapGqlRefund()
+// helper — reproducing REST's `amount_set.presentment_money || amount` refund math.
+
+// GraphQL response shape for GET_ORDERS_WITH_LINE_ITEMS_QUERY.
+interface GqlOrderWithLineItemsNode {
+  id: string;
+  name: string;
+  createdAt: string;
+  displayFinancialStatus: string | null;
+  displayFulfillmentStatus: string;
+  cancelReason: string | null;
+  email: string | null;
+  customer: { firstName: string | null; lastName: string | null; email: string | null } | null;
+  totalPriceSet: GqlMoneyBag;
+  lineItems: {
+    edges: Array<{
+      node: {
+        title: string;
+        quantity: number;
+        sku: string | null;
+        variantTitle: string | null;
+        originalUnitPriceSet: GqlMoneyBag;
+      };
+    }>;
+  };
+  refunds: GqlRefundNode[];
+}
+interface GqlOrdersWithLineItemsResponse {
+  orders: {
+    edges: Array<{ node: GqlOrderWithLineItemsNode }>;
+    pageInfo: { hasNextPage: boolean; endCursor: string | null };
+  };
+}
+
+// Same >=/<= quoted-timestamp search syntax as buildRefundsDateQuery above,
+// filtering by created_at instead of updated_at — reproduces REST's
+// created_at_min/created_at_max query params.
+function buildOrdersDateQuery(from: string, to: string): string {
+  const clauses: string[] = [];
+  if (from) clauses.push(`created_at:>='${from}T00:00:00'`);
+  if (to) clauses.push(`created_at:<='${to}T23:59:59'`);
+  return clauses.join(" ");
+}
+
+// Each node here pulls BOTH a lineItems(first: 250) connection AND a nested
+// refunds -> transactions/refundLineItems subtree — costlier per-node than
+// getRefunds' refunds-only page, so a smaller page size than REFUNDS_PAGE_SIZE
+// keeps a single request comfortably under Shopify's GraphQL query cost cap.
+const ORDERS_EXPORT_PAGE_SIZE = 25;
+
+// No status clause -> all statuses (open/closed/cancelled), reproducing REST's
+// status=any (same precedent as SYNC_ORDERS_QUERY above).
+const GET_ORDERS_WITH_LINE_ITEMS_QUERY = `
+  query GetOrdersWithLineItems($first: Int!, $after: String, $query: String) {
+    orders(first: $first, after: $after, query: $query) {
+      edges {
+        node {
+          id
+          name
+          createdAt
+          displayFinancialStatus
+          displayFulfillmentStatus
+          cancelReason
+          email
+          customer { firstName lastName email }
+          totalPriceSet { shopMoney { amount } }
+          lineItems(first: 250) {
+            edges {
+              node { title quantity sku variantTitle originalUnitPriceSet { shopMoney { amount } } }
+            }
+          }
+          refunds {
+            id
+            createdAt
+            note
+            transactions(first: 50) {
+              edges { node { id kind gateway amountSet { shopMoney { amount } presentmentMoney { amount } } } }
+            }
+            refundLineItems(first: 250) {
+              edges { node { quantity lineItem { title } } }
+            }
+          }
+        }
+      }
+      pageInfo { hasNextPage endCursor }
+    }
+  }
+`;
+
+/**
+ * Fetch all orders in a date range with line items and derived refund fields,
+ * flattened for export, via the GraphQL Admin API. Paginates fully (not capped
+ * like getOrders). Returns the same shape the former REST implementation produced.
+ */
+export async function getOrdersWithLineItems(credentials: ShopifyCredentials, dateRange: { from: string; to: string }) {
+  const query = buildOrdersDateQuery(dateRange.from, dateRange.to);
+
+  const nodes: GqlOrderWithLineItemsNode[] = [];
+  let after: string | null = null;
+  let hasNextPage = true;
+
+  while (hasNextPage) {
+    const data: GqlOrdersWithLineItemsResponse = await shopifyGraphQL<GqlOrdersWithLineItemsResponse>(
+      credentials,
+      GET_ORDERS_WITH_LINE_ITEMS_QUERY,
+      { first: ORDERS_EXPORT_PAGE_SIZE, after, query },
+    );
+    nodes.push(...data.orders.edges.map(({ node }) => node));
+    hasNextPage = data.orders.pageInfo.hasNextPage;
+    after = data.orders.pageInfo.endCursor;
+  }
+
+  return nodes.map((node) => {
+    // presentment-preferred per-transaction amounts via the shared mapGqlRefund
+    // helper — matches the original REST `amount_set.presentment_money || amount`.
+    const refunds = node.refunds.map(mapGqlRefund);
+    const refundAmount = refunds.reduce(
+      (sum, r) => sum + r.transactions.reduce((ts, t) => ts + parseFloat(t.amount || "0"), 0),
+      0,
+    );
+    const refundNote = refunds.map((r) => r.note).filter(Boolean).join("; ");
+    const cancelReason = node.cancelReason ? node.cancelReason.toLowerCase() : null;
+    const refundReason = refundNote || cancelReason;
+    const refundedAt = refunds.map((r) => r.created_at).sort().at(-1) ?? null;
+
+    return {
+      orderNumber: node.name,
+      createdAt: node.createdAt,
+      customer: node.customer
+        ? `${node.customer.firstName || ""} ${node.customer.lastName || ""}`.trim() || "Unknown"
+        : node.email || "Unknown",
+      customerEmail: node.customer?.email || node.email || null,
+      // GraphQL displayFinancialStatus is nullable (REST's bare financial_status
+      // field was not) — '' is the least-surprising fallback for the rare order
+      // with no financial status yet, preserving the non-null `string` contract.
+      financialStatus: node.displayFinancialStatus ? node.displayFinancialStatus.toLowerCase() : "",
+      fulfillmentStatus: mapFulfillmentStatus(node.displayFulfillmentStatus),
+      // Bare shop-currency amount — matches REST's bare `total_price` field
+      // (only refund math preferred presentment_money in the original).
+      totalPrice: node.totalPriceSet?.shopMoney.amount || "0",
+      cancelReason,
+      refundAmount,
+      refundReason,
+      refundedAt,
+      lineItems: node.lineItems.edges.map(({ node: item }) => ({
+        title: item.title,
+        quantity: item.quantity,
+        // Bare shop-currency unit price — matches REST's bare `price` field.
+        price: item.originalUnitPriceSet.shopMoney.amount,
+        sku: item.sku ?? undefined,
+        variantTitle: item.variantTitle ?? undefined,
+      })),
+    };
+  });
+}
+
 // GraphQL shape for a customer's draft orders (REST /draft_orders.json can't
 // filter by customer_id, so we use the GraphQL draftOrders connection).
 interface DraftOrdersGraphQLResponse {
